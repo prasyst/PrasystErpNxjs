@@ -48,20 +48,15 @@ const CustomAutocomplete = React.forwardRef(
               helperText={helperText}
               inputRef={ref}
               onKeyDown={onKeyDown}
-            //   InputProps={{
-            //     ...params.InputProps,
-            //     startAdornment: (
-            //       <>
-            //         {params.InputProps.startAdornment}
-            //       </>
-            //     ),
-            //     endAdornment: (
-            //       <InputAdornment position="end">
-            //         {endAdornment}
-            //         {params.InputProps.endAdornment}
-            //       </InputAdornment>
-            //     ),
-            //   }}
+            sx={{
+    '& .MuiInputBase-root': {
+      height: '36px', // ↓ reduces overall height
+      fontSize: '0.875rem',
+    },
+    '& input': {
+      padding: '8px',
+    },
+  }}
               fullWidth
             />
           )}
