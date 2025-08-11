@@ -46,6 +46,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
 
   const menuItems = [
     { name: 'Dashboard', icon: MdDashboard, path: '/' },
+
     {
       name: 'Masters',
       icon: MdOutlineApartment,
@@ -145,6 +146,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
         },
       ],
     },
+
     { name: 'Orders', icon: MdShoppingCart, path: '/order' },
     { name: 'Products', icon: MdInventory, path: '/products' },
     { name: 'Customers', icon: MdPeople, path: '/customers' },
