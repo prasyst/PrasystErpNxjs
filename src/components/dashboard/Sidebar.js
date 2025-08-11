@@ -4,60 +4,23 @@ import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import { useTheme } from '../../../src/app/context/ThemeContext';
 import {
-  MdDashboard,
-  MdSearch,
-  MdShoppingCart,
-  MdInventory,
-  MdPeople,
-  MdAnalytics,
-  MdSettings,
-  MdMenu,
-  MdClose,
-  MdExpandMore,
-  MdExpandLess,
-  MdBusiness,
-  MdMap,
-  MdBuild,
-  MdLocalShipping,
-  MdPeopleAlt,
-  MdAllInbox,
-  MdReceipt,
-  MdGavel,
-  MdEvent,
-  MdCategory,
-  MdOutlineGroupWork,
-  MdPersonAdd,
-  MdLocalOffer,
-  MdClass,
-  MdStars,
-  MdRateReview,
-  MdWork,
-  MdAccountBox,
-  MdDomain,
-  MdWarehouse,
-  MdLocalMall,
-  MdCollectionsBookmark,
-  MdAttachMoney,
-  MdAssignment,
-  MdAccessibility,
-  MdEmojiPeople,
-  MdBrandingWatermark,
-  MdStraighten,
-  MdLibraryBooks,
-  MdOutlineApartment
+  MdDashboard, MdSearch, MdShoppingCart, MdInventory, MdPeople,
+  MdAnalytics, MdSettings, MdMenu, MdClose, MdExpandMore, MdExpandLess,
+  MdBusiness, MdMap, MdBuild, MdLocalShipping, MdPeopleAlt, MdAllInbox,
+  MdReceipt, MdGavel, MdEvent, MdCategory, MdOutlineGroupWork, MdPersonAdd,
+  MdLocalOffer, MdClass, MdStars, MdRateReview, MdWork, MdAccountBox,
+  MdDomain, MdWarehouse, MdLocalMall, MdCollectionsBookmark, MdAttachMoney,
+  MdAssignment, MdAccessibility, MdEmojiPeople, MdBrandingWatermark,
+  MdStraighten, MdLibraryBooks, MdOutlineApartment
 } from 'react-icons/md';
 
 import { FaBoxOpen, FaBuilding, FaTruck, FaUserTag, FaHandshake, FaBalanceScale } from 'react-icons/fa';
 import { AiOutlineUsergroupAdd, AiOutlineNodeIndex } from 'react-icons/ai';
 
-
-
 const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
   const { theme } = useTheme();
   const sidebarRef = useRef(null);
 
-
-  // submenu toggle states
   const [openMenus, setOpenMenus] = useState({
     Masters: false,
     Company: false,
@@ -66,24 +29,23 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
   const toggleMenu = (name, parentName = null) => {
     setOpenMenus((prev) => {
       const newState = { ...prev };
-
-      // If the clicked item is inside Masters, close all other submenus under Masters
       if (parentName === 'Masters') {
         Object.keys(newState).forEach((key) => {
-          if (key !== name && menuItems.find(item => item.name === 'Masters')?.children?.some(child => child.name === key)) {
+          if (
+            key !== name &&
+            menuItems.find(item => item.name === 'Masters')?.children?.some(child => child.name === key)
+          ) {
             newState[key] = false;
           }
         });
       }
-
       newState[name] = !prev[name];
       return newState;
     });
   };
-  
+
   const menuItems = [
     { name: 'Dashboard', icon: MdDashboard, path: '/' },
-
     {
       name: 'Masters',
       icon: MdOutlineApartment,
@@ -104,7 +66,6 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
             { name: 'Employee', icon: MdAccessibility, path: '/masters/company/employee' },
           ],
         },
-
         {
           name: 'Vendors',
           icon: FaTruck,
@@ -115,7 +76,6 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
             { name: 'Creditors/Suppliers', icon: FaUserTag, path: '/masters/vendors/creditors' },
           ],
         },
-
         {
           name: 'Customers',
           icon: MdPeopleAlt,
@@ -132,14 +92,13 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
             { name: 'Party Brand Parameter', icon: MdBuild, path: '/masters/customers/brand-parameter' },
           ],
         },
-
         {
           name: 'Products',
           icon: FaBoxOpen,
           path: '/masters/products',
           children: [
-            { name: 'Category Master', icon: MdCategory, path: '/masters/products/categories' },
-            { name: 'Product Group', icon: AiOutlineNodeIndex, path: '/masters/products/group' },
+            { name: 'Category Master', icon: MdCategory, path: '/masters/products/category' },
+            { name: 'Product Group', icon: AiOutlineNodeIndex, path: '/masters/products/productgrp' },
             { name: 'Product Master', icon: MdLocalMall, path: '/masters/products/master' },
             { name: 'Style Master', icon: MdCollectionsBookmark, path: '/masters/products/style' },
             { name: 'Type Master', icon: MdCategory, path: '/masters/products/type' },
@@ -151,7 +110,6 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
             { name: 'Quality', icon: MdLibraryBooks, path: '/masters/products/quality' },
           ],
         },
-
         {
           name: 'GST/SAC Code',
           icon: MdReceipt,
@@ -160,7 +118,6 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
             { name: 'GST Codes', icon: MdReceipt, path: '/masters/gst-sac/gst' },
           ],
         },
-
         {
           name: 'Tax/Terms',
           icon: FaBalanceScale,
@@ -178,7 +135,6 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
             { name: 'Excise Tariff Group', icon: MdLibraryBooks, path: '/masters/tax-terms/excise-group' },
           ],
         },
-
         {
           name: 'Season',
           icon: MdEvent,
@@ -189,7 +145,6 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
         },
       ],
     },
-
     { name: 'Orders', icon: MdShoppingCart, path: '/order' },
     { name: 'Products', icon: MdInventory, path: '/products' },
     { name: 'Customers', icon: MdPeople, path: '/customers' },
@@ -197,72 +152,68 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
     { name: 'Settings', icon: MdSettings, path: '/settings' },
   ];
 
-
   const renderMenu = (items, level = 0) => {
     return items.map((item, index) => {
       const IconComponent = item.icon;
       const hasChildren = item.children && item.children.length > 0;
       const isMenuOpen = openMenus[item.name];
 
+      const menuContent = (
+        <div
+          onClick={() => {
+            if (hasChildren) toggleMenu(item.name, level === 1 ? 'Masters' : null);
+          }}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            padding: '0.75rem 0.5rem',
+            borderRadius: '0.5rem',
+            cursor: hasChildren ? 'pointer' : 'default',
+            transition: 'all 0.3s ease',
+            userSelect: 'none',
+          }}
+          className="hover:bg-opacity-20 hover:bg-white"
+        >
+          {IconComponent && (
+            <span style={{
+              fontSize: '1.2rem',
+              minWidth: '24px',
+              display: 'flex',
+              justifyContent: 'center',
+              marginRight: isCollapsed ? 0 : '1rem',
+            }}>
+              <IconComponent size={20} />
+            </span>
+          )}
+          {!isCollapsed && (
+            <>
+              <span style={{
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                flex: 1,
+              }}>
+                {item.name}
+              </span>
+              {hasChildren && (
+                <span>
+                  {isMenuOpen ? <MdExpandLess size={18} /> : <MdExpandMore size={18} />}
+                </span>
+              )}
+            </>
+          )}
+        </div>
+      );
+
       return (
         <li key={item.name + index} style={{ marginBottom: '0.5rem', paddingLeft: `${level * 12}px` }}>
-          <div
-            onClick={() => {
-              if (hasChildren) toggleMenu(item.name, level === 1 ? 'Masters' : null);
-            }}
-
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              padding: '0.75rem 0.5rem',
-              borderRadius: '0.5rem',
-              cursor: 'pointer',
-              transition: 'all 0.3s ease',
-              userSelect: 'none',
-            }}
-            className="hover:bg-opacity-20 hover:bg-white"
-          >
-            {IconComponent && (
-              <span style={{
-                fontSize: '1.2rem',
-                minWidth: '24px',
-                display: 'flex',
-                justifyContent: 'center',
-                marginRight: isCollapsed ? 0 : '1rem',
-              }}>
-                <IconComponent size={20} />
-              </span>
-            )}
-            {!isCollapsed && (
-              <>
-                <span style={{
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  flex: 1,
-                }}>
-                  {item.name}
-                </span>
-                {hasChildren && (
-                  <span>
-                    {isMenuOpen ? <MdExpandLess size={18} /> : <MdExpandMore size={18} />}
-                  </span>
-                )}
-              </>
-            )}
-          </div>
-
-          {item.path && !hasChildren && (
-            <Link
-              href={item.path}
-              passHref
-              style={{
-                textDecoration: 'none',
-                color: 'inherit',
-              }}
-            />
+          {item.path && !hasChildren ? (
+            <Link href={item.path} passHref legacyBehavior>
+              <a style={{ textDecoration: 'none', color: 'inherit' }}>{menuContent}</a>
+            </Link>
+          ) : (
+            menuContent
           )}
-
           {hasChildren && isMenuOpen && (
             <ul style={{ listStyle: 'none', padding: 0, marginTop: '0.25rem' }}>
               {renderMenu(item.children, level + 1)}
@@ -337,6 +288,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
           {isCollapsed ? <MdMenu size={20} /> : <MdClose size={20} />}
         </button>
       </div>
+
       <div
         style={{
           flex: 1,
@@ -344,23 +296,15 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
           overflowX: 'hidden',
           maxHeight: 'calc(100vh - 100px)',
           paddingRight: '4px',
-          scrollbarColor: 'var(--sidebar-text) var(--sidebar-bg)', // for Firefox
-          scrollbarWidth: 'thin', // for Firefox
+          scrollbarColor: 'var(--sidebar-text) var(--sidebar-bg)',
+          scrollbarWidth: 'thin',
         }}
         className="custom-scrollbar"
       >
-        <ul
-          style={{
-            listStyle: 'none',
-            padding: 0,
-            margin: 0,
-          }}
-        >
+        <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
           {renderMenu(menuItems)}
         </ul>
       </div>
-
-
     </div>
   );
 };
