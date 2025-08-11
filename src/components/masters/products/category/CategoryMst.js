@@ -51,11 +51,11 @@ const CategoryMst = () => {
 
   const [currentFGCAT_KEY, setCurrentFGCAT_KEY] = useState(null);
   const [form, setForm] = useState({
-    FGCAT_KEY: '',  
-    FGCAT_NAME: '',  
+    FGCAT_KEY: '',
+    FGCAT_NAME: '',
     Abrv: '',
     SearchByCd: '',
-    SR_CODE: '',    
+    SR_CODE: '',
     SEGMENT_KEY: '',
     FGCAT_CODE: '',
     FGCAT_LST_CODE: '',
@@ -225,12 +225,12 @@ const CategoryMst = () => {
         url = `Category/InsertFgCat?UserName=${(UserName)}&strCobrid=${COBR_ID}`;
       }
       const payload = {
-        FGCAT_KEY: form.FGCAT_KEY,  
-        FGCAT_CODE: form.FGCAT_CODE, 
-        FGCAT_NAME: data.FGCAT_NAME, 
+        FGCAT_KEY: form.FGCAT_KEY,
+        FGCAT_CODE: form.FGCAT_CODE,
+        FGCAT_NAME: data.FGCAT_NAME,
         FGCAT_ABRV: form.Abrv,
         STATUS: form.Status ? "1" : "0",
-        SR_CODE: form.SR_CODE,    
+        SR_CODE: form.SR_CODE,
         SEGMENT_KEY: form.SEGMENT_KEY,
         CO_ID: CO_ID
       };
@@ -480,7 +480,7 @@ const CategoryMst = () => {
   };
   return (
     <>
-      <Box
+      {/* <Box
         sx={{
           width: '100%',
           justifyContent: 'center',
@@ -489,6 +489,17 @@ const CategoryMst = () => {
           boxSizing: 'border-box',
           marginTop: { xs: "30px", sm: "0px" }
         }}
+        className="form-container"
+      > */}
+      <Box
+        sx={{
+          // width: '100%',
+          justifyContent: 'center',
+          alignItems: 'flex-start',
+          padding: 0,
+          boxSizing: 'border-box',
+        }}
+   
         className="form-container"
       >
         <ToastContainer />
@@ -501,7 +512,10 @@ const CategoryMst = () => {
         >
           {/* Header Section */}
           <Grid container alignItems="center"
-            justifyContent="space-between" spacing={2} sx={{ marginTop: "30px", marginInline: '20px' }}>
+            justifyContent="space-between" spacing={2} 
+            // sx={{ marginTop: "30px", marginInline: '20px' }}
+  sx={{ margin: 0, padding: '20px' }} 
+            >
             <Grid sx={{
               display: 'flex', justifyContent: {
                 xs: 'center',
@@ -539,7 +553,7 @@ const CategoryMst = () => {
                 Category Master
               </Typography>
             </Grid>
-          {/* Right Buttons */}
+            {/* Right Buttons */}
             <Grid>
               <Stack direction="row" spacing={{ xs: 0.5, sm: 1 }}>
                 <CrudButton
@@ -769,6 +783,7 @@ const CategoryMst = () => {
           </Grid>
         </Box>
       </Box>
+
       <Dialog
         open={openConfirmDialog}
         onClose={handleCloseConfirmDialog}

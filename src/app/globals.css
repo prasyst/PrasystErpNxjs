@@ -7,7 +7,7 @@ html, body, #__next {
   height: 100%;
   margin: 0;
   padding: 0;
-  overflow-x: hidden;
+  overflow: hidden;
 }
 
 /* DataGrid specific fixes */
@@ -98,10 +98,6 @@ body {
   gap: 1rem;
 }
 
-.p-4 {
-  padding: 1rem;
-}
-
 .mb-4 {
   margin-bottom: 1rem;
 }
@@ -116,4 +112,89 @@ body {
 
 .transition {
   transition: all 0.3s ease;
+}
+
+.form-container {
+  background-color: rgb(236, 238, 240);
+  min-height: 100vh;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.form_grid {
+  width: 80% !important;
+  height: auto;
+  margin: auto !important;
+  border-radius: 8px;
+  padding: 0px 20px 20px 20px;
+  background-color: #fff;
+}
+
+.custom-textfield .MuiFilledInput-root,
+.custom-select .MuiFilledInput-root {
+  background-color: transparent;
+  border: 1px solid #e0e0e0;
+  border-radius: 5px !important;
+  overflow: hidden !important;
+}
+
+.custom-textfield .css-hwkq3c-MuiInputBase-root-MuiFilledInput-root:hover {
+  background-color: transparent !important;
+}
+
+.custom-textfield .MuiFilledInput-root:before,
+.custom-textfield .MuiFilledInput-root:after {
+  display: none !important;
+}
+
+.custom-textfield .MuiFilledInput-root.Mui-focused,
+.custom-select .MuiFilledInput-root.Mui-focused {
+  background-color: transparent;
+  border: 1px solid #39ace2;
+}
+
+.custom-textfield .MuiFilledInput-root.Mui-focused {
+  border: 1px solid #39ace2;
+}
+
+.custom-textfield .MuiInputLabel-root.Mui-focused {
+  color: #39ace2;
+}
+
+.custom-textfield label {
+  line-height: 15px !important;
+}
+
+.custom-textfield .MuiInputBase-input {
+  padding: 8px 10px !important;
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+/* height */
+.custom-textfield .MuiInputBase-root {
+  min-height: 36px;
+}
+
+.custom-textfield .MuiInputLabel-shrink {
+  font-size: 10px;
+  transform: translate(12px, -6px) scale(0.85);
+}
+
+.custom-textfield .MuiInputLabel-root {
+  font-size: 15px;
+}
+
+.custom-textfield .MuiInputLabel-shrink {
+  font-size: 12px;
+}
+
+.custom-textfield .MuiFilledInput-root.Mui-disabled {
+  background-color: transparent !important;
 }

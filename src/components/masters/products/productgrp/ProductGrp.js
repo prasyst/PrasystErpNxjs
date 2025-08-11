@@ -1,3 +1,4 @@
+'use client'
 import React, { useEffect, useRef, useState } from 'react';
 import {
     Box,
@@ -16,20 +17,26 @@ import {
 } from '@mui/material';
 import KeyboardArrowLeftIcon from "@mui/icons-material/KeyboardArrowLeft";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
-import { useLocation, useNavigate } from 'react-router-dom';
+// import { useLocation, useNavigate } from 'react-router-dom';
 import { toast, ToastContainer } from 'react-toastify';
-import { debounce } from 'lodash';
-import { getFormMode } from '../../../../lib/helpers';
-import axiosInstance from '../../../../lib/axios';
-import CrudButton from '../../../../Global Function/CrudButton';
-import PrintPrdGrpData from './PrintPrdGrpData';
-import { pdf } from '@react-pdf/renderer';
+import { useRouter } from 'next/navigation';
+
+// import { getFormMode } from '../../../../lib/helpers';
+// import axiosInstance from '../../../../lib/axios';
+// import CrudButton from '../../../../Global Function/CrudButton';
+// import PrintPrdGrpData from './PrintPrdGrpData';
+// import { pdf } from '@react-pdf/renderer';
+import { getFormMode } from '@/lib/helpers';
+import axiosInstance from '@/lib/axios';
+import CrudButton from '@/GlobalFunction/CrudButton';
+import debounce from 'lodash.debounce';
 
 const FORM_MODE = getFormMode();
 const ProductGrp = () => {
-    const location = useLocation();
-    console.log("Location state:", location.state);
-    const navigate = useNavigate();
+    // const location = useLocation();
+   
+    // const navigate = useNavigate();
+     const router = useRouter();
     const [currentPRODGRP_KEY, setCurrentPRODGRP_KEY] = useState(null);
     const [form, setForm] = useState({
         SearchByCd: '',
@@ -398,7 +405,10 @@ const ProductGrp = () => {
       }
   };
 
-    const handleExit = () => { navigate("/masters/products/product-grp-table") };
+    const handleExit = () => {
+        //  navigate("/masters/products/product-grp-table")
+        // router.push('/masters/products/product-grp-table');
+         };
 
     return (
         <>
