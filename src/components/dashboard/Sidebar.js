@@ -46,7 +46,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
 
   const menuItems = [
     { name: 'Dashboard', icon: MdDashboard, path: '/' },
-
+{ name: 'Stock Enquiry', icon: MdSearch, path: '/dashboard/stock-enquiry-table' },
     {
       name: 'Masters',
       icon: MdOutlineApartment,
