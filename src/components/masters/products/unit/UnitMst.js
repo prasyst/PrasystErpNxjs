@@ -1,53 +1,44 @@
 'use client'
 import React, { useEffect, useRef, useState } from 'react';
 import {
-    Box,
-    Grid,
-    TextField,
-    Typography,
-    Button,
-    Stack,
-    FormControlLabel,
-    Checkbox,
-    Dialog,
-    DialogTitle,
-    DialogContent,
-    DialogContentText,
-    DialogActions,
+    Box, Grid, TextField, Typography, Button, Stack, FormControlLabel, Checkbox, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions,
 } from '@mui/material';
 import KeyboardArrowLeftIcon from "@mui/icons-material/KeyboardArrowLeft";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import { toast, ToastContainer } from 'react-toastify';
-import PrintPrdGrpData from './PrintPrdGrpData';
 import { pdf } from '@react-pdf/renderer';
+import PrintUnitData from './PrintUnitData';
 import { useRouter } from 'next/navigation';
 import { getFormMode } from '@/lib/helpers';
 import CrudButton from '@/GlobalFunction/CrudButton';
 import debounce from 'lodash.debounce';
 import axiosInstance from '@/lib/axios';
+import CustomAutocomplete from '@/GlobalFunction/CustomAutoComplete/CustomAutoComplete';
 
 const FORM_MODE = getFormMode();
-const ProductGrp = () => {
+const UnitMst = () => {
      const router = useRouter();
-    const [currentPRODGRP_KEY, setCurrentPRODGRP_KEY] = useState(null);
+    const [currentUNIT_KEY, setCurrentUNIT_KEY] = useState(null);
     const [form, setForm] = useState({
         SearchByCd: '',
         SERIES: '',
-        PRODGRP_CODE: '',
-        PRODGRP_KEY: '',  //CODE
-        PRODGRP_NAME: '',  //CATEGORY NAME
-        PRODGRP_ABRV: '',
-        ProdGrp_LST_CODE: '',
+        UNIT_ALT_CODE: '',
+        UNIT_KEY: '',  //CODE
+        UNIT_NAME: '',  //SHADE NAME
+        UNIT_ABRV: '',
+        UNIT_FOR: '',
+        UNIT_LST_CODE: '',
         Status: FORM_MODE.add ? "1" : "0",
     });
     const [openConfirmDialog, setOpenConfirmDialog] = useState(false);
-    const contentRef = useRef(null);
-    const PRODGRP_KEYRef = useRef(null);
-    const ProdGrp_NAMERef = useRef(null);
-    const PRODGRP_ABRVRef = useRef(null);
+    const UNIT_KEYRef = useRef(null);
+    const UNIT_NAMERef = useRef(null);
+    const UNIT_ABRVRef = useRef(null);
+    const UNIT_FORRef = useRef(null);
+    const UNIT_ALT_CODERef = useRef(null);
     const SERIESRef = useRef(null);
     const [mode, setMode] = useState(() => {
-        currentPRODGRP_KEY ? FORM_MODE.read : FORM_MODE.add
+        currentUNIT_KEY ? FORM_MODE.read : FORM_MODE.add
     });
     const [Status, setStatus] = useState("1");
     const FCYR_KEY = localStorage.getItem('FCYR_KEY');
@@ -57,6 +48,11 @@ const ProductGrp = () => {
     const PARTY_KEY = localStorage.getItem('PARTY_KEY');
     const COBR_ID = localStorage.getItem('COBR_ID');
 
+     const unitOptions = [
+        { Id: '0', Name: 'N' },
+        // { Id: '1', Name: 'L' },
+        
+    ];
     const handleChangeStatus = (event) => {
         const updatedStatus = event.target.checked ? "1" : "0";
         setStatus(updatedStatus);
@@ -65,14 +61,13 @@ const ProductGrp = () => {
             Status: updatedStatus
         }))
     };
-
-    const fetchRetriveData = async (currentPRODGRP_KEY, flag = "R", isManualSearch = false) => {
+    const fetchRetriveData = async (currentUNIT_KEY, flag = "R", isManualSearch = false) => {
         try {
-            const response = await axiosInstance.post('ProdGrp/RetriveProdGrp', {
+            const response = await axiosInstance.post('Unit/RetriveUnit', {
                 "FLAG": flag,
-                "TBLNAME": "ProdGrp",
-                "FLDNAME": "PRODGRP_KEY",
-                "ID": currentPRODGRP_KEY,
+                "TBLNAME": "Unit",
+                "FLDNAME": "Unit_KEY",
+                "ID": currentUNIT_KEY,
                 "ORDERBYFLD": "",
                 "CWHAER": "",
                 "CO_ID": CO_ID
@@ -81,26 +76,28 @@ const ProductGrp = () => {
             if (STATUS === 0 && Array.isArray(DATA) && RESPONSESTATUSCODE == 1) {
                 const categoryData = DATA[0];
                 setForm({
-                    PRODGRP_KEY: categoryData.PRODGRP_KEY,
-                    PRODGRP_NAME: categoryData.PRODGRP_NAME,
-                    PRODGRP_ABRV: categoryData.PRODGRP_ABRV || '',
-                    PRODGRP_CODE: categoryData.PRODGRP_CODE || '',
+                    UNIT_KEY: categoryData.UNIT_KEY,
+                    UNIT_NAME: categoryData.UNIT_NAME,
+                    UNIT_ABRV: categoryData.UNIT_ABRV || '',
+                    UNIT_FOR: categoryData.UNIT_FOR || '',
+                    UNIT_ALT_CODE: categoryData.UNIT_ALT_CODE || '',
                     SERIES: categoryData.SERIES || '',
-                    ProdGrp_LST_CODE: categoryData.ProdGrp_LST_CODE || '',
+                    UNIT_LST_CODE: categoryData.UNIT_LST_CODE || '',
                     Status: categoryData.STATUS,
                 });
                 setStatus(DATA[0].STATUS);
-                setCurrentPRODGRP_KEY(categoryData.PRODGRP_KEY);
+                setCurrentUNIT_KEY(categoryData.UNIT_KEY);
             } else {
                 if (isManualSearch) {
-                    toast.error(`${MESSAGE} FOR ${currentPRODGRP_KEY}`);
+                    toast.error(`${MESSAGE} FOR ${currentUNIT_KEY}`);
                     setForm({
-                        PRODGRP_KEY: '',
-                        PRODGRP_NAME: '',
-                        PRODGRP_ABRV: '',
-                        PRODGRP_CODE: '',
+                        UNIT_KEY: '',
+                        UNIT_NAME: '',
+                        UNIT_ABRV: '',
+                        UNIT_FOR: '',
+                        UNIT_ALT_CODE: '',
                         SERIES: '',
-                        ProdGrp_LST_CODE: '',
+                        UNIT_LST_CODE: '',
                         Status: 0,
                     });
                 }
@@ -110,56 +107,59 @@ const ProductGrp = () => {
         }
     };
     useEffect(() => {
-        if (location.state && location.state.PRODGRP_KEY) {
-            setCurrentPRODGRP_KEY(location.state.PRODGRP_KEY);
-            console.log("Location state:", location.state);
-            console.log("PRODGRPKEY", location.state.PRODGRP_KEY);
-            fetchRetriveData(location.state.PRODGRP_KEY);
+        if (location.state && location.state.UNIT_KEY) {
+            setCurrentUNIT_KEY(location.state.UNIT_KEY);
+            fetchRetriveData(location.state.UNIT_KEY);
             setMode(FORM_MODE.read);
         } else {
             setForm({
-                SearchByCd: '',
-                SERIES: '',
-                PRODGRP_CODE: '',
-                PRODGRP_KEY: '',  //CODE
-                PRODGRP_NAME: '',  //CATEGORY NAME
-                PRODGRP_ABRV: '',
-                ProdGrp_LST_CODE: '',
-                Status: FORM_MODE.add ? "1" : "0",
-            });
+              SearchByCd: '',
+        SERIES: '',
+        UNIT_ALT_CODE: '',
+        UNIT_KEY: '',  //CODE
+        UNIT_NAME: '',  //SHADE NAME
+        UNIT_ABRV: '',
+        UNIT_FOR: '',
+        UNIT_LST_CODE: '',
+        Status: "1",
+            })
             setMode(FORM_MODE.read);
         }
     }, [location]);
-
     const handleSubmit = async () => {
         try {
             const UserName = userRole === 'user' ? username : PARTY_KEY;
-
             let url;
-
-            if (mode === FORM_MODE.edit && currentPRODGRP_KEY) {
-                url = `ProdGrp/UpdateProdGrp?UserName=${(UserName)}&strCobrid=${COBR_ID}`;
+            if (mode === FORM_MODE.edit && currentUNIT_KEY) {
+                url = `Unit/UpdateUnit?UserName=${(UserName)}&strCobrid=${COBR_ID}`;
             } else {
-                url = `ProdGrp/InsertProdGrp?UserName=${(UserName)}&strCobrid=${COBR_ID}`;
+                url = `Unit/InsertUnit?UserName=${(UserName)}&strCobrid=${COBR_ID}`;
             }
             const payload = {
-                PRODGRP_KEY: form.PRODGRP_KEY,  //CODE
-                PRODGRP_CODE: form.PRODGRP_CODE, //ALT CODE
-                PRODGRP_NAME: form.PRODGRP_NAME, //PRODGRP NAME
-                PRODGRP_ABRV: form.PRODGRP_ABRV,
+                UNIT_KEY: form.UNIT_KEY,  //CODE
+                UNIT_ALT_CODE: form.UNIT_ALT_CODE, //ALT CODE
+                UNIT_NAME: form.UNIT_NAME, //UNIT NAME
+                UNIT_ABRV: form.UNIT_ABRV,
+                UNIT_FOR: form.UNIT_FOR,
                 STATUS: form.Status ? "1" : "0",
-            };
 
+
+                "Unit_KEY": "UN061",
+                "UNIT_ALT_CODE": "API",
+                "Unit_NAME": "TESTAPI",
+                "Unit_ABRV": "TESTAPI",
+                "UNIT_FOR": "N",
+            };
             let response;
-            if (mode == FORM_MODE.edit && currentPRODGRP_KEY) {
+            if (mode == FORM_MODE.edit && currentUNIT_KEY) {
                 payload.UPDATED_BY = 1;
                 payload.UPDATED_DT = new Date().toISOString();
                 response = await axiosInstance.post(url, payload);
+
                 const { STATUS, MESSAGE } = response.data;
                 if (STATUS === 0) {
                     setMode(FORM_MODE.read);
                     toast.success(MESSAGE, { autoClose: 1000 });
-
                 } else {
                     toast.error(MESSAGE, { autoClose: 1000 });
                 }
@@ -170,14 +170,12 @@ const ProductGrp = () => {
                 const { STATUS, MESSAGE } = response.data;
                 if (STATUS === 0) {
                     setForm({
-                        PRODGRP_KEY: '',
-                        PRODGRP_NAME: '',
-                        PRODGRP_ABRV: '',
-                        SR_CODE: '',
-                        SEGMENT_KEY: '',
-                        PRODGRP_CODE: '',
+                        UNIT_KEY: '',
+                        UNIT_NAME: '',
+                        UNIT_ABRV: '',
+                        UNIT_ALT_CODE: '',
                         SERIES: '',
-                        ProdGrp_LST_CODE: '',
+                        UNIT_LST_CODE: '',
                         Status: 0,
                     });
                     setMode(FORM_MODE.read);
@@ -194,7 +192,7 @@ const ProductGrp = () => {
         if (mode === FORM_MODE.add) {
             await fetchRetriveData(1, "L");
         } else {
-            await fetchRetriveData(currentPRODGRP_KEY, "R");
+            await fetchRetriveData(currentUNIT_KEY, "R");
         }
         setMode(FORM_MODE.read);
         setForm((prev) => ({
@@ -205,16 +203,16 @@ const ProductGrp = () => {
     const debouncedApiCall = debounce(async (newSeries) => {
         try {
             const response = await axiosInstance.post('GetSeriesSettings/GetSeriesLastNewKey', {
-                "MODULENAME": "ProdGrp",
-                "TBLNAME": "ProdGrp",
-                "FLDNAME": "ProdGrp_KEY",
-                "NCOLLEN": 5,
+                "MODULENAME": "Unit",
+                "TBLNAME": "Unit",
+                "FLDNAME": "Unit_KEY",
+                "NCOLLEN": 0,
                 "CPREFIX": newSeries,
                 "COBR_ID": COBR_ID,
                 "FCYR_KEY": FCYR_KEY,
                 "TRNSTYPE": "M",
-                "SERIESID": 0,
-                "FLAG": ""
+                "SERIESID": 5,
+                "FLAG": "Series"
             });
             const { STATUS, DATA, MESSAGE } = response.data;
             if (STATUS === 0 && DATA.length > 0) {
@@ -222,16 +220,16 @@ const ProductGrp = () => {
                 const lastId = DATA[0].LASTID;
                 setForm((prevForm) => ({
                     ...prevForm,
-                    PRODGRP_KEY: id,
-                    ProdGrp_LST_CODE: lastId
+                    UNIT_KEY: id,
+                    UNIT_LST_CODE: lastId
                 }));
             } else {
                 toast.error(`${MESSAGE} for ${newSeries}`, { autoClose: 1000 });
 
                 setForm((prevForm) => ({
                     ...prevForm,
-                    PRODGRP_KEY: '',
-                    ProdGrp_LST_CODE: ''
+                    UNIT_KEY: '',
+                    UNIT_LST_CODE: ''
                 }));
             }
         } catch (error) {
@@ -246,38 +244,38 @@ const ProductGrp = () => {
         if (newSeries.trim() === '') {
             setForm((prevForm) => ({
                 ...prevForm,
-                PRODGRP_KEY: '',
-                ProdGrp_LST_CODE: ''
+                UNIT_KEY: '',
+                UNIT_LST_CODE: ''
             }));
             return;
         };
         debouncedApiCall(newSeries);
     }
     const handleAdd = async () => {
-        console.log("handleAdd called");
         setMode(FORM_MODE.add);
-        setCurrentPRODGRP_KEY(null);
+        setCurrentUNIT_KEY(null);
         setForm((prevForm) => ({
             ...prevForm,
-            PRODGRP_NAME: '',
-            PRODGRP_ABRV: '',
+            UNIT_NAME: '',
+            UNIT_ABRV: '',
             SearchByCd: '',
-            PRODGRP_CODE: '',
+            UNIT_ALT_CODE: '',
             Status: '1',
         }));
 
+        // Step 1: Fetch CPREFIX value from the first API
         let cprefix = '';
         try {
             const response = await axiosInstance.post('GetSeriesSettings/GetSeriesLastNewKey', {
-                "MODULENAME": "ProdGrp",
-                "TBLNAME": "ProdGrp",
-                "FLDNAME": "PRODGRP_KEY",
+                "MODULENAME": "Unit",
+                "TBLNAME": "Unit",
+                "FLDNAME": "Unit_KEY",
                 "NCOLLEN": 0,
                 "CPREFIX": "",
                 "COBR_ID": COBR_ID,
                 "FCYR_KEY": FCYR_KEY,
                 "TRNSTYPE": "M",
-                "SERIESID": 162,
+                "SERIESID": 5,
                 "FLAG": "Series"
             });
 
@@ -295,9 +293,9 @@ const ProductGrp = () => {
         }
         try {
             const response = await axiosInstance.post('GetSeriesSettings/GetSeriesLastNewKey', {
-                "MODULENAME": "ProdGrp",
-                "TBLNAME": "ProdGrp",
-                "FLDNAME": "PRODGRP_KEY",
+                "MODULENAME": "Unit",
+                "TBLNAME": "Unit",
+                "FLDNAME": "Unit_KEY",
                 "NCOLLEN": 5,
                 "CPREFIX": cprefix,
                 "COBR_ID": COBR_ID,
@@ -305,7 +303,6 @@ const ProductGrp = () => {
                 "TRNSTYPE": "M",
                 "SERIESID": 0,
                 "FLAG": ""
-
             });
             const { STATUS, DATA } = response.data;
             if (STATUS === 0 && DATA.length > 0) {
@@ -313,8 +310,8 @@ const ProductGrp = () => {
                 const lastId = DATA[0].LASTID;
                 setForm((prevForm) => ({
                     ...prevForm,
-                    PRODGRP_KEY: id,
-                    ProdGrp_LST_CODE: lastId
+                    UNIT_KEY: id,
+                    UNIT_LST_CODE: lastId
                 }));
             }
         } catch (error) {
@@ -322,15 +319,15 @@ const ProductGrp = () => {
         }
     };
     const handlePrevious = async () => {
-        await fetchRetriveData(currentPRODGRP_KEY, "P");
+        await fetchRetriveData(currentUNIT_KEY, "P");
         setForm((prev) => ({
             ...prev,
             SearchByCd: ''
         }));
     };
     const handleNext = async () => {
-        if (currentPRODGRP_KEY) {
-            await fetchRetriveData(currentPRODGRP_KEY, "N");
+        if (currentUNIT_KEY) {
+            await fetchRetriveData(currentUNIT_KEY, "N");
         }
         setForm((prev) => ({
             ...prev,
@@ -347,13 +344,13 @@ const ProductGrp = () => {
         setOpenConfirmDialog(false);
         try {
             const UserName = userRole === 'user' ? username : PARTY_KEY;
-            const response = await axiosInstance.post(`ProdGrp/DeleteProdGrp?UserName=${(UserName)}&strCobrid=${COBR_ID}`, {
-                PRODGRP_KEY: form.PRODGRP_KEY
+            const response = await axiosInstance.post(`Unit/DeleteUnit?UserName=${(UserName)}&strCobrid=${COBR_ID}`, {
+                UNIT_KEY: form.UNIT_KEY
             });
             const { data: { STATUS, MESSAGE } } = response;
             if (STATUS === 0) {
                 toast.success(MESSAGE, { autoClose: 500 });
-                await fetchRetriveData(currentPRODGRP_KEY, 'P');
+                await fetchRetriveData(currentUNIT_KEY, 'P');
             } else {
                 toast.error(MESSAGE);
             }
@@ -363,72 +360,56 @@ const ProductGrp = () => {
     };
     const handleEdit = () => {
         setMode(FORM_MODE.edit);
-
     };
-
-        const handlePrint = async () => {
-      try {
-          const response = await axiosInstance.post(`/ProdGrp/GetProdGrpDashBoard?currentPage=1&limit=5000`, {
-              "SearchText": ""
-          });
-          const { data: { STATUS, DATA } } = response; // Extract DATA
-          if (STATUS === 0 && Array.isArray(DATA)) {
-              const formattedData = DATA.map(row => ({
-                  ...row,
-                  STATUS: row.STATUS === "1" ? "Active" : "Inactive"
-              }));
-  
-              // Generate the PDF blob
-              const asPdf = pdf(<PrintPrdGrpData rows={formattedData} />);
-              const blob = await asPdf.toBlob();
-              const url = URL.createObjectURL(blob);
-  
-              // Open the PDF in a new tab
-              const newTab = window.open(url, '_blank');
-              if (newTab) {
-                  newTab.focus();
-              } 
-              setTimeout(() => {
-                  URL.revokeObjectURL(url);
-              }, 100);
-          }
-      } catch (error) {
-          console.error("Print Error:", error);
-      }
-  };
-
-    const handleExit = () => {
-        // router.push('/masters/products/product-grp-table');
-         };
+       const handlePrint = async () => {
+        try {
+            const response = await axiosInstance.post(`Unit/GetUnitDashBoard?currentPage=1&limit=5000`, {
+                "SearchText": ""
+            });
+            const { data: { STATUS, DATA } } = response; // Extract DATA
+            if (STATUS === 0 && Array.isArray(DATA)) {
+                const formattedData = DATA.map(row => ({
+                    ...row,
+                    STATUS: row.STATUS === "1" ? "Active" : "Inactive"
+                }));
+    
+                // Generate the PDF blob
+                const asPdf = pdf(<PrintUnitData rows={formattedData} />);
+                const blob = await asPdf.toBlob();
+                const url = URL.createObjectURL(blob);
+    
+                // Open the PDF in a new tab
+                const newTab = window.open(url, '_blank');
+                if (newTab) {
+                    newTab.focus();
+                } 
+                setTimeout(() => {
+                    URL.revokeObjectURL(url);
+                }, 100);
+            }
+        } catch (error) {
+            console.error("Print Error:", error);
+        }
+    };
+    const handleExit = () => { 
+         // router.push('/masters/products');
+     };
 
     return (
         <>
-            <Box
-                sx={{
-                    width: '100%',
-                    justifyContent: 'center',
-                    alignItems: 'flex-start',
-                    padding: '24px',
-                    boxSizing: 'border-box',
-                    marginTop: { xs: "30px", sm: "0px" } 
-                }}
-                className="form-container"
-            >
+            <Box sx={{ width: '100%', justifyContent: 'center', alignItems: 'flex-start', padding: '24px', boxSizing: 'border-box', marginTop: { xs: "30px", sm: "0px" } }}
+                className="form-container">
                 <ToastContainer />
-                <Box
-                    sx={{
-                        maxWidth: '1000px',
-                        boxShadow: '0px 2px 6px rgba(0, 0, 0, 0.1)',
-                    }}
-                    className="form_grid"
-                >
+                <Box sx={{ maxWidth: '1000px', boxShadow: '0px 2px 6px rgba(0, 0, 0, 0.1)' }} className="form_grid" >
                     <Grid container alignItems="center"
                         justifyContent="space-between" spacing={2} sx={{ marginTop: "30px", marginInline: '20px' }}>
-                        <Grid sx={{ display: 'flex', justifyContent: {
+                        <Grid sx={{
+                            display: 'flex', justifyContent: {
                                 xs: 'center',
                                 sm: 'flex-start'
                             },
-                            width: { xs: '100%', sm: 'auto' }, }}>
+                            width: { xs: '100%', sm: 'auto' },
+                        }}>
                             <Stack direction="row" spacing={1}>
                                 <Button variant="contained" size="small" className="three-d-button-previous"
                                     sx={{
@@ -436,7 +417,7 @@ const ProductGrp = () => {
                                     }}
                                     onClick={handlePrevious}
                                     disabled={
-                                        mode !== FORM_MODE.read || !currentPRODGRP_KEY || currentPRODGRP_KEY === 1
+                                        mode !== FORM_MODE.read || !currentUNIT_KEY || currentUNIT_KEY === 1
                                     }
                                 >
                                     <KeyboardArrowLeftIcon />
@@ -446,7 +427,7 @@ const ProductGrp = () => {
                                         backgroundColor: "#635BFF"
                                     }}
                                     onClick={handleNext}
-                                    disabled={mode !== FORM_MODE.read || !currentPRODGRP_KEY}
+                                    disabled={mode !== FORM_MODE.read || !currentUNIT_KEY}
                                 >
                                     <NavigateNextIcon />
                                 </Button>
@@ -454,11 +435,11 @@ const ProductGrp = () => {
                         </Grid>
                         <Grid sx={{ flexGrow: 1 }}>
                             <Typography align="center" variant="h5">
-                                Product Group Master
+                                Unit Master
                             </Typography>
                         </Grid>
                         <Grid>
-                            <Stack direction="row" spacing={{ xs: 0.5, sm: 1 }} >
+                            <Stack direction="row" spacing={{ xs: 0.5, sm: 1 }}  >
                                 <CrudButton
                                     mode={mode}
                                     onAdd={handleAdd}
@@ -471,9 +452,16 @@ const ProductGrp = () => {
                             </Stack>
                         </Grid>
                     </Grid>
-                    <Box sx={{ display: 'flex', flexDirection: 'column',    gap: { xs: 1.5, sm: 1.5, md: 2 },
+                    {/* Form Fields */}
+                    <Box
+                        sx={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: { xs: 1.5, sm: 1.5, md: 2 },
                             marginInline: { xs: '5%', sm: '10%', md: '25%' },
-                            marginBlock: { xs: '15px', sm: '20px', md: '30px' }, }}>
+                            marginBlock: { xs: '15px', sm: '20px', md: '30px' },
+                        }}
+                    >
                         <Box sx={{ display: 'flex', justifyContent: 'end' }}>
                             <TextField
                                 placeholder="Search By Code"
@@ -481,27 +469,33 @@ const ProductGrp = () => {
                                 sx={{
                                     width: { xs: '100%', sm: '50%', md: '30%' },
                                     backgroundColor: '#e0f7fa',
-                                    '& .MuiInputBase-input': {
-                                        paddingBlock: { xs: '8px', md: '4px' },
+                                    '& .MuiInputBase-input': {                                  
+                                         paddingBlock: { xs: '8px', md: '4px' },
                                         paddingLeft: { xs: '10px', md: '8px' },
                                     },
-                                     
                                 }}
                                 value={form.SearchByCd}
                                 onChange={(e) => setForm({ ...form, SearchByCd: e.target.value })}
                                 onKeyPress={(e) => {
                                     if (e.key === 'Enter') {
-                                        fetchRetriveData(e.target.value, "R", true);
+                                        fetchRetriveData(e.target.value, 'R', true);
                                     }
                                 }}
                             />
                         </Box>
 
-                        <Box sx={{ display: 'flex',   flexDirection: { xs: 'column', sm: 'row', md: 'row' }, justifyContent: 'space-between',  gap: { xs: 1, sm: 1, md: 1 }}}>
+                        <Box
+                            sx={{
+                                display: 'flex',
+                                flexDirection: { xs: 'column', sm: 'row', md: 'row' },
+                                justifyContent: 'space-between',
+                                gap: { xs: 1, sm: 1, md: 1 },
+                            }}
+                        >
                             <TextField
                                 label="Series"
                                 inputRef={SERIESRef}
-                                sx={{ width: { xs: '100%', sm: '50%', md: '32%' }}}
+                                sx={{ width: { xs: '100%', sm: '48%', md: '25%' } }}
                                 disabled={mode === FORM_MODE.read}
                                 fullWidth
                                 className="custom-textfield"
@@ -510,95 +504,125 @@ const ProductGrp = () => {
                             />
                             <TextField
                                 label="Last Cd"
-                               sx={{ width: { xs: '100%', sm: '50%', md: '32%' }}}
+                                sx={{ width: { xs: '100%', sm: '48%', md: '25%' }}}
                                 disabled={true}
                                 fullWidth
                                 className="custom-textfield"
-                                value={form.ProdGrp_LST_CODE}
-                                onChange={(e) => setForm({ ...form, ProdGrp_LST_CODE: e.target.value })}
+                                value={form.UNIT_LST_CODE}
+                                onChange={(e) => setForm({ ...form, UNIT_LST_CODE: e.target.value })}
                             />
                             <TextField
                                 label="Code"
-                                inputRef={PRODGRP_KEYRef}
-                                sx={{ width: { xs: '100%', sm: '50%', md: '32%' }}}
+                                inputRef={UNIT_KEYRef}
+                                sx={{ width: { xs: '100%', sm: '48%', md: '25%' }}}
                                 disabled={mode === FORM_MODE.read}
                                 className="custom-textfield"
-                                value={form.PRODGRP_KEY}
-                                onChange={(e) => setForm({ ...form, PRODGRP_KEY: e.target.value })}
+                                value={form.UNIT_KEY}
+                                onChange={(e) => setForm({ ...form, UNIT_KEY: e.target.value })}
                             />
-
+                            <TextField
+                                label="Alt Code"
+                                inputRef={UNIT_ALT_CODERef}
+                                sx={{ width: { xs: '100%', sm: '48%', md: '25%' } }}
+                                disabled={mode === FORM_MODE.read}
+                                fullWidth
+                                className="custom-textfield"
+                                value={form.UNIT_ALT_CODE}
+                                onChange={(e) => setForm({ ...form, UNIT_ALT_CODE: e.target.value })}
+                            />
                         </Box>
 
-                        <Box  sx={{
+                        <Box
+                            sx={{
                                 display: 'flex',
                                 flexDirection: { xs: 'column', sm: 'row', md: 'row' },
                                 justifyContent: 'space-between',
                                 gap: { xs: 1, sm: 1, md: 1 },
-                            }}>
-
+                            }}
+                        >
                             <TextField
-                                inputRef={ProdGrp_NAMERef}
-                                label=" Name"
-                                // label={
-                                //     <span>
-                                //         Name<span style={{ color: "red" }}>*</span>
-                                //     </span>
-                                // }
+                                inputRef={UNIT_NAMERef}
+                                label="Shade"
                                 sx={{ width: '100%' }}
                                 disabled={mode === FORM_MODE.read}
                                 className="custom-textfield"
-                                value={form.PRODGRP_NAME}
-                                onChange={(e) => setForm({ ...form, PRODGRP_NAME: e.target.value })}
+                                value={form.UNIT_NAME}
+                                onChange={(e) => setForm({ ...form, UNIT_NAME: e.target.value })}
                             />
                         </Box>
-                        <Box  sx={{
+
+                        <Box
+                            sx={{
                                 display: 'flex',
                                 flexDirection: { xs: 'column', sm: 'row', md: 'row' },
-                                justifyContent: 'space-between',
-                                gap: { xs: 1, sm: 1, md: 1 },
-                            }}>
+                                gap: { xs: 1, sm: 1.5, md: 2 },
+                                alignItems: {
+                                    xs: 'stretch', sm:
 
+                                        'center', md: 'center'
+                                },
+                            }}
+                        >
+                            <CustomAutocomplete
+                                id="unit-key-autocomplete"
+                                   sx={{ width: { xs: '100%', sm: '40%', md: '90%' } }}
+                                inputRef={UNIT_FORRef}
+                                disabled={true}
+                                label="Unit For"
+                                name="UNIT_FOR"
+                                options={unitOptions}
+                                value={unitOptions.find(opt => opt.Id === form.UNIT_FOR) || null}
+                                onChange={(e) => setForm({ ...form, [e.target.name]: e.target.value })}
+                                className="custom-textfield"
+                            />
                             <TextField
                                 label="Abbreviation"
-                                inputRef={PRODGRP_ABRVRef}
-                                 sx={{ width: { xs: '100%', sm: '40%', md: '30%' }}}
+                                inputRef={UNIT_ABRVRef}
+                                sx={{ width: { xs: '100%', sm: '40%', md: '30%' } }}
                                 disabled={mode === FORM_MODE.read}
                                 className="custom-textfield"
-                                value={form.PRODGRP_ABRV}
-                                onChange={(e) => setForm({ ...form, PRODGRP_ABRV: e.target.value })}
+                                value={form.UNIT_ABRV}
+                                onChange={(e) => setForm({ ...form, UNIT_ABRV: e.target.value })}
                             />
-
                             <FormControlLabel
                                 control={
                                     <Checkbox
                                         disabled={mode === FORM_MODE.read}
-                                        checked={Status == "1"}
+                                        checked={Status == '1'}
                                         onChange={handleChangeStatus}
                                         sx={{
                                             '&.Mui-checked': {
                                                 color: '#39ace2',
-                                            }
+                                            },
                                         }}
                                     />
                                 }
-                                label="Active "
+                                label="Active"
                             />
                         </Box>
                     </Box>
-                    {/* Submit / Cancel Buttons */}
-                    <Grid item xs={12} className="form_button"   sx={{
+
+                    <Grid
+                        item
+                        xs={12}
+                        className="form_button"
+                        sx={{
                             display: 'flex',
                             justifyContent: { xs: 'center', sm: 'flex-end' },
                             gap: { xs: 1, sm: 1.5 },
                             padding: { xs: 1, sm: 2, md: 3 },
-                        }}>
+                        }}
+                    >
                         {mode === FORM_MODE.read && (
                             <>
                                 <Button
                                     variant="contained"
                                     sx={{
-                                        mr: 1,
+                                        mr: { xs: 0, sm: 1 },
+                                        mb: { xs: 1, sm: 0 },
                                         background: "linear-gradient(290deg, #d4d4d4, #ffffff)",
+                                        minWidth: { xs: 100, sm: 100 },
+                                        fontSize: { xs: '0.75rem', sm: '0.875rem' },
                                     }}
                                     onClick={handleAdd}
                                     disabled
@@ -608,8 +632,11 @@ const ProductGrp = () => {
                                 <Button
                                     variant="contained"
                                     sx={{
-                                        mr: 1,
+                                        mr: { xs: 0, sm: 1 },
+                                        mb: { xs: 1, sm: 0 },
                                         background: "linear-gradient(290deg, #a7c5e9, #ffffff)",
+                                        minWidth: { xs: 100, sm: 100 },
+                                        fontSize: { xs: '0.75rem', sm: '0.875rem' },
                                     }}
                                     onClick={handleEdit}
                                     disabled
@@ -623,8 +650,11 @@ const ProductGrp = () => {
                                 <Button
                                     variant="contained"
                                     sx={{
-                                        mr: 1,
-                                        background: "linear-gradient(290deg,   #b9d0e9, #e9f2fa)",
+                                        mr: { xs: 0, sm: 1 },
+                                        mb: { xs: 1, sm: 0 },
+                                        background: "linear-gradient(290deg, #b9d0e9, #e9f2fa)",
+                                        minWidth: { xs: 100, sm: 100 },
+                                        fontSize: { xs: '0.75rem', sm: '0.875rem' },
                                     }}
                                     onClick={handleSubmit}
                                 >
@@ -633,8 +663,11 @@ const ProductGrp = () => {
                                 <Button
                                     variant="contained"
                                     sx={{
-                                        mr: 1,
-                                        background: "linear-gradient(290deg,   #b9d0e9, #e9f2fa)",
+                                        mr: { xs: 0, sm: 1 },
+                                        mb: { xs: 1, sm: 0 },
+                                        background: "linear-gradient(290deg, #b9d0e9, #e9f2fa)",
+                                        minWidth: { xs: 100, sm: 100 },
+                                        fontSize: { xs: '0.75rem', sm: '0.875rem' },
                                     }}
                                     onClick={handleCancel}
                                 >
@@ -645,27 +678,36 @@ const ProductGrp = () => {
                     </Grid>
                 </Box>
             </Box>
+
             <Dialog
                 open={openConfirmDialog}
                 onClose={handleCloseConfirmDialog}
+                maxWidth="xs"
                 aria-labelledby="alert-dialog-title"
                 aria-describedby="alert-dialog-description"
             >
-                <DialogTitle id="alert-dialog-title">{"Confirm Deletion"}</DialogTitle>
+                <DialogTitle
+                    id="alert-dialog-title"
+                    sx={{ fontSize: { xs: '1rem', sm: '1.25rem' } }}
+                >
+                    Confirm Deletion
+                </DialogTitle>
                 <DialogContent>
-                    <DialogContentText id="alert-dialog-description">
+                    <DialogContentText
+                        id="alert-dialog-description"
+                        sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}
+                    >
                         Are you sure you want to delete this record?
                     </DialogContentText>
                 </DialogContent>
-                <DialogActions>
+                <DialogActions sx={{ justifyContent: 'center', gap: { xs: 0.5, sm: 1 } }}> 
                     <Button
                         sx={{
                             backgroundColor: "#39ace2",
                             color: "white",
-                            "&:hover": {
-                                backgroundColor: "#2199d6",
-                                color: "white",
-                            },
+                            "&:hover": { backgroundColor: "#2199d6", color: "white" },
+                            minWidth: { xs: 80, sm: 100 },
+                            fontSize: { xs: '0.75rem', sm: '0.875rem' },
                         }}
                         onClick={handleConfirmDelete}
                     >
@@ -675,10 +717,9 @@ const ProductGrp = () => {
                         sx={{
                             backgroundColor: "#39ace2",
                             color: "white",
-                            "&:hover": {
-                                backgroundColor: "#2199d6",
-                                color: "white",
-                            },
+                            "&:hover": { backgroundColor: "#2199d6", color: "white" },
+                            minWidth: { xs: 80, sm: 100 },
+                            fontSize: { xs: '0.75rem', sm: '0.875rem' },
                         }}
                         onClick={handleCloseConfirmDialog}
                     >
@@ -689,4 +730,4 @@ const ProductGrp = () => {
         </>
     );
 };
-export default ProductGrp;
+export default UnitMst;

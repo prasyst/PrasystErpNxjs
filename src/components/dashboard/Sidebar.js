@@ -107,7 +107,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
             { name: 'Pattern Master', icon: MdLibraryBooks, path: '/masters/products/pattern' },
             { name: 'Brand Master', icon: MdBrandingWatermark, path: '/masters/products/brand' },
             { name: 'Unit Master', icon: MdStraighten, path: '/masters/products/unit' },
-            { name: 'Web Collection', icon: MdCollectionsBookmark, path: '/masters/products/web-collection' },
+            { name: 'Web Collection', icon: MdCollectionsBookmark, path: '/masters/products/webcollection' },
             { name: 'Quality', icon: MdLibraryBooks, path: '/masters/products/quality' },
           ],
         },
