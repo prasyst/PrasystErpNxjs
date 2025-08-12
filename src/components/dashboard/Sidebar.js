@@ -100,7 +100,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
           children: [
             { name: 'Category Master', icon: MdCategory, path: '/masters/products/category' },
             { name: 'Product Group', icon: AiOutlineNodeIndex, path: '/masters/products/productgrp' },
-            { name: 'Product Master', icon: MdLocalMall, path: '/masters/products/master' },
+            { name: 'Product Master', icon: MdLocalMall, path: '/masters/products/product' },
             { name: 'Style Master', icon: MdCollectionsBookmark, path: '/masters/products/style' },
             { name: 'Type Master', icon: MdCategory, path: '/masters/products/type' },
             { name: 'Shade Master', icon: MdLibraryBooks, path: '/masters/products/shade' },
