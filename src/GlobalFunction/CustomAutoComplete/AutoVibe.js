@@ -2,7 +2,7 @@
 import React from 'react';
 import { Autocomplete, TextField, FormControl, InputAdornment } from '@mui/material';
 
-const CustomAutocomplete = React.forwardRef(
+const AutoVibe = React.forwardRef(
   ({
     options,
     value,
@@ -21,7 +21,7 @@ const CustomAutocomplete = React.forwardRef(
     variant = "filled",
     className = ""
   }, ref) => {
-
+    
     const [focused, setFocused] = React.useState(false);
     const shouldShrink = !!value || focused;
 
@@ -48,15 +48,20 @@ const CustomAutocomplete = React.forwardRef(
               helperText={helperText}
               inputRef={ref}
               onKeyDown={onKeyDown}
-              sx={{
-                '& .MuiInputBase-root': {
-                  height: '36px', // ↓ reduces overall height
-                  fontSize: '0.875rem',
-                },
-                '& input': {
-                  padding: '8px',
-                },
-              }}
+            //   InputProps={{
+            //     ...params.InputProps,
+            //     startAdornment: (
+            //       <>
+            //         {params.InputProps.startAdornment}
+            //       </>
+            //     ),
+            //     endAdornment: (
+            //       <InputAdornment position="end">
+            //         {endAdornment}
+            //         {params.InputProps.endAdornment}
+            //       </InputAdornment>
+            //     ),
+            //   }}
               fullWidth
             />
           )}
@@ -66,6 +71,5 @@ const CustomAutocomplete = React.forwardRef(
     );
   }
 );
-// ✅ Add display name to fix ESLint warning
-CustomAutocomplete.displayName = 'CustomAutocomplete';
-export default CustomAutocomplete;
+
+export default AutoVibe;

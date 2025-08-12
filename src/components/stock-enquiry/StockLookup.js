@@ -418,7 +418,7 @@ const handsontableColumns = [
   { field: "DLV_DT", headerName: "DELIVERY DT", width: 130, type: "text" },
   { field: "PARTY_NAME", headerName: "PARTY NAME", width: 200, type: "text" },
   { field: "BROKER_NAME", headerName: "BROKER NAME", width: 160, type: "text" },
-  { field: "SALEPERSON_NAME", headerName: "SALES PERSON", width: 160, type: "text" },
+  // { field: "SALEPERSON_NAME", headerName: "SALES PERSON", width: 160, type: "text" },
   { field: "QTY", headerName: "QUANTITY", width: 120, type: "numeric" },
   { field: "BAL_QTY", headerName: "BALANCE QTY", width: 130, type: "numeric" },
   { field: "AMT", headerName: "AMOUNT", width: 120, type: "numeric" },
@@ -488,7 +488,7 @@ export default function StockLookup() {
     }
   };
 
-  const debouncedFetch = useCallback(debounce(fetchPartiesByName, 300), []);
+  // const debouncedFetch = useCallback(debounce(fetchPartiesByName, 300), []);
 
   const handleClickAway = () => {
     setShowSuggestions(false);
@@ -542,36 +542,42 @@ export default function StockLookup() {
     fetchPartyDetails();
   }, [form.PARTY_KEY]);
 
+const fetchTableData = useCallback(async () => {
+  setIsLoading(true);
+  try {
+    const response = await axiosInstance.post(`StockEnqiry/GetOrderDashBoard`, {
+      pageNumber: "1",
+      PageSize: "1000",
+      SearchText: form.PARTY_KEY,
+      Flag: "",
+      PARTY_KEY: ""
+    });
+
+    const { data: { STATUS, DATA } } = response;
+    if (STATUS === 0 && Array.isArray(DATA)) {
+      const formattedData = DATA.map((row, index) => ({
+        id: index,
+        ...row,
+        ORDER_Date: row.ORDBK_DT ? new Date(row.ORDBK_DT).toLocaleDateString() : "-",
+        DLV_DT: row.DLV_DT ? new Date(row.DLV_DT).toLocaleDateString() : "-"
+      }));
+      setRows(formattedData);
+    }
+  } catch (error) {
+    console.error("Error fetching productgrp data:", error);
+  } finally {
+    setIsLoading(false);
+  }
+}, [form.PARTY_KEY]); // dependencies
+
+useEffect(() => {
+  fetchTableData();
+}, [fetchTableData]);
+
   useEffect(() => {
     fetchTableData();
-  }, [form.PARTY_KEY]);
+  }, [fetchTableData]);
 
-  const fetchTableData = async () => {
-    setIsLoading(true);
-    try {
-      const response = await axiosInstance.post(`StockEnqiry/GetOrderDashBoard`, {
-        "pageNumber": "1",
-        "PageSize": "1000",
-        "SearchText": form.PARTY_KEY,
-        "Flag": "",
-        "PARTY_KEY": ""
-      });
-      const { data: { STATUS, DATA } } = response;
-      if (STATUS === 0 && Array.isArray(DATA)) {
-        const formattedData = DATA.map((row, index) => ({
-          id: index,
-          ...row,
-          ORDER_Date: row.ORDBK_DT ? new Date(row.ORDBK_DT).toLocaleDateString() : "-",
-          DLV_DT: row.DLV_DT ? new Date(row.DLV_DT).toLocaleDateString() : "-",
-        }));
-        setRows(formattedData);
-      }
-    } catch (error) {
-      console.error("Error fetching productgrp data:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const handleSearchInputChange = (e) => {
     const val = e.target.value;
