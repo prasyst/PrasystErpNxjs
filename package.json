@@ -2,12 +2,13 @@
   "name": "orderplusnxt",
   "version": "0.1.0",
   "private": true,
+  "type": "module", 
   "scripts": {
-    "dev": "next dev --turbopack -p 4000",
-    "build": "next build",
-    "start": "next start -p 4000",
-    "lint": "next lint"
-  },
+  "dev": "node server.js",
+  "build": "next build",
+  "start": "next start -p 4000",
+  "lint": "next lint"
+},
   "dependencies": {
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
@@ -30,6 +31,7 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
+    "detect-port": "^2.1.0",
     "eslint": "^9",
     "eslint-config-next": "15.4.5"
   }
