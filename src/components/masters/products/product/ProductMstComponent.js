@@ -1,4 +1,4 @@
-'use client'
+'use client';
 import React, { useEffect, useState } from 'react';
 import {
   Box,
@@ -13,11 +13,12 @@ import {
   RadioGroup,
   Checkbox,
 } from '@mui/material';
+import { useRouter } from 'next/navigation';
 import { toast, ToastContainer } from 'react-toastify';
 import KeyboardArrowLeftIcon from "@mui/icons-material/KeyboardArrowLeft";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import CrudButton from '../../../../GlobalFunction/CrudButton';
-import CustomAutocomplete from '../../../../GlobalFunction/CustomAutoComplete/CustomAutoComplete';
+import AutoVibe from '../../../../GlobalFunction/CustomAutoComplete/AutoVibe';
 import EditableTable from '@/atoms/EditTable';
 
 const columns = [
@@ -29,11 +30,11 @@ const columns = [
   { label: 'Status', field: 'STATUS', type: 'checkbox' }
 ];
 
-// Changes
-
 const ProductMst = () => {
 
   const [options, setOptions] = useState([]);
+  const [isFormDisabled, setIsFormDisabled] = useState(true);
+  const router = useRouter();
 
   useEffect(() => {
     setOptions(['Apple', 'Banana', 'Orange']);
@@ -66,34 +67,6 @@ const ProductMst = () => {
       padding: '15px 12px 1px!important'
     }
   };
-
-  // const DropInputSx = {
-  //   '& .MuiInputBase-root': {
-  //     height: 30,
-  //     fontSize: '12px',
-  //   },
-  //   '& .MuiInputLabel-root': {
-  //     fontSize: '12px',
-  //     top: '-6px',
-  //   },
-  //   '& .MuiFilledInput-root': {
-  //     backgroundColor: 'transparent',
-  //     border: '1px solid #e0e0e0',
-  //     borderRadius: '5px',
-  //     overflow: 'hidden',
-  //     height: 30,
-  //     fontSize: '12px',
-  //   },
-  //   '& .MuiFilledInput-root:before': {
-  //     display: 'none',
-  //   },
-  //   '& .MuiFilledInput-root:after': {
-  //     display: 'none',
-  //   },
-  //   '& .MuiInputBase-input': {
-  //     padding: '0px 12px 1px!important'
-  //   }
-  // };
 
   const DropInputSx = {
     '& .MuiInputBase-root': {
@@ -156,6 +129,10 @@ const ProductMst = () => {
     });
   };
 
+  const handleExit = () => {
+    router.push('/masters/products/productTable');
+  };
+
   return (
     <Box
       sx={{
@@ -178,7 +155,7 @@ const ProductMst = () => {
         sx={{
           width: { xs: '100%', sm: '100%', md: '100%', lg: '90%', xl: '90%' },
           maxWidth: { xs: '100%', sm: '90%', md: '1000px', lg: '1400px', xl: '1800px' },
-          height: { xs: 'auto', sm: 'auto', md: '570px', lg: '580px', xl: '570px' },
+          height: { xs: 'auto', sm: 'auto', md: '570px', lg: '570px', xl: '570px' },
           boxShadow: '0px 2px 6px rgba(0, 0, 0, 0.1)',
           paddingBottom: '140px',
           // margin: 'auto !important',
@@ -225,8 +202,8 @@ const ProductMst = () => {
                 onEdit={''}
                 onView={''}
                 onDelete={''}
-                onExit={''}
-                readOnlyMode={''}
+                onExit={handleExit}
+                readOnlyMode={isFormDisabled}
               />
             </Stack>
           </Grid>
@@ -325,7 +302,7 @@ const ProductMst = () => {
             justifyContent: 'space-between',
             gap: { xs: 1, sm: 1, md: 2 },
           }}>
-            <CustomAutocomplete
+            <AutoVibe
               id=""
               // disabled={''}
               options={options || []}
@@ -342,7 +319,7 @@ const ProductMst = () => {
                 },
               }}
             />
-            <CustomAutocomplete
+            <AutoVibe
               id=""
               // disabled={''}
               options={options || []}
@@ -412,7 +389,7 @@ const ProductMst = () => {
                   },
                 }}
               />
-              <CustomAutocomplete
+              <AutoVibe
                 id=""
                 // disabled={''}
                 options={options || []}
@@ -559,7 +536,7 @@ const ProductMst = () => {
             justifyContent: 'space-between',
             gap: { xs: 1, sm: 1, md: 2 },
           }}>
-            <CustomAutocomplete
+            <AutoVibe
               id=""
               // disabled={''}
               options={options || []}
@@ -576,7 +553,7 @@ const ProductMst = () => {
                 },
               }}
             />
-            <CustomAutocomplete
+            <AutoVibe
               id=""
               // disabled={''}
               options={options || []}
@@ -602,7 +579,7 @@ const ProductMst = () => {
             gap: { xs: 1, sm: 1, md: 2 },
             width: { xs: '100%', sm: '48%', md: '100%' },
           }}>
-            <CustomAutocomplete
+            <AutoVibe
               id=""
               // disabled={''}
               options={options || []}
@@ -619,7 +596,7 @@ const ProductMst = () => {
                 },
               }}
             />
-            <CustomAutocomplete
+            <AutoVibe
               id=""
               // disabled={''}
               options={options || []}
@@ -644,7 +621,7 @@ const ProductMst = () => {
                 width: { xs: '100%', sm: '48%', md: '209%' },
               }}
             >
-              <CustomAutocomplete
+              <AutoVibe
                 id=""
                 // disabled={''}
                 options={options || []}
@@ -695,7 +672,7 @@ const ProductMst = () => {
                 width: { xs: '100%', sm: '48%', md: '49%' },
               }}
             >
-              <CustomAutocomplete
+              <AutoVibe
                 id=""
                 // disabled={''}
                 options={options || []}
@@ -829,7 +806,7 @@ const ProductMst = () => {
                 display: 'flex',
                 justifyContent: '',
                 gap: 1,
-                marginTop: '16px',
+                marginTop: '10px',
                 position: 'relative',
                 left: 140
               }}>
