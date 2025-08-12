@@ -2,12 +2,13 @@
   "name": "orderplusnxt",
   "version": "0.1.0",
   "private": true,
+  "type": "module", 
   "scripts": {
-    "dev": "next dev --turbopack",
-    "build": "next build",
-    "start": "next start",
-    "lint": "next lint"
-  },
+  "dev": "node server.js",
+  "build": "next build",
+  "start": "next start -p 4000",
+  "lint": "next lint"
+},
   "dependencies": {
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
@@ -27,10 +28,11 @@
     "react-dom": "19.1.0",
     "react-icons": "^5.5.0",
     "react-toastify": "^11.0.5",
-    "zod": "^4.0.15"
+    "zod": "^4.0.17"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
+    "detect-port": "^2.1.0",
     "eslint": "^9",
     "eslint-config-next": "15.4.5"
   }
