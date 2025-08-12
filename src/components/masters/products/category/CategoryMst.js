@@ -17,20 +17,16 @@ import {
 } from '@mui/material';
 import KeyboardArrowLeftIcon from "@mui/icons-material/KeyboardArrowLeft";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
-// import { useLocation, useNavigate } from 'react-router-dom';
-// ✅ Correct for Next.js
 import { useRouter } from 'next/navigation';
-
 import { toast, ToastContainer } from 'react-toastify';
-// import { debounce } from 'lodash';
 import z from 'zod';
 import axiosInstance from '@/lib/axios';
 import CrudButton from '@/GlobalFunction/CrudButton';
 import CustomAutocomplete from '@/GlobalFunction/CustomAutoComplete/CustomAutoComplete';
 import debounce from 'lodash.debounce';
 import { getFormMode } from '@/lib/helpers';
-
-// import { PrintCatData } from './PrintCatData';
+import { pdf } from '@react-pdf/renderer';
+ import { PrintCatData } from './PrintCatData';
 
 const FORM_MODE = getFormMode();
 const categoryFormSchema = z.object({

@@ -66,5 +66,6 @@ const CustomAutocomplete = React.forwardRef(
     );
   }
 );
-
+// ✅ Add display name to fix ESLint warning
+CustomAutocomplete.displayName = 'CustomAutocomplete';
 export default CustomAutocomplete;
