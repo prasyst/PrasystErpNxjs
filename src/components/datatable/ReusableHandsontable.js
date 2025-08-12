@@ -305,7 +305,7 @@ const ReusableHandsontable = ({
     }, 100);
 
     return () => clearTimeout(timer);
-  }, [filteredData, searchValues]);
+  }, );
 
   // Update table when filtered data changes
   useEffect(() => {

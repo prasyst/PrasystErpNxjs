@@ -181,16 +181,17 @@ const Charts = () => {
   const chartInstances = useRef({ revenue: null, orders: null });
   
   useEffect(() => {
-    // Cleanup previous charts
-    return () => {
-      if (chartInstances.current.revenue) {
-        chartInstances.current.revenue.destroy();
-      }
-      if (chartInstances.current.orders) {
-        chartInstances.current.orders.destroy();
-      }
-    };
-  }, []);
+  // Cleanup previous charts
+  const currentChartInstances = chartInstances.current;
+  return () => {
+    if (currentChartInstances.revenue) {
+      currentChartInstances.revenue.destroy();
+    }
+    if (currentChartInstances.orders) {
+      currentChartInstances.orders.destroy();
+    }
+  };
+}, []);
 
   useEffect(() => {
     if (revenueChartRef.current && ordersChartRef.current) {
