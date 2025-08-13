@@ -29,7 +29,7 @@ export default function ProductMstTable() {
     setIsLoading(true);
     try {
       const response = await axiosInstance.post(`Product/GetFgPrdDashBoard?currentPage=1&limit=5000`, {
-        "SearchText": '' 
+        "SearchText": ''
       });
       const { data: { STATUS, DATA } } = response;
       if (STATUS === 0 && Array.isArray(DATA)) {
@@ -54,6 +54,14 @@ export default function ProductMstTable() {
 
   const handleAfterSelection = (row, column, row2, column2) => {
     console.log('Selection changed:', { row, column, row2, column2 });
+  };
+
+  const handleRowDoubleClick = (row) => {
+    console.log("Row double-clicked:", row);
+
+    navigate("/masters/productMaster", {
+      state: { FGPRD_KEY: row.FGPRD_KEY, mode: "view" },
+    });
   };
 
   const addButtonStyles = {
@@ -88,11 +96,11 @@ export default function ProductMstTable() {
 
         <div style={{ height: 'calc(100vh - 180px)', width: '100%' }}>
           {isLoading ? (
-            <div style={{ 
-              display: 'flex', 
-              justifyContent: 'center', 
-              alignItems: 'center', 
-              height: '100%' 
+            <div style={{
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              height: '100%'
             }}>
               Loading...
             </div>
@@ -105,6 +113,7 @@ export default function ProductMstTable() {
               colHeaders={true}
               rowHeaders={true}
               afterChange={handleAfterChange}
+              handleRowDoubleClick={handleRowDoubleClick}
               afterSelection={handleAfterSelection}
               readOnly={true}
               customSettings={{
