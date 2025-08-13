@@ -13,7 +13,6 @@ import { useRouter } from 'next/navigation';
 import CrudButton from '@/GlobalFunction/CrudButton';
 import debounce from 'lodash.debounce';
 import axiosInstance from '@/lib/axios';
-
 const FORM_MODE = getFormMode();
 const PatternMst = () => {
     const router = useRouter();
@@ -38,12 +37,12 @@ const PatternMst = () => {
         currentFGPTN_KEY ? FORM_MODE.read : FORM_MODE.add
     });
     const [Status, setStatus] = useState("1");
-    const FCYR_KEY = localStorage.getItem('FCYR_KEY');
-    const CO_ID = localStorage.getItem('CO_ID');
-    const userRole = localStorage.getItem('userRole');
-    const username = localStorage.getItem('USER_NAME');
-    const PARTY_KEY = localStorage.getItem('PARTY_KEY');
-    const COBR_ID = localStorage.getItem('COBR_ID');
+    // const FCYR_KEY = localStorage.getItem('FCYR_KEY');
+    // const CO_ID = localStorage.getItem('CO_ID');
+    // const userRole = localStorage.getItem('userRole');
+    // const username = localStorage.getItem('USER_NAME');
+    // const PARTY_KEY = localStorage.getItem('PARTY_KEY');
+    // const COBR_ID = localStorage.getItem('COBR_ID');
 
     const handleChangeStatus = (event) => {
         const updatedStatus = event.target.checked ? "1" : "0";
@@ -96,25 +95,25 @@ const PatternMst = () => {
             console.error(err);
         }
     };
-    useEffect(() => {
-        if (location.state && location.state.FGPTN_KEY) {
-            setCurrentFGPTN_KEY(location.state.FGPTN_KEY);
-            fetchRetriveData(location.state.FGPTN_KEY);
-            setMode(FORM_MODE.read);
-        } else {
-            setForm({
-                SearchByCd: '',
-                SERIES: '',
-                FGPTN_CODE: '',
-                FGPTN_KEY: '',
-                FGPTN_NAME: '',
-                FGPTN_ABRV: '',
-                FGPTN_LST_CODE: '',
-                Status: "1",
-            })
-            setMode(FORM_MODE.read);
-        }
-    }, [location]);
+    // useEffect(() => {
+    //     if (location.state && location.state.FGPTN_KEY) {
+    //         setCurrentFGPTN_KEY(location.state.FGPTN_KEY);
+    //         fetchRetriveData(location.state.FGPTN_KEY);
+    //         setMode(FORM_MODE.read);
+    //     } else {
+    //         setForm({
+    //             SearchByCd: '',
+    //             SERIES: '',
+    //             FGPTN_CODE: '',
+    //             FGPTN_KEY: '',
+    //             FGPTN_NAME: '',
+    //             FGPTN_ABRV: '',
+    //             FGPTN_LST_CODE: '',
+    //             Status: "1",
+    //         })
+    //         setMode(FORM_MODE.read);
+    //     }
+    // }, [location]);
     const handleSubmit = async () => {
         try {
             const UserName = userRole === 'user' ? username : PARTY_KEY;
