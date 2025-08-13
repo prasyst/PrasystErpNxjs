@@ -45,7 +45,7 @@ const ProductMst = () => {
   const [brand, setBrand] = useState([]);
   const [currentFGPRD_KEY, setCurrentFGPRD_KEY] = useState(null);
   const router = useRouter();
-  const XYZ = localStorage.getItem('FGPRD_KEY');
+  // const XYZ = localStorage.getItem('FGPRD_KEY');
 
   const initialRow = {
     FGSIZE_ID: "",
@@ -99,16 +99,16 @@ const ProductMst = () => {
     fgSizeEntities: [initialRow]
   }]);
 
-  useEffect(() => {
-    if (XYZ) {
-      setCurrentFGPRD_KEY(XYZ);
-      fetchFGPRD_KEYData(XYZ);
-      setMode('view');
-    } else {
-      setMode('add');
-      setIsFormDisabled(true);
-    }
-  }, [XYZ]);
+  // useEffect(() => {
+  //   if (XYZ) {
+  //     setCurrentFGPRD_KEY(XYZ);
+  //     fetchFGPRD_KEYData(XYZ);
+  //     setMode('view');
+  //   } else {
+  //     setMode('add');
+  //     setIsFormDisabled(true);
+  //   }
+  // }, [XYZ]);
 
   const textInputSx = {
     '& .MuiInputBase-root': {
