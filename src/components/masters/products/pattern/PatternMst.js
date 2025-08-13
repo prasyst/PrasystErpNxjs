@@ -13,7 +13,6 @@ import { useRouter } from 'next/navigation';
 import CrudButton from '@/GlobalFunction/CrudButton';
 import debounce from 'lodash.debounce';
 import axiosInstance from '@/lib/axios';
-
 const FORM_MODE = getFormMode();
 const PatternMst = () => {
     const router = useRouter();
