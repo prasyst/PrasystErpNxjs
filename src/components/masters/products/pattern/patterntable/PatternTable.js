@@ -1,0 +1,158 @@
+'use client';
+import React, { useState, useEffect, useCallback } from "react";
+
+import {
+  Button,
+} from '@mui/material';
+import AddIcon from "@mui/icons-material/Add";
+import axiosInstance from "@/lib/axios";
+import ReusableHandsontable from "@/components/datatable/ReusableHandsontable";
+import { useRouter } from "next/navigation";
+
+
+const handsontableColumns = [
+  { field: "ROWNUM", headerName: "SrNo", width: "16%", type: "numeric" },
+  { field: "FGPTN_KEY", headerName: "Code", width: "16%", type: "text" },
+  { field: "FGPTN_ALT_KEY", headerName: "AltCode", width: "15%", type: "text" },
+  { field: "FGPTN_NAME", headerName: "Name", width: "15%", type: "text" },
+  { field: "FGPTN_ABRV", headerName: "Abrv", width: "15%", type: "text" },
+  { field: "STATUS", headerName: "Status", width: "15%", type: "numeric" }
+];
+
+
+export default function PatternTable() {
+  const router = useRouter();
+
+  const [isLoading, setIsLoading] = useState(true);
+  const [rows, setRows] = useState([]);
+
+  useEffect(() => {
+    fetchTableData();
+  }, []);
+
+  const fetchTableData = async () => {
+    setIsLoading(true);
+    try {
+      const response = await axiosInstance.post(`Fgptn/GetFgptnDashBoard?currentPage=1&limit=5000`, {
+        "SearchText": ''
+      });
+      const { data: { STATUS, DATA } } = response;
+      if (STATUS === 0 && Array.isArray(DATA)) {
+        const formattedData = DATA.map((row, index) => ({
+          id: index,
+          ...row,
+        }));
+        setRows(formattedData);
+      }
+    } catch (error) {
+      console.error("Error fetching productgrp data:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleAfterChange = (changes, source) => {
+    if (source === 'edit') {
+      console.log('Data changed:', changes);
+    }
+  };
+
+  const handleAfterSelection = (row, column, row2, column2) => {
+    console.log('Selection changed:', { row, column, row2, column2 });
+  };
+
+  // const handleRowDoubleClick = (row) => {
+  //   console.log("Row double-clicked:", row);
+  //   router.push({
+  //     pathname: "/masters/products/pattern",
+  //     query: {
+  //       FGPTN_KEY: row.FGPTN_KEY,
+  //       mode: "view"
+  //     }
+  //   });
+  
+  // };
+ const handleRowDoubleClick = (row) => {
+  console.log("Row double-clicked:", row);
+  const params = new URLSearchParams({
+    FGPTN_KEY: row.FGPTN_KEY,
+    mode: "view"
+  }).toString();
+  router.push(`/masters/products/pattern?${params}`);
+};
+
+
+
+  const addButtonStyles = {
+    background: "#39ace2",
+    height: 40,
+    color: "white",
+    borderRadius: "50px",
+    padding: "5px 20px",
+    boxShadow: "0px 6px 15px rgba(0, 0, 0, 0.3)",
+    transition: "background 0.3s ease",
+    "&:hover": { background: "#2199d6" },
+    "&:disabled": {
+      backgroundColor: "#39ace2",
+      color: "rgba(0, 0, 0, 0.26)",
+    },
+  };
+
+  return (
+    <div className="p-2 w-full">
+      <div className="w-full mx-auto" style={{ maxWidth: '100%' }}>
+        <div className="mb-4 flex flex-wrap gap-4 items-center">
+
+          <Button
+            variant="contained"
+            size="small"
+            sx={addButtonStyles}
+            startIcon={<AddIcon />}
+      onClick={() => router.push('/masters/products/pattern')}
+          >
+            New
+          </Button>
+        </div>
+
+        <div style={{ height: 'calc(100vh - 180px)', width: '100%' }}>
+          {isLoading ? (
+            <div style={{
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              height: '100%'
+            }}>
+              Loading...
+            </div>
+          ) : (
+            <ReusableHandsontable
+              data={rows}
+              columns={handsontableColumns}
+              height="auto"
+              width="100%"
+              colHeaders={true}
+              rowHeaders={true}
+              afterChange={handleAfterChange}
+              handleRowDoubleClick={handleRowDoubleClick}
+              afterSelection={handleAfterSelection}
+              readOnly={true}
+              customSettings={{
+                stretchH: 'all',
+                dropdownMenu: true,
+                filters: {
+                  indicators: true,
+                  showOperators: true
+                },
+                contextMenu: true,
+                search: true,
+                filteringCaseSensitive: false,
+                filteringIndicator: true,
+                licenseKey: "non-commercial-and-evaluation"
+              }}
+            />
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
