@@ -2,13 +2,13 @@
   "name": "orderplusnxt",
   "version": "0.1.0",
   "private": true,
-  "type": "module", 
+  "type": "module",
   "scripts": {
-  "dev": "node server.js",
-  "build": "next build",
-  "start": "next start -p 4000",
-  "lint": "next lint"
-},
+    "dev": "node server.js",
+    "build": "next build",
+    "start": "next start -p 4000",
+    "lint": "next lint"
+  },
   "dependencies": {
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
