@@ -1,5 +1,5 @@
 'use client'
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState ,useCallback} from 'react';
 import {
     Box, Grid, TextField, Typography, Button, Stack, FormControlLabel, Checkbox, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions,
 } from '@mui/material';
@@ -13,9 +13,14 @@ import { useRouter } from 'next/navigation';
 import CrudButton from '@/GlobalFunction/CrudButton';
 import debounce from 'lodash.debounce';
 import axiosInstance from '@/lib/axios';
+import { useSearchParams } from 'next/navigation';
+
 const FORM_MODE = getFormMode();
 const PatternMst = () => {
     const router = useRouter();
+      const searchParams = useSearchParams();
+       const FGPTN_KEY = searchParams.get('FGPTN_KEY');
+
     const [currentFGPTN_KEY, setCurrentFGPTN_KEY] = useState(null);
     const [form, setForm] = useState({
         SearchByCd: '',
@@ -34,16 +39,15 @@ const PatternMst = () => {
     const FGPTN_CODERef = useRef(null);
     const SERIESRef = useRef(null);
     const [mode, setMode] = useState(() => {
-        // currentFGPTN_KEY ? FORM_MODE.read : FORM_MODE.add
-           return FORM_MODE.read;
+        currentFGPTN_KEY ? FORM_MODE.read : FORM_MODE.add        
     });
     const [Status, setStatus] = useState("1");
-    // const FCYR_KEY = localStorage.getItem('FCYR_KEY');
-    // const CO_ID = localStorage.getItem('CO_ID');
-    // const userRole = localStorage.getItem('userRole');
-    // const username = localStorage.getItem('USER_NAME');
-    // const PARTY_KEY = localStorage.getItem('PARTY_KEY');
-    // const COBR_ID = localStorage.getItem('COBR_ID');
+    const FCYR_KEY = localStorage.getItem('FCYR_KEY');
+    const CO_ID = localStorage.getItem('CO_ID');
+    const userRole = localStorage.getItem('userRole');
+    const username = localStorage.getItem('USER_NAME');
+    const PARTY_KEY = localStorage.getItem('PARTY_KEY');
+    const COBR_ID = localStorage.getItem('COBR_ID');
 
     const handleChangeStatus = (event) => {
         const updatedStatus = event.target.checked ? "1" : "0";
@@ -53,68 +57,127 @@ const PatternMst = () => {
             Status: updatedStatus
         }))
     };
-    const fetchRetriveData = async (currentFGPTN_KEY, flag = "R", isManualSearch = false) => {
-        try {
-            const response = await axiosInstance.post('Fgptn/RetriveFgptn', {
-                "FLAG": flag,
-                "TBLNAME": "Fgptn",
-                "FLDNAME": "Fgptn_KEY",
-                "ID": currentFGPTN_KEY,
-                "ORDERBYFLD": "",
-                "CWHAER": "",
-                "CO_ID": CO_ID
-            });
-            const { data: { STATUS, DATA, RESPONSESTATUSCODE, MESSAGE } } = response;
-            if (STATUS === 0 && Array.isArray(DATA) && RESPONSESTATUSCODE == 1) {
-                const categoryData = DATA[0];
-                setForm({
-                    FGPTN_KEY: categoryData.FGPTN_KEY,
-                    FGPTN_NAME: categoryData.FGPTN_NAME,
-                    FGPTN_ABRV: categoryData.FGPTN_ABRV || '',
-                    FGPTN_CODE: categoryData.FGPTN_CODE || '',
-                    SERIES: categoryData.SERIES || '',
-                    FGPTN_LST_CODE: categoryData.FGPTN_LST_CODE || '',
-                    Status: categoryData.STATUS,
-                });
-                setStatus(DATA[0].STATUS);
-                setCurrentFGPTN_KEY(categoryData.FGPTN_KEY);
-            } else {
-                if (isManualSearch) {
-                    toast.error(`${MESSAGE} FOR ${currentFGPTN_KEY}`);
-                    setForm({
-                        FGPTN_KEY: '',
-                        FGPTN_NAME: '',
-                        FGPTN_ABRV: '',
-                        FGPTN_CODE: '',
-                        SERIES: '',
-                        FGPTN_LST_CODE: '',
-                        Status: 0,
-                    });
-                }
-            }
-        } catch (err) {
-            console.error(err);
-        }
-    };
-    // useEffect(() => {
-    //     if (location.state && location.state.FGPTN_KEY) {
-    //         setCurrentFGPTN_KEY(location.state.FGPTN_KEY);
-    //         fetchRetriveData(location.state.FGPTN_KEY);
-    //         setMode(FORM_MODE.read);
-    //     } else {
-    //         setForm({
-    //             SearchByCd: '',
-    //             SERIES: '',
-    //             FGPTN_CODE: '',
-    //             FGPTN_KEY: '',
-    //             FGPTN_NAME: '',
-    //             FGPTN_ABRV: '',
-    //             FGPTN_LST_CODE: '',
-    //             Status: "1",
-    //         })
-    //         setMode(FORM_MODE.read);
+    console.log("currentFGPTN_KEY",currentFGPTN_KEY)
+    console.log("FGPTN_KEY",FGPTN_KEY)
+
+    // const fetchRetriveData = async (currentFGPTN_KEY, flag = "R", isManualSearch = false) => {
+    //     try {
+    //         const response = await axiosInstance.post('Fgptn/RetriveFgptn', {
+    //             "FLAG": flag,
+    //             "TBLNAME": "Fgptn",
+    //             "FLDNAME": "Fgptn_KEY",
+    //             "ID": currentFGPTN_KEY,
+    //             "ORDERBYFLD": "",
+    //             "CWHAER": "",
+    //             "CO_ID": CO_ID
+    //         });
+    //         const { data: { STATUS, DATA, RESPONSESTATUSCODE, MESSAGE } } = response;
+    //         if (STATUS === 0 && Array.isArray(DATA) && RESPONSESTATUSCODE == 1) {
+    //             const categoryData = DATA[0];
+    //             setForm({
+    //                 FGPTN_KEY: categoryData.FGPTN_KEY,
+    //                 FGPTN_NAME: categoryData.FGPTN_NAME,
+    //                 FGPTN_ABRV: categoryData.FGPTN_ABRV || '',
+    //                 FGPTN_CODE: categoryData.FGPTN_CODE || '',
+    //                 SERIES: categoryData.SERIES || '',
+    //                 FGPTN_LST_CODE: categoryData.FGPTN_LST_CODE || '',
+    //                 Status: categoryData.STATUS,
+    //             });
+    //             setStatus(DATA[0].STATUS);
+    //             setCurrentFGPTN_KEY(categoryData.FGPTN_KEY);
+
+    //                // ✅ Update URL
+    //         const newParams = new URLSearchParams();
+    //         newParams.set("FGPTN_KEY", categoryData.FGPTN_KEY);
+    //         router.replace(`/masters/products/pattern?${newParams.toString()}`);
+    //         } else {
+    //             if (isManualSearch) {
+    //                 toast.error(`${MESSAGE} FOR ${currentFGPTN_KEY}`);
+    //                 setForm({
+    //                     FGPTN_KEY: '',
+    //                     FGPTN_NAME: '',
+    //                     FGPTN_ABRV: '',
+    //                     FGPTN_CODE: '',
+    //                     SERIES: '',
+    //                     FGPTN_LST_CODE: '',
+    //                     Status: 0,
+    //                 });
+    //             }
+    //         }
+    //     } catch (err) {
+    //         console.error(err);
     //     }
-    // }, [location]);
+    // };
+   
+    const fetchRetriveData = useCallback(async (currentFGPTN_KEY, flag = "R", isManualSearch = false) => {
+    try {
+        const response = await axiosInstance.post('Fgptn/RetriveFgptn', {
+            "FLAG": flag,
+            "TBLNAME": "Fgptn",
+            "FLDNAME": "Fgptn_KEY",
+            "ID": currentFGPTN_KEY,
+            "ORDERBYFLD": "",
+            "CWHAER": "",
+            "CO_ID": CO_ID
+        });
+
+        const { data: { STATUS, DATA, RESPONSESTATUSCODE, MESSAGE } } = response;
+
+        if (STATUS === 0 && Array.isArray(DATA) && RESPONSESTATUSCODE == 1) {
+            const categoryData = DATA[0];
+            setForm({
+                FGPTN_KEY: categoryData.FGPTN_KEY,
+                FGPTN_NAME: categoryData.FGPTN_NAME,
+                FGPTN_ABRV: categoryData.FGPTN_ABRV || '',
+                FGPTN_CODE: categoryData.FGPTN_CODE || '',
+                SERIES: categoryData.SERIES || '',
+                FGPTN_LST_CODE: categoryData.FGPTN_LST_CODE || '',
+                Status: categoryData.STATUS,
+            });
+            setStatus(categoryData.STATUS);
+            setCurrentFGPTN_KEY(categoryData.FGPTN_KEY);
+
+            // ✅ Update URL
+            const newParams = new URLSearchParams();
+            newParams.set("FGPTN_KEY", categoryData.FGPTN_KEY);
+            router.replace(`/masters/products/pattern?${newParams.toString()}`);
+        } else if (isManualSearch) {
+            toast.error(`${MESSAGE} FOR ${currentFGPTN_KEY}`);
+            setForm({
+                FGPTN_KEY: '',
+                FGPTN_NAME: '',
+                FGPTN_ABRV: '',
+                FGPTN_CODE: '',
+                SERIES: '',
+                FGPTN_LST_CODE: '',
+                Status: 0,
+            });
+        }
+    } catch (err) {
+        console.error(err);
+    }
+}, [CO_ID, router]); 
+
+  useEffect(() => {
+    if (FGPTN_KEY) {
+        setCurrentFGPTN_KEY(FGPTN_KEY);
+      fetchRetriveData(FGPTN_KEY);
+       setMode(FORM_MODE.read);
+    }else {
+            setForm({
+                SearchByCd: '',
+                SERIES: '',
+                FGPTN_CODE: '',
+                FGPTN_KEY: '',
+                FGPTN_NAME: '',
+                FGPTN_ABRV: '',
+                FGPTN_LST_CODE: '',
+                Status: "1",
+            })
+            setMode(FORM_MODE.read);
+        }
+         setMode(FORM_MODE.read);
+  }, [FGPTN_KEY,fetchRetriveData]);
     const handleSubmit = async () => {
         try {
             const UserName = userRole === 'user' ? username : PARTY_KEY;
@@ -126,7 +189,7 @@ const PatternMst = () => {
             }
             const payload = {
                 Fgptn_KEY: form.FGPTN_KEY,  //CODE
-                Fgptn_CODE: form.FGPTN_CODE, //ALT CODE
+                Fgptn_CODE: form.FGPTN_CODE, 
                 Fgptn_NAME: form.FGPTN_NAME,
                 Fgptn_ABRV: form.FGPTN_ABRV,
                 Merchandiser_key: '',
@@ -328,9 +391,8 @@ const PatternMst = () => {
     const handleConfirmDelete = async () => {
         setOpenConfirmDialog(false);
         try {
-            // const UserName = userRole === 'user' ? username : PARTY_KEY;
-            // const response = await axiosInstance.post(`Fgptn/DeleteFgptn?UserName=${(UserName)}&strCobrid=${COBR_ID}`, {
-               const response = await axiosInstance.post('Fgptn/DeleteFgptn?UserName=PC0001&strCobrid=02', {   
+         const UserName = userRole === 'user' ? username : PARTY_KEY;
+            const response = await axiosInstance.post(`Fgptn/DeleteFgptn?UserName=${(UserName)}&strCobrid=${COBR_ID}`, {
             Fgptn_KEY: form.FGPTN_KEY
             });
             const { data: { STATUS, MESSAGE } } = response;
@@ -380,7 +442,18 @@ const PatternMst = () => {
     const handleExit = () => {
         router.push('/masters/products/pattern/patterntable');
     };
-
+   
+  const Buttonsx = {
+    backgroundColor: '#39ace2',
+    margin: { xs: '0 4px', sm: '0 6px' },
+    minWidth: { xs: 40, sm: 46, md: 60 },
+    height: { xs: 40, sm: 46, md: 27 },
+    // "&:disabled": {
+    //   backgroundColor: "rgba(0, 0, 0, 0.12)",
+    //   color: "rgba(0, 0, 0, 0.26)",
+    //   boxShadow: "none",
+    // }
+  };
     return (
         <>
             <Box sx={{ width: '100%', justifyContent: 'center', alignItems: 'flex-start', padding: '24px', boxSizing: 'border-box', marginTop: { xs: "30px", sm: "0px" } }}
@@ -398,9 +471,7 @@ const PatternMst = () => {
                         }}>
                             <Stack direction="row" spacing={1}>
                                 <Button variant="contained" size="small" className="three-d-button-previous"
-                                    sx={{
-                                        backgroundColor: "#635BFF"
-                                    }}
+                                     sx={Buttonsx}
                                     onClick={handlePrevious}
                                     disabled={
                                         mode !== FORM_MODE.read || !currentFGPTN_KEY || currentFGPTN_KEY === 1
@@ -409,9 +480,7 @@ const PatternMst = () => {
                                     <KeyboardArrowLeftIcon />
                                 </Button>
                                 <Button variant="contained" size="small" className="three-d-button-next"
-                                    sx={{
-                                        backgroundColor: "#635BFF"
-                                    }}
+                                    sx={Buttonsx}
                                     onClick={handleNext}
                                     disabled={mode !== FORM_MODE.read || !currentFGPTN_KEY}
                                 >

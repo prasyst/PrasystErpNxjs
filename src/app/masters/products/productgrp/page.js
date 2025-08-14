@@ -2,14 +2,12 @@
 'use client';
 
 import React, { Suspense } from 'react';
-import TypeMst from "@/components/masters/products/type/TypeMst";
+import ProductGrp from '@/components/masters/products/productgrp/ProductGrp';
 
-export default function TypePage() {
+export default function ProductGrpPage() {
     return (
         <Suspense fallback={<div>Loading...</div>}>
-            <TypeMst />
+          <ProductGrp />
         </Suspense>
     );
 }
-
-

@@ -1,6 +1,5 @@
 'use client';
 import React, { useState, useEffect, useCallback } from "react";
-
 import {
   Button,
 } from '@mui/material';
@@ -11,14 +10,15 @@ import { useRouter } from "next/navigation";
 
 const handsontableColumns = [
   { field: "ROWNUM", headerName: "SrNo", width: "16%", type: "numeric" },
-  { field: "FGPTN_KEY", headerName: "Code", width: "16%", type: "text" },
-  { field: "FGPTN_ALT_KEY", headerName: "AltCode", width: "15%", type: "text" },
-  { field: "FGPTN_NAME", headerName: "Name", width: "15%", type: "text" },
-  { field: "FGPTN_ABRV", headerName: "Abrv", width: "15%", type: "text" },
-  { field: "STATUS", headerName: "Status", width: "15%", type: "numeric" }
+  { field: "UNIT_KEY", headerName: "Code", width: "16%", type: "text" },
+    { field: "UNIT_ALT_KEY", headerName: "ALTCode", width: "16%", type: "text" },
+  { field: "UNIT_NAME", headerName: "Name", width: "15%", type: "text" },
+  { field: "UNIT_FOR", headerName: "Unit For", width: "15%", type: "text" },
+  { field: "UNIT_ABRV", headerName: "Abrv", width: "15%", type: "text" },
+  { field: "STATUS", headerName: "Status", width: "15%", type: "text" }
 ];
 
-export default function PatternTable() {
+export default function UnitTable() {
   const router = useRouter();
 
   const [isLoading, setIsLoading] = useState(true);
@@ -31,7 +31,7 @@ export default function PatternTable() {
   const fetchTableData = async () => {
     setIsLoading(true);
     try {
-      const response = await axiosInstance.post(`Fgptn/GetFgptnDashBoard?currentPage=1&limit=5000`, {
+      const response = await axiosInstance.post(`Unit/GetUnitDashBoard?currentPage=1&limit=5000`, {
         "SearchText": ''
       });
       const { data: { STATUS, DATA } } = response;
@@ -62,10 +62,10 @@ export default function PatternTable() {
 
 const handleRowClick = (row) => {
   const params = new URLSearchParams({
-    FGPTN_KEY: row.FGPTN_KEY,
+    UNIT_KEY: row.UNIT_KEY,
     mode: "view"
   }).toString();
-  router.push(`/masters/products/pattern?${params}`);
+  router.push(`/masters/products/unit?${params}`);
 };
 
 
@@ -94,7 +94,7 @@ const handleRowClick = (row) => {
             size="small"
             sx={addButtonStyles}
             startIcon={<AddIcon />}
-      onClick={() => router.push('/masters/products/pattern')}
+      onClick={() => router.push('/masters/products/unit')}
           >
             New
           </Button>
