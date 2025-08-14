@@ -1,5 +1,5 @@
 'use client'
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState ,useCallback} from 'react';
 import {
     Box, Grid, TextField, Typography, Button, Stack, FormControlLabel, Checkbox, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions,
 } from '@mui/material';
@@ -14,10 +14,13 @@ import CrudButton from '@/GlobalFunction/CrudButton';
 import debounce from 'lodash.debounce';
 import axiosInstance from '@/lib/axios';
 import CustomAutocomplete from '@/GlobalFunction/CustomAutoComplete/CustomAutoComplete';
+import { useSearchParams } from 'next/navigation';
 
 const FORM_MODE = getFormMode();
 const UnitMst = () => {
-     const router = useRouter();
+    const router = useRouter();
+    const searchParams = useSearchParams();
+    const UNIT_KEY = searchParams.get('UNIT_KEY');
     const [currentUNIT_KEY, setCurrentUNIT_KEY] = useState(null);
     const [form, setForm] = useState({
         SearchByCd: '',
@@ -41,17 +44,17 @@ const UnitMst = () => {
         currentUNIT_KEY ? FORM_MODE.read : FORM_MODE.add
     });
     const [Status, setStatus] = useState("1");
-    // const FCYR_KEY = localStorage.getItem('FCYR_KEY');
-    // const CO_ID = localStorage.getItem('CO_ID');
-    // const userRole = localStorage.getItem('userRole');
-    // const username = localStorage.getItem('USER_NAME');
-    // const PARTY_KEY = localStorage.getItem('PARTY_KEY');
-    // const COBR_ID = localStorage.getItem('COBR_ID');
+    const FCYR_KEY = localStorage.getItem('FCYR_KEY');
+    const CO_ID = localStorage.getItem('CO_ID');
+    const userRole = localStorage.getItem('userRole');
+    const username = localStorage.getItem('USER_NAME');
+    const PARTY_KEY = localStorage.getItem('PARTY_KEY');
+    const COBR_ID = localStorage.getItem('COBR_ID');
 
-     const unitOptions = [
+    const unitOptions = [
         { Id: '0', Name: 'N' },
         // { Id: '1', Name: 'L' },
-        
+
     ];
     const handleChangeStatus = (event) => {
         const updatedStatus = event.target.checked ? "1" : "0";
@@ -61,7 +64,7 @@ const UnitMst = () => {
             Status: updatedStatus
         }))
     };
-    const fetchRetriveData = async (currentUNIT_KEY, flag = "R", isManualSearch = false) => {
+    const fetchRetriveData = useCallback(async (currentUNIT_KEY, flag = "R", isManualSearch = false) => {
         try {
             const response = await axiosInstance.post('Unit/RetriveUnit', {
                 "FLAG": flag,
@@ -87,6 +90,9 @@ const UnitMst = () => {
                 });
                 setStatus(DATA[0].STATUS);
                 setCurrentUNIT_KEY(categoryData.UNIT_KEY);
+                const newParams = new URLSearchParams();
+                newParams.set("UNIT_KEY", categoryData.UNIT_KEY);
+                router.replace(`/masters/products/unit?${newParams.toString()}`);
             } else {
                 if (isManualSearch) {
                     toast.error(`${MESSAGE} FOR ${currentUNIT_KEY}`);
@@ -105,27 +111,28 @@ const UnitMst = () => {
         } catch (err) {
             console.error(err);
         }
-    };
-    // useEffect(() => {
-    //     if (location.state && location.state.UNIT_KEY) {
-    //         setCurrentUNIT_KEY(location.state.UNIT_KEY);
-    //         fetchRetriveData(location.state.UNIT_KEY);
-    //         setMode(FORM_MODE.read);
-    //     } else {
-    //         setForm({
-    //           SearchByCd: '',
-    //     SERIES: '',
-    //     UNIT_ALT_CODE: '',
-    //     UNIT_KEY: '',  //CODE
-    //     UNIT_NAME: '',  //SHADE NAME
-    //     UNIT_ABRV: '',
-    //     UNIT_FOR: '',
-    //     UNIT_LST_CODE: '',
-    //     Status: "1",
-    //         })
-    //         setMode(FORM_MODE.read);
-    //     }
-    // }, [location]);
+    },[CO_ID,router])
+    useEffect(() => {
+        if (UNIT_KEY) {
+            setCurrentUNIT_KEY(UNIT_KEY);
+            fetchRetriveData(UNIT_KEY);
+            setMode(FORM_MODE.read);
+        } else {
+            setForm({
+                SearchByCd: '',
+                SERIES: '',
+                UNIT_ALT_CODE: '',
+                UNIT_KEY: '',  
+                UNIT_NAME: '',  
+                UNIT_ABRV: '',
+                UNIT_FOR: '',
+                UNIT_LST_CODE: '',
+                Status: "1",
+            })
+            setMode(FORM_MODE.read);
+        }
+        setMode(FORM_MODE.read);
+    }, [UNIT_KEY,fetchRetriveData]);
     const handleSubmit = async () => {
         try {
             const UserName = userRole === 'user' ? username : PARTY_KEY;
@@ -361,7 +368,7 @@ const UnitMst = () => {
     const handleEdit = () => {
         setMode(FORM_MODE.edit);
     };
-       const handlePrint = async () => {
+    const handlePrint = async () => {
         try {
             const response = await axiosInstance.post(`Unit/GetUnitDashBoard?currentPage=1&limit=5000`, {
                 "SearchText": ""
@@ -372,17 +379,17 @@ const UnitMst = () => {
                     ...row,
                     STATUS: row.STATUS === "1" ? "Active" : "Inactive"
                 }));
-    
+
                 // Generate the PDF blob
                 const asPdf = pdf(<PrintUnitData rows={formattedData} />);
                 const blob = await asPdf.toBlob();
                 const url = URL.createObjectURL(blob);
-    
+
                 // Open the PDF in a new tab
                 const newTab = window.open(url, '_blank');
                 if (newTab) {
                     newTab.focus();
-                } 
+                }
                 setTimeout(() => {
                     URL.revokeObjectURL(url);
                 }, 100);
@@ -391,10 +398,20 @@ const UnitMst = () => {
             console.error("Print Error:", error);
         }
     };
-    const handleExit = () => { 
-         // router.push('/masters/products');
-     };
-
+    const handleExit = () => {
+    router.push('/masters/products/unit/unittable');
+    };
+  const Buttonsx = {
+    backgroundColor: '#39ace2',
+    margin: { xs: '0 4px', sm: '0 6px' },
+    minWidth: { xs: 40, sm: 46, md: 60 },
+    height: { xs: 40, sm: 46, md: 27 },
+    // "&:disabled": {
+    //   backgroundColor: "rgba(0, 0, 0, 0.12)",
+    //   color: "rgba(0, 0, 0, 0.26)",
+    //   boxShadow: "none",
+    // }
+  };
     return (
         <>
             <Box sx={{ width: '100%', justifyContent: 'center', alignItems: 'flex-start', padding: '24px', boxSizing: 'border-box', marginTop: { xs: "30px", sm: "0px" } }}
@@ -412,9 +429,7 @@ const UnitMst = () => {
                         }}>
                             <Stack direction="row" spacing={1}>
                                 <Button variant="contained" size="small" className="three-d-button-previous"
-                                    sx={{
-                                        backgroundColor: "#635BFF"
-                                    }}
+                                     sx={Buttonsx}
                                     onClick={handlePrevious}
                                     disabled={
                                         mode !== FORM_MODE.read || !currentUNIT_KEY || currentUNIT_KEY === 1
@@ -423,9 +438,7 @@ const UnitMst = () => {
                                     <KeyboardArrowLeftIcon />
                                 </Button>
                                 <Button variant="contained" size="small" className="three-d-button-next"
-                                    sx={{
-                                        backgroundColor: "#635BFF"
-                                    }}
+                                    sx={Buttonsx}
                                     onClick={handleNext}
                                     disabled={mode !== FORM_MODE.read || !currentUNIT_KEY}
                                 >
@@ -469,8 +482,8 @@ const UnitMst = () => {
                                 sx={{
                                     width: { xs: '100%', sm: '50%', md: '30%' },
                                     backgroundColor: '#e0f7fa',
-                                    '& .MuiInputBase-input': {                                  
-                                         paddingBlock: { xs: '8px', md: '4px' },
+                                    '& .MuiInputBase-input': {
+                                        paddingBlock: { xs: '8px', md: '4px' },
                                         paddingLeft: { xs: '10px', md: '8px' },
                                     },
                                 }}
@@ -504,7 +517,7 @@ const UnitMst = () => {
                             />
                             <TextField
                                 label="Last Cd"
-                                sx={{ width: { xs: '100%', sm: '48%', md: '25%' }}}
+                                sx={{ width: { xs: '100%', sm: '48%', md: '25%' } }}
                                 disabled={true}
                                 fullWidth
                                 className="custom-textfield"
@@ -514,7 +527,7 @@ const UnitMst = () => {
                             <TextField
                                 label="Code"
                                 inputRef={UNIT_KEYRef}
-                                sx={{ width: { xs: '100%', sm: '48%', md: '25%' }}}
+                                sx={{ width: { xs: '100%', sm: '48%', md: '25%' } }}
                                 disabled={mode === FORM_MODE.read}
                                 className="custom-textfield"
                                 value={form.UNIT_KEY}
@@ -565,7 +578,7 @@ const UnitMst = () => {
                         >
                             <CustomAutocomplete
                                 id="unit-key-autocomplete"
-                                   sx={{ width: { xs: '100%', sm: '40%', md: '90%' } }}
+                                sx={{ width: { xs: '100%', sm: '40%', md: '90%' } }}
                                 inputRef={UNIT_FORRef}
                                 disabled={true}
                                 label="Unit For"
@@ -700,7 +713,7 @@ const UnitMst = () => {
                         Are you sure you want to delete this record?
                     </DialogContentText>
                 </DialogContent>
-                <DialogActions sx={{ justifyContent: 'center', gap: { xs: 0.5, sm: 1 } }}> 
+                <DialogActions sx={{ justifyContent: 'center', gap: { xs: 0.5, sm: 1 } }}>
                     <Button
                         sx={{
                             backgroundColor: "#39ace2",

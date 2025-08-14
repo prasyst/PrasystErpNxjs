@@ -1,5 +1,4 @@
-'use client'
-import React, { useEffect, useRef, useState ,useCallback} from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
     Box,
     Grid,
@@ -18,41 +17,39 @@ import {
 import KeyboardArrowLeftIcon from "@mui/icons-material/KeyboardArrowLeft";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import { toast, ToastContainer } from 'react-toastify';
-import { useRouter } from 'next/navigation';
 import { getFormMode } from '@/lib/helpers';
+import { useRouter } from 'next/navigation';
 import CrudButton from '@/GlobalFunction/CrudButton';
 import debounce from 'lodash.debounce';
 import axiosInstance from '@/lib/axios';
-import { pdf } from '@react-pdf/renderer';
-import PrintTypeData from './PrintTypeData';
 import { useSearchParams } from 'next/navigation';
+import { pdf } from '@react-pdf/renderer';
+import PrintPrdGrpDt from './PrintPrdGrpDt';
 
 const FORM_MODE = getFormMode();
-
-const TypeMst = () => {
-    const router = useRouter();
-    const searchParams = useSearchParams();
-    const FGTYPE_KEY = searchParams.get('FGTYPE_KEY');
-    const [currentFGTYPE_KEY, setCurrentFGTYPE_KEY] = useState(null);
+const ProductGrp = () => {
+     const router = useRouter();
+         const searchParams = useSearchParams();
+          const PRODGRP_KEY = searchParams.get('PRODGRP_KEY');
+    const [currentPRODGRP_KEY, setCurrentPRODGRP_KEY] = useState(null);
     const [form, setForm] = useState({
         SearchByCd: '',
         SERIES: '',
-        FGTYPE_CODE: '',
-        FGTYPE_KEY: '',
-        FGTYPE_NAME: '',
-        FGTYPE_ABRV: '',
-        FGTYPE_LST_CODE: '',
+        PRODGRP_CODE: '',
+        PRODGRP_KEY: '',  //CODE
+        PRODGRP_NAME: '',  
+        PRODGRP_ABRV: '',
+        ProdGrp_LST_CODE: '',
         Status: FORM_MODE.add ? "1" : "0",
     });
     const [openConfirmDialog, setOpenConfirmDialog] = useState(false);
     const contentRef = useRef(null);
-    const FGTYPE_KEYRef = useRef(null);
-    const FGTYPE_NAMERef = useRef(null);
-    const FGTYPE_ABRVRef = useRef(null);
-    const FGTYPE_CODERef = useRef(null);
+    const PRODGRP_KEYRef = useRef(null);
+    const ProdGrp_NAMERef = useRef(null);
+    const PRODGRP_ABRVRef = useRef(null);
     const SERIESRef = useRef(null);
     const [mode, setMode] = useState(() => {
-        currentFGTYPE_KEY ? FORM_MODE.read : FORM_MODE.add
+        currentPRODGRP_KEY ? FORM_MODE.read : FORM_MODE.add
     });
     const [Status, setStatus] = useState("1");
     const FCYR_KEY = localStorage.getItem('FCYR_KEY');
@@ -71,13 +68,13 @@ const TypeMst = () => {
         }))
     };
 
-    const fetchRetriveData = useCallback(async (currentFGTYPE_KEY, flag = "R", isManualSearch = false) => {
+    const fetchRetriveData = useCallback(  async (currentPRODGRP_KEY, flag = "R", isManualSearch = false) => {
         try {
-            const response = await axiosInstance.post('Fgtype/RetriveFGTYPE', {
+            const response = await axiosInstance.post('ProdGrp/RetriveProdGrp', {
                 "FLAG": flag,
-                "TBLNAME": "FGTYPE",
-                "FLDNAME": "FGTYPE_KEY",
-                "ID": currentFGTYPE_KEY,
+                "TBLNAME": "ProdGrp",
+                "FLDNAME": "PRODGRP_KEY",
+                "ID": currentPRODGRP_KEY,
                 "ORDERBYFLD": "",
                 "CWHAER": "",
                 "CO_ID": CO_ID
@@ -86,30 +83,30 @@ const TypeMst = () => {
             if (STATUS === 0 && Array.isArray(DATA) && RESPONSESTATUSCODE == 1) {
                 const categoryData = DATA[0];
                 setForm({
-                    FGTYPE_KEY: categoryData.FGTYPE_KEY,
-                    FGTYPE_NAME: categoryData.FGTYPE_NAME,
-                    FGTYPE_ABRV: categoryData.FGTYPE_ABRV || '',
-                    FGTYPE_CODE: categoryData.FGTYPE_CODE || '',
+                    PRODGRP_KEY: categoryData.PRODGRP_KEY,
+                    PRODGRP_NAME: categoryData.PRODGRP_NAME,
+                    PRODGRP_ABRV: categoryData.PRODGRP_ABRV || '',
+                    PRODGRP_CODE: categoryData.PRODGRP_CODE || '',
                     SERIES: categoryData.SERIES || '',
-                    FGTYPE_LST_CODE: categoryData.FGTYPE_LST_CODE || '',
+                    ProdGrp_LST_CODE: categoryData.ProdGrp_LST_CODE || '',
                     Status: categoryData.STATUS,
                 });
                 setStatus(DATA[0].STATUS);
-                setCurrentFGTYPE_KEY(categoryData.FGTYPE_KEY);
-                // ✅ Update URL
-                const newParams = new URLSearchParams();
-                newParams.set("FGTYPE_KEY", categoryData.FGTYPE_KEY);
-                router.replace(`/masters/products/type?${newParams.toString()}`);
+                setCurrentPRODGRP_KEY(categoryData.PRODGRP_KEY);
+                        
+            const newParams = new URLSearchParams();
+            newParams.set("PRODGRP_KEY", categoryData.PRODGRP_KEY);
+            router.replace(`/masters/products/productgrp?${newParams.toString()}`);
             } else {
                 if (isManualSearch) {
-                    toast.error(`${MESSAGE} FOR ${currentFGTYPE_KEY}`);
+                    toast.error(`${MESSAGE} FOR ${currentPRODGRP_KEY}`);
                     setForm({
-                        FGTYPE_KEY: '',
-                        FGTYPE_NAME: '',
-                        FGTYPE_ABRV: '',
-                        FGTYPE_CODE: '',
+                        PRODGRP_KEY: '',
+                        PRODGRP_NAME: '',
+                        PRODGRP_ABRV: '',
+                        PRODGRP_CODE: '',
                         SERIES: '',
-                        FGTYPE_LST_CODE: '',
+                        ProdGrp_LST_CODE: '',
                         Status: 0,
                     });
                 }
@@ -117,29 +114,28 @@ const TypeMst = () => {
         } catch (err) {
             console.error(err);
         }
-    },[CO_ID,router]);
-
-    useEffect(() => {
-        if (FGTYPE_KEY) {
-            setCurrentFGTYPE_KEY(FGTYPE_KEY);
-            fetchRetriveData(FGTYPE_KEY);
-            setMode(FORM_MODE.read);
-        } else {
-            setForm({
-                SearchByCd: '',
+    },[CO_ID,router])
+   
+     useEffect(() => {
+        if (PRODGRP_KEY) {
+            setCurrentPRODGRP_KEY(PRODGRP_KEY);
+          fetchRetriveData(PRODGRP_KEY);
+           setMode(FORM_MODE.read);
+        }else {
+                setForm({
+                     SearchByCd: '',
                 SERIES: '',
-                FGTYPE_CODE: '',
-                FGTYPE_KEY: '',
-                FGTYPE_NAME: '',
-                FGTYPE_ABRV: '',
-                FGTYPE_LST_CODE: '',
-                Status: "1",
-            })
-            setMode(FORM_MODE.read);
-        }
-        setMode(FORM_MODE.read);
-    }, [FGTYPE_KEY,fetchRetriveData]);
-
+                PRODGRP_CODE: '',
+                PRODGRP_KEY: '',  //CODE
+                PRODGRP_NAME: '',  
+                PRODGRP_ABRV: '',
+                ProdGrp_LST_CODE: '',
+                Status: FORM_MODE.add ? "1" : "0",
+                })
+                setMode(FORM_MODE.read);
+            }
+             setMode(FORM_MODE.read);
+      }, [PRODGRP_KEY,fetchRetriveData]);
 
     const handleSubmit = async () => {
         try {
@@ -147,22 +143,21 @@ const TypeMst = () => {
 
             let url;
 
-            if (mode === FORM_MODE.edit && currentFGTYPE_KEY) {
-                url = `Fgtype/UpdateFGTYPE?UserName=${(UserName)}&strCobrid=${COBR_ID}`;
+            if (mode === FORM_MODE.edit && currentPRODGRP_KEY) {
+                url = `ProdGrp/UpdateProdGrp?UserName=${(UserName)}&strCobrid=${COBR_ID}`;
             } else {
-                url = `Fgtype/InsertFGTYPE?UserName=${(UserName)}&strCobrid=${COBR_ID}`;
+                url = `ProdGrp/InsertProdGrp?UserName=${(UserName)}&strCobrid=${COBR_ID}`;
             }
             const payload = {
-                FGTYPE_KEY: form.FGTYPE_KEY,  //CODE
-                FGTYPE_CODE: form.FGTYPE_CODE, //ALT CODE
-                FGTYPE_NAME: form.FGTYPE_NAME, //TYPE NAME
-                FGTYPE_ABRV: form.FGTYPE_ABRV,
+                PRODGRP_KEY: form.PRODGRP_KEY,  //CODE
+                PRODGRP_CODE: form.PRODGRP_CODE, //ALT CODE
+                PRODGRP_NAME: form.PRODGRP_NAME, //PRODGRP NAME
+                PRODGRP_ABRV: form.PRODGRP_ABRV,
                 STATUS: form.Status ? "1" : "0",
             };
 
             let response;
-
-            if (mode == FORM_MODE.edit && currentFGTYPE_KEY) {
+            if (mode == FORM_MODE.edit && currentPRODGRP_KEY) {
                 payload.UPDATED_BY = 1;
                 payload.UPDATED_DT = new Date().toISOString();
                 response = await axiosInstance.post(url, payload);
@@ -181,12 +176,14 @@ const TypeMst = () => {
                 const { STATUS, MESSAGE } = response.data;
                 if (STATUS === 0) {
                     setForm({
-                        FGTYPE_KEY: '',
-                        FGTYPE_NAME: '',
-                        FGTYPE_ABRV: '',
-                        FGTYPE_CODE: '',
+                        PRODGRP_KEY: '',
+                        PRODGRP_NAME: '',
+                        PRODGRP_ABRV: '',
+                        SR_CODE: '',
+                        SEGMENT_KEY: '',
+                        PRODGRP_CODE: '',
                         SERIES: '',
-                        FGTYPE_LST_CODE: '',
+                        ProdGrp_LST_CODE: '',
                         Status: 0,
                     });
                     setMode(FORM_MODE.read);
@@ -199,12 +196,11 @@ const TypeMst = () => {
             console.error("Submit Error:", error);
         }
     };
-
     const handleCancel = async () => {
         if (mode === FORM_MODE.add) {
             await fetchRetriveData(1, "L");
         } else {
-            await fetchRetriveData(currentFGTYPE_KEY, "R");
+            await fetchRetriveData(currentPRODGRP_KEY, "R");
         }
         setMode(FORM_MODE.read);
         setForm((prev) => ({
@@ -215,9 +211,9 @@ const TypeMst = () => {
     const debouncedApiCall = debounce(async (newSeries) => {
         try {
             const response = await axiosInstance.post('GetSeriesSettings/GetSeriesLastNewKey', {
-                "MODULENAME": "FGTYPE",
-                "TBLNAME": "FGTYPE",
-                "FLDNAME": "FGTYPE_KEY",
+                "MODULENAME": "ProdGrp",
+                "TBLNAME": "ProdGrp",
+                "FLDNAME": "ProdGrp_KEY",
                 "NCOLLEN": 5,
                 "CPREFIX": newSeries,
                 "COBR_ID": COBR_ID,
@@ -232,16 +228,16 @@ const TypeMst = () => {
                 const lastId = DATA[0].LASTID;
                 setForm((prevForm) => ({
                     ...prevForm,
-                    FGTYPE_KEY: id,
-                    FGTYPE_LST_CODE: lastId
+                    PRODGRP_KEY: id,
+                    ProdGrp_LST_CODE: lastId
                 }));
             } else {
                 toast.error(`${MESSAGE} for ${newSeries}`, { autoClose: 1000 });
 
                 setForm((prevForm) => ({
                     ...prevForm,
-                    FGTYPE_KEY: '',
-                    FGTYPE_LST_CODE: ''
+                    PRODGRP_KEY: '',
+                    ProdGrp_LST_CODE: ''
                 }));
             }
         } catch (error) {
@@ -256,39 +252,38 @@ const TypeMst = () => {
         if (newSeries.trim() === '') {
             setForm((prevForm) => ({
                 ...prevForm,
-                FGTYPE_KEY: '',
-                FGTYPE_LST_CODE: ''
+                PRODGRP_KEY: '',
+                ProdGrp_LST_CODE: ''
             }));
             return;
         };
         debouncedApiCall(newSeries);
     }
-
     const handleAdd = async () => {
+        console.log("handleAdd called");
         setMode(FORM_MODE.add);
-        setCurrentFGTYPE_KEY(null);
+        setCurrentPRODGRP_KEY(null);
         setForm((prevForm) => ({
             ...prevForm,
-            FGTYPE_NAME: '',
-            FGTYPE_ABRV: '',
+            PRODGRP_NAME: '',
+            PRODGRP_ABRV: '',
             SearchByCd: '',
-            FGTYPE_CODE: '',
+            PRODGRP_CODE: '',
             Status: '1',
         }));
 
-        // Step 1: Fetch CPREFIX value from the first API
         let cprefix = '';
         try {
             const response = await axiosInstance.post('GetSeriesSettings/GetSeriesLastNewKey', {
-                "MODULENAME": "FGTYPE",
-                "TBLNAME": "FGTYPE",
-                "FLDNAME": "FGTYPE_KEY",
+                "MODULENAME": "ProdGrp",
+                "TBLNAME": "ProdGrp",
+                "FLDNAME": "PRODGRP_KEY",
                 "NCOLLEN": 0,
                 "CPREFIX": "",
                 "COBR_ID": COBR_ID,
                 "FCYR_KEY": FCYR_KEY,
                 "TRNSTYPE": "M",
-                "SERIESID": 28,
+                "SERIESID": 162,
                 "FLAG": "Series"
             });
 
@@ -306,9 +301,9 @@ const TypeMst = () => {
         }
         try {
             const response = await axiosInstance.post('GetSeriesSettings/GetSeriesLastNewKey', {
-                "MODULENAME": "FGTYPE",
-                "TBLNAME": "FGTYPE",
-                "FLDNAME": "FGTYPE_KEY",
+                "MODULENAME": "ProdGrp",
+                "TBLNAME": "ProdGrp",
+                "FLDNAME": "PRODGRP_KEY",
                 "NCOLLEN": 5,
                 "CPREFIX": cprefix,
                 "COBR_ID": COBR_ID,
@@ -324,8 +319,8 @@ const TypeMst = () => {
                 const lastId = DATA[0].LASTID;
                 setForm((prevForm) => ({
                     ...prevForm,
-                    FGTYPE_KEY: id,
-                    FGTYPE_LST_CODE: lastId
+                    PRODGRP_KEY: id,
+                    ProdGrp_LST_CODE: lastId
                 }));
             }
         } catch (error) {
@@ -333,15 +328,15 @@ const TypeMst = () => {
         }
     };
     const handlePrevious = async () => {
-        await fetchRetriveData(currentFGTYPE_KEY, "P");
+        await fetchRetriveData(currentPRODGRP_KEY, "P");
         setForm((prev) => ({
             ...prev,
             SearchByCd: ''
         }));
     };
     const handleNext = async () => {
-        if (currentFGTYPE_KEY) {
-            await fetchRetriveData(currentFGTYPE_KEY, "N");
+        if (currentPRODGRP_KEY) {
+            await fetchRetriveData(currentPRODGRP_KEY, "N");
         }
         setForm((prev) => ({
             ...prev,
@@ -358,13 +353,13 @@ const TypeMst = () => {
         setOpenConfirmDialog(false);
         try {
             const UserName = userRole === 'user' ? username : PARTY_KEY;
-            const response = await axiosInstance.post(`Fgtype/DeleteFGTYPE?UserName=${(UserName)}&strCobrid=${COBR_ID}`, {
-                "FGTYPE_KEY": form.FGTYPE_KEY
+            const response = await axiosInstance.post(`ProdGrp/DeleteProdGrp?UserName=${(UserName)}&strCobrid=${COBR_ID}`, {
+                PRODGRP_KEY: form.PRODGRP_KEY
             });
             const { data: { STATUS, MESSAGE } } = response;
             if (STATUS === 0) {
                 toast.success(MESSAGE, { autoClose: 500 });
-                await fetchRetriveData(currentFGTYPE_KEY, 'P');
+                await fetchRetriveData(currentPRODGRP_KEY, 'P');
             } else {
                 toast.error(MESSAGE);
             }
@@ -377,41 +372,40 @@ const TypeMst = () => {
 
     };
 
-    const handlePrint = async () => {
-        try {
-            const response = await axiosInstance.post(`/Fgtype/GetFGTYPEDashBoard?currentPage=1&limit=5000`, {
-                "SearchText": ""
-            });
-            const { data: { STATUS, DATA } } = response; // Extract DATA
-            if (STATUS === 0 && Array.isArray(DATA)) {
-                const formattedData = DATA.map(row => ({
-                    ...row,
-                    STATUS: row.STATUS === "1" ? "Active" : "Inactive"
-                }));
+        const handlePrint = async () => {
+      try {
+          const response = await axiosInstance.post(`/ProdGrp/GetProdGrpDashBoard?currentPage=1&limit=5000`, {
+              "SearchText": ""
+          });
+          const { data: { STATUS, DATA } } = response; // Extract DATA
+          if (STATUS === 0 && Array.isArray(DATA)) {
+              const formattedData = DATA.map(row => ({
+                  ...row,
+                  STATUS: row.STATUS === "1" ? "Active" : "Inactive"
+              }));
+  
+              // Generate the PDF blob
+              const asPdf = pdf(<PrintPrdGrpDt rows={formattedData} />);
+              const blob = await asPdf.toBlob();
+              const url = URL.createObjectURL(blob);
+  
+              // Open the PDF in a new tab
+              const newTab = window.open(url, '_blank');
+              if (newTab) {
+                  newTab.focus();
+              } 
+              setTimeout(() => {
+                  URL.revokeObjectURL(url);
+              }, 100);
+          }
+      } catch (error) {
+          console.error("Print Error:", error);
+      }
+  };
 
-                // Generate the PDF blob
-                const asPdf = pdf(<PrintTypeData rows={formattedData} />);
-                const blob = await asPdf.toBlob();
-                const url = URL.createObjectURL(blob);
-
-                // Open the PDF in a new tab
-                const newTab = window.open(url, '_blank');
-                if (newTab) {
-                    newTab.focus();
-                }
-                setTimeout(() => {
-                    URL.revokeObjectURL(url);
-                }, 100);
-            }
-        } catch (error) {
-            console.error("Print Error:", error);
-        }
-    };
-
-    const handleExit = () => {
-        router.push('/masters/products/type/typetable');
-    };
-      const Buttonsx = {
+    const handleExit = () => { router.push("/masters/products/productgrp/prdgrptable") };
+ 
+  const Buttonsx = {
     backgroundColor: '#39ace2',
     margin: { xs: '0 4px', sm: '0 6px' },
     minWidth: { xs: 40, sm: 46, md: 60 },
@@ -422,7 +416,6 @@ const TypeMst = () => {
     //   boxShadow: "none",
     // }
   };
-
     return (
         <>
             <Box
@@ -432,7 +425,7 @@ const TypeMst = () => {
                     alignItems: 'flex-start',
                     padding: '24px',
                     boxSizing: 'border-box',
-                    marginTop: { xs: "30px", sm: "0px" }
+                    marginTop: { xs: "30px", sm: "0px" } 
                 }}
                 className="form-container"
             >
@@ -444,22 +437,19 @@ const TypeMst = () => {
                     }}
                     className="form_grid"
                 >
-                    {/* Header Section */}
                     <Grid container alignItems="center"
                         justifyContent="space-between" spacing={2} sx={{ marginTop: "30px", marginInline: '20px' }}>
-                        <Grid sx={{
-                            display: 'flex', justifyContent: {
+                        <Grid sx={{ display: 'flex', justifyContent: {
                                 xs: 'center',
                                 sm: 'flex-start'
                             },
-                            width: { xs: '100%', sm: 'auto' },
-                        }}>
+                            width: { xs: '100%', sm: 'auto' }, }}>
                             <Stack direction="row" spacing={1}>
                                 <Button variant="contained" size="small" className="three-d-button-previous"
                                      sx={Buttonsx}
                                     onClick={handlePrevious}
                                     disabled={
-                                        mode !== FORM_MODE.read || !currentFGTYPE_KEY || currentFGTYPE_KEY === 1
+                                        mode !== FORM_MODE.read || !currentPRODGRP_KEY || currentPRODGRP_KEY === 1
                                     }
                                 >
                                     <KeyboardArrowLeftIcon />
@@ -467,23 +457,19 @@ const TypeMst = () => {
                                 <Button variant="contained" size="small" className="three-d-button-next"
                                      sx={Buttonsx}
                                     onClick={handleNext}
-                                    disabled={mode !== FORM_MODE.read || !currentFGTYPE_KEY}
+                                    disabled={mode !== FORM_MODE.read || !currentPRODGRP_KEY}
                                 >
                                     <NavigateNextIcon />
                                 </Button>
                             </Stack>
                         </Grid>
-
-                        {/* Center Header */}
                         <Grid sx={{ flexGrow: 1 }}>
                             <Typography align="center" variant="h5">
-                                Type Master
+                                Product Group Master
                             </Typography>
                         </Grid>
-
-                        {/* Right Buttons */}
                         <Grid>
-                            <Stack direction="row" spacing={{ xs: 0.5, sm: 1 }}>
+                            <Stack direction="row" spacing={{ xs: 0.5, sm: 1 }} >
                                 <CrudButton
                                     mode={mode}
                                     onAdd={handleAdd}
@@ -496,15 +482,9 @@ const TypeMst = () => {
                             </Stack>
                         </Grid>
                     </Grid>
-
-                    {/* Form Fields */}
-                    <Box sx={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: { xs: 1.5, sm: 1.5, md: 2 },
-                        marginInline: { xs: '5%', sm: '10%', md: '25%' },
-                        marginBlock: { xs: '15px', sm: '20px', md: '30px' },
-                    }}>
+                    <Box sx={{ display: 'flex', flexDirection: 'column',    gap: { xs: 1.5, sm: 1.5, md: 2 },
+                            marginInline: { xs: '5%', sm: '10%', md: '25%' },
+                            marginBlock: { xs: '15px', sm: '20px', md: '30px' }, }}>
                         <Box sx={{ display: 'flex', justifyContent: 'end' }}>
                             <TextField
                                 placeholder="Search By Code"
@@ -516,7 +496,7 @@ const TypeMst = () => {
                                         paddingBlock: { xs: '8px', md: '4px' },
                                         paddingLeft: { xs: '10px', md: '8px' },
                                     },
-
+                                     
                                 }}
                                 value={form.SearchByCd}
                                 onChange={(e) => setForm({ ...form, SearchByCd: e.target.value })}
@@ -528,16 +508,11 @@ const TypeMst = () => {
                             />
                         </Box>
 
-                        <Box sx={{
-                            display: 'flex',
-                            flexDirection: { xs: 'column', sm: 'row', md: 'row' },
-                            justifyContent: 'space-between',
-                            gap: { xs: 1, sm: 1, md: 1 },
-                        }}>
+                        <Box sx={{ display: 'flex',   flexDirection: { xs: 'column', sm: 'row', md: 'row' }, justifyContent: 'space-between',  gap: { xs: 1, sm: 1, md: 1 }}}>
                             <TextField
                                 label="Series"
                                 inputRef={SERIESRef}
-                                sx={{ width: { xs: '100%', sm: '48%', md: '25%' } }}
+                                sx={{ width: { xs: '100%', sm: '50%', md: '32%' }}}
                                 disabled={mode === FORM_MODE.read}
                                 fullWidth
                                 className="custom-textfield"
@@ -546,79 +521,62 @@ const TypeMst = () => {
                             />
                             <TextField
                                 label="Last Cd"
-                                sx={{ width: { xs: '100%', sm: '48%', md: '25%' } }}
+                               sx={{ width: { xs: '100%', sm: '50%', md: '32%' }}}
                                 disabled={true}
                                 fullWidth
                                 className="custom-textfield"
-                                value={form.FGTYPE_LST_CODE}
-                                onChange={(e) => setForm({ ...form, FGTYPE_LST_CODE: e.target.value })}
+                                value={form.ProdGrp_LST_CODE}
+                                onChange={(e) => setForm({ ...form, ProdGrp_LST_CODE: e.target.value })}
                             />
                             <TextField
                                 label="Code"
-                                inputRef={FGTYPE_KEYRef}
-                                sx={{ width: { xs: '100%', sm: '48%', md: '25%' } }}
+                                inputRef={PRODGRP_KEYRef}
+                                sx={{ width: { xs: '100%', sm: '50%', md: '32%' }}}
                                 disabled={mode === FORM_MODE.read}
                                 className="custom-textfield"
-                                value={form.FGTYPE_KEY}
-                                onChange={(e) => setForm({ ...form, FGTYPE_KEY: e.target.value })}
-                            />
-                            <TextField
-                                label="Alt Code"
-                                inputRef={FGTYPE_CODERef}
-                                sx={{ width: { xs: '100%', sm: '48%', md: '25%' } }}
-                                disabled={mode === FORM_MODE.read}
-                                fullWidth
-                                className="custom-textfield"
-                                value={form.FGTYPE_CODE}
-                                onChange={(e) => setForm({ ...form, FGTYPE_CODE: e.target.value })}
+                                value={form.PRODGRP_KEY}
+                                onChange={(e) => setForm({ ...form, PRODGRP_KEY: e.target.value })}
                             />
 
                         </Box>
 
-                        <Box sx={{
-                            display: 'flex',
-                            flexDirection: { xs: 'column', sm: 'row', md: 'row' },
-                            gap: { xs: 1, sm: 1.5, md: 2 },
-                            alignItems: {
-                                xs: 'stretch', sm:
-
-                                    'center', md: 'center'
-                            },
-                        }}>
+                        <Box  sx={{
+                                display: 'flex',
+                                flexDirection: { xs: 'column', sm: 'row', md: 'row' },
+                                justifyContent: 'space-between',
+                                gap: { xs: 1, sm: 1, md: 1 },
+                            }}>
 
                             <TextField
-                                inputRef={FGTYPE_NAMERef}
-                                label={
-                                    <span>
-                                        Name<span style={{ color: "red" }}>*</span>
-                                    </span>
-                                }
+                                inputRef={ProdGrp_NAMERef}
+                                label=" Name"
+                                // label={
+                                //     <span>
+                                //         Name<span style={{ color: "red" }}>*</span>
+                                //     </span>
+                                // }
                                 sx={{ width: '100%' }}
                                 disabled={mode === FORM_MODE.read}
                                 className="custom-textfield"
-                                value={form.FGTYPE_NAME}
-                                onChange={(e) => setForm({ ...form, FGTYPE_NAME: e.target.value })}
+                                value={form.PRODGRP_NAME}
+                                onChange={(e) => setForm({ ...form, PRODGRP_NAME: e.target.value })}
                             />
                         </Box>
-                        <Box sx={{
-                            display: 'flex',
-                            flexDirection: { xs: 'column', sm: 'row', md: 'row' },
-                            gap: { xs: 1, sm: 1.5, md: 2 },
-                            alignItems: {
-                                xs: 'stretch', sm:
-
-                                    'center', md: 'center'
-                            },
-                        }}>
+                        <Box  sx={{
+                                display: 'flex',
+                                flexDirection: { xs: 'column', sm: 'row', md: 'row' },
+                                justifyContent: 'space-between',
+                                gap: { xs: 1, sm: 1, md: 1 },
+                            }}>
 
                             <TextField
                                 label="Abbreviation"
-                                inputRef={FGTYPE_ABRVRef}
-                                sx={{ width: { xs: '100%', sm: '40%', md: '30%' } }}
+                                inputRef={PRODGRP_ABRVRef}
+                                 sx={{ width: { xs: '100%', sm: '40%', md: '30%' }}}
                                 disabled={mode === FORM_MODE.read}
                                 className="custom-textfield"
-                                value={form.FGTYPE_ABRV}
-                                onChange={(e) => setForm({ ...form, FGTYPE_ABRV: e.target.value })}
+                                value={form.PRODGRP_ABRV}
+                                onChange={(e) => setForm({ ...form, PRODGRP_ABRV: e.target.value })}
                             />
 
                             <FormControlLabel
@@ -639,12 +597,12 @@ const TypeMst = () => {
                         </Box>
                     </Box>
                     {/* Submit / Cancel Buttons */}
-                    <Grid item xs={12} className="form_button" sx={{
-                        display: 'flex',
-                        justifyContent: { xs: 'center', sm: 'flex-end' },
-                        gap: { xs: 1, sm: 1.5 },
-                        padding: { xs: 1, sm: 2, md: 3 },
-                    }} >
+                    <Grid item xs={12} className="form_button"   sx={{
+                            display: 'flex',
+                            justifyContent: { xs: 'center', sm: 'flex-end' },
+                            gap: { xs: 1, sm: 1.5 },
+                            padding: { xs: 1, sm: 2, md: 3 },
+                        }}>
                         {mode === FORM_MODE.read && (
                             <>
                                 <Button
@@ -701,29 +659,24 @@ const TypeMst = () => {
             <Dialog
                 open={openConfirmDialog}
                 onClose={handleCloseConfirmDialog}
-                maxWidth="xs"
                 aria-labelledby="alert-dialog-title"
                 aria-describedby="alert-dialog-description"
             >
-                <DialogTitle id="alert-dialog-title"
-                    sx={{ fontSize: { xs: '1rem', sm: '1.25rem' } }}
-                >{"Confirm Deletion"}</DialogTitle>
+                <DialogTitle id="alert-dialog-title">{"Confirm Deletion"}</DialogTitle>
                 <DialogContent>
-                    <DialogContentText id="alert-dialog-description"
-                        sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}
-                    >
+                    <DialogContentText id="alert-dialog-description">
                         Are you sure you want to delete this record?
                     </DialogContentText>
                 </DialogContent>
-                <DialogActions sx={{ justifyContent: 'center', gap: { xs: 0.5, sm: 1 } }}>
+                <DialogActions>
                     <Button
                         sx={{
                             backgroundColor: "#39ace2",
                             color: "white",
-                            "&:hover": { backgroundColor: "#2199d6", color: "white" },
-                            minWidth: { xs: 80, sm: 100 },
-                            fontSize: { xs: '0.75rem', sm: '0.875rem' },
-
+                            "&:hover": {
+                                backgroundColor: "#2199d6",
+                                color: "white",
+                            },
                         }}
                         onClick={handleConfirmDelete}
                     >
@@ -747,4 +700,4 @@ const TypeMst = () => {
         </>
     );
 };
-export default TypeMst;
+export default ProductGrp;

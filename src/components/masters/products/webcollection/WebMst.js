@@ -1,5 +1,5 @@
 'use client'
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState ,useCallback} from 'react';
 import {
     Box, Grid, TextField, Typography, Button, Stack, FormControlLabel, Checkbox, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions,
 } from '@mui/material';
@@ -15,16 +15,19 @@ import debounce from 'lodash.debounce';
 import axiosInstance from '@/lib/axios';
 import CustomAutocomplete from '@/GlobalFunction/CustomAutoComplete/CustomAutoComplete';
 import PrintWebDt from './PrintWebDt';
+import { useSearchParams } from 'next/navigation';
 
 const FORM_MODE = getFormMode();
 const WebMst = () => {
- const router = useRouter();
+    const router = useRouter();
+     const searchParams = useSearchParams();
+           const WEBCOLLECTION_KEY = searchParams.get('WEBCOLLECTION_KEY');
     const [currentWeb_KEY, setCurrentWeb_KEY] = useState(null);
     const [form, setForm] = useState({
         SearchByCd: '',
         SERIES: '',
         WEBCOLLECTION_KEY: '',
-        WEBCOLLECTIONCAT_KEY:'',
+        WEBCOLLECTIONCAT_KEY: '',
         WEBCOLLECTION_NAME: '',
         WEBCOLLECTION_ABRV: '',
         WEBCOLLECTION_LST_CODE: '',
@@ -39,12 +42,12 @@ const WebMst = () => {
         currentWeb_KEY ? FORM_MODE.read : FORM_MODE.add
     });
     const [Status, setStatus] = useState("1");
-    // const FCYR_KEY = localStorage.getItem('FCYR_KEY');
-    // const CO_ID = localStorage.getItem('CO_ID');
-    // const userRole = localStorage.getItem('userRole');
-    // const username = localStorage.getItem('USER_NAME');
-    // const PARTY_KEY = localStorage.getItem('PARTY_KEY');
-    // const COBR_ID = localStorage.getItem('COBR_ID');
+    const FCYR_KEY = localStorage.getItem('FCYR_KEY');
+    const CO_ID = localStorage.getItem('CO_ID');
+    const userRole = localStorage.getItem('userRole');
+    const username = localStorage.getItem('USER_NAME');
+    const PARTY_KEY = localStorage.getItem('PARTY_KEY');
+    const COBR_ID = localStorage.getItem('COBR_ID');
 
     const handleChangeStatus = (event) => {
         const updatedStatus = event.target.checked ? "1" : "0";
@@ -54,7 +57,7 @@ const WebMst = () => {
             Status: updatedStatus
         }))
     };
-    const fetchRetriveData = async (currentWeb_KEY, flag = "R", isManualSearch = false) => {
+    const fetchRetriveData = useCallback(async (currentWeb_KEY, flag = "R", isManualSearch = false) => {
         try {
             const response = await axiosInstance.post('WEBCOLLECTION/RetriveWEBCOLLECTION', {
                 "FLAG": flag,
@@ -71,7 +74,7 @@ const WebMst = () => {
                 setForm({
                     WEBCOLLECTION_KEY: webData.WEBCOLLECTION_KEY,
                     WEBCOLLECTION_NAME: webData.WEBCOLLECTION_NAME,
-                    WEBCOLLECTIONCAT_KEY:webData.WEBCOLLECTIONCAT_KEY,
+                    WEBCOLLECTIONCAT_KEY: webData.WEBCOLLECTIONCAT_KEY,
                     WEBCOLLECTION_ABRV: webData.WEBCOLLECTION_ABRV || '',
                     SERIES: webData.SERIES || '',
                     WEBCOLLECTION_LST_CODE: webData.WEBCOLLECTION_LST_CODE || '',
@@ -79,13 +82,18 @@ const WebMst = () => {
                 });
                 setStatus(DATA[0].STATUS);
                 setCurrentWeb_KEY(webData.WEBCOLLECTION_KEY);
+
+                                   // ✅ Update URL
+            const newParams = new URLSearchParams();
+            newParams.set("WEBCOLLECTION_KEY", categoryData.WEBCOLLECTION_KEY);
+            router.replace(`/masters/products/webcollection?${newParams.toString()}`);
             } else {
                 if (isManualSearch) {
                     toast.error(`${MESSAGE} FOR ${currentWeb_KEY}`);
                     setForm({
                         WEBCOLLECTION_KEY: '',
                         WEBCOLLECTION_NAME: '',
-                        WEBCOLLECTIONCAT_KEY:'',
+                        WEBCOLLECTIONCAT_KEY: '',
                         WEBCOLLECTION_ABRV: '',
                         SERIES: '',
                         WEBCOLLECTION_LST_CODE: '',
@@ -96,26 +104,27 @@ const WebMst = () => {
         } catch (err) {
             console.error(err);
         }
-    };
-    // useEffect(() => {
-    //     if (location.state && location.state.WEBCOLLECTION_KEY) {
-    //         setCurrentWeb_KEY(location.state.WEBCOLLECTION_KEY);
-    //         fetchRetriveData(location.state.WEBCOLLECTION_KEY);
-    //         setMode(FORM_MODE.read);
-    //     } else {
-    //         setForm({
-    //             SearchByCd: '',
-    //             SERIES: '',
-    //             WEBCOLLECTION_KEY: '',
-    //             WEBCOLLECTION_NAME: '',
-    //             WEBCOLLECTIONCAT_KEY:'',
-    //             WEBCOLLECTION_ABRV: '',
-    //             WEBCOLLECTION_LST_CODE: '',
-    //             Status: "1",
-    //         })
-    //         setMode(FORM_MODE.read);
-    //     }
-    // }, [location]);
+    },[CO_ID,router]);
+    useEffect(() => {
+        if (WEBCOLLECTION_KEY) {
+            setCurrentWeb_KEY(WEBCOLLECTION_KEY);
+            fetchRetriveData(WEBCOLLECTION_KEY);
+            setMode(FORM_MODE.read);
+        } else {
+            setForm({
+                SearchByCd: '',
+                SERIES: '',
+                WEBCOLLECTION_KEY: '',
+                WEBCOLLECTION_NAME: '',
+                WEBCOLLECTIONCAT_KEY: '',
+                WEBCOLLECTION_ABRV: '',
+                WEBCOLLECTION_LST_CODE: '',
+                Status: "1",
+            })
+            setMode(FORM_MODE.read);
+        }
+        setMode(FORM_MODE.read);
+    }, [WEBCOLLECTION_KEY,fetchRetriveData]);
     const handleSubmit = async () => {
         try {
             const UserName = userRole === 'user' ? username : PARTY_KEY;
@@ -129,7 +138,7 @@ const WebMst = () => {
                 WEBCOLLECTION_KEY: form.WEBCOLLECTION_KEY,
                 WEBCOLLECTION_NAME: form.WEBCOLLECTION_NAME,
                 WEBCOLLECTION_ABRV: form.WEBCOLLECTION_ABRV,
-                WEBCOLLECTIONCAT_KEY:form.WEBCOLLECTIONCAT_KEY,
+                WEBCOLLECTIONCAT_KEY: form.WEBCOLLECTIONCAT_KEY,
                 WEBCOLLECTIONCAT_KEY: form.WEBCOLLECTIONCAT_KEY || "",
                 STATUS: form.Status ? "1" : "0",
             };
@@ -156,7 +165,7 @@ const WebMst = () => {
                         WEBCOLLECTION_KEY: '',
                         WEBCOLLECTION_NAME: '',
                         WEBCOLLECTION_ABRV: '',
-                        WEBCOLLECTIONCAT_KEY:'',
+                        WEBCOLLECTIONCAT_KEY: '',
                         SERIES: '',
                         WEBCOLLECTION_LST_CODE: '',
                         Status: 0,
@@ -241,7 +250,7 @@ const WebMst = () => {
             ...prevForm,
             WEBCOLLECTION_NAME: '',
             WEBCOLLECTION_ABRV: '',
-            WEBCOLLECTIONCAT_KEY:'',
+            WEBCOLLECTIONCAT_KEY: '',
             SearchByCd: '',
             Status: '1',
         }));
@@ -362,8 +371,19 @@ const WebMst = () => {
         }
     };
 
-    const handleExit = () => { 
-        // router.push('/masters/products/product-grp-table');
+    const handleExit = () => {
+        router.push('/masters/products/webcollection/webtable');
+    };
+    const Buttonsx = {
+        backgroundColor: '#39ace2',
+        margin: { xs: '0 4px', sm: '0 6px' },
+        minWidth: { xs: 40, sm: 46, md: 60 },
+        height: { xs: 40, sm: 46, md: 27 },
+        // "&:disabled": {
+        //   backgroundColor: "rgba(0, 0, 0, 0.12)",
+        //   color: "rgba(0, 0, 0, 0.26)",
+        //   boxShadow: "none",
+        // }
     };
 
     return (
@@ -383,9 +403,7 @@ const WebMst = () => {
                         }}>
                             <Stack direction="row" spacing={1}>
                                 <Button variant="contained" size="small" className="three-d-button-previous"
-                                    sx={{
-                                        backgroundColor: "#635BFF"
-                                    }}
+                                    sx={Buttonsx}
                                     onClick={handlePrevious}
                                     disabled={
                                         mode !== FORM_MODE.read || !currentWeb_KEY || currentWeb_KEY === 1
@@ -394,9 +412,7 @@ const WebMst = () => {
                                     <KeyboardArrowLeftIcon />
                                 </Button>
                                 <Button variant="contained" size="small" className="three-d-button-next"
-                                    sx={{
-                                        backgroundColor: "#635BFF"
-                                    }}
+                                    sx={Buttonsx}
                                     onClick={handleNext}
                                     disabled={mode !== FORM_MODE.read || !currentWeb_KEY}
                                 >
@@ -510,219 +526,219 @@ const WebMst = () => {
                                 id="webcollection-key-autocomplete"
                                 disabled={true}
                                 label="Category"
-                                 name="WEBCOLLECTIONCAT_KEY"
+                                name="WEBCOLLECTIONCAT_KEY"
                                 // options={termsTypeOptions}
-                                 value={form.WEBCOLLECTIONCAT_KEY}
-                                 onChange={(value) => setForm({ ...form, WEBCOLLECTIONCAT_KEY: value })}
+                                value={form.WEBCOLLECTIONCAT_KEY}
+                                onChange={(value) => setForm({ ...form, WEBCOLLECTIONCAT_KEY: value })}
                                 sx={{ width: { xs: '100%', sm: '48%', md: '50%' } }}
                             />
-                            </Box>
-                            <Box
-                                sx={{
-                                    display: 'flex',
-                                    flexDirection: { xs: 'column', sm: 'row', md: 'row' },
-                                    justifyContent: 'space-between',
-                                    gap: { xs: 1, sm: 1, md: 1 },
-                                }}
-                            >
-                                <TextField
-                                    inputRef={WEBCOLLECTION_NAMERef}
-                                    label="Name"
-                                    sx={{
-                                        width: '100%'
-                                    }}
-                                    disabled={mode === FORM_MODE.read}
-                                    className="custom-textfield"
-                                    value={form.WEBCOLLECTION_NAME}
-                                    onChange={(e) => setForm({ ...form, WEBCOLLECTION_NAME: e.target.value })}
-                                />
-                            </Box>
-                            <Box
-                                sx={{
-                                    display: 'flex',
-                                    flexDirection: { xs: 'column', sm: 'row', md: 'row' },
-                                    justifyContent: 'space-between',
-                                    gap: { xs: 1, sm: 1, md: 1 },
-                                }}
-                            >
-                                <TextField
-                                    label="Full Name"
-                                    sx={{
-                                        width: '100%'
-                                    }}
-                                    disabled={mode === FORM_MODE.read}
-                                    className="custom-textfield"
-                                    value={form.WEBCOLLECTION_FullNAME}
-                                    onChange={(e) => setForm({ ...form, WEBCOLLECTION_FullNAME: e.target.value })}
-                                />
-                            </Box>
-
-                            <Box
-                                sx={{
-                                    display: 'flex',
-                                    flexDirection: { xs: 'column', sm: 'row', md: 'row' },
-                                    gap: { xs: 1, sm: 1.5, md: 2 },
-                                    alignItems: {
-                                        xs: 'stretch', sm:
-                                            'center', md: 'center'
-                                    },
-                                }}
-                            >
-                                <TextField
-                                    label="Abbreviation"
-                                    inputRef={WEBCOLLECTION_ABRVRef}
-                                    sx={{
-                                        width: { xs: '100%', sm: '40%', md: '30%' }
-                                    }}
-                                    disabled={mode === FORM_MODE.read}
-                                    className="custom-textfield"
-                                    value={form.WEBCOLLECTION_ABRV}
-                                    onChange={(e) => setForm({ ...form, WEBCOLLECTION_ABRV: e.target.value })}
-                                />
-                                <FormControlLabel
-                                    control={
-                                        <Checkbox
-                                            disabled={mode === FORM_MODE.read}
-                                            checked={Status == '1'}
-                                            onChange={handleChangeStatus}
-                                            sx={{
-                                                '&.Mui-checked': {
-                                                    color: '#39ace2',
-                                                },
-                                            }}
-                                        />
-                                    }
-                                    label="Active"
-                                />
-                            </Box>
                         </Box>
-
-                        <Grid
-                            item
-                            xs={12}
-                            className="form_button"
+                        <Box
                             sx={{
                                 display: 'flex',
-                                justifyContent: { xs: 'center', sm: 'flex-end' },
-                                gap: { xs: 1, sm: 1.5 },
-                                padding: { xs: 1, sm: 2, md: 3 },
+                                flexDirection: { xs: 'column', sm: 'row', md: 'row' },
+                                justifyContent: 'space-between',
+                                gap: { xs: 1, sm: 1, md: 1 },
                             }}
                         >
-                            {mode === FORM_MODE.read && (
-                                <>
-                                    <Button
-                                        variant="contained"
-                                        sx={{
-                                            mr: { xs: 0, sm: 1 },
-                                            mb: { xs: 1, sm: 0 },
-                                            background: "linear-gradient(290deg, #d4d4d4, #ffffff)",
-                                            minWidth: { xs: 100, sm: 100 },
-                                            fontSize: { xs: '0.75rem', sm: '0.875rem' },
-                                        }}
-                                        onClick={handleAdd}
-                                        disabled
-                                    >
-                                        Submit
-                                    </Button>
-                                    <Button
-                                        variant="contained"
-                                        sx={{
-                                            mr: { xs: 0, sm: 1 },
-                                            mb: { xs: 1, sm: 0 },
-                                            background: "linear-gradient(290deg, #a7c5e9, #ffffff)",
-                                            minWidth: { xs: 100, sm: 100 },
-                                            fontSize: { xs: '0.75rem', sm: '0.875rem' },
-                                        }}
-                                        onClick={handleEdit}
-                                        disabled
-                                    >
-                                        Cancel
-                                    </Button>
-                                </>
-                            )}
-                            {(mode === FORM_MODE.edit || mode === FORM_MODE.add) && (
-                                <>
-                                    <Button
-                                        variant="contained"
-                                        sx={{
-                                            mr: { xs: 0, sm: 1 },
-                                            mb: { xs: 1, sm: 0 },
-                                            background: "linear-gradient(290deg, #b9d0e9, #e9f2fa)",
-                                            minWidth: { xs: 100, sm: 100 },
-                                            fontSize: { xs: '0.75rem', sm: '0.875rem' },
-                                        }}
-                                        onClick={handleSubmit}
-                                    >
-                                        Submit
-                                    </Button>
-                                    <Button
-                                        variant="contained"
-                                        sx={{
-                                            mr: { xs: 0, sm: 1 },
-                                            mb: { xs: 1, sm: 0 },
-                                            background: "linear-gradient(290deg, #b9d0e9, #e9f2fa)",
-                                            minWidth: { xs: 100, sm: 100 },
-                                            fontSize: { xs: '0.75rem', sm: '0.875rem' },
-                                        }}
-                                        onClick={handleCancel}
-                                    >
-                                        Cancel
-                                    </Button>
-                                </>
-                            )}
-                        </Grid>
-                    </Box>
-                </Box>
+                            <TextField
+                                inputRef={WEBCOLLECTION_NAMERef}
+                                label="Name"
+                                sx={{
+                                    width: '100%'
+                                }}
+                                disabled={mode === FORM_MODE.read}
+                                className="custom-textfield"
+                                value={form.WEBCOLLECTION_NAME}
+                                onChange={(e) => setForm({ ...form, WEBCOLLECTION_NAME: e.target.value })}
+                            />
+                        </Box>
+                        <Box
+                            sx={{
+                                display: 'flex',
+                                flexDirection: { xs: 'column', sm: 'row', md: 'row' },
+                                justifyContent: 'space-between',
+                                gap: { xs: 1, sm: 1, md: 1 },
+                            }}
+                        >
+                            <TextField
+                                label="Full Name"
+                                sx={{
+                                    width: '100%'
+                                }}
+                                disabled={mode === FORM_MODE.read}
+                                className="custom-textfield"
+                                value={form.WEBCOLLECTION_FullNAME}
+                                onChange={(e) => setForm({ ...form, WEBCOLLECTION_FullNAME: e.target.value })}
+                            />
+                        </Box>
 
-                <Dialog
-                    open={openConfirmDialog}
-                    onClose={handleCloseConfirmDialog}
-                    maxWidth="xs"
-                    aria-labelledby="alert-dialog-title"
-                    aria-describedby="alert-dialog-description"
-                >
-                    <DialogTitle
-                        id="alert-dialog-title"
-                        sx={{ fontSize: { xs: '1rem', sm: '1.25rem' } }}
+                        <Box
+                            sx={{
+                                display: 'flex',
+                                flexDirection: { xs: 'column', sm: 'row', md: 'row' },
+                                gap: { xs: 1, sm: 1.5, md: 2 },
+                                alignItems: {
+                                    xs: 'stretch', sm:
+                                        'center', md: 'center'
+                                },
+                            }}
+                        >
+                            <TextField
+                                label="Abbreviation"
+                                inputRef={WEBCOLLECTION_ABRVRef}
+                                sx={{
+                                    width: { xs: '100%', sm: '40%', md: '30%' }
+                                }}
+                                disabled={mode === FORM_MODE.read}
+                                className="custom-textfield"
+                                value={form.WEBCOLLECTION_ABRV}
+                                onChange={(e) => setForm({ ...form, WEBCOLLECTION_ABRV: e.target.value })}
+                            />
+                            <FormControlLabel
+                                control={
+                                    <Checkbox
+                                        disabled={mode === FORM_MODE.read}
+                                        checked={Status == '1'}
+                                        onChange={handleChangeStatus}
+                                        sx={{
+                                            '&.Mui-checked': {
+                                                color: '#39ace2',
+                                            },
+                                        }}
+                                    />
+                                }
+                                label="Active"
+                            />
+                        </Box>
+                    </Box>
+
+                    <Grid
+                        item
+                        xs={12}
+                        className="form_button"
+                        sx={{
+                            display: 'flex',
+                            justifyContent: { xs: 'center', sm: 'flex-end' },
+                            gap: { xs: 1, sm: 1.5 },
+                            padding: { xs: 1, sm: 2, md: 3 },
+                        }}
                     >
-                        Confirm Deletion
-                    </DialogTitle>
-                    <DialogContent>
-                        <DialogContentText
-                            id="alert-dialog-description"
-                            sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}
-                        >
-                            Are you sure you want to delete this record?
-                        </DialogContentText>
-                    </DialogContent>
-                    <DialogActions sx={{ justifyContent: 'center', gap: { xs: 0.5, sm: 1 } }}>
-                        <Button
-                            sx={{
-                                backgroundColor: "#39ace2",
-                                color: "white",
-                                "&:hover": { backgroundColor: "#2199d6", color: "white" },
-                                minWidth: { xs: 80, sm: 100 },
-                                fontSize: { xs: '0.75rem', sm: '0.875rem' },
-                            }}
-                            onClick={handleConfirmDelete}
-                        >
-                            Yes
-                        </Button>
-                        <Button
-                            sx={{
-                                backgroundColor: "#39ace2",
-                                color: "white",
-                                "&:hover": { backgroundColor: "#2199d6", color: "white" },
-                                minWidth: { xs: 80, sm: 100 },
-                                fontSize: { xs: '0.75rem', sm: '0.875rem' },
-                            }}
-                            onClick={handleCloseConfirmDialog}
-                        >
-                            No
-                        </Button>
-                    </DialogActions>
-                </Dialog>
-            </>
-            );
+                        {mode === FORM_MODE.read && (
+                            <>
+                                <Button
+                                    variant="contained"
+                                    sx={{
+                                        mr: { xs: 0, sm: 1 },
+                                        mb: { xs: 1, sm: 0 },
+                                        background: "linear-gradient(290deg, #d4d4d4, #ffffff)",
+                                        minWidth: { xs: 100, sm: 100 },
+                                        fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                                    }}
+                                    onClick={handleAdd}
+                                    disabled
+                                >
+                                    Submit
+                                </Button>
+                                <Button
+                                    variant="contained"
+                                    sx={{
+                                        mr: { xs: 0, sm: 1 },
+                                        mb: { xs: 1, sm: 0 },
+                                        background: "linear-gradient(290deg, #a7c5e9, #ffffff)",
+                                        minWidth: { xs: 100, sm: 100 },
+                                        fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                                    }}
+                                    onClick={handleEdit}
+                                    disabled
+                                >
+                                    Cancel
+                                </Button>
+                            </>
+                        )}
+                        {(mode === FORM_MODE.edit || mode === FORM_MODE.add) && (
+                            <>
+                                <Button
+                                    variant="contained"
+                                    sx={{
+                                        mr: { xs: 0, sm: 1 },
+                                        mb: { xs: 1, sm: 0 },
+                                        background: "linear-gradient(290deg, #b9d0e9, #e9f2fa)",
+                                        minWidth: { xs: 100, sm: 100 },
+                                        fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                                    }}
+                                    onClick={handleSubmit}
+                                >
+                                    Submit
+                                </Button>
+                                <Button
+                                    variant="contained"
+                                    sx={{
+                                        mr: { xs: 0, sm: 1 },
+                                        mb: { xs: 1, sm: 0 },
+                                        background: "linear-gradient(290deg, #b9d0e9, #e9f2fa)",
+                                        minWidth: { xs: 100, sm: 100 },
+                                        fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                                    }}
+                                    onClick={handleCancel}
+                                >
+                                    Cancel
+                                </Button>
+                            </>
+                        )}
+                    </Grid>
+                </Box>
+            </Box>
+
+            <Dialog
+                open={openConfirmDialog}
+                onClose={handleCloseConfirmDialog}
+                maxWidth="xs"
+                aria-labelledby="alert-dialog-title"
+                aria-describedby="alert-dialog-description"
+            >
+                <DialogTitle
+                    id="alert-dialog-title"
+                    sx={{ fontSize: { xs: '1rem', sm: '1.25rem' } }}
+                >
+                    Confirm Deletion
+                </DialogTitle>
+                <DialogContent>
+                    <DialogContentText
+                        id="alert-dialog-description"
+                        sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}
+                    >
+                        Are you sure you want to delete this record?
+                    </DialogContentText>
+                </DialogContent>
+                <DialogActions sx={{ justifyContent: 'center', gap: { xs: 0.5, sm: 1 } }}>
+                    <Button
+                        sx={{
+                            backgroundColor: "#39ace2",
+                            color: "white",
+                            "&:hover": { backgroundColor: "#2199d6", color: "white" },
+                            minWidth: { xs: 80, sm: 100 },
+                            fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                        }}
+                        onClick={handleConfirmDelete}
+                    >
+                        Yes
+                    </Button>
+                    <Button
+                        sx={{
+                            backgroundColor: "#39ace2",
+                            color: "white",
+                            "&:hover": { backgroundColor: "#2199d6", color: "white" },
+                            minWidth: { xs: 80, sm: 100 },
+                            fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                        }}
+                        onClick={handleCloseConfirmDialog}
+                    >
+                        No
+                    </Button>
+                </DialogActions>
+            </Dialog>
+        </>
+    );
 };
-            export default WebMst;
+export default WebMst;

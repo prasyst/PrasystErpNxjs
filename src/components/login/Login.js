@@ -264,7 +264,7 @@ useEffect(() => {
         alignItems: 'center',
         justifyContent: 'center',
         p: isMobile ? 2 : 0,
-        position: 'relative',
+        position: 'relative', 
       }}
     >
       <ToastContainer />
