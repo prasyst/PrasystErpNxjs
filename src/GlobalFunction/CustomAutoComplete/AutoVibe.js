@@ -48,20 +48,6 @@ const AutoVibe = React.forwardRef(
               helperText={helperText}
               inputRef={ref}
               onKeyDown={onKeyDown}
-            //   InputProps={{
-            //     ...params.InputProps,
-            //     startAdornment: (
-            //       <>
-            //         {params.InputProps.startAdornment}
-            //       </>
-            //     ),
-            //     endAdornment: (
-            //       <InputAdornment position="end">
-            //         {endAdornment}
-            //         {params.InputProps.endAdornment}
-            //       </InputAdornment>
-            //     ),
-            //   }}
               fullWidth
             />
           )}
@@ -71,5 +57,7 @@ const AutoVibe = React.forwardRef(
     );
   }
 );
+
+AutoVibe.displayName = "AutoVibe";
 
 export default AutoVibe;

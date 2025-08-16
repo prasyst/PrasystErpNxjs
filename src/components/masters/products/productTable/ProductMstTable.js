@@ -6,10 +6,12 @@ import {
 } from '@mui/material';
 import AddIcon from "@mui/icons-material/Add";
 import ReusableHandsontable from '../../../datatable/ReusableHandsontable';
+import { useRouter } from 'next/navigation';
 
 const handsontableColumns = [
   { field: "FGPRD_NAME", headerName: "Product", width: "16%", type: "text" },
   { field: "FGPRD_ABRV", headerName: "FGPRDABRV", width: "16%", type: "text" },
+  // { field: "FGPRD_KEY", headerName: "FGPRD_KEY", width: "16%", type: "text" },
   { field: "FGMDW_RATE", headerName: "FGMDWRATE", width: "15%", type: "numeric" },
   { field: "FGCAT_NAME", headerName: "Category", width: "15%", type: "text" },
   { field: "UNIT_NAME", headerName: "UNIT", width: "15%", type: "text" },
@@ -20,6 +22,7 @@ export default function ProductMstTable() {
 
   const [isLoading, setIsLoading] = useState(true);
   const [rows, setRows] = useState([]);
+  const router = useRouter();
 
   useEffect(() => {
     fetchTableData();
@@ -33,8 +36,7 @@ export default function ProductMstTable() {
       });
       const { data: { STATUS, DATA } } = response;
       if (STATUS === 0 && Array.isArray(DATA)) {
-        const formattedData = DATA.map((row, index) => ({
-          id: index,
+        const formattedData = DATA.map((row) => ({
           ...row,
         }));
         setRows(formattedData);
@@ -54,14 +56,16 @@ export default function ProductMstTable() {
 
   const handleAfterSelection = (row, column, row2, column2) => {
     console.log('Selection changed:', { row, column, row2, column2 });
+    console.log('Double-clicked row:', row);
+    
+    router.push(`/masters/products/product?FGPRD_KEY=${encodeURIComponent(row.FGPRD_KEY)}&mode=view`);
+    console.log('Double-clicked row12345:', row.FGPRD_KEY);
   };
 
-  const handleRowDoubleClick = (row) => {
-    console.log("Row double-clicked:", row);
-
-    navigate("/masters/productMaster", {
-      state: { FGPRD_KEY: row.FGPRD_KEY, mode: "view" },
-    });
+  const handleNew = () => {
+    
+    router.push(`/masters/products/product`);
+    
   };
 
   const addButtonStyles = {
@@ -88,6 +92,7 @@ export default function ProductMstTable() {
             variant="contained"
             size="small"
             sx={addButtonStyles}
+            onClick={handleNew}
             startIcon={<AddIcon />}
           >
             New
@@ -113,7 +118,6 @@ export default function ProductMstTable() {
               colHeaders={true}
               rowHeaders={true}
               afterChange={handleAfterChange}
-              handleRowDoubleClick={handleRowDoubleClick}
               afterSelection={handleAfterSelection}
               readOnly={true}
               customSettings={{
