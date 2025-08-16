@@ -45,7 +45,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
   };
 
   const menuItems = [
-    { name: 'Dashboard', icon: MdDashboard, path: '/' },
+    { name: 'Dashboard', icon: MdDashboard, path: '/dashboard' },
 { name: 'Stock Enquiry', icon: MdSearch, path: '/dashboard/stock-enquiry-table' },
     {
       name: 'Masters',
@@ -210,8 +210,8 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
       return (
         <li key={item.name + index} style={{ marginBottom: '0.5rem', paddingLeft: `${level * 12}px` }}>
           {item.path && !hasChildren ? (
-            <Link href={item.path} passHref legacyBehavior>
-              <a style={{ textDecoration: 'none', color: 'inherit' }}>{menuContent}</a>
+            <Link href={item.path} style={{ textDecoration: 'none', color: 'inherit' }}>
+              {menuContent}
             </Link>
           ) : (
             menuContent

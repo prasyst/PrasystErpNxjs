@@ -3,11 +3,24 @@
 import { useState } from 'react';
 import { useTheme } from '../../../src/app/context/ThemeContext';
 import { IoIosSearch } from "react-icons/io";
+import { useRouter } from "next/navigation";
 
 const Header = ({ isSidebarCollapsed }) => {
   const [isSearchExpanded, setIsSearchExpanded] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const { theme, toggleTheme } = useTheme();
+  const router=useRouter();
+
+    const handleLogout = () => {
+    localStorage.removeItem('authenticated');
+    localStorage.removeItem('userRole');
+    localStorage.removeItem('CO_ID');
+    localStorage.removeItem('COBR_ID');
+    localStorage.removeItem('PARTY_NAME');
+    localStorage.removeItem('PARTY_KEY');
+    localStorage.removeItem('FCYR_KEY');
+    router.push("/login");
+  };
 
   return (
     <header 
@@ -161,6 +174,7 @@ const Header = ({ isSidebarCollapsed }) => {
                   color: 'var(--text-color)',
                   transition: 'background-color 0.2s',
                 }} 
+                onClick={handleLogout}
                   className="hover:bg-opacity-10 hover:bg-white"
                 >
                   Logout
