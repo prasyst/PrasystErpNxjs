@@ -544,7 +544,7 @@ const ProductMst = () => {
         width: '100%',
         justifyContent: 'center',
         alignItems: 'flex-start',
-        padding: { xs: '16px', sm: '20px', md: '4px' },
+        padding: { xs: '16px', sm: '20px', md: '24px' },
         boxSizing: 'border-box',
         bottom: 0,
         backgroundColor: 'rgb(236, 238, 240)',
@@ -560,7 +560,7 @@ const ProductMst = () => {
         sx={{
           width: { xs: '100%', sm: '100%', md: '100%', lg: '90%', xl: '90%' },
           maxWidth: { xs: '100%', sm: '90%', md: '1000px', lg: '1400px', xl: '1800px' },
-          height: { xs: 'auto', sm: 'auto', md: '570px', lg: '570px', xl: '570px' },
+          height: { xs: 'auto', sm: 'auto', md: '570px', lg: '600px', xl: '620px' },
           boxShadow: '0px 2px 6px rgba(0, 0, 0, 0.1)',
           paddingBottom: '140px',
           // margin: 'auto !important',
