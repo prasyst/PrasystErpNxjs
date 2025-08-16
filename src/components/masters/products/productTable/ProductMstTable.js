@@ -5,7 +5,7 @@ import {
   Button,
 } from '@mui/material';
 import AddIcon from "@mui/icons-material/Add";
-import ReusableHandsontable from '../../../datatable/ReusableHandsontable';
+import ReusableHandsontable from '@/components/datatable/ReusableHandsontable';
 import { useRouter } from 'next/navigation';
 
 const handsontableColumns = [
@@ -56,10 +56,14 @@ export default function ProductMstTable() {
 
   const handleAfterSelection = (row, column, row2, column2) => {
     console.log('Selection changed:', { row, column, row2, column2 });
-    console.log('Double-clicked row:', row);
-    
-    router.push(`/masters/products/product?FGPRD_KEY=${encodeURIComponent(row.FGPRD_KEY)}&mode=view`);
-    console.log('Double-clicked row12345:', row.FGPRD_KEY);
+  };
+
+  const handleRowClick = (row) => {
+    const params = new URLSearchParams({
+      FGPRD_KEY: row.FGPRD_KEY,
+      mode: "view"
+    }).toString();
+    router.push(`/masters/products/product?${params}`);
   };
 
   const handleNew = () => {
@@ -118,6 +122,7 @@ export default function ProductMstTable() {
               colHeaders={true}
               rowHeaders={true}
               afterChange={handleAfterChange}
+              handleRowDoubleClick={handleRowClick}
               afterSelection={handleAfterSelection}
               readOnly={true}
               customSettings={{

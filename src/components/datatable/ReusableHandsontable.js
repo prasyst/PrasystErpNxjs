@@ -1,7 +1,7 @@
 'use client';
 import React, { useEffect, useRef, useState } from 'react';
 import { HotTable } from '@handsontable/react';
-import { 
+import {
   registerAllModules,
   registerAllEditors,
   registerAllRenderers,
@@ -28,6 +28,7 @@ const ReusableHandsontable = ({
   licenseKey = "non-commercial-and-evaluation",
   className = "ht-theme-main",
   customSettings = {},
+  handleRowDoubleClick,
   afterChange = null,
   afterSelection = null
 }) => {
@@ -62,10 +63,10 @@ const ReusableHandsontable = ({
     const filtered = originalData.filter(row => {
       return Object.entries(searchTerms).every(([field, searchTerm]) => {
         if (!searchTerm) return true;
-        
+
         const cellValue = row[field];
         if (cellValue === null || cellValue === undefined) return false;
-        
+
         return String(cellValue).toLowerCase().includes(searchTerm.toLowerCase());
       });
     });
@@ -104,7 +105,7 @@ const ReusableHandsontable = ({
   useEffect(() => {
     const timer = setTimeout(() => {
       const headerInputs = document.querySelectorAll('.header-search-input');
-      
+
       const handleInputChange = (e) => {
         const field = e.target.getAttribute('data-field');
         const value = e.target.value;
@@ -115,11 +116,11 @@ const ReusableHandsontable = ({
         // Remove existing listeners
         input.removeEventListener('input', handleInputChange);
         input.removeEventListener('keyup', handleInputChange);
-        
+
         // Add new listeners
         input.addEventListener('input', handleInputChange);
         input.addEventListener('keyup', handleInputChange);
-        
+
         // Set current value
         const field = input.getAttribute('data-field');
         if (searchValues[field]) {
@@ -129,7 +130,7 @@ const ReusableHandsontable = ({
     }, 100);
 
     return () => clearTimeout(timer);
-  }, );
+  },);
 
   // Update table when filtered data changes
   useEffect(() => {
@@ -158,14 +159,14 @@ const ReusableHandsontable = ({
     afterSelection,
     // Additional custom settings
     ...customSettings,
-afterOnCellMouseDown: (event, coords, TD) => {
-  const { row } = coords;
-  if (row < 0) return; // Ignore header clicks
-  const clickedRow = filteredData[row];
-  if (clickedRow && handleRowDoubleClick) {
-    handleRowDoubleClick(clickedRow);
-  }
-},
+    afterOnCellMouseDown: (event, coords, TD) => {
+      const { row } = coords;
+      if (row < 0) return; // Ignore header clicks
+      const clickedRow = filteredData[row];
+      if (clickedRow && handleRowDoubleClick) {
+        handleRowDoubleClick(clickedRow);
+      }
+    },
 
   };
 
@@ -254,7 +255,7 @@ afterOnCellMouseDown: (event, coords, TD) => {
           background: #a1a1a1;
         }
       `}</style>
-      <HotTable 
+      <HotTable
         ref={hotTableRef}
 
         {...settings}
