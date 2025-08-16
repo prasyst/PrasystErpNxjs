@@ -25,7 +25,8 @@ const Header = ({ isSidebarCollapsed }) => {
   return (
     <header 
       style={{
-        backgroundColor: 'var(--header-bg)',
+        // backgroundColor: 'var(--header-bg)',
+         backgroundColor: '#1fc7c7ff',
         padding: '0.5rem',
         position: 'fixed',
         top: 0,
