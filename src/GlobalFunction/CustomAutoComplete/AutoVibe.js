@@ -136,7 +136,6 @@ const AutoVibe = React.forwardRef(
   }
 );
 
-
 AutoVibe.displayName = "AutoVibe";
-
 export default AutoVibe;
+

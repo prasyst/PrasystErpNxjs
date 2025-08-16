@@ -29,8 +29,7 @@ const ReusableHandsontable = ({
   className = "ht-theme-main",
   customSettings = {},
   afterChange = null,
-  afterSelection = null,
-  handleRowDoubleClick
+  afterSelection = null
 }) => {
   const hotTableRef = useRef(null);
   const [originalData, setOriginalData] = useState([]);
@@ -257,7 +256,7 @@ afterOnCellMouseDown: (event, coords, TD) => {
       `}</style>
       <HotTable 
         ref={hotTableRef}
-     
+
         {...settings}
       />
     </div>
