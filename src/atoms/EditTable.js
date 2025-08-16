@@ -76,7 +76,7 @@ const EditableTable = ({
       elevation={3}
       sx={{
         mt: 2,
-        maxHeight: 146,
+        maxHeight: 130,
         borderRadius: 2,
         overflowY: 'auto',
         overflowX: 'auto',

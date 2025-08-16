@@ -14,7 +14,7 @@ const handsontableColumns = [
   { field: "FGCAT_KEY", headerName: "Code", width: "16%", type: "text" },
   { field: "FGCAT_CODE", headerName: "AltCode", width: "15%", type: "text" },
   { field: "FGCAT_NAME", headerName: "Name", width: "15%", type: "text" },
-    { field: "SEGMENT_KEY", headerName: "Segment", width: "15%", type: "text" },
+  { field: "SEGMENT_KEY", headerName: "Segment", width: "15%", type: "text" },
   { field: "SR_CODE", headerName: "Cat_Series", width: "15%", type: "text" },
   { field: "STATUS", headerName: "Status", width: "15%", type: "numeric" }
 ];
@@ -40,7 +40,7 @@ export default function CatTable() {
         const formattedData = DATA.map((row, index) => ({
           id: index,
           ...row,
-            STATUS: row.STATUS === "1" ? "Active" : "Inactive"
+          STATUS: row.STATUS === "1" ? "Active" : "Inactive"
         }));
         setRows(formattedData);
       }
@@ -61,13 +61,13 @@ export default function CatTable() {
     console.log('Selection changed:', { row, column, row2, column2 });
   };
 
-const handleRowClick = (row) => {
-  const params = new URLSearchParams({
-    FGCAT_KEY: row.FGCAT_KEY,
-    mode: "view"
-  }).toString();
-  router.push(`/masters/products/category?${params}`);
-};
+  const handleRowClick = (row) => {
+    const params = new URLSearchParams({
+      FGCAT_KEY: row.FGCAT_KEY,
+      mode: "view"
+    }).toString();
+    router.push(`/masters/products/category?${params}`);
+  };
 
 
   const addButtonStyles = {
@@ -95,7 +95,7 @@ const handleRowClick = (row) => {
             size="small"
             sx={addButtonStyles}
             startIcon={<AddIcon />}
-      onClick={() => router.push('/masters/products/category')}
+            onClick={() => router.push('/masters/products/category')}
           >
             New
           </Button>

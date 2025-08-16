@@ -40,6 +40,7 @@ const productFormSchema = z.object({
 });
 
 const ProductMst = () => {
+  const router = useRouter();
 
   const [options, setOptions] = useState([]);
   const [isFormDisabled, setIsFormDisabled] = useState(true);
@@ -57,11 +58,10 @@ const ProductMst = () => {
   const [currentFGPRD_KEY, setCurrentFGPRD_KEY] = useState(null);
   const searchParams = useSearchParams();
   const FG = searchParams.get('FGPRD_KEY');
-  // const mode1 = searchParams.get('view');
-  const FCYR_KEY = sessionStorage.getItem('FCYR_KEY');
-  const COBR_ID = sessionStorage.getItem('COBR_ID');
+  const FCYR_KEY = localStorage.getItem('FCYR_KEY');
+  const COBR_ID = localStorage.getItem('COBR_ID');
+  const CO_ID = localStorage.getItem('CO_ID');
 
-  const router = useRouter();
   const initialRow = {
     FGSIZE_ID: "",
     FGPRD_KEY: "",
@@ -217,7 +217,7 @@ const ProductMst = () => {
         "ID": currentFGPRD_KEY,
         "ORDERBYFLD": "",
         "CWHAER": "",
-        "CO_ID": ""
+        "CO_ID": CO_ID
       });
 
       if (response.data.STATUS === 0 && response.data.RESPONSESTATUSCODE === 1) {
@@ -272,9 +272,9 @@ const ProductMst = () => {
 
         setIsFormDisabled(true);
         setCurrentFGPRD_KEY(productData?.FGPRD_KEY);
-
-        console.log("response", response);
-
+        const newParams = new URLSearchParams();
+        newParams.set("FGPRD_KEY", productData.FGPRD_KEY);
+        router.replace(`/masters/products/product?${newParams.toString()}`);
 
       } else if (response.data.STATUS === 1 && response.data.RESPONSESTATUSCODE === 2) {
         toast.info(response.data.MESSAGE);
@@ -285,7 +285,7 @@ const ProductMst = () => {
       console.error('Error fetching product data:', error);
       toast.error('Error fetching product data. Please try again.');
     }
-  }, [mode]);
+  }, [CO_ID, router]);
 
   // useEffect(() => {
   //   fetchProductData();
@@ -293,13 +293,54 @@ const ProductMst = () => {
 
   useEffect(() => {
     if (FG) {
-      fetchProductData();
+      setCurrentFGPRD_KEY(FG);
+      fetchProductData(FG);
       setMode('view');
     } else {
-      setMode('add');
-      // handleAdd();
+      setMode('view');
+      setForm({
+        SearchByCd: "",
+        BRAND_NAME: "",
+        PRODGRP_NAME: "",
+        CPREFIX: "",
+        FGPRD_KEY: "",
+        ID: "",
+        LASTID: "",
+        FGCAT_KEY: "",
+        FGCAT_NAME: "",
+        FGPRD_CODE: "",
+        FGPRD_NAME: "",
+        FGPRD_ABRV: "",
+        FGMDW_RATE: "",
+        RDOFF: "option2",
+        STATUS: "1",
+        CREATED_BY: "",
+        CREATED_DT: "",
+        TAX_KEY: "",
+        TERM_KEY: "",
+        EFF_DT: "",
+        UNIT_KEY: "",
+        UNIT_NAME: "",
+        SR_CODE: "",
+        FGSUBLOC_KEY: "",
+        BRAND_KEY: "",
+        FGMUP_RATE: "",
+        GEN_UNIQUE_BARCODE: "",
+        Excise_appl: "",
+        Excise_Key: "",
+        ProdGrp_Key: "",
+        Is_Unique: "",
+        HSNCODE_KEY: "",
+        HSN_CODE: "",
+        QC_REQ: "option2",
+        QC_SUBGROUP_KEY: "",
+        ISSERVICE: "",
+        DBFLAG: "",
+        fgSizeEntities: [initialRow]
+      });
       setIsFormDisabled(true);
     }
+    setMode('view');
   }, [FG, fetchProductData]);
 
   useEffect(() => {
@@ -850,7 +891,7 @@ const ProductMst = () => {
         width: '100%',
         justifyContent: 'center',
         alignItems: 'flex-start',
-        padding: { xs: '16px', sm: '20px', md: '24px' },
+        padding: { xs: '16px', sm: '20px', md: '2px' },
         boxSizing: 'border-box',
         bottom: 0,
         backgroundColor: 'rgb(236, 238, 240)',
@@ -866,7 +907,7 @@ const ProductMst = () => {
         sx={{
           width: { xs: '100%', sm: '100%', md: '100%', lg: '90%', xl: '90%' },
           maxWidth: { xs: '100%', sm: '90%', md: '1000px', lg: '1400px', xl: '1800px' },
-          height: { xs: 'auto', sm: 'auto', md: '570px', lg: '600px', xl: '620px' },
+          height: { xs: 'auto', sm: 'auto', md: '570px', lg: '570px', xl: '570px' },
           boxShadow: '0px 2px 6px rgba(0, 0, 0, 0.1)',
           paddingBottom: '140px',
           // margin: 'auto !important',
