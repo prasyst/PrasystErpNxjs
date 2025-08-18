@@ -11,6 +11,7 @@ import {
   TextField,
   Checkbox,
   Paper,
+  Box
 } from '@mui/material';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 
@@ -87,17 +88,18 @@ const EditableTable = ({
           <TableRow>
             {/* Arrow ke liye ek extra blank header cell */}
             <TableCell sx={{ p: '6px 8px', width: 30 }} />
-            {columns.map((col) => (
+            {columns.map((col, index) => (
               <TableCell
                 key={col.field}
                 sx={{
-                  p: '6px 8px',
+                  p: '4px 6px',
                   fontWeight: 600,
-                  fontSize: 13,
+                  fontSize: 12,
                   color: '#333',
                   backgroundColor: '#fafafa',
                 }}
               >
+                {index === 0 && <span style={{ color: 'red', marginRight: 4 }}>*</span>}
                 {col.label}
               </TableCell>
             ))}
@@ -121,7 +123,9 @@ const EditableTable = ({
                 p: '2px 4px', width: 15
               }}>
                 {activeRow === row.originalIndex && (
-                  <ChevronRightIcon sx={{ color: '#1976d2' }} />
+                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+                    <ChevronRightIcon sx={{ color: '#1976d2', fontSize: 20 }} />
+                  </Box>
                 )}
               </TableCell>
 

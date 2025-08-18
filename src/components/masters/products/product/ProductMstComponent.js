@@ -37,6 +37,7 @@ const columns = [
 const FORM_MODE = getFormMode();
 const productFormSchema = z.object({
   FGPRD_ABRV: z.string().min(1, "Name is required"),
+  FGCAT_KEY: z.string().min(1, "Category Name is required"),
 });
 
 const ProductMst = () => {
@@ -124,7 +125,7 @@ const ProductMst = () => {
       top: '-6px',
     },
     '& .MuiFilledInput-root': {
-      backgroundColor: 'transparent',
+      backgroundColor: '#fafafa',
       border: '1px solid #e0e0e0',
       borderRadius: '5px',
       overflow: 'hidden',
@@ -152,7 +153,7 @@ const ProductMst = () => {
       top: '-6px',
     },
     '& .MuiFilledInput-root': {
-      backgroundColor: 'transparent',
+      backgroundColor: '#fafafa',
       border: '1px solid #e0e0e0',
       borderRadius: '5px',
       overflow: 'hidden',
@@ -207,7 +208,7 @@ const ProductMst = () => {
     });
   };
 
-  const fetchProductData = useCallback(async (currentFGPRD_KEY, flag = "R") => {
+  const fetchProductData = useCallback(async (currentFGPRD_KEY, flag = "R", isManualSearch = false) => {
 
     try {
       const response = await axiosInstance.post(`Product/RetriveFgprd`, {
@@ -279,8 +280,53 @@ const ProductMst = () => {
       } else if (response.data.STATUS === 1 && response.data.RESPONSESTATUSCODE === 2) {
         toast.info(response.data.MESSAGE);
       } else {
-        toast.error('Failed to fetch product data');
+        if (isManualSearch) {
+          toast.error(`${MESSAGE} FOR ${currentFGPRD_KEY}`);
+          setForm({
+            SearchByCd: "",
+            BRAND_NAME: "",
+            PRODGRP_NAME: "",
+            CPREFIX: "",
+            FGPRD_KEY: "",
+            ID: "",
+            LASTID: "",
+            FGCAT_KEY: "",
+            FGCAT_NAME: "",
+            FGPRD_CODE: "",
+            FGPRD_NAME: "",
+            FGPRD_ABRV: "",
+            FGMDW_RATE: "",
+            RDOFF: "",
+            STATUS: "0",
+            CREATED_BY: "",
+            CREATED_DT: "",
+            TAX_KEY: "",
+            TERM_KEY: "",
+            EFF_DT: "",
+            UNIT_KEY: "",
+            UNIT_NAME: "",
+            SR_CODE: "",
+            FGSUBLOC_KEY: "",
+            BRAND_KEY: "",
+            FGMUP_RATE: "",
+            GEN_UNIQUE_BARCODE: "",
+            Excise_appl: "0",
+            Excise_Key: "",
+            ProdGrp_Key: "",
+            Is_Unique: "0",
+            HSNCODE_KEY: "",
+            HSN_CODE: "",
+            QC_REQ: "option2",
+            QC_SUBGROUP_KEY: "",
+            ISSERVICE: "0",
+            DBFLAG: "",
+            fgSizeEntities: [initialRow]
+          });
+        }
       }
+      // else {
+      //   toast.error('Failed to fetch product data');
+      // }
     } catch (error) {
       console.error('Error fetching product data:', error);
       toast.error('Error fetching product data. Please try again.');
@@ -694,7 +740,7 @@ const ProductMst = () => {
     const payload = [{
 
       FGPRD_KEY: form.FGPRD_KEY || 0,
-      FGCAT_KEY: form.FGCAT_KEY || "",
+      FGCAT_KEY: data.FGCAT_KEY || "",
       FGCAT_NAME: form.FGCAT_NAME || "",
       FGPRD_CODE: form.FGPRD_CODE || 0,
       FGPRD_NAME: form.FGPRD_NAME || 0,
@@ -809,11 +855,10 @@ const ProductMst = () => {
         });
       }
 
-      toast.success(`${selectedRowIndex.length} row(s) deleted successfully`);
-
       return { ...prev, fgSizeEntities: newData };
     });
 
+    toast.success(`${selectedRowIndex.length} row(s) deleted successfully`);
     setSelectedRowIndex([]);
   };
 
@@ -889,32 +934,29 @@ const ProductMst = () => {
     <Box
       sx={{
         width: '100%',
-        justifyContent: 'center',
-        alignItems: 'flex-start',
-        padding: { xs: '16px', sm: '20px', md: '2px' },
-        boxSizing: 'border-box',
-        bottom: 0,
-        backgroundColor: 'rgb(236, 238, 240)',
-        minHeight: '100vh',
-        minWidth: '84vw',
         display: 'flex',
-        overflow: 'hidden !important'
+        flexDirection: 'column',
+        justifyContent: 'center',
+        alignItems: 'center',
+        boxSizing: 'border-box',
+        backgroundColor: 'rgb(236, 238, 240)',
+        minHeight: '91vh',
+        overflowX: 'hidden',
+        overflowY: 'auto',
       }}
-
     >
       <ToastContainer />
       <Box
-        sx={{
-          width: { xs: '100%', sm: '100%', md: '100%', lg: '90%', xl: '90%' },
-          maxWidth: { xs: '100%', sm: '90%', md: '1000px', lg: '1400px', xl: '1800px' },
-          height: { xs: 'auto', sm: 'auto', md: '570px', lg: '570px', xl: '570px' },
-          boxShadow: '0px 2px 6px rgba(0, 0, 0, 0.1)',
-          paddingBottom: '140px',
-          // margin: 'auto !important',
-          borderRadius: '8px',
-          padding: '0px 20px 20px 20px',
-          backgroundColor: '#fff'
-        }}
+      // sx={{
+      //   width: { xs: '100%', sm: '100%', md: '100%', lg: '90%', xl: '90%' },
+      //   maxWidth: { xs: '100%', sm: '90%', md: '1000px', lg: '1400px', xl: '1800px' },
+      //   height: { xs: 'auto', sm: 'auto', md: '570px', lg: '570px', xl: '570px' },
+      //   boxShadow: '0px 2px 6px rgba(0, 0, 0, 0.1)',
+      //   paddingBottom: '140px',
+      //   borderRadius: '8px',
+      //   padding: '0px 20px 20px 20px',
+      //   backgroundColor: '#fff'
+      // }}
 
       >
         <Grid container alignItems="center"
@@ -1063,7 +1105,11 @@ const ProductMst = () => {
               disabled={isFormDisabled}
               options={categories}
               getOptionLabel={(option) => option.FGCAT_NAME || ""}
-              label="Category"
+              label={
+                <span>
+                  Category <span style={{ color: 'red' }}>*</span>
+                </span>
+              }
               name="FGCAT_KEY"
               value={categories.find(option => String(option.FGCAT_KEY) === String(form.FGCAT_KEY)) || null}
               onChange={(e, newValue) => {
@@ -1374,7 +1420,7 @@ const ProductMst = () => {
           }}>
             <AutoVibe
               id=""
-              disabled={isFormDisabled || form.Excise_KEY !== "1"}
+              disabled={isFormDisabled || form.Excise_appl !== "1"}
               options={options || []}
               getOptionLabel={(option) => option}
               label="Excise Tariff"

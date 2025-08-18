@@ -11,7 +11,6 @@ import { useRouter } from 'next/navigation';
 const handsontableColumns = [
   { field: "FGPRD_NAME", headerName: "Product", width: "16%", type: "text" },
   { field: "FGPRD_ABRV", headerName: "FGPRDABRV", width: "16%", type: "text" },
-  // { field: "FGPRD_KEY", headerName: "FGPRD_KEY", width: "16%", type: "text" },
   { field: "FGMDW_RATE", headerName: "FGMDWRATE", width: "15%", type: "numeric" },
   { field: "FGCAT_NAME", headerName: "Category", width: "15%", type: "text" },
   { field: "UNIT_NAME", headerName: "UNIT", width: "15%", type: "text" },
