@@ -1,12 +1,13 @@
 'use client';
 
+import BrandMst from '@/components/masters/products/brand/BrandMst';
 import React, { Suspense } from 'react';
-import WebMst from "@/components/masters/products/webcollection/WebMst";
 
-export default function WebPage() {
+
+export default function BrandPage() {
     return (
         <Suspense fallback={<div>Loading...</div>}>
-            <WebMst />
+            <BrandMst />
         </Suspense>
     );
 }
