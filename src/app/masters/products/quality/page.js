@@ -1,12 +1,13 @@
 'use client';
 
+import QualityMst from '@/components/masters/products/quality/QualityMst';
 import React, { Suspense } from 'react';
-import WebMst from "@/components/masters/products/webcollection/WebMst";
 
-export default function WebPage() {
+
+export default function QualityPage() {
     return (
         <Suspense fallback={<div>Loading...</div>}>
-            <WebMst />
+            <QualityMst />
         </Suspense>
     );
 }
