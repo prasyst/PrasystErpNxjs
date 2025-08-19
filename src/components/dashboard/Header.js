@@ -26,7 +26,7 @@ const Header = ({ isSidebarCollapsed }) => {
     <header 
       style={{
         // backgroundColor: 'var(--header-bg)',
-         backgroundColor: '#1fc7c7ff',
+         backgroundColor: '#1b69e7ff',
         padding: '0.5rem',
         position: 'fixed',
         top: 0,
@@ -134,7 +134,7 @@ const Header = ({ isSidebarCollapsed }) => {
           >
             R
           </div>
-          <span style={{ color: 'var(--text-color)' }}>Rajat !</span>
+          <span style={{ color: 'white' }}>Rajat !</span>
 
           {isDropdownOpen && (
             <div 

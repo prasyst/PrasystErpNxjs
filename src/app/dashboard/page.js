@@ -28,7 +28,7 @@ export default function DashboardPage() {
   }, [router]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" style={{ height: 'calc(100vh - 64px)', overflowY: 'auto' }}>
       <Cards />
       <Charts />
     </div>
