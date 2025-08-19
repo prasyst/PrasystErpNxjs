@@ -1,13 +1,16 @@
+
 'use client'
 import React from 'react';
-import { Button, Tooltip, Grid, Box } from '@mui/material';
+import { Button, Tooltip, Box } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import PrintIcon from '@mui/icons-material/Print';
 import ExitToAppIcon from '@mui/icons-material/ExitToApp';
+import SaveIcon from '@mui/icons-material/Save';
+import CancelIcon from '@mui/icons-material/Cancel';
 
-const CrudButton = ({
+const CrudButtons = ({
     onAdd,
     onEdit,
     onDelete,
@@ -33,7 +36,6 @@ const CrudButton = ({
     };
 
     return (
-
         <Box
             sx={{
                 display: 'flex',
@@ -46,52 +48,83 @@ const CrudButton = ({
             }}
         >
             {!hideAdd && (
-                <Tooltip title="Add">
-                    <Button size="small" variant="contained" sx={buttonSx}
+                <Tooltip title={readOnlyMode ? "Add" : "Save"}>
+                    <Button
+                        size="small"
+                        variant="contained"
+                        sx={buttonSx}
                         onClick={onAdd}
-                        disabled={!readOnlyMode}
+                        disabled={!readOnlyMode && false}
                     >
-                        <AddIcon />
+                        {readOnlyMode ? <AddIcon /> : <SaveIcon />}
                     </Button>
                 </Tooltip>
             )}
+
             {!hideEdit && (
-                <Tooltip title="Edit">
-                    <Button size="small" variant="contained"
-                        sx={buttonSx} onClick={onEdit}
-                        disabled={!readOnlyMode}
+                <Tooltip title={readOnlyMode ? "Edit" : "Cancel"}>
+                    <Button
+                        size="small"
+                        variant="contained"
+                        sx={buttonSx}
+                        onClick={onEdit}
+                        disabled={!readOnlyMode && false} 
                     >
-                        <EditIcon />
+                        {readOnlyMode ? <EditIcon /> : <CancelIcon />}
                     </Button>
                 </Tooltip>
             )}
+
+        
             {!hideDelete && (
                 <Tooltip title="Delete">
-                    <Button size="small" variant="contained" disabled={!readOnlyMode} sx={buttonSx} onClick={onDelete}>
+                    <Button
+                        size="small"
+                        variant="contained"
+                        sx={buttonSx}
+                        onClick={onDelete}
+                        disabled={!readOnlyMode}
+                    >
                         <DeleteIcon />
                     </Button>
                 </Tooltip>
             )}
+
+            {/* Position 4: Print (always shown, disabled in edit/add mode) */}
             {!hideView && (
                 <Tooltip title="Print">
-                    <Button size="small" variant="contained" sx={buttonSx} disabled={!readOnlyMode} onClick={onView}>
+                    <Button
+                        size="small"
+                        variant="contained"
+                        sx={buttonSx}
+                        onClick={onView}
+                        disabled={!readOnlyMode}
+                    >
                         <PrintIcon />
                     </Button>
                 </Tooltip>
             )}
+
+            {/* Position 5: Exit (always shown, disabled in edit/add mode) */}
             {!hideExit && (
                 <Tooltip title="Exit">
-                    <Button size="small" variant="contained" disabled={!readOnlyMode} sx={buttonSx} onClick={onExit}>
+                    <Button
+                        size="small"
+                        variant="contained"
+                        sx={buttonSx}
+                        onClick={onExit}
+                        disabled={!readOnlyMode}
+                    >
                         <ExitToAppIcon />
                     </Button>
                 </Tooltip>
             )}
-
         </Box>
     );
 };
 
-export default CrudButton;
+export default CrudButtons;
+
 
 
 

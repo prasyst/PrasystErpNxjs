@@ -1,13 +1,13 @@
-
 'use client';
 
+import RackMst from '@/components/masters/products/rack/RackMst';
 import React, { Suspense } from 'react';
-import UnitMst from "@/components/masters/products/unit/UnitMst";
 
-export default function UnitPage() {
+
+export default function RackPage() {
     return (
         <Suspense fallback={<div>Loading...</div>}>
-          <UnitMst />
+            <RackMst />
         </Suspense>
     );
 }

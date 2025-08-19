@@ -1,5 +1,5 @@
 'use client'
-import React, { useEffect, useRef, useState ,useCallback} from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import {
     Box, Grid, TextField, Typography, Button, Stack, FormControlLabel, Checkbox, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions,
 } from '@mui/material';
@@ -10,16 +10,18 @@ import { pdf } from '@react-pdf/renderer';
 import PrintPtrnData from './PrintPtrnData';
 import { getFormMode } from '@/lib/helpers';
 import { useRouter } from 'next/navigation';
-import CrudButton from '@/GlobalFunction/CrudButton';
 import debounce from 'lodash.debounce';
 import axiosInstance from '@/lib/axios';
 import { useSearchParams } from 'next/navigation';
+import FirstPageIcon from '@mui/icons-material/FirstPage';
+import LastPageIcon from '@mui/icons-material/LastPage';
+import CrudButtons from '@/GlobalFunction/CrudButtons';
 
 const FORM_MODE = getFormMode();
 const PatternMst = () => {
     const router = useRouter();
-      const searchParams = useSearchParams();
-       const FGPTN_KEY = searchParams.get('FGPTN_KEY');
+    const searchParams = useSearchParams();
+    const FGPTN_KEY = searchParams.get('FGPTN_KEY');
 
     const [currentFGPTN_KEY, setCurrentFGPTN_KEY] = useState(null);
     const [form, setForm] = useState({
@@ -39,7 +41,7 @@ const PatternMst = () => {
     const FGPTN_CODERef = useRef(null);
     const SERIESRef = useRef(null);
     const [mode, setMode] = useState(() => {
-        currentFGPTN_KEY ? FORM_MODE.read : FORM_MODE.add        
+        currentFGPTN_KEY ? FORM_MODE.read : FORM_MODE.add
     });
     const [Status, setStatus] = useState("1");
     const FCYR_KEY = localStorage.getItem('FCYR_KEY');
@@ -57,8 +59,8 @@ const PatternMst = () => {
             Status: updatedStatus
         }))
     };
-    console.log("currentFGPTN_KEY",currentFGPTN_KEY)
-    console.log("FGPTN_KEY",FGPTN_KEY)
+    console.log("currentFGPTN_KEY", currentFGPTN_KEY)
+    console.log("FGPTN_KEY", FGPTN_KEY)
 
     // const fetchRetriveData = async (currentFGPTN_KEY, flag = "R", isManualSearch = false) => {
     //     try {
@@ -108,62 +110,62 @@ const PatternMst = () => {
     //         console.error(err);
     //     }
     // };
-   
+
     const fetchRetriveData = useCallback(async (currentFGPTN_KEY, flag = "R", isManualSearch = false) => {
-    try {
-        const response = await axiosInstance.post('Fgptn/RetriveFgptn', {
-            "FLAG": flag,
-            "TBLNAME": "Fgptn",
-            "FLDNAME": "Fgptn_KEY",
-            "ID": currentFGPTN_KEY,
-            "ORDERBYFLD": "",
-            "CWHAER": "",
-            "CO_ID": CO_ID
-        });
-
-        const { data: { STATUS, DATA, RESPONSESTATUSCODE, MESSAGE } } = response;
-
-        if (STATUS === 0 && Array.isArray(DATA) && RESPONSESTATUSCODE == 1) {
-            const categoryData = DATA[0];
-            setForm({
-                FGPTN_KEY: categoryData.FGPTN_KEY,
-                FGPTN_NAME: categoryData.FGPTN_NAME,
-                FGPTN_ABRV: categoryData.FGPTN_ABRV || '',
-                FGPTN_CODE: categoryData.FGPTN_CODE || '',
-                SERIES: categoryData.SERIES || '',
-                FGPTN_LST_CODE: categoryData.FGPTN_LST_CODE || '',
-                Status: categoryData.STATUS,
+        try {
+            const response = await axiosInstance.post('Fgptn/RetriveFgptn', {
+                "FLAG": flag,
+                "TBLNAME": "Fgptn",
+                "FLDNAME": "Fgptn_KEY",
+                "ID": currentFGPTN_KEY,
+                "ORDERBYFLD": "",
+                "CWHAER": "",
+                "CO_ID": CO_ID
             });
-            setStatus(categoryData.STATUS);
-            setCurrentFGPTN_KEY(categoryData.FGPTN_KEY);
 
-            // ✅ Update URL
-            const newParams = new URLSearchParams();
-            newParams.set("FGPTN_KEY", categoryData.FGPTN_KEY);
-            router.replace(`/masters/products/pattern?${newParams.toString()}`);
-        } else if (isManualSearch) {
-            toast.error(`${MESSAGE} FOR ${currentFGPTN_KEY}`);
-            setForm({
-                FGPTN_KEY: '',
-                FGPTN_NAME: '',
-                FGPTN_ABRV: '',
-                FGPTN_CODE: '',
-                SERIES: '',
-                FGPTN_LST_CODE: '',
-                Status: 0,
-            });
+            const { data: { STATUS, DATA, RESPONSESTATUSCODE, MESSAGE } } = response;
+
+            if (STATUS === 0 && Array.isArray(DATA) && RESPONSESTATUSCODE == 1) {
+                const categoryData = DATA[0];
+                setForm({
+                    FGPTN_KEY: categoryData.FGPTN_KEY,
+                    FGPTN_NAME: categoryData.FGPTN_NAME,
+                    FGPTN_ABRV: categoryData.FGPTN_ABRV || '',
+                    FGPTN_CODE: categoryData.FGPTN_CODE || '',
+                    SERIES: categoryData.SERIES || '',
+                    FGPTN_LST_CODE: categoryData.FGPTN_LST_CODE || '',
+                    Status: categoryData.STATUS,
+                });
+                setStatus(categoryData.STATUS);
+                setCurrentFGPTN_KEY(categoryData.FGPTN_KEY);
+
+                // ✅ Update URL
+                const newParams = new URLSearchParams();
+                newParams.set("FGPTN_KEY", categoryData.FGPTN_KEY);
+                router.replace(`/masters/products/pattern?${newParams.toString()}`);
+            } else if (isManualSearch) {
+                toast.error(`${MESSAGE} FOR ${currentFGPTN_KEY}`);
+                setForm({
+                    FGPTN_KEY: '',
+                    FGPTN_NAME: '',
+                    FGPTN_ABRV: '',
+                    FGPTN_CODE: '',
+                    SERIES: '',
+                    FGPTN_LST_CODE: '',
+                    Status: 0,
+                });
+            }
+        } catch (err) {
+            console.error(err);
         }
-    } catch (err) {
-        console.error(err);
-    }
-}, [CO_ID, router]); 
+    }, [CO_ID, router]);
 
-  useEffect(() => {
-    if (FGPTN_KEY) {
-        setCurrentFGPTN_KEY(FGPTN_KEY);
-      fetchRetriveData(FGPTN_KEY);
-       setMode(FORM_MODE.read);
-    }else {
+    useEffect(() => {
+        if (FGPTN_KEY) {
+            setCurrentFGPTN_KEY(FGPTN_KEY);
+            fetchRetriveData(FGPTN_KEY);
+            setMode(FORM_MODE.read);
+        } else {
             setForm({
                 SearchByCd: '',
                 SERIES: '',
@@ -176,8 +178,8 @@ const PatternMst = () => {
             })
             setMode(FORM_MODE.read);
         }
-         setMode(FORM_MODE.read);
-  }, [FGPTN_KEY,fetchRetriveData]);
+        setMode(FORM_MODE.read);
+    }, [FGPTN_KEY, fetchRetriveData]);
     const handleSubmit = async () => {
         try {
             const UserName = userRole === 'user' ? username : PARTY_KEY;
@@ -189,7 +191,7 @@ const PatternMst = () => {
             }
             const payload = {
                 Fgptn_KEY: form.FGPTN_KEY,  //CODE
-                Fgptn_CODE: form.FGPTN_CODE, 
+                Fgptn_CODE: form.FGPTN_CODE,
                 Fgptn_NAME: form.FGPTN_NAME,
                 Fgptn_ABRV: form.FGPTN_ABRV,
                 Merchandiser_key: '',
@@ -366,6 +368,14 @@ const PatternMst = () => {
             console.error("Error fetching ID and LASTID:", error);
         }
     };
+    const handleFirst = ()=>{}
+    const handleLast = async()=>{
+        await fetchRetriveData(1, "L");
+        setForm((prev) => ({
+            ...prev,
+            SearchByCd: ''
+        }));
+    }
     const handlePrevious = async () => {
         await fetchRetriveData(currentFGPTN_KEY, "P");
         setForm((prev) => ({
@@ -391,9 +401,9 @@ const PatternMst = () => {
     const handleConfirmDelete = async () => {
         setOpenConfirmDialog(false);
         try {
-         const UserName = userRole === 'user' ? username : PARTY_KEY;
+            const UserName = userRole === 'user' ? username : PARTY_KEY;
             const response = await axiosInstance.post(`Fgptn/DeleteFgptn?UserName=${(UserName)}&strCobrid=${COBR_ID}`, {
-            Fgptn_KEY: form.FGPTN_KEY
+                Fgptn_KEY: form.FGPTN_KEY
             });
             const { data: { STATUS, MESSAGE } } = response;
             if (STATUS === 0) {
@@ -442,18 +452,18 @@ const PatternMst = () => {
     const handleExit = () => {
         router.push('/masters/products/pattern/patterntable');
     };
-   
-  const Buttonsx = {
-    backgroundColor: '#39ace2',
-    margin: { xs: '0 4px', sm: '0 6px' },
-    minWidth: { xs: 40, sm: 46, md: 60 },
-    height: { xs: 40, sm: 46, md: 27 },
-    // "&:disabled": {
-    //   backgroundColor: "rgba(0, 0, 0, 0.12)",
-    //   color: "rgba(0, 0, 0, 0.26)",
-    //   boxShadow: "none",
-    // }
-  };
+
+    const Buttonsx = {
+        backgroundColor: '#39ace2',
+        margin: { xs: '0 4px', sm: '0 6px' },
+        minWidth: { xs: 40, sm: 46, md: 60 },
+        height: { xs: 40, sm: 46, md: 27 },
+        // "&:disabled": {
+        //   backgroundColor: "rgba(0, 0, 0, 0.12)",
+        //   color: "rgba(0, 0, 0, 0.26)",
+        //   boxShadow: "none",
+        // }
+    };
     return (
         <>
             <Box sx={{ width: '100%', justifyContent: 'center', alignItems: 'flex-start', padding: '24px', boxSizing: 'border-box', marginTop: { xs: "30px", sm: "0px" } }}
@@ -461,51 +471,14 @@ const PatternMst = () => {
                 <ToastContainer />
                 <Box sx={{ maxWidth: '1000px', boxShadow: '0px 2px 6px rgba(0, 0, 0, 0.1)' }} className="form_grid" >
                     <Grid container alignItems="center"
-                        justifyContent="space-between" spacing={2} sx={{ marginTop: "30px", marginInline: '20px' }}>
-                        <Grid sx={{
-                            display: 'flex', justifyContent: {
-                                xs: 'center',
-                                sm: 'flex-start'
-                            },
-                            width: { xs: '100%', sm: 'auto' },
-                        }}>
-                            <Stack direction="row" spacing={1}>
-                                <Button variant="contained" size="small" className="three-d-button-previous"
-                                     sx={Buttonsx}
-                                    onClick={handlePrevious}
-                                    disabled={
-                                        mode !== FORM_MODE.read || !currentFGPTN_KEY || currentFGPTN_KEY === 1
-                                    }
-                                >
-                                    <KeyboardArrowLeftIcon />
-                                </Button>
-                                <Button variant="contained" size="small" className="three-d-button-next"
-                                    sx={Buttonsx}
-                                    onClick={handleNext}
-                                    disabled={mode !== FORM_MODE.read || !currentFGPTN_KEY}
-                                >
-                                    <NavigateNextIcon />
-                                </Button>
-                            </Stack>
-                        </Grid>
+                        justifyContent="space-between" spacing={2} sx={{ marginTop: "10px", marginInline: '20px' }}>
+
                         <Grid sx={{ flexGrow: 1 }}>
                             <Typography align="center" variant="h5">
                                 Pattern Master
                             </Typography>
                         </Grid>
-                        <Grid>
-                            <Stack direction="row" spacing={{ xs: 0.5, sm: 1 }}  >
-                                <CrudButton
-                                    mode={mode}
-                                    onAdd={handleAdd}
-                                    onEdit={handleEdit}
-                                    onView={handlePrint}
-                                    onDelete={handleDelete}
-                                    onExit={handleExit}
-                                    readOnlyMode={mode === FORM_MODE.read}
-                                />
-                            </Stack>
-                        </Grid>
+
                     </Grid>
                     <Box
                         sx={{
@@ -644,80 +617,64 @@ const PatternMst = () => {
                             />
                         </Box>
                     </Box>
+                    <Grid container alignItems="center"   justifyContent="center"
+                        spacing={1} sx={{ marginTop: "10px", marginInline: '20px' }}>
+                        <Grid sx={{
+                            width: { xs: '100%', sm: 'auto' },
+                        }}>
+                            <Stack direction="row" spacing={1}>
+                                <Button
+                                    variant="contained"
+                                    size="small"
+                                    className="three-d-button-first"
+                                    sx={Buttonsx}
+                                    onClick={handleFirst}
+                                    disabled={mode !== FORM_MODE.read || !currentFGPTN_KEY || currentFGPTN_KEY === 1}
+                                >
+                                    <FirstPageIcon />
+                                </Button>
 
-                    <Grid
-                        item
-                        xs={12}
-                        className="form_button"
-                        sx={{
-                            display: 'flex',
-                            justifyContent: { xs: 'center', sm: 'flex-end' },
-                            gap: { xs: 1, sm: 1.5 },
-                            padding: { xs: 1, sm: 2, md: 3 },
-                        }}
-                    >
-                        {mode === FORM_MODE.read && (
-                            <>
-                                <Button
-                                    variant="contained"
-                                    sx={{
-                                        mr: { xs: 0, sm: 1 },
-                                        mb: { xs: 1, sm: 0 },
-                                        background: "linear-gradient(290deg, #d4d4d4, #ffffff)",
-                                        minWidth: { xs: 100, sm: 100 },
-                                        fontSize: { xs: '0.75rem', sm: '0.875rem' },
-                                    }}
-                                    onClick={handleAdd}
-                                    disabled
+                                <Button variant="contained" size="small" className="three-d-button-previous"
+                                    sx={Buttonsx}
+                                    onClick={handlePrevious}
+                                    disabled={
+                                        mode !== FORM_MODE.read || !currentFGPTN_KEY || currentFGPTN_KEY === 1
+                                    }
                                 >
-                                    Submit
+                                    <KeyboardArrowLeftIcon />
+                                </Button>
+                                <Button variant="contained" size="small" className="three-d-button-next"
+                                    sx={Buttonsx}
+                                    onClick={handleNext}
+                                    disabled={mode !== FORM_MODE.read || !currentFGPTN_KEY}
+                                >
+                                    <NavigateNextIcon />
                                 </Button>
                                 <Button
                                     variant="contained"
-                                    sx={{
-                                        mr: { xs: 0, sm: 1 },
-                                        mb: { xs: 1, sm: 0 },
-                                        background: "linear-gradient(290deg, #a7c5e9, #ffffff)",
-                                        minWidth: { xs: 100, sm: 100 },
-                                        fontSize: { xs: '0.75rem', sm: '0.875rem' },
-                                    }}
-                                    onClick={handleEdit}
-                                    disabled
+                                    size="small"
+                                    className="three-d-button-last"
+                                    sx={Buttonsx}
+                                    onClick={handleLast}
+                                    disabled={mode !== FORM_MODE.read || !currentFGPTN_KEY}
                                 >
-                                    Cancel
+                                    <LastPageIcon />
                                 </Button>
-                            </>
-                        )}
-                        {(mode === FORM_MODE.edit || mode === FORM_MODE.add) && (
-                            <>
-                                <Button
-                                    variant="contained"
-                                    sx={{
-                                        mr: { xs: 0, sm: 1 },
-                                        mb: { xs: 1, sm: 0 },
-                                        background: "linear-gradient(290deg, #b9d0e9, #e9f2fa)",
-                                        minWidth: { xs: 100, sm: 100 },
-                                        fontSize: { xs: '0.75rem', sm: '0.875rem' },
-                                    }}
-                                    onClick={handleSubmit}
-                                >
-                                    Submit
-                                </Button>
-                                <Button
-                                    variant="contained"
-                                    sx={{
-                                        mr: { xs: 0, sm: 1 },
-                                        mb: { xs: 1, sm: 0 },
-                                        background: "linear-gradient(290deg, #b9d0e9, #e9f2fa)",
-                                        minWidth: { xs: 100, sm: 100 },
-                                        fontSize: { xs: '0.75rem', sm: '0.875rem' },
-                                    }}
-                                    onClick={handleCancel}
-                                >
-                                    Cancel
-                                </Button>
-                            </>
-                        )}
+                            </Stack>
+                        </Grid>
+                        <Grid>
+                            <Stack direction="row" spacing={{ xs: 0.5, sm: 1 }}  >
+                                <CrudButtons
+                                    mode={mode}
+                                    onView={handlePrint}
+                                    onDelete={handleDelete}
+                                    onExit={handleExit}
+                                    onAdd={mode === FORM_MODE.read ? handleAdd : handleSubmit}
+                                    onEdit={mode === FORM_MODE.read ? handleEdit : handleCancel}
+                                    readOnlyMode={mode === FORM_MODE.read}
+                                />
+                            </Stack>
+                        </Grid>
                     </Grid>
                 </Box>
             </Box>

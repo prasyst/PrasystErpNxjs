@@ -10,7 +10,7 @@ import ReusableHandsontable from "@/components/datatable/ReusableHandsontable";
 import { useRouter } from "next/navigation";
 
 const handsontableColumns = [
-    { field: "ROWNUM", headerName: "SrNo", width: "16%", type: "numeric" },
+    // { field: "ROWNUM", headerName: "SrNo", width: "16%", type: "numeric" },
     { field: "FGSHADE_KEY", headerName: "Code", width: "16%", type: "text" },
     { field: "FGSHADE_ALT_KEY", headerName: "ALTCode", width: "10%", type: "text" },
     { field: "FGSHADE_NAME", headerName: "Name", width: "20%", type: "text" },

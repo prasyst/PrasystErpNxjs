@@ -313,11 +313,6 @@
 
 // export default Sidebar;
 
-
-
-
-
-
 'use client'
 
 import Link from 'next/link';
@@ -366,7 +361,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
 
   const menuItems = [
     { name: 'Dashboard', icon: MdDashboard, path: '/dashboard' },
-{ name: 'Stock Enquiry', icon: MdSearch, path: '/dashboard/stock-enquiry-table' },
+    { name: 'Stock Enquiry', icon: MdSearch, path: '/dashboard/stock-enquiry-table' },
     {
       name: 'Masters',
       icon: MdOutlineApartment,
@@ -377,14 +372,14 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
           path: '/masters/company',
           children: [
             { name: 'Company', icon: MdDomain, path: '/masters/company' },
-            { name: 'Company Area', icon: MdMap, path: '/masters/company/area' },
-            { name: 'Company Division', icon: MdOutlineGroupWork, path: '/masters/company/division' },
-            { name: 'Stock Type', icon: MdCategory, path: '/masters/company/stock-type' },
-            { name: 'Stock Location', icon: MdWarehouse, path: '/masters/company/stock-location' },
-            { name: 'Department', icon: MdWork, path: '/masters/company/department' },
-            { name: 'Designation', icon: MdAccountBox, path: '/masters/company/designation' },
-            { name: 'SalesPerson', icon: MdEmojiPeople, path: '/masters/company/salesperson' },
-            { name: 'Employee', icon: MdAccessibility, path: '/masters/company/employee' },
+            { name: 'Company Area', icon: MdMap, path: '#' },
+            { name: 'Company Division', icon: MdOutlineGroupWork, path: '#' },
+            { name: 'Stock Type', icon: MdCategory, path: '#' },
+            { name: 'Stock Location', icon: MdWarehouse, path: '#' },
+            { name: 'Department', icon: MdWork, path: '#' },
+            { name: 'Designation', icon: MdAccountBox, path: '#' },
+            { name: 'SalesPerson', icon: MdEmojiPeople, path: '#' },
+            { name: 'Employee', icon: MdAccessibility, path: '#' },
           ],
         },
         {
@@ -392,9 +387,9 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
           icon: FaTruck,
           path: '/masters/vendors',
           children: [
-            { name: 'Broker', icon: FaHandshake, path: '/masters/vendors/broker' },
-            { name: 'Transporter', icon: MdLocalShipping, path: '/masters/vendors/transporter' },
-            { name: 'Creditors/Suppliers', icon: FaUserTag, path: '/masters/vendors/creditors' },
+            { name: 'Broker', icon: FaHandshake, path: '#' },
+            { name: 'Transporter', icon: MdLocalShipping, path: '/#' },
+            { name: 'Creditors/Suppliers', icon: FaUserTag, path: '#' },
           ],
         },
         {
@@ -402,15 +397,15 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
           icon: MdPeopleAlt,
           path: '/masters/customers',
           children: [
-            { name: 'Debtors/Customers', icon: MdPeople, path: '/masters/customers/debtors' },
-            { name: 'Category (For Rate)', icon: MdCategory, path: '/masters/customers/category' },
-            { name: 'Customer Group', icon: AiOutlineUsergroupAdd, path: '/masters/customers/group' },
-            { name: 'Consignee', icon: MdPersonAdd, path: '/masters/customers/consignee' },
-            { name: 'Party Class Master', icon: MdClass, path: '/masters/customers/party-class' },
-            { name: 'Party Wise Rate List', icon: MdLocalOffer, path: '/masters/customers/rate-list' },
-            { name: 'Party Brand Broker', icon: MdStars, path: '/masters/customers/brand-broker' },
-            { name: 'Party Rating Update', icon: MdRateReview, path: '/masters/customers/rating' },
-            { name: 'Party Brand Parameter', icon: MdBuild, path: '/masters/customers/brand-parameter' },
+            { name: 'Debtors/Customers', icon: MdPeople, path: '#' },
+            { name: 'Category (For Rate)', icon: MdCategory, path: '#' },
+            { name: 'Customer Group', icon: AiOutlineUsergroupAdd, path: '#' },
+            { name: 'Consignee', icon: MdPersonAdd, path: '#' },
+            { name: 'Party Class Master', icon: MdClass, path: '#' },
+            { name: 'Party Wise Rate List', icon: MdLocalOffer, path: '#' },
+            { name: 'Party Brand Broker', icon: MdStars, path: '#' },
+            { name: 'Party Rating Update', icon: MdRateReview, path: '#' },
+            { name: 'Party Brand Parameter', icon: MdBuild, path: '#' },
           ],
         },
         {
@@ -421,7 +416,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
             { name: 'Category Master', icon: MdCategory, path: '/masters/products/category' },
             { name: 'Product Group', icon: AiOutlineNodeIndex, path: '/masters/products/productgrp' },
             { name: 'Product Master', icon: MdLocalMall, path: '/masters/products/product' },
-            { name: 'Style Master', icon: MdCollectionsBookmark, path: '/masters/products/style' },
+            { name: 'Style Master', icon: MdCollectionsBookmark, path: '#' },
             { name: 'Type Master', icon: MdCategory, path: '/masters/products/type' },
             { name: 'Shade Master', icon: MdLibraryBooks, path: '/masters/products/shade' },
             { name: 'Pattern Master', icon: MdLibraryBooks, path: '/masters/products/pattern' },
@@ -429,6 +424,8 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
             { name: 'Unit Master', icon: MdStraighten, path: '/masters/products/unit' },
             { name: 'Web Collection', icon: MdCollectionsBookmark, path: '/masters/products/webcollection' },
             { name: 'Quality', icon: MdLibraryBooks, path: '/masters/products/quality' },
+            { name: 'RackMst', icon: MdLibraryBooks, path: '/masters/products/rack' },
+            { name: 'Prod Series', icon: MdLibraryBooks, path: '/masters/products/prodseries' },
           ],
         },
         {
@@ -436,7 +433,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
           icon: MdReceipt,
           path: '/masters/gst-sac',
           children: [
-            { name: 'GST Codes', icon: MdReceipt, path: '/masters/gst-sac/gst' },
+            { name: 'GST Codes', icon: MdReceipt, path: '#' },
           ],
         },
         {
@@ -444,16 +441,16 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
           icon: FaBalanceScale,
           path: '/masters/tax-terms',
           children: [
-            { name: 'Tax Group', icon: MdGavel, path: '/masters/tax-terms/tax-group' },
-            { name: 'Tax Master', icon: MdGavel, path: '/masters/tax-terms/tax-master' },
-            { name: 'Term Group', icon: MdGavel, path: '/masters/tax-terms/term-group' },
-            { name: 'Terms Master', icon: MdAssignment, path: '/masters/tax-terms/terms-master' },
-            { name: 'Discount Pattern', icon: MdLocalOffer, path: '/masters/tax-terms/discount-pattern' },
-            { name: 'Discount Sequence', icon: MdAssignment, path: '/masters/tax-terms/discount-sequence' },
-            { name: 'Pattern Master', icon: MdLibraryBooks, path: '/masters/tax-terms/pattern-master' },
-            { name: 'Cash Discount Terms', icon: MdAttachMoney, path: '/masters/tax-terms/cash-discount' },
-            { name: 'Excise Tariff Master', icon: MdLibraryBooks, path: '/masters/tax-terms/excise-master' },
-            { name: 'Excise Tariff Group', icon: MdLibraryBooks, path: '/masters/tax-terms/excise-group' },
+            { name: 'Tax Group', icon: MdGavel, path: '#' },
+            { name: 'Tax Master', icon: MdGavel, path: '#' },
+            { name: 'Term Group', icon: MdGavel, path: '#' },
+            { name: 'Terms Master', icon: MdAssignment, path: '#' },
+            { name: 'Discount Pattern', icon: MdLocalOffer, path: '#' },
+            { name: 'Discount Sequence', icon: MdAssignment, path: '#' },
+            { name: 'Pattern Master', icon: MdLibraryBooks, path: '#' },
+            { name: 'Cash Discount Terms', icon: MdAttachMoney, path: '#' },
+            { name: 'Excise Tariff Master', icon: MdLibraryBooks, path: '#' },
+            { name: 'Excise Tariff Group', icon: MdLibraryBooks, path: '#' },
           ],
         },
         {
@@ -461,7 +458,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
           icon: MdEvent,
           path: '/masters/season',
           children: [
-            { name: 'Season Master', icon: MdEvent, path: '/masters/season/list' },
+            { name: 'Season Master', icon: MdEvent, path: '#' },
           ],
         },
       ],
@@ -559,8 +556,8 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
       style={{
         backgroundColor: '#fff',
         color: '#1b69e7ff',
-         fontSize: '1rem',
-            fontWeight: '490',
+        fontSize: '1rem',
+        fontWeight: '490',
         height: '100vh',
         position: 'fixed',
         border: '1px solid #edeff0',
