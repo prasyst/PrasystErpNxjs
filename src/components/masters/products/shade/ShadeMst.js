@@ -1,18 +1,18 @@
+'use client'
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import {
     Box, Grid, TextField, Typography, Button, Stack, FormControlLabel, Checkbox, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions,
 } from '@mui/material';
-import KeyboardArrowLeftIcon from "@mui/icons-material/KeyboardArrowLeft";
-import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import { toast, ToastContainer } from 'react-toastify';
 import { getFormMode } from '@/lib/helpers';
 import { useRouter } from 'next/navigation';
-import CrudButton from '@/GlobalFunction/CrudButton';
 import debounce from 'lodash.debounce';
 import axiosInstance from '@/lib/axios';
 import { useSearchParams } from 'next/navigation';
 import { pdf } from '@react-pdf/renderer';
 import PrintShadeDt from './PrintShadeDt';
+import CrudButtons from '@/GlobalFunction/CrudButtons';
+import PaginationButtons from '@/GlobalFunction/PaginationButtons';
 
 const FORM_MODE = getFormMode();
 const ShadeMst = () => {
@@ -302,6 +302,14 @@ const ShadeMst = () => {
             console.error("Error fetching ID and LASTID:", error);
         }
     };
+    const handleFirst =()=>{}
+    const handleLast=async()=>{
+       await fetchRetriveData(1, "L");
+        setForm((prev) => ({
+            ...prev,
+            SearchByCd: ''
+        }));  
+    }
     const handlePrevious = async () => {
         await fetchRetriveData(currentSHADE_KEY, "P");
         setForm((prev) => ({
@@ -345,28 +353,6 @@ const ShadeMst = () => {
     const handleEdit = () => {
         setMode(FORM_MODE.edit);
     };
-
-
-
-
-
-    // const handlePrint = async () => {
-    //     try {
-    //         const response = await axiosInstance.post(
-    //             `Fgshade/GetFGSHADEDashBoard?currentPage=1&limit=5000`,
-    //             { SearchText: "" }
-    //         );
-
-    //         const { data: { STATUS, DATA } } = response;
-
-    //         if (STATUS === 0 && Array.isArray(DATA)) {
-    //             PrintShadeData(DATA);
-    //         }
-    //     } catch (error) {
-    //         console.error("Print Error:", error);
-    //     }
-    // };
-
         const handlePrint = async () => {
       try {
           const response = await axiosInstance.post(`Fgshade/GetFGSHADEDashBoard?currentPage=1&limit=5000`, {
@@ -379,12 +365,10 @@ const ShadeMst = () => {
                   STATUS: row.STATUS === "1" ? "Active" : "Inactive"
               }));
   
-              // Generate the PDF blob
               const asPdf = pdf(<PrintShadeDt rows={formattedData} />);
               const blob = await asPdf.toBlob();
               const url = URL.createObjectURL(blob);
   
-              // Open the PDF in a new tab
               const newTab = window.open(url, '_blank');
               if (newTab) {
                   newTab.focus();
@@ -416,51 +400,12 @@ const ShadeMst = () => {
                 <ToastContainer />
                 <Box sx={{ maxWidth: '1000px', boxShadow: '0px 2px 6px rgba(0, 0, 0, 0.1)' }} className="form_grid" >
                     <Grid container alignItems="center"
-                        justifyContent="space-between" spacing={2} sx={{ marginTop: "30px", marginInline: '20px' }}>
-                        <Grid sx={{
-                            display: 'flex', justifyContent: {
-                                xs: 'center',
-                                sm: 'flex-start'
-                            },
-                            width: { xs: '100%', sm: 'auto' },
-                        }}>
-                            <Stack direction="row" spacing={1}>
-                                <Button variant="contained" size="small" className="three-d-button-previous"
-                                       sx={Buttonsx}
-                                    onClick={handlePrevious}
-                                    disabled={
-                                        mode !== FORM_MODE.read || !currentSHADE_KEY || currentSHADE_KEY === 1
-                                    }
-                                >
-                                    <KeyboardArrowLeftIcon />
-                                </Button>
-                                <Button variant="contained" size="small" className="three-d-button-next"
-                                     sx={Buttonsx}
-                                    onClick={handleNext}
-                                    disabled={mode !== FORM_MODE.read || !currentSHADE_KEY}
-                                >
-                                    <NavigateNextIcon />
-                                </Button>
-                            </Stack>
-                        </Grid>
+                        justifyContent="space-between" spacing={2} sx={{ marginTop: "10px", marginInline: '20px' }}>
                         <Grid sx={{ flexGrow: 1 }}>
                             <Typography align="center" variant="h5">
                                 Shade Master
                             </Typography>
-                        </Grid>
-                        <Grid>
-                            <Stack direction="row" spacing={{ xs: 0.5, sm: 1 }}  >
-                                <CrudButton
-                                    mode={mode}
-                                    onAdd={handleAdd}
-                                    onEdit={handleEdit}
-                                    onView={handlePrint}
-                                    onDelete={handleDelete}
-                                    onExit={handleExit}
-                                    readOnlyMode={mode === FORM_MODE.read}
-                                />
-                            </Stack>
-                        </Grid>
+                        </Grid>                        
                     </Grid>
                     <Box
                         sx={{
@@ -610,7 +555,40 @@ const ShadeMst = () => {
                             />
                         </Box>
                     </Box>
-
+                      <Grid container alignItems="center"
+                        justifyContent="center" spacing={1} sx={{ marginTop: "10px", marginInline: '20px' }}>
+                        <Grid sx={{
+                            width: { xs: '100%', sm: 'auto' },
+                        }}>
+                            <Stack direction="row" spacing={1}>
+                                 <PaginationButtons
+                                    mode={mode}
+                                    FORM_MODE={FORM_MODE}
+                                    currentKey={currentSHADE_KEY}
+                                    onFirst={handleFirst}
+                                    onPrevious={handlePrevious}
+                                    onNext={handleNext}
+                                    onLast={handleLast}
+                                    sx={{ mt: 2 }}
+                                    buttonSx={Buttonsx}
+                                />
+                            </Stack>
+                        </Grid>
+                        <Grid>
+                            <Stack direction="row" spacing={{ xs: 0.5, sm: 1 }}  >
+                                <CrudButtons
+                                    mode={mode}
+                                                                      onAdd={mode === FORM_MODE.read ? handleAdd : handleSubmit}
+                                    onEdit={mode === FORM_MODE.read ? handleEdit : handleCancel}
+                                    onView={handlePrint}
+                                    onDelete={handleDelete}
+                                    onExit={handleExit}
+                                    readOnlyMode={mode === FORM_MODE.read}
+                                />
+                            </Stack>
+                        </Grid>
+                    </Grid>
+{/* 
                     <Grid
                         item
                         xs={12}
@@ -684,7 +662,7 @@ const ShadeMst = () => {
                                 </Button>
                             </>
                         )}
-                    </Grid>
+                    </Grid> */}
                 </Box>
             </Box>
 

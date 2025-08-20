@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTheme } from '../../../src/app/context/ThemeContext';
 import { IoIosSearch } from "react-icons/io";
 import { useRouter } from "next/navigation";
@@ -10,6 +10,15 @@ const Header = ({ isSidebarCollapsed }) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const { theme, toggleTheme } = useTheme();
   const router=useRouter();
+  const [userName, setUserName] = useState(''); 
+
+    useEffect(() => {
+    const storedName = localStorage.getItem('USER_NAME');
+    if (storedName) {
+      setUserName(storedName);
+    }
+  }, []);
+    const getInitial = (name) => name?.charAt(0)?.toUpperCase() || '?';
 
     const handleLogout = () => {
     localStorage.removeItem('authenticated');
@@ -26,7 +35,7 @@ const Header = ({ isSidebarCollapsed }) => {
     <header 
       style={{
         // backgroundColor: 'var(--header-bg)',
-         backgroundColor: '#1fc7c7ff',
+         backgroundColor: '#1b69e7ff',
         padding: '0.5rem',
         position: 'fixed',
         top: 0,
@@ -132,9 +141,12 @@ const Header = ({ isSidebarCollapsed }) => {
               fontWeight: 'bold',
             }}
           >
-            R
+             {getInitial(userName)}
           </div>
-          <span style={{ color: 'var(--text-color)' }}>Rajat !</span>
+
+
+          <span style={{ color: 'var(--text-color)' }}> {userName || 'User'}!</span>
+
 
           {isDropdownOpen && (
             <div 

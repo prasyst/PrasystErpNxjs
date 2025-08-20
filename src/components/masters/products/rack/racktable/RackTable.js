@@ -11,15 +11,16 @@ import { useRouter } from "next/navigation";
 
 const handsontableColumns = [
   // { field: "ROWNUM", headerName: "SrNo", width: "16%", type: "numeric" },
-  { field: "FGCAT_KEY", headerName: "Code", width: "16%", type: "text" },
-  { field: "FGCAT_CODE", headerName: "AltCode", width: "15%", type: "text" },
-  { field: "FGCAT_NAME", headerName: "Name", width: "15%", type: "text" },
-  { field: "SEGMENT_KEY", headerName: "Segment", width: "15%", type: "text" },
-  { field: "SR_CODE", headerName: "Cat_Series", width: "15%", type: "text" },
+  { field: "RACKMST_KEY", headerName: "Code", width: "16%", type: "text" },
+  { field: "RACKMST_NO", headerName: "Rack No.", width: "15%", type: "text" },
+   { field: "ROWMST_KEY", headerName: "Row No.", width: "15%", type: "text" },
+  { field: "CURRN_RACK", headerName: "DefaultRack", width: "15%", type: "text" },
+  { field: "CAPACITY", headerName: "Capacity", width: "15%", type: "text" },
+  { field: "RACKMST_ABRV", headerName: "Abrv", width: "15%", type: "text" },
   { field: "STATUS", headerName: "Status", width: "15%", type: "numeric" }
 ];
 
-export default function CatTable() {
+export default function RackTable() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
   const [rows, setRows] = useState([]);
@@ -31,7 +32,7 @@ export default function CatTable() {
   const fetchTableData = async () => {
     setIsLoading(true);
     try {
-      const response = await axiosInstance.post(`Category/GetFgCatDashBoard?currentPage=1&limit=500`, {
+      const response = await axiosInstance.post(`RACKMST/GetRACKMSTDashBoard?currentPage=1&limit=5000`, {
         "SearchText": ''
       });
       const { data: { STATUS, DATA } } = response;
@@ -44,7 +45,7 @@ export default function CatTable() {
         setRows(formattedData);
       }
     } catch (error) {
-      console.error("Error fetching category data:", error);
+      console.error("Error fetching rack data:", error);
     } finally {
       setIsLoading(false);
     }
@@ -62,10 +63,10 @@ export default function CatTable() {
 
   const handleRowClick = (row) => {
     const params = new URLSearchParams({
-      FGCAT_KEY: row.FGCAT_KEY,
+      RACKMST_KEY: row.RACKMST_KEY,
       mode: "view"
     }).toString();
-    router.push(`/masters/products/category?${params}`);
+    router.push(`/masters/products/rack?${params}`);
   };
 
 
@@ -94,7 +95,7 @@ export default function CatTable() {
             size="small"
             sx={addButtonStyles}
             startIcon={<AddIcon />}
-            onClick={() => router.push('/masters/products/category')}
+            onClick={() => router.push('/masters/products/rack')}
           >
             New
           </Button>

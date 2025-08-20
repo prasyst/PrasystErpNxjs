@@ -2,23 +2,22 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
     Box, Grid, TextField, Typography, Button, Stack, FormControlLabel, Checkbox, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions,
 } from '@mui/material';
-import KeyboardArrowLeftIcon from "@mui/icons-material/KeyboardArrowLeft";
-import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import { toast, ToastContainer } from 'react-toastify';
 import { getFormMode } from '@/lib/helpers';
 import { useRouter } from 'next/navigation';
-import CrudButton from '@/GlobalFunction/CrudButton';
 import debounce from 'lodash.debounce';
 import axiosInstance from '@/lib/axios';
 import { useSearchParams } from 'next/navigation';;
 import { pdf } from '@react-pdf/renderer';
 import PrintBrDt from './PrintBrDt'
 import Image from 'next/image';
+import CrudButtons from '@/GlobalFunction/CrudButtons';
+import PaginationButtons from '@/GlobalFunction/PaginationButtons';
 const FORM_MODE = getFormMode();
 const BrandMst = () => {
     const router = useRouter();
-         const searchParams = useSearchParams();
-          const BRAND_KEY = searchParams.get('BRAND_KEY');
+    const searchParams = useSearchParams();
+    const BRAND_KEY = searchParams.get('BRAND_KEY');
     const [currentBRAND_KEY, setCurrentBRAND_KEY] = useState(null);
     const [form, setForm] = useState({
         SearchByCd: '',
@@ -54,7 +53,7 @@ const BrandMst = () => {
             Status: updatedStatus
         }))
     };
-    const fetchRetriveData = useCallback(  async (currentBRAND_KEY, flag = "R", isManualSearch = false) => {
+    const fetchRetriveData = useCallback(async (currentBRAND_KEY, flag = "R", isManualSearch = false) => {
         try {
             const response = await axiosInstance.post('Brand/RetriveBrand', {
                 "FLAG": flag,
@@ -96,7 +95,7 @@ const BrandMst = () => {
         } catch (err) {
             console.error(err);
         }
-    },[CO_ID]);
+    }, [CO_ID]);
     // useEffect(() => {
     //     if (location.state && location.state.BRAND_KEY) {
     //         setCurrentBRAND_KEY(location.state.BRAND_KEY);
@@ -118,15 +117,15 @@ const BrandMst = () => {
     //         setBrandImage(null);
     //     }
     // }, [location]);
-      useEffect(() => {
+    useEffect(() => {
         if (BRAND_KEY) {
             setCurrentBRAND_KEY(BRAND_KEY);
-          fetchRetriveData(BRAND_KEY);
-           setMode(FORM_MODE.read);
+            fetchRetriveData(BRAND_KEY);
+            setMode(FORM_MODE.read);
             setBrandImage(null);
-        }else {
-                setForm({
-                     SearchByCd: '',
+        } else {
+            setForm({
+                SearchByCd: '',
                 SERIES: '',
                 BRAND_CODE: '',
                 BRAND_KEY: '',  //CODE
@@ -134,12 +133,12 @@ const BrandMst = () => {
                 BRAND_ABRV: '',
                 Brand_LST_CODE: '',
                 Status: "1",
-                })
-                setMode(FORM_MODE.read);
-                    setBrandImage(null);
-            }
-             setMode(FORM_MODE.read);
-      }, [BRAND_KEY,fetchRetriveData]);
+            })
+            setMode(FORM_MODE.read);
+            setBrandImage(null);
+        }
+        setMode(FORM_MODE.read);
+    }, [BRAND_KEY, fetchRetriveData]);
     const handleSubmit = async () => {
         try {
             const UserName = userRole === 'user' ? username : PARTY_KEY;
@@ -337,6 +336,15 @@ const BrandMst = () => {
         }));
         setBrandImage(null);
     };
+    const handleFirst = () => { }
+    const handleLast = async () => {
+        await fetchRetriveData(1, "L");
+        setForm((prev) => ({
+            ...prev,
+            SearchByCd: ''
+        }));
+        setBrandImage(null);
+    };
     const handleNext = async () => {
         if (currentBRAND_KEY) {
             await fetchRetriveData(currentBRAND_KEY, "N");
@@ -375,36 +383,36 @@ const BrandMst = () => {
         setMode(FORM_MODE.edit);
         setBrandImage(null);
     };
-   const handlePrint = async () => {
-    try {
-        const response = await axiosInstance.post(`/Brand/GetBrandDashBoard?currentPage=1&limit=5000`, {
-            "SearchText": ""
-        });
-        const { data: { STATUS, DATA } } = response; // Extract DATA
-        if (STATUS === 0 && Array.isArray(DATA)) {
-            const formattedData = DATA.map(row => ({
-                ...row,
-                STATUS: row.STATUS === "1" ? "Active" : "Inactive"
-            }));
+    const handlePrint = async () => {
+        try {
+            const response = await axiosInstance.post(`/Brand/GetBrandDashBoard?currentPage=1&limit=5000`, {
+                "SearchText": ""
+            });
+            const { data: { STATUS, DATA } } = response; // Extract DATA
+            if (STATUS === 0 && Array.isArray(DATA)) {
+                const formattedData = DATA.map(row => ({
+                    ...row,
+                    STATUS: row.STATUS === "1" ? "Active" : "Inactive"
+                }));
 
-            // Generate the PDF blob
-            const asPdf = pdf(<PrintBrDt rows={formattedData} />);
-            const blob = await asPdf.toBlob();
-            const url = URL.createObjectURL(blob);
+                // Generate the PDF blob
+                const asPdf = pdf(<PrintBrDt rows={formattedData} />);
+                const blob = await asPdf.toBlob();
+                const url = URL.createObjectURL(blob);
 
-            // Open the PDF in a new tab
-            const newTab = window.open(url, '_blank');
-            if (newTab) {
-                newTab.focus();
-            } 
-            setTimeout(() => {
-                URL.revokeObjectURL(url);
-            }, 100);
+                // Open the PDF in a new tab
+                const newTab = window.open(url, '_blank');
+                if (newTab) {
+                    newTab.focus();
+                }
+                setTimeout(() => {
+                    URL.revokeObjectURL(url);
+                }, 100);
+            }
+        } catch (error) {
+            console.error("Print Error:", error);
         }
-    } catch (error) {
-        console.error("Print Error:", error);
-    }
-};
+    };
 
     const handleExit = () => { router.push("/masters/products/brand/brandtable") };
     const handleImageChange = (e) => {
@@ -417,17 +425,17 @@ const BrandMst = () => {
             reader.readAsDataURL(file);
         }
     };
-      const Buttonsx = {
-    backgroundColor: '#39ace2',
-    margin: { xs: '0 4px', sm: '0 6px' },
-    minWidth: { xs: 40, sm: 46, md: 60 },
-    height: { xs: 40, sm: 46, md: 27 },
-    // "&:disabled": {
-    //   backgroundColor: "rgba(0, 0, 0, 0.12)",
-    //   color: "rgba(0, 0, 0, 0.26)",
-    //   boxShadow: "none",
-    // }
-  };
+    const Buttonsx = {
+        backgroundColor: '#39ace2',
+        margin: { xs: '0 4px', sm: '0 6px' },
+        minWidth: { xs: 40, sm: 46, md: 60 },
+        height: { xs: 40, sm: 46, md: 27 },
+        // "&:disabled": {
+        //   backgroundColor: "rgba(0, 0, 0, 0.12)",
+        //   color: "rgba(0, 0, 0, 0.26)",
+        //   boxShadow: "none",
+        // }
+    };
     return (
         <>
             <Box sx={{ width: '100%', justifyContent: 'center', alignItems: 'flex-start', padding: '24px', boxSizing: 'border-box', marginTop: { xs: "30px", sm: "0px" } }}
@@ -435,50 +443,11 @@ const BrandMst = () => {
                 <ToastContainer />
                 <Box sx={{ maxWidth: '1000px', boxShadow: '0px 2px 6px rgba(0, 0, 0, 0.1)' }} className="form_grid" >
                     <Grid container alignItems="center"
-                        justifyContent="space-between" spacing={2} sx={{ marginTop: "30px", marginInline: '20px' }}>
-                        <Grid sx={{
-                            display: 'flex', justifyContent: {
-                                xs: 'center',
-                                sm: 'flex-start'
-                            },
-                            width: { xs: '100%', sm: 'auto' },
-                        }}>
-                            <Stack direction="row" spacing={1}>
-                                <Button variant="contained" size="small" className="three-d-button-previous"
-                                       sx={Buttonsx}
-                                    onClick={handlePrevious}
-                                    disabled={
-                                        mode !== FORM_MODE.read || !currentBRAND_KEY || currentBRAND_KEY === 1
-                                    }
-                                >
-                                    <KeyboardArrowLeftIcon />
-                                </Button>
-                                <Button variant="contained" size="small" className="three-d-button-next"
-                                      sx={Buttonsx}
-                                    onClick={handleNext}
-                                    disabled={mode !== FORM_MODE.read || !currentBRAND_KEY}
-                                >
-                                    <NavigateNextIcon />
-                                </Button>
-                            </Stack>
-                        </Grid>
+                        justifyContent="space-between" spacing={2} sx={{ marginTop: "10px", marginInline: '20px' }}>
                         <Grid sx={{ flexGrow: 1 }}>
                             <Typography align="center" variant="h5">
                                 Brand Master
                             </Typography>
-                        </Grid>
-                        <Grid>
-                            <Stack direction="row" spacing={{ xs: 0.5, sm: 1 }}  >
-                                <CrudButton
-                                    mode={mode}
-                                    onAdd={handleAdd}
-                                    onEdit={handleEdit}
-                                    onView={handlePrint}
-                                    onDelete={handleDelete}
-                                    onExit={handleExit}
-                                    readOnlyMode={mode === FORM_MODE.read}
-                                />
-                            </Stack>
                         </Grid>
                     </Grid>
                     <Box
@@ -550,7 +519,7 @@ const BrandMst = () => {
                                         sx={{
                                             width: { xs: '100%', sm: '32%' },
                                             '& .MuiInputBase-input': { fontSize: { xs: '0.875rem', sm: '1rem' } },
-                                            
+
                                         }}
                                         disabled={mode === FORM_MODE.read}
                                         fullWidth
@@ -563,7 +532,7 @@ const BrandMst = () => {
                                         sx={{
                                             width: { xs: '100%', sm: '32%' },
                                             '& .MuiInputBase-input': { fontSize: { xs: '0.875rem', sm: '1rem' } },
-                                            
+
                                         }}
                                         disabled={true}
                                         fullWidth
@@ -576,7 +545,7 @@ const BrandMst = () => {
                                         inputRef={BRAND_KEYRef}
                                         sx={{
                                             width: { xs: '100%', sm: '32%' },
-                                            
+
                                         }}
                                         disabled={mode === FORM_MODE.read}
                                         className="custom-textfield"
@@ -618,7 +587,7 @@ const BrandMst = () => {
                                         sx={{
                                             width: { xs: '100%', sm: '30%' },
                                             '& .MuiInputBase-input': { fontSize: { xs: '0.875rem', sm: '1rem' } }
-                                          
+
                                         }}
                                         disabled={mode === FORM_MODE.read}
                                         className="custom-textfield"
@@ -656,7 +625,7 @@ const BrandMst = () => {
                             >
                                 <Image
                                     src={brandImage || ''}
-                                     alt="Brand"
+                                    alt="Brand"
                                     style={{
                                         width: '150px',
                                         height: '150px',
@@ -722,7 +691,40 @@ const BrandMst = () => {
                             </Box>
                         </Box>
                     </Box>
-                    <Grid
+                    <Grid container alignItems="center"
+                        justifyContent="center" spacing={1} sx={{ marginTop: "30px", marginInline: '20px' }}>
+                        <Grid sx={{
+                            width: { xs: '100%', sm: 'auto' },
+                        }}>
+                            <Stack direction="row" spacing={1}>
+                                <PaginationButtons
+                                    mode={mode}
+                                    FORM_MODE={FORM_MODE}
+                                    currentKey={currentBRAND_KEY}
+                                    onFirst={handleFirst}
+                                    onPrevious={handlePrevious}
+                                    onNext={handleNext}
+                                    onLast={handleLast}
+                                    sx={{ mt: 2 }}
+                                    buttonSx={Buttonsx}
+                                />
+                            </Stack>
+                        </Grid>
+                        <Grid>
+                            <Stack direction="row" spacing={{ xs: 0.5, sm: 1 }}  >
+                                <CrudButtons
+                                    mode={mode}
+                                    onAdd={mode === FORM_MODE.read ? handleAdd : handleSubmit}
+                                    onEdit={mode === FORM_MODE.read ? handleEdit : handleCancel}
+                                    onView={handlePrint}
+                                    onDelete={handleDelete}
+                                    onExit={handleExit}
+                                    readOnlyMode={mode === FORM_MODE.read}
+                                />
+                            </Stack>
+                        </Grid>
+                    </Grid>
+                    {/* <Grid
                         item
                         xs={12}
                         className="form_button"
@@ -795,7 +797,7 @@ const BrandMst = () => {
                                 </Button>
                             </>
                         )}
-                    </Grid>
+                    </Grid> */}
                 </Box>
             </Box>
 
