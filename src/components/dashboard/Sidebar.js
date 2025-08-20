@@ -728,7 +728,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
             { name: 'Category (For Rate)', icon: MdCategory, path: '/masters/customers/category' },
             { name: 'Customer Group', icon: AiOutlineUsergroupAdd, path: '/masters/customers/group' },
             { name: 'Consignee', icon: MdPersonAdd, path: '/masters/customers/consignee' },
-            { name: 'Party Class Master', icon: MdClass, path: '/masters/customers/party-class' },
+            { name: 'Party Class Master', icon: MdClass, path: '/masters/customers' },
             { name: 'Party Wise Rate List', icon: MdLocalOffer, path: '/masters/customers/rate-list' },
             { name: 'Party Brand Broker', icon: MdStars, path: '/masters/customers/brand-broker' },
             { name: 'Party Rating Update', icon: MdRateReview, path: '/masters/customers/rating' },

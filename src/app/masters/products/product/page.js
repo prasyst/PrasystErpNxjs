@@ -1,4 +1,5 @@
-// app/order/page.js
+'use client';
+
 import ProductMstComponent from '@/components/masters/products/product/ProductMstComponent';
 
 export default function ProductPage() {
