@@ -5,8 +5,6 @@ import {
   ClientSideRowModelModule,
   ModuleRegistry,
 } from "ag-grid-community";
-// import "ag-grid-community/styles/ag-grid.css";
-// import "ag-grid-community/styles/ag-theme-quartz.css";
 import {
   ExcelExportModule,
   MultiFilterModule,
@@ -39,6 +37,9 @@ const ReusableTable = ({
   customGridOptions = {},
   loading = false,
   enableExport = true,
+  exportSelectedOnly = false, // New prop for exporting selected rows only
+  selectedRows = [], // Selected rows data
+  enableCheckbox = false, // New prop to control checkbox visibility
   defaultColDef = {},
   autoSizeStrategy = null,
   compactMode = false,
@@ -72,33 +73,75 @@ const ReusableTable = ({
   }, []);
 
   // Export to Excel
-  const onExportExcel = useCallback(() => {
-    if (gridRef.current?.api) {
+  // Export to Excel
+const onExportExcel = useCallback(() => {
+  if (gridRef.current?.api) {
+    let fileName;
+
+    if (exportSelectedOnly && selectedRows.length > 0) {
+      // Export only selected rows
+      fileName = `selected_export_${new Date().toISOString().split('T')[0]}.xlsx`;
+      
+      // Create a temporary grid with selected data for export
+      const selectedNodes = gridRef.current.api.getSelectedNodes();
+      if (selectedNodes.length > 0) {
+        gridRef.current.api.exportDataAsExcel({
+          fileName: fileName,
+          onlySelected: true,
+          processHeaderCallback: (params) => {
+            // Skip checkbox column in export
+            if (params.column.getColDef().checkboxSelection) {
+              return null; // This will exclude the checkbox column
+            }
+            return params.column.getColDef().headerName || params.column.getColId();
+          }
+        });
+      } else {
+        alert('Please select rows to export');
+      }
+    } else {
+      // Export all data
+      fileName = `export_${new Date().toISOString().split('T')[0]}.xlsx`;
       gridRef.current.api.exportDataAsExcel({
-        fileName: `export_${new Date().toISOString().split('T')[0]}.xlsx`,
+        fileName: fileName,
         processHeaderCallback: (params) => {
-          // Make headers bold in Excel export
-          return {
-            style: { font: { bold: true } },
-            text: params.column.getColDef().headerName || params.column.getColId()
-          };
+          // Skip checkbox column in export
+          if (params.column.getColDef().checkboxSelection) {
+            return null; // This will exclude the checkbox column
+          }
+          return params.column.getColDef().headerName || params.column.getColId();
         }
       });
     }
-  }, []);
+  }
+}, [exportSelectedOnly, selectedRows]);
+
+  // Processed column definitions based on checkbox requirement
+  const processedColumnDefs = useMemo(() => {
+    if (!enableCheckbox) {
+      // Remove checkbox and serial number columns if checkbox is not enabled
+      return columnDefs.filter(col => 
+        !col.checkboxSelection && 
+        col.field !== 'serialNo' && 
+        col.headerName !== 'Select' && 
+        col.headerName !== 'S.No'
+      );
+    }
+    return columnDefs;
+  }, [columnDefs, enableCheckbox]);
 
   // Grid options
   const gridOptions = useMemo(() => ({
     onRowClicked: onRowClick,
     onRowDoubleClicked: onRowDoubleClick,
     onSelectionChanged: onSelectionChanged,
-    suppressRowClickSelection: false,
-    rowSelection: 'single',
+    suppressRowClickSelection: enableCheckbox ? true : false,
+    rowSelection: enableCheckbox ? 'multiple' : 'single',
     animateRows: true,
     enableCellTextSelection: true,
     ensureDomOrder: true,
     ...customGridOptions
-  }), [onRowClick, onRowDoubleClick, onSelectionChanged, customGridOptions]);
+  }), [onRowClick, onRowDoubleClick, onSelectionChanged, customGridOptions, enableCheckbox]);
 
   return (
     <div style={{ 
@@ -115,7 +158,7 @@ const ReusableTable = ({
         alignItems: 'center',
         margin: '0 16px'
       }}>
-        {/* {quickFilter && (
+        {quickFilter && (
           <div style={{ 
             position: 'relative', 
             display: 'flex', 
@@ -159,14 +202,33 @@ const ReusableTable = ({
                 width: '100%',
                 boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
                 transition: 'all 0.2s ease',
-                ':focus': {
-                  borderColor: '#3b82f6',
-                  boxShadow: '0 0 0 3px rgba(59, 130, 246, 0.1)'
-                }
+              }}
+              onFocus={(e) => {
+                e.target.style.borderColor = '#3b82f6';
+                e.target.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.1)';
+              }}
+              onBlur={(e) => {
+                e.target.style.borderColor = '#d0d5dd';
+                e.target.style.boxShadow = '0 1px 2px rgba(0,0,0,0.05)';
               }}
             />
           </div>
-        )} */}
+        )}
+        
+        {/* Show selected count if checkboxes are enabled */}
+        {enableCheckbox && selectedRows.length > 0 && (
+          <div style={{
+            padding: '4px 12px',
+            backgroundColor: '#f0f9ff',
+            border: '1px solid #0ea5e9',
+            borderRadius: '6px',
+            fontSize: '14px',
+            color: '#0369a1',
+            fontWeight: '500'
+          }}>
+            {selectedRows.length} row{selectedRows.length > 1 ? 's' : ''} selected
+          </div>
+        )}
         
         {enableExport && (
           <button
@@ -175,26 +237,31 @@ const ReusableTable = ({
               padding: '8px 16px',
               borderRadius: '6px',
               border: '1px solid #d0d5dd',
-              backgroundColor: '#fff',
+              backgroundColor: '#3CB371',
               cursor: 'pointer',
               fontSize: '14px',
               fontWeight: '500',
-              color: '#333',
+              color: '#ffffff',
               display: 'flex',
               alignItems: 'center',
               gap: '6px',
               boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
               transition: 'all 0.2s ease',
-              ':hover': {
-                backgroundColor: '#f8f9fa',
-                borderColor: '#b3b9c2'
-              }
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.backgroundColor = '#2e8b57';
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.backgroundColor = '#3CB371';
             }}
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M13 11H18L12 17L6 11H11V3H13V11ZM4 19H20V12H22V20C22 20.5523 21.5523 21 21 21H3C2.44772 21 2 20.5523 2 20V12H4V19Z" fill="currentColor"/>
             </svg>
-            Export Excel
+            {exportSelectedOnly && selectedRows.length > 0 
+              ? `Export Selected (${selectedRows.length})` 
+              : 'Export Excel'
+            }
           </button>
         )}
       </div>
@@ -211,7 +278,7 @@ const ReusableTable = ({
       >
         <AgGridReact
           ref={gridRef}
-          columnDefs={columnDefs}
+          columnDefs={processedColumnDefs}
           rowData={rowData}
           defaultColDef={defaultColDefMemo}
           autoSizeStrategy={autoSizeStrategyMemo}
