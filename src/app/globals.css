@@ -1,5 +1,7 @@
 /* Ensure proper layout calculations */
-html, body, #__next {
+html,
+body,
+#__next {
   width: 100%;
   height: 100%;
   margin: 0;
@@ -28,6 +30,7 @@ html, body, #__next {
   text-overflow: ellipsis;
   max-width: 100% !important;
 }
+
 /* styles/globals.css */
 #__next-build-watcher,
 [data-nextjs-dev-overlay] {
@@ -131,8 +134,8 @@ body {
   border-radius: 12px;
   padding: 0px 20px 20px 20px;
   background-color: #fff;
-   transition: all 0.3s ease-in-out;
-     box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease-in-out;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1);
 }
 
 .custom-textfield .MuiFilledInput-root,
@@ -196,23 +199,26 @@ body {
 
 .custom-textfield .MuiFilledInput-root.Mui-disabled {
   background-color: transparent !important;
-}       
+}
 
 
 
 
 
-button, .MuiButtonBase-root {
+button,
+.MuiButtonBase-root {
   transition: all 0.3s ease !important;
   border-radius: 6px !important;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
 }
 
-button:hover, .MuiButtonBase-root:hover {
+button:hover,
+.MuiButtonBase-root:hover {
   background-color: #e0f7fa !important;
   color: #1976d2 !important;
   transform: translateY(-1px);
 }
+
 /* .form_grid {
   background-color: #ffffff;
   border-radius: 12px;
@@ -226,6 +232,7 @@ button:hover, .MuiButtonBase-root:hover {
   margin-bottom: 10px;
   letter-spacing: 0.5px;
 }
+
 .MuiDialog-paper {
   border-radius: 12px !important;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2) !important;
@@ -239,6 +246,7 @@ button:hover, .MuiButtonBase-root:hover {
 .MuiDialogContentText-root {
   color: #455a64;
 }
+
 .MuiCheckbox-root {
   color: #39ace2 !important;
 }
@@ -246,9 +254,11 @@ button:hover, .MuiButtonBase-root:hover {
 .MuiCheckbox-root.Mui-checked {
   color: #0288d1 !important;
 }
+
 .custom-textfield .MuiFilledInput-root.Mui-focused {
   box-shadow: 0 0 0 2px rgba(57, 172, 226, 0.2);
 }
+
 .search-input .MuiFilledInput-root {
   background-color: #e3f2fd !important;
   border: 1px solid #b3e5fc;

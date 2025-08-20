@@ -764,9 +764,9 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
           path: '/masters/tax-terms',
           children: [
             { name: 'Tax Group', icon: MdGavel, path: '#' },
-            { name: 'Tax Master', icon: MdGavel, path: '#' },
+            { name: 'Tax Master', icon: MdGavel, path: '/masters/taxterms/taxmaster' },
             { name: 'Term Group', icon: MdGavel, path: '#' },
-            { name: 'Terms Master', icon: MdAssignment, path: '#' },
+            { name: 'Terms Master', icon: MdAssignment, path: '/masters/taxterms/termmaster' },
             { name: 'Discount Pattern', icon: MdLocalOffer, path: '#' },
             { name: 'Discount Sequence', icon: MdAssignment, path: '#' },
             { name: 'Pattern Master', icon: MdLibraryBooks, path: '#' },
@@ -780,7 +780,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
           icon: MdEvent,
           path: '/masters/season',
           children: [
-            { name: 'Season Master', icon: MdEvent, path: '#' },
+            { name: 'Season Master', icon: MdEvent, path: '/masters/season/season' },
           ],
         },
       ],
@@ -895,6 +895,9 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
       style={{
         backgroundColor: '#fff',
 
+        color: '#1b69e7ff',
+        fontSize: '1rem',
+        fontWeight: '490',
         color: '#333',
 
         height: '100vh',
