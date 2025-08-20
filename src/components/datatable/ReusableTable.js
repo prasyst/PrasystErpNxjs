@@ -109,13 +109,13 @@ const ReusableTable = ({
       gap: '12px'
     }}>
       {/* Header with search and export */}
-      {/* <div style={{ 
+      <div style={{ 
         display: 'flex', 
         justifyContent: 'space-between', 
         alignItems: 'center',
         margin: '0 16px'
       }}>
-        {quickFilter && (
+        {/* {quickFilter && (
           <div style={{ 
             position: 'relative', 
             display: 'flex', 
@@ -166,7 +166,7 @@ const ReusableTable = ({
               }}
             />
           </div>
-        )}
+        )} */}
         
         {enableExport && (
           <button
@@ -197,7 +197,7 @@ const ReusableTable = ({
             Export Excel
           </button>
         )}
-      </div> */}
+      </div>
 
       {/* AG Grid */}
       <div 

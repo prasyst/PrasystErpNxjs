@@ -408,35 +408,92 @@ import {
   Box, 
   Button, 
   TextField, 
-  List, 
-  ListItem, 
-  ListItemButton, 
-  ListItemText, 
-  Paper,
-  TablePagination,
   CircularProgress,
   Autocomplete,
-  FormControl,
-  Select,
-  MenuItem
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
-import SearchIcon from '@mui/icons-material/Search';
-import { ClickAwayListener } from "@mui/material";
 import axiosInstance from '../../lib/axios';
-import ReusableHandsontable from '../datatable/ReusableHandsontable';
+import ReusableTable from '../../components/datatable/ReusableTable';
 import { useRouter } from 'next/navigation';
 
-const handsontableColumns = [
-  { field: "ORDBK_NO", headerName: "ORDER NO", width: 130, type: "text" },
-  { field: "ORDER_Date", headerName: "ORDER DATE", width: 130, type: "text" },
-  { field: "PORD_REF", headerName: "P ORDER REF", width: 140, type: "text" },
-  { field: "DLV_DT", headerName: "DELIVERY DT", width: 130, type: "text" },
-  { field: "PARTY_NAME", headerName: "PARTY NAME", width: 200, type: "text" },
-  { field: "BROKER_NAME", headerName: "BROKER NAME", width: 160, type: "text" },
-  { field: "QTY", headerName: "QUANTITY", width: 120, type: "numeric" },
-  { field: "BAL_QTY", headerName: "BALANCE QTY", width: 130, type: "numeric" },
-  { field: "AMT", headerName: "AMOUNT", width: 120, type: "numeric" },
+// Column definitions for AG Grid
+const columnDefs = [
+  { 
+    field: "ORDBK_NO", 
+    headerName: "ORDER NO", 
+    width: 130,
+    filter: true,
+    sortable: true
+  },
+  { 
+    field: "ORDER_Date", 
+    headerName: "ORDER DATE", 
+    width: 130,
+    filter: 'agDateColumnFilter',
+    sortable: true
+  },
+  { 
+    field: "PORD_REF", 
+    headerName: "P ORDER REF", 
+    width: 160,
+    filter: true,
+    sortable: true
+  },
+  { 
+    field: "DLV_DT", 
+    headerName: "DELIVERY DT", 
+    width: 130,
+    filter: 'agDateColumnFilter',
+    sortable: true
+  },
+  { 
+    field: "PARTY_NAME", 
+    headerName: "PARTY NAME", 
+    width: 230,
+    filter: true,
+    sortable: true
+  },
+  { 
+    field: "BROKER_NAME", 
+    headerName: "BROKER NAME", 
+    width: 140,
+    filter: true,
+    sortable: true
+  },
+  { 
+    field: "QTY", 
+    headerName: "QUANTITY", 
+    width: 120,
+    // type: "numericColumn",
+    filter: 'agNumberColumnFilter',
+    // cellStyle: { textAlign: 'right' }
+  },
+  { 
+    field: "BAL_QTY", 
+    headerName: "BALANCE QTY", 
+    width: 130,
+    // type: "numericColumn",
+    filter: 'agNumberColumnFilter',
+    // cellStyle: { textAlign: 'right' }
+  },
+  { 
+    field: "AMT", 
+    headerName: "AMOUNT", 
+    width: 120,
+    // type: "numericColumn",
+    filter: 'agNumberColumnFilter',
+    // cellStyle: { textAlign: 'right' },
+    valueFormatter: (params) => {
+      if (params.value != null) {
+        return new Intl.NumberFormat('en-IN', {
+          style: 'currency',
+          currency: 'INR',
+          minimumFractionDigits: 2
+        }).format(params.value);
+      }
+      return '';
+    }
+  },
 ];
 
 export default function StockLookup() {
@@ -444,7 +501,6 @@ export default function StockLookup() {
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [partyDtls, setPartyDtls] = useState([]);
-  const [showSuggestions, setShowSuggestions] = useState(false);
   const [partySearchResults, setPartySearchResults] = useState([]);
   const [isCustomer, setIsCustomer] = useState(false);
   const [partyName, setPartyName] = useState("");
@@ -454,8 +510,6 @@ export default function StockLookup() {
     PARTY_NAME: ""
   });
   const [rows, setRows] = useState([]);
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(25);
 
   useEffect(() => {
     const userRole = localStorage.getItem('userRole');
@@ -505,22 +559,6 @@ export default function StockLookup() {
     router.push("/dashboard/stock_enqury");
   };
 
-  const handleClickAway = () => {
-    setShowSuggestions(false);
-  };
-
-  const handleSelectParty = (party) => {
-    setForm(prev => ({
-      ...prev,
-      PARTY_KEY: party.PARTY_KEY,
-      PARTY_NAME: party.PARTY_NAME,
-    }));
-    setSearchTerm(party.PARTY_NAME);
-    setShowSuggestions(false);
-  };
-
-
-
   const fetchTableData = useCallback(async () => {
     setIsLoading(true);
     try {
@@ -541,10 +579,9 @@ export default function StockLookup() {
           DLV_DT: row.DLV_DT ? new Date(row.DLV_DT).toLocaleDateString() : "-"
         }));
         setRows(formattedData);
-        setPage(0);
       }
     } catch (error) {
-      console.error("Error fetching productgrp data:", error);
+      console.error("Error fetching order data:", error);
     } finally {
       setIsLoading(false);
     }
@@ -554,36 +591,15 @@ export default function StockLookup() {
     fetchTableData();
   }, [fetchTableData]);
 
-  const paginatedData = useMemo(() => {
-    const startIndex = page * rowsPerPage;
-    return rows.slice(startIndex, startIndex + rowsPerPage);
-  }, [rows, page, rowsPerPage]);
+  const handleRowClick = useCallback((event) => {
+    console.log('Row clicked:', event.data);
+    // Add your row click logic here
+  }, []);
 
-  const handleSearchInputChange = (e) => {
-    const val = e.target.value;
-    setSearchTerm(val);
-    if (!isCustomer) {
-      debouncedFetch(val);
-    }
-  };
-
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setForm(prev => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
-
-  const handleAfterChange = (changes, source) => {
-    if (source === 'edit') {
-      console.log('Data changed:', changes);
-    }
-  };
-
-  const handleAfterSelection = (row, column, row2, column2) => {
-    console.log('Selection changed:', { row, column, row2, column2 });
-  };
+  const handleRowDoubleClick = useCallback((event) => {
+    console.log('Row double clicked:', event.data);
+    // Add your double click logic here - maybe navigate to detail page
+  }, []);
 
   const addButtonStyles = {
     background: "#39ace2",
@@ -719,7 +735,8 @@ export default function StockLookup() {
           </Box>
         </Box>
 
-        <div style={{ height: 'calc(100vh - 180px)', width: '100%' }}>
+        {/* AG Grid Table */}
+        <div style={{ height: 'calc(100vh - 150px)', width: '100%' }}>
           {isLoading ? (
             <div style={{ 
               display: 'flex', 
@@ -730,50 +747,37 @@ export default function StockLookup() {
               <CircularProgress />
             </div>
           ) : (
-            <>
-              <ReusableHandsontable
-                data={paginatedData}
-                columns={handsontableColumns}
-                height="auto"
-                width="100%"
-                colHeaders={true}
-                rowHeaders={true}
-                afterChange={handleAfterChange}
-                afterSelection={handleAfterSelection}
-                readOnly={true}
-                customSettings={{
-                  stretchH: 'all',
-                  dropdownMenu: true,
-                  filters: {
-                    indicators: true,
-                    showOperators: true
-                  },
-                  contextMenu: true,
-                  search: true,
-                  filteringCaseSensitive: false,
-                  filteringIndicator: true,
-                  licenseKey: "non-commercial-and-evaluation"
-                }}
-              />
-              <TablePagination
-                rowsPerPageOptions={[25, 50, 100, 250, 500, 1000, 3000]}
-                component="div"
-                count={rows.length}
-                rowsPerPage={rowsPerPage}
-                page={page}
-                onPageChange={(e, newPage) => setPage(newPage)}
-                onRowsPerPageChange={(e) => {
-                  setRowsPerPage(parseInt(e.target.value, 10));
-                  setPage(0);
-                }}
-                sx={{
-                  borderTop: "1px solid #e0e0e0",
-                  "& .MuiTablePagination-toolbar": {
-                    minHeight: "52px",
-                  },
-                }}
-              />
-            </>
+           <ReusableTable
+  columnDefs={columnDefs}
+  rowData={rows}
+  height="100%"
+  theme="ag-theme-quartz"
+  isDarkMode={false}
+  pagination={true}
+  paginationPageSize={25}
+  paginationPageSizeSelector={[25, 50, 100, 250, 500, 1000]}
+  quickFilter={true}
+  onRowClick={handleRowClick}
+  onRowDoubleClick={handleRowDoubleClick}
+  loading={isLoading}
+  enableExport={true}
+  compactMode={true} // Enable compact mode for tighter rows
+   rowHeight={24} 
+  defaultColDef={{
+    resizable: true,
+    sortable: true,
+    filter: true,
+    flex: 1,
+    minWidth: 100
+  }}
+  customGridOptions={{
+    suppressRowClickSelection: false,
+    rowSelection: 'single',
+    animateRows: true,
+    enableCellTextSelection: true,
+    ensureDomOrder: true
+  }}
+/>
           )}
         </div>
       </div>
