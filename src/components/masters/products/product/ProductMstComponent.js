@@ -801,7 +801,7 @@ const ProductMst = () => {
   };
 
   const handleExit = () => {
-    router.push('/masters/products/productTable');
+    router.push('/masters/products/product/productTable');
   };
 
   const handleCellChange = (rowIndex, field, value) => {
@@ -1111,7 +1111,7 @@ const ProductMst = () => {
                 </span>
               }
               name="FGCAT_KEY"
-              value={categories.find(option => String(option.FGCAT_KEY) === String(form.FGCAT_KEY)) || null}
+              value={categories.find(option => String(option.FGCAT_KEY) === String(form.FGCAT_KEY)) || null || ""}
               onChange={(e, newValue) => {
                 const selectedName = newValue ? newValue.FGCAT_NAME : '';
                 const selectedId = newValue ? newValue.FGCAT_KEY : '';
@@ -1372,7 +1372,7 @@ const ProductMst = () => {
               options={Tax}
               label="Tax"
               name="TAX_KEY"
-              value={Tax.find(option => option.TAX_KEY === form.TAX_NAME) || null}
+              value={Tax.find(option => option.TAX_KEY === form.TAX_NAME) || null || ""}
               onChange={(e, newValue) => {
                 setForm((prevForm) => ({
                   ...prevForm,

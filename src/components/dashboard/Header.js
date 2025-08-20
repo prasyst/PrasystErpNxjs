@@ -35,7 +35,7 @@ const Header = ({ isSidebarCollapsed }) => {
     <header 
       style={{
         // backgroundColor: 'var(--header-bg)',
-         backgroundColor: '#1fc7c7ff',
+         backgroundColor: '#1b69e7ff',
         padding: '0.5rem',
         position: 'fixed',
         top: 0,
@@ -143,7 +143,10 @@ const Header = ({ isSidebarCollapsed }) => {
           >
              {getInitial(userName)}
           </div>
+
+
           <span style={{ color: 'var(--text-color)' }}> {userName || 'User'}!</span>
+
 
           {isDropdownOpen && (
             <div 
