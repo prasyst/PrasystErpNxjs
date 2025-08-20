@@ -2,7 +2,7 @@
 
 const Cards = () => {
   const cardData = [
-    { title: 'Total Revenue', value: '$12,345', change: '+12%', icon: '💰', color: 'var(--primary)' },
+    { title: 'Total Revenue', value: '₹12,345', change: '+12%', icon: '💰', color: 'var(--primary)' },
     { title: 'Total Orders', value: '1,234', change: '+8%', icon: '🛒', color: 'var(--secondary)' },
     { title: 'Total Customers', value: '567', change: '+5%', icon: '👥', color: 'var(--success)' },
     { title: 'Transactions', value: '2,345', change: '+3%', icon: '💳', color: 'var(--warning)' },
