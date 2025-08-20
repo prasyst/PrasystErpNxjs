@@ -1,47 +1,44 @@
 'use client'
-import React, { useEffect, useRef, useState ,useCallback} from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
     Box, Grid, TextField, Typography, Button, Stack, FormControlLabel, Checkbox, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions,
 } from '@mui/material';
-import KeyboardArrowLeftIcon from "@mui/icons-material/KeyboardArrowLeft";
-import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import { toast, ToastContainer } from 'react-toastify';
-import { pdf } from '@react-pdf/renderer';
-import PrintUnitData from './PrintUnitData';
-import { useRouter } from 'next/navigation';
 import { getFormMode } from '@/lib/helpers';
-import CrudButton from '@/GlobalFunction/CrudButton';
+import { useRouter } from 'next/navigation';
 import debounce from 'lodash.debounce';
 import axiosInstance from '@/lib/axios';
-import CustomAutocomplete from '@/GlobalFunction/CustomAutoComplete/CustomAutoComplete';
 import { useSearchParams } from 'next/navigation';
+import { pdf } from '@react-pdf/renderer';
+import CrudButtons from '@/GlobalFunction/CrudButtons';
+import CustomAutocomplete from '@/GlobalFunction/CustomAutoComplete/CustomAutoComplete';
+import PaginationButtons from '@/GlobalFunction/PaginationButtons';
 
 const FORM_MODE = getFormMode();
-const UnitMst = () => {
+const RackMst = () => {
     const router = useRouter();
     const searchParams = useSearchParams();
-    const UNIT_KEY = searchParams.get('UNIT_KEY');
-    const [currentUNIT_KEY, setCurrentUNIT_KEY] = useState(null);
+    const RACKMST_KEY = searchParams.get('RACKMST_KEY');
+    const [currentRACKMST_KEY, setCurrentRACKMST_KEY] = useState(null);
     const [form, setForm] = useState({
         SearchByCd: '',
         SERIES: '',
-        UNIT_ALT_CODE: '',
-        UNIT_KEY: '',  //CODE
-        UNIT_NAME: '',  //SHADE NAME
-        UNIT_ABRV: '',
-        UNIT_FOR: '',
-        UNIT_LST_CODE: '',
+        RACKMST_KEY: '',
+        RACKMST_NO: '',
+        RACKMST_ABRV: '',
+        CURRN_RACK: '',
+        ROW_NO: '',
+        CAPACITY: '',
+        RACKMST_LST_CODE: '',
         Status: FORM_MODE.add ? "1" : "0",
     });
     const [openConfirmDialog, setOpenConfirmDialog] = useState(false);
-    const UNIT_KEYRef = useRef(null);
-    const UNIT_NAMERef = useRef(null);
-    const UNIT_ABRVRef = useRef(null);
-    const UNIT_FORRef = useRef(null);
-    const UNIT_ALT_CODERef = useRef(null);
+    const RACKMST_KEYRef = useRef(null);
+    const RACKMST_NORef = useRef(null);
+    const RACKMST_ABRVRef = useRef(null);
     const SERIESRef = useRef(null);
     const [mode, setMode] = useState(() => {
-        currentUNIT_KEY ? FORM_MODE.read : FORM_MODE.add
+        currentRACKMST_KEY ? FORM_MODE.read : FORM_MODE.add
     });
     const [Status, setStatus] = useState("1");
     const FCYR_KEY = localStorage.getItem('FCYR_KEY');
@@ -50,12 +47,6 @@ const UnitMst = () => {
     const username = localStorage.getItem('USER_NAME');
     const PARTY_KEY = localStorage.getItem('PARTY_KEY');
     const COBR_ID = localStorage.getItem('COBR_ID');
-
-    const unitOptions = [
-        { Id: '0', Name: 'N' },
-        // { Id: '1', Name: 'L' },
-
-    ];
     const handleChangeStatus = (event) => {
         const updatedStatus = event.target.checked ? "1" : "0";
         setStatus(updatedStatus);
@@ -64,46 +55,45 @@ const UnitMst = () => {
             Status: updatedStatus
         }))
     };
-    const fetchRetriveData = useCallback(async (currentUNIT_KEY, flag = "R", isManualSearch = false) => {
+    const fetchRetriveData = useCallback(async (currentRACKMST_KEY, flag = "R", isManualSearch = false) => {
         try {
-            const response = await axiosInstance.post('Unit/RetriveUnit', {
+            const response = await axiosInstance.post('RACKMST/RetriveRACKMST', {
                 "FLAG": flag,
-                "TBLNAME": "Unit",
-                "FLDNAME": "Unit_KEY",
-                "ID": currentUNIT_KEY,
+                "TBLNAME": "RACKMST",
+                "FLDNAME": "RACKMST_KEY",
+                "ID": currentRACKMST_KEY,
                 "ORDERBYFLD": "",
                 "CWHAER": "",
                 "CO_ID": CO_ID
             });
             const { data: { STATUS, DATA, RESPONSESTATUSCODE, MESSAGE } } = response;
             if (STATUS === 0 && Array.isArray(DATA) && RESPONSESTATUSCODE == 1) {
-                const categoryData = DATA[0];
+                const rackData = DATA[0];
                 setForm({
-                    UNIT_KEY: categoryData.UNIT_KEY,
-                    UNIT_NAME: categoryData.UNIT_NAME,
-                    UNIT_ABRV: categoryData.UNIT_ABRV || '',
-                    UNIT_FOR: categoryData.UNIT_FOR || '',
-                    UNIT_ALT_CODE: categoryData.UNIT_ALT_CODE || '',
-                    SERIES: categoryData.SERIES || '',
-                    UNIT_LST_CODE: categoryData.UNIT_LST_CODE || '',
-                    Status: categoryData.STATUS,
+                    RACKMST_KEY: rackData.RACKMST_KEY,
+                    RACKMST_NO: rackData.RACKMST_NO,
+                    RACKMST_ABRV: rackData.RACKMST_ABRV || '',
+                    CURRN_RACK: rackData.CURRN_RACK,
+                    ROW_NO: rackData.ROW_NO || '',
+                    CAPACITY: rackData.CAPACITY || '',
+                    SERIES: rackData.SERIES || '',
+                    RACKMST_LST_CODE: rackData.RACKMST_LST_CODE || '',
+                    Status: rackData.STATUS,
                 });
                 setStatus(DATA[0].STATUS);
-                setCurrentUNIT_KEY(categoryData.UNIT_KEY);
-                const newParams = new URLSearchParams();
-                newParams.set("UNIT_KEY", categoryData.UNIT_KEY);
-                router.replace(`/masters/products/unit?${newParams.toString()}`);
+                setCurrentRACKMST_KEY(rackData.RACKMST_KEY);
             } else {
                 if (isManualSearch) {
-                    toast.error(`${MESSAGE} FOR ${currentUNIT_KEY}`);
+                    toast.error(`${MESSAGE} FOR ${currentRACKMST_KEY}`);
                     setForm({
-                        UNIT_KEY: '',
-                        UNIT_NAME: '',
-                        UNIT_ABRV: '',
-                        UNIT_FOR: '',
-                        UNIT_ALT_CODE: '',
+                        RACKMST_KEY: '',
+                        RACKMST_NO: '',
+                        RACKMST_ABRV: '',
+                        CURRN_RACK: '',
+                        ROW_NO: '',
+                        CAPACITY: '',
                         SERIES: '',
-                        UNIT_LST_CODE: '',
+                        RACKMST_LST_CODE: '',
                         Status: 0,
                     });
                 }
@@ -111,54 +101,51 @@ const UnitMst = () => {
         } catch (err) {
             console.error(err);
         }
-    },[CO_ID,router])
+    }, [CO_ID]);
+   
     useEffect(() => {
-        if (UNIT_KEY) {
-            setCurrentUNIT_KEY(UNIT_KEY);
-            fetchRetriveData(UNIT_KEY);
+        if (RACKMST_KEY) {
+            setCurrentRACKMST_KEY(RACKMST_KEY);
+            fetchRetriveData(RACKMST_KEY);
             setMode(FORM_MODE.read);
         } else {
             setForm({
                 SearchByCd: '',
                 SERIES: '',
-                UNIT_ALT_CODE: '',
-                UNIT_KEY: '',  
-                UNIT_NAME: '',  
-                UNIT_ABRV: '',
-                UNIT_FOR: '',
-                UNIT_LST_CODE: '',
+                RACKMST_KEY: '',
+                RACKMST_NO: '',
+                RACKMST_ABRV: '',
+                CURRN_RACK: '',
+                ROW_NO: '',
+                CAPACITY: '',
+                RACKMST_LST_CODE: '',
                 Status: "1",
             })
             setMode(FORM_MODE.read);
         }
         setMode(FORM_MODE.read);
-    }, [UNIT_KEY,fetchRetriveData]);
+    }, [RACKMST_KEY, fetchRetriveData]);
     const handleSubmit = async () => {
         try {
             const UserName = userRole === 'user' ? username : PARTY_KEY;
             let url;
-            if (mode === FORM_MODE.edit && currentUNIT_KEY) {
-                url = `Unit/UpdateUnit?UserName=${(UserName)}&strCobrid=${COBR_ID}`;
+            if (mode === FORM_MODE.edit && currentRACKMST_KEY) {
+                url = `RACKMST/UpdateRACKMST?UserName=${(UserName)}&strCobrid=${COBR_ID}`;
             } else {
-                url = `Unit/InsertUnit?UserName=${(UserName)}&strCobrid=${COBR_ID}`;
+                url = `RACKMST/InsertRACKMST?UserName=${(UserName)}&strCobrid=${COBR_ID}`;
             }
             const payload = {
-                UNIT_KEY: form.UNIT_KEY,  //CODE
-                UNIT_ALT_CODE: form.UNIT_ALT_CODE, //ALT CODE
-                UNIT_NAME: form.UNIT_NAME, //UNIT NAME
-                UNIT_ABRV: form.UNIT_ABRV,
-                UNIT_FOR: form.UNIT_FOR,
+                "RACKMST_KEY": form.RACKMST_KEY,
+                "RACKMST_NO": form.RACKMST_NO, //NAME
+                "RACKMST_ABRV": form.RACKMST_ABRV,
+                "ROWMST_KEY": form.ROW_NO,
+                "CURRN_RACK": form.CURRN_RACK,
+                "COBR_ID": COBR_ID,
+                "CAPACITY": form.CAPACITY,
                 STATUS: form.Status ? "1" : "0",
-
-
-                "Unit_KEY": "UN061",
-                "UNIT_ALT_CODE": "API",
-                "Unit_NAME": "TESTAPI",
-                "Unit_ABRV": "TESTAPI",
-                "UNIT_FOR": "N",
             };
             let response;
-            if (mode == FORM_MODE.edit && currentUNIT_KEY) {
+            if (mode == FORM_MODE.edit && currentRACKMST_KEY) {
                 payload.UPDATED_BY = 1;
                 payload.UPDATED_DT = new Date().toISOString();
                 response = await axiosInstance.post(url, payload);
@@ -177,12 +164,14 @@ const UnitMst = () => {
                 const { STATUS, MESSAGE } = response.data;
                 if (STATUS === 0) {
                     setForm({
-                        UNIT_KEY: '',
-                        UNIT_NAME: '',
-                        UNIT_ABRV: '',
-                        UNIT_ALT_CODE: '',
+                        RACKMST_KEY: '',
+                        RACKMST_NO: '', //code
+                        RACKMST_ABRV: '',
+                        CURRN_RACK: '',
+                        ROW_NO: '',
+                        CAPACITY: '',
                         SERIES: '',
-                        UNIT_LST_CODE: '',
+                        RACKMST_LST_CODE: '',
                         Status: 0,
                     });
                     setMode(FORM_MODE.read);
@@ -199,7 +188,7 @@ const UnitMst = () => {
         if (mode === FORM_MODE.add) {
             await fetchRetriveData(1, "L");
         } else {
-            await fetchRetriveData(currentUNIT_KEY, "R");
+            await fetchRetriveData(currentRACKMST_KEY, "R");
         }
         setMode(FORM_MODE.read);
         setForm((prev) => ({
@@ -210,16 +199,16 @@ const UnitMst = () => {
     const debouncedApiCall = debounce(async (newSeries) => {
         try {
             const response = await axiosInstance.post('GetSeriesSettings/GetSeriesLastNewKey', {
-                "MODULENAME": "Unit",
-                "TBLNAME": "Unit",
-                "FLDNAME": "Unit_KEY",
-                "NCOLLEN": 0,
+                "MODULENAME": "RACKMST",
+                "TBLNAME": "RACKMST",
+                "FLDNAME": "RACKMST_KEY",
+                "NCOLLEN": 5,
                 "CPREFIX": newSeries,
                 "COBR_ID": COBR_ID,
                 "FCYR_KEY": FCYR_KEY,
                 "TRNSTYPE": "M",
-                "SERIESID": 5,
-                "FLAG": "Series"
+                "SERIESID": 0,
+                "FLAG": ""
             });
             const { STATUS, DATA, MESSAGE } = response.data;
             if (STATUS === 0 && DATA.length > 0) {
@@ -227,16 +216,16 @@ const UnitMst = () => {
                 const lastId = DATA[0].LASTID;
                 setForm((prevForm) => ({
                     ...prevForm,
-                    UNIT_KEY: id,
-                    UNIT_LST_CODE: lastId
+                    RACKMST_KEY: id,
+                    RACKMST_LST_CODE: lastId
                 }));
             } else {
                 toast.error(`${MESSAGE} for ${newSeries}`, { autoClose: 1000 });
 
                 setForm((prevForm) => ({
                     ...prevForm,
-                    UNIT_KEY: '',
-                    UNIT_LST_CODE: ''
+                    RACKMST_KEY: '',
+                    RACKMST_LST_CODE: ''
                 }));
             }
         } catch (error) {
@@ -251,8 +240,8 @@ const UnitMst = () => {
         if (newSeries.trim() === '') {
             setForm((prevForm) => ({
                 ...prevForm,
-                UNIT_KEY: '',
-                UNIT_LST_CODE: ''
+                RACKMST_KEY: '',
+                RACKMST_LST_CODE: ''
             }));
             return;
         };
@@ -260,13 +249,15 @@ const UnitMst = () => {
     }
     const handleAdd = async () => {
         setMode(FORM_MODE.add);
-        setCurrentUNIT_KEY(null);
+        setCurrentRACKMST_KEY(null);
         setForm((prevForm) => ({
             ...prevForm,
-            UNIT_NAME: '',
-            UNIT_ABRV: '',
+            RACKMST_NO: '',
+            RACKMST_ABRV: '',
+            CURRN_RACK: '',
+            ROW_NO: '',
+            CAPACITY: '',
             SearchByCd: '',
-            UNIT_ALT_CODE: '',
             Status: '1',
         }));
 
@@ -274,15 +265,15 @@ const UnitMst = () => {
         let cprefix = '';
         try {
             const response = await axiosInstance.post('GetSeriesSettings/GetSeriesLastNewKey', {
-                "MODULENAME": "Unit",
-                "TBLNAME": "Unit",
-                "FLDNAME": "Unit_KEY",
+                "MODULENAME": "RACKMST",
+                "TBLNAME": "RACKMST",
+                "FLDNAME": "RACKMST_KEY",
                 "NCOLLEN": 0,
                 "CPREFIX": "",
                 "COBR_ID": COBR_ID,
                 "FCYR_KEY": FCYR_KEY,
                 "TRNSTYPE": "M",
-                "SERIESID": 5,
+                "SERIESID": 139,
                 "FLAG": "Series"
             });
 
@@ -300,9 +291,9 @@ const UnitMst = () => {
         }
         try {
             const response = await axiosInstance.post('GetSeriesSettings/GetSeriesLastNewKey', {
-                "MODULENAME": "Unit",
-                "TBLNAME": "Unit",
-                "FLDNAME": "Unit_KEY",
+                "MODULENAME": "RACKMST",
+                "TBLNAME": "RACKMST",
+                "FLDNAME": "RACKMST_KEY",
                 "NCOLLEN": 5,
                 "CPREFIX": cprefix,
                 "COBR_ID": COBR_ID,
@@ -317,24 +308,32 @@ const UnitMst = () => {
                 const lastId = DATA[0].LASTID;
                 setForm((prevForm) => ({
                     ...prevForm,
-                    UNIT_KEY: id,
-                    UNIT_LST_CODE: lastId
+                    RACKMST_KEY: id,
+                    RACKMST_LST_CODE: lastId
                 }));
             }
         } catch (error) {
             console.error("Error fetching ID and LASTID:", error);
         }
     };
+    const handleFirst = () => { }
+    const handleLast = async () => {
+        await fetchRetriveData(1, "L");
+        setForm((prev) => ({
+            ...prev,
+            SearchByCd: ''
+        }));
+    }
     const handlePrevious = async () => {
-        await fetchRetriveData(currentUNIT_KEY, "P");
+        await fetchRetriveData(currentRACKMST_KEY, "P");
         setForm((prev) => ({
             ...prev,
             SearchByCd: ''
         }));
     };
     const handleNext = async () => {
-        if (currentUNIT_KEY) {
-            await fetchRetriveData(currentUNIT_KEY, "N");
+        if (currentRACKMST_KEY) {
+            await fetchRetriveData(currentRACKMST_KEY, "N");
         }
         setForm((prev) => ({
             ...prev,
@@ -351,13 +350,13 @@ const UnitMst = () => {
         setOpenConfirmDialog(false);
         try {
             const UserName = userRole === 'user' ? username : PARTY_KEY;
-            const response = await axiosInstance.post(`Unit/DeleteUnit?UserName=${(UserName)}&strCobrid=${COBR_ID}`, {
-                UNIT_KEY: form.UNIT_KEY
+            const response = await axiosInstance.post(`RACKMST/DeleteRACKMST?UserName=${(UserName)}&strCobrid=${COBR_ID}`, {
+                RACKMST_KEY: form.RACKMST_KEY
             });
             const { data: { STATUS, MESSAGE } } = response;
             if (STATUS === 0) {
                 toast.success(MESSAGE, { autoClose: 500 });
-                await fetchRetriveData(currentUNIT_KEY, 'P');
+                await fetchRetriveData(currentRACKMST_KEY, 'P');
             } else {
                 toast.error(MESSAGE);
             }
@@ -368,50 +367,35 @@ const UnitMst = () => {
     const handleEdit = () => {
         setMode(FORM_MODE.edit);
     };
+
     const handlePrint = async () => {
         try {
-            const response = await axiosInstance.post(`Unit/GetUnitDashBoard?currentPage=1&limit=5000`, {
-                "SearchText": ""
-            });
-            const { data: { STATUS, DATA } } = response; // Extract DATA
+            const response = await axiosInstance.post(
+                `RACKMST/GetRACKMSTDashBoard?currentPage=1&limit=5000`,
+                { SearchText: "" }
+            );
+
+            const { data: { STATUS, DATA } } = response;
+
             if (STATUS === 0 && Array.isArray(DATA)) {
-                const formattedData = DATA.map(row => ({
-                    ...row,
-                    STATUS: row.STATUS === "1" ? "Active" : "Inactive"
-                }));
-
-                // Generate the PDF blob
-                const asPdf = pdf(<PrintUnitData rows={formattedData} />);
-                const blob = await asPdf.toBlob();
-                const url = URL.createObjectURL(blob);
-
-                // Open the PDF in a new tab
-                const newTab = window.open(url, '_blank');
-                if (newTab) {
-                    newTab.focus();
-                }
-                setTimeout(() => {
-                    URL.revokeObjectURL(url);
-                }, 100);
+                PrintRackDt(DATA);
             }
         } catch (error) {
             console.error("Print Error:", error);
         }
     };
-    const handleExit = () => {
-    router.push('/masters/products/unit/unittable');
+    const handleExit = () => { router.push("/masters/products/rack/racktable") };
+    const Buttonsx = {
+        backgroundColor: '#39ace2',
+        margin: { xs: '0 4px', sm: '0 6px' },
+        minWidth: { xs: 40, sm: 46, md: 60 },
+        height: { xs: 40, sm: 46, md: 27 },
+        // "&:disabled": {
+        //   backgroundColor: "rgba(0, 0, 0, 0.12)",
+        //   color: "rgba(0, 0, 0, 0.26)",
+        //   boxShadow: "none",
+        // }
     };
-  const Buttonsx = {
-    backgroundColor: '#39ace2',
-    margin: { xs: '0 4px', sm: '0 6px' },
-    minWidth: { xs: 40, sm: 46, md: 60 },
-    height: { xs: 40, sm: 46, md: 27 },
-    // "&:disabled": {
-    //   backgroundColor: "rgba(0, 0, 0, 0.12)",
-    //   color: "rgba(0, 0, 0, 0.26)",
-    //   boxShadow: "none",
-    // }
-  };
     return (
         <>
             <Box sx={{ width: '100%', justifyContent: 'center', alignItems: 'flex-start', padding: '24px', boxSizing: 'border-box', marginTop: { xs: "30px", sm: "0px" } }}
@@ -419,53 +403,13 @@ const UnitMst = () => {
                 <ToastContainer />
                 <Box sx={{ maxWidth: '1000px', boxShadow: '0px 2px 6px rgba(0, 0, 0, 0.1)' }} className="form_grid" >
                     <Grid container alignItems="center"
-                        justifyContent="space-between" spacing={2} sx={{ marginTop: "30px", marginInline: '20px' }}>
-                        <Grid sx={{
-                            display: 'flex', justifyContent: {
-                                xs: 'center',
-                                sm: 'flex-start'
-                            },
-                            width: { xs: '100%', sm: 'auto' },
-                        }}>
-                            <Stack direction="row" spacing={1}>
-                                <Button variant="contained" size="small" className="three-d-button-previous"
-                                     sx={Buttonsx}
-                                    onClick={handlePrevious}
-                                    disabled={
-                                        mode !== FORM_MODE.read || !currentUNIT_KEY || currentUNIT_KEY === 1
-                                    }
-                                >
-                                    <KeyboardArrowLeftIcon />
-                                </Button>
-                                <Button variant="contained" size="small" className="three-d-button-next"
-                                    sx={Buttonsx}
-                                    onClick={handleNext}
-                                    disabled={mode !== FORM_MODE.read || !currentUNIT_KEY}
-                                >
-                                    <NavigateNextIcon />
-                                </Button>
-                            </Stack>
-                        </Grid>
+                        justifyContent="space-between" spacing={2} sx={{ marginTop: "10px", marginInline: '20px' }}>
                         <Grid sx={{ flexGrow: 1 }}>
                             <Typography align="center" variant="h5">
-                                Unit Master
+                                Rack Master
                             </Typography>
                         </Grid>
-                        <Grid>
-                            <Stack direction="row" spacing={{ xs: 0.5, sm: 1 }}  >
-                                <CrudButton
-                                    mode={mode}
-                                    onAdd={handleAdd}
-                                    onEdit={handleEdit}
-                                    onView={handlePrint}
-                                    onDelete={handleDelete}
-                                    onExit={handleExit}
-                                    readOnlyMode={mode === FORM_MODE.read}
-                                />
-                            </Stack>
-                        </Grid>
                     </Grid>
-                    {/* Form Fields */}
                     <Box
                         sx={{
                             display: 'flex',
@@ -484,7 +428,7 @@ const UnitMst = () => {
                                     backgroundColor: '#e0f7fa',
                                     '& .MuiInputBase-input': {
                                         paddingBlock: { xs: '8px', md: '4px' },
-                                        paddingLeft: { xs: '10px', md: '8px' },
+                                        paddingLeft: { xs: '8px', md: '8px' },
                                     },
                                 }}
                                 value={form.SearchByCd}
@@ -496,7 +440,6 @@ const UnitMst = () => {
                                 }}
                             />
                         </Box>
-
                         <Box
                             sx={{
                                 display: 'flex',
@@ -508,7 +451,9 @@ const UnitMst = () => {
                             <TextField
                                 label="Series"
                                 inputRef={SERIESRef}
-                                sx={{ width: { xs: '100%', sm: '48%', md: '25%' } }}
+                                sx={{
+                                    width: { xs: '100%', sm: '48%', md: '32%' }
+                                }}
                                 disabled={mode === FORM_MODE.read}
                                 fullWidth
                                 className="custom-textfield"
@@ -517,31 +462,25 @@ const UnitMst = () => {
                             />
                             <TextField
                                 label="Last Cd"
-                                sx={{ width: { xs: '100%', sm: '48%', md: '25%' } }}
+                                sx={{
+                                    width: { xs: '100%', sm: '48%', md: '32%' }
+                                }}
                                 disabled={true}
                                 fullWidth
                                 className="custom-textfield"
-                                value={form.UNIT_LST_CODE}
-                                onChange={(e) => setForm({ ...form, UNIT_LST_CODE: e.target.value })}
+                                value={form.RACKMST_LST_CODE}
+                                onChange={(e) => setForm({ ...form, RACKMST_LST_CODE: e.target.value })}
                             />
                             <TextField
                                 label="Code"
-                                inputRef={UNIT_KEYRef}
-                                sx={{ width: { xs: '100%', sm: '48%', md: '25%' } }}
+                                inputRef={RACKMST_KEYRef}
+                                sx={{
+                                    width: { xs: '100%', sm: '48%', md: '32%' }
+                                }}
                                 disabled={mode === FORM_MODE.read}
                                 className="custom-textfield"
-                                value={form.UNIT_KEY}
-                                onChange={(e) => setForm({ ...form, UNIT_KEY: e.target.value })}
-                            />
-                            <TextField
-                                label="Alt Code"
-                                inputRef={UNIT_ALT_CODERef}
-                                sx={{ width: { xs: '100%', sm: '48%', md: '25%' } }}
-                                disabled={mode === FORM_MODE.read}
-                                fullWidth
-                                className="custom-textfield"
-                                value={form.UNIT_ALT_CODE}
-                                onChange={(e) => setForm({ ...form, UNIT_ALT_CODE: e.target.value })}
+                                value={form.RACKMST_KEY}
+                                onChange={(e) => setForm({ ...form, RACKMST_KEY: e.target.value })}
                             />
                         </Box>
 
@@ -554,16 +493,36 @@ const UnitMst = () => {
                             }}
                         >
                             <TextField
-                                inputRef={UNIT_NAMERef}
-                                label="Shade"
-                                sx={{ width: '100%' }}
+                                inputRef={RACKMST_NORef}
+                                label="Rack No."
+                                sx={{
+                                    width: '100%'
+                                }}
                                 disabled={mode === FORM_MODE.read}
                                 className="custom-textfield"
-                                value={form.UNIT_NAME}
-                                onChange={(e) => setForm({ ...form, UNIT_NAME: e.target.value })}
+                                value={form.RACKMST_NO}
+                                onChange={(e) => setForm({ ...form, RACKMST_NO: e.target.value })}
                             />
                         </Box>
-
+                        <Box
+                            sx={{
+                                display: 'flex',
+                                flexDirection: { xs: 'column', sm: 'row', md: 'row' },
+                                justifyContent: 'space-between',
+                                gap: { xs: 1, sm: 1.5, md: 2 },
+                            }}
+                        >
+                            <CustomAutocomplete
+                                id="rowno--autocomplete"
+                                disabled={true}
+                                label="Row No."
+                                name="ROW_NO "
+                                // options={termsTypeOptions}
+                                value={form.ROW_NO}
+                                onChange={(value) => setForm({ ...form, ROW_NO: value })}
+                                sx={{ width: { xs: '100%', sm: '48%', md: '100%' } }}
+                            />
+                        </Box>
                         <Box
                             sx={{
                                 display: 'flex',
@@ -576,46 +535,104 @@ const UnitMst = () => {
                                 },
                             }}
                         >
-                            <CustomAutocomplete
-                                id="unit-key-autocomplete"
-                                sx={{ width: { xs: '100%', sm: '40%', md: '90%' } }}
-                                inputRef={UNIT_FORRef}
-                                disabled={true}
-                                label="Unit For"
-                                name="UNIT_FOR"
-                                options={unitOptions}
-                                value={unitOptions.find(opt => opt.Id === form.UNIT_FOR) || null}
-                                onChange={(e) => setForm({ ...form, [e.target.name]: e.target.value })}
-                                className="custom-textfield"
-                            />
                             <TextField
-                                label="Abbreviation"
-                                inputRef={UNIT_ABRVRef}
-                                sx={{ width: { xs: '100%', sm: '40%', md: '30%' } }}
+                                label="Abbr"
+                                inputRef={RACKMST_ABRVRef}
+                                sx={{
+                                    width: { xs: '100%', sm: '40%', md: '30%' }
+                                }}
                                 disabled={mode === FORM_MODE.read}
                                 className="custom-textfield"
-                                value={form.UNIT_ABRV}
-                                onChange={(e) => setForm({ ...form, UNIT_ABRV: e.target.value })}
+                                value={form.RACKMST_ABRV}
+                                onChange={(e) => setForm({ ...form, RACKMST_ABRV: e.target.value })}
                             />
+                            <TextField
+                                label="Capacity"
+                                sx={{
+                                    width: { xs: '100%', sm: '40%', md: '30%' }
+                                }}
+                                disabled={mode === FORM_MODE.read}
+                                className="custom-textfield"
+                                value={form.CAPACITY}
+                                onChange={(e) => setForm({ ...form, CAPACITY: e.target.value })}
+                            />
+
+
+                        </Box>
+
+                        <Box><FormControlLabel
+                            control={
+                                <Checkbox
+                                    disabled={mode === FORM_MODE.read}
+                                    checked={Status == '1'}
+                                    onChange={handleChangeStatus}
+                                    sx={{
+                                        '&.Mui-checked': {
+                                            color: '#39ace2',
+                                        },
+                                    }}
+                                />
+                            }
+                            label="Active"
+                        />
                             <FormControlLabel
                                 control={
                                     <Checkbox
                                         disabled={mode === FORM_MODE.read}
-                                        checked={Status == '1'}
-                                        onChange={handleChangeStatus}
+                                        checked={form.CURRN_RACK === "1"}
+                                        onChange={(e) => setForm((prev) => ({
+                                            ...prev,
+                                            CURRN_RACK: e.target.checked ? "1" : "0",
+                                        }))}
+
                                         sx={{
                                             '&.Mui-checked': {
-                                                color: '#39ace2',
+                                                color: mode === FORM_MODE.read ? 'rgba(0, 0, 0, 0.38)' : '#39ace2',
                                             },
+
                                         }}
                                     />
                                 }
-                                label="Active"
+                                label="Default Rack"
+
                             />
                         </Box>
                     </Box>
+                    <Grid container alignItems="center"
+                        justifyContent="center" spacing={1} sx={{ marginTop: "10px", marginInline: '20px' }}>
+                        <Grid sx={{
+                            width: { xs: '100%', sm: 'auto' },
+                        }}>
+                            <Stack direction="row" spacing={1}>
+                                <PaginationButtons
+                                    mode={mode}
+                                    FORM_MODE={FORM_MODE}
+                                    currentKey={currentRACKMST_KEY}
+                                    onFirst={handleFirst}
+                                    onPrevious={handlePrevious}
+                                    onNext={handleNext}
+                                    onLast={handleLast}
+                                    sx={{ mt: 2 }}
+                                    buttonSx={Buttonsx}
+                                />
+                            </Stack>
+                        </Grid>
 
-                    <Grid
+                        <Grid>
+                            <Stack direction="row" spacing={{ xs: 0.5, sm: 1 }}  >
+                                <CrudButtons
+                                    mode={mode}
+                                    onAdd={mode === FORM_MODE.read ? handleAdd : handleSubmit}
+                                    onEdit={mode === FORM_MODE.read ? handleEdit : handleCancel}
+                                    onView={handlePrint}
+                                    onDelete={handleDelete}
+                                    onExit={handleExit}
+                                    readOnlyMode={mode === FORM_MODE.read}
+                                />
+                            </Stack>
+                        </Grid>
+                    </Grid>
+                    {/* <Grid
                         item
                         xs={12}
                         className="form_button"
@@ -688,7 +705,7 @@ const UnitMst = () => {
                                 </Button>
                             </>
                         )}
-                    </Grid>
+                    </Grid> */}
                 </Box>
             </Box>
 
@@ -743,4 +760,4 @@ const UnitMst = () => {
         </>
     );
 };
-export default UnitMst;
+export default RackMst

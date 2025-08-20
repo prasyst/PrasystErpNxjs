@@ -1,3 +1,4 @@
+'use client'
 import axios from 'axios';
 
 const token = 'eyJhbGciOiJIUzI1NiJ9.eyJWYWxpZElzc3VlciI6IlByYXN5c3QiLCJWYWxpZEF1ZGllbmNlIjoiUHJhc3lzdCJ9.gMMGQ74cWLoymeDv0D4c3UQKTEJSCzdkXoxlW4qF5QU';

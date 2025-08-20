@@ -82,55 +82,103 @@ const ReusableHandsontable = ({
   };
 
   // Generate column headers with search inputs
+  // const generateColumnHeaders = () => {
+  //   return columns.map((col, index) => {
+  //     const headerName = col.headerName || col.field || '';
+  //     const searchInputWidth = Math.max((col.width || 150) - 30, 100);
+  //     return `
+  //       <div class="header-with-search">
+  //         <div class="header-title">${headerName}</div>
+  //         <input type="text" 
+  //                class="header-search-input" 
+  //                placeholder="Search..." 
+  //                data-field="${col.field}"
+  //                data-index="${index}"
+  //                value="${searchValues[col.field] || ''}"
+  //                style="width: ${searchInputWidth}px"/>
+  //       </div>
+  //     `;
+  //   });
+  // };
   const generateColumnHeaders = () => {
-    return columns.map((col, index) => {
-      const headerName = col.headerName || col.field || '';
-      const searchInputWidth = Math.max((col.width || 150) - 30, 100);
-      return `
-        <div class="header-with-search">
-          <div class="header-title">${headerName}</div>
-          <input type="text" 
-                 class="header-search-input" 
-                 placeholder="Search..." 
-                 data-field="${col.field}"
-                 data-index="${index}"
-                 value="${searchValues[col.field] || ''}"
-                 style="width: ${searchInputWidth}px"/>
-        </div>
-      `;
-    });
+  return (index) => {
+    const col = columns[index];
+    const headerName = col.headerName || col.field || '';
+    const searchInputWidth = Math.max((col.width || 150) - 30, 100);
+    return `
+      <div class="header-with-search">
+        <div class="header-title">${headerName}</div>
+        <input type="text" 
+               class="header-search-input" 
+               placeholder="Search..." 
+               data-field="${col.field}"
+               style="width: ${searchInputWidth}px"/>
+      </div>
+    `;
   };
+};
+
 
   // Attach event listeners to search inputs
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      const headerInputs = document.querySelectorAll('.header-search-input');
+  // useEffect(() => {
+  //   const timer = setTimeout(() => {
+  //     const headerInputs = document.querySelectorAll('.header-search-input');
+
+  //     const handleInputChange = (e) => {
+  //       const field = e.target.getAttribute('data-field');
+  //       const value = e.target.value;
+  //       handleSearchChange(field, value);
+  //     };
+
+  //     headerInputs.forEach(input => {
+  //       // Remove existing listeners
+  //       input.removeEventListener('input', handleInputChange);
+  //       input.removeEventListener('keyup', handleInputChange);
+
+  //       // Add new listeners
+  //       input.addEventListener('input', handleInputChange);
+  //       input.addEventListener('keyup', handleInputChange);
+
+  //       // Set current value
+  //       const field = input.getAttribute('data-field');
+  //       if (searchValues[field]) {
+  //         input.value = searchValues[field];
+  //       }
+  //     });
+  //   }, 100);
+
+  //   return () => clearTimeout(timer);
+  // },);
+ useEffect(() => {
+  const timer = setTimeout(() => {
+    const headerInputs = document.querySelectorAll('.header-search-input');
+
+    headerInputs.forEach(input => {
+      const field = input.getAttribute('data-field');
+
+      // Set value manually without resetting focus
+      if (searchValues[field] !== undefined && input.value !== searchValues[field]) {
+        const start = input.selectionStart;
+        const end = input.selectionEnd;
+        input.value = searchValues[field];
+        input.setSelectionRange(start, end); // Preserve cursor
+      }
 
       const handleInputChange = (e) => {
-        const field = e.target.getAttribute('data-field');
         const value = e.target.value;
         handleSearchChange(field, value);
       };
 
-      headerInputs.forEach(input => {
-        // Remove existing listeners
-        input.removeEventListener('input', handleInputChange);
-        input.removeEventListener('keyup', handleInputChange);
+      // Attach input listener only once
+      input.removeEventListener('input', handleInputChange);
+      input.addEventListener('input', handleInputChange);
+    });
+  }, 100);
 
-        // Add new listeners
-        input.addEventListener('input', handleInputChange);
-        input.addEventListener('keyup', handleInputChange);
+  return () => clearTimeout(timer);
+}, [filteredData, searchValues]);
 
-        // Set current value
-        const field = input.getAttribute('data-field');
-        if (searchValues[field]) {
-          input.value = searchValues[field];
-        }
-      });
-    }, 100);
 
-    return () => clearTimeout(timer);
-  },);
 
   // Update table when filtered data changes
   useEffect(() => {
