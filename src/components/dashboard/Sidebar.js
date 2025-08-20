@@ -313,8 +313,7 @@
 
 // export default Sidebar;
 
-<<<<<<< HEAD
-=======
+
 
 
 
@@ -639,8 +638,6 @@
 // export default Sidebar;
 
 
-
->>>>>>> da67194e56c50f00bcff9a03cf69bd70e6961921
 'use client'
 
 import Link from 'next/link';
@@ -772,9 +769,9 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
           path: '/masters/tax-terms',
           children: [
             { name: 'Tax Group', icon: MdGavel, path: '#' },
-            { name: 'Tax Master', icon: MdGavel, path: '#' },
+            { name: 'Tax Master', icon: MdGavel, path: '/masters/taxterms/taxmaster' },
             { name: 'Term Group', icon: MdGavel, path: '#' },
-            { name: 'Terms Master', icon: MdAssignment, path: '#' },
+            { name: 'Terms Master', icon: MdAssignment, path: '/masters/taxterms/termmaster' },
             { name: 'Discount Pattern', icon: MdLocalOffer, path: '#' },
             { name: 'Discount Sequence', icon: MdAssignment, path: '#' },
             { name: 'Pattern Master', icon: MdLibraryBooks, path: '#' },
@@ -788,7 +785,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
           icon: MdEvent,
           path: '/masters/season',
           children: [
-            { name: 'Season Master', icon: MdEvent, path: '#' },
+            { name: 'Season Master', icon: MdEvent, path: '/masters/season/season' },
           ],
         },
       ],
@@ -902,13 +899,10 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
       className={`sidebar ${isCollapsed ? 'collapsed' : ''}`}
       style={{
         backgroundColor: '#fff',
-<<<<<<< HEAD
         color: '#1b69e7ff',
         fontSize: '1rem',
         fontWeight: '490',
-=======
         color: '#333',
->>>>>>> da67194e56c50f00bcff9a03cf69bd70e6961921
         height: '100vh',
         position: 'fixed',
         borderRight: '1px solid #e0e0e0',
