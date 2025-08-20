@@ -313,11 +313,6 @@
 
 // export default Sidebar;
 
-
-
-
-
-
 // 'use client'
 
 // import Link from 'next/link';
@@ -637,7 +632,6 @@
 // export default Sidebar;
 
 
-
 'use client'
 
 import Link from 'next/link';
@@ -724,15 +718,16 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
           icon: MdPeopleAlt,
           path: '/masters/customers',
           children: [
-            { name: 'Debtors/Customers', icon: MdPeople, path: '#' },
-            { name: 'Category (For Rate)', icon: MdCategory, path: '#' },
-            { name: 'Customer Group', icon: AiOutlineUsergroupAdd, path: '#' },
-            { name: 'Consignee', icon: MdPersonAdd, path: '#' },
-            { name: 'Party Class Master', icon: MdClass, path: '#' },
-            { name: 'Party Wise Rate List', icon: MdLocalOffer, path: '#' },
-            { name: 'Party Brand Broker', icon: MdStars, path: '#' },
-            { name: 'Party Rating Update', icon: MdRateReview, path: '#' },
-            { name: 'Party Brand Parameter', icon: MdBuild, path: '#' },
+            { name: 'Debtors/Customers', icon: MdPeople, path: '/masters/customers/debtors' },
+            { name: 'Category (For Rate)', icon: MdCategory, path: '/masters/customers/category' },
+            { name: 'Customer Group', icon: AiOutlineUsergroupAdd, path: '/masters/customers/group' },
+            { name: 'Consignee', icon: MdPersonAdd, path: '/masters/customers/consignee' },
+            { name: 'Party Class Master', icon: MdClass, path: '/masters/customers' },
+            { name: 'Party Wise Rate List', icon: MdLocalOffer, path: '/masters/customers/rate-list' },
+            { name: 'Party Brand Broker', icon: MdStars, path: '/masters/customers/brand-broker' },
+            { name: 'Party Rating Update', icon: MdRateReview, path: '/masters/customers/rating' },
+            { name: 'Party Brand Parameter', icon: MdBuild, path: '/masters/customers/brand-parameter' },
+
           ],
         },
         {
@@ -899,7 +894,9 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
       className={`sidebar ${isCollapsed ? 'collapsed' : ''}`}
       style={{
         backgroundColor: '#fff',
+
         color: '#333',
+
         height: '100vh',
         position: 'fixed',
         borderRight: '1px solid #e0e0e0',
