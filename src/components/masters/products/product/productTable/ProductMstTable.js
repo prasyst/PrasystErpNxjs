@@ -1,6 +1,6 @@
 'use client';
 import React, { useState, useEffect, useCallback } from "react";
-import axiosInstance from '../../../../lib/axios';
+import axiosInstance from '../../../../../lib/axios';
 import {
   Button,
 } from '@mui/material';
