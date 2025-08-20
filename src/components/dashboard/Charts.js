@@ -167,6 +167,9 @@
 // };
 
 // export default Charts;
+
+
+
 import React from 'react';
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, ResponsiveContainer, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
 import {
@@ -175,7 +178,6 @@ import {
   GaugeReferenceArc,
   useGaugeState,
 } from '@mui/x-charts/Gauge';
-
 const Dashboard = () => {
   // Sample data for charts
   const lineData = [
@@ -214,7 +216,6 @@ const Dashboard = () => {
     { id: '#005', name: 'David Brown', state: 'Nevada', country: 'USA' },
   ];
 
-  // MUI Gauge Component
   const MuiGauge = ({ value = 75 }) => {
     return (
       <div className="gauge-wrapper">
@@ -229,6 +230,31 @@ const Dashboard = () => {
           <GaugeValueArc />
         </GaugeContainer>
       </div>
+    );
+  };
+
+  // Calculate total for percentage calculation
+  const total = pieData.reduce((sum, entry) => sum + entry.value, 0);
+
+  // Custom label function for pie chart
+  const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent }) => {
+    const RADIAN = Math.PI / 180;
+    const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+    const x = cx + radius * Math.cos(-midAngle * RADIAN);
+    const y = cy + radius * Math.sin(-midAngle * RADIAN);
+
+    return (
+      <text 
+        x={x} 
+        y={y} 
+        fill="white" 
+        textAnchor={x > cx ? 'start' : 'end'} 
+        dominantBaseline="central"
+        fontSize={12}
+        fontWeight="bold"
+      >
+        {`${(percent * 100).toFixed(0)}%`}
+      </text>
     );
   };
 
@@ -279,7 +305,6 @@ const Dashboard = () => {
           width: 100%;
           padding: 16px;
           box-sizing: border-box;
-       
           overflow-y: auto;
         }
 
@@ -318,14 +343,6 @@ const Dashboard = () => {
           width: 100%;
           flex-grow: 1;
           position: relative;
-        }
-
-        .gauge-wrapper {
-          width: 100%;
-          height: 100%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
         }
 
         .bottom-section {
@@ -373,15 +390,15 @@ const Dashboard = () => {
           margin-top: 4px;
         }
 
-         .table-section {
-    background: white;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    overflow: hidden;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-  }
+        .table-section {
+          background: white;
+          border-radius: 8px;
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+          overflow: hidden;
+          height: 100%;
+          display: flex;
+          flex-direction: column;
+        }
 
         .table-header {
           padding: 16px 24px;
@@ -397,10 +414,10 @@ const Dashboard = () => {
         }
 
         .table-container {
-    overflow: auto;
-    flex-grow: 1;
-    max-height: 300px; /* Adjust this value as needed */
-  }
+          overflow: auto;
+          flex-grow: 1;
+          max-height: 300px;
+        }
 
         .data-table {
           width: 100%;
@@ -423,28 +440,28 @@ const Dashboard = () => {
         }
 
         .table-body tr {
-    transition: background-color 0.2s ease;
-    height: 20px; /* Reduced row height */
-  }
+          transition: background-color 0.2s ease;
+          height: 20px;
+        }
 
-  .table-body tr:not(:last-child) {
-    border-bottom: 1px solid #e5e7eb;
-  }
+        .table-body tr:not(:last-child) {
+          border-bottom: 1px solid #e5e7eb;
+        }
+
         .table-body tr:hover {
           background-color: #f9fafb;
         }
 
         .table-body td {
-    padding: 8px 16px; /* Reduced padding */
-    font-size: 13px; /* Slightly smaller font */
-    color: #1f2937;
-    white-space: nowrap;
-  }
+          padding: 8px 16px;
+          font-size: 13px;
+          color: #1f2937;
+          white-space: nowrap;
+        }
 
-  /* Remove the bottom border from the last row */
-  .table-body tr:last-child td {
-    border-bottom: none;
-  }
+        .table-body tr:last-child td {
+          border-bottom: none;
+        }
 
         /* Responsive Design */
         @media (max-width: 1024px) {
@@ -501,13 +518,22 @@ const Dashboard = () => {
             <h3 className="chart-title">Revenue Trend</h3>
             <div className="chart-wrapper">
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={lineData} margin={{ top: 5, right: 5, left: 5, bottom: 5 }}>
+                <LineChart data={lineData} margin={{ top: 5, right: 5, left: 5, bottom: 20 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                  <XAxis 
+                    dataKey="name" 
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fontSize: 10, fill: '#6b7280' }}
+                  />
+                  <YAxis hide />
+                  <Tooltip />
                   <Line 
                     type="monotone" 
                     dataKey="value" 
                     stroke="#8884d8" 
                     strokeWidth={2}
-                    dot={false}
+                    dot={{ fill: '#8884d8', strokeWidth: 2, r: 3 }}
                   />
                 </LineChart>
               </ResponsiveContainer>
@@ -519,8 +545,17 @@ const Dashboard = () => {
             <h3 className="chart-title">Order Volume</h3>
             <div className="chart-wrapper">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={barData} margin={{ top: 5, right: 5, left: 5, bottom: 5 }}>
-                  <Bar dataKey="value" fill="#82ca9d" />
+                <BarChart data={barData} margin={{ top: 5, right: 5, left: 5, bottom: 20 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                  <XAxis 
+                    dataKey="name" 
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fontSize: 10, fill: '#6b7280' }}
+                  />
+                  <YAxis hide />
+                  <Tooltip />
+                  <Bar dataKey="value" fill="#82ca9d" radius={[2, 2, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -536,7 +571,9 @@ const Dashboard = () => {
                     data={pieData}
                     cx="50%"
                     cy="50%"
-                    outerRadius={50}
+                    labelLine={false}
+                    label={renderCustomizedLabel}
+                    outerRadius={60}
                     fill="#8884d8"
                     dataKey="value"
                   >
@@ -544,13 +581,14 @@ const Dashboard = () => {
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                     ))}
                   </Pie>
+                  <Tooltip />
                 </PieChart>
               </ResponsiveContainer>
             </div>
           </div>
 
-          {/* MUI Gauge Chart */}
-          <div className="chart-card">
+          {/* Simple Gauge Chart (Custom Implementation) */}
+       <div className="chart-card">
             <h3 className="chart-title">Performance</h3>
             <div className="chart-wrapper">
               <MuiGauge value={75} />
@@ -567,34 +605,33 @@ const Dashboard = () => {
           </div>
 
           {/* Order Status Table */}
-         {/* Order Status Table */}
-<div className="table-section">
-  <div className="table-header">
-    <h3 className="table-title">Order Status</h3>
-  </div>
-  <div className="table-container">
-    <table className="data-table">
-      <thead className="table-head">
-        <tr>
-          <th>ID</th>
-          <th>Name</th>
-          <th>State</th>
-          <th>Country</th>
-        </tr>
-      </thead>
-      <tbody className="table-body">
-        {orderData.map((order, index) => (
-          <tr key={index}>
-            <td>{order.id}</td>
-            <td>{order.name}</td>
-            <td>{order.state}</td>
-            <td>{order.country}</td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
-  </div>
-</div>
+          <div className="table-section">
+            <div className="table-header">
+              <h3 className="table-title">Order Status</h3>
+            </div>
+            <div className="table-container">
+              <table className="data-table">
+                <thead className="table-head">
+                  <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>State</th>
+                    <th>Country</th>
+                  </tr>
+                </thead>
+                <tbody className="table-body">
+                  {orderData.map((order, index) => (
+                    <tr key={index}>
+                      <td>{order.id}</td>
+                      <td>{order.name}</td>
+                      <td>{order.state}</td>
+                      <td>{order.country}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
       </div>
     </>

@@ -894,9 +894,9 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
       className={`sidebar ${isCollapsed ? 'collapsed' : ''}`}
       style={{
         backgroundColor: '#fff',
-        color: '#1b69e7ff',
-        fontSize: '1rem',
-        fontWeight: '490',
+
+        color: '#333',
+
         height: '100vh',
         position: 'fixed',
         borderRight: '1px solid #e0e0e0',
