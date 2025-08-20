@@ -10,15 +10,18 @@
     "lint": "next lint",
     "export": "next build && next export"
   },
-
   "dependencies": {
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
     "@handsontable/react": "^16.0.1",
     "@mui/icons-material": "^7.2.0",
     "@mui/material": "^7.2.0",
+    "@mui/x-charts": "^8.10.1",
     "@mui/x-data-grid": "^8.9.2",
     "@react-pdf/renderer": "^4.3.0",
+    "ag-grid-community": "^34.1.1",
+    "ag-grid-enterprise": "^34.1.1",
+    "ag-grid-react": "^34.1.1",
     "axios": "^1.11.0",
     "chart.js": "^4.5.0",
     "hamburger-react": "^2.5.2",
@@ -31,6 +34,7 @@
     "react-hook-form": "^7.62.0",
     "react-icons": "^5.5.0",
     "react-toastify": "^11.0.5",
+    "recharts": "^3.1.2",
     "zod": "^4.0.17"
   },
   "devDependencies": {
