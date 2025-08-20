@@ -3,45 +3,44 @@ import React, { useEffect, useRef, useState, useCallback } from 'react';
 import {
     Box, Grid, TextField, Typography, Button, Stack, FormControlLabel, Checkbox, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions,
 } from '@mui/material';
-import KeyboardArrowLeftIcon from "@mui/icons-material/KeyboardArrowLeft";
-import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import { toast, ToastContainer } from 'react-toastify';
 import { pdf } from '@react-pdf/renderer';
-import PrintPtrnData from './PrintPtrnData';
-import { getFormMode } from '@/lib/helpers';
+import PrintUnitData from './PrintUnitData';
 import { useRouter } from 'next/navigation';
+import { getFormMode } from '@/lib/helpers';
 import debounce from 'lodash.debounce';
 import axiosInstance from '@/lib/axios';
+import CustomAutocomplete from '@/GlobalFunction/CustomAutoComplete/CustomAutoComplete';
 import { useSearchParams } from 'next/navigation';
-import FirstPageIcon from '@mui/icons-material/FirstPage';
-import LastPageIcon from '@mui/icons-material/LastPage';
 import CrudButtons from '@/GlobalFunction/CrudButtons';
+import PaginationButtons from '@/GlobalFunction/PaginationButtons';
 
 const FORM_MODE = getFormMode();
-const PatternMst = () => {
+const UnitMst = () => {
     const router = useRouter();
     const searchParams = useSearchParams();
-    const FGPTN_KEY = searchParams.get('FGPTN_KEY');
-
-    const [currentFGPTN_KEY, setCurrentFGPTN_KEY] = useState(null);
+    const UNIT_KEY = searchParams.get('UNIT_KEY');
+    const [currentUNIT_KEY, setCurrentUNIT_KEY] = useState(null);
     const [form, setForm] = useState({
         SearchByCd: '',
         SERIES: '',
-        FGPTN_CODE: '',
-        FGPTN_KEY: '',
-        FGPTN_NAME: '',
-        FGPTN_ABRV: '',
-        FGPTN_LST_CODE: '',
+        UNIT_ALT_CODE: '',
+        UNIT_KEY: '',  //CODE
+        UNIT_NAME: '',  //SHADE NAME
+        UNIT_ABRV: '',
+        UNIT_FOR: '',
+        UNIT_LST_CODE: '',
         Status: FORM_MODE.add ? "1" : "0",
     });
     const [openConfirmDialog, setOpenConfirmDialog] = useState(false);
-    const FGPTN_KEYRef = useRef(null);
-    const FGPTN_NAMERef = useRef(null);
-    const FGPTN_ABRVRef = useRef(null);
-    const FGPTN_CODERef = useRef(null);
+    const UNIT_KEYRef = useRef(null);
+    const UNIT_NAMERef = useRef(null);
+    const UNIT_ABRVRef = useRef(null);
+    const UNIT_FORRef = useRef(null);
+    const UNIT_ALT_CODERef = useRef(null);
     const SERIESRef = useRef(null);
     const [mode, setMode] = useState(() => {
-        currentFGPTN_KEY ? FORM_MODE.read : FORM_MODE.add
+        currentUNIT_KEY ? FORM_MODE.read : FORM_MODE.add
     });
     const [Status, setStatus] = useState("1");
     const FCYR_KEY = localStorage.getItem('FCYR_KEY');
@@ -51,6 +50,11 @@ const PatternMst = () => {
     const PARTY_KEY = localStorage.getItem('PARTY_KEY');
     const COBR_ID = localStorage.getItem('COBR_ID');
 
+    const unitOptions = [
+        { Id: '0', Name: 'N' },
+        // { Id: '1', Name: 'L' },
+
+    ];
     const handleChangeStatus = (event) => {
         const updatedStatus = event.target.checked ? "1" : "0";
         setStatus(updatedStatus);
@@ -59,149 +63,101 @@ const PatternMst = () => {
             Status: updatedStatus
         }))
     };
-    console.log("currentFGPTN_KEY", currentFGPTN_KEY)
-    console.log("FGPTN_KEY", FGPTN_KEY)
-
-    // const fetchRetriveData = async (currentFGPTN_KEY, flag = "R", isManualSearch = false) => {
-    //     try {
-    //         const response = await axiosInstance.post('Fgptn/RetriveFgptn', {
-    //             "FLAG": flag,
-    //             "TBLNAME": "Fgptn",
-    //             "FLDNAME": "Fgptn_KEY",
-    //             "ID": currentFGPTN_KEY,
-    //             "ORDERBYFLD": "",
-    //             "CWHAER": "",
-    //             "CO_ID": CO_ID
-    //         });
-    //         const { data: { STATUS, DATA, RESPONSESTATUSCODE, MESSAGE } } = response;
-    //         if (STATUS === 0 && Array.isArray(DATA) && RESPONSESTATUSCODE == 1) {
-    //             const categoryData = DATA[0];
-    //             setForm({
-    //                 FGPTN_KEY: categoryData.FGPTN_KEY,
-    //                 FGPTN_NAME: categoryData.FGPTN_NAME,
-    //                 FGPTN_ABRV: categoryData.FGPTN_ABRV || '',
-    //                 FGPTN_CODE: categoryData.FGPTN_CODE || '',
-    //                 SERIES: categoryData.SERIES || '',
-    //                 FGPTN_LST_CODE: categoryData.FGPTN_LST_CODE || '',
-    //                 Status: categoryData.STATUS,
-    //             });
-    //             setStatus(DATA[0].STATUS);
-    //             setCurrentFGPTN_KEY(categoryData.FGPTN_KEY);
-
-    //                // ✅ Update URL
-    //         const newParams = new URLSearchParams();
-    //         newParams.set("FGPTN_KEY", categoryData.FGPTN_KEY);
-    //         router.replace(`/masters/products/pattern?${newParams.toString()}`);
-    //         } else {
-    //             if (isManualSearch) {
-    //                 toast.error(`${MESSAGE} FOR ${currentFGPTN_KEY}`);
-    //                 setForm({
-    //                     FGPTN_KEY: '',
-    //                     FGPTN_NAME: '',
-    //                     FGPTN_ABRV: '',
-    //                     FGPTN_CODE: '',
-    //                     SERIES: '',
-    //                     FGPTN_LST_CODE: '',
-    //                     Status: 0,
-    //                 });
-    //             }
-    //         }
-    //     } catch (err) {
-    //         console.error(err);
-    //     }
-    // };
-
-    const fetchRetriveData = useCallback(async (currentFGPTN_KEY, flag = "R", isManualSearch = false) => {
+    const fetchRetriveData = useCallback(async (currentUNIT_KEY, flag = "R", isManualSearch = false) => {
         try {
-            const response = await axiosInstance.post('Fgptn/RetriveFgptn', {
+            const response = await axiosInstance.post('Unit/RetriveUnit', {
                 "FLAG": flag,
-                "TBLNAME": "Fgptn",
-                "FLDNAME": "Fgptn_KEY",
-                "ID": currentFGPTN_KEY,
+                "TBLNAME": "Unit",
+                "FLDNAME": "Unit_KEY",
+                "ID": currentUNIT_KEY,
                 "ORDERBYFLD": "",
                 "CWHAER": "",
                 "CO_ID": CO_ID
             });
-
             const { data: { STATUS, DATA, RESPONSESTATUSCODE, MESSAGE } } = response;
-
             if (STATUS === 0 && Array.isArray(DATA) && RESPONSESTATUSCODE == 1) {
                 const categoryData = DATA[0];
                 setForm({
-                    FGPTN_KEY: categoryData.FGPTN_KEY,
-                    FGPTN_NAME: categoryData.FGPTN_NAME,
-                    FGPTN_ABRV: categoryData.FGPTN_ABRV || '',
-                    FGPTN_CODE: categoryData.FGPTN_CODE || '',
+                    UNIT_KEY: categoryData.UNIT_KEY,
+                    UNIT_NAME: categoryData.UNIT_NAME,
+                    UNIT_ABRV: categoryData.UNIT_ABRV || '',
+                    UNIT_FOR: categoryData.UNIT_FOR || '',
+                    UNIT_ALT_CODE: categoryData.UNIT_ALT_CODE || '',
                     SERIES: categoryData.SERIES || '',
-                    FGPTN_LST_CODE: categoryData.FGPTN_LST_CODE || '',
+                    UNIT_LST_CODE: categoryData.UNIT_LST_CODE || '',
                     Status: categoryData.STATUS,
                 });
-                setStatus(categoryData.STATUS);
-                setCurrentFGPTN_KEY(categoryData.FGPTN_KEY);
-
-                // ✅ Update URL
+                setStatus(DATA[0].STATUS);
+                setCurrentUNIT_KEY(categoryData.UNIT_KEY);
                 const newParams = new URLSearchParams();
-                newParams.set("FGPTN_KEY", categoryData.FGPTN_KEY);
-                router.replace(`/masters/products/pattern?${newParams.toString()}`);
-            } else if (isManualSearch) {
-                toast.error(`${MESSAGE} FOR ${currentFGPTN_KEY}`);
-                setForm({
-                    FGPTN_KEY: '',
-                    FGPTN_NAME: '',
-                    FGPTN_ABRV: '',
-                    FGPTN_CODE: '',
-                    SERIES: '',
-                    FGPTN_LST_CODE: '',
-                    Status: 0,
-                });
+                newParams.set("UNIT_KEY", categoryData.UNIT_KEY);
+                router.replace(`/masters/products/unit?${newParams.toString()}`);
+            } else {
+                if (isManualSearch) {
+                    toast.error(`${MESSAGE} FOR ${currentUNIT_KEY}`);
+                    setForm({
+                        UNIT_KEY: '',
+                        UNIT_NAME: '',
+                        UNIT_ABRV: '',
+                        UNIT_FOR: '',
+                        UNIT_ALT_CODE: '',
+                        SERIES: '',
+                        UNIT_LST_CODE: '',
+                        Status: 0,
+                    });
+                }
             }
         } catch (err) {
             console.error(err);
         }
-    }, [CO_ID, router]);
-
+    }, [CO_ID, router])
     useEffect(() => {
-        if (FGPTN_KEY) {
-            setCurrentFGPTN_KEY(FGPTN_KEY);
-            fetchRetriveData(FGPTN_KEY);
+        if (UNIT_KEY) {
+            setCurrentUNIT_KEY(UNIT_KEY);
+            fetchRetriveData(UNIT_KEY);
             setMode(FORM_MODE.read);
         } else {
             setForm({
                 SearchByCd: '',
                 SERIES: '',
-                FGPTN_CODE: '',
-                FGPTN_KEY: '',
-                FGPTN_NAME: '',
-                FGPTN_ABRV: '',
-                FGPTN_LST_CODE: '',
+                UNIT_ALT_CODE: '',
+                UNIT_KEY: '',
+                UNIT_NAME: '',
+                UNIT_ABRV: '',
+                UNIT_FOR: '',
+                UNIT_LST_CODE: '',
                 Status: "1",
             })
             setMode(FORM_MODE.read);
         }
         setMode(FORM_MODE.read);
-    }, [FGPTN_KEY, fetchRetriveData]);
+    }, [UNIT_KEY, fetchRetriveData]);
     const handleSubmit = async () => {
         try {
             const UserName = userRole === 'user' ? username : PARTY_KEY;
             let url;
-            if (mode === FORM_MODE.edit && currentFGPTN_KEY) {
-                url = `Fgptn/UpdateFgptn?UserName=${(UserName)}&strCobrid=${COBR_ID}`;
+            if (mode === FORM_MODE.edit && currentUNIT_KEY) {
+                url = `Unit/UpdateUnit?UserName=${(UserName)}&strCobrid=${COBR_ID}`;
             } else {
-                url = `Fgptn/InsertFgptn?UserName=${(UserName)}&strCobrid=${COBR_ID}`;
+                url = `Unit/InsertUnit?UserName=${(UserName)}&strCobrid=${COBR_ID}`;
             }
             const payload = {
-                Fgptn_KEY: form.FGPTN_KEY,  //CODE
-                Fgptn_CODE: form.FGPTN_CODE,
-                Fgptn_NAME: form.FGPTN_NAME,
-                Fgptn_ABRV: form.FGPTN_ABRV,
-                Merchandiser_key: '',
-                DISP_FLG: '0',
-                FGStyle_Id: 0,
+                UNIT_KEY: form.UNIT_KEY,  //CODE
+                UNIT_ALT_CODE: form.UNIT_ALT_CODE, //ALT CODE
+                UNIT_NAME: form.UNIT_NAME, //UNIT NAME
+                UNIT_ABRV: form.UNIT_ABRV,
+                UNIT_FOR: form.UNIT_FOR,
                 STATUS: form.Status ? "1" : "0",
 
+
+                "Unit_KEY": "UN061",
+                "UNIT_ALT_CODE": "API",
+                "Unit_NAME": "TESTAPI",
+                "Unit_ABRV": "TESTAPI",
+                "UNIT_FOR": "N",
             };
             let response;
-            if (mode == FORM_MODE.edit && currentFGPTN_KEY) {
+            if (mode == FORM_MODE.edit && currentUNIT_KEY) {
                 payload.UPDATED_BY = 1;
                 payload.UPDATED_DT = new Date().toISOString();
                 response = await axiosInstance.post(url, payload);
@@ -220,12 +176,12 @@ const PatternMst = () => {
                 const { STATUS, MESSAGE } = response.data;
                 if (STATUS === 0) {
                     setForm({
-                        FGPTN_KEY: '',
-                        FGPTN_NAME: '',
-                        FGPTN_ABRV: '',
-                        FGPTN_CODE: '',
+                        UNIT_KEY: '',
+                        UNIT_NAME: '',
+                        UNIT_ABRV: '',
+                        UNIT_ALT_CODE: '',
                         SERIES: '',
-                        FGPTN_LST_CODE: '',
+                        UNIT_LST_CODE: '',
                         Status: 0,
                     });
                     setMode(FORM_MODE.read);
@@ -242,7 +198,7 @@ const PatternMst = () => {
         if (mode === FORM_MODE.add) {
             await fetchRetriveData(1, "L");
         } else {
-            await fetchRetriveData(currentFGPTN_KEY, "R");
+            await fetchRetriveData(currentUNIT_KEY, "R");
         }
         setMode(FORM_MODE.read);
         setForm((prev) => ({
@@ -253,16 +209,16 @@ const PatternMst = () => {
     const debouncedApiCall = debounce(async (newSeries) => {
         try {
             const response = await axiosInstance.post('GetSeriesSettings/GetSeriesLastNewKey', {
-                "MODULENAME": "Fgptn",
-                "TBLNAME": "Fgptn",
-                "FLDNAME": "Fgptn_KEY",
-                "NCOLLEN": 5,
+                "MODULENAME": "Unit",
+                "TBLNAME": "Unit",
+                "FLDNAME": "Unit_KEY",
+                "NCOLLEN": 0,
                 "CPREFIX": newSeries,
                 "COBR_ID": COBR_ID,
                 "FCYR_KEY": FCYR_KEY,
                 "TRNSTYPE": "M",
-                "SERIESID": 0,
-                "FLAG": ""
+                "SERIESID": 5,
+                "FLAG": "Series"
             });
             const { STATUS, DATA, MESSAGE } = response.data;
             if (STATUS === 0 && DATA.length > 0) {
@@ -270,16 +226,16 @@ const PatternMst = () => {
                 const lastId = DATA[0].LASTID;
                 setForm((prevForm) => ({
                     ...prevForm,
-                    FGPTN_KEY: id,
-                    FGPTN_LST_CODE: lastId
+                    UNIT_KEY: id,
+                    UNIT_LST_CODE: lastId
                 }));
             } else {
                 toast.error(`${MESSAGE} for ${newSeries}`, { autoClose: 1000 });
 
                 setForm((prevForm) => ({
                     ...prevForm,
-                    FGPTN_KEY: '',
-                    FGPTN_LST_CODE: ''
+                    UNIT_KEY: '',
+                    UNIT_LST_CODE: ''
                 }));
             }
         } catch (error) {
@@ -294,8 +250,8 @@ const PatternMst = () => {
         if (newSeries.trim() === '') {
             setForm((prevForm) => ({
                 ...prevForm,
-                FGPTN_KEY: '',
-                FGPTN_LST_CODE: ''
+                UNIT_KEY: '',
+                UNIT_LST_CODE: ''
             }));
             return;
         };
@@ -303,13 +259,13 @@ const PatternMst = () => {
     }
     const handleAdd = async () => {
         setMode(FORM_MODE.add);
-        setCurrentFGPTN_KEY(null);
+        setCurrentUNIT_KEY(null);
         setForm((prevForm) => ({
             ...prevForm,
-            FGPTN_NAME: '',
-            FGPTN_ABRV: '',
+            UNIT_NAME: '',
+            UNIT_ABRV: '',
             SearchByCd: '',
-            FGPTN_CODE: '',
+            UNIT_ALT_CODE: '',
             Status: '1',
         }));
 
@@ -317,15 +273,15 @@ const PatternMst = () => {
         let cprefix = '';
         try {
             const response = await axiosInstance.post('GetSeriesSettings/GetSeriesLastNewKey', {
-                "MODULENAME": "Fgptn",
-                "TBLNAME": "Fgptn",
-                "FLDNAME": "Fgptn_KEY",
+                "MODULENAME": "Unit",
+                "TBLNAME": "Unit",
+                "FLDNAME": "Unit_KEY",
                 "NCOLLEN": 0,
                 "CPREFIX": "",
                 "COBR_ID": COBR_ID,
                 "FCYR_KEY": FCYR_KEY,
                 "TRNSTYPE": "M",
-                "SERIESID": 29,
+                "SERIESID": 5,
                 "FLAG": "Series"
             });
 
@@ -343,9 +299,9 @@ const PatternMst = () => {
         }
         try {
             const response = await axiosInstance.post('GetSeriesSettings/GetSeriesLastNewKey', {
-                "MODULENAME": "Fgptn",
-                "TBLNAME": "Fgptn",
-                "FLDNAME": "Fgptn_KEY",
+                "MODULENAME": "Unit",
+                "TBLNAME": "Unit",
+                "FLDNAME": "Unit_KEY",
                 "NCOLLEN": 5,
                 "CPREFIX": cprefix,
                 "COBR_ID": COBR_ID,
@@ -360,16 +316,16 @@ const PatternMst = () => {
                 const lastId = DATA[0].LASTID;
                 setForm((prevForm) => ({
                     ...prevForm,
-                    FGPTN_KEY: id,
-                    FGPTN_LST_CODE: lastId
+                    UNIT_KEY: id,
+                    UNIT_LST_CODE: lastId
                 }));
             }
         } catch (error) {
             console.error("Error fetching ID and LASTID:", error);
         }
     };
-    const handleFirst = ()=>{}
-    const handleLast = async()=>{
+    const handleFirst = () => { }
+    const handleLast = async () => {
         await fetchRetriveData(1, "L");
         setForm((prev) => ({
             ...prev,
@@ -377,15 +333,15 @@ const PatternMst = () => {
         }));
     }
     const handlePrevious = async () => {
-        await fetchRetriveData(currentFGPTN_KEY, "P");
+        await fetchRetriveData(currentUNIT_KEY, "P");
         setForm((prev) => ({
             ...prev,
             SearchByCd: ''
         }));
     };
     const handleNext = async () => {
-        if (currentFGPTN_KEY) {
-            await fetchRetriveData(currentFGPTN_KEY, "N");
+        if (currentUNIT_KEY) {
+            await fetchRetriveData(currentUNIT_KEY, "N");
         }
         setForm((prev) => ({
             ...prev,
@@ -402,13 +358,13 @@ const PatternMst = () => {
         setOpenConfirmDialog(false);
         try {
             const UserName = userRole === 'user' ? username : PARTY_KEY;
-            const response = await axiosInstance.post(`Fgptn/DeleteFgptn?UserName=${(UserName)}&strCobrid=${COBR_ID}`, {
-                Fgptn_KEY: form.FGPTN_KEY
+            const response = await axiosInstance.post(`Unit/DeleteUnit?UserName=${(UserName)}&strCobrid=${COBR_ID}`, {
+                UNIT_KEY: form.UNIT_KEY
             });
             const { data: { STATUS, MESSAGE } } = response;
             if (STATUS === 0) {
                 toast.success(MESSAGE, { autoClose: 500 });
-                await fetchRetriveData(currentFGPTN_KEY, 'P');
+                await fetchRetriveData(currentUNIT_KEY, 'P');
             } else {
                 toast.error(MESSAGE);
             }
@@ -421,7 +377,7 @@ const PatternMst = () => {
     };
     const handlePrint = async () => {
         try {
-            const response = await axiosInstance.post(`Fgptn/GetFgptnDashBoard?currentPage=1&limit=5000`, {
+            const response = await axiosInstance.post(`Unit/GetUnitDashBoard?currentPage=1&limit=5000`, {
                 "SearchText": ""
             });
             const { data: { STATUS, DATA } } = response; // Extract DATA
@@ -432,7 +388,7 @@ const PatternMst = () => {
                 }));
 
                 // Generate the PDF blob
-                const asPdf = pdf(<PrintPtrnData rows={formattedData} />);
+                const asPdf = pdf(<PrintUnitData rows={formattedData} />);
                 const blob = await asPdf.toBlob();
                 const url = URL.createObjectURL(blob);
 
@@ -450,9 +406,8 @@ const PatternMst = () => {
         }
     };
     const handleExit = () => {
-        router.push('/masters/products/pattern/patterntable');
+        router.push('/masters/products/unit/unittable');
     };
-
     const Buttonsx = {
         backgroundColor: '#39ace2',
         margin: { xs: '0 4px', sm: '0 6px' },
@@ -472,14 +427,13 @@ const PatternMst = () => {
                 <Box sx={{ maxWidth: '1000px', boxShadow: '0px 2px 6px rgba(0, 0, 0, 0.1)' }} className="form_grid" >
                     <Grid container alignItems="center"
                         justifyContent="space-between" spacing={2} sx={{ marginTop: "10px", marginInline: '20px' }}>
-
                         <Grid sx={{ flexGrow: 1 }}>
                             <Typography align="center" variant="h5">
-                                Pattern Master
+                                Unit Master
                             </Typography>
                         </Grid>
-
                     </Grid>
+                    {/* Form Fields */}
                     <Box
                         sx={{
                             display: 'flex',
@@ -500,7 +454,6 @@ const PatternMst = () => {
                                         paddingBlock: { xs: '8px', md: '4px' },
                                         paddingLeft: { xs: '10px', md: '8px' },
                                     },
-
                                 }}
                                 value={form.SearchByCd}
                                 onChange={(e) => setForm({ ...form, SearchByCd: e.target.value })}
@@ -536,27 +489,27 @@ const PatternMst = () => {
                                 disabled={true}
                                 fullWidth
                                 className="custom-textfield"
-                                value={form.FGPTN_LST_CODE}
-                                onChange={(e) => setForm({ ...form, FGPTN_LST_CODE: e.target.value })}
+                                value={form.UNIT_LST_CODE}
+                                onChange={(e) => setForm({ ...form, UNIT_LST_CODE: e.target.value })}
                             />
                             <TextField
                                 label="Code"
-                                inputRef={FGPTN_KEYRef}
+                                inputRef={UNIT_KEYRef}
                                 sx={{ width: { xs: '100%', sm: '48%', md: '25%' } }}
                                 disabled={mode === FORM_MODE.read}
                                 className="custom-textfield"
-                                value={form.FGPTN_KEY}
-                                onChange={(e) => setForm({ ...form, FGPTN_KEY: e.target.value })}
+                                value={form.UNIT_KEY}
+                                onChange={(e) => setForm({ ...form, UNIT_KEY: e.target.value })}
                             />
                             <TextField
                                 label="Alt Code"
-                                inputRef={FGPTN_CODERef}
+                                inputRef={UNIT_ALT_CODERef}
                                 sx={{ width: { xs: '100%', sm: '48%', md: '25%' } }}
                                 disabled={mode === FORM_MODE.read}
                                 fullWidth
                                 className="custom-textfield"
-                                value={form.FGPTN_CODE}
-                                onChange={(e) => setForm({ ...form, FGPTN_CODE: e.target.value })}
+                                value={form.UNIT_ALT_CODE}
+                                onChange={(e) => setForm({ ...form, UNIT_ALT_CODE: e.target.value })}
                             />
                         </Box>
 
@@ -569,13 +522,13 @@ const PatternMst = () => {
                             }}
                         >
                             <TextField
-                                inputRef={FGPTN_NAMERef}
-                                label="Name"
+                                inputRef={UNIT_NAMERef}
+                                label="Shade"
                                 sx={{ width: '100%' }}
                                 disabled={mode === FORM_MODE.read}
                                 className="custom-textfield"
-                                value={form.FGPTN_NAME}
-                                onChange={(e) => setForm({ ...form, FGPTN_NAME: e.target.value })}
+                                value={form.UNIT_NAME}
+                                onChange={(e) => setForm({ ...form, UNIT_NAME: e.target.value })}
                             />
                         </Box>
 
@@ -591,14 +544,26 @@ const PatternMst = () => {
                                 },
                             }}
                         >
+                            <CustomAutocomplete
+                                id="unit-key-autocomplete"
+                                sx={{ width: { xs: '100%', sm: '40%', md: '90%' } }}
+                                inputRef={UNIT_FORRef}
+                                disabled={true}
+                                label="Unit For"
+                                name="UNIT_FOR"
+                                options={unitOptions}
+                                value={unitOptions.find(opt => opt.Id === form.UNIT_FOR) || null}
+                                onChange={(e) => setForm({ ...form, [e.target.name]: e.target.value })}
+                                className="custom-textfield"
+                            />
                             <TextField
                                 label="Abbreviation"
-                                inputRef={FGPTN_ABRVRef}
+                                inputRef={UNIT_ABRVRef}
                                 sx={{ width: { xs: '100%', sm: '40%', md: '30%' } }}
                                 disabled={mode === FORM_MODE.read}
                                 className="custom-textfield"
-                                value={form.FGPTN_ABRV}
-                                onChange={(e) => setForm({ ...form, FGPTN_ABRV: e.target.value })}
+                                value={form.UNIT_ABRV}
+                                onChange={(e) => setForm({ ...form, UNIT_ABRV: e.target.value })}
                             />
                             <FormControlLabel
                                 control={
@@ -617,65 +582,113 @@ const PatternMst = () => {
                             />
                         </Box>
                     </Box>
-                    <Grid container alignItems="center"   justifyContent="center"
-                        spacing={1} sx={{ marginTop: "10px", marginInline: '20px' }}>
+                    <Grid container alignItems="center"
+                        justifyContent="center" spacing={1} sx={{ marginTop: "10px", marginInline: '20px' }}>
                         <Grid sx={{
                             width: { xs: '100%', sm: 'auto' },
                         }}>
                             <Stack direction="row" spacing={1}>
-                                <Button
-                                    variant="contained"
-                                    size="small"
-                                    className="three-d-button-first"
-                                    sx={Buttonsx}
-                                    onClick={handleFirst}
-                                    disabled={mode !== FORM_MODE.read || !currentFGPTN_KEY || currentFGPTN_KEY === 1}
-                                >
-                                    <FirstPageIcon />
-                                </Button>
-
-                                <Button variant="contained" size="small" className="three-d-button-previous"
-                                    sx={Buttonsx}
-                                    onClick={handlePrevious}
-                                    disabled={
-                                        mode !== FORM_MODE.read || !currentFGPTN_KEY || currentFGPTN_KEY === 1
-                                    }
-                                >
-                                    <KeyboardArrowLeftIcon />
-                                </Button>
-                                <Button variant="contained" size="small" className="three-d-button-next"
-                                    sx={Buttonsx}
-                                    onClick={handleNext}
-                                    disabled={mode !== FORM_MODE.read || !currentFGPTN_KEY}
-                                >
-                                    <NavigateNextIcon />
-                                </Button>
-                                <Button
-                                    variant="contained"
-                                    size="small"
-                                    className="three-d-button-last"
-                                    sx={Buttonsx}
-                                    onClick={handleLast}
-                                    disabled={mode !== FORM_MODE.read || !currentFGPTN_KEY}
-                                >
-                                    <LastPageIcon />
-                                </Button>
+                                <PaginationButtons
+                                    mode={mode}
+                                    FORM_MODE={FORM_MODE}
+                                    currentKey={currentUNIT_KEY}
+                                    onFirst={handleFirst}
+                                    onPrevious={handlePrevious}
+                                    onNext={handleNext}
+                                    onLast={handleLast}
+                                    sx={{ mt: 2 }}
+                                    buttonSx={Buttonsx}
+                                />
                             </Stack>
                         </Grid>
                         <Grid>
                             <Stack direction="row" spacing={{ xs: 0.5, sm: 1 }}  >
                                 <CrudButtons
                                     mode={mode}
+                                    onAdd={mode === FORM_MODE.read ? handleAdd : handleSubmit}
+                                    onEdit={mode === FORM_MODE.read ? handleEdit : handleCancel}
                                     onView={handlePrint}
                                     onDelete={handleDelete}
                                     onExit={handleExit}
-                                    onAdd={mode === FORM_MODE.read ? handleAdd : handleSubmit}
-                                    onEdit={mode === FORM_MODE.read ? handleEdit : handleCancel}
                                     readOnlyMode={mode === FORM_MODE.read}
                                 />
                             </Stack>
                         </Grid>
                     </Grid>
+                    {/* <Grid
+                        item
+                        xs={12}
+                        className="form_button"
+                        sx={{
+                            display: 'flex',
+                            justifyContent: { xs: 'center', sm: 'flex-end' },
+                            gap: { xs: 1, sm: 1.5 },
+                            padding: { xs: 1, sm: 2, md: 3 },
+                        }}
+                    >
+                        {mode === FORM_MODE.read && (
+                            <>
+                                <Button
+                                    variant="contained"
+                                    sx={{
+                                        mr: { xs: 0, sm: 1 },
+                                        mb: { xs: 1, sm: 0 },
+                                        background: "linear-gradient(290deg, #d4d4d4, #ffffff)",
+                                        minWidth: { xs: 100, sm: 100 },
+                                        fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                                    }}
+                                    onClick={handleAdd}
+                                    disabled
+                                >
+                                    Submit
+                                </Button>
+                                <Button
+                                    variant="contained"
+                                    sx={{
+                                        mr: { xs: 0, sm: 1 },
+                                        mb: { xs: 1, sm: 0 },
+                                        background: "linear-gradient(290deg, #a7c5e9, #ffffff)",
+                                        minWidth: { xs: 100, sm: 100 },
+                                        fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                                    }}
+                                    onClick={handleEdit}
+                                    disabled
+                                >
+                                    Cancel
+                                </Button>
+                            </>
+                        )}
+                        {(mode === FORM_MODE.edit || mode === FORM_MODE.add) && (
+                            <>
+                                <Button
+                                    variant="contained"
+                                    sx={{
+                                        mr: { xs: 0, sm: 1 },
+                                        mb: { xs: 1, sm: 0 },
+                                        background: "linear-gradient(290deg, #b9d0e9, #e9f2fa)",
+                                        minWidth: { xs: 100, sm: 100 },
+                                        fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                                    }}
+                                    onClick={handleSubmit}
+                                >
+                                    Submit
+                                </Button>
+                                <Button
+                                    variant="contained"
+                                    sx={{
+                                        mr: { xs: 0, sm: 1 },
+                                        mb: { xs: 1, sm: 0 },
+                                        background: "linear-gradient(290deg, #b9d0e9, #e9f2fa)",
+                                        minWidth: { xs: 100, sm: 100 },
+                                        fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                                    }}
+                                    onClick={handleCancel}
+                                >
+                                    Cancel
+                                </Button>
+                            </>
+                        )}
+                    </Grid> */}
                 </Box>
             </Box>
 
@@ -730,4 +743,4 @@ const PatternMst = () => {
         </>
     );
 };
-export default PatternMst;
+export default UnitMst;

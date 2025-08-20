@@ -9,9 +9,9 @@ import ReusableHandsontable from "@/components/datatable/ReusableHandsontable";
 import { useRouter } from "next/navigation";
 
 const handsontableColumns = [
-  { field: "ROWNUM", headerName: "SrNo", width: "16%", type: "numeric" },
+  // { field: "ROWNUM", headerName: "SrNo", width: "16%", type: "numeric" },
   { field: "UNIT_KEY", headerName: "Code", width: "16%", type: "text" },
-    { field: "UNIT_ALT_KEY", headerName: "ALTCode", width: "16%", type: "text" },
+  { field: "UNIT_ALT_KEY", headerName: "ALTCode", width: "16%", type: "text" },
   { field: "UNIT_NAME", headerName: "Name", width: "15%", type: "text" },
   { field: "UNIT_FOR", headerName: "Unit For", width: "15%", type: "text" },
   { field: "UNIT_ABRV", headerName: "Abrv", width: "15%", type: "text" },
@@ -39,7 +39,7 @@ export default function UnitTable() {
         const formattedData = DATA.map((row, index) => ({
           id: index,
           ...row,
-            STATUS: row.STATUS === "1" ? "Active" : "Inactive"
+          STATUS: row.STATUS === "1" ? "Active" : "Inactive"
         }));
         setRows(formattedData);
       }
@@ -60,13 +60,13 @@ export default function UnitTable() {
     console.log('Selection changed:', { row, column, row2, column2 });
   };
 
-const handleRowClick = (row) => {
-  const params = new URLSearchParams({
-    UNIT_KEY: row.UNIT_KEY,
-    mode: "view"
-  }).toString();
-  router.push(`/masters/products/unit?${params}`);
-};
+  const handleRowClick = (row) => {
+    const params = new URLSearchParams({
+      UNIT_KEY: row.UNIT_KEY,
+      mode: "view"
+    }).toString();
+    router.push(`/masters/products/unit?${params}`);
+  };
 
 
   const addButtonStyles = {
@@ -94,7 +94,7 @@ const handleRowClick = (row) => {
             size="small"
             sx={addButtonStyles}
             startIcon={<AddIcon />}
-      onClick={() => router.push('/masters/products/unit')}
+            onClick={() => router.push('/masters/products/unit')}
           >
             New
           </Button>

@@ -15,17 +15,16 @@ import {
     DialogContentText,
     DialogActions,
 } from '@mui/material';
-import KeyboardArrowLeftIcon from "@mui/icons-material/KeyboardArrowLeft";
-import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import { toast, ToastContainer } from 'react-toastify';
 import { useRouter } from 'next/navigation';
 import { getFormMode } from '@/lib/helpers';
-import CrudButton from '@/GlobalFunction/CrudButton';
 import debounce from 'lodash.debounce';
 import axiosInstance from '@/lib/axios';
 import { pdf } from '@react-pdf/renderer';
 import PrintTypeData from './PrintTypeData';
 import { useSearchParams } from 'next/navigation';
+import CrudButtons from '@/GlobalFunction/CrudButtons';
+import PaginationButtons from '@/GlobalFunction/PaginationButtons';
 
 const FORM_MODE = getFormMode();
 
@@ -332,6 +331,14 @@ const TypeMst = () => {
             console.error("Error fetching ID and LASTID:", error);
         }
     };
+    const handleFirst =()=>{}
+    const handleLast =async()=>{
+         await fetchRetriveData(1, "L");
+        setForm((prev) => ({
+            ...prev,
+            SearchByCd: ''
+        })); 
+    }
     const handlePrevious = async () => {
         await fetchRetriveData(currentFGTYPE_KEY, "P");
         setForm((prev) => ({
@@ -446,54 +453,12 @@ const TypeMst = () => {
                 >
                     {/* Header Section */}
                     <Grid container alignItems="center"
-                        justifyContent="space-between" spacing={2} sx={{ marginTop: "30px", marginInline: '20px' }}>
-                        <Grid sx={{
-                            display: 'flex', justifyContent: {
-                                xs: 'center',
-                                sm: 'flex-start'
-                            },
-                            width: { xs: '100%', sm: 'auto' },
-                        }}>
-                            <Stack direction="row" spacing={1}>
-                                <Button variant="contained" size="small" className="three-d-button-previous"
-                                     sx={Buttonsx}
-                                    onClick={handlePrevious}
-                                    disabled={
-                                        mode !== FORM_MODE.read || !currentFGTYPE_KEY || currentFGTYPE_KEY === 1
-                                    }
-                                >
-                                    <KeyboardArrowLeftIcon />
-                                </Button>
-                                <Button variant="contained" size="small" className="three-d-button-next"
-                                     sx={Buttonsx}
-                                    onClick={handleNext}
-                                    disabled={mode !== FORM_MODE.read || !currentFGTYPE_KEY}
-                                >
-                                    <NavigateNextIcon />
-                                </Button>
-                            </Stack>
-                        </Grid>
-
+                        justifyContent="space-between" spacing={2} sx={{ marginTop: "10px", marginInline: '20px' }}>
                         {/* Center Header */}
                         <Grid sx={{ flexGrow: 1 }}>
                             <Typography align="center" variant="h5">
                                 Type Master
                             </Typography>
-                        </Grid>
-
-                        {/* Right Buttons */}
-                        <Grid>
-                            <Stack direction="row" spacing={{ xs: 0.5, sm: 1 }}>
-                                <CrudButton
-                                    mode={mode}
-                                    onAdd={handleAdd}
-                                    onEdit={handleEdit}
-                                    onView={handlePrint}
-                                    onDelete={handleDelete}
-                                    onExit={handleExit}
-                                    readOnlyMode={mode === FORM_MODE.read}
-                                />
-                            </Stack>
                         </Grid>
                     </Grid>
 
@@ -638,8 +603,41 @@ const TypeMst = () => {
                             />
                         </Box>
                     </Box>
+                     <Grid container alignItems="center"
+                        justifyContent="center" spacing={1} sx={{ marginTop: "10px", marginInline: '20px' }}>
+                        <Grid sx={{
+                            width: { xs: '100%', sm: 'auto' },
+                        }}>
+                            <Stack direction="row" spacing={1}>
+                                <PaginationButtons
+                                    mode={mode}
+                                    FORM_MODE={FORM_MODE}
+                                    currentKey={currentFGTYPE_KEY}
+                                    onFirst={handleFirst}
+                                    onPrevious={handlePrevious}
+                                    onNext={handleNext}
+                                    onLast={handleLast}
+                                    sx={{ mt: 2 }}
+                                    buttonSx={Buttonsx}
+                                />
+                            </Stack>
+                        </Grid>
+                        <Grid>
+                            <Stack direction="row" spacing={{ xs: 0.5, sm: 1 }}>
+                                <CrudButtons
+                                    mode={mode}
+                                    onAdd={mode === FORM_MODE.read ? handleAdd : handleSubmit}
+                                    onEdit={mode === FORM_MODE.read ? handleEdit : handleCancel}
+                                    onView={handlePrint}
+                                    onDelete={handleDelete}
+                                    onExit={handleExit}
+                                    readOnlyMode={mode === FORM_MODE.read}
+                                />
+                            </Stack>
+                        </Grid>
+                    </Grid>
                     {/* Submit / Cancel Buttons */}
-                    <Grid item xs={12} className="form_button" sx={{
+                    {/* <Grid item xs={12} className="form_button" sx={{
                         display: 'flex',
                         justifyContent: { xs: 'center', sm: 'flex-end' },
                         gap: { xs: 1, sm: 1.5 },
@@ -695,7 +693,7 @@ const TypeMst = () => {
                                 </Button>
                             </>
                         )}
-                    </Grid>
+                    </Grid> */}
                 </Box>
             </Box>
             <Dialog

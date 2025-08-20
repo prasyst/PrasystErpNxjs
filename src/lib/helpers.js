@@ -1,3 +1,4 @@
+'use client'
 export const getFormMode = () => ({
     add: "ADD",
     edit: "EDIT",

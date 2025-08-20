@@ -10,17 +10,18 @@ import ReusableHandsontable from "@/components/datatable/ReusableHandsontable";
 import { useRouter } from "next/navigation";
 
 const handsontableColumns = [
-    // { field: "ROWNUM", headerName: "SrNo", width: "16%", type: "numeric" },
-    { field: "FGSHADE_KEY", headerName: "Code", width: "16%", type: "text" },
-    { field: "FGSHADE_ALT_KEY", headerName: "ALTCode", width: "10%", type: "text" },
-    { field: "FGSHADE_NAME", headerName: "Name", width: "20%", type: "text" },
-    { field: "FGSHADE_ABRV", headerName: "Abrv", width: "15%", type: "text" },
+    //   { field: "ROWNUM", headerName: "SrNo", width: "16%", type: "numeric" },
+    { field: "QLTY_KEY", headerName: "Code", width: "10%", type: "text" },
+    { field: "QLTY_ALT_KEY", headerName: "AltCode", width: "10%", type: "text" },
+    { field: "QLTY_NAME", headerName: "Name", width: "15%", type: "text" },
+    { field: "QLTYGRP_KEY", headerName: "QLTYGRP", width: "10%", type: "text" },
+    { field: "TARGET_SALE", headerName: "TarSale", width: "10%", type: "text" },
+    { field: "QLTY_ABRV", headerName: "Abrv", width: "15%", type: "text" },
     { field: "STATUS", headerName: "Status", width: "15%", type: "numeric" }
 ];
 
-export default function ShadeTable() {
+export default function QualityTable() {
     const router = useRouter();
-
     const [isLoading, setIsLoading] = useState(true);
     const [rows, setRows] = useState([]);
 
@@ -31,7 +32,7 @@ export default function ShadeTable() {
     const fetchTableData = async () => {
         setIsLoading(true);
         try {
-            const response = await axiosInstance.post(`Fgshade/GetFGSHADEDashBoard?currentPage=1&limit=5000`, {
+            const response = await axiosInstance.post(`QUALITY/GetQUALITYDashBoard?currentPage=1&limit=5000 `, {
                 "SearchText": ''
             });
             const { data: { STATUS, DATA } } = response;
@@ -44,7 +45,7 @@ export default function ShadeTable() {
                 setRows(formattedData);
             }
         } catch (error) {
-            console.error("Error fetching shade data:", error);
+            console.error("Error fetching quality data:", error);
         } finally {
             setIsLoading(false);
         }
@@ -62,12 +63,11 @@ export default function ShadeTable() {
 
     const handleRowClick = (row) => {
         const params = new URLSearchParams({
-            FGSHADE_KEY: row.FGSHADE_KEY,
+            QLTY_KEY: row.QLTY_KEY,
             mode: "view"
         }).toString();
-        router.push(`/masters/products/shade?${params}`);
+        router.push(`/masters/products/quality?${params}`);
     };
-
 
     const addButtonStyles = {
         background: "#39ace2",
@@ -94,7 +94,7 @@ export default function ShadeTable() {
                         size="small"
                         sx={addButtonStyles}
                         startIcon={<AddIcon />}
-                        onClick={() => router.push('/masters/products/shade')}
+                        onClick={() => router.push('/masters/products/quality')}
                     >
                         New
                     </Button>

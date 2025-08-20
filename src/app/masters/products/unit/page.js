@@ -2,7 +2,7 @@
 'use client';
 
 import React, { Suspense } from 'react';
-import UnitMst from "@/components/unit/UnitMst";
+import UnitMst from "@/components/masters/products/unit/UnitMst";
 
 export default function UnitPage() {
     return (

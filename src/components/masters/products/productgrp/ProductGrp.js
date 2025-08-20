@@ -1,3 +1,4 @@
+'use client'
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
     Box,
@@ -14,30 +15,29 @@ import {
     DialogContentText,
     DialogActions,
 } from '@mui/material';
-import KeyboardArrowLeftIcon from "@mui/icons-material/KeyboardArrowLeft";
-import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import { toast, ToastContainer } from 'react-toastify';
 import { getFormMode } from '@/lib/helpers';
 import { useRouter } from 'next/navigation';
-import CrudButton from '@/GlobalFunction/CrudButton';
 import debounce from 'lodash.debounce';
 import axiosInstance from '@/lib/axios';
 import { useSearchParams } from 'next/navigation';
 import { pdf } from '@react-pdf/renderer';
 import PrintPrdGrpDt from './PrintPrdGrpDt';
+import PaginationButtons from '@/GlobalFunction/PaginationButtons';
+import CrudButtons from '@/GlobalFunction/CrudButtons';
 
 const FORM_MODE = getFormMode();
 const ProductGrp = () => {
-     const router = useRouter();
-         const searchParams = useSearchParams();
-          const PRODGRP_KEY = searchParams.get('PRODGRP_KEY');
+    const router = useRouter();
+    const searchParams = useSearchParams();
+    const PRODGRP_KEY = searchParams.get('PRODGRP_KEY');
     const [currentPRODGRP_KEY, setCurrentPRODGRP_KEY] = useState(null);
     const [form, setForm] = useState({
         SearchByCd: '',
         SERIES: '',
         PRODGRP_CODE: '',
         PRODGRP_KEY: '',  //CODE
-        PRODGRP_NAME: '',  
+        PRODGRP_NAME: '',
         PRODGRP_ABRV: '',
         ProdGrp_LST_CODE: '',
         Status: FORM_MODE.add ? "1" : "0",
@@ -68,7 +68,7 @@ const ProductGrp = () => {
         }))
     };
 
-    const fetchRetriveData = useCallback(  async (currentPRODGRP_KEY, flag = "R", isManualSearch = false) => {
+    const fetchRetriveData = useCallback(async (currentPRODGRP_KEY, flag = "R", isManualSearch = false) => {
         try {
             const response = await axiosInstance.post('ProdGrp/RetriveProdGrp', {
                 "FLAG": flag,
@@ -93,10 +93,10 @@ const ProductGrp = () => {
                 });
                 setStatus(DATA[0].STATUS);
                 setCurrentPRODGRP_KEY(categoryData.PRODGRP_KEY);
-                        
-            const newParams = new URLSearchParams();
-            newParams.set("PRODGRP_KEY", categoryData.PRODGRP_KEY);
-            router.replace(`/masters/products/productgrp?${newParams.toString()}`);
+
+                const newParams = new URLSearchParams();
+                newParams.set("PRODGRP_KEY", categoryData.PRODGRP_KEY);
+                router.replace(`/masters/products/productgrp?${newParams.toString()}`);
             } else {
                 if (isManualSearch) {
                     toast.error(`${MESSAGE} FOR ${currentPRODGRP_KEY}`);
@@ -114,28 +114,28 @@ const ProductGrp = () => {
         } catch (err) {
             console.error(err);
         }
-    },[CO_ID,router])
-   
-     useEffect(() => {
+    }, [CO_ID, router])
+
+    useEffect(() => {
         if (PRODGRP_KEY) {
             setCurrentPRODGRP_KEY(PRODGRP_KEY);
-          fetchRetriveData(PRODGRP_KEY);
-           setMode(FORM_MODE.read);
-        }else {
-                setForm({
-                     SearchByCd: '',
+            fetchRetriveData(PRODGRP_KEY);
+            setMode(FORM_MODE.read);
+        } else {
+            setForm({
+                SearchByCd: '',
                 SERIES: '',
                 PRODGRP_CODE: '',
                 PRODGRP_KEY: '',  //CODE
-                PRODGRP_NAME: '',  
+                PRODGRP_NAME: '',
                 PRODGRP_ABRV: '',
                 ProdGrp_LST_CODE: '',
                 Status: FORM_MODE.add ? "1" : "0",
-                })
-                setMode(FORM_MODE.read);
-            }
-             setMode(FORM_MODE.read);
-      }, [PRODGRP_KEY,fetchRetriveData]);
+            })
+            setMode(FORM_MODE.read);
+        }
+        setMode(FORM_MODE.read);
+    }, [PRODGRP_KEY, fetchRetriveData]);
 
     const handleSubmit = async () => {
         try {
@@ -327,6 +327,14 @@ const ProductGrp = () => {
             console.error("Error fetching ID and LASTID:", error);
         }
     };
+    const handleFirst = async()=>{}
+    const handleLast = async ()=>{
+          await fetchRetriveData(1, "L");
+        setForm((prev) => ({
+            ...prev,
+            SearchByCd: ''
+        }));
+    }
     const handlePrevious = async () => {
         await fetchRetriveData(currentPRODGRP_KEY, "P");
         setForm((prev) => ({
@@ -372,50 +380,50 @@ const ProductGrp = () => {
 
     };
 
-        const handlePrint = async () => {
-      try {
-          const response = await axiosInstance.post(`/ProdGrp/GetProdGrpDashBoard?currentPage=1&limit=5000`, {
-              "SearchText": ""
-          });
-          const { data: { STATUS, DATA } } = response; // Extract DATA
-          if (STATUS === 0 && Array.isArray(DATA)) {
-              const formattedData = DATA.map(row => ({
-                  ...row,
-                  STATUS: row.STATUS === "1" ? "Active" : "Inactive"
-              }));
-  
-              // Generate the PDF blob
-              const asPdf = pdf(<PrintPrdGrpDt rows={formattedData} />);
-              const blob = await asPdf.toBlob();
-              const url = URL.createObjectURL(blob);
-  
-              // Open the PDF in a new tab
-              const newTab = window.open(url, '_blank');
-              if (newTab) {
-                  newTab.focus();
-              } 
-              setTimeout(() => {
-                  URL.revokeObjectURL(url);
-              }, 100);
-          }
-      } catch (error) {
-          console.error("Print Error:", error);
-      }
-  };
+    const handlePrint = async () => {
+        try {
+            const response = await axiosInstance.post(`/ProdGrp/GetProdGrpDashBoard?currentPage=1&limit=5000`, {
+                "SearchText": ""
+            });
+            const { data: { STATUS, DATA } } = response; // Extract DATA
+            if (STATUS === 0 && Array.isArray(DATA)) {
+                const formattedData = DATA.map(row => ({
+                    ...row,
+                    STATUS: row.STATUS === "1" ? "Active" : "Inactive"
+                }));
+
+                // Generate the PDF blob
+                const asPdf = pdf(<PrintPrdGrpDt rows={formattedData} />);
+                const blob = await asPdf.toBlob();
+                const url = URL.createObjectURL(blob);
+
+                // Open the PDF in a new tab
+                const newTab = window.open(url, '_blank');
+                if (newTab) {
+                    newTab.focus();
+                }
+                setTimeout(() => {
+                    URL.revokeObjectURL(url);
+                }, 100);
+            }
+        } catch (error) {
+            console.error("Print Error:", error);
+        }
+    };
 
     const handleExit = () => { router.push("/masters/products/productgrp/prdgrptable") };
- 
-  const Buttonsx = {
-    backgroundColor: '#39ace2',
-    margin: { xs: '0 4px', sm: '0 6px' },
-    minWidth: { xs: 40, sm: 46, md: 60 },
-    height: { xs: 40, sm: 46, md: 27 },
-    // "&:disabled": {
-    //   backgroundColor: "rgba(0, 0, 0, 0.12)",
-    //   color: "rgba(0, 0, 0, 0.26)",
-    //   boxShadow: "none",
-    // }
-  };
+
+    const Buttonsx = {
+        backgroundColor: '#39ace2',
+        margin: { xs: '0 4px', sm: '0 6px' },
+        minWidth: { xs: 40, sm: 46, md: 60 },
+        height: { xs: 40, sm: 46, md: 27 },
+        // "&:disabled": {
+        //   backgroundColor: "rgba(0, 0, 0, 0.12)",
+        //   color: "rgba(0, 0, 0, 0.26)",
+        //   boxShadow: "none",
+        // }
+    };
     return (
         <>
             <Box
@@ -425,7 +433,7 @@ const ProductGrp = () => {
                     alignItems: 'flex-start',
                     padding: '24px',
                     boxSizing: 'border-box',
-                    marginTop: { xs: "30px", sm: "0px" } 
+                    marginTop: { xs: "30px", sm: "0px" }
                 }}
                 className="form-container"
             >
@@ -438,53 +446,18 @@ const ProductGrp = () => {
                     className="form_grid"
                 >
                     <Grid container alignItems="center"
-                        justifyContent="space-between" spacing={2} sx={{ marginTop: "30px", marginInline: '20px' }}>
-                        <Grid sx={{ display: 'flex', justifyContent: {
-                                xs: 'center',
-                                sm: 'flex-start'
-                            },
-                            width: { xs: '100%', sm: 'auto' }, }}>
-                            <Stack direction="row" spacing={1}>
-                                <Button variant="contained" size="small" className="three-d-button-previous"
-                                     sx={Buttonsx}
-                                    onClick={handlePrevious}
-                                    disabled={
-                                        mode !== FORM_MODE.read || !currentPRODGRP_KEY || currentPRODGRP_KEY === 1
-                                    }
-                                >
-                                    <KeyboardArrowLeftIcon />
-                                </Button>
-                                <Button variant="contained" size="small" className="three-d-button-next"
-                                     sx={Buttonsx}
-                                    onClick={handleNext}
-                                    disabled={mode !== FORM_MODE.read || !currentPRODGRP_KEY}
-                                >
-                                    <NavigateNextIcon />
-                                </Button>
-                            </Stack>
-                        </Grid>
+                        justifyContent="space-between" spacing={2} sx={{ marginTop: "10px", marginInline: '20px' }}>
                         <Grid sx={{ flexGrow: 1 }}>
                             <Typography align="center" variant="h5">
                                 Product Group Master
                             </Typography>
                         </Grid>
-                        <Grid>
-                            <Stack direction="row" spacing={{ xs: 0.5, sm: 1 }} >
-                                <CrudButton
-                                    mode={mode}
-                                    onAdd={handleAdd}
-                                    onEdit={handleEdit}
-                                    onView={handlePrint}
-                                    onDelete={handleDelete}
-                                    onExit={handleExit}
-                                    readOnlyMode={mode === FORM_MODE.read}
-                                />
-                            </Stack>
-                        </Grid>
                     </Grid>
-                    <Box sx={{ display: 'flex', flexDirection: 'column',    gap: { xs: 1.5, sm: 1.5, md: 2 },
-                            marginInline: { xs: '5%', sm: '10%', md: '25%' },
-                            marginBlock: { xs: '15px', sm: '20px', md: '30px' }, }}>
+                    <Box sx={{
+                        display: 'flex', flexDirection: 'column', gap: { xs: 1.5, sm: 1.5, md: 2 },
+                        marginInline: { xs: '5%', sm: '10%', md: '25%' },
+                        marginBlock: { xs: '15px', sm: '20px', md: '30px' },
+                    }}>
                         <Box sx={{ display: 'flex', justifyContent: 'end' }}>
                             <TextField
                                 placeholder="Search By Code"
@@ -496,7 +469,7 @@ const ProductGrp = () => {
                                         paddingBlock: { xs: '8px', md: '4px' },
                                         paddingLeft: { xs: '10px', md: '8px' },
                                     },
-                                     
+
                                 }}
                                 value={form.SearchByCd}
                                 onChange={(e) => setForm({ ...form, SearchByCd: e.target.value })}
@@ -508,11 +481,11 @@ const ProductGrp = () => {
                             />
                         </Box>
 
-                        <Box sx={{ display: 'flex',   flexDirection: { xs: 'column', sm: 'row', md: 'row' }, justifyContent: 'space-between',  gap: { xs: 1, sm: 1, md: 1 }}}>
+                        <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row', md: 'row' }, justifyContent: 'space-between', gap: { xs: 1, sm: 1, md: 1 } }}>
                             <TextField
                                 label="Series"
                                 inputRef={SERIESRef}
-                                sx={{ width: { xs: '100%', sm: '50%', md: '32%' }}}
+                                sx={{ width: { xs: '100%', sm: '50%', md: '32%' } }}
                                 disabled={mode === FORM_MODE.read}
                                 fullWidth
                                 className="custom-textfield"
@@ -521,7 +494,7 @@ const ProductGrp = () => {
                             />
                             <TextField
                                 label="Last Cd"
-                               sx={{ width: { xs: '100%', sm: '50%', md: '32%' }}}
+                                sx={{ width: { xs: '100%', sm: '50%', md: '32%' } }}
                                 disabled={true}
                                 fullWidth
                                 className="custom-textfield"
@@ -531,7 +504,7 @@ const ProductGrp = () => {
                             <TextField
                                 label="Code"
                                 inputRef={PRODGRP_KEYRef}
-                                sx={{ width: { xs: '100%', sm: '50%', md: '32%' }}}
+                                sx={{ width: { xs: '100%', sm: '50%', md: '32%' } }}
                                 disabled={mode === FORM_MODE.read}
                                 className="custom-textfield"
                                 value={form.PRODGRP_KEY}
@@ -540,12 +513,12 @@ const ProductGrp = () => {
 
                         </Box>
 
-                        <Box  sx={{
-                                display: 'flex',
-                                flexDirection: { xs: 'column', sm: 'row', md: 'row' },
-                                justifyContent: 'space-between',
-                                gap: { xs: 1, sm: 1, md: 1 },
-                            }}>
+                        <Box sx={{
+                            display: 'flex',
+                            flexDirection: { xs: 'column', sm: 'row', md: 'row' },
+                            justifyContent: 'space-between',
+                            gap: { xs: 1, sm: 1, md: 1 },
+                        }}>
 
                             <TextField
                                 inputRef={ProdGrp_NAMERef}
@@ -562,17 +535,17 @@ const ProductGrp = () => {
                                 onChange={(e) => setForm({ ...form, PRODGRP_NAME: e.target.value })}
                             />
                         </Box>
-                        <Box  sx={{
-                                display: 'flex',
-                                flexDirection: { xs: 'column', sm: 'row', md: 'row' },
-                                justifyContent: 'space-between',
-                                gap: { xs: 1, sm: 1, md: 1 },
-                            }}>
+                        <Box sx={{
+                            display: 'flex',
+                            flexDirection: { xs: 'column', sm: 'row', md: 'row' },
+                            justifyContent: 'space-between',
+                            gap: { xs: 1, sm: 1, md: 1 },
+                        }}>
 
                             <TextField
                                 label="Abbreviation"
                                 inputRef={PRODGRP_ABRVRef}
-                                 sx={{ width: { xs: '100%', sm: '40%', md: '30%' }}}
+                                sx={{ width: { xs: '100%', sm: '40%', md: '30%' } }}
                                 disabled={mode === FORM_MODE.read}
                                 className="custom-textfield"
                                 value={form.PRODGRP_ABRV}
@@ -596,8 +569,45 @@ const ProductGrp = () => {
                             />
                         </Box>
                     </Box>
+                    <Grid container alignItems="center"
+                        justifyContent="center" spacing={1} sx={{ marginTop: "10px", marginInline: '20px' }}>
+                        <Grid sx={{
+                            display: 'flex', justifyContent: {
+                                xs: 'center',
+                                sm: 'flex-start'
+                            },
+                            width: { xs: '100%', sm: 'auto' },
+                        }}>
+                            <Stack direction="row" spacing={1}>
+                                <PaginationButtons
+                                    mode={mode}
+                                    FORM_MODE={FORM_MODE}
+                                    currentKey={currentPRODGRP_KEY}
+                                    onFirst={handleFirst}
+                                    onPrevious={handlePrevious}
+                                    onNext={handleNext}
+                                    onLast={handleLast}
+                                    sx={{ mt: 2 }}
+                                    buttonSx={Buttonsx}
+                                />
+                            </Stack>
+                        </Grid>
+                        <Grid>
+                            <Stack direction="row" spacing={{ xs: 0.5, sm: 1 }} >
+                                <CrudButtons
+                                    mode={mode}
+                                    onAdd={mode === FORM_MODE.read ? handleAdd : handleSubmit}
+                                    onEdit={mode === FORM_MODE.read ? handleEdit : handleCancel}
+                                    onView={handlePrint}
+                                    onDelete={handleDelete}
+                                    onExit={handleExit}
+                                    readOnlyMode={mode === FORM_MODE.read}
+                                />
+                            </Stack>
+                        </Grid>
+                    </Grid>
                     {/* Submit / Cancel Buttons */}
-                    <Grid item xs={12} className="form_button"   sx={{
+                    {/* <Grid item xs={12} className="form_button"   sx={{
                             display: 'flex',
                             justifyContent: { xs: 'center', sm: 'flex-end' },
                             gap: { xs: 1, sm: 1.5 },
@@ -653,7 +663,7 @@ const ProductGrp = () => {
                                 </Button>
                             </>
                         )}
-                    </Grid>
+                    </Grid> */}
                 </Box>
             </Box>
             <Dialog

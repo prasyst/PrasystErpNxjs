@@ -2,7 +2,7 @@
 import React from "react";
 import { Page, Text, View, Document } from "@react-pdf/renderer";
 
-const PrintShadeDt = ({ rows, currentCatData }) => {
+const PrintQtDt = ({ rows, currentCatData }) => {
   const currentDate = new Date().toLocaleDateString();
   const currentTime = new Date().toLocaleTimeString();
 
@@ -13,7 +13,7 @@ const PrintShadeDt = ({ rows, currentCatData }) => {
           {/* Header - Repeats on each page */}
           <View style={{ position: 'absolute', top: 20, left: 30, right: 30, textAlign: 'center', marginBottom: 15 }} fixed>
             <Text style={{ fontSize: 16, fontWeight: 'bold', marginBottom: 5 }}>YOUR COMPANY NAME</Text>
-            <Text style={{ fontSize: 14, fontWeight: 'bold', marginBottom: 5 }}>SHADE MASTER REPORT</Text>
+            <Text style={{ fontSize: 14, fontWeight: 'bold', marginBottom: 5 }}>Quality MASTER REPORT</Text>
           </View>
 
           {/* Body - Page specific content */}
@@ -29,28 +29,25 @@ const PrintShadeDt = ({ rows, currentCatData }) => {
               {/* Table Header - Repeats on each page */}
               <View style={{ flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: '#000', borderBottomStyle: 'solid', borderTopWidth: 1, borderTopColor: '#000', borderTopStyle: 'solid', backgroundColor: '#f5f5f5', fontWeight: 'bold' }}>
                 <Text style={{ width: '7%', borderRight: '1px solid #ddd', padding: 5, textAlign: 'center' }}>SrNo.</Text>
-                <Text style={{ width: '15%', borderRight: '1px solid #ddd', padding: 5 }}>SHADE Key</Text>
-                <Text style={{ width: '50%', borderRight: '1px solid #ddd', padding: 5 }}>SHADE Name</Text>
-                <Text style={{ width: '15%', borderRight: '1px solid #ddd', padding: 5 }}>Abrv</Text>
+                <Text style={{ width: '15%', borderRight: '1px solid #ddd', padding: 5 }}>Qlty Key</Text>
+                <Text style={{ width: '50%', borderRight: '1px solid #ddd', padding: 5 }}>Qlty Name</Text>
+                <Text style={{ width: '15%', borderRight: '1px solid #ddd', padding: 5 }}>Abbrv</Text>
                 <Text style={{ width: '12%', padding: 5 }}>Status</Text>
               </View>
 
               {/* Table Rows - Paginated */}
               {rows.slice(pageIndex * 30, (pageIndex + 1) * 30).map((row, index) => (
-                <View key={row.FGSHADE_KEY} style={{ flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: '#ddd', borderBottomStyle: 'solid' }}>
+                <View key={row.QLTY_KEY} style={{ flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: '#ddd', borderBottomStyle: 'solid' }}>
                   <Text style={{ width: '7%', borderRight: '1px solid #ddd', padding: 5, textAlign: 'center' }}>{pageIndex * 30 + index + 1}</Text>
-                  <Text style={{ width: '15%', borderRight: '1px solid #ddd', padding: 5 }}>{row.FGSHADE_KEY}</Text>
-                  <Text style={{ width: '50%', borderRight: '1px solid #ddd', padding: 5 }}>{row.FGSHADE_NAME}</Text>
-                  <Text style={{ width: '15%', borderRight: '1px solid #ddd', padding: 5 }}>{row.FGSHADE_ABRV}</Text>
+                  <Text style={{ width: '15%', borderRight: '1px solid #ddd', padding: 5 }}>{row.QLTY_KEY}</Text>
+                  <Text style={{ width: '50%', borderRight: '1px solid #ddd', padding: 5 }}>{row.QLTY_NAME}</Text>
+                  <Text style={{ width: '15%', borderRight: '1px solid #ddd', padding: 5 }}>{row.QLTY_ABRV}</Text>
                   <Text style={{ width: '12%', padding: 5 }}>{row.STATUS === "1" ? "Active" : "Inactive"}</Text>
                 </View>
               ))}
             </View>
           </View>
 
-          {/* Footer - Repeats on each page */}
-          
-          {/* Page Number */}
           <Text style={{ position: 'absolute', fontSize: 9, bottom: 20, left: 0, right: 0, textAlign: 'center' }} render={({ pageNumber, totalPages }) => (
             `Page ${pageNumber} of ${totalPages}`
           )} fixed />
@@ -60,4 +57,4 @@ const PrintShadeDt = ({ rows, currentCatData }) => {
   );
 };
 
-export default PrintShadeDt;
+export default PrintQtDt;

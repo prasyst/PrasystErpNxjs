@@ -1,12 +1,13 @@
 'use client';
 
+import RackMst from '@/components/masters/products/rack/RackMst';
 import React, { Suspense } from 'react';
-import WebMst from "@/components/masters/products/webcollection/WebMst";
 
-export default function WebPage() {
+
+export default function RackPage() {
     return (
         <Suspense fallback={<div>Loading...</div>}>
-            <WebMst />
+            <RackMst />
         </Suspense>
     );
 }

@@ -1,47 +1,45 @@
 'use client'
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
     Box, Grid, TextField, Typography, Button, Stack, FormControlLabel, Checkbox, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions,
 } from '@mui/material';
-import KeyboardArrowLeftIcon from "@mui/icons-material/KeyboardArrowLeft";
-import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import { toast, ToastContainer } from 'react-toastify';
-import { pdf } from '@react-pdf/renderer';
-import PrintPtrnData from './PrintPtrnData';
 import { getFormMode } from '@/lib/helpers';
 import { useRouter } from 'next/navigation';
 import debounce from 'lodash.debounce';
 import axiosInstance from '@/lib/axios';
 import { useSearchParams } from 'next/navigation';
-import FirstPageIcon from '@mui/icons-material/FirstPage';
-import LastPageIcon from '@mui/icons-material/LastPage';
+import { pdf } from '@react-pdf/renderer';
+import PrintQtDt from './PrintQtDt';
+import CustomAutocomplete from '@/GlobalFunction/CustomAutoComplete/CustomAutoComplete';
 import CrudButtons from '@/GlobalFunction/CrudButtons';
+import PaginationButtons from '@/GlobalFunction/PaginationButtons';
 
 const FORM_MODE = getFormMode();
-const PatternMst = () => {
+const QualityMst = () => {
     const router = useRouter();
     const searchParams = useSearchParams();
-    const FGPTN_KEY = searchParams.get('FGPTN_KEY');
+    const QLTY_KEY = searchParams.get('QLTY_KEY');
 
-    const [currentFGPTN_KEY, setCurrentFGPTN_KEY] = useState(null);
+    const [currentQUALITY_KEY, setCurrentQUALITY_KEY] = useState(null);
     const [form, setForm] = useState({
         SearchByCd: '',
         SERIES: '',
-        FGPTN_CODE: '',
-        FGPTN_KEY: '',
-        FGPTN_NAME: '',
-        FGPTN_ABRV: '',
-        FGPTN_LST_CODE: '',
+        QLTY_KEY: '',
+        QLTY_NAME: '',
+        QLTY_ABRV: '',
+        QLTYGRP_KEY: '',
+        TARGET_SALE: '',
+        QLTY_LST_CODE: '',
         Status: FORM_MODE.add ? "1" : "0",
     });
     const [openConfirmDialog, setOpenConfirmDialog] = useState(false);
-    const FGPTN_KEYRef = useRef(null);
-    const FGPTN_NAMERef = useRef(null);
-    const FGPTN_ABRVRef = useRef(null);
-    const FGPTN_CODERef = useRef(null);
+    const QLTY_KEYRef = useRef(null);
+    const QLTY_NAMERef = useRef(null);
+    const QLTY_ABRVRef = useRef(null);
     const SERIESRef = useRef(null);
     const [mode, setMode] = useState(() => {
-        currentFGPTN_KEY ? FORM_MODE.read : FORM_MODE.add
+        currentQUALITY_KEY ? FORM_MODE.read : FORM_MODE.add
     });
     const [Status, setStatus] = useState("1");
     const FCYR_KEY = localStorage.getItem('FCYR_KEY');
@@ -50,7 +48,6 @@ const PatternMst = () => {
     const username = localStorage.getItem('USER_NAME');
     const PARTY_KEY = localStorage.getItem('PARTY_KEY');
     const COBR_ID = localStorage.getItem('COBR_ID');
-
     const handleChangeStatus = (event) => {
         const updatedStatus = event.target.checked ? "1" : "0";
         setStatus(updatedStatus);
@@ -59,149 +56,94 @@ const PatternMst = () => {
             Status: updatedStatus
         }))
     };
-    console.log("currentFGPTN_KEY", currentFGPTN_KEY)
-    console.log("FGPTN_KEY", FGPTN_KEY)
-
-    // const fetchRetriveData = async (currentFGPTN_KEY, flag = "R", isManualSearch = false) => {
-    //     try {
-    //         const response = await axiosInstance.post('Fgptn/RetriveFgptn', {
-    //             "FLAG": flag,
-    //             "TBLNAME": "Fgptn",
-    //             "FLDNAME": "Fgptn_KEY",
-    //             "ID": currentFGPTN_KEY,
-    //             "ORDERBYFLD": "",
-    //             "CWHAER": "",
-    //             "CO_ID": CO_ID
-    //         });
-    //         const { data: { STATUS, DATA, RESPONSESTATUSCODE, MESSAGE } } = response;
-    //         if (STATUS === 0 && Array.isArray(DATA) && RESPONSESTATUSCODE == 1) {
-    //             const categoryData = DATA[0];
-    //             setForm({
-    //                 FGPTN_KEY: categoryData.FGPTN_KEY,
-    //                 FGPTN_NAME: categoryData.FGPTN_NAME,
-    //                 FGPTN_ABRV: categoryData.FGPTN_ABRV || '',
-    //                 FGPTN_CODE: categoryData.FGPTN_CODE || '',
-    //                 SERIES: categoryData.SERIES || '',
-    //                 FGPTN_LST_CODE: categoryData.FGPTN_LST_CODE || '',
-    //                 Status: categoryData.STATUS,
-    //             });
-    //             setStatus(DATA[0].STATUS);
-    //             setCurrentFGPTN_KEY(categoryData.FGPTN_KEY);
-
-    //                // ✅ Update URL
-    //         const newParams = new URLSearchParams();
-    //         newParams.set("FGPTN_KEY", categoryData.FGPTN_KEY);
-    //         router.replace(`/masters/products/pattern?${newParams.toString()}`);
-    //         } else {
-    //             if (isManualSearch) {
-    //                 toast.error(`${MESSAGE} FOR ${currentFGPTN_KEY}`);
-    //                 setForm({
-    //                     FGPTN_KEY: '',
-    //                     FGPTN_NAME: '',
-    //                     FGPTN_ABRV: '',
-    //                     FGPTN_CODE: '',
-    //                     SERIES: '',
-    //                     FGPTN_LST_CODE: '',
-    //                     Status: 0,
-    //                 });
-    //             }
-    //         }
-    //     } catch (err) {
-    //         console.error(err);
-    //     }
-    // };
-
-    const fetchRetriveData = useCallback(async (currentFGPTN_KEY, flag = "R", isManualSearch = false) => {
+    const fetchRetriveData = useCallback(async (currentQUALITY_KEY, flag = "R", isManualSearch = false) => {
         try {
-            const response = await axiosInstance.post('Fgptn/RetriveFgptn', {
+            const response = await axiosInstance.post('QUALITY/RetriveQUALITY', {
                 "FLAG": flag,
-                "TBLNAME": "Fgptn",
-                "FLDNAME": "Fgptn_KEY",
-                "ID": currentFGPTN_KEY,
+                "TBLNAME": "QUALITY",
+                "FLDNAME": "QLTY_KEY",
+                "ID": currentQUALITY_KEY,
                 "ORDERBYFLD": "",
                 "CWHAER": "",
                 "CO_ID": CO_ID
             });
-
             const { data: { STATUS, DATA, RESPONSESTATUSCODE, MESSAGE } } = response;
-
             if (STATUS === 0 && Array.isArray(DATA) && RESPONSESTATUSCODE == 1) {
-                const categoryData = DATA[0];
+                const qualityData = DATA[0];
                 setForm({
-                    FGPTN_KEY: categoryData.FGPTN_KEY,
-                    FGPTN_NAME: categoryData.FGPTN_NAME,
-                    FGPTN_ABRV: categoryData.FGPTN_ABRV || '',
-                    FGPTN_CODE: categoryData.FGPTN_CODE || '',
-                    SERIES: categoryData.SERIES || '',
-                    FGPTN_LST_CODE: categoryData.FGPTN_LST_CODE || '',
-                    Status: categoryData.STATUS,
+                    QLTY_KEY: qualityData.QLTY_KEY,
+                    QLTY_NAME: qualityData.QLTY_NAME,
+                    QLTY_ABRV: qualityData.QLTY_ABRV || '',
+                    QLTYGRP_KEY: qualityData.QLTYGRP_KEY || '',
+                    TARGET_SALE: qualityData.TARGET_SALE || '',
+                    SERIES: qualityData.SERIES || '',
+                    QLTY_LST_CODE: qualityData.QLTY_LST_CODE || '',
+                    Status: qualityData.STATUS,
                 });
-                setStatus(categoryData.STATUS);
-                setCurrentFGPTN_KEY(categoryData.FGPTN_KEY);
-
-                // ✅ Update URL
-                const newParams = new URLSearchParams();
-                newParams.set("FGPTN_KEY", categoryData.FGPTN_KEY);
-                router.replace(`/masters/products/pattern?${newParams.toString()}`);
-            } else if (isManualSearch) {
-                toast.error(`${MESSAGE} FOR ${currentFGPTN_KEY}`);
-                setForm({
-                    FGPTN_KEY: '',
-                    FGPTN_NAME: '',
-                    FGPTN_ABRV: '',
-                    FGPTN_CODE: '',
-                    SERIES: '',
-                    FGPTN_LST_CODE: '',
-                    Status: 0,
-                });
+                setStatus(DATA[0].STATUS);
+                setCurrentQUALITY_KEY(qualityData.QLTY_KEY);
+            } else {
+                if (isManualSearch) {
+                    toast.error(`${MESSAGE} FOR ${currentQUALITY_KEY}`);
+                    setForm({
+                        QLTY_KEY: '',
+                        QLTY_NAME: '',
+                        QLTY_ABRV: '',
+                        QLTYGRP_KEY: '',
+                        TARGET_SALE: '',
+                        SERIES: '',
+                        QLTY_LST_CODE: '',
+                        Status: 0,
+                    });
+                }
             }
         } catch (err) {
             console.error(err);
         }
-    }, [CO_ID, router]);
+    }, [CO_ID])
 
     useEffect(() => {
-        if (FGPTN_KEY) {
-            setCurrentFGPTN_KEY(FGPTN_KEY);
-            fetchRetriveData(FGPTN_KEY);
+        if (QLTY_KEY) {
+            setCurrentQUALITY_KEY(QLTY_KEY);
+            fetchRetriveData(QLTY_KEY);
             setMode(FORM_MODE.read);
         } else {
             setForm({
                 SearchByCd: '',
                 SERIES: '',
-                FGPTN_CODE: '',
-                FGPTN_KEY: '',
-                FGPTN_NAME: '',
-                FGPTN_ABRV: '',
-                FGPTN_LST_CODE: '',
+                QLTY_KEY: '',
+                QLTY_NAME: '',
+                QLTY_ABRV: '',
+                QLTYGRP_KEY: '',
+                TARGET_SALE: '',
+                QLTY_LST_CODE: '',
                 Status: "1",
             })
             setMode(FORM_MODE.read);
         }
         setMode(FORM_MODE.read);
-    }, [FGPTN_KEY, fetchRetriveData]);
+    }, [QLTY_KEY, fetchRetriveData]);
     const handleSubmit = async () => {
         try {
             const UserName = userRole === 'user' ? username : PARTY_KEY;
             let url;
-            if (mode === FORM_MODE.edit && currentFGPTN_KEY) {
-                url = `Fgptn/UpdateFgptn?UserName=${(UserName)}&strCobrid=${COBR_ID}`;
+            if (mode === FORM_MODE.edit && currentQUALITY_KEY) {
+                url = `QUALITY/UpdateQUALITY?UserName=${(UserName)}&strCobrid=${COBR_ID}`;
             } else {
-                url = `Fgptn/InsertFgptn?UserName=${(UserName)}&strCobrid=${COBR_ID}`;
+                url = `QUALITY/InsertQUALITY?UserName=${(UserName)}&strCobrid=${COBR_ID}`;
             }
             const payload = {
-                Fgptn_KEY: form.FGPTN_KEY,  //CODE
-                Fgptn_CODE: form.FGPTN_CODE,
-                Fgptn_NAME: form.FGPTN_NAME,
-                Fgptn_ABRV: form.FGPTN_ABRV,
-                Merchandiser_key: '',
-                DISP_FLG: '0',
-                FGStyle_Id: 0,
+                "QLTY_KEY": form.QLTY_KEY,
+                "QLTY_NAME": form.QLTY_NAME,
+                "QLTY_ABRV": form.QLTY_ABRV,
+                QLTYGRP_KEY: form.QLTYGRP_KEY,
+                TARGET_SALE: form.TARGET_SALE,
+                "QLTYGRP_KEY": form.QLTYGRP_KEY || "",
+                "TARGET_SALE": form.TARGET_SALE,
                 STATUS: form.Status ? "1" : "0",
-
             };
             let response;
-            if (mode == FORM_MODE.edit && currentFGPTN_KEY) {
+            if (mode == FORM_MODE.edit && currentQUALITY_KEY) {
                 payload.UPDATED_BY = 1;
                 payload.UPDATED_DT = new Date().toISOString();
                 response = await axiosInstance.post(url, payload);
@@ -220,12 +162,13 @@ const PatternMst = () => {
                 const { STATUS, MESSAGE } = response.data;
                 if (STATUS === 0) {
                     setForm({
-                        FGPTN_KEY: '',
-                        FGPTN_NAME: '',
-                        FGPTN_ABRV: '',
-                        FGPTN_CODE: '',
+                        QLTY_KEY: '',
+                        QLTY_NAME: '',
+                        QLTY_ABRV: '',
+                        QLTYGRP_KEY: '',
+                        TARGET_SALE: '',
                         SERIES: '',
-                        FGPTN_LST_CODE: '',
+                        QLTY_LST_CODE: '',
                         Status: 0,
                     });
                     setMode(FORM_MODE.read);
@@ -242,7 +185,7 @@ const PatternMst = () => {
         if (mode === FORM_MODE.add) {
             await fetchRetriveData(1, "L");
         } else {
-            await fetchRetriveData(currentFGPTN_KEY, "R");
+            await fetchRetriveData(currentQUALITY_KEY, "R");
         }
         setMode(FORM_MODE.read);
         setForm((prev) => ({
@@ -253,9 +196,9 @@ const PatternMst = () => {
     const debouncedApiCall = debounce(async (newSeries) => {
         try {
             const response = await axiosInstance.post('GetSeriesSettings/GetSeriesLastNewKey', {
-                "MODULENAME": "Fgptn",
-                "TBLNAME": "Fgptn",
-                "FLDNAME": "Fgptn_KEY",
+                "MODULENAME": "QUALITY",
+                "TBLNAME": "QUALITY",
+                "FLDNAME": "QLTY_KEY",
                 "NCOLLEN": 5,
                 "CPREFIX": newSeries,
                 "COBR_ID": COBR_ID,
@@ -270,16 +213,16 @@ const PatternMst = () => {
                 const lastId = DATA[0].LASTID;
                 setForm((prevForm) => ({
                     ...prevForm,
-                    FGPTN_KEY: id,
-                    FGPTN_LST_CODE: lastId
+                    QLTY_KEY: id,
+                    QLTY_LST_CODE: lastId
                 }));
             } else {
                 toast.error(`${MESSAGE} for ${newSeries}`, { autoClose: 1000 });
 
                 setForm((prevForm) => ({
                     ...prevForm,
-                    FGPTN_KEY: '',
-                    FGPTN_LST_CODE: ''
+                    QLTY_KEY: '',
+                    QLTY_LST_CODE: ''
                 }));
             }
         } catch (error) {
@@ -294,8 +237,8 @@ const PatternMst = () => {
         if (newSeries.trim() === '') {
             setForm((prevForm) => ({
                 ...prevForm,
-                FGPTN_KEY: '',
-                FGPTN_LST_CODE: ''
+                QLTY_KEY: '',
+                QLTY_LST_CODE: ''
             }));
             return;
         };
@@ -303,13 +246,14 @@ const PatternMst = () => {
     }
     const handleAdd = async () => {
         setMode(FORM_MODE.add);
-        setCurrentFGPTN_KEY(null);
+        setCurrentQUALITY_KEY(null);
         setForm((prevForm) => ({
             ...prevForm,
-            FGPTN_NAME: '',
-            FGPTN_ABRV: '',
+            QLTY_NAME: '',
+            QLTY_ABRV: '',
+            QLTYGRP_KEY: '',
+            TARGET_SALE: '',
             SearchByCd: '',
-            FGPTN_CODE: '',
             Status: '1',
         }));
 
@@ -317,15 +261,15 @@ const PatternMst = () => {
         let cprefix = '';
         try {
             const response = await axiosInstance.post('GetSeriesSettings/GetSeriesLastNewKey', {
-                "MODULENAME": "Fgptn",
-                "TBLNAME": "Fgptn",
-                "FLDNAME": "Fgptn_KEY",
+                "MODULENAME": "QUALITY",
+                "TBLNAME": "QUALITY",
+                "FLDNAME": "QLTY_KEY",
                 "NCOLLEN": 0,
                 "CPREFIX": "",
                 "COBR_ID": COBR_ID,
                 "FCYR_KEY": FCYR_KEY,
                 "TRNSTYPE": "M",
-                "SERIESID": 29,
+                "SERIESID": 43,
                 "FLAG": "Series"
             });
 
@@ -343,9 +287,9 @@ const PatternMst = () => {
         }
         try {
             const response = await axiosInstance.post('GetSeriesSettings/GetSeriesLastNewKey', {
-                "MODULENAME": "Fgptn",
-                "TBLNAME": "Fgptn",
-                "FLDNAME": "Fgptn_KEY",
+                "MODULENAME": "QUALITY",
+                "TBLNAME": "QUALITY",
+                "FLDNAME": "QLTY_KEY",
                 "NCOLLEN": 5,
                 "CPREFIX": cprefix,
                 "COBR_ID": COBR_ID,
@@ -360,16 +304,17 @@ const PatternMst = () => {
                 const lastId = DATA[0].LASTID;
                 setForm((prevForm) => ({
                     ...prevForm,
-                    FGPTN_KEY: id,
-                    FGPTN_LST_CODE: lastId
+                    QLTY_KEY: id,
+                    QLTY_LST_CODE: lastId
                 }));
             }
         } catch (error) {
             console.error("Error fetching ID and LASTID:", error);
         }
     };
-    const handleFirst = ()=>{}
-    const handleLast = async()=>{
+    const handleFirst = () => { }
+
+    const handleLast = async () => {
         await fetchRetriveData(1, "L");
         setForm((prev) => ({
             ...prev,
@@ -377,15 +322,15 @@ const PatternMst = () => {
         }));
     }
     const handlePrevious = async () => {
-        await fetchRetriveData(currentFGPTN_KEY, "P");
+        await fetchRetriveData(currentQUALITY_KEY, "P");
         setForm((prev) => ({
             ...prev,
             SearchByCd: ''
         }));
     };
     const handleNext = async () => {
-        if (currentFGPTN_KEY) {
-            await fetchRetriveData(currentFGPTN_KEY, "N");
+        if (currentQUALITY_KEY) {
+            await fetchRetriveData(currentQUALITY_KEY, "N");
         }
         setForm((prev) => ({
             ...prev,
@@ -402,13 +347,13 @@ const PatternMst = () => {
         setOpenConfirmDialog(false);
         try {
             const UserName = userRole === 'user' ? username : PARTY_KEY;
-            const response = await axiosInstance.post(`Fgptn/DeleteFgptn?UserName=${(UserName)}&strCobrid=${COBR_ID}`, {
-                Fgptn_KEY: form.FGPTN_KEY
+            const response = await axiosInstance.post(`QUALITY/DeleteQUALITY?UserName=${(UserName)}&strCobrid=${COBR_ID}`, {
+                QLTY_KEY: form.QLTY_KEY
             });
             const { data: { STATUS, MESSAGE } } = response;
             if (STATUS === 0) {
                 toast.success(MESSAGE, { autoClose: 500 });
-                await fetchRetriveData(currentFGPTN_KEY, 'P');
+                await fetchRetriveData(currentQUALITY_KEY, 'P');
             } else {
                 toast.error(MESSAGE);
             }
@@ -419,9 +364,10 @@ const PatternMst = () => {
     const handleEdit = () => {
         setMode(FORM_MODE.edit);
     };
+    ;
     const handlePrint = async () => {
         try {
-            const response = await axiosInstance.post(`Fgptn/GetFgptnDashBoard?currentPage=1&limit=5000`, {
+            const response = await axiosInstance.post(`QUALITY/GetQUALITYDashBoard?currentPage=1&limit=5000`, {
                 "SearchText": ""
             });
             const { data: { STATUS, DATA } } = response; // Extract DATA
@@ -432,7 +378,7 @@ const PatternMst = () => {
                 }));
 
                 // Generate the PDF blob
-                const asPdf = pdf(<PrintPtrnData rows={formattedData} />);
+                const asPdf = pdf(<PrintQtDt rows={formattedData} />);
                 const blob = await asPdf.toBlob();
                 const url = URL.createObjectURL(blob);
 
@@ -449,10 +395,7 @@ const PatternMst = () => {
             console.error("Print Error:", error);
         }
     };
-    const handleExit = () => {
-        router.push('/masters/products/pattern/patterntable');
-    };
-
+    const handleExit = () => { router.push("/masters/products/quality/qualitytable") };
     const Buttonsx = {
         backgroundColor: '#39ace2',
         margin: { xs: '0 4px', sm: '0 6px' },
@@ -472,13 +415,11 @@ const PatternMst = () => {
                 <Box sx={{ maxWidth: '1000px', boxShadow: '0px 2px 6px rgba(0, 0, 0, 0.1)' }} className="form_grid" >
                     <Grid container alignItems="center"
                         justifyContent="space-between" spacing={2} sx={{ marginTop: "10px", marginInline: '20px' }}>
-
                         <Grid sx={{ flexGrow: 1 }}>
                             <Typography align="center" variant="h5">
-                                Pattern Master
+                                Base/Quality Master
                             </Typography>
                         </Grid>
-
                     </Grid>
                     <Box
                         sx={{
@@ -486,7 +427,7 @@ const PatternMst = () => {
                             flexDirection: 'column',
                             gap: { xs: 1.5, sm: 1.5, md: 2 },
                             marginInline: { xs: '5%', sm: '10%', md: '25%' },
-                            marginBlock: { xs: '15px', sm: '20px', md: '30px' },
+                            marginTop: { xs: '15px', sm: '20px', md: '10px' },
                         }}
                     >
                         <Box sx={{ display: 'flex', justifyContent: 'end' }}>
@@ -498,9 +439,8 @@ const PatternMst = () => {
                                     backgroundColor: '#e0f7fa',
                                     '& .MuiInputBase-input': {
                                         paddingBlock: { xs: '8px', md: '4px' },
-                                        paddingLeft: { xs: '10px', md: '8px' },
+                                        paddingLeft: { xs: '8px', md: '8px' },
                                     },
-
                                 }}
                                 value={form.SearchByCd}
                                 onChange={(e) => setForm({ ...form, SearchByCd: e.target.value })}
@@ -523,7 +463,9 @@ const PatternMst = () => {
                             <TextField
                                 label="Series"
                                 inputRef={SERIESRef}
-                                sx={{ width: { xs: '100%', sm: '48%', md: '25%' } }}
+                                sx={{
+                                    width: { xs: '100%', sm: '48%', md: '32%' }
+                                }}
                                 disabled={mode === FORM_MODE.read}
                                 fullWidth
                                 className="custom-textfield"
@@ -532,31 +474,25 @@ const PatternMst = () => {
                             />
                             <TextField
                                 label="Last Cd"
-                                sx={{ width: { xs: '100%', sm: '48%', md: '25%' } }}
+                                sx={{
+                                    width: { xs: '100%', sm: '48%', md: '32%' }
+                                }}
                                 disabled={true}
                                 fullWidth
                                 className="custom-textfield"
-                                value={form.FGPTN_LST_CODE}
-                                onChange={(e) => setForm({ ...form, FGPTN_LST_CODE: e.target.value })}
+                                value={form.QLTY_LST_CODE}
+                                onChange={(e) => setForm({ ...form, QLTY_LST_CODE: e.target.value })}
                             />
                             <TextField
                                 label="Code"
-                                inputRef={FGPTN_KEYRef}
-                                sx={{ width: { xs: '100%', sm: '48%', md: '25%' } }}
+                                inputRef={QLTY_KEYRef}
+                                sx={{
+                                    width: { xs: '100%', sm: '48%', md: '32%' }
+                                }}
                                 disabled={mode === FORM_MODE.read}
                                 className="custom-textfield"
-                                value={form.FGPTN_KEY}
-                                onChange={(e) => setForm({ ...form, FGPTN_KEY: e.target.value })}
-                            />
-                            <TextField
-                                label="Alt Code"
-                                inputRef={FGPTN_CODERef}
-                                sx={{ width: { xs: '100%', sm: '48%', md: '25%' } }}
-                                disabled={mode === FORM_MODE.read}
-                                fullWidth
-                                className="custom-textfield"
-                                value={form.FGPTN_CODE}
-                                onChange={(e) => setForm({ ...form, FGPTN_CODE: e.target.value })}
+                                value={form.QLTY_KEY}
+                                onChange={(e) => setForm({ ...form, QLTY_KEY: e.target.value })}
                             />
                         </Box>
 
@@ -569,13 +505,15 @@ const PatternMst = () => {
                             }}
                         >
                             <TextField
-                                inputRef={FGPTN_NAMERef}
+                                inputRef={QLTY_NAMERef}
                                 label="Name"
-                                sx={{ width: '100%' }}
+                                sx={{
+                                    width: '100%'
+                                }}
                                 disabled={mode === FORM_MODE.read}
                                 className="custom-textfield"
-                                value={form.FGPTN_NAME}
-                                onChange={(e) => setForm({ ...form, FGPTN_NAME: e.target.value })}
+                                value={form.QLTY_NAME}
+                                onChange={(e) => setForm({ ...form, QLTY_NAME: e.target.value })}
                             />
                         </Box>
 
@@ -593,84 +531,95 @@ const PatternMst = () => {
                         >
                             <TextField
                                 label="Abbreviation"
-                                inputRef={FGPTN_ABRVRef}
-                                sx={{ width: { xs: '100%', sm: '40%', md: '30%' } }}
+                                inputRef={QLTY_ABRVRef}
+                                sx={{
+                                    width: { xs: '100%', sm: '40%', md: '30%' }
+                                }}
                                 disabled={mode === FORM_MODE.read}
                                 className="custom-textfield"
-                                value={form.FGPTN_ABRV}
-                                onChange={(e) => setForm({ ...form, FGPTN_ABRV: e.target.value })}
+                                value={form.QLTY_ABRV}
+                                onChange={(e) => setForm({ ...form, QLTY_ABRV: e.target.value })}
                             />
-                            <FormControlLabel
-                                control={
-                                    <Checkbox
-                                        disabled={mode === FORM_MODE.read}
-                                        checked={Status == '1'}
-                                        onChange={handleChangeStatus}
-                                        sx={{
-                                            '&.Mui-checked': {
-                                                color: '#39ace2',
-                                            },
-                                        }}
-                                    />
-                                }
-                                label="Active"
+                            <TextField
+                                label="Target Sale"
+                                sx={{
+                                    width: { xs: '100%', sm: '40%', md: '30%' }
+                                }}
+                                disabled={mode === FORM_MODE.read}
+                                className="custom-textfield"
+                                value={form.TARGET_SALE}
+                                onChange={(e) => setForm({ ...form, TARGET_SALE: e.target.value })}
+                            />
+
+
+                        </Box>
+                        <Box
+                            sx={{
+                                display: 'flex',
+                                flexDirection: { xs: 'column', sm: 'row', md: 'row' },
+                                justifyContent: 'space-between',
+                                gap: { xs: 1, sm: 1.5, md: 2 },
+                            }}
+                        >
+                            <CustomAutocomplete
+                                id="quallity-grp-autocomplete"
+                                disabled={true}
+                                label="Quality Group"
+                                name="QLTYGRP_KEY "
+                                // options={termsTypeOptions}
+                                value={form.QLTYGRP_KEY}
+                                onChange={(value) => setForm({ ...form, QLTYGRP_KEY: value })}
+                                sx={{ width: { xs: '100%', sm: '48%', md: '100%' } }}
                             />
                         </Box>
+                        <Box><FormControlLabel
+                            control={
+                                <Checkbox
+                                    disabled={mode === FORM_MODE.read}
+                                    checked={Status == '1'}
+                                    onChange={handleChangeStatus}
+                                    sx={{
+                                        '&.Mui-checked': {
+                                            color: '#39ace2',
+                                        },
+                                    }}
+                                />
+                            }
+                            label="Active"
+                        /></Box>
                     </Box>
-                    <Grid container alignItems="center"   justifyContent="center"
-                        spacing={1} sx={{ marginTop: "10px", marginInline: '20px' }}>
+                    <Grid container alignItems="center"
+                        justifyContent="center" spacing={1} sx={{ marginTop: "10px", marginInline: '20px' }}>
                         <Grid sx={{
+                            display: 'flex', justifyContent: {
+                                xs: 'center',
+                                sm: 'flex-start'
+                            },
                             width: { xs: '100%', sm: 'auto' },
                         }}>
                             <Stack direction="row" spacing={1}>
-                                <Button
-                                    variant="contained"
-                                    size="small"
-                                    className="three-d-button-first"
-                                    sx={Buttonsx}
-                                    onClick={handleFirst}
-                                    disabled={mode !== FORM_MODE.read || !currentFGPTN_KEY || currentFGPTN_KEY === 1}
-                                >
-                                    <FirstPageIcon />
-                                </Button>
-
-                                <Button variant="contained" size="small" className="three-d-button-previous"
-                                    sx={Buttonsx}
-                                    onClick={handlePrevious}
-                                    disabled={
-                                        mode !== FORM_MODE.read || !currentFGPTN_KEY || currentFGPTN_KEY === 1
-                                    }
-                                >
-                                    <KeyboardArrowLeftIcon />
-                                </Button>
-                                <Button variant="contained" size="small" className="three-d-button-next"
-                                    sx={Buttonsx}
-                                    onClick={handleNext}
-                                    disabled={mode !== FORM_MODE.read || !currentFGPTN_KEY}
-                                >
-                                    <NavigateNextIcon />
-                                </Button>
-                                <Button
-                                    variant="contained"
-                                    size="small"
-                                    className="three-d-button-last"
-                                    sx={Buttonsx}
-                                    onClick={handleLast}
-                                    disabled={mode !== FORM_MODE.read || !currentFGPTN_KEY}
-                                >
-                                    <LastPageIcon />
-                                </Button>
+                                <PaginationButtons
+                                    mode={mode}
+                                    FORM_MODE={FORM_MODE}
+                                    currentKey={currentQUALITY_KEY}
+                                    onFirst={handleFirst}
+                                    onPrevious={handlePrevious}
+                                    onNext={handleNext}
+                                    onLast={handleLast}
+                                    sx={{ mt: 2 }}
+                                    buttonSx={Buttonsx}
+                                />
                             </Stack>
                         </Grid>
                         <Grid>
                             <Stack direction="row" spacing={{ xs: 0.5, sm: 1 }}  >
                                 <CrudButtons
                                     mode={mode}
+                                    onAdd={mode === FORM_MODE.read ? handleAdd : handleSubmit}
+                                    onEdit={mode === FORM_MODE.read ? handleEdit : handleCancel}
                                     onView={handlePrint}
                                     onDelete={handleDelete}
                                     onExit={handleExit}
-                                    onAdd={mode === FORM_MODE.read ? handleAdd : handleSubmit}
-                                    onEdit={mode === FORM_MODE.read ? handleEdit : handleCancel}
                                     readOnlyMode={mode === FORM_MODE.read}
                                 />
                             </Stack>
@@ -730,4 +679,4 @@ const PatternMst = () => {
         </>
     );
 };
-export default PatternMst;
+export default QualityMst

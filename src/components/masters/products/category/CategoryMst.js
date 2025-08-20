@@ -1,5 +1,5 @@
 'use client'
-import React, { useEffect, useRef, useState ,useCallback} from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import {
     Box,
     Grid,
@@ -28,7 +28,8 @@ import { useSearchParams } from 'next/navigation';
 import { pdf } from '@react-pdf/renderer';
 import CustomAutocomplete from '@/GlobalFunction/CustomAutoComplete/CustomAutoComplete';
 import PrintCatDt from './PrintCatDt';
-
+import CrudButtons from '@/GlobalFunction/CrudButtons';
+import PaginationButtons from '@/GlobalFunction/PaginationButtons';
 
 const FORM_MODE = getFormMode();
 const categoryFormSchema = z.object({
@@ -44,9 +45,9 @@ const columns = [
 
 ];
 const CategoryMst = () => {
-   const router = useRouter();
-        const searchParams = useSearchParams();
-         const FGCAT_KEY = searchParams.get('FGCAT_KEY');
+    const router = useRouter();
+    const searchParams = useSearchParams();
+    const FGCAT_KEY = searchParams.get('FGCAT_KEY');
 
     const [currentFGCAT_KEY, setCurrentFGCAT_KEY] = useState(null);
     const [form, setForm] = useState({
@@ -146,9 +147,9 @@ const CategoryMst = () => {
                 });
                 setStatus(DATA[0].STATUS);
                 setCurrentFGCAT_KEY(categoryData.FGCAT_KEY);
-            const newParams = new URLSearchParams();
-            newParams.set("FGCAT_KEY", categoryData.FGCAT_KEY);
-            router.replace(`/masters/products/category?${newParams.toString()}`);
+                const newParams = new URLSearchParams();
+                newParams.set("FGCAT_KEY", categoryData.FGCAT_KEY);
+                router.replace(`/masters/products/category?${newParams.toString()}`);
             } else {
                 if (isManualSearch) {
                     toast.error(`${MESSAGE} FOR ${currentFGCAT_KEY}`);
@@ -168,17 +169,17 @@ const CategoryMst = () => {
         } catch (err) {
             console.error(err);
         }
-    },[CO_ID,router]);
- 
-     useEffect(() => {
+    }, [CO_ID, router]);
+
+    useEffect(() => {
         if (FGCAT_KEY) {
             setCurrentFGCAT_KEY(FGCAT_KEY);
-          fetchRetriveData(FGCAT_KEY);
-           setMode(FORM_MODE.read);
-        }else {
-                setForm({
-                    SearchByCd: '',
-                    FGCAT_KEY: '',
+            fetchRetriveData(FGCAT_KEY);
+            setMode(FORM_MODE.read);
+        } else {
+            setForm({
+                SearchByCd: '',
+                FGCAT_KEY: '',
                 FGCAT_NAME: '',
                 Abrv: '',
                 SearchByCd: '',
@@ -188,11 +189,11 @@ const CategoryMst = () => {
                 FGCAT_LST_CODE: '',
                 SERIES: '',
                 Status: '1',
-                })
-                setMode(FORM_MODE.read);
-            }
-             setMode(FORM_MODE.read);
-      }, [FGCAT_KEY,fetchRetriveData]);
+            })
+            setMode(FORM_MODE.read);
+        }
+        setMode(FORM_MODE.read);
+    }, [FGCAT_KEY, fetchRetriveData]);
 
 
     const handleSubmit = async () => {
@@ -409,6 +410,14 @@ const CategoryMst = () => {
             console.error("Error fetching ID and LASTID:", error);
         }
     };
+    const handleFirst=()=>{}
+    const handleLast=async()=>{
+        await fetchRetriveData(1, "L");
+        setForm((prev) => ({
+            ...prev,
+            SearchByCd: ''
+        })); 
+    }
     const handlePrevious = async () => {
         await fetchRetriveData(currentFGCAT_KEY, "P");
         setForm((prev) => ({
@@ -452,49 +461,49 @@ const CategoryMst = () => {
         setMode(FORM_MODE.edit);
     };
 
-      const handlePrint = async () => {
-            try {
-                const response = await axiosInstance.post(`Category/GetFgCatDashBoard?currentPage=1&limit=5000`, {
-                    "SearchText": ""
-                });
-                const { data: { STATUS, DATA } } = response; 
-                if (STATUS === 0 && Array.isArray(DATA)) {
-                    const formattedData = DATA.map(row => ({
-                        ...row,
-                        STATUS: row.STATUS === "1" ? "Active" : "Inactive"
-                    }));
-    
-                    // Generate the PDF blob
-                    const asPdf = pdf(<PrintCatDt rows={formattedData} />);
-                    const blob = await asPdf.toBlob();
-                    const url = URL.createObjectURL(blob);
-    
-                    // Open the PDF in a new tab
-                    const newTab = window.open(url, '_blank');
-                    if (newTab) {
-                        newTab.focus();
-                    }
-                    setTimeout(() => {
-                        URL.revokeObjectURL(url);
-                    }, 100);
+    const handlePrint = async () => {
+        try {
+            const response = await axiosInstance.post(`Category/GetFgCatDashBoard?currentPage=1&limit=5000`, {
+                "SearchText": ""
+            });
+            const { data: { STATUS, DATA } } = response;
+            if (STATUS === 0 && Array.isArray(DATA)) {
+                const formattedData = DATA.map(row => ({
+                    ...row,
+                    STATUS: row.STATUS === "1" ? "Active" : "Inactive"
+                }));
+
+                // Generate the PDF blob
+                const asPdf = pdf(<PrintCatDt rows={formattedData} />);
+                const blob = await asPdf.toBlob();
+                const url = URL.createObjectURL(blob);
+
+                // Open the PDF in a new tab
+                const newTab = window.open(url, '_blank');
+                if (newTab) {
+                    newTab.focus();
                 }
-            } catch (error) {
-                console.error("Print Error:", error);
+                setTimeout(() => {
+                    URL.revokeObjectURL(url);
+                }, 100);
             }
-        };
+        } catch (error) {
+            console.error("Print Error:", error);
+        }
+    };
     const handleExit = () => { router.push("/masters/products/category/cattable") };
 
-     const Buttonsx = {
-    backgroundColor: '#39ace2',
-    margin: { xs: '0 4px', sm: '0 6px' },
-    minWidth: { xs: 40, sm: 46, md: 60 },
-    height: { xs: 40, sm: 46, md: 27 },
-    // "&:disabled": {
-    //   backgroundColor: "rgba(0, 0, 0, 0.12)",
-    //   color: "rgba(0, 0, 0, 0.26)",
-    //   boxShadow: "none",
-    // }
-  };
+    const Buttonsx = {
+        backgroundColor: '#39ace2',
+        margin: { xs: '0 4px', sm: '0 6px' },
+        minWidth: { xs: 40, sm: 46, md: 60 },
+        height: { xs: 40, sm: 46, md: 27 },
+        // "&:disabled": {
+        //   backgroundColor: "rgba(0, 0, 0, 0.12)",
+        //   color: "rgba(0, 0, 0, 0.26)",
+        //   boxShadow: "none",
+        // }
+    };
     return (
         <>
             <Box
@@ -518,54 +527,12 @@ const CategoryMst = () => {
                 >
                     {/* Header Section */}
                     <Grid container alignItems="center"
-                        justifyContent="space-between" spacing={2} sx={{ marginTop: "30px", marginInline: '20px' }}>
-                        <Grid sx={{
-                            display: 'flex', justifyContent: {
-                                xs: 'center',
-                                sm: 'flex-start'
-                            },
-                            width: { xs: '100%', sm: 'auto' },
-                        }}>
-                            <Stack direction="row" spacing={1}>
-                                <Button variant="contained" size="small" className="three-d-button-previous"
-                                      sx={Buttonsx}
-                                    onClick={handlePrevious}
-                                    disabled={
-                                        mode !== FORM_MODE.read || !currentFGCAT_KEY || currentFGCAT_KEY === 1
-                                    }
-                                >
-                                    <KeyboardArrowLeftIcon />
-                                </Button>
-                                <Button variant="contained" size="small" className="three-d-button-next"
-                                     sx={Buttonsx}
-                                    onClick={handleNext}
-                                    disabled={mode !== FORM_MODE.read || !currentFGCAT_KEY}
-                                >
-                                    <NavigateNextIcon />
-                                </Button>
-                            </Stack>
-                        </Grid>
-
+                        justifyContent="space-between" spacing={2} sx={{ marginTop: "10px", marginInline: '20px' }}>
                         {/* Center Header */}
                         <Grid sx={{ flexGrow: 1 }}>
                             <Typography align="center" variant="h5">
                                 Category Master
                             </Typography>
-                        </Grid>
-
-                        {/* Right Buttons */}
-                        <Grid>
-                            <Stack direction="row" spacing={{ xs: 0.5, sm: 1 }}>
-                                <CrudButton
-                                    mode={mode}
-                                    onAdd={handleAdd}
-                                    onEdit={handleEdit}
-                                    onView={handlePrint}
-                                    onDelete={handleDelete}
-                                    onExit={handleExit}
-                                    readOnlyMode={mode === FORM_MODE.read}
-                                />
-                            </Stack>
                         </Grid>
                     </Grid>
 
@@ -723,63 +690,38 @@ const CategoryMst = () => {
                             />
                         </Box>
                     </Box>
-                    {/* Submit / Cancel Buttons */}
-                    <Grid item xs={12} className="form_button" sx={{
-                        display: 'flex',
-                        justifyContent: { xs: 'center', sm: 'flex-end' },
-                        gap: { xs: 1, sm: 1.5 },
-                        padding: { xs: 1, sm: 2, md: 3 },
-                    }}>
-                        {mode === FORM_MODE.read && (
-                            <>
-                                <Button
-                                    variant="contained"
-                                    sx={{
-                                        mr: 1,
-                                        background: "linear-gradient(290deg, #d4d4d4, #ffffff)",
-                                    }}
-                                    onClick={handleAdd}
-                                    disabled
-                                >
-                                    Submit
-                                </Button>
-                                <Button
-                                    variant="contained"
-                                    sx={{
-                                        mr: 1,
-                                        background: "linear-gradient(290deg, #a7c5e9, #ffffff)",
-                                    }}
-                                    onClick={handleEdit}
-                                    disabled
-                                >
-                                    Cancel
-                                </Button>
-                            </>
-                        )}
-                        {(mode === FORM_MODE.edit || mode === FORM_MODE.add) && (
-                            <>
-                                <Button
-                                    variant="contained"
-                                    sx={{
-                                        mr: 1,
-                                        background: "linear-gradient(290deg,   #b9d0e9, #e9f2fa)",
-                                    }}
-                                    onClick={handleSubmit}
-                                >
-                                    Submit
-                                </Button>
-                                <Button
-                                    variant="contained"
-                                    sx={{
-                                        mr: 1,
-                                        background: "linear-gradient(290deg,   #b9d0e9, #e9f2fa)",
-                                    }}
-                                    onClick={handleCancel}
-                                >
-                                    Cancel
-                                </Button>
-                            </>
-                        )}
+                    <Grid container alignItems="center"
+                        justifyContent="center" spacing={1} sx={{ marginTop: "10px", marginInline: '20px' }}>
+                        <Grid sx={{
+                            width: { xs: '100%', sm: 'auto' },
+                        }}>
+                            <Stack direction="row" spacing={1}>
+                                <PaginationButtons
+                                    mode={mode}
+                                    FORM_MODE={FORM_MODE}
+                                    currentKey={currentFGCAT_KEY}
+                                    onFirst={handleFirst}
+                                    onPrevious={handlePrevious}
+                                    onNext={handleNext}
+                                    onLast={handleLast}
+                                    sx={{ mt: 2 }}
+                                    buttonSx={Buttonsx}
+                                />
+                            </Stack>
+                        </Grid>
+                        <Grid>
+                            <Stack direction="row" spacing={{ xs: 0.5, sm: 1 }}>
+                                <CrudButtons
+                                    mode={mode}
+                                    onAdd={mode === FORM_MODE.read ? handleAdd : handleSubmit}
+                                    onEdit={mode === FORM_MODE.read ? handleEdit : handleCancel}
+                                    onView={handlePrint}
+                                    onDelete={handleDelete}
+                                    onExit={handleExit}
+                                    readOnlyMode={mode === FORM_MODE.read}
+                                />
+                            </Stack>
+                        </Grid>
                     </Grid>
                 </Box>
             </Box>
