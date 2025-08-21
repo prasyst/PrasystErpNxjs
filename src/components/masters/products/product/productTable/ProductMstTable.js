@@ -2,11 +2,12 @@
 import React, { useState, useEffect, useCallback } from "react";
 import axiosInstance from '../../../../../lib/axios';
 import {
-  Button,
+  Button, Stack, Box
 } from '@mui/material';
-import AddIcon from "@mui/icons-material/Add";
 import ReusableHandsontable from '@/components/datatable/ReusableHandsontable';
 import { useRouter } from 'next/navigation';
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import LogoutIcon from "@mui/icons-material/Logout";
 
 const handsontableColumns = [
   { field: "FGPRD_NAME", headerName: "Product", width: "16%", type: "text" },
@@ -65,25 +66,12 @@ export default function ProductMstTable() {
     router.push(`/masters/products/product?${params}`);
   };
 
-  const handleNew = () => {
-    
-    router.push(`/masters/products/product`);
-    
+  const handleBack = () => {
+    window.history.back();
   };
 
-  const addButtonStyles = {
-    background: "#39ace2",
-    height: 40,
-    color: "white",
-    borderRadius: "50px",
-    padding: "5px 20px",
-    boxShadow: "0px 6px 15px rgba(0, 0, 0, 0.3)",
-    transition: "background 0.3s ease",
-    "&:hover": { background: "#2199d6" },
-    "&:disabled": {
-      backgroundColor: "#39ace2",
-      color: "rgba(0, 0, 0, 0.26)",
-    },
+  const Exit = () => {
+    router.push('/dashboard');
   };
 
   return (
@@ -91,15 +79,29 @@ export default function ProductMstTable() {
       <div className="w-full mx-auto" style={{ maxWidth: '100%' }}>
         <div className="mb-4 flex flex-wrap gap-4 items-center">
 
-          <Button
-            variant="contained"
-            size="small"
-            sx={addButtonStyles}
-            onClick={handleNew}
-            startIcon={<AddIcon />}
-          >
-            New
-          </Button>
+        <Box width="100%" display="flex" justifyContent="flex-end">
+          <Stack direction="row" spacing={2} alignItems="center">
+            {/* Back Button */}
+            <Button
+              onClick={handleBack}
+              variant="outlined"
+              color="primary"
+              startIcon={<ArrowBackIcon />}
+            >
+              Back
+            </Button>
+
+            {/* Logout Button */}
+            <Button
+              onClick={Exit}
+              variant="outlined"
+              color="error"
+              startIcon={<LogoutIcon />}
+            >
+              Exit
+            </Button>
+          </Stack>
+        </Box>
         </div>
 
         <div style={{ height: 'calc(100vh - 180px)', width: '100%' }}>
