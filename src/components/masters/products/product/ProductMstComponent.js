@@ -23,7 +23,10 @@ import AutoVibe from '../../../../GlobalFunction/CustomAutoComplete/AutoVibe';
 import axiosInstance from '../../../../lib/axios';
 import { getFormMode } from '../../../../lib/helpers';
 import EditableTable from '@/atoms/EditTable';
+import CrudButtons from "@/GlobalFunction/CrudButtons";
+import PaginationButtons from '@/GlobalFunction/PaginationButtons';
 import z from 'zod';
+import { FaTable } from 'react-icons/fa';
 
 const columns = [
   { label: 'Size', field: 'FGSIZE_NAME', type: 'text' },
@@ -115,22 +118,50 @@ const ProductMst = () => {
     fgSizeEntities: [initialRow]
   }]);
 
+  // const textInputSx = {
+  //   '& .MuiInputBase-root': {
+  //     height: 30,
+  //     fontSize: '12px',
+  //   },
+  //   '& .MuiInputLabel-root': {
+  //     fontSize: '12px',
+  //     top: '-6px',
+  //   },
+  //   '& .MuiFilledInput-root': {
+  //     backgroundColor: '#fafafa',
+  //     border: '1px solid #e0e0e0',
+  //     borderRadius: '5px',
+  //     overflow: 'hidden',
+  //     height: 30,
+  //     fontSize: '12px',
+  //   },
+  //   '& .MuiFilledInput-root:before': {
+  //     display: 'none',
+  //   },
+  //   '& .MuiFilledInput-root:after': {
+  //     display: 'none',
+  //   },
+  //   '& .MuiInputBase-input': {
+  //     padding: '15px 12px 1px!important'
+  //   }
+  // };
+
   const textInputSx = {
     '& .MuiInputBase-root': {
-      height: 30,
-      fontSize: '12px',
+      height: 40, // Match dropdown height
+      fontSize: '14px', // Match dropdown font size
     },
     '& .MuiInputLabel-root': {
-      fontSize: '12px',
-      top: '-6px',
+      fontSize: '14px',
+      top: '-4px', // Aligned better for larger input
     },
     '& .MuiFilledInput-root': {
       backgroundColor: '#fafafa',
       border: '1px solid #e0e0e0',
-      borderRadius: '5px',
+      borderRadius: '6px',
       overflow: 'hidden',
-      height: 30,
-      fontSize: '12px',
+      height: 40,
+      fontSize: '14px',
     },
     '& .MuiFilledInput-root:before': {
       display: 'none',
@@ -139,27 +170,65 @@ const ProductMst = () => {
       display: 'none',
     },
     '& .MuiInputBase-input': {
-      padding: '15px 12px 1px!important'
+      padding: '10px 12px !important', // Align text vertically
+      fontSize: '14px',
+      lineHeight: '1.4',
     }
   };
 
+  // const DropInputSx = {
+  //   '& .MuiInputBase-root': {
+  //     height: 30,
+  //     fontSize: '12px',
+  //   },
+  //   '& .MuiInputLabel-root': {
+  //     fontSize: '12px',
+  //     top: '-6px',
+  //   },
+  //   '& .MuiFilledInput-root': {
+  //     backgroundColor: '#fafafa',
+  //     border: '1px solid #e0e0e0',
+  //     borderRadius: '5px',
+  //     overflow: 'hidden',
+  //     height: 30,
+  //     fontSize: '12px',
+  //     paddingRight: '32px', // Space for the icon
+  //   },
+  //   '& .MuiFilledInput-root:before': {
+  //     display: 'none',
+  //   },
+  //   '& .MuiFilledInput-root:after': {
+  //     display: 'none',
+  //   },
+  //   '& .MuiInputBase-input': {
+  //     padding: '6px 12px',
+  //     fontSize: '12px',
+  //     lineHeight: '1.2',
+  //   },
+  //   '& .MuiAutocomplete-endAdornment': {
+  //     top: '50%',
+  //     transform: 'translateY(-50%)',
+  //     right: '8px', // spacing from the right
+  //   },
+  // };
+
   const DropInputSx = {
     '& .MuiInputBase-root': {
-      height: 30,
-      fontSize: '12px',
+      height: 40, // Increased height
+      fontSize: '14px', // Slightly larger font
     },
     '& .MuiInputLabel-root': {
-      fontSize: '12px',
-      top: '-6px',
+      fontSize: '14px',
+      top: '-4px', // Adjusted for better vertical alignment
     },
     '& .MuiFilledInput-root': {
       backgroundColor: '#fafafa',
       border: '1px solid #e0e0e0',
-      borderRadius: '5px',
+      borderRadius: '6px',
       overflow: 'hidden',
-      height: 30,
-      fontSize: '12px',
-      paddingRight: '32px', // Space for the icon
+      height: 40,
+      fontSize: '14px',
+      paddingRight: '36px', // Slightly more space for icon
     },
     '& .MuiFilledInput-root:before': {
       display: 'none',
@@ -168,14 +237,14 @@ const ProductMst = () => {
       display: 'none',
     },
     '& .MuiInputBase-input': {
-      padding: '6px 12px',
-      fontSize: '12px',
-      lineHeight: '1.2',
+      padding: '10px 12px', // More padding for bigger size
+      fontSize: '14px',
+      lineHeight: '1.4',
     },
     '& .MuiAutocomplete-endAdornment': {
       top: '50%',
       transform: 'translateY(-50%)',
-      right: '8px', // spacing from the right
+      right: '10px', // Adjusted spacing from the right
     },
   };
 
@@ -801,6 +870,10 @@ const ProductMst = () => {
   };
 
   const handleExit = () => {
+    router.push('/dashboard');
+  };
+
+  const handleTable = () => {
     router.push('/masters/products/product/productTable');
   };
 
@@ -883,6 +956,15 @@ const ProductMst = () => {
 
   const handlePrint = () => { };
 
+  const handleFirst = () => { }
+  const handleLast = async () => {
+    await fetchProductData(1, "L");
+    setForm((prev) => ({
+      ...prev,
+      SearchByCd: ''
+    }));
+  }
+
   const handlePrevious = async () => {
     await fetchProductData(currentFGPRD_KEY, "P");
     setForm((prev) => ({
@@ -961,10 +1043,9 @@ const ProductMst = () => {
       >
         <Grid container alignItems="center"
           justifyContent="space-between" spacing={2} sx={{
-            marginTop: { xs: '10px', sm: '10px', md: '10px', lg: '10px', xl: '10px' },
             marginInline: { xs: '20px', sm: '20px', md: '20px', lg: '20px', xl: '20px' }
           }}>
-          <Grid sx={{ display: 'flex' }}>
+          {/* <Grid sx={{ display: 'flex' }}>
             <Stack direction="row" spacing={1}>
               <Button variant="contained" size="small"
                 sx={Buttonsx}
@@ -981,13 +1062,13 @@ const ProductMst = () => {
                 <NavigateNextIcon />
               </Button>
             </Stack>
-          </Grid>
+          </Grid> */}
           <Grid sx={{ flexGrow: 1 }}>
             <Typography align="center" variant="h6">
               Product Master
             </Typography>
           </Grid>
-          <Grid>
+          {/* <Grid>
             <Stack direction="row" spacing={1}>
               <CrudButton
                 mode={mode}
@@ -1000,7 +1081,7 @@ const ProductMst = () => {
                 readOnlyMode={isFormDisabled}
               />
             </Stack>
-          </Grid>
+          </Grid> */}
         </Grid>
 
         <Box
@@ -1008,12 +1089,11 @@ const ProductMst = () => {
             display: 'flex',
             flexDirection: 'column',
             gap: { xs: 1.5, sm: 1.5, md: 0.7 },
-            marginInline: { xs: '5%', sm: '5%', md: '15%' },
-            marginTop: { xs: '15px', sm: '20px', md: '10px' },
+            marginInline: { xs: '5%', sm: '5%', md: '15%' }
           }}
 
         >
-          <Box sx={{ display: 'flex', justifyContent: 'end' }}>
+          <Box sx={{ display: 'flex', justifyContent: 'end', gap: 2 }}>
             <TextField
               placeholder="Search By Code"
               variant="filled"
@@ -1035,6 +1115,7 @@ const ProductMst = () => {
                 }
               }}
             />
+            <FaTable size={24} color="#39ace2" onClick={handleTable} />
           </Box>
 
           <Box
@@ -1043,6 +1124,7 @@ const ProductMst = () => {
               flexDirection: { xs: 'column', sm: 'row', md: 'row' },
               justifyContent: 'space-between',
               gap: { xs: 1, sm: 1, md: 2 },
+              width: { xs: '100%', sm: '48%', md: '100%' }
             }}
           >
             <TextField
@@ -1076,22 +1158,47 @@ const ProductMst = () => {
                 },
               }}
             />
-            <TextField
-              label="Code"
-              variant="filled"
-              fullWidth
-              name="FGPRD_KEY"
-              value={form.FGPRD_KEY || ""}
-              onChange={(e) => setForm({ ...form, FGPRD_KEY: e.target.value })}
-              disabled={isFormDisabled}
-              sx={textInputSx}
-              inputProps={{
-                style: {
-                  padding: '6px 8px',
-                  fontSize: '12px',
-                },
+            <Box
+              sx={{
+                display: 'flex',
+                flexDirection: { xs: 'column', sm: 'row' },
+                gap: 1,
+                width: { xs: '100%', sm: '48%', md: '209%' },
               }}
-            />
+            >
+              <TextField
+                label="Code"
+                variant="filled"
+                fullWidth
+                name="FGPRD_KEY"
+                value={form.FGPRD_KEY || ""}
+                onChange={(e) => setForm({ ...form, FGPRD_KEY: e.target.value })}
+                disabled={isFormDisabled}
+                sx={textInputSx}
+                inputProps={{
+                  style: {
+                    padding: '6px 8px',
+                    fontSize: '12px',
+                  },
+                }}
+              />
+              <TextField
+                label="PrdSeries"
+                variant="filled"
+                fullWidth
+                onChange={handleInputChange}
+                value={form.SR_CODE || ""}
+                disabled={isFormDisabled}
+                name="SR_CODE"
+                sx={textInputSx}
+                inputProps={{
+                  style: {
+                    padding: '6px 8px',
+                    fontSize: '12px',
+                  },
+                }}
+              />
+            </Box>
           </Box>
 
           <Box sx={{
@@ -1099,6 +1206,7 @@ const ProductMst = () => {
             flexDirection: { xs: 'column', sm: 'row', md: 'row' },
             justifyContent: 'space-between',
             gap: { xs: 1, sm: 1, md: 2 },
+            width: { xs: '100%', sm: '48%', md: '100%' },
           }}>
             <AutoVibe
               id="FGCAT_KEY"
@@ -1138,57 +1246,6 @@ const ProductMst = () => {
                 },
               }}
             />
-            <AutoVibe
-              id="PRODGRP_KEY"
-              disabled={isFormDisabled}
-              getOptionLabel={(option) => option.PRODGRP_NAME || ''}
-              options={prdGrp}
-              label="ProductGroup"
-              name="PRODGRP_KEY"
-              value={prdGrp.find(option => option.PRODGRP_KEY === form.PRODGRP_NAME) || null}
-              onChange={(e, newValue) => {
-                setForm((prevForm) => ({
-                  ...prevForm,
-                  PRODGRP_NAME: newValue ? newValue.PRODGRP_KEY : '',
-                }));
-              }}
-              sx={DropInputSx}
-              inputProps={{
-                style: {
-                  padding: '6px 8px',
-                  fontSize: '12px',
-                },
-              }}
-            />
-          </Box>
-
-          <Box sx={{
-            display: 'flex',
-            flexDirection: { xs: 'column', sm: 'row', md: 'row' },
-            justifyContent: 'space-between',
-            gap: { xs: 1, sm: 1, md: 2 },
-            width: { xs: '100%', sm: '48%', md: '100%' },
-          }}>
-            <TextField
-              label={
-                <span>
-                  Name <span style={{ color: 'red' }}>*</span>
-                </span>
-              }
-              variant="filled"
-              fullWidth
-              onChange={handleInputChange}
-              value={form.FGPRD_ABRV || ""}
-              name="FGPRD_ABRV"
-              disabled={isFormDisabled}
-              sx={textInputSx}
-              inputProps={{
-                style: {
-                  padding: '6px 8px',
-                  fontSize: '12px',
-                },
-              }}
-            />
             <Box
               sx={{
                 display: 'flex',
@@ -1198,13 +1255,17 @@ const ProductMst = () => {
               }}
             >
               <TextField
-                label="PrdSeries"
+                label={
+                  <span>
+                    Name <span style={{ color: 'red' }}>*</span>
+                  </span>
+                }
                 variant="filled"
                 fullWidth
                 onChange={handleInputChange}
-                value={form.SR_CODE || ""}
+                value={form.FGPRD_ABRV || ""}
+                name="FGPRD_ABRV"
                 disabled={isFormDisabled}
-                name="SR_CODE"
                 sx={textInputSx}
                 inputProps={{
                   style: {
@@ -1213,18 +1274,27 @@ const ProductMst = () => {
                   },
                 }}
               />
+            </Box>
+            <Box
+              sx={{
+                display: 'flex',
+                flexDirection: { xs: 'column', sm: 'row' },
+                gap: 1,
+                width: { xs: '100%', sm: '48%', md: '209%' },
+              }}
+            >
               <AutoVibe
-                id="UNIT_KEY"
+                id="PRODGRP_KEY"
                 disabled={isFormDisabled}
-                getOptionLabel={(option) => option.UNIT_NAME || ''}
-                options={unit}
-                label="Unit"
-                name="UNIT_KEY"
-                value={unit.find(option => option.UNIT_KEY === form.UNIT_NAME) || null}
+                getOptionLabel={(option) => option.PRODGRP_NAME || ''}
+                options={prdGrp}
+                label="ProductGroup"
+                name="PRODGRP_KEY"
+                value={prdGrp.find(option => option.PRODGRP_KEY === form.PRODGRP_NAME) || null}
                 onChange={(e, newValue) => {
                   setForm((prevForm) => ({
                     ...prevForm,
-                    UNIT_NAME: newValue ? newValue.UNIT_KEY : '',
+                    PRODGRP_NAME: newValue ? newValue.PRODGRP_KEY : '',
                   }));
                 }}
                 sx={DropInputSx}
@@ -1242,8 +1312,8 @@ const ProductMst = () => {
             display: 'flex',
             flexDirection: { xs: 'column', sm: 'row', md: 'row' },
             justifyContent: 'space-between',
-            gap: { xs: 1, sm: 1.5, md: 2 },
-            width: { xs: '100%', sm: '48%', md: '100%' },
+            gap: { xs: 1, sm: 1, md: 2 },
+            width: { xs: '100%', sm: '48%', md: '99.6%' },
           }}>
             <TextField
               label="Description"
@@ -1285,15 +1355,21 @@ const ProductMst = () => {
                   },
                 }}
               />
-              <TextField
-                label="Mark.Dn Pur%"
-                variant="filled"
-                fullWidth
-                name=""
-                value={""}
-                onChange={handleInputChange}
+              <AutoVibe
+                id="UNIT_KEY"
                 disabled={isFormDisabled}
-                sx={textInputSx}
+                getOptionLabel={(option) => option.UNIT_NAME || ''}
+                options={unit}
+                label="Unit"
+                name="UNIT_KEY"
+                value={unit.find(option => option.UNIT_KEY === form.UNIT_NAME) || null}
+                onChange={(e, newValue) => {
+                  setForm((prevForm) => ({
+                    ...prevForm,
+                    UNIT_NAME: newValue ? newValue.UNIT_KEY : '',
+                  }));
+                }}
+                sx={DropInputSx}
                 inputProps={{
                   style: {
                     padding: '6px 8px',
@@ -1309,8 +1385,24 @@ const ProductMst = () => {
             flexDirection: { xs: 'column', sm: 'row', md: 'row' },
             justifyContent: 'space-between',
             gap: { xs: 1, sm: 1.5, md: 2 },
-            width: { xs: '100%', sm: '48%', md: '119.5%' }
+            width: { xs: '100%', sm: '48%', md: '100%' },
           }}>
+            <TextField
+              label="Mark.Dn Pur%"
+              variant="filled"
+              fullWidth
+              name=""
+              value={""}
+              onChange={handleInputChange}
+              disabled={isFormDisabled}
+              sx={textInputSx}
+              inputProps={{
+                style: {
+                  padding: '6px 8px',
+                  fontSize: '12px',
+                },
+              }}
+            />
             <TextField
               label="Mark Down Rt %"
               variant="filled"
@@ -1332,10 +1424,10 @@ const ProductMst = () => {
                 display: 'flex',
                 flexDirection: { xs: 'column', sm: 'row' },
                 gap: 1,
-                width: { xs: '100%', sm: '48%', md: '140%' },
+                width: { xs: '100%', sm: '48%', md: '209%' },
               }}
             >
-              <FormLabel sx={{ margin: '7px 14px 0px 10px', fontSize: '12px', fontWeight: 'bold', color: 'black' }} component="legend">Round Off</FormLabel>
+              <FormLabel sx={{ margin: '8px 14px 4px', fontSize: '14px', fontWeight: 'bold', color: 'black' }} component="legend">Round Off</FormLabel>
               <RadioGroup
                 row
                 name="RDOFF"
@@ -1344,17 +1436,17 @@ const ProductMst = () => {
                 value={form.RDOFF || ""}
               >
                 <FormControlLabel disabled={isFormDisabled}
-                  value="option1" control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
-                  label={<Typography sx={{ fontSize: '12px' }}>None</Typography>} />
+                  value="option1" control={<Radio sx={{ transform: 'scale(0.8)', padding: '4px' }} />}
+                  label={<Typography sx={{ fontSize: '14px' }}>None</Typography>} />
                 <FormControlLabel disabled={isFormDisabled}
-                  value="option2" control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
-                  label={<Typography sx={{ fontSize: '12px' }}>Nearest Re</Typography>} />
+                  value="option2" control={<Radio sx={{ transform: 'scale(0.8)', padding: '4px' }} />}
+                  label={<Typography sx={{ fontSize: '14px' }}>Nearest Re</Typography>} />
                 <FormControlLabel disabled={isFormDisabled}
-                  value="option3" control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
-                  label={<Typography sx={{ fontSize: '12px' }}>Rs. 5</Typography>} />
+                  value="option3" control={<Radio sx={{ transform: 'scale(0.8)', padding: '4px' }} />}
+                  label={<Typography sx={{ fontSize: '14px' }}>Rs. 5</Typography>} />
                 <FormControlLabel disabled={isFormDisabled}
-                  value="option4" control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
-                  label={<Typography sx={{ fontSize: '12px' }}>Rs. 10</Typography>} />
+                  value="option4" control={<Radio sx={{ transform: 'scale(0.8)', padding: '4px' }} />}
+                  label={<Typography sx={{ fontSize: '14px' }}>Rs. 10</Typography>} />
               </RadioGroup>
             </Box>
           </Box>
@@ -1363,7 +1455,8 @@ const ProductMst = () => {
             display: 'flex',
             flexDirection: { xs: 'column', sm: 'row', md: 'row' },
             justifyContent: 'space-between',
-            gap: { xs: 1, sm: 1, md: 2 },
+            gap: { xs: 1, sm: 1.5, md: 2 },
+            width: { xs: '100%', sm: '48%', md: '100%' }
           }}>
             <AutoVibe
               id="TAX_KEY"
@@ -1409,6 +1502,58 @@ const ProductMst = () => {
                 },
               }}
             />
+            <Box
+              sx={{
+                display: 'flex',
+                flexDirection: { xs: 'column', sm: 'row' },
+                gap: 1,
+                width: { xs: '100%', sm: '48%', md: '209%' },
+              }}
+            >
+              <AutoVibe
+                id=""
+                disabled={isFormDisabled || form.Excise_appl !== "1"}
+                options={options || []}
+                getOptionLabel={(option) => option}
+                label="Excise Tariff"
+                name=""
+                value={''}
+                onChange={handleInputChange}
+                sx={DropInputSx}
+                inputProps={{
+                  style: {
+                    padding: '6px 8px',
+                    fontSize: '12px',
+                  },
+                }}
+              />
+              <AutoVibe
+                id=""
+                disabled={isFormDisabled || form.Excise_appl !== "1"}
+                getOptionLabel={(option) => option || ''}
+                options={[]}
+                label="Excise"
+                name=""
+                value={''}
+                onChange={handleInputChange}
+                sx={DropInputSx}
+                inputProps={{
+                  style: {
+                    padding: '6px 8px',
+                    fontSize: '12px',
+                  },
+                }}
+              />
+            </Box>
+          </Box>
+
+          <Box sx={{
+            display: 'flex',
+            flexDirection: { xs: 'column', sm: 'row', md: 'row' },
+            justifyContent: 'space-between',
+            gap: { xs: 1, sm: 1, md: 2 },
+          }}>
+
           </Box>
 
           <Box sx={{
@@ -1419,14 +1564,19 @@ const ProductMst = () => {
             width: { xs: '100%', sm: '48%', md: '100%' },
           }}>
             <AutoVibe
-              id=""
-              disabled={isFormDisabled || form.Excise_appl !== "1"}
-              options={options || []}
-              getOptionLabel={(option) => option}
-              label="Excise Tariff"
-              name=""
-              value={''}
-              onChange={handleInputChange}
+              id="HSNCODE_KEY"
+              disabled={isFormDisabled}
+              getOptionLabel={(option) => option.HSN_CODE || ''}
+              options={HSNCODE}
+              label="HSN Code"
+              name="HSNCODE_KEY"
+              value={HSNCODE.find(option => option.HSNCODE_KEY === form.HSN_CODE) || null}
+              onChange={(e, newValue) => {
+                setForm((prevForm) => ({
+                  ...prevForm,
+                  HSN_CODE: newValue ? newValue.HSNCODE_KEY : '',
+                }));
+              }}
               sx={DropInputSx}
               inputProps={{
                 style: {
@@ -1437,10 +1587,10 @@ const ProductMst = () => {
             />
             <AutoVibe
               id=""
-              disabled={isFormDisabled || form.Excise_appl !== "1"}
+              disabled={isFormDisabled || form.QC_REQ === 'option2'}
               getOptionLabel={(option) => option || ''}
               options={[]}
-              label="Excise"
+              label="Qc SubGroup"
               name=""
               value={''}
               onChange={handleInputChange}
@@ -1460,79 +1610,21 @@ const ProductMst = () => {
                 width: { xs: '100%', sm: '48%', md: '209%' },
               }}
             >
-              <AutoVibe
-                id="HSNCODE_KEY"
-                disabled={isFormDisabled}
-                getOptionLabel={(option) => option.HSN_CODE || ''}
-                options={HSNCODE}
-                label="HSN Code"
-                name="HSNCODE_KEY"
-                value={HSNCODE.find(option => option.HSNCODE_KEY === form.HSN_CODE) || null}
-                onChange={(e, newValue) => {
-                  setForm((prevForm) => ({
-                    ...prevForm,
-                    HSN_CODE: newValue ? newValue.HSNCODE_KEY : '',
-                  }));
-                }}
-                sx={DropInputSx}
-                inputProps={{
-                  style: {
-                    padding: '6px 8px',
-                    fontSize: '12px',
-                  },
-                }}
-              />
-            </Box>
-          </Box>
-
-          <Box sx={{
-            display: 'flex',
-            flexDirection: { xs: 'column', sm: 'row', md: 'row' },
-            justifyContent: 'space-between',
-            gap: { xs: 1, sm: 1.5, md: 2 },
-            width: { xs: '100%', sm: '48%', md: '100%' }
-          }}>
-            <FormLabel sx={{ marginTop: '7px', fontSize: '12px', fontWeight: 'bold', color: 'black' }} component="legend">Qc Req</FormLabel>
-            <RadioGroup
-              row
-              name="QC_REQ"
-              onChange={handleInputChange}
-              disabled={isFormDisabled}
-              value={form.QC_REQ || "N"}
-              sx={{ position: 'relative', right: 110 }}
-            >
-              <FormControlLabel disabled={isFormDisabled}
-                value="option1" control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
-                label={<Typography sx={{ fontSize: '12px' }}>Yes</Typography>} />
-              <FormControlLabel disabled={isFormDisabled}
-                value="option2" control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
-                label={<Typography sx={{ fontSize: '12px' }}>No</Typography>} />
-            </RadioGroup>
-            <Box
-              sx={{
-                display: 'flex',
-                flexDirection: { xs: 'column', sm: 'row', md: 'row' },
-                gap: 1,
-                width: { xs: '100%', sm: '48%', md: '49%' },
-              }}
-            >
-              <AutoVibe
-                id=""
-                disabled={isFormDisabled || form.QC_REQ === 'option2'}
-                getOptionLabel={(option) => option || ''}
-                options={[]}
-                label="Qc SubGroup"
-                name=""
-                value={''}
+              <FormLabel sx={{ marginTop: '10px', fontSize: '14px', fontWeight: 'bold', color: 'black' }} component="legend">Qc Req</FormLabel>
+              <RadioGroup
+                row
+                name="QC_REQ"
                 onChange={handleInputChange}
-                sx={DropInputSx}
-                inputProps={{
-                  style: {
-                    padding: '6px 8px',
-                    fontSize: '12px',
-                  },
-                }}
-              />
+                disabled={isFormDisabled}
+                value={form.QC_REQ || "N"}
+              >
+                <FormControlLabel disabled={isFormDisabled}
+                  value="option1" control={<Radio sx={{ transform: 'scale(0.8)', padding: '4px' }} />}
+                  label={<Typography sx={{ fontSize: '14px' }}>Yes</Typography>} />
+                <FormControlLabel disabled={isFormDisabled}
+                  value="option2" control={<Radio sx={{ transform: 'scale(0.8)', padding: '4px' }} />}
+                  label={<Typography sx={{ fontSize: '14px' }}>No</Typography>} />
+              </RadioGroup>
             </Box>
           </Box>
 
@@ -1645,7 +1737,7 @@ const ProductMst = () => {
               />
             </Box>
 
-            <Box
+            {/* <Box
               sx={{
                 display: 'flex',
                 justifyContent: '',
@@ -1688,10 +1780,45 @@ const ProductMst = () => {
                   </Button>
                 </>
               )}
-            </Box>
+            </Box> */}
           </Box>
 
         </Box>
+
+        <Grid container alignItems="center"
+          justifyContent="center" spacing={1}
+          sx={{ marginInline: '20px', position: 'relative', top: -2 }}>
+          <Grid sx={{
+            width: { xs: '100%', sm: 'auto' },
+          }}>
+            <Stack direction="row" spacing={1}>
+              <PaginationButtons
+                mode={mode}
+                FORM_MODE={FORM_MODE}
+                currentKey={currentFGPRD_KEY}
+                onFirst={handleFirst}
+                onPrevious={handlePrevious}
+                onNext={handleNext}
+                onLast={handleLast}
+                sx={{ mt: 2 }}
+                buttonSx={Buttonsx}
+              />
+            </Stack>
+          </Grid>
+          <Grid>
+            <Stack direction="row" spacing={{ xs: 0.5, sm: 1 }}>
+              <CrudButtons
+                mode={mode}
+                onAdd={mode === "view" ? handleAdd : handleSubmit}
+                onEdit={mode === "view" ? handleEdit : handleCancel}
+                onView={handlePrint}
+                onDelete={handleDelete}
+                onExit={handleExit}
+                readOnlyMode={mode === "view"}
+              />
+            </Stack>
+          </Grid>
+        </Grid>
 
       </Box>
     </Box>
