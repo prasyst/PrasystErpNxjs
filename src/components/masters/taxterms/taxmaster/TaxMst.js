@@ -15,7 +15,7 @@ import { pdf } from '@react-pdf/renderer';
 import CrudButtons from '@/GlobalFunction/CrudButtons';
 import PrintTaxDt from './PrintTaxDt';
 import PaginationButtons from '@/GlobalFunction/PaginationButtons';
-import CustomAutocomplete from '@/GlobalFunction/CustomAutoComplete/CustomAutoComplete';
+import CustomAutocomplete from '@/GlobalFunction/CustomAutoComplete/CustomNew';
 
 const FORM_MODE = getFormMode();
 const TaxMst = () => {
@@ -57,9 +57,8 @@ const TaxMst = () => {
     const REMKRef = useRef(null);
 
     const SERIESRef = useRef(null);
-    const [mode, setMode] = useState(() => {
-        currentTAX_KEY ? FORM_MODE.read : FORM_MODE.add
-    });
+    const [mode, setMode] = useState(
+        currentTAX_KEY ? FORM_MODE.read : FORM_MODE.add);
     const [Status, setStatus] = useState("1");
     const FCYR_KEY = localStorage.getItem('FCYR_KEY');
     const CO_ID = localStorage.getItem('CO_ID');
@@ -73,8 +72,6 @@ const TaxMst = () => {
         { id: '0', name: 'test' },
         { id: '2', name: 'test2' },
     ];
-
-
     const handleChangeStatus = (event) => {
         const updatedStatus = event.target.checked ? "1" : "0";
         setStatus(updatedStatus);
@@ -97,8 +94,8 @@ const TaxMst = () => {
             const { data: { STATUS, DATA, RESPONSESTATUSCODE, MESSAGE } } = response;
             if (STATUS === 0 && Array.isArray(DATA) && RESPONSESTATUSCODE == 1) {
                 const taxData = DATA[0];
-                setForm({
-                    ...form,
+               setForm(prevForm => ({
+        ...prevForm,
                     TAX_KEY: taxData.TAX_KEY,
                     TAX_NAME: taxData.TAX_NAME,
                     TAX_ABRV: taxData.TAX_ABRV || '',
@@ -124,7 +121,7 @@ const TaxMst = () => {
                     AOT2_ACCLED_ID: taxData.AOT2_ACCLED_ID || '',
                     ACCLED_ID_17_5: taxData.ACCLED_ID_17_5 || '',
                     ACCLED_ID_NO_CLAIM: taxData.ACCLED_ID_NO_CLAIM || ''
-                });
+                  }));
                 setStatus(taxData.STATUS);
                 setCurrentTAX_KEY(taxData.TAX_KEY);
             } else {
@@ -136,7 +133,7 @@ const TaxMst = () => {
         } catch (err) {
             console.error(err);
         }
-    }, [CO_ID, form])
+    }, [CO_ID])
     const resetForm = () => {
         setForm({
             SearchByCd: '',
@@ -460,13 +457,13 @@ const TaxMst = () => {
     };
     return (
         <>
-            <Box sx={{ width: '100%', justifyContent: 'center', alignItems: 'flex-start', padding: '24px', boxSizing: 'border-box', marginTop: { xs: "30px", sm: "0px", md: '0px' } }}
+            <Box sx={{ width: '100%', justifyContent: 'center', alignItems: 'flex-start', padding: '24px', boxSizing: 'border-box', marginTop:0 }}
                 className="form-container">
                 <ToastContainer />
-                <Box sx={{ maxWidth: '1000px', boxShadow: '0px 2px 6px rgba(0, 0, 0, 0.1)', marginBlock: '10px' }} className="form_grid" >
+                <Box sx={{ maxWidth: '1000px', boxShadow: '0px 2px 6px rgba(0, 0, 0, 0.1)', marginBlock: '0px !important' }} className="form_grid" >
                     <Grid container alignItems="center"
-                        sx={{ marginTop: "10px", marginInline: '20px' }}>
-                        <Grid sx={{ flexGrow: 1 }}>
+                        sx={{ marginTop: "0px", marginInline: '20px' }}>
+                        <Grid sx={{ flexGrow: 1 ,marginTop: "10px", }}>
                             <Typography align="center" variant="h5">
                                 Tax Master
                             </Typography>
@@ -479,7 +476,7 @@ const TaxMst = () => {
                             flexDirection: 'column',
                             gap: { xs: 1.5, sm: 1.5, md: 1 },
                             marginInline: { xs: '5%', sm: '10%', md: '20%' },
-                            marginBlock: { xs: '15px', sm: '20px', md: '10px' },
+                            marginBlock: { xs: '15px', sm: '20px', md: '5px' },
                         }}
                     >
                         <Box sx={{ display: 'flex', justifyContent: 'end' }}>
@@ -575,7 +572,7 @@ const TaxMst = () => {
                                 value={form.TAXGRP_KEY}
                                 onChange={(value) => setForm({ ...form, TAXGRP_KEY: value })}
                                 disabled={true}
-                                sx={{ width: { xs: '100%', sm: '48%', md: '48%' } }}
+                                sx={{ width: { xs: '100%', sm: '48%', md: '100%' } }}
                             />
                             <CustomAutocomplete
                                 label="Tax Type"
@@ -583,7 +580,7 @@ const TaxMst = () => {
                                 value={form.TAX_TYPE}
                                 onChange={(value) => setForm({ ...form, TAX_TYPE: value })}
                                 disabled={true}
-                                sx={{ width: { xs: '100%', sm: '48%', md: '48%' } }}
+                                sx={{ width: { xs: '100%', sm: '48%', md: '100%' } }}
                             />
                         </Box>
                         {/* <Box
@@ -617,7 +614,7 @@ const TaxMst = () => {
                                 value={form.ACCLED_ID}
                                 onChange={(value) => setForm({ ...form, ACCLED_ID: value })}
                                 disabled={true}
-                                sx={{ width: { xs: '100%', sm: '48%', md: '48%' } }}
+                                sx={{ width: { xs: '100%', sm: '48%', md: '100%' } }}
                             />
                         </Box>
                         <Box
@@ -634,7 +631,7 @@ const TaxMst = () => {
                                 value={form.ACCLED_ID_17_5}
                                 onChange={(value) => setForm({ ...form, ACCLED_ID_17_5: value })}
                                 disabled={true}
-                                sx={{ width: { xs: '100%', sm: '48%', md: '48%' } }}
+                                sx={{ width: { xs: '100%', sm: '48%', md: '100%' } }}
                             />
                         </Box>
                         <Box
@@ -651,7 +648,7 @@ const TaxMst = () => {
                                 value={form.ACCLED_ID_NO_CLAIM}
                                 onChange={(value) => setForm({ ...form, ACCLED_ID_NO_CLAIM: value })}
                                 disabled={true}
-                                sx={{ width: { xs: '100%', sm: '48%', md: '48%' } }}
+                                sx={{ width: { xs: '100%', sm: '48%', md: '100%' } }}
                             />
                         </Box>
 
@@ -681,7 +678,7 @@ const TaxMst = () => {
                                 // value={form.TAX_FORM}
                                 // onChange={(value) => setForm({ ...form, TAX_FORM: value })}
                                 disabled={true}
-                                sx={{ width: { xs: '100%', sm: '48%', md: '48%' } }}
+                               sx={{ width: { xs: '100%', sm: '48%', md: '100%' } }}
                             />
                         </Box>
                         {/* Add On Taxes Section */}
@@ -713,28 +710,28 @@ const TaxMst = () => {
                                         <TableCell
                                             sx={{ width: '14%', padding: '0px', border: '1px solid #e0e0e0' }}
                                         >
-                                            <Typography variant="h6" sx={{ fontSize: '0.85rem', padding: 0, paddingLeft: '2px', margin: 0, fontWeight: 'bold', color: '#8A3324' }}>
+                                            <Typography variant="h6" sx={{ fontSize: '0.76rem', padding: 0, paddingLeft: '2px', margin: 0, fontWeight: 'bold', color: '#8A3324' }}>
                                                 Add On Taxes
                                             </Typography>
                                         </TableCell>
                                         <TableCell
                                             sx={{ width: '45%', padding: '4px', border: '1px solid #e0e0e0' }}
                                         >
-                                            <Typography variant="h6" sx={{ fontSize: '0.85rem', padding: 0, margin: 0, fontWeight: 'bold', }}>
+                                            <Typography variant="h6" sx={{ fontSize: '0.76rem', padding: 0, margin: 0, fontWeight: 'bold', }}>
                                                 Description
                                             </Typography>
                                         </TableCell>
                                         <TableCell
                                             sx={{ width: '10%', padding: '4px', border: '1px solid #e0e0e0' }}
                                         >
-                                            <Typography variant="h6" sx={{ fontSize: '0.85rem', padding: 0, margin: 0, fontWeight: 'bold' }}>
+                                            <Typography variant="h6" sx={{ fontSize: '0.76rem', padding: 0, margin: 0, fontWeight: 'bold' }}>
                                                 Rate%
                                             </Typography>
                                         </TableCell>
                                         <TableCell
                                             sx={{ width: '25%', padding: '4px', border: '1px solid #e0e0e0' }}
                                         >
-                                            <Typography variant="h6" sx={{ fontSize: '0.85rem', padding: 0, margin: 0, fontWeight: 'bold' }}>
+                                            <Typography variant="h6" sx={{ fontSize: '0.76rem', padding: 0, margin: 0, fontWeight: 'bold' }}>
                                                 Ledger
                                             </Typography>
                                         </TableCell>
@@ -744,7 +741,7 @@ const TaxMst = () => {
 
                                     <TableRow>
                                         <TableCell sx={{ width: '14%', padding: '4px', border: '1px solid #e0e0e0' }}>
-                                            <Typography sx={{ fontSize: '0.8rem', padding: 0, margin: 0, paddingLeft: '4px', fontWeight: 'bold' }}>
+                                            <Typography sx={{ fontSize: '0.76rem', padding: 0, margin: 0, paddingLeft: '4px', fontWeight: 'bold' }}>
                                                 AOT1
                                             </Typography>
                                         </TableCell>
@@ -846,26 +843,19 @@ const TaxMst = () => {
 
                                         </TableCell>
                                     </TableRow>
-
                                     <TableRow>
                                         <TableCell sx={{ width: '14%', padding: '4px', border: '1px solid #e0e0e0' }}>
-                                            <Typography sx={{ fontSize: '0.8rem', padding: 0, paddingLeft: '4px', margin: 0, fontWeight: 'bold' }}>
+                                            <Typography sx={{ fontSize: '0.76rem', padding: 0, paddingLeft: '4px', margin: 0, fontWeight: 'bold' }}>
                                                 AOT2
                                             </Typography>
                                         </TableCell>
-                                        {/* <TableCell sx={{ width: '45%', padding: '4px', border: '1px solid #e0e0e0' }}>
-                                            <Typography sx={{ fontSize: '0.9rem', padding: 0, margin: 0 }}>
-                                                {form.AOT2_D}
-                                            </Typography>
-                                        </TableCell> */}
-
                                         <TableCell sx={{ width: '45%', padding: '4px', border: '1px solid #e0e0e0' }}>
                                             <TextField
                                                 value={form.AOT2_D || ''}
                                                 onChange={(e) => setForm({ ...form, AOT2_D: e.target.value })}
                                                 variant="standard"
                                                 fullWidth
-                                                disabled={isReadOnly} // Optional, use this if you're toggling read mode
+                                                disabled={isReadOnly}
                                                 InputProps={{
                                                     disableUnderline: true,
                                                     sx: {
@@ -881,19 +871,13 @@ const TaxMst = () => {
                                                 }}
                                             />
                                         </TableCell>
-
-                                        {/* <TableCell sx={{ width: '10%', padding: '4px', border: '1px solid #e0e0e0' }}>
-                                            <Typography sx={{ fontSize: '0.9rem', padding: 0, margin: 0 }}>
-                                                {form.AOT2_R}
-                                            </Typography>
-                                        </TableCell> */}
                                         <TableCell sx={{ width: '10%', padding: '4px', border: '1px solid #e0e0e0' }}>
                                             <TextField
                                                 value={form.AOT2_R || ''}
                                                 onChange={(e) => setForm({ ...form, AOT2_R: e.target.value })}
                                                 variant="standard"
                                                 fullWidth
-                                                disabled={isReadOnly} // Optional read-only handling
+                                                disabled={isReadOnly}
                                                 InputProps={{
                                                     disableUnderline: true,
                                                     sx: {
@@ -911,9 +895,6 @@ const TaxMst = () => {
                                         </TableCell>
 
                                         <TableCell sx={{ width: '25%', padding: '4px', border: '1px solid #e0e0e0' }}>
-                                            {/* <Typography sx={{ fontSize: '0.9rem', padding: 0, margin: 0 }}>
-                                                {form.AOT2_L}
-                                            </Typography> */}
                                             <TextField
                                                 select
                                                 value={form.AOT2_ACCLED_ID}
@@ -921,9 +902,9 @@ const TaxMst = () => {
                                                 fullWidth
                                                 disabled={true}
                                                 size="small"
-                                                variant="standard" // Removes outline
+                                                variant="standard"
                                                 InputProps={{
-                                                    disableUnderline: true, // Removes the underline
+                                                    disableUnderline: true,
                                                     sx: {
                                                         fontSize: '0.9rem',
                                                         padding: 0,
@@ -939,11 +920,6 @@ const TaxMst = () => {
                                                     fontSize: '0.9rem',
                                                 }}
                                             >
-                                                {/* {ledgerOptions.map((option) => (
-                                                    <MenuItem key={option} value={option}>
-                                                        {option}
-                                                    </MenuItem>
-                                                ))} */}
                                             </TextField>
                                         </TableCell>
                                     </TableRow>
@@ -968,144 +944,142 @@ const TaxMst = () => {
                                 value={form.REMK}
                                 onChange={(e) => setForm({ ...form, REMK: e.target.value })}
                             />
-                        </Box>
-                       
+                       </Box>
                     </Box>
-                     <Box
+                    <Box
+                        sx={{
+                            display: 'flex',
+                            justifyContent: 'center',
+                            flexDirection: { xs: 'column', sm: 'row', md: 'row' },
+                            gap: { xs: 0.5, sm: 0.5, md: 1 },
+                            width: '100%',
+                            maxWidth: '100%',
+                            flexWrap: 'nowrap',
+                            overflowX: 'auto',
+
+                        }}
+                    >
+                        <FormControlLabel
+                            control={
+                                <Checkbox
+                                    disabled={mode === FORM_MODE.read}
+                                    checked={form.CHG_TAXABLE === "1"}
+                                    onChange={(e) => {
+                                        setForm((prevForm) => ({
+                                            ...prevForm,
+                                            CHG_TAXABLE: e.target.checked ? "1" : "0",
+                                        }));
+                                    }}
+                                    size="small"
+                                    sx={{
+                                        '&.Mui-checked': {
+                                            color: mode === FORM_MODE.read ? 'rgba(0, 0, 0, 0.38)' : '#39ace2',
+                                        },
+                                        p: '4px',
+                                        '& .MuiSvgIcon-root': {
+                                            fontSize: '20px',
+                                        },
+                                    }}
+                                />
+                            }
+                            label="Allow to Change Taxable"
                             sx={{
-                                display: 'flex',
-                                justifyContent: 'center',
-                                flexDirection: { xs: 'column', sm: 'row', md: 'row' },
-                                gap: { xs: 0.5, sm: 0.5, md: 1 },
-                                 width: '100%',
-    maxWidth: '100%',
-                                flexWrap: 'nowrap',
-                                overflowX: 'auto',
-
+                                '& .MuiFormControlLabel-label': {
+                                    fontSize: '15px',
+                                },
+                                m: 0,
                             }}
-                        >
-                            <FormControlLabel
-                                control={
-                                    <Checkbox
-                                        disabled={mode === FORM_MODE.read}
-                                        checked={form.CHG_TAXABLE === "1"}
-                                        onChange={(e) => {
-                                            setForm((prevForm) => ({
-                                                ...prevForm,
-                                                CHG_TAXABLE: e.target.checked ? "1" : "0",
-                                            }));
-                                        }}
+                        />
+                        <FormControlLabel
+                            control={
+                                <Checkbox
+                                    disabled={mode === FORM_MODE.read}
+                                    checked={form.ROFF === "1"}
+                                    onChange={(e) => {
+                                        setForm((prevForm) => ({
+                                            ...prevForm,
+                                            ROFF: e.target.checked ? "1" : "0",
+                                        }));
+                                    }}
+                                    size="small"
+                                    sx={{
+                                        '&.Mui-checked': {
+                                            color: mode === FORM_MODE.read ? 'rgba(0, 0, 0, 0.38)' : '#39ace2',
+                                        },
+                                        p: '4px',
+                                        '& .MuiSvgIcon-root': {
+                                            fontSize: '20px',
+                                        },
+                                    }}
+                                />
+                            }
+                            label="Round Off"
+                            sx={{
+                                '& .MuiFormControlLabel-label': {
+                                    fontSize: '15px',
+                                },
+                                m: 0,
+                            }}
+                        />
 
-                                        size="small"
-                                        sx={{
-                                            '&.Mui-checked': {
-                                                color: mode === FORM_MODE.read ? 'rgba(0, 0, 0, 0.38)' : '#39ace2',
-                                            },
-                                            p: '4px',
-                                            '& .MuiSvgIcon-root': {
-                                                fontSize: '20px',
-                                            },
-                                        }}
-                                    />
-                                }
-                                label="Allow to Change Taxable"
-                                sx={{
-                                    '& .MuiFormControlLabel-label': {
-                                        fontSize: '15px',
-                                    },
-                                    m: 0,
-                                }}
-                            />
-                            <FormControlLabel
-                                control={
-                                    <Checkbox
-                                        disabled={mode === FORM_MODE.read}
-                                        checked={form.ROFF === "1"}
-                                        onChange={(e) => {
-                                            setForm((prevForm) => ({
-                                                ...prevForm,
-                                                ROFF: e.target.checked ? "1" : "0",
-                                            }));
-                                        }}
-                                        size="small"
-                                        sx={{
-                                            '&.Mui-checked': {
-                                                color: mode === FORM_MODE.read ? 'rgba(0, 0, 0, 0.38)' : '#39ace2',
-                                            },
-                                            p: '4px',
-                                            '& .MuiSvgIcon-root': {
-                                                fontSize: '20px',
-                                            },
-                                        }}
-                                    />
-                                }
-                                label="Round Off"
-                                sx={{
-                                    '& .MuiFormControlLabel-label': {
-                                        fontSize: '15px',
-                                    },
-                                    m: 0,
-                                }}
-                            />
-
-                            <FormControlLabel
-                                control={
-                                    <Checkbox
-                                        disabled={mode === FORM_MODE.read}
-                                        checked={form.NOSETOFF === "1"}
-                                        onChange={(e) => {
-                                            setForm((prevForm) => ({
-                                                ...prevForm,
-                                                NOSETOFF: e.target.checked ? "1" : "0",
-                                            }));
-                                        }}
-                                        size="small"
-                                        sx={{
-                                            '&.Mui-checked': {
-                                                color: mode === FORM_MODE.read ? 'rgba(0, 0, 0, 0.38)' : '#39ace2',
-                                            },
-                                            p: '4px',
-                                            '& .MuiSvgIcon-root': {
-                                                fontSize: '20px',
-                                            },
-                                        }}
-                                    />
-                                }
-                                label="No Set Off Part Of Purchase"
-                                sx={{
-                                    '& .MuiFormControlLabel-label': {
-                                        fontSize: '15px',
-                                    },
-                                    m: 0,
-                                }}
-                            />
-                            <FormControlLabel
-                                control={
-                                    <Checkbox
-                                        disabled={mode === FORM_MODE.read}
-                                        checked={Status === '1'}
-                                        onChange={handleChangeStatus}
-                                        size="small"
-                                        sx={{
-                                            '&.Mui-checked': {
-                                                color: mode === FORM_MODE.read ? 'rgba(0, 0, 0, 0.38)' : '#39ace2',
-                                            },
-                                            p: '4px',
-                                            '& .MuiSvgIcon-root': {
-                                                fontSize: '20px',
-                                            },
-                                        }}
-                                    />
-                                }
-                                label="Active"
-                                sx={{
-                                    '& .MuiFormControlLabel-label': {
-                                        fontSize: '15px',
-                                    },
-                                    m: 0,
-                                }}
-                            />
-                        </Box>
+                        <FormControlLabel
+                            control={
+                                <Checkbox
+                                    disabled={mode === FORM_MODE.read}
+                                    checked={form.NOSETOFF === "1"}
+                                    onChange={(e) => {
+                                        setForm((prevForm) => ({
+                                            ...prevForm,
+                                            NOSETOFF: e.target.checked ? "1" : "0",
+                                        }));
+                                    }}
+                                    size="small"
+                                    sx={{
+                                        '&.Mui-checked': {
+                                            color: mode === FORM_MODE.read ? 'rgba(0, 0, 0, 0.38)' : '#39ace2',
+                                        },
+                                        p: '4px',
+                                        '& .MuiSvgIcon-root': {
+                                            fontSize: '20px',
+                                        },
+                                    }}
+                                />
+                            }
+                            label="No Set Off Part Of Purchase"
+                            sx={{
+                                '& .MuiFormControlLabel-label': {
+                                    fontSize: '15px',
+                                },
+                                m: 0,
+                            }}
+                        />
+                        <FormControlLabel
+                            control={
+                                <Checkbox
+                                    disabled={mode === FORM_MODE.read}
+                                    checked={Status === '1'}
+                                    onChange={handleChangeStatus}
+                                    size="small"
+                                    sx={{
+                                        '&.Mui-checked': {
+                                            color: mode === FORM_MODE.read ? 'rgba(0, 0, 0, 0.38)' : '#39ace2',
+                                        },
+                                        p: '4px',
+                                        '& .MuiSvgIcon-root': {
+                                            fontSize: '20px',
+                                        },
+                                    }}
+                                />
+                            }
+                            label="Active"
+                            sx={{
+                                '& .MuiFormControlLabel-label': {
+                                    fontSize: '15px',
+                                },
+                                m: 0,
+                            }}
+                        />
+                    </Box>
                     <Grid container alignItems="center"
                         justifyContent="center" spacing={1} sx={{ marginTop: "10px", marginInline: '20px' }}>
                         <Grid sx={{

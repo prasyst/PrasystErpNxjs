@@ -116,7 +116,7 @@ body {
 
 .form-container {
   background-color: rgb(236, 238, 240);
-  min-height: 100vh;
+  /* min-height: 100vh;
   width: 100%;
   display: flex;
   justify-content: center;
@@ -124,15 +124,18 @@ body {
   margin: 0 !important;
   padding: 0 !important;
   overflow: hidden;
-  box-sizing: border-box;
+  box-sizing: border-box; */
+
+    /* border: 2px solid red; */
 }
 
 .form_grid {
   width: 80% !important;
   height: auto;
-  margin: auto !important;
+  margin-block: 0 !important;
+  margin-inline: auto ;
   border-radius: 12px;
-  padding: 0px 20px 20px 20px;
+  padding: 0px 0px 10px 0px;
   background-color: #fff;
   transition: all 0.3s ease-in-out;
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1);
@@ -200,11 +203,8 @@ body {
 .custom-textfield .MuiFilledInput-root.Mui-disabled {
   background-color: transparent !important;
 }
-
-
-
-
-
+   
+/* 
 button,
 .MuiButtonBase-root {
   transition: all 0.3s ease !important;
@@ -219,13 +219,6 @@ button:hover,
   transform: translateY(-1px);
 }
 
-/* .form_grid {
-  background-color: #ffffff;
-  border-radius: 12px;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1);
-  padding: 20px 30px 30px;
-  transition: all 0.3s ease-in-out;
-} */
 .MuiTypography-h5 {
   font-weight: 600;
   color: #0d47a1;
@@ -272,4 +265,4 @@ button:hover,
 .search-input .MuiFilledInput-root.Mui-focused {
   border-color: #0288d1;
   box-shadow: 0 0 0 2px rgba(2, 136, 209, 0.2);
-}
+} */
