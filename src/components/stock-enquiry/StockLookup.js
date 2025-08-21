@@ -416,8 +416,34 @@ import axiosInstance from '../../lib/axios';
 import ReusableTable from '../../components/datatable/ReusableTable';
 import { useRouter } from 'next/navigation';
 
-// Column definitions for AG Grid
+// Column definitions for AG Grid with Serial No and Checkbox
 const columnDefs = [
+  { 
+    headerName: "Select", 
+    width: 30,
+    checkboxSelection: true,
+    headerCheckboxSelection: true,
+    pinned: 'left',
+    lockPosition: true,
+    suppressMenu: true,
+    sortable: false,
+    filter: false,
+    resizable: false
+  },
+  // { 
+  //   field: "serialNo", 
+  //   headerName: "S.No", 
+  //   width: 30,
+  //   pinned: 'left',
+  //   lockPosition: true,
+  //   suppressMenu: true,
+  //   sortable: false,
+  //   filter: false,
+  //   resizable: false,
+  //   valueGetter: (params) => {
+  //     return params.node.rowIndex + 1;
+  //   }
+  // },
   { 
     field: "ORDBK_NO", 
     headerName: "ORDER NO", 
@@ -464,25 +490,19 @@ const columnDefs = [
     field: "QTY", 
     headerName: "QUANTITY", 
     width: 120,
-    // type: "numericColumn",
     filter: 'agNumberColumnFilter',
-    // cellStyle: { textAlign: 'right' }
   },
   { 
     field: "BAL_QTY", 
     headerName: "BALANCE QTY", 
     width: 130,
-    // type: "numericColumn",
     filter: 'agNumberColumnFilter',
-    // cellStyle: { textAlign: 'right' }
   },
   { 
     field: "AMT", 
     headerName: "AMOUNT", 
     width: 120,
-    // type: "numericColumn",
     filter: 'agNumberColumnFilter',
-    // cellStyle: { textAlign: 'right' },
     valueFormatter: (params) => {
       if (params.value != null) {
         return new Intl.NumberFormat('en-IN', {
@@ -504,6 +524,7 @@ export default function StockLookup() {
   const [partySearchResults, setPartySearchResults] = useState([]);
   const [isCustomer, setIsCustomer] = useState(false);
   const [partyName, setPartyName] = useState("");
+  const [selectedRows, setSelectedRows] = useState([]);
   const [form, setForm] = useState({
     PARTY_KEY: "",
     PARTYDTL_ID: "",
@@ -553,6 +574,23 @@ export default function StockLookup() {
     }
   };
 
+  // Fetch party details/branches when party is selected
+  const fetchPartyDetails = async (partyKey) => {
+    try {
+      const response = await axiosInstance.post("Party/GetPartyDtl_By_PartyKey", {
+        PARTY_KEY: partyKey
+      });
+      if (response.data.STATUS === 0 && Array.isArray(response.data.DATA)) {
+        setPartyDtls(response.data.DATA);
+      } else {
+        setPartyDtls([]);
+      }
+    } catch (error) {
+      console.error("Error fetching party details:", error);
+      setPartyDtls([]);
+    }
+  };
+
   const debouncedFetch = useCallback(debounce(fetchPartiesByName, 300), []);
 
   const handleClick = () => {
@@ -569,6 +607,7 @@ export default function StockLookup() {
         Flag: "",
         PARTY_KEY: ""
       });
+      console.log("my response ", response.data.DATA[1].PARTY_NAME)
 
       const { data: { STATUS, DATA } } = response;
       if (STATUS === 0 && Array.isArray(DATA)) {
@@ -593,12 +632,17 @@ export default function StockLookup() {
 
   const handleRowClick = useCallback((event) => {
     console.log('Row clicked:', event.data);
-    // Add your row click logic here
   }, []);
 
   const handleRowDoubleClick = useCallback((event) => {
     console.log('Row double clicked:', event.data);
-    // Add your double click logic here - maybe navigate to detail page
+  }, []);
+
+  const handleSelectionChanged = useCallback((event) => {
+    const selectedNodes = event.api.getSelectedNodes();
+    const selectedData = selectedNodes.map(node => node.data);
+    setSelectedRows(selectedData);
+    console.log('Selected rows:', selectedData);
   }, []);
 
   const addButtonStyles = {
@@ -657,8 +701,15 @@ export default function StockLookup() {
                       setForm(prev => ({
                         ...prev,
                         PARTY_KEY: newValue?.PARTY_KEY || '',
-                        PARTY_NAME: newValue?.PARTY_NAME || ''
+                        PARTY_NAME: newValue?.PARTY_NAME || '',
+                        PARTYDTL_ID: '' // Reset branch when party changes
                       }));
+                      // Fetch branches/party details when party is selected
+                      if (newValue?.PARTY_KEY) {
+                        fetchPartyDetails(newValue.PARTY_KEY);
+                      } else {
+                        setPartyDtls([]);
+                      }
                     }}
                     onInputChange={(event, newInputValue) => {
                       setSearchTerm(newInputValue);
@@ -747,37 +798,41 @@ export default function StockLookup() {
               <CircularProgress />
             </div>
           ) : (
-           <ReusableTable
-  columnDefs={columnDefs}
-  rowData={rows}
-  height="100%"
-  theme="ag-theme-quartz"
-  isDarkMode={false}
-  pagination={true}
-  paginationPageSize={25}
-  paginationPageSizeSelector={[25, 50, 100, 250, 500, 1000]}
-  quickFilter={true}
-  onRowClick={handleRowClick}
-  onRowDoubleClick={handleRowDoubleClick}
-  loading={isLoading}
-  enableExport={true}
-  compactMode={true} // Enable compact mode for tighter rows
-   rowHeight={24} 
-  defaultColDef={{
-    resizable: true,
-    sortable: true,
-    filter: true,
-    flex: 1,
-    minWidth: 100
-  }}
-  customGridOptions={{
-    suppressRowClickSelection: false,
-    rowSelection: 'single',
-    animateRows: true,
-    enableCellTextSelection: true,
-    ensureDomOrder: true
-  }}
-/>
+            <ReusableTable
+              columnDefs={columnDefs}
+              rowData={rows}
+              height="100%"
+              theme="ag-theme-quartz"
+              isDarkMode={false}
+              pagination={true}
+              paginationPageSize={25}
+              paginationPageSizeSelector={[25, 50, 100, 250, 500, 1000]}
+              quickFilter={true}
+              onRowClick={handleRowClick}
+              onRowDoubleClick={handleRowDoubleClick}
+              onSelectionChanged={handleSelectionChanged}
+              loading={isLoading}
+              enableExport={true}
+              exportSelectedOnly={true} // New prop for exporting selected rows only
+              selectedRows={selectedRows} // Pass selected rows to table component
+              enableCheckbox={true} // New prop to enable checkbox
+              compactMode={true}
+              rowHeight={24} 
+              defaultColDef={{
+                resizable: true,
+                sortable: true,
+                filter: true,
+                flex: 1,
+                minWidth: 100
+              }}
+              customGridOptions={{
+                suppressRowClickSelection: true, // Prevent row selection on click
+                rowSelection: 'multiple',
+                animateRows: true,
+                enableCellTextSelection: true,
+                ensureDomOrder: true
+              }}
+            />
           )}
         </div>
       </div>

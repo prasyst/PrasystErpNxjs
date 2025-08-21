@@ -203,9 +203,7 @@ body {
 .custom-textfield .MuiFilledInput-root.Mui-disabled {
   background-color: transparent !important;
 }
-   
-/* 
-button,
+
 .MuiButtonBase-root {
   transition: all 0.3s ease !important;
   border-radius: 6px !important;
@@ -217,9 +215,19 @@ button:hover,
   background-color: #e0f7fa !important;
   color: #1976d2 !important;
   transform: translateY(-1px);
-}
+} */
 
 .MuiTypography-h5 {
+
+/* .form_grid {
+  background-color: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1);
+  padding: 20px 30px 30px;
+  transition: all 0.3s ease-in-out;
+} */
+/* .MuiTypography-h5 {
+
   font-weight: 600;
   color: #0d47a1;
   margin-bottom: 10px;
@@ -265,4 +273,17 @@ button:hover,
 .search-input .MuiFilledInput-root.Mui-focused {
   border-color: #0288d1;
   box-shadow: 0 0 0 2px rgba(2, 136, 209, 0.2);
-} */
+
+
+.ag-cell.ag-cell-last-left-pinned:not(.ag-cell-range-right,.ag-cell-range-single-cell,.ag-cell-focus:not(.ag-cell-range-selected):focus-within)
+ {
+    border-right: none !important;
+}
+
+.ag-cell-focus:not(.ag-cell-range-selected):focus-within, .ag-cell-range-single-cell, .ag-cell-range-single-cell.ag-cell-range-handle, .ag-context-menu-open .ag-cell-focus:not(.ag-cell-range-selected), .ag-context-menu-open .ag-full-width-row.ag-row-focus .ag-cell-wrapper.ag-row-group, .ag-full-width-row.ag-row-focus:focus .ag-cell-wrapper.ag-row-group {
+    border: none !important;
+    border-color: none !important;
+    border-style: none !important;
+    outline: none !important;
+}
+

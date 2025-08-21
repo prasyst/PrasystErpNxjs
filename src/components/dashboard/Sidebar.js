@@ -15,7 +15,10 @@ import {
 } from 'react-icons/md';
 
 import { FaBoxOpen, FaBuilding, FaTruck, FaUserTag, FaHandshake, FaBalanceScale } from 'react-icons/fa';
+import { FiUser } from 'react-icons/fi';
 import { AiOutlineUsergroupAdd, AiOutlineNodeIndex } from 'react-icons/ai';
+import { FaBoxes } from 'react-icons/fa';
+import { FaUserTie } from "react-icons/fa";
 
 const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
   const { theme } = useTheme();
@@ -84,11 +87,11 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
           icon: MdPeopleAlt,
           path: '/masters/customers',
           children: [
-            { name: 'Debtors/Customers', icon: MdPeople, path: '/masters/customers/debtors' },
+            { name: 'Debtors/Customers', icon: MdPeople, path: '/masters/customers' },
             { name: 'Category (For Rate)', icon: MdCategory, path: '/masters/customers/category' },
             { name: 'Customer Group', icon: AiOutlineUsergroupAdd, path: '/masters/customers/group' },
             { name: 'Consignee', icon: MdPersonAdd, path: '/masters/customers/consignee' },
-            { name: 'Party Class Master', icon: MdClass, path: '/masters/customers' },
+            { name: 'Party Class Master', icon: MdClass, path: '/masters/customers/debtors' },
             { name: 'Party Wise Rate List', icon: MdLocalOffer, path: '/masters/customers/rate-list' },
             { name: 'Party Brand Broker', icon: MdStars, path: '/masters/customers/brand-broker' },
             { name: 'Party Rating Update', icon: MdRateReview, path: '/masters/customers/rating' },
@@ -151,7 +154,9 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
         },
       ],
     },
-    { name: 'Customers', icon: MdPeople, path: '#' },
+    { name: 'Accounts', icon: FiUser, path: '#' },
+    { name: 'Inventory', icon: FaBoxes, path: '#' },
+    { name: 'HR/PayRoll', icon: FaUserTie, path: '#' },
     { name: 'Reports', icon: MdAnalytics, path: '#' },
     { name: 'Settings', icon: MdSettings, path: '#' },
   ];
