@@ -1,10 +1,10 @@
 'use client'
 import React from 'react'
 
-const creditorsSuppliersTable = () => {
+const CreditorsSuppliersTable = () => {
   return (
     <div>creditorsSuppliersTable</div>
   )
 }
 
-export default creditorsSuppliersTable;
+export default CreditorsSuppliersTable;

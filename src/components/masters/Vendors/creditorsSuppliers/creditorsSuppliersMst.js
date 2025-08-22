@@ -44,7 +44,7 @@ const steps = ["Company Details", "Branch Details", "Terms Details"];
 
 const FORM_MODE = getFormMode();
 
-const creditorsSuppliersMst = () => {
+const CreditorsSuppliersMst = () => {
 
   const [tabIndex, setTabIndex] = useState(0);
 
@@ -224,4 +224,4 @@ const creditorsSuppliersMst = () => {
   );
 };
 
-export default creditorsSuppliersMst;
+export default CreditorsSuppliersMst;
