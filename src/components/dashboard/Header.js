@@ -98,7 +98,7 @@ const Header = ({ isSidebarCollapsed }) => {
       </div>
 
       <div className="flex items-center gap-4 relative">
-        <button 
+        {/* <button 
           onClick={toggleTheme}
           style={{
             background: 'none',
@@ -115,8 +115,8 @@ const Header = ({ isSidebarCollapsed }) => {
           }}
           className="hover:bg-opacity-10 hover:bg-white"
         >
-          {/* {theme === 'light' ? '🌙' : '☀️'} */}
-        </button>
+          {theme === 'light' ? '🌙' : '☀️'}
+        </button> */}
 
         <div 
           style={{
