@@ -79,7 +79,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
           children: [
             { name: 'Broker', icon: FaHandshake, path: '#' },
             { name: 'Transporter', icon: MdLocalShipping, path: '/#' },
-            { name: 'Creditors/Suppliers', icon: FaUserTag, path: '#' },
+            { name: 'Creditors/Suppliers', icon: FaUserTag, path: '/masters/vendors' },
           ],
         },
         {

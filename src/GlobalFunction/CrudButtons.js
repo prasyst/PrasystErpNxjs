@@ -1,4 +1,3 @@
-
 'use client'
 import React from 'react';
 import { Button, Tooltip, Box } from '@mui/material';
@@ -9,6 +8,7 @@ import PrintIcon from '@mui/icons-material/Print';
 import ExitToAppIcon from '@mui/icons-material/ExitToApp';
 import SaveIcon from '@mui/icons-material/Save';
 import CancelIcon from '@mui/icons-material/Cancel';
+import SearchIcon from '@mui/icons-material/Search';
 
 const CrudButtons = ({
     onAdd,
@@ -16,12 +16,14 @@ const CrudButtons = ({
     onDelete,
     onView,
     onExit,
+    onSearch,
     readOnlyMode,
     hideAdd = false,
     hideEdit = false,
     hideDelete = false,
     hideView = false,
-    hideExit = false
+    hideExit = false,
+    hideSearch = false
 }) => {
     const buttonSx = {
         backgroundColor: '#39ace2',
@@ -105,6 +107,20 @@ const CrudButtons = ({
                 </Tooltip>
             )}
 
+            {!hideSearch && (
+                <Tooltip title="Search">
+                    <Button
+                        size="small"
+                        variant="contained"
+                        sx={buttonSx}
+                        onClick={onSearch}
+                        disabled={!readOnlyMode}
+                    >
+                        <SearchIcon />
+                    </Button>
+                </Tooltip>
+            )}
+
             {/* Position 5: Exit (always shown, disabled in edit/add mode) */}
             {!hideExit && (
                 <Tooltip title="Exit">
@@ -124,7 +140,4 @@ const CrudButtons = ({
 };
 
 export default CrudButtons;
-
-
-
 
