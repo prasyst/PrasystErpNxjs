@@ -24,26 +24,130 @@ import AddIcon from "@mui/icons-material/Add";
 import SearchIcon from '@mui/icons-material/Search';
 import { ClickAwayListener } from "@mui/material";
 import axiosInstance from '../../lib/axios';
-import ReusableHandsontable from '../datatable/ReusableHandsontable';
-
+import ReusableTable, { getCustomDateFilter } from '../datatable/ReusableTable';
 import { useRouter } from 'next/navigation';
 import { toast } from 'react-toastify';
 import ConfirmModal from './ConfirmModal';
 
-const handsontableColumns = [
-  { field: "FGCAT_NAME", headerName: "Category", width: 140, type: "text", readOnly: true },
-  { field: "FGPRD_ABRV", headerName: "Product", width: 200, type: "text", readOnly: true },
-  { field: "COLLECTION_NAME", headerName: "Series", width: 130, type: "text", readOnly: true },
-  { field: "FGSTYLE_CODE", headerName: "StyleCode", width: 130, type: "text", readOnly: true },
-  { field: "FGSTYLE_NAME", headerName: "Style", width: 130, type: "text", readOnly: true },
-  { field: "FGSHADE_NAME", headerName: "Shade", width: 130, type: "text", readOnly: true },
-  { field: "STYSIZE_NAME", headerName: "Size", width: 130, type: "text", readOnly: true },
-  { field: "PACK_QTY", headerName: "PackOf", width: 130, type: "text", readOnly: true },
-  { field: "ORD_QTY", headerName: "OrdQty", width: 130, type: "text", readOnly: false },
-  { field: "WEIGHT", headerName: "PerBox", width: 130, type: "text", readOnly: true },
-  { field: "MRP", headerName: "MRP", width: 130, type: "text", readOnly: true },
-  { field: "BARCODE", headerName: "Barcode", width: 130, type: "text", readOnly: true },
-  { field: "EAN_CODE", headerName: "EAN", width: 130, type: "text", readOnly: true },
+// AG Grid Column Definitions
+const columnDefs = [
+  { 
+    headerName: "Select", 
+    width: 50, 
+    maxWidth: 40, 
+    checkboxSelection: true,
+    headerCheckboxSelection: true,
+    lockPosition: true,
+    suppressMenu: true,
+    sortable: false,
+    filter: false,
+    resizable: false,
+    headerClass: 'checkbox-header'
+  },
+  { 
+    field: "FGCAT_NAME", 
+    headerName: "Category", 
+    width: 140,
+    filter: true,
+    sortable: true
+  },
+  { 
+    field: "FGPRD_ABRV", 
+    headerName: "Product", 
+    width: 200,
+    filter: true,
+    sortable: true
+  },
+  { 
+    field: "COLLECTION_NAME", 
+    headerName: "Series", 
+    width: 130,
+    filter: true,
+    sortable: true
+  },
+  { 
+    field: "FGSTYLE_CODE", 
+    headerName: "StyleCode", 
+    width: 130,
+    filter: true,
+    sortable: true
+  },
+  { 
+    field: "FGSTYLE_NAME", 
+    headerName: "Style", 
+    width: 130,
+    filter: true,
+    sortable: true
+  },
+  { 
+    field: "FGSHADE_NAME", 
+    headerName: "Shade", 
+    width: 130,
+    filter: true,
+    sortable: true
+  },
+  { 
+    field: "STYSIZE_NAME", 
+    headerName: "Size", 
+    width: 130,
+    filter: true,
+    sortable: true
+  },
+  { 
+    field: "PACK_QTY", 
+    headerName: "PackOf", 
+    width: 130,
+    filter: 'agNumberColumnFilter',
+    sortable: true
+  },
+  { 
+    field: "ORD_QTY", 
+    headerName: "OrdQty", 
+    width: 130,
+    filter: 'agNumberColumnFilter',
+    sortable: true,
+    editable: true,
+    cellRenderer: 'agAnimateShowChangeCellRenderer',
+    cellStyle: { backgroundColor: '#f5f5f5' }
+  },
+  { 
+    field: "WEIGHT", 
+    headerName: "PerBox", 
+    width: 130,
+    filter: 'agNumberColumnFilter',
+    sortable: true
+  },
+  { 
+    field: "MRP", 
+    headerName: "MRP", 
+    width: 130,
+    filter: 'agNumberColumnFilter',
+    sortable: true,
+    valueFormatter: (params) => {
+      if (params.value != null) {
+        return new Intl.NumberFormat('en-IN', {
+          style: 'currency',
+          currency: 'INR',
+          minimumFractionDigits: 2
+        }).format(params.value);
+      }
+      return '';
+    }
+  },
+  { 
+    field: "BARCODE", 
+    headerName: "Barcode", 
+    width: 130,
+    filter: true,
+    sortable: true
+  },
+  { 
+    field: "EAN_CODE", 
+    headerName: "EAN", 
+    width: 130,
+    filter: true,
+    sortable: true
+  },
 ];
 
 const filterTypeToFlag = {
@@ -62,27 +166,13 @@ export default function StockInquiryTable() {
   
   // State management
   const [isLoading, setIsLoading] = useState(true);
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(25);
   const [tableData, setTableData] = useState([]);
-  const [filters, setFilters] = useState({});
-  const [searchTerm, setSearchTerm] = useState("");
   const [partyDtls, setPartyDtls] = useState([]);
-  const [showSuggestions, setShowSuggestions] = useState(false);
   const [partySearchResults, setPartySearchResults] = useState([]);
   const [isCustomer, setIsCustomer] = useState(false);
-  const [partyName, setPartyName] = useState("");
   const [dropdownOptions, setDropdownOptions] = useState([]);
   const [dropdownLoading, setDropdownLoading] = useState(false);
   const [selectedDropdownValue, setSelectedDropdownValue] = useState(null);
-  const [selectedFilterValues, setSelectedFilterValues] = useState({
-    Group: '',
-    Type: '',
-    Series: '',
-    Age: '',
-    Gender: '',
-    Disc: ''
-  });
   const [selectedFilter, setSelectedFilter] = useState('Product Group');
   const [form, setForm] = useState({
     PARTY_KEY: "",
@@ -94,11 +184,8 @@ export default function StockInquiryTable() {
   const [orderQuantities, setOrderQuantities] = useState({});
   const [modalOpen, setModalOpen] = useState(false);
   const [modalData, setModalData] = useState(null);
-  const [sortConfig, setSortConfig] = useState({ key: '', direction: '' });
-  const [totalRecords, setTotalRecords] = useState(0);
-  
-  const tableHeight = isMobile ? 400 : 600;
-  const rowHeight = isMobile ? 40 : 48;
+  const [selectedRows, setSelectedRows] = useState([]);
+  const gridRef = useRef(null);
 
   // Initialize component
   useEffect(() => {
@@ -112,7 +199,6 @@ export default function StockInquiryTable() {
         PARTY_KEY: storedPartyKey || "",
         PARTYDTL_ID: "",
       }));
-      setPartyName(storedPartyName || "");
     }
     
     // Set default filter to "Product Group"
@@ -239,8 +325,6 @@ export default function StockInquiryTable() {
         });
 
         setTableData(newData);
-        setTotalRecords(newData.length);
-        setPage(0); // Reset to first page when new data is loaded
       }
     } catch (error) {
       console.error("Error fetching data:", error);
@@ -307,123 +391,84 @@ export default function StockInquiryTable() {
     fetchPartyDetails();
   }, [form.PARTY_KEY]);
 
-  // Handle quantity changes in the table
-  const handleAfterChange = (changes, source) => {
-    if (source === 'edit') {
-      changes.forEach(([row, prop, oldValue, newValue]) => {
-        if (prop === 'ORD_QTY') {
-          const item = tableData[row];
-          if (item && item._key) {
-            const value = Math.max(0, parseInt(newValue) || 0);
-            setOrderQuantities(prev => ({
-              ...prev,
-              [item._key]: value
-            }));
-            
-            // Update the table data
-            setTableData(prev => {
-              const newData = [...prev];
-              newData[row] = {
-                ...newData[row],
+  // Handle cell value changes in the table
+  const onCellValueChanged = useCallback((event) => {
+    if (event.colDef.field === 'ORD_QTY') {
+      const item = event.data;
+      if (item && item._key) {
+        const value = Math.max(0, parseInt(event.newValue) || 0);
+        setOrderQuantities(prev => ({
+          ...prev,
+          [item._key]: value
+        }));
+        
+        // Update all fetched data
+        setAllFetchedData(prev => {
+          return prev.map(dataItem => {
+            if (dataItem._key === item._key) {
+              return {
+                ...dataItem,
                 ORD_QTY: value
               };
-              return newData;
-            });
-            
-            // Update all fetched data
-            setAllFetchedData(prev => {
-              return prev.map(dataItem => {
-                if (dataItem._key === item._key) {
-                  return {
-                    ...dataItem,
-                    ORD_QTY: value
-                  };
-                }
-                return dataItem;
-              });
-            });
-          }
-        }
-      });
+            }
+            return dataItem;
+          });
+        });
+      }
     }
-  };
+  }, []);
 
   // Handle save action
-  // In StockInquiryTable component, update the handleSave function:
-// In the handleSave function:
-const handleSave = () => {
-  if (!form.PARTY_KEY || !form.PARTYDTL_ID) {
-    toast.error("Please select a Party and Branch before proceeding.");
-    return;
-  }
+  const handleSave = () => {
+    if (!form.PARTY_KEY || !form.PARTYDTL_ID) {
+      toast.error("Please select a Party and Branch before proceeding.");
+      return;
+    }
 
-  const itemsToSave = allFetchedData
-    .filter(item => (orderQuantities[item._key] || 0) > 0)
-    .map(item => ({
-      ...item,
-      ORD_QTY: orderQuantities[item._key] || 0
-    }));
+    const itemsToSave = allFetchedData
+      .filter(item => (orderQuantities[item._key] || 0) > 0)
+      .map(item => ({
+        ...item,
+        ORD_QTY: orderQuantities[item._key] || 0
+      }));
 
-  if (itemsToSave.length === 0) {
-    toast.error("Please enter order quantities greater than 0 before proceeding.");
-    return;
-  }
+    if (itemsToSave.length === 0) {
+      toast.error("Please enter order quantities greater than 0 before proceeding.");
+      return;
+    }
 
-  const selectedBranch = partyDtls.find(detail => detail.PARTYDTL_ID === form.PARTYDTL_ID);
+    const selectedBranch = partyDtls.find(detail => detail.PARTYDTL_ID === form.PARTYDTL_ID);
 
-  setModalData({
-    items: itemsToSave,
-    partyKey: form.PARTY_KEY,
-    partyDtlId: form.PARTYDTL_ID,
-    branchName: selectedBranch?.PLACE || "",
-    FCYR_KEY: localStorage.getItem('financialYear') || '25',
-    COBR_ID: localStorage.getItem('companyBranch') || '02', // Add this
-    CO_ID: localStorage.getItem('companyId') || '01' // Add this
-  });
-  setModalOpen(true);
-};
+    setModalData({
+      items: itemsToSave,
+      partyKey: form.PARTY_KEY,
+      partyDtlId: form.PARTYDTL_ID,
+      branchName: selectedBranch?.PLACE || "",
+      FCYR_KEY: localStorage.getItem('financialYear') || '25',
+      COBR_ID: localStorage.getItem('companyBranch') || '02',
+      CO_ID: localStorage.getItem('companyId') || '01'
+    });
+    setModalOpen(true);
+  };
 
   // Handle cancel action
   const handleCancel = () => {
     router.push("/dashboard/stock-enquiry-table");
   };
 
-  // Handle search input changes
-  const handleSearchInputChange = (e) => {
-    const val = e.target.value;
-    setSearchTerm(val);
-    if (!isCustomer) {
-      debounce(fetchPartiesByName, 300)(val);
-    }
-  };
-
-  // Handle input changes
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setForm(prev => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
-
-  // Handle party selection
-  const handleSelectParty = (party) => {
-    setForm(prev => ({
-      ...prev,
-      PARTY_KEY: party.PARTY_KEY,
-      PARTY_NAME: party.PARTY_NAME,
-    }));
-    setSearchTerm(party.PARTY_NAME);
-    setShowSuggestions(false);
-    setPartySearchResults([]);
-  };
+  // Handle selection changes
+  const handleSelectionChanged = useCallback((event) => {
+    const selectedNodes = event.api.getSelectedNodes();
+    const selectedData = selectedNodes.map(node => node.data);
+    setSelectedRows(selectedData);
+  }, []);
 
   // Button styles
   const addButtonStyles = {
     background: "#39ace2",
     height: 40,
     color: "white",
-    borderRadius: "50px",
+    borderRadius: "10px !important",
     padding: "5px 20px",
     boxShadow: "0px 6px 15px rgba(0, 0, 0, 0.3)",
     transition: "background 0.3s ease",
@@ -433,45 +478,6 @@ const handleSave = () => {
       color: "rgba(0, 0, 0, 0.26)",
     },
   };
-
-  // Process data for the table
-  const processedData = useMemo(() => {
-    let result = [...tableData];
-
-    // Apply filters
-    if (Object.keys(filters).length > 0) {
-      result = result.filter(row =>
-        Object.entries(filters).every(([key, value]) => {
-          if (!value) return true;
-          return String(row[key] || "").toLowerCase().includes(value.toLowerCase());
-        })
-      );
-    }
-
-    // Apply sorting
-    if (sortConfig.key) {
-      result.sort((a, b) => {
-        if (['ORD_QTY', 'MRP', 'PACK_QTY', 'WEIGHT'].includes(sortConfig.key)) {
-          const aValue = parseFloat(a[sortConfig.key]) || 0;
-          const bValue = parseFloat(b[sortConfig.key]) || 0;
-          return sortConfig.direction === 'asc' ? aValue - bValue : bValue - aValue;
-        }
-        const aValue = a[sortConfig.key]?.toString().toLowerCase() || '';
-        const bValue = b[sortConfig.key]?.toString().toLowerCase() || '';
-        if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1;
-        if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1;
-        return 0;
-      });
-    }
-
-    return result;
-  }, [tableData, filters, sortConfig]);
-
-  // Paginated data
-  const paginatedData = useMemo(() => {
-    const startIndex = page * rowsPerPage;
-    return processedData.slice(startIndex, startIndex + rowsPerPage);
-  }, [processedData, page, rowsPerPage]);
 
   return (
     <div className="p-2 w-full">
@@ -636,19 +642,23 @@ const handleSave = () => {
                 Save
               </Button>
               
-              <Button
+              {/* <Button
                 variant="contained"
                 size="small"
                 sx={addButtonStyles}
                 onClick={handleCancel}
               >
                 Cancel
-              </Button>
+              </Button> */}
+
+               <Button onClick={handleCancel} variant="outlined" sx={{  borderRadius: "10px !important", borderColor: "#f44336", color: "#f44336" }}>
+                            Cancel
+                          </Button>
             </Box>
           </Box>
         </Box>
 
-        <div style={{ height: 'calc(100vh - 180px)', width: '100%' }}>
+        <div style={{ height: 'calc(100vh - 150px)', width: '100%' }}>
           {isLoading ? (
             <div style={{ 
               display: 'flex', 
@@ -659,86 +669,59 @@ const handleSave = () => {
               <CircularProgress />
             </div>
           ) : (
-            <>
-              <ReusableHandsontable
-                data={paginatedData}
-                columns={handsontableColumns}
-                height="auto"
-                width="100%"
-                colHeaders={true}
-                rowHeaders={true}
-                afterChange={handleAfterChange}
-                customSettings={{
-                  stretchH: 'all',
-                  dropdownMenu: true,
-                  filters: {
-                    indicators: true,
-                    showOperators: true
-                  },
-                  contextMenu: true,
-                  search: true,
-                  filteringCaseSensitive: false,
-                  filteringIndicator: true,
-                  licenseKey: "non-commercial-and-evaluation",
-                  cells: (row, col, prop) => {
-                    const cellProperties = {};
-                    const column = handsontableColumns.find(colDef => colDef.field === prop);
-                    
-                    // Set readOnly based on column definition
-                    if (column) {
-                      cellProperties.readOnly = column.readOnly;
-                    }
-                    
-                    if (prop === 'ORD_QTY') {
-                      cellProperties.type = 'numeric';
-                      cellProperties.validator = (value, callback) => {
-                        if (value >= 0) {
-                          callback(true);
-                        } else {
-                          callback(false);
-                        }
-                      };
-                    }
-                    return cellProperties;
-                  }
-                }}
-              />
-              <TablePagination
-                rowsPerPageOptions={[25, 50, 100, 250, 500, 1000, 3000]}
-                component="div"
-                count={processedData.length}
-                rowsPerPage={rowsPerPage}
-                page={page}
-                onPageChange={(e, newPage) => setPage(newPage)}
-                onRowsPerPageChange={(e) => {
-                  setRowsPerPage(parseInt(e.target.value, 10));
-                  setPage(0);
-                }}
-                sx={{
-                  borderTop: "1px solid #e0e0e0",
-                  "& .MuiTablePagination-toolbar": {
-                    minHeight: "52px",
-                  },
-                }}
-              />
-            </>
+            <ReusableTable
+              ref={gridRef}
+              columnDefs={columnDefs}
+              rowData={tableData}
+              height="100%"
+              theme="ag-theme-quartz"
+              isDarkMode={false}
+              pagination={true}
+              paginationPageSize={25}
+              paginationPageSizeSelector={[25, 50, 100, 250, 500, 1000,3000]}
+              quickFilter={true}
+              onSelectionChanged={handleSelectionChanged}
+              loading={isLoading}
+              enableExport={true}
+              exportSelectedOnly={true}
+              selectedRows={selectedRows}
+              enableCheckbox={true}
+              compactMode={true}
+              rowHeight={24}
+              defaultColDef={{
+                resizable: true,
+                sortable: true,
+                filter: true,
+                flex: 1,
+                minWidth: 100,
+                editable: false,
+              }}
+              customGridOptions={{
+                suppressRowClickSelection: true,
+                rowSelection: 'multiple',
+                animateRows: true,
+                enableCellTextSelection: true,
+                ensureDomOrder: true,
+                onCellValueChanged: onCellValueChanged
+              }}
+            />
           )}
         </div>
       </div>
 
       {/* Confirm Modal */}
-     <ConfirmModal
-  open={modalOpen}
-  onClose={() => setModalOpen(false)}
-  modalData={modalData?.items || []}
-  PARTY_KEY={modalData?.partyKey || ""}
-  PARTYDTL_ID={modalData?.partyDtlId || ""}
-  branchName={modalData?.branchName || ""}
-  columns={handsontableColumns.filter(col => col.field !== "ORD_QTY")}
-  FCYR_KEY={modalData?.FCYR_KEY}
-  COBR_ID={modalData?.COBR_ID} // Add this
-  CO_ID={modalData?.CO_ID} // Add this
-/>
+      <ConfirmModal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        modalData={modalData?.items || []}
+        PARTY_KEY={modalData?.partyKey || ""}
+        PARTYDTL_ID={modalData?.partyDtlId || ""}
+        branchName={modalData?.branchName || ""}
+        columns={columnDefs.filter(col => col.field !== "ORD_QTY")}
+        FCYR_KEY={modalData?.FCYR_KEY}
+        COBR_ID={modalData?.COBR_ID}
+        CO_ID={modalData?.CO_ID}
+      />
     </div>
   );
 }
