@@ -11,7 +11,7 @@ import {
 } from "ag-grid-enterprise";
 import { AgGridReact } from "ag-grid-react";
 
-// Register AG Grid modules
+
 ModuleRegistry.registerModules([
   AllCommunityModule,
   ClientSideRowModelModule,
@@ -20,7 +20,7 @@ ModuleRegistry.registerModules([
   MultiFilterModule,
 ]);
 
-// Custom date filter component
+
 const DateFilterComponent = ({ model, onModelChange, filterParams }) => {
   const [filterType, setFilterType] = useState('equals');
   const [date1, setDate1] = useState('');

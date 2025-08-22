@@ -320,9 +320,9 @@ export default function StockLookup() {
                         ...prev,
                         PARTY_KEY: newValue?.PARTY_KEY || '',
                         PARTY_NAME: newValue?.PARTY_NAME || '',
-                        PARTYDTL_ID: '' // Reset branch when party changes
+                        PARTYDTL_ID: '' 
                       }));
-                      // Fetch branches/party details when party is selected
+                    
                       if (newValue?.PARTY_KEY) {
                         fetchPartyDetails(newValue.PARTY_KEY);
                       } else {
