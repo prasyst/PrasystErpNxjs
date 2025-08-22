@@ -231,10 +231,10 @@ button:hover,
     &:before {
        background-image: none !important;
         /* background-repeat: no-repeat;
-        background-size: 170px 40px;
-        content: "";
-        display: block;
-        height: 40px;
+        background-size: 170px 40px; */
+        /* content: ""; */
+        display: none !important;
+        /* height: 40px;
         width: 170px; */
     }
 }
