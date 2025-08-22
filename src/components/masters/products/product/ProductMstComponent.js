@@ -26,7 +26,6 @@ import EditableTable from '@/atoms/EditTable';
 import CrudButtons from "@/GlobalFunction/CrudButtons";
 import PaginationButtons from '@/GlobalFunction/PaginationButtons';
 import z from 'zod';
-import { FaTable } from 'react-icons/fa';
 
 const columns = [
   { label: 'Size', field: 'FGSIZE_NAME', type: 'text' },
@@ -148,19 +147,19 @@ const ProductMst = () => {
 
   const textInputSx = {
     '& .MuiInputBase-root': {
-      height: 40, // Match dropdown height
+      height: 36, // Match dropdown height
       fontSize: '14px', // Match dropdown font size
     },
     '& .MuiInputLabel-root': {
       fontSize: '14px',
-      top: '-4px', // Aligned better for larger input
+      top: '-8px', // Aligned better for larger input
     },
     '& .MuiFilledInput-root': {
       backgroundColor: '#fafafa',
       border: '1px solid #e0e0e0',
       borderRadius: '6px',
       overflow: 'hidden',
-      height: 40,
+      height: 36,
       fontSize: '14px',
     },
     '& .MuiFilledInput-root:before': {
@@ -171,9 +170,9 @@ const ProductMst = () => {
     },
     '& .MuiInputBase-input': {
       padding: '10px 12px !important', // Align text vertically
-      fontSize: '14px',
+      fontSize: '14px !important',
       lineHeight: '1.4',
-    }
+    },
   };
 
   // const DropInputSx = {
@@ -214,7 +213,7 @@ const ProductMst = () => {
 
   const DropInputSx = {
     '& .MuiInputBase-root': {
-      height: 40, // Increased height
+      height: 36, // Increased height
       fontSize: '14px', // Slightly larger font
     },
     '& .MuiInputLabel-root': {
@@ -226,7 +225,7 @@ const ProductMst = () => {
       border: '1px solid #e0e0e0',
       borderRadius: '6px',
       overflow: 'hidden',
-      height: 40,
+      height: 36,
       fontSize: '14px',
       paddingRight: '36px', // Slightly more space for icon
     },
@@ -1028,61 +1027,7 @@ const ProductMst = () => {
       }}
     >
       <ToastContainer />
-      <Box
-      // sx={{
-      //   width: { xs: '100%', sm: '100%', md: '100%', lg: '90%', xl: '90%' },
-      //   maxWidth: { xs: '100%', sm: '90%', md: '1000px', lg: '1400px', xl: '1800px' },
-      //   height: { xs: 'auto', sm: 'auto', md: '570px', lg: '570px', xl: '570px' },
-      //   boxShadow: '0px 2px 6px rgba(0, 0, 0, 0.1)',
-      //   paddingBottom: '140px',
-      //   borderRadius: '8px',
-      //   padding: '0px 20px 20px 20px',
-      //   backgroundColor: '#fff'
-      // }}
-
-      >
-        <Grid container alignItems="center"
-          justifyContent="space-between" spacing={2} sx={{
-            marginInline: { xs: '20px', sm: '20px', md: '20px', lg: '20px', xl: '20px' }
-          }}>
-          {/* <Grid sx={{ display: 'flex' }}>
-            <Stack direction="row" spacing={1}>
-              <Button variant="contained" size="small"
-                sx={Buttonsx}
-                onClick={handlePrevious}
-                disabled={mode !== 'view' || !currentFGPRD_KEY || currentFGPRD_KEY === 1}
-              >
-                <KeyboardArrowLeftIcon />
-              </Button>
-              <Button variant="contained" size="small"
-                sx={Buttonsx}
-                onClick={handleNext}
-                disabled={mode !== 'view' || !currentFGPRD_KEY}
-              >
-                <NavigateNextIcon />
-              </Button>
-            </Stack>
-          </Grid> */}
-          <Grid sx={{ flexGrow: 1 }}>
-            <Typography align="center" variant="h6">
-              Product Master
-            </Typography>
-          </Grid>
-          {/* <Grid>
-            <Stack direction="row" spacing={1}>
-              <CrudButton
-                mode={mode}
-                moduleName="Product Master"
-                onAdd={handleAdd}
-                onEdit={handleEdit}
-                onView={handlePrint}
-                onDelete={handleDelete}
-                onExit={handleExit}
-                readOnlyMode={isFormDisabled}
-              />
-            </Stack>
-          </Grid> */}
-        </Grid>
+      <Box>
 
         <Box
           sx={{
@@ -1093,79 +1038,81 @@ const ProductMst = () => {
           }}
 
         >
-          <Box sx={{ display: 'flex', justifyContent: 'end', gap: 2 }}>
-            <TextField
-              placeholder="Search By Code"
-              variant="filled"
-              sx={{
-                width: { xs: '100%', sm: '50%', md: '30%' }, marginBottom: '1px',
-                backgroundColor: '#e0f7fa',
-                '& .MuiInputBase-input': {
-                  padding: { xs: '8px 0px', md: '2px 0px' },
-                },
-                '& .css-voecp4-MuiInputBase-input-MuiFilledInput-input': {
-                  fontSize: '14px',
-                },
-              }}
-              value={form.SearchByCd}
-              onChange={(e) => setForm({ ...form, SearchByCd: e.target.value })}
-              onKeyPress={(e) => {
-                if (e.key === 'Enter') {
-                  fetchProductData(e.target.value, 'R', true);
-                }
-              }}
-            />
-            <FaTable size={24} color="#39ace2" onClick={handleTable} />
+          <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+            <Box sx={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
+              <Typography align="center" variant="h6">
+                Product Master
+              </Typography>
+            </Box>
+            <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+              <TextField
+                placeholder="Search By Code"
+                variant="filled"
+                sx={{
+                  width: { xs: '100%', sm: '50%', md: '100%' }, marginBottom: '1px',
+                  backgroundColor: '#e0f7fa',
+                  '& .MuiInputBase-input': {
+                    padding: { xs: '8px 0px', md: '2px 0px' },
+                  },
+                  '& .css-voecp4-MuiInputBase-input-MuiFilledInput-input': {
+                    fontSize: '14px',
+                  },
+                }}
+                value={form.SearchByCd}
+                onChange={(e) => setForm({ ...form, SearchByCd: e.target.value })}
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter') {
+                    fetchProductData(e.target.value, 'R', true);
+                  }
+                }}
+              />
+            </Box>
           </Box>
 
           <Box
             sx={{
               display: 'flex',
               flexDirection: { xs: 'column', sm: 'row', md: 'row' },
-              justifyContent: 'space-between',
               gap: { xs: 1, sm: 1, md: 2 },
               width: { xs: '100%', sm: '48%', md: '100%' }
             }}
           >
-            <TextField
-              label="Series"
-              disabled={isFormDisabled}
-              variant="filled"
-              fullWidth
-              value={form.CPREFIX || ""}
-              onChange={(e) => handleManualSeriesChange(e.target.value)}
-              sx={textInputSx}
-              inputProps={{
-                style: {
-                  padding: '6px 8px',
-                  fontSize: '12px',
-                },
-              }}
-            />
-            <TextField
-              label="Last Code"
-              variant="filled"
-              fullWidth
-              onChange={(e) => setForm({ ...form, LASTID: e.target.value })}
-              name="LASTID"
-              value={form.LASTID || ""}
-              disabled={true}
-              sx={textInputSx}
-              inputProps={{
-                style: {
-                  padding: '6px 8px',
-                  fontSize: '12px',
-                },
-              }}
-            />
-            <Box
-              sx={{
-                display: 'flex',
-                flexDirection: { xs: 'column', sm: 'row' },
-                gap: 1,
-                width: { xs: '100%', sm: '48%', md: '209%' },
-              }}
-            >
+            <Box sx={{ flex: 1 }}>
+              <TextField
+                label="Series"
+                disabled={isFormDisabled}
+                variant="filled"
+                fullWidth
+                value={form.CPREFIX || ""}
+                onChange={(e) => handleManualSeriesChange(e.target.value)}
+                sx={textInputSx}
+                inputProps={{
+                  style: {
+                    padding: '6px 8px',
+                    fontSize: '12px',
+                  },
+                }}
+              />
+            </Box>
+            <Box sx={{ flex: 1 }}>
+              <TextField
+                label="Last Code"
+                variant="filled"
+                fullWidth
+                onChange={(e) => setForm({ ...form, LASTID: e.target.value })}
+                name="LASTID"
+                value={form.LASTID || ""}
+                disabled={true}
+                sx={textInputSx}
+                inputProps={{
+                  style: {
+                    padding: '6px 8px',
+                    fontSize: '12px',
+                  },
+                }}
+              />
+            </Box>
+            <Box sx={{ flex: 1 }}>
               <TextField
                 label="Code"
                 variant="filled"
@@ -1182,6 +1129,8 @@ const ProductMst = () => {
                   },
                 }}
               />
+            </Box>
+            <Box sx={{ flex: 1 }}>
               <TextField
                 label="PrdSeries"
                 variant="filled"
@@ -1208,52 +1157,47 @@ const ProductMst = () => {
             gap: { xs: 1, sm: 1, md: 2 },
             width: { xs: '100%', sm: '48%', md: '100%' },
           }}>
-            <AutoVibe
-              id="FGCAT_KEY"
-              disabled={isFormDisabled}
-              options={categories}
-              getOptionLabel={(option) => option.FGCAT_NAME || ""}
-              label={
-                <span>
-                  Category <span style={{ color: 'red' }}>*</span>
-                </span>
-              }
-              name="FGCAT_KEY"
-              value={categories.find(option => String(option.FGCAT_KEY) === String(form.FGCAT_KEY)) || null || ""}
-              onChange={(e, newValue) => {
-                const selectedName = newValue ? newValue.FGCAT_NAME : '';
-                const selectedId = newValue ? newValue.FGCAT_KEY : '';
+            <Box sx={{ flex: 1 }}>
+              <AutoVibe
+                id="FGCAT_KEY"
+                disabled={isFormDisabled}
+                options={categories}
+                getOptionLabel={(option) => option.FGCAT_NAME || ""}
+                label={
+                  <span>
+                    Category <span style={{ color: 'red' }}>*</span>
+                  </span>
+                }
+                name="FGCAT_KEY"
+                value={categories.find(option => String(option.FGCAT_KEY) === String(form.FGCAT_KEY)) || null || ""}
+                onChange={(e, newValue) => {
+                  const selectedName = newValue ? newValue.FGCAT_NAME : '';
+                  const selectedId = newValue ? newValue.FGCAT_KEY : '';
 
-                setForm((prevForm) => {
-                  const updatedForm = {
-                    ...prevForm,
-                    FGCAT_NAME: selectedName,
-                    FGCAT_KEY: selectedId
-                  };
+                  setForm((prevForm) => {
+                    const updatedForm = {
+                      ...prevForm,
+                      FGCAT_NAME: selectedName,
+                      FGCAT_KEY: selectedId
+                    };
 
-                  if (selectedName && prevForm.FGPRD_ABRV) {
-                    updatedForm.FGPRD_NAME = selectedName + prevForm.FGPRD_ABRV;
-                  }
+                    if (selectedName && prevForm.FGPRD_ABRV) {
+                      updatedForm.FGPRD_NAME = selectedName + prevForm.FGPRD_ABRV;
+                    }
 
-                  return updatedForm;
-                });
-              }}
-              sx={DropInputSx}
-              inputProps={{
-                style: {
-                  padding: '6px 8px',
-                  fontSize: '12px',
-                },
-              }}
-            />
-            <Box
-              sx={{
-                display: 'flex',
-                flexDirection: { xs: 'column', sm: 'row' },
-                gap: 1,
-                width: { xs: '100%', sm: '48%', md: '100%' },
-              }}
-            >
+                    return updatedForm;
+                  });
+                }}
+                sx={DropInputSx}
+                inputProps={{
+                  style: {
+                    padding: '6px 8px',
+                    fontSize: '12px',
+                  },
+                }}
+              />
+            </Box>
+            <Box sx={{ flex: 2.1 }}>
               <TextField
                 label={
                   <span>
@@ -1275,14 +1219,7 @@ const ProductMst = () => {
                 }}
               />
             </Box>
-            <Box
-              sx={{
-                display: 'flex',
-                flexDirection: { xs: 'column', sm: 'row' },
-                gap: 1,
-                width: { xs: '100%', sm: '48%', md: '209%' },
-              }}
-            >
+            <Box sx={{ flex: 1 }}>
               <AutoVibe
                 id="PRODGRP_KEY"
                 disabled={isFormDisabled}
@@ -1337,6 +1274,8 @@ const ProductMst = () => {
                 flexDirection: { xs: 'column', sm: 'row' },
                 gap: 1,
                 width: { xs: '100%', sm: '48%', md: '100%' },
+                position: 'relative',
+                left: 2
               }}
             >
               <TextField
@@ -1355,21 +1294,15 @@ const ProductMst = () => {
                   },
                 }}
               />
-              <AutoVibe
-                id="UNIT_KEY"
+              <TextField
+                label="Mark.Dn Pur%"
+                variant="filled"
+                fullWidth
+                name=""
+                value={""}
+                onChange={handleInputChange}
                 disabled={isFormDisabled}
-                getOptionLabel={(option) => option.UNIT_NAME || ''}
-                options={unit}
-                label="Unit"
-                name="UNIT_KEY"
-                value={unit.find(option => option.UNIT_KEY === form.UNIT_NAME) || null}
-                onChange={(e, newValue) => {
-                  setForm((prevForm) => ({
-                    ...prevForm,
-                    UNIT_NAME: newValue ? newValue.UNIT_KEY : '',
-                  }));
-                }}
-                sx={DropInputSx}
+                sx={textInputSx}
                 inputProps={{
                   style: {
                     padding: '6px 8px',
@@ -1377,6 +1310,24 @@ const ProductMst = () => {
                   },
                 }}
               />
+              
+              <TextField
+                label="Mark Down Rt %"
+                variant="filled"
+                fullWidth
+                onChange={handleInputChange}
+                value={form.FGMDW_RATE || ""}
+                name="FGMDW_RATE"
+                disabled={isFormDisabled}
+                sx={textInputSx}
+                inputProps={{
+                  style: {
+                    padding: '6px 8px',
+                    fontSize: '12px',
+                  },
+                }}
+              />
+              
             </Box>
           </Box>
 
@@ -1387,15 +1338,21 @@ const ProductMst = () => {
             gap: { xs: 1, sm: 1.5, md: 2 },
             width: { xs: '100%', sm: '48%', md: '100%' },
           }}>
-            <TextField
-              label="Mark.Dn Pur%"
-              variant="filled"
-              fullWidth
-              name=""
-              value={""}
-              onChange={handleInputChange}
+            <AutoVibe
+              id="UNIT_KEY"
               disabled={isFormDisabled}
-              sx={textInputSx}
+              getOptionLabel={(option) => option.UNIT_NAME || ''}
+              options={unit}
+              label="Unit"
+              name="UNIT_KEY"
+              value={unit.find(option => option.UNIT_KEY === form.UNIT_NAME) || null}
+              onChange={(e, newValue) => {
+                setForm((prevForm) => ({
+                  ...prevForm,
+                  UNIT_NAME: newValue ? newValue.UNIT_KEY : '',
+                }));
+              }}
+              sx={DropInputSx}
               inputProps={{
                 style: {
                   padding: '6px 8px',
@@ -1403,15 +1360,21 @@ const ProductMst = () => {
                 },
               }}
             />
-            <TextField
-              label="Mark Down Rt %"
-              variant="filled"
-              fullWidth
-              onChange={handleInputChange}
-              value={form.FGMDW_RATE || ""}
-              name="FGMDW_RATE"
+            <AutoVibe
+              id="TAX_KEY"
               disabled={isFormDisabled}
-              sx={textInputSx}
+              getOptionLabel={(option) => option.TAX_NAME || ""}
+              options={Tax}
+              label="Tax"
+              name="TAX_KEY"
+              value={Tax.find(option => option.TAX_KEY === form.TAX_NAME) || null || ""}
+              onChange={(e, newValue) => {
+                setForm((prevForm) => ({
+                  ...prevForm,
+                  TAX_NAME: newValue ? newValue.TAX_KEY : '',
+                }));
+              }}
+              sx={DropInputSx}
               inputProps={{
                 style: {
                   padding: '6px 8px',
@@ -1427,7 +1390,7 @@ const ProductMst = () => {
                 width: { xs: '100%', sm: '48%', md: '209%' },
               }}
             >
-              <FormLabel sx={{ margin: '8px 14px 4px', fontSize: '14px', fontWeight: 'bold', color: 'black' }} component="legend">Round Off</FormLabel>
+              <FormLabel sx={{ margin: '8px 14px 4px 2px', fontSize: '14px', fontWeight: 'bold', color: 'black' }} component="legend">Round Off</FormLabel>
               <RadioGroup
                 row
                 name="RDOFF"
@@ -1455,31 +1418,10 @@ const ProductMst = () => {
             display: 'flex',
             flexDirection: { xs: 'column', sm: 'row', md: 'row' },
             justifyContent: 'space-between',
+            alignItems: 'center',
             gap: { xs: 1, sm: 1.5, md: 2 },
             width: { xs: '100%', sm: '48%', md: '100%' }
           }}>
-            <AutoVibe
-              id="TAX_KEY"
-              disabled={isFormDisabled}
-              getOptionLabel={(option) => option.TAX_NAME || ""}
-              options={Tax}
-              label="Tax"
-              name="TAX_KEY"
-              value={Tax.find(option => option.TAX_KEY === form.TAX_NAME) || null || ""}
-              onChange={(e, newValue) => {
-                setForm((prevForm) => ({
-                  ...prevForm,
-                  TAX_NAME: newValue ? newValue.TAX_KEY : '',
-                }));
-              }}
-              sx={DropInputSx}
-              inputProps={{
-                style: {
-                  padding: '6px 8px',
-                  fontSize: '12px',
-                },
-              }}
-            />
             <AutoVibe
               id="BRAND_KEY"
               disabled={isFormDisabled}
@@ -1502,58 +1444,37 @@ const ProductMst = () => {
                 },
               }}
             />
+            <AutoVibe
+              id=""
+              disabled={isFormDisabled}
+              options={options || []}
+              getOptionLabel={(option) => option}
+              label="Excise Tariff"
+              name=""
+              value={''}
+              onChange={handleInputChange}
+              sx={DropInputSx}
+              inputProps={{
+                style: {
+                  padding: '6px 8px',
+                  fontSize: '12px',
+                },
+              }}
+            />
             <Box
               sx={{
                 display: 'flex',
                 flexDirection: { xs: 'column', sm: 'row' },
                 gap: 1,
                 width: { xs: '100%', sm: '48%', md: '209%' },
+                position: 'relative',
+                left: 2
               }}
             >
-              <AutoVibe
-                id=""
-                disabled={isFormDisabled || form.Excise_appl !== "1"}
-                options={options || []}
-                getOptionLabel={(option) => option}
-                label="Excise Tariff"
-                name=""
-                value={''}
-                onChange={handleInputChange}
-                sx={DropInputSx}
-                inputProps={{
-                  style: {
-                    padding: '6px 8px',
-                    fontSize: '12px',
-                  },
-                }}
-              />
-              <AutoVibe
-                id=""
-                disabled={isFormDisabled || form.Excise_appl !== "1"}
-                getOptionLabel={(option) => option || ''}
-                options={[]}
-                label="Excise"
-                name=""
-                value={''}
-                onChange={handleInputChange}
-                sx={DropInputSx}
-                inputProps={{
-                  style: {
-                    padding: '6px 8px',
-                    fontSize: '12px',
-                  },
-                }}
-              />
+              <Typography>
+                Excise Tariff Grp Heading ...
+              </Typography>
             </Box>
-          </Box>
-
-          <Box sx={{
-            display: 'flex',
-            flexDirection: { xs: 'column', sm: 'row', md: 'row' },
-            justifyContent: 'space-between',
-            gap: { xs: 1, sm: 1, md: 2 },
-          }}>
-
           </Box>
 
           <Box sx={{
@@ -1563,6 +1484,23 @@ const ProductMst = () => {
             gap: { xs: 1, sm: 1, md: 2 },
             width: { xs: '100%', sm: '48%', md: '100%' },
           }}>
+            <AutoVibe
+              id=""
+              disabled={isFormDisabled || form.Excise_appl !== "1"}
+              getOptionLabel={(option) => option || ''}
+              options={[]}
+              label="Excise"
+              name=""
+              value={''}
+              onChange={handleInputChange}
+              sx={DropInputSx}
+              inputProps={{
+                style: {
+                  padding: '6px 8px',
+                  fontSize: '12px',
+                },
+              }}
+            />
             <AutoVibe
               id="HSNCODE_KEY"
               disabled={isFormDisabled}
@@ -1585,32 +1523,38 @@ const ProductMst = () => {
                 },
               }}
             />
-            <AutoVibe
-              id=""
-              disabled={isFormDisabled || form.QC_REQ === 'option2'}
-              getOptionLabel={(option) => option || ''}
-              options={[]}
-              label="Qc SubGroup"
-              name=""
-              value={''}
-              onChange={handleInputChange}
-              sx={DropInputSx}
-              inputProps={{
-                style: {
-                  padding: '6px 8px',
-                  fontSize: '12px',
-                },
-              }}
-            />
             <Box
               sx={{
                 display: 'flex',
                 flexDirection: { xs: 'column', sm: 'row' },
-                gap: 1,
+                gap: 3,
                 width: { xs: '100%', sm: '48%', md: '209%' },
               }}
             >
-              <FormLabel sx={{ marginTop: '10px', fontSize: '14px', fontWeight: 'bold', color: 'black' }} component="legend">Qc Req</FormLabel>
+              <Box
+                sx={{
+                  width: { xs: '100%', sm: '48%', md: '48.5%' },
+                }}
+              >
+              <AutoVibe
+                id=""
+                disabled={isFormDisabled || form.QC_REQ === 'option2'}
+                getOptionLabel={(option) => option || ''}
+                options={[]}
+                label="Qc SubGroup"
+                name=""
+                value={''}
+                onChange={handleInputChange}
+                sx={DropInputSx}
+                inputProps={{
+                  style: {
+                    padding: '6px 8px',
+                    fontSize: '12px',
+                  },
+                }}
+              />
+              </Box>
+              <FormLabel sx={{ marginTop: '7px', fontSize: '14px', fontWeight: 'bold', color: 'black' }} component="legend">Qc Req</FormLabel>
               <RadioGroup
                 row
                 name="QC_REQ"
@@ -1813,6 +1757,7 @@ const ProductMst = () => {
                 onEdit={mode === "view" ? handleEdit : handleCancel}
                 onView={handlePrint}
                 onDelete={handleDelete}
+                onSearch={handleTable}
                 onExit={handleExit}
                 readOnlyMode={mode === "view"}
               />
@@ -1832,3 +1777,10 @@ export default function Wrapper() {
     </Suspense>
   );
 }
+
+
+
+
+
+
+
