@@ -1,6 +1,5 @@
 'use client';
 import React, { useState } from "react";
-import { useForm } from "react-hook-form";
 import {
   Box, TextField,
   Grid,
@@ -19,15 +18,35 @@ import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 
+const initialFormState = {
+  SmallName: "",
+  BigName: "",
+  PrintName: "",
+  Jurisdiction: "",
+  Address: "",
+  Place: "",
+  Fax: "",
+  VAT: "",
+  LBT: "",
+  WorkAddr: "",
+  OwnerMobile: "",
+  Abrv: "",
+  Image: "",
+  Tel: "",
+  Email: "",
+  ExciseCd: "",
+  ExciseRng: "",
+  CoDivision: "",
+  BankDetails: "",
+  GSTINNo: "",
+  Active: false
+};
 
 const StepperMst2 = ({ TableData, IsButtonSubmit, UserLoginId, TextDisabledFast }) => {
-  const { register, watch, reset, setValue } = useForm();
-  
-
+  const [form, setForm] = useState(initialFormState);
   const [AllTextDisabled, setAllTextDisabled] = useState(false);
   const [AllButtonDisabled, setAllButtonDisabled] = useState(true);
   const [AddDisabled, setAddDisabled] = useState(false);
-  const [selectedImage, setselectedImage] = useState("");
   const [selectedRowIndex, setSelectedRowIndex] = useState(null);
 
   const columns = [
@@ -42,18 +61,16 @@ const StepperMst2 = ({ TableData, IsButtonSubmit, UserLoginId, TextDisabledFast 
   };
 
   const handleClickAdd = () => {
-    console.log("Add clicked");
-    reset(); // Clear form
+    setForm(initialFormState);
     setAddDisabled(true);
     setAllTextDisabled(false);
     setSelectedRowIndex(null);
   };
 
   const handleClickEdit = () => {
-    console.log("Edit clicked for row index:", selectedRowIndex);
     if (selectedRowIndex !== null) {
       const selectedData = TableData[selectedRowIndex];
-      Object.entries(selectedData).forEach(([key, value]) => setValue(key, value));
+      setForm({ ...initialFormState, ...selectedData });
       setAllTextDisabled(false);
     }
   };
@@ -62,26 +79,19 @@ const StepperMst2 = ({ TableData, IsButtonSubmit, UserLoginId, TextDisabledFast 
     if (selectedRowIndex !== null) {
       const selectedData = TableData[selectedRowIndex];
       console.log("Delete clicked for row:", selectedData);
-      // Confirm & delete logic
+      // TODO: Add delete logic
     }
   };
 
-  const handlePreviousClick = () => {
-    console.log("Previous clicked");
+  const handleInputChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setForm((prev) => ({
+      ...prev,
+      [name]: type === "checkbox" ? checked : value
+    }));
   };
-
-  const handleClickCancelButton = () => {
-    console.log("Cancel clicked");
-    reset();
-    setAllTextDisabled(true);
-    setAddDisabled(false);
-    setSelectedRowIndex(null);
-  };
-
-  const handleSubmit = async () => {
-    const formData = watch();
-
-  };
+  const handleConfirm =()=>{}
+  const handleCancel=()=>{}
 
   const textFieldSx = {
     "& .MuiInputBase-root": {
@@ -94,41 +104,30 @@ const StepperMst2 = ({ TableData, IsButtonSubmit, UserLoginId, TextDisabledFast 
     },
   };
 
-  const labelWidth = 120;
+  const labelWidth = 100;
   const inputWidth = 300;
 
   return (
-    <>
+    <>    
       {/* Table Section */}
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "center",
-          mt: 0,
-          ml: 10
-        }}
-      >
-        <Paper
-          sx={{
-            width: "75%",
-            maxWidth: "1000px",
-            overflow: "hidden",
-            border: "1px solid lightgray"
-          }}
-        >
+    <Box sx={{  width: "100%",
+      maxWidth: 900,  
+      margin: "0 auto",
+      mt: 3,            
+      px: 2,          
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",}}>
+
+       <Paper sx={{ width: "75%", maxWidth: "800px", overflow: "hidden", border: "1px solid lightgray" }}>
+
           <TableContainer sx={{ maxHeight: 1000 }}>
-            <Table stickyHeader aria-label="sticky table">
+            <Table stickyHeader>
               <TableHead>
                 <TableRow sx={{ "& > th": { padding: "2px 10px" } }}>
                   {columns.map((column) => (
-                    <TableCell
-                      key={column.id}
-                      align={column.align}
-                      style={{ minWidth: column.minWidth }}
-                    >
-                      <Typography variant="subtitle1" fontWeight="bold">
-                        {column.label}
-                      </Typography>
+                    <TableCell key={column.id} align={column.align} style={{ minWidth: column.minWidth }}>
+                      <Typography variant="subtitle1" fontWeight="bold">{column.label}</Typography>
                     </TableCell>
                   ))}
                 </TableRow>
@@ -139,20 +138,14 @@ const StepperMst2 = ({ TableData, IsButtonSubmit, UserLoginId, TextDisabledFast 
                     hover
                     key={index}
                     selected={index === selectedRowIndex}
-                    sx={{
-                      "& > td": { padding: "2px 14px" },
-                      cursor: "pointer"
-                    }}
+                    sx={{ "& > td": { padding: "2px 14px" }, cursor: "pointer" }}
                     onClick={() => handleRowClick(index)}
                   >
-                    {columns.map((column) => {
-                      const value = row[column.id];
-                      return (
-                        <TableCell key={column.id} align={column.align}>
-                          {value || "N/A"}
-                        </TableCell>
-                      );
-                    })}
+                    {columns.map((column) => (
+                      <TableCell key={column.id} align={column.align}>
+                        {row[column.id] || "N/A"}
+                      </TableCell>
+                    ))}
                   </TableRow>
                 ))}
               </TableBody>
@@ -160,58 +153,18 @@ const StepperMst2 = ({ TableData, IsButtonSubmit, UserLoginId, TextDisabledFast 
           </TableContainer>
         </Paper>
       </Box>
+
       {/* Action Buttons */}
-      <Grid
-        item
-        xs={12}
-        sx={{
-          display: "flex",
-          gap: "10px",
-          alignItems: "center",
-          marginTop: "10px",
-          // paddingRight: "60%"
-        }}
-      >
+      <Grid item xs={12} sx={{ display: "flex", gap: "10px", alignItems: "center", marginTop: "10px" }}>
         <Box sx={{ marginLeft: "17%" }}>
-          <Button
-            variant="contained"
-            size="small"
-            sx={{ backgroundColor: "#635bff" }}
-            onClick={handleClickAdd}
-            disabled={(AllButtonDisabled && AddDisabled) || IsButtonSubmit}
-          >
-            <AddIcon />
-          </Button>
-          <Button
-            variant="contained"
-            size="small"
-            sx={{ backgroundColor: "#635bff", margin: "0px 10px" }}
-            onClick={handleClickEdit}
-            disabled={AllButtonDisabled || IsButtonSubmit}
-          >
-            <EditIcon />
-          </Button>
-          <Button
-            variant="contained"
-            size="small"
-            sx={{ backgroundColor: "#635bff" }}
-            onClick={handleDelete}
-            disabled={AllButtonDisabled || IsButtonSubmit}
-          >
-            <DeleteIcon />
-          </Button>
+          <Button variant="contained" size="small" sx={{ backgroundColor: "#39ace2" }} onClick={handleClickAdd} disabled={(AllButtonDisabled && AddDisabled) || IsButtonSubmit}><AddIcon /></Button>
+          <Button variant="contained" size="small" sx={{ backgroundColor: "#39ace2", margin: "0px 10px" }} onClick={handleClickEdit} disabled={AllButtonDisabled || IsButtonSubmit}><EditIcon /></Button>
+          <Button variant="contained" size="small" sx={{ backgroundColor: "#39ace2" }} onClick={handleDelete} disabled={AllButtonDisabled || IsButtonSubmit}><DeleteIcon /></Button>
         </Box>
       </Grid>
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "center",
-          gap: 6,
-          marginTop: "20px",
-          flexWrap: "wrap",
-          alignItems: "flex-start",
-        }}
-      >
+
+      {/* Form Section */}
+      <Box sx={{ display: "flex", justifyContent: "center", gap: 6, marginTop: "20px", flexWrap: "wrap", alignItems: "flex-start" }}>
         {/* Left Section */}
         <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
           {[
@@ -221,260 +174,163 @@ const StepperMst2 = ({ TableData, IsButtonSubmit, UserLoginId, TextDisabledFast 
                 <>
                   <TextField
                     size="small"
-                    value={watch("SmallName") || ""}
-                    onChange={(e) => setValue("SmallName", e.target.value)}
+                    name="SmallName"
+                    value={form.SmallName}
+                    onChange={handleInputChange}
                     disabled={AllTextDisabled || TextDisabledFast}
-                    sx={{
-                      width: 40,
-                      "& .MuiInputBase-root": {
-                        paddingTop: "2px",
-                        paddingBottom: "2px",
-                        fontSize: "0.75rem",
-                      },
-                      "& .MuiOutlinedInput-input": {
-                        padding: "4px 8px",
-                      },
-                    }}
+                    sx={{ width: 40, ...textFieldSx }}
                   />
                   <TextField
                     size="small"
-                    value={watch("BigName") || ""}
-                    onChange={(e) => setValue("BigName", e.target.value)}
+                    name="BigName"
+                    value={form.BigName}
+                    onChange={handleInputChange}
                     disabled={AllTextDisabled || TextDisabledFast}
                     sx={{ width: 252, ...textFieldSx }}
                   />
                 </>
               ),
             },
-            { label: "Print Name", field: "PrintName" },
-            ...[
-              "Jurisdiction",
-              "Address",
-              "Place",
-              "Fax",
-              "VAT",
-              "LBT",
-              "WorkAddr",
-              "OwnerMobile",
-            ].map((field) => ({
-              label: field.replace(/([A-Z])/g, " $1"),
-              field,
-            })),
-          ].map(({ label, field, custom }) => (
-            <Box key={label} sx={{ display: "flex", alignItems: "center", gap: 1, minWidth: 320 }}>
-              <Typography sx={{ width: labelWidth, textAlign: "right" }}>{label}:</Typography>
-              {custom ||
-                (field === "Address" ? (
+            "PrintName",
+            "Jurisdiction",
+            "Address",
+            "Place",
+            "Fax",
+            "VAT",
+            "LBT",
+            "WorkAddr",
+            "OwnerMobile"
+          ].map((fieldOrObj) => {
+            const label = typeof fieldOrObj === 'string' ? fieldOrObj.replace(/([A-Z])/g, ' $1') : fieldOrObj.label;
+            const field = typeof fieldOrObj === 'string' ? fieldOrObj : null;
+            const custom = typeof fieldOrObj === 'object' ? fieldOrObj.custom : null;
+
+            return (
+              <Box key={label} sx={{ display: "flex", alignItems: "center", gap: 1, minWidth: 320 }}>
+                <Typography sx={{ width: labelWidth, textAlign: "left" }}>{label}:</Typography> {/* <-- Left aligned text here */}
+                {custom || (
                   <TextField
                     size="small"
-                    value={watch(field) || ""}
-                    multiline
-                    rows={1}
-                    onChange={(e) => setValue(field, e.target.value)}
+                    name={field}
+                    value={form[field]}
+                    onChange={handleInputChange}
                     disabled={AllTextDisabled || TextDisabledFast}
-                    sx={{
-                      width: inputWidth, ...textFieldSx, '& textarea': {
-                        paddingLeft: '0px', 
-                        paddingTop: '6px',  
-                        paddingBottom: '6px',
-                      }, '& .MuiInputBase-root': {
-                        padding: 0, 
-                      },
-                    }}
-                    InputProps={{
-                      sx: {
-                        paddingRight: 0,
-                      },
-                    }}
-                  />
-                ) : (
-                  <TextField
-                    size="small"
-                    value={watch(field) || ""}
-                    onChange={(e) => setValue(field, e.target.value)}
-                    disabled={AllTextDisabled || TextDisabledFast}
+                    multiline={field === "Address"}
+                    rows={field === "Address" ? 1 : undefined}
                     sx={{ width: inputWidth, ...textFieldSx }}
                   />
-                ))}
-            </Box>
-          ))}
+                )}
+              </Box>
+            );
+          })}
         </Box>
+
         {/* Right Section */}
         <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
           {[
             {
               label: "Abrv",
               custom: (
-                <Box
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 1,
-                    minWidth: 320,
-                  }}
-                >
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1, minWidth: 320 }}>
                   <TextField
                     size="small"
-                    value={watch("Abrv") || ""}
-                    onChange={(e) => setValue("Abrv", e.target.value)}
+                    name="Abrv"
+                    value={form.Abrv}
+                    onChange={handleInputChange}
                     disabled={AllTextDisabled || TextDisabledFast}
                     sx={{ width: 150, ...textFieldSx }}
                   />
-                  <Button
-                    variant="text"      
-                    size="small"
-                    sx={{ padding: "4px 6px", border: "none", alignSelf: "flex-start" }}  
-                    onClick={() => {
-                      setValue("Image", "");
-                    }}
-
-                  >
+                  <Button variant="text" size="small" onClick={() => setForm(prev => ({ ...prev, Image: "" }))}>
                     Clear Image
                   </Button>
                 </Box>
-              ),
+              )
             },
             {
               label: "Image & Tel",
               custom: (
                 <Box sx={{ display: "flex", flexDirection: 'row', gap: 1, alignItems: "center" }}>
-                  {/* Image Box */}
-                  <Box
-                    sx={{
-                      width: 80,
-                      height: 60,
-                      border: "1px solid gray",
-                      borderRadius: 2,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      backgroundColor: "#f9f9f9",
-                      boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
-                      flexShrink: 0,
-                    }}
-                  >
-                    <Typography variant="caption" color="textSecondary">
-                      Image
-                    </Typography>
+                  <Box sx={{ width: 80, height: 60, border: "1px solid gray", borderRadius: 2, display: "flex", alignItems: "center", justifyContent: "center", backgroundColor: "#f9f9f9" }}>
+                    <Typography variant="caption" color="textSecondary">Image</Typography>
                   </Box>
-                  {/* Tel with label outside */}
-                  <Box sx={{ display: "flex", flexDirection: 'column', gap: 0, paddingBlock: '0px' }}>
+                  <Box sx={{ display: "flex", flexDirection: 'column', gap: 0 }}>
                     <Box sx={{ display: "flex", alignItems: "center", gap: 0 }}>
-                      <Typography sx={{ width: 30, textAlign: "left" }}>Tel:</Typography>
+                      <Typography sx={{ width: 30 }}>Tel:</Typography>
                       <TextField
                         size="small"
-                        value={watch("Tel") || ""}
-                        onChange={(e) => setValue("Tel", e.target.value)}
+                        name="Tel"
+                        value={form.Tel}
+                        onChange={handleInputChange}
                         disabled={AllTextDisabled || TextDisabledFast}
                         sx={{ width: 180, ...textFieldSx }}
                       />
                     </Box>
-                                       <Button
-                      variant="text"      
-                      size="small"
-                      sx={{ padding: "4px 6px", border: "none", alignSelf: "flex-start" }}  
-                    >
-                      Browse...
-                    </Button>
+                    <Button variant="text" size="small">Browse...</Button>
                   </Box>
                 </Box>
-              ),
+              )
             },
-            ...[
-              "Email",
-              "ExciseCd",
-              "ExciseRng",
-              "CoDivision",
-              "BankDetails",
-              "GSTINNo",
-            ].map((field) => ({
-              label: field.replace(/([A-Z])/g, " $1"),
-              field,
-            })),
+            "Email", "ExciseCd", "ExciseRng", "CoDivision", "BankDetails", "GSTINNo",
             {
               label: "Active",
               custom: (
                 <input
                   type="checkbox"
-                  checked={watch("Active") || false}
-                  onChange={(e) => setValue("Active", e.target.checked)}
+                  name="Active"
+                  checked={form.Active}
+                  onChange={handleInputChange}
                   disabled={AllTextDisabled || TextDisabledFast}
                 />
-              ),
-            },
-          ].map(({ label, field, custom }) => (
-            <Box key={label} sx={{ display: "flex", alignItems: "center", gap: 1, minWidth: 320 }}>
-              <Typography sx={{ width: labelWidth, textAlign: "right" }}>{label}:</Typography>
-              {custom ||
-                (field === "BankDetails" ? (
+              )
+            }
+          ].map((fieldOrObj) => {
+            const label = typeof fieldOrObj === 'string' ? fieldOrObj.replace(/([A-Z])/g, ' $1') : fieldOrObj.label;
+            const field = typeof fieldOrObj === 'string' ? fieldOrObj : null;
+            const custom = typeof fieldOrObj === 'object' ? fieldOrObj.custom : null;
+
+            return (
+              <Box key={label} sx={{ display: "flex", alignItems: "center", gap: 1, minWidth: 320 }}>
+                <Typography sx={{ width: labelWidth, textAlign: "left" }}>{label}:</Typography>
+                {custom || (
                   <TextField
                     size="small"
-                    value={watch(field) || ""}
-                    multiline
-                    rows={1}
-                    onChange={(e) => setValue(field, e.target.value)}
+                    name={field}
+                    value={form[field]}
+                    onChange={handleInputChange}
                     disabled={AllTextDisabled || TextDisabledFast}
-                    sx={{
-                      width: inputWidth, ...textFieldSx, '& textarea': {
-                        paddingLeft: '0px', 
-                        paddingTop: '6px',
-                        paddingBottom: '6px',
-                      }, '& .MuiInputBase-root': {
-                        padding: 0, 
-                      },
-                    }}
-                    InputProps={{
-                      sx: {
-                        paddingRight: 0,
-                      },
-                    }}
-                  />
-                ) : (
-                  <TextField
-                    size="small"
-                    value={watch(field) || ""}
-                    onChange={(e) => setValue(field, e.target.value)}
-                    disabled={AllTextDisabled || TextDisabledFast}
+                    multiline={field === "BankDetails"}
+                    rows={field === "BankDetails" ? 1 : undefined}
                     sx={{ width: inputWidth, ...textFieldSx }}
                   />
-                ))}
-
-            </Box>
-          ))}
+                )}
+              </Box>
+            );
+          })}
         </Box>
+ 
+
       </Box>
-      {/* Footer Buttons */}
-      <Grid
-        item
-        xs={2}
-        className="form_button"
-        sx={{
-          display: "flex",
-          gap: "10px",
-          alignItems: "center",
-          marginBlock: "10px",
-          marginLeft: "69vw",
-          textAlign: "right"
-        }}
-      >
-        {['Prev', 'Submit', 'Cancel'].map((label, index) => (
-          <Button
-            key={index}
-            sx={{ background: 'linear-gradient(290deg, #b9d0e9, #e9f2fa)', width: "60px" }}
-            variant="contained"
-            onClick={
-              label === 'Prev'
-                ? handlePreviousClick
-                : label === 'Submit'
-                  ? handleSubmit
-                  : handleClickCancelButton
-            }
-            disabled={IsButtonSubmit}
-          >
-            {label}
-          </Button>
-        ))}
-      </Grid>
+      {/* Confirm / Cancel Buttons at bottom of form */}
+{!AllTextDisabled && (
+  <Box sx={{ display: "flex", justifyContent: "flex-end", marginTop: 0, gap: 2 }}>
+    <Button
+      variant="contained"
+    
+      onClick={handleConfirm}
+      disabled={IsButtonSubmit}
+    >
+      Confirm
+    </Button>
+    <Button
+      variant="outlined"
+      color="secondary"
+      onClick={handleCancel}
+    >
+      Cancel
+    </Button>
+  </Box>
+)}
+
     </>
   );
 };
