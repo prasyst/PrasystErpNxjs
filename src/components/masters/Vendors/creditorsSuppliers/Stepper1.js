@@ -26,7 +26,7 @@ import "react-toastify/dist/ReactToastify.css";
 import { getFormMode } from "../../../../lib/helpers";
 const FORM_MODE = getFormMode();
 
-const StepperMst2 = () => {
+const StepperMst1 = () => {
   const [isFormDisabled, setIsFormDisabled] = useState(true);
 
   const textInputSx = {
@@ -936,4 +936,4 @@ const StepperMst2 = () => {
   );
 };
 
-export default StepperMst2;
+export default StepperMst1;

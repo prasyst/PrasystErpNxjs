@@ -214,3 +214,54 @@ button:hover,
   color: #1976d2 !important;
   transform: translateY(-1px);
 }  */
+
+.ag-cell.ag-cell-last-left-pinned:not(.ag-cell-range-right,.ag-cell-range-single-cell,.ag-cell-focus:not(.ag-cell-range-selected):focus-within)
+ {
+    border-right: none !important;
+}
+
+.ag-cell-focus:not(.ag-cell-range-selected):focus-within, .ag-cell-range-single-cell, .ag-cell-range-single-cell.ag-cell-range-handle, .ag-context-menu-open .ag-cell-focus:not(.ag-cell-range-selected), .ag-context-menu-open .ag-full-width-row.ag-row-focus .ag-cell-wrapper.ag-row-group, .ag-full-width-row.ag-row-focus:focus .ag-cell-wrapper.ag-row-group {
+    border: none !important;
+    border-color: none !important;
+    border-style: none !important;
+    outline: none !important;
+}
+
+/* .ag-watermark {
+    &:before {
+       background-image: none !important;
+        background-repeat: no-repeat;
+        background-size: 170px 40px;
+         content: ""; 
+        display: none !important;
+        height: 40px;
+        width: 170px;
+    }
+}
+
+:where(.ag-ltr) .ag-watermark-text {
+    
+    display: none !important;
+}
+
+.ag-watermark-text {
+   
+    opacity: -0.5 !important;
+} */
+
+
+/* code for removal of water mark */
+div[class*="watermark"],
+div[class*="Watermark"],
+.ag-root-wrapper .ag-watermark,
+.ag-root-wrapper .ag-watermark-text {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    height: 0 !important;
+    width: 0 !important;
+    overflow: hidden !important;
+    position: absolute !important;
+    left: -9999px !important;
+}
+

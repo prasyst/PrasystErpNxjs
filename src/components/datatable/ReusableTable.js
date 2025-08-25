@@ -1,5 +1,4 @@
-import React, { useRef, useState, useMemo, useCallback } from 'react';
-
+import React, { useRef, useState, useMemo, useCallback, useEffect } from 'react';
 import {
   AllCommunityModule,
   ClientSideRowModelModule,
@@ -12,7 +11,7 @@ import {
 } from "ag-grid-enterprise";
 import { AgGridReact } from "ag-grid-react";
 
-// Register AG Grid modules
+
 ModuleRegistry.registerModules([
   AllCommunityModule,
   ClientSideRowModelModule,
@@ -20,6 +19,199 @@ ModuleRegistry.registerModules([
   SetFilterModule,
   MultiFilterModule,
 ]);
+
+
+const DateFilterComponent = ({ model, onModelChange, filterParams }) => {
+  const [filterType, setFilterType] = useState('equals');
+  const [date1, setDate1] = useState('');
+  const [date2, setDate2] = useState('');
+
+  useEffect(() => {
+    if (model) {
+      setFilterType(model.type || 'equals');
+      setDate1(model.date1 || '');
+      setDate2(model.date2 || '');
+    }
+  }, [model]);
+
+  const updateModel = (type, d1, d2) => {
+    const newModel = { type, date1: d1, date2: d2 };
+    onModelChange(newModel);
+  };
+
+  const onFilterTypeChange = (e) => {
+    const type = e.target.value;
+    setFilterType(type);
+    updateModel(type, date1, date2);
+  };
+
+  const onDate1Change = (e) => {
+    const d1 = e.target.value;
+    setDate1(d1);
+    updateModel(filterType, d1, date2);
+  };
+
+  const onDate2Change = (e) => {
+    const d2 = e.target.value;
+    setDate2(d2);
+    updateModel(filterType, date1, d2);
+  };
+
+  // Does the filter pass?
+  const isFilterActive = () => {
+    return filterType && date1;
+  };
+
+  // Get the filter state for saving
+  const getModel = () => {
+    if (isFilterActive()) {
+      return { type: filterType, date1, date2 };
+    }
+    return null;
+  };
+
+  return (
+    <div style={{ padding: '10px', width: '250px' }}>
+      <div style={{ marginBottom: '10px' }}>
+        <select 
+          value={filterType} 
+          onChange={onFilterTypeChange}
+          style={{ width: '100%', padding: '5px' }}
+        >
+          <option value="equals">Equals</option>
+          <option value="notEqual">Not equal</option>
+          <option value="lessThan">Before</option>
+          <option value="greaterThan">After</option>
+          <option value="inRange">Between</option>
+          <option value="empty">Empty</option>
+          <option value="notEmpty">Not Empty</option>
+          <option value="today">Today</option>
+          <option value="yesterday">Yesterday</option>
+          <option value="thisMonth">This Month</option>
+          <option value="lastMonth">Last Month</option>
+          <option value="nextMonth">Next Month</option>
+        </select>
+      </div>
+      
+      {(filterType !== 'empty' && filterType !== 'notEmpty' && 
+        !filterType.includes('Month') && filterType !== 'today' && filterType !== 'yesterday') && (
+        <div style={{ marginBottom: '10px' }}>
+          <input 
+            type="date" 
+            value={date1} 
+            onChange={onDate1Change}
+            style={{ width: '100%', padding: '5px' }}
+          />
+        </div>
+      )}
+      
+      {filterType === 'inRange' && (
+        <div style={{ marginBottom: '10px' }}>
+          <input 
+            type="date" 
+            value={date2} 
+            onChange={onDate2Change}
+            style={{ width: '100%', padding: '5px' }}
+            placeholder="End date"
+          />
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Custom date filter for AG Grid
+const getCustomDateFilter = () => {
+  return {
+    doesFilterPass: (params) => {
+      const cellValue = params.data[params.colDef.field];
+      if (!cellValue) return false;
+      
+      const filterModel = params.filterInstance.getModel();
+      if (!filterModel) return true;
+      
+      const cellDate = new Date(cellValue);
+      const filterDate1 = filterModel.date1 ? new Date(filterModel.date1) : null;
+      const filterDate2 = filterModel.date2 ? new Date(filterModel.date2) : null;
+      
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      const yesterday = new Date(today);
+      yesterday.setDate(yesterday.getDate() - 1);
+      
+      const thisMonthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+      const thisMonthEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+      
+      const lastMonthStart = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+      const lastMonthEnd = new Date(today.getFullYear(), today.getMonth(), 0);
+      
+      const nextMonthStart = new Date(today.getFullYear(), today.getMonth() + 1, 1);
+      const nextMonthEnd = new Date(today.getFullYear(), today.getMonth() + 2, 0);
+      
+      switch (filterModel.type) {
+        case 'equals':
+          return cellDate.getTime() === filterDate1.getTime();
+        case 'notEqual':
+          return cellDate.getTime() !== filterDate1.getTime();
+        case 'lessThan':
+          return cellDate < filterDate1;
+        case 'greaterThan':
+          return cellDate > filterDate1;
+        case 'inRange':
+          return cellDate >= filterDate1 && cellDate <= filterDate2;
+        case 'empty':
+          return !cellValue;
+        case 'notEmpty':
+          return !!cellValue;
+        case 'today':
+          return cellDate.getTime() === today.getTime();
+        case 'yesterday':
+          return cellDate.getTime() === yesterday.getTime();
+        case 'thisMonth':
+          return cellDate >= thisMonthStart && cellDate <= thisMonthEnd;
+        case 'lastMonth':
+          return cellDate >= lastMonthStart && cellDate <= lastMonthEnd;
+        case 'nextMonth':
+          return cellDate >= nextMonthStart && cellDate <= nextMonthEnd;
+        default:
+          return true;
+      }
+    },
+    
+    getModel: function() {
+      return this.model;
+    },
+    
+    setModel: function(model) {
+      this.model = model;
+    },
+    
+    isFilterActive: function() {
+      return this.model !== null;
+    },
+    
+    getModelAsString: function(model) {
+      if (!model) return '';
+      
+      switch (model.type) {
+        case 'equals': return `= ${model.date1}`;
+        case 'notEqual': return `≠ ${model.date1}`;
+        case 'lessThan': return `< ${model.date1}`;
+        case 'greaterThan': return `> ${model.date1}`;
+        case 'inRange': return `${model.date1} to ${model.date2}`;
+        case 'empty': return 'Empty';
+        case 'notEmpty': return 'Not Empty';
+        case 'today': return 'Today';
+        case 'yesterday': return 'Yesterday';
+        case 'thisMonth': return 'This Month';
+        case 'lastMonth': return 'Last Month';
+        case 'nextMonth': return 'Next Month';
+        default: return '';
+      }
+    }
+  };
+};
 
 const ReusableTable = ({
   columnDefs = [],
@@ -37,9 +229,9 @@ const ReusableTable = ({
   customGridOptions = {},
   loading = false,
   enableExport = true,
-  exportSelectedOnly = false, // New prop for exporting selected rows only
-  selectedRows = [], // Selected rows data
-  enableCheckbox = false, // New prop to control checkbox visibility
+  exportSelectedOnly = false,
+  selectedRows = [],
+  enableCheckbox = false,
   defaultColDef = {},
   autoSizeStrategy = null,
   compactMode = false,
@@ -47,6 +239,22 @@ const ReusableTable = ({
 }) => {
   const gridRef = useRef(null);
   const [quickFilterText, setQuickFilterText] = useState("");
+  const [showExportDropdown, setShowExportDropdown] = useState(false);
+  const exportDropdownRef = useRef(null);
+
+  // Handle outside clicks for export dropdown
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (exportDropdownRef.current && !exportDropdownRef.current.contains(event.target)) {
+        setShowExportDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   // Default column definition
   const defaultColDefMemo = useMemo(() => ({
@@ -72,49 +280,93 @@ const ReusableTable = ({
     setQuickFilterText(e.target.value);
   }, []);
 
-  // Export to Excel
-  // Export to Excel
-const onExportExcel = useCallback(() => {
-  if (gridRef.current?.api) {
-    let fileName;
-
-    if (exportSelectedOnly && selectedRows.length > 0) {
-      // Export only selected rows
-      fileName = `selected_export_${new Date().toISOString().split('T')[0]}.xlsx`;
+  // Export Current Page
+  const onExportCurrentPage = useCallback(() => {
+    if (gridRef.current?.api) {
+      const fileName = `current_page_export_${new Date().toISOString().split('T')[0]}.xlsx`;
       
-      // Create a temporary grid with selected data for export
-      const selectedNodes = gridRef.current.api.getSelectedNodes();
-      if (selectedNodes.length > 0) {
+      // Get current page displayed rows
+      const displayedRows = [];
+      gridRef.current.api.forEachNodeAfterFilterAndSort((node, index) => {
+        const startIndex = gridRef.current.api.paginationGetCurrentPage() * gridRef.current.api.paginationGetPageSize();
+        const endIndex = startIndex + gridRef.current.api.paginationGetPageSize();
+        if (index >= startIndex && index < endIndex) {
+          displayedRows.push(node.data);
+        }
+      });
+
+      if (displayedRows.length > 0) {
         gridRef.current.api.exportDataAsExcel({
           fileName: fileName,
-          onlySelected: true,
+          onlySelected: false,
+          shouldRowBeSkipped: (params) => {
+            // Only export rows that are on current page
+            const currentPageRows = [];
+            gridRef.current.api.forEachNodeAfterFilterAndSort((node, index) => {
+              const startIndex = gridRef.current.api.paginationGetCurrentPage() * gridRef.current.api.paginationGetPageSize();
+              const endIndex = startIndex + gridRef.current.api.paginationGetPageSize();
+              if (index >= startIndex && index < endIndex) {
+                currentPageRows.push(node.data);
+              }
+            });
+            return !currentPageRows.some(row => row === params.node.data);
+          },
           processHeaderCallback: (params) => {
-            // Skip checkbox column in export
             if (params.column.getColDef().checkboxSelection) {
-              return null; // This will exclude the checkbox column
+              return null;
             }
             return params.column.getColDef().headerName || params.column.getColId();
           }
         });
-      } else {
-        alert('Please select rows to export');
       }
-    } else {
-      // Export all data
-      fileName = `export_${new Date().toISOString().split('T')[0]}.xlsx`;
+      setShowExportDropdown(false);
+    }
+  }, []);
+
+  // Export All Records
+  const onExportAllRecords = useCallback(() => {
+    if (gridRef.current?.api) {
+      const fileName = `all_records_export_${new Date().toISOString().split('T')[0]}.xlsx`;
+      
       gridRef.current.api.exportDataAsExcel({
         fileName: fileName,
+        onlySelected: false,
         processHeaderCallback: (params) => {
-          // Skip checkbox column in export
           if (params.column.getColDef().checkboxSelection) {
-            return null; // This will exclude the checkbox column
+            return null;
           }
           return params.column.getColDef().headerName || params.column.getColId();
         }
       });
+      setShowExportDropdown(false);
     }
-  }
-}, [exportSelectedOnly, selectedRows]);
+  }, []);
+
+  // Export Selected Rows
+  const onExportSelectedRows = useCallback(() => {
+    if (gridRef.current?.api) {
+      const selectedNodes = gridRef.current.api.getSelectedNodes();
+      
+      if (selectedNodes.length === 0) {
+        alert('Please select at least one row to export.');
+        return;
+      }
+
+      const fileName = `selected_rows_export_${new Date().toISOString().split('T')[0]}.xlsx`;
+      
+      gridRef.current.api.exportDataAsExcel({
+        fileName: fileName,
+        onlySelected: true,
+        processHeaderCallback: (params) => {
+          if (params.column.getColDef().checkboxSelection) {
+            return null;
+          }
+          return params.column.getColDef().headerName || params.column.getColId();
+        }
+      });
+      setShowExportDropdown(false);
+    }
+  }, []);
 
   // Processed column definitions based on checkbox requirement
   const processedColumnDefs = useMemo(() => {
@@ -231,38 +483,138 @@ const onExportExcel = useCallback(() => {
         )}
         
         {enableExport && (
-          <button
-            onClick={onExportExcel}
-            style={{
-              padding: '8px 16px',
-              borderRadius: '6px',
-              border: '1px solid #d0d5dd',
-              backgroundColor: '#3CB371',
-              cursor: 'pointer',
-              fontSize: '14px',
-              fontWeight: '500',
-              color: '#ffffff',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
-              transition: 'all 0.2s ease',
-            }}
-            onMouseEnter={(e) => {
-              e.target.style.backgroundColor = '#2e8b57';
-            }}
-            onMouseLeave={(e) => {
-              e.target.style.backgroundColor = '#3CB371';
-            }}
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M13 11H18L12 17L6 11H11V3H13V11ZM4 19H20V12H22V20C22 20.5523 21.5523 21 21 21H3C2.44772 21 2 20.5523 2 20V12H4V19Z" fill="currentColor"/>
-            </svg>
-            {exportSelectedOnly && selectedRows.length > 0 
-              ? `Export Selected (${selectedRows.length})` 
-              : 'Export Excel'
-            }
-          </button>
+          <div style={{ position: 'relative' }} ref={exportDropdownRef}>
+            <button
+              onClick={() => setShowExportDropdown(!showExportDropdown)}
+              style={{
+                padding: '8px 16px',
+                borderRadius: '6px',
+                border: '1px solid #d0d5dd',
+                backgroundColor: '#3CB371',
+                cursor: 'pointer',
+                fontSize: '14px',
+                fontWeight: '500',
+                color: '#ffffff',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
+                transition: 'all 0.2s ease',
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.backgroundColor = '#2e8b57';
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.backgroundColor = '#3CB371';
+              }}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M13 11H18L12 17L6 11H11V3H13V11ZM4 19H20V12H22V20C22 20.5523 21.5523 21 21 21H3C2.44772 21 2 20.5523 2 20V12H4V19Z" fill="currentColor"/>
+              </svg>
+              Export Excel
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ marginLeft: '4px' }}>
+                <path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </button>
+            
+            {showExportDropdown && (
+              <div style={{
+                position: 'absolute',
+                top: '100%',
+                right: 0,
+                marginTop: '4px',
+                backgroundColor: '#ffffff',
+                border: '1px solid #d0d5dd',
+                borderRadius: '6px',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                zIndex: 1000,
+                minWidth: '180px'
+              }}>
+                <button
+                  onClick={onExportCurrentPage}
+                  style={{
+                    width: '100%',
+                    padding: '12px 16px',
+                    border: 'none',
+                    backgroundColor: 'transparent',
+                    textAlign: 'left',
+                    fontSize: '14px',
+                    color: '#374151',
+                    cursor: 'pointer',
+                    borderRadius: '6px 6px 0 0',
+                    transition: 'background-color 0.2s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.target.style.backgroundColor = '#f9fafb';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.target.style.backgroundColor = 'transparent';
+                  }}
+                >
+                  Export Current Page
+                </button>
+                <div style={{
+                  height: '1px',
+                  backgroundColor: '#e5e7eb',
+                  margin: '0 8px'
+                }}></div>
+                <button
+                  onClick={onExportAllRecords}
+                  style={{
+                    width: '100%',
+                    padding: '12px 16px',
+                    border: 'none',
+                    backgroundColor: 'transparent',
+                    textAlign: 'left',
+                    fontSize: '14px',
+                    color: '#374151',
+                    cursor: 'pointer',
+                    transition: 'background-color 0.2s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.target.style.backgroundColor = '#f9fafb';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.target.style.backgroundColor = 'transparent';
+                  }}
+                >
+                  Export All Records
+                </button>
+                {enableCheckbox && (
+                  <>
+                    <div style={{
+                      height: '1px',
+                      backgroundColor: '#e5e7eb',
+                      margin: '0 8px'
+                    }}></div>
+                    <button
+                      onClick={onExportSelectedRows}
+                      style={{
+                        width: '100%',
+                        padding: '12px 16px',
+                        border: 'none',
+                        backgroundColor: 'transparent',
+                        textAlign: 'left',
+                        fontSize: '14px',
+                        color: '#374151',
+                        cursor: 'pointer',
+                        borderRadius: '0 0 6px 6px',
+                        transition: 'background-color 0.2s ease'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.target.style.backgroundColor = '#f9fafb';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.target.style.backgroundColor = 'transparent';
+                      }}
+                    >
+                      Export Selected Rows
+                    </button>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
         )}
       </div>
 
@@ -322,4 +674,5 @@ const onExportExcel = useCallback(() => {
   );
 };
 
+export { DateFilterComponent, getCustomDateFilter };
 export default ReusableTable;

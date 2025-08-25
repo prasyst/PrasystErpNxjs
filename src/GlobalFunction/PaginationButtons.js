@@ -96,7 +96,7 @@ const PaginationButtons = ({
     sx = {},
     buttonSx = {}
 }) => {
-    const isReadMode = mode === FORM_MODE.read;
+    const isReadMode = mode === FORM_MODE.read || mode === "view";
     const isFirstDisabled = !isReadMode || !currentKey || currentKey === 1;
     const isNavDisabled = !isReadMode || !currentKey;
 

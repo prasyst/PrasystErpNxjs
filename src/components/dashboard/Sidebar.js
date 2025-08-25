@@ -79,7 +79,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
           children: [
             { name: 'Broker', icon: FaHandshake, path: '#' },
             { name: 'Transporter', icon: MdLocalShipping, path: '/#' },
-            { name: 'Creditors/Suppliers', icon: FaUserTag, path: '#' },
+            { name: 'Creditors/Suppliers', icon: FaUserTag, path: '/masters/vendors' },
           ],
         },
         {
@@ -154,8 +154,8 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
         },
       ],
     },
-    { name: 'Accounts', icon: FiUser, path: '#' },
     { name: 'Inventory', icon: FaBoxes, path: '#' },
+    { name: 'Accounts', icon: FiUser, path: '#' },
     { name: 'HR/PayRoll', icon: FaUserTie, path: '#' },
     { name: 'Reports', icon: MdAnalytics, path: '#' },
     { name: 'Settings', icon: MdSettings, path: '#' },
