@@ -130,7 +130,7 @@ body {
 .form_grid {
   width: 80% !important;
   height: auto;
-  margin-block: 0 !important;
+  margin-block: auto !important;
   margin-inline: auto ;
   border-radius: 12px;
   padding: 0px 0px 10px 0px;
@@ -264,3 +264,4 @@ div[class*="Watermark"],
     position: absolute !important;
     left: -9999px !important;
 }
+

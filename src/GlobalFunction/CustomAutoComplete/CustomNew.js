@@ -69,25 +69,29 @@ const CustomAutocomplete = React.forwardRef(
       },
     },
   }}
-  sx={{
-    '& .MuiInputBase-root': {
-      fontSize: '0.75rem',
-      backgroundColor: 'transparent',
-      minHeight: '34px',
-      paddingTop: '0px',
-      paddingBottom: '0px',
-      paddingLeft: '8px',
-      paddingRight: '8px',
-    },
-    '& .MuiInputBase-input': {
-      padding: '4px 0px',
-      height: '20px',
-    },
-    '& .MuiFormHelperText-root': {
-      marginTop: '2px',
-    },
-    ...sx,
-  }}
+sx={{
+  '& .MuiInputBase-root': {
+    fontSize: '0.75rem',
+    backgroundColor: 'transparent',
+    minHeight: '28px', // ⬅️ Reduced from 34px
+    paddingTop: '0px',
+    paddingBottom: '0px',
+    paddingLeft: '6px',
+    paddingRight: '6px',
+    height: '28px', // ⬅️ Force height
+  },
+  '& .MuiInputBase-input': {
+    padding: '4px 0px',
+    height: '18px', // ⬅️ Shrinks input area
+    fontSize: '0.75rem',
+  },
+  '& .MuiFormHelperText-root': {
+    marginTop: '2px',
+    fontSize: '0.65rem',
+  },
+  ...sx,
+}}
+
   fullWidth
 />
 

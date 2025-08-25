@@ -1,47 +1,20 @@
 'use client';
-import React, { useState, useEffect } from "react";
-
+import React, { useState } from "react";
 import {
   Box,
-  Grid,
-  Button,
   TextField,
   Typography,
-  Stepper,
-  Step,
-  StepLabel,
-  FormControl,
-  Checkbox,
-  FormGroup,
   FormControlLabel,
-
+  Checkbox,
 } from "@mui/material";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-
 import { getFormMode } from "../../../lib/helpers";
-import CustomAutocomplete from "../../../GlobalFunction/CrudButton";
+import CustomAutocomplete from "@/GlobalFunction/CustomAutoComplete/CustomNew";
+
 const FORM_MODE = getFormMode();
-let pincity = [];
-const StepperMst1 = ({
-  index,
-  mode,
-  CompanyData,
-  Cities,
-  AllTextDisabled,
-  AllButtonDisabled,
-  addModeDis,
-  viewModeDis,
-  stepToNext,
-  Status,
-  setStatus,
-  setMode,
-  AllfieldStepperData,
-  Flag,
-  fetchCompanyData,
-  setTableData,
-  CompanyId,
-}) => {
+
+const StepperMst1 = ({ mode }) => {
   const [form, setForm] = useState({
     COMPANY_NAME: '',
     ABBR: '',
@@ -72,48 +45,24 @@ const StepperMst1 = ({
     EXCISE_COMM: '',
     MSME_NO: '',
     CO_DIVISION_ACTIVE: false,
+    SMALL_INPUT: '',
+    BIG_INPUT: '',
   });
 
-
-  const openNewTab = () => {
-    window.open("/pincode");
-  }
-
-  const handleClickNext = () => {
-
-  };
-
-  const HandleNextStep = () => { };
-
-  const handleCancel = async () => {
-
-
-
-  };
-
   const handleFileChange = (event) => {
-    console.log("obj", watch());
     const file = event.target.files[0];
-    console.log("file", file);
     if (file) {
       const reader = new FileReader();
-
       const readFileAsBase64 = (file) => {
         return new Promise((resolve, reject) => {
-          reader.onloadend = () => {
-            resolve(reader.result);
-          };
+          reader.onloadend = () => resolve(reader.result);
           reader.onerror = reject;
           reader.readAsDataURL(file);
         });
       };
 
       readFileAsBase64(file)
-        .then((base64String) => {
-          console.log("base64String", base64String);
-          setValue("CoLogo", base64String);
-          setselectedImage(base64String);
-        })
+        .then(() => toast.success("File loaded successfully"))
         .catch((err) => {
           console.error("Error reading file:", err);
           toast.error("Error reading file. Please try again.");
@@ -121,210 +70,203 @@ const StepperMst1 = ({
     }
   };
 
+  const renderLabelInput = (label, value, onChange, width, fullWidth) => (
+    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+      <Typography sx={{ width: 150, fontSize: '14px' }}>{label}</Typography>
+      <TextField
+        value={value}
+        onChange={onChange}
+        size="small"
+        fullWidth={fullWidth}
+        sx={{
+          width: width,
+          '& .MuiInputBase-root': {
+            height: '26px',
+            fontSize: '13px',
+          },
+          '& input': {
+            padding: '6px 8px',
+            fontSize: '13px',
+          },
+        }}
+      />
+    </Box>
+  );
+
   return (
-    <>
+    <Box
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 1,
+        marginInline: { xs: '5%', sm: '10%', md: '20%' },
+        marginTop: { xs: '15px', sm: '20px', md: '0px' },
+      }}
+    >
+      {/* First Row: Company + Image */}
       <Box
         sx={{
           display: 'flex',
-          flexDirection: 'column',
-          gap: 0.8,
-          marginInline: { xs: '5%', sm: '10%', md: '20%' },
-          marginTop: { xs: '15px', sm: '20px', md: '0px' },
+          alignItems: 'flex-start',
+          flexDirection: 'row',
+          width: '100%',
+          gap: 1,
         }}
       >
-        {/* Top Section: Inputs + Image */}
+        {/* Left side form */}
         <Box
           sx={{
             display: 'flex',
-            flexDirection: 'row',
-            alignItems: 'flex-start',
-            gap: 0,
-            flexWrap: 'nowrap',
+            flexDirection: 'column',
+            maxWidth: 'calc(100% - 150px)',
+            flexGrow: 1,
+            gap: 0.5,
           }}
         >
-          {/* Left Inputs */}
-          <Box
-            sx={{
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 0.8,
-              flex: 1,
-            }}
-          >
-            {/* Row 1 */}
-            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-              <TextField
-                label="Company"
-                className="custom-textfield"
-                sx={{ width: '350px' }}
-                disabled={mode === FORM_MODE.read}
-                onChange={(e) => setForm({ ...form, COMPANY_NAME: e.target.value })}
-              />
-              <TextField
-                label="Abbr"
-                className="custom-textfield"
-                sx={{ width: '120px' }}
-                disabled={mode === FORM_MODE.read}
-                onChange={(e) => setForm({ ...form, ABBR: e.target.value })}
-              />
-              <TextField
-                label="GSTIN NO."
-                className="custom-textfield"
-                sx={{ width: '120px' }}
-                disabled={mode === FORM_MODE.read}
-                onChange={(e) => setForm({ ...form, GSTIN: e.target.value })}
-              />
-            </Box>
+          {/* Row 1: Company */}
+          <Box sx={{ display: 'flex', alignItems: 'center', width: '100%', gap: 1 }}>
+            <Typography sx={{ width: 150 ,fontSize: '14px' }}>Company:</Typography>
 
-            {/* Row 2 */}
-            <Box sx={{ display: 'flex',flexDirection:'row', flexWrap: 'wrap', gap: 0.8 }}>
+            <TextField
+              value={form.SMALL_INPUT}
+              onChange={(e) => setForm({ ...form, SMALL_INPUT: e.target.value })}
+              size="small"
+              disabled={mode === FORM_MODE.read}
+              sx={{
+                width: 90,
+                '& .MuiInputBase-root': { height: '28px', fontSize: '12px' },
+                '& input': { padding: '6px 8px', fontSize: '12px' },
+              }}
+              inputProps={{ style: { fontSize: '13px' } }}
+            />
 
-              <TextField
-                label="Jurisdiction"
-                className="custom-textfield"
-                sx={{ width: '350px' }}
-                disabled={mode === FORM_MODE.read}
-                onChange={(e) => setForm({ ...form, JURISDICTION: e.target.value })}
-              />
-              {/* <CustomAutocomplete
-                id="jurisdiction-autocomplete"
-                disabled={true}
-                label="Jurisdiction"
-                name="JURISDICTION "
-                // options={termsTypeOptions}
-                value={form.JURISDICTION}
-                onChange={(value) => setForm({ ...form, JURISDICTION: value })}
-                sx={{ width:'150px' }}
-              /> */}
-              <TextField
-                label="Print Name"
-                className="custom-textfield"
-                sx={{ width: '250px' }}
-                disabled={mode === FORM_MODE.read}
-                onChange={(e) => setForm({ ...form, PRINT_INFO: e.target.value })}
-              />
-            </Box>
+            <TextField
+              value={form.BIG_INPUT}
+              onChange={(e) => setForm({ ...form, BIG_INPUT: e.target.value })}
+              size="small"
+              disabled={mode === FORM_MODE.read}
+              sx={{
+                width: 450,
+                '& .MuiInputBase-root': { height: '28px', fontSize: '12px' },
+                '& input': { padding: '6px 8px', fontSize: '12px' },
+              }}
+              inputProps={{ style: { fontSize: '13px' } }}
+            />
           </Box>
 
-          {/* Image Box */}
-          <Box
-            sx={{
-              width: '150px',
-              minHeight: '80px',
-              border: '1px dashed #ccc',
-              borderRadius: 1,
-              flexShrink: 0,
-            }}
-          />
+          {/* Row 2: Abvr */}
+          <Box sx={{ display: 'flex', alignItems: 'center', width: '100%', gap: 1 }}>
+            <Typography sx={{ width: 430 ,fontSize: '14px' }}>Abvr:</Typography>
+
+            <TextField
+              value={form.ABBR}
+              onChange={(e) => setForm({ ...form, ABBR: e.target.value })}
+              size="small"
+              disabled={mode === FORM_MODE.read}
+              sx={{
+                width: 180,
+                '& .MuiInputBase-root': { height: '28px', fontSize: '12px' },
+                '& input': { padding: '6px 8px', fontSize: '12px' },
+              }}
+              inputProps={{ style: { fontSize: '13px' } }}
+            />
+            <Typography sx={{ width: 90 ,fontSize: '14px' }}>GSTINNO:</Typography>
+            <TextField
+              value={form.GSTIN}
+              onChange={(e) => setForm({ ...form, GSTIN: e.target.value })}
+              size="small"
+              disabled={mode === FORM_MODE.read}
+              sx={{
+                width: 190,
+                '& .MuiInputBase-root': { height: '28px', fontSize: '12px' },
+                '& input': { padding: '6px 8px', fontSize: '12px' },
+              }}
+              inputProps={{ style: { fontSize: '13px' } }}
+            />
+
+            <Typography sx={{ width: 80,fontSize: '14px'  }}>Jurisdiction:</Typography>
+
+            <CustomAutocomplete
+              value={form.JURISDICTION}
+              onChange={(value) => setForm({ ...form, JURISDICTION: value })}
+              disabled={mode === FORM_MODE.read}
+              sx={{ width: 200 }}
+            />
+          </Box>
         </Box>
 
-        {/* Bottom Section: New Inputs + TDS Details */}
+        {/* Right side image box */}
         <Box
           sx={{
-            display: 'flex',
-            flexDirection: 'row',
-            gap: 2,
-            flexWrap: 'wrap',
-            alignItems: 'flex-start',
+            width: '140px',
+            height: '70px',
+            border: '1px solid #ccc',
+            borderRadius: 1,
+            flexShrink: 0,
           }}
-        >
-          {/* Left Side New Inputs */}
-          <Box
-            sx={{
-              display: 'flex',
-              flexWrap: 'wrap',
-              gap: 0.8,
-              flex: 1,
-            }}
-          >
-            <TextField
-              label="Work Address"
-              className="custom-textfield"
-              sx={{ flex: '1 1 250px' }}
-              disabled={mode === FORM_MODE.read}
-              onChange={(e) => setForm({ ...form, WORK_ADDRESS: e.target.value })}
-            />
-            <TextField
-              label="Address"
-              className="custom-textfield"
-              sx={{ flex: '1 1 250px' }}
-              disabled={mode === FORM_MODE.read}
-              onChange={(e) => setForm({ ...form, ADDRESS: e.target.value })}
-            />
-            <TextField
-              label="Place"
-              className="custom-textfield"
-              sx={{ flex: '1 1 150px' }}
-              disabled={mode === FORM_MODE.read}
-              onChange={(e) => setForm({ ...form, PLACE: e.target.value })}
-            />
-            <TextField
-              label="Regd Address"
-              className="custom-textfield"
-              sx={{ flex: '1 1 250px' }}
-              disabled={mode === FORM_MODE.read}
-              onChange={(e) => setForm({ ...form, REGD_ADDRESS: e.target.value })}
-            />
+        />
+      </Box>
+      {/* Two Column Layout */}
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: 4,
+          marginTop: 0,
+        }}
+      >
+        {/* Left Column */}
+        <Box sx={{ flex: 1, minWidth: '300px', display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+          {[
+            { label: 'Print Name:', key: 'PRINT_INFO' },
+            { label: 'Address:', key: 'ADDRESS' },
+            { label: 'Regd Add:', key: 'REGD_ADDRESS' },
+            { label: 'CIN NO.:', key: 'CIN_NO' },
+            { label: 'IE Code:', key: 'IE_CODE' },
+            { label: 'Tel:', key: 'TEL' },
+            { label: 'Email:', key: 'EMAIL' },
+            { label: 'Website:', key: 'WEBSITE' },
+            { label: 'OwnerMobNo:', key: 'OWNER_MOBILE_NO' },
+          ].map(({ label, key }) => (
+            <Box key={key}>
+              {renderLabelInput(
+                label,
+                form[key],
+                (e) => setForm({ ...form, [key]: e.target.value }),
+                300,
+                true
+              )}
+            </Box>
+          ))}
+        </Box>
 
-            <TextField
-              label="PinCode"
-              className="custom-textfield"
-              sx={{ flex: '1 1 150px' }}
-              disabled={mode === FORM_MODE.read}
-              onChange={(e) => setForm({ ...form, PINCODE: e.target.value })}
-            />
-            <TextField
-              label="CIN NO."
-              className="custom-textfield"
-              sx={{ flex: '1 1 250px' }}
-              disabled={mode === FORM_MODE.read}
-              onChange={(e) => setForm({ ...form, CIN_NO: e.target.value })}
-            />
-            <TextField
-              label="IE Code"
-              className="custom-textfield"
-              sx={{ flex: '1 1 250px' }}
-              disabled={mode === FORM_MODE.read}
-              onChange={(e) => setForm({ ...form, IE_CODE: e.target.value })}
-            />
-            <TextField
-              label="Tel"
-              className="custom-textfield"
-              sx={{ flex: '1 1 250px' }}
-              disabled={mode === FORM_MODE.read}
-              onChange={(e) => setForm({ ...form, TEL: e.target.value })}
-            />
-            <TextField
-              label="Email"
-              className="custom-textfield"
-              sx={{ flex: '1 1 250px' }}
-              disabled={mode === FORM_MODE.read}
-              onChange={(e) => setForm({ ...form, EMAIL: e.target.value })}
-            />
-            <TextField
-              label="Website"
-              className="custom-textfield"
-              sx={{ flex: '1 1 250px' }}
-              disabled={mode === FORM_MODE.read}
-              onChange={(e) => setForm({ ...form, WEBSITE: e.target.value })}
-            />
-            <TextField
-              label="Owner Mobile No."
-              className="custom-textfield"
-              sx={{ flex: '1 1 250px' }}
-              disabled={mode === FORM_MODE.read}
-              onChange={(e) => setForm({ ...form, OWNER_MOBILE_NO: e.target.value })}
-            />
-          </Box>
+        {/* Right Column */}
+        <Box sx={{ flex: 1, minWidth: '300px', display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+          {[
+            { label: 'Work Add:', key: 'WORK_ADDRESS' },
+            { label: 'Place:', key: 'PLACE' },
+            { label: 'PinCode:', key: 'PINCODE' },
+          ].map(({ label, key }) => (
+            <Box key={key}>
+              {renderLabelInput(
+                label,
+                form[key],
+                (e) => setForm({ ...form, [key]: e.target.value }),
+                300,
+                true
+              )}
+            </Box>
+          ))}
 
-          {/* Right Side TDS Details */}
+          {/* TDS Section */}
           <Box
             sx={{
               display: 'flex',
               flexDirection: 'column',
-              gap: 0.8,
-              width: '250px',
-
+             
+              gap: 0, // spacing between heading and each field
+              marginTop: 0,
             }}
           >
             <Typography
@@ -332,167 +274,113 @@ const StepperMst1 = ({
               sx={{
                 textAlign: 'center',
                 fontWeight: 'bold',
-                paddingBottom: '0px',
+                marginBottom: 0,
+                fontSize: '14px',
               }}
             >
               TDS Details
             </Typography>
-
-            <TextField
-              label="PAN"
-              className="custom-textfield"
-              sx={{ width: '100%' }}
-              disabled={mode === FORM_MODE.read}
-              onChange={(e) => setForm({ ...form, PAN: e.target.value })}
-            />
-            <TextField
-              label="TAN"
-              className="custom-textfield"
-              sx={{ width: '100%' }}
-              disabled={mode === FORM_MODE.read}
-              onChange={(e) => setForm({ ...form, TAN: e.target.value })}
-            />
-            <TextField
-              label="TDS Circle"
-              className="custom-textfield"
-              sx={{ width: '100%' }}
-              disabled={mode === FORM_MODE.read}
-              onChange={(e) => setForm({ ...form, TDS_CIRCLE: e.target.value })}
-            />
-            <TextField
-              label="TDS Person"
-              className="custom-textfield"
-              sx={{ width: '100%' }}
-              disabled={mode === FORM_MODE.read}
-              onChange={(e) => setForm({ ...form, TDS_PERSON: e.target.value })}
-            />
-            <TextField
-              label="Designation"
-              className="custom-textfield"
-              sx={{ width: '100%' }}
-              disabled={mode === FORM_MODE.read}
-              onChange={(e) => setForm({ ...form, DESIGNATION: e.target.value })}
-            />
+            {[
+              { label: 'PAN:', key: 'PAN' },
+              { label: 'TAN:', key: 'TAN' },
+              { label: 'TDS Circle:', key: 'TDS_CIRCLE' },
+              { label: 'TDS Person:', key: 'TDS_PERSON' },
+              { label: 'Designation:', key: 'DESIGNATION' },
+            ].map(({ label, key }) => (
+              <Box key={key} sx={{ marginBottom: 0.5 }}>
+                {renderLabelInput(
+                  label,
+                  form[key],
+                  (e) => setForm({ ...form, [key]: e.target.value }),
+                  280,
+                  true
+                )}
+              </Box>
+            ))}
           </Box>
-
         </Box>
-
-
-        {/* Border below Designation field */}
-        <Box
-          sx={{
-            borderBottom: '3px solid #ccc',
-            marginX: 0,
-            marginY: 0,
-          }}
-        />
-
-        {/* Additional Fields Section */}
-        <Box
-          sx={{
-            display: 'flex',
-            flexWrap: 'wrap',
-            gap: 0.8,
-            marginTop: 0,
-          }}
-        >
-          <TextField
-            label="C.S.T"
-            className="custom-textfield"
-            sx={{ width: '250px' }}
-            disabled={mode === FORM_MODE.read}
-            onChange={(e) => setForm({ ...form, CST: e.target.value })}
-          />
-          <TextField
-            label="Excise CD"
-            className="custom-textfield"
-            sx={{ width: '250px' }}
-            disabled={mode === FORM_MODE.read}
-            onChange={(e) => setForm({ ...form, EXCISE_CD: e.target.value })}
-          />
-          <TextField
-            label="Excise Div"
-            className="custom-textfield"
-            sx={{ width: '250px' }}
-            disabled={mode === FORM_MODE.read}
-            onChange={(e) => setForm({ ...form, EXCISE_DIV: e.target.value })}
-          />
-          <TextField
-            label="VAT (Reg. Off)"
-            className="custom-textfield"
-            sx={{ width: '250px' }}
-            disabled={mode === FORM_MODE.read}
-            onChange={(e) => setForm({ ...form, VAT_REG_OFF: e.target.value })}
-          />
-          <TextField
-            label="Excise Rng"
-            className="custom-textfield"
-            sx={{ width: '250px' }}
-            disabled={mode === FORM_MODE.read}
-            onChange={(e) => setForm({ ...form, EXCISE_RNG: e.target.value })}
-          />
-          <TextField
-            label="Excise Comm"
-            className="custom-textfield"
-            sx={{ width: '250px' }}
-            disabled={mode === FORM_MODE.read}
-            onChange={(e) => setForm({ ...form, EXCISE_COMM: e.target.value })}
-          />
-          <TextField
-            label="MSME No"
-            className="custom-textfield"
-            sx={{ width: '250px' }}
-            disabled={mode === FORM_MODE.read}
-            onChange={(e) => setForm({ ...form, MSME_NO: e.target.value })}
-          />
-
-          {/* Checkbox for Co-division Active */}
-          <FormControlLabel
-            control={
-              <Checkbox
-                checked={form.CO_DIVISION_ACTIVE || false}
-                onChange={(e) =>
-                  setForm({ ...form, CO_DIVISION_ACTIVE: e.target.checked })
-                }
-                disabled={mode === FORM_MODE.read}
-              />
-            }
-            label="Co-division Active"
-            sx={{ width: '250px', marginLeft: '8px' }}
-          />
-        </Box>
-
       </Box>
 
-      <Grid item xs={12} className="form_button" sx={{ marginTop: '-20px', marginBottom: '10px', marginRight: '60px' }}>
-        <Button
-          variant="contained"
-          size="small"
-          sx={{
-            mr: 1,
-            background: "linear-gradient(290deg, #b9d0e9, #e9f2fa)",
-          }}
-          onClick={handleClickNext}
-          disabled={AllTextDisabled}
-        >
-          Next
-        </Button>
-        <Button
-          variant="contained"
-          size="small"
-          sx={{
-            mr: 1,
-            background: "linear-gradient(290deg, #b9d0e9, #e9f2fa)",
-          }}
-          onClick={handleCancel}
-          disabled={AllTextDisabled}
-        >
-          Cancel
-        </Button>
-      </Grid>
+      {/* Divider */}
+      <Box
+        sx={{
+          borderBottom: '1px solid #ccc',
+          marginY: 0,
+          width: '100%',
+        }}
+      />
+     {/* Additional Fields */}
+{/* Additional Fields */}
+<Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+  {/* First Row */}
+  <Box sx={{ display: 'flex', flexDirection: 'row', gap: 1 }}>
+    {[
+      { label: 'C.S.T', key: 'CST' },
+      { label: 'Excise Cd', key: 'EXCISE_CD' },
+      { label: 'Excise Div', key: 'EXCISE_DIV' },
+    ].map(({ label, key }, idx) => (
+      <Box key={key} sx={{ flex: idx === 0 ? 1 : 0.5 }}>
+        {renderLabelInput(
+          label,
+          form[key],
+          (e) => setForm({ ...form, [key]: e.target.value }),
+          '100%', // width managed by flex
+          true
+        )}
+      </Box>
+    ))}
+  </Box>
 
+  {/* Second Row */}
+  <Box sx={{ display: 'flex', flexDirection: 'row', gap: 1 }}>
+    {[
+      { label: 'VAT(Reg.Off)', key: 'VAT_REG_OFF' },
+      { label: 'Excise Rng', key: 'EXCISE_RNG' },
+      { label: 'ExciseComm', key: 'EXCISE_COMM' },
+    ].map(({ label, key }, idx) => (
+      <Box key={key} sx={{ flex: idx === 0 ? 1 : 0.5 }}>
+        {renderLabelInput(
+          label,
+          form[key],
+          (e) => setForm({ ...form, [key]: e.target.value }),
+          '100%',
+          true
+        )}
+      </Box>
+    ))}
+  </Box>
 
-    </>
+  {/* Third Row */}
+  <Box sx={{ display: 'flex', flexDirection: 'row', gap: 1 }}>
+    <Box sx={{ flex: 1 }}>
+      {renderLabelInput(
+        'MSME No',
+        form['MSME_NO'],
+        (e) => setForm({ ...form, MSME_NO: e.target.value }),
+        '100%',
+        true
+      )}
+    </Box>
+
+    <Box sx={{ flex: 1, display: 'flex', alignItems: 'center' }}>
+      <FormControlLabel
+        control={
+          <Checkbox
+            checked={form.CO_DIVISION_ACTIVE || false}
+            onChange={(e) =>
+              setForm({ ...form, CO_DIVISION_ACTIVE: e.target.checked })
+            }
+            disabled={mode === FORM_MODE.read}
+          />
+        }
+        label="Co-division Active"
+        sx={{ width: '100%', fontSize: '13px' }}
+      />
+    </Box>
+  </Box>
+</Box>
+
+    </Box>
   );
 };
 
