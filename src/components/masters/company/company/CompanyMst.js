@@ -1,0 +1,576 @@
+'use client';
+import React, { useCallback, useEffect, useState } from "react";
+import {
+  Box,
+  Grid,
+  Button,
+  Typography,
+  Tabs,
+  Tab,
+  Stack,
+} from "@mui/material";
+import "react-toastify/dist/ReactToastify.css";
+import { toast, ToastContainer } from "react-toastify";
+import CrudButtons from "@/GlobalFunction/CrudButtons";
+import PaginationButtons from "@/GlobalFunction/PaginationButtons";
+import { getFormMode } from "@/lib/helpers";
+import ConfirmDelDialog from "@/GlobalFunction/ConfirmDelDialog";
+import StepperMst1 from "./Stepper1";
+import StepperMst2 from "./Stepper2";
+import { useRouter } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
+import axiosInstance from "@/lib/axios";
+const FORM_MODE = getFormMode();
+const initialStepper1Form = {
+  CO_ID: "",
+  CO_NAME: "",
+  CO_ABRV: "",
+  GSTTIN_NO: "",
+  JURISDICTION: "",
+  PRINT_NAME: "",
+  OTH_ADD: "",
+  REGD_ADD: "",
+  CINNo: "",
+  IE_CODE: "",
+  RTEL_NO: "",
+  RE_MAIL: "",
+  WEBSITE: "",
+  OWN_MOBILENO: "",
+  WORK_ADD: "",
+  PLACE: "",
+  PINCODE: "",
+  PAN_NO: "",
+  TAN_NO: "",
+  TDS_CIRCLE: "",
+  TDS_PERSON: "",
+  TDS_P_DESIG: "",
+  CST: "",
+  EXCISE_CODE: "",
+  EXCISE_DIV: "",
+  RVAT: "",
+  EXCISE_RANG: "",
+  EXCISE_COMM: "",
+  MSME_NO: "",
+  CO_DIV_KEY: false,
+};
+
+const CompanyMst = () => {
+  const [tabIndex, setTabIndex] = useState(0);
+  const [form, setForm] = useState(initialStepper1Form);
+
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const CO_ID = searchParams.get('CO_ID');
+  const [openDialog, setopenDialog] = useState(false);
+  const [currentCO_ID, setCurrentCO_ID] = useState(null);
+  const [mode, setMode] = useState(() => (currentCO_ID ? FORM_MODE.read : FORM_MODE.add));
+  const [tableData, setTableData] = useState([]);
+  const [isButtonSubmit, setIsButtonSubmit] = useState(false);
+  const [stepper1Form, setStepper1Form] = useState({});
+  const [stepper2Branches, setStepper2Branches] = useState([]);
+  const [branchList, setBranchList] = useState([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const userRole = localStorage.getItem('userRole');
+  const UserName = localStorage.getItem('USER_NAME');
+  const PARTY_KEY = localStorage.getItem('PARTY_KEY');
+  const COBR_ID = localStorage.getItem('COBR_ID');
+  const CO_IDD = localStorage.getItem('CO_ID');
+
+   useEffect(() => {
+  if (stepper2Branches.length > 0 && Object.keys(stepper1Form).length > 0) {
+    const updatedBranches = stepper2Branches.map(branch => ({
+      ...branch,
+      CO_ID: stepper1Form.CO_ID || branch.CO_ID,
+      COBR_NAME: stepper1Form.CO_NAME || branch.COBR_NAME,
+      COBR_ABRV: stepper1Form.CO_ABRV || branch.COBR_ABRV,
+      COBR_ADD: stepper1Form.REGD_ADD || branch.COBR_ADD,  
+      TEL_NO: stepper1Form.RTEL_NO || branch.TEL_NO,      
+      E_MAIL: stepper1Form.RE_MAIL || branch.E_MAIL,     
+      PLACE: stepper1Form.PLACE || branch.PLACE,
+      BRANCH_OWN_MOBNO: stepper1Form.OWN_MOBNO || branch.BRANCH_OWN_MOBNO, 
+      GSTTIN_NO: stepper1Form.GSTTIN_NO || branch.GSTTIN_NO,             
+      EXCISE_CODE: stepper1Form.EXCISE_CODE || branch.EXCISE_CODE,         
+      EXCISE_RANG: stepper1Form.EXCISE_RANG || branch.EXCISE_RANG,        
+      EXCISE_DIV: stepper1Form.EXCISE_DIV || branch.EXCISE_DIV,
+      BANK_ACC: stepper1Form.BANK_ACC || branch.BANK_ACC,
+      PRINT_NAME: stepper1Form.PRINT_NAME || branch.PRINT_NAME,            
+      WORK_ADD: stepper1Form.WORK_ADD || branch.WORK_ADD,              
+      PINCODE: stepper1Form.PINCODE || branch.PINCODE,                   
+      Active: stepper1Form.Active || branch.Active,                
+      STATUS: "1",
+    }));
+    setStepper2Branches(updatedBranches);
+  }
+}, [stepper1Form, stepper2Branches]);
+
+  useEffect(() => {
+    // Only sync if in add or edit mode
+    if (mode === FORM_MODE.add || mode === FORM_MODE.edit) {
+      const branchDefaults = {
+          TEL_NO: stepper1Form.RTEL_NO || '',
+      E_MAIL: stepper1Form.RE_MAIL || '',
+      COBR_ADD: stepper1Form.REGD_ADD || '',   // fixed key
+      PLACE: stepper1Form.PLACE || '',
+      BRANCH_OWN_MOBNO: stepper1Form.OWN_MOBNO || '',  // fixed key
+      GSTTIN_NO: stepper1Form.GSTTIN_NO || '',
+      EXCISE_CODE: stepper1Form.EXCISE_CODE || '',
+      EXCISE_RANG: stepper1Form.EXCISE_RANG || '',
+      EXCISE_DIV: stepper1Form.EXCISE_DIV || '',
+      BANK_ACC: stepper1Form.BANK_ACC || '',
+      PRINT_NAME: stepper1Form.PRINT_NAME || '',  // fixed key
+      COBR_ID: stepper1Form.CO_ID,
+      CO_ID: stepper1Form.CO_ID || '',
+      COBR_NAME: stepper1Form.CO_NAME || '',
+      COBR_ABRV: stepper1Form.CO_ABRV || '',
+      COBRLOC_KEY: '',
+      FAX_NO: '',
+      LST: '',
+      VAT: '',
+      STATUS: "1",
+      PINCODE: stepper1Form.PINCODE || '',
+      CO_DIV_KEY: stepper1Form.CO_DIV_KEY || '',
+      ORD_SYNCSTATUS: '',
+      WORK_ADD: stepper1Form.WORK_ADD || '',   // add work address
+      Active: stepper1Form.Active || false, 
+      };
+
+      // Only update first branch
+      setStepper2Branches((prevBranches) => {
+        const updatedBranches = [...prevBranches];
+        if (updatedBranches.length === 0) {
+          return [branchDefaults];
+        } else {
+          updatedBranches[0] = {
+            ...updatedBranches[0],
+            ...branchDefaults,
+          };
+          return updatedBranches;
+        }
+      });
+    }
+  }, [stepper1Form, mode]);
+
+
+  const handlePrint = () => { };
+  const handleExit = () => { router.push("/masters/company/company/companytable") };
+
+  const handleAdd = () => {
+    setMode(FORM_MODE.add);
+    setStepper1Form(initialStepper1Form);
+    setStepper2Branches([]);
+  };
+
+  const handleEdit = () => {
+    setMode(FORM_MODE.edit);
+  };
+  const handleDelete = async () => {
+    setopenDialog(true);
+  };
+  const handleDelCancel = async () => {
+    setopenDialog(false);
+  };
+
+  const handleConfirmDelete = async () => {
+    // Your existing logic for delete confirm
+    setopenDialog(false);
+  };
+  const fetchRetriveData = useCallback(async (currentCO_ID, flag = "R") => {
+    try {
+      const response = await axiosInstance.post('Company/RetriveCOMPANY', {
+        "FLAG": flag,
+        "TBLNAME": "Company",
+        "FLDNAME": "CO_ID",
+        "ID": currentCO_ID,
+        "ORDERBYFLD": "",
+        "CWHAER": "",
+        "CO_ID": CO_IDD
+      });
+
+      const { data: { STATUS, DATA, RESPONSESTATUSCODE, MESSAGE } } = response;
+
+      if (STATUS === 0 && Array.isArray(DATA.COList) && RESPONSESTATUSCODE === 1) {
+        const companyData = DATA.COList[0]; // Get the first company
+
+        setStepper1Form({
+          CO_ID: companyData.CO_ID || '',
+          CO_NAME: companyData.CO_NAME || '',
+          CO_ABRV: companyData.CO_ABRV || '',
+          GSTTIN_NO: companyData.GSTTIN_NO || '',
+          JURISDICTION: companyData.JURISDICTION || '',
+          PRINT_NAME: companyData.PRINT_NAME || '',
+          OTH_ADD: companyData.OTH_ADD || '',
+          REG_ADD: companyData.REG_ADD || '',
+          CINNo: companyData.CINNo || '',
+          IE_CODE: companyData.IE_CODE || '',
+          RTEL_NO: companyData.RTEL_NO || '',
+          RE_MAIL: companyData.RE_MAIL || '',
+          WEBSITE: companyData.WEBSITE || '',
+          OWN_MOBNO: companyData.Own_MobNo || '',
+          WORK_ADD: companyData.WORK_ADD || '',
+          PLACE: companyData.PLACE || '',
+          PINCODE: companyData.PINCODE || '',
+          PAN_NO: companyData.PAN_NO || '',
+          TAN_NO: companyData.TAN_NO || '',
+          TDS_CIRCLE: companyData.TDS_CIRCLE || '',
+          TDS_PERSON: companyData.TDS_PERSON || '',
+          TDS_P_DESIG: companyData.TDS_P_DESIG || '',
+          CST: companyData.CST || '',
+          EXCISE_CODE: companyData.EXCISE_CODE || '',
+          EXCISE_DIV: companyData.EXCISE_DIV || '',
+          RVAT: companyData.RVAT || '',
+          EXCISE_RANG: companyData.EXCISE_RANG || '',
+          EXCISE_COMM: companyData.EXCISE_COMM || '',
+          MSME_NO: companyData.MSME_NO || '',
+          CO_DIV_KEY: companyData.CO_DIV_KEY || false,
+        });
+
+        // Set branches if they exist
+        if (Array.isArray(companyData.COBRENTITIES)) {
+          const branches = companyData.COBRENTITIES.map(branch => ({
+            COBR_ID: branch.COBR_ID || "",
+            CO_ID: branch.CO_ID || "",
+            COBR_NAME: branch.COBR_NAME || "",
+            COBR_ABRV: branch.COBR_ABRV || "",
+            COBR_ADD: branch.COBR_ADD || "",
+            TEL_NO: branch.TEL_NO || "",
+            FAX_NO: branch.FAX_NO || "",
+            E_MAIL: branch.E_MAIL || "",
+            OTH_ADD: branch.OTH_ADD || "",
+            VAT: branch.VAT || "",
+            EXCISE_CODE: branch.EXCISE_CODE || "",
+            EXCISE_RANG: branch.EXCISE_RANG || "",
+            EXCISE_DIV: branch.EXCISE_DIV || "",
+            BRANCH_OWN_MOBNO: branch.BRANCH_OWN_MOBNO || "",
+            bank_acc: branch.bank_acc || "",
+            GSTTIN_NO: branch.GSTTIN_NO || "",
+            PLACE: branch.PLACE || "",
+            PINCODE: branch.PINCODE || "",
+            PRINT_NAME: branch.PRINT_NAME || "",
+            CO_DIV_KEY: branch.CO_DIV_KEY || "",
+            STATUS: branch.STATUS || "1",
+          }));
+          setStepper2Branches(branches);
+        } else {
+          setStepper2Branches([]); // Reset if no branches
+        }
+
+        setCurrentCO_ID(companyData.CO_ID);
+      } else {
+        console.error(MESSAGE);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  }, [CO_IDD]);
+
+
+  useEffect(() => {
+    if (CO_ID) {
+      setCurrentCO_ID(CO_ID);
+      fetchRetriveData(CO_ID);
+      setMode(FORM_MODE.read);
+    } else {
+      // resetFunc();
+      setMode(FORM_MODE.read);
+    }
+    setMode(FORM_MODE.read);
+  }, [CO_ID, fetchRetriveData]);
+  const handleSubmit = async () => {
+
+    const apiUrl = `Company/ManageCompanyBranch?UserName=${UserName}&strCobrid=${COBR_ID}`;
+
+    const payload = [{
+      DBFLAG: stepper1Form.DBFLAG || "I",
+      CO_ID: stepper1Form.CO_ID || "",
+      CO_NAME: stepper1Form.CO_NAME || "",
+      CO_ABRV: stepper1Form.CO_ABRV || "",
+      COBRLOC_KEY: stepper1Form.COBRLOC_KEY || 1,
+      REG_ADD: stepper1Form.REGD_ADD || "",
+      RTEL_NO: stepper1Form.RTEL_NO || "",
+      RFAX_NO: stepper1Form.RFAX_NO || "",
+      RE_MAIL: stepper1Form.EMAIL || "",
+      RLST: stepper1Form.RLST || "",
+      RVAT: stepper1Form.RVAT || "",
+      WORK_ADD: stepper1Form.WORK_ADD || "",
+      WTEL_NO: stepper1Form.TEL || "",
+      WFAX_NO: stepper1Form.FAX_NO || "",
+      WE_MAIL: stepper1Form.EMAIL || "",
+      WLST: stepper1Form.WLST || "",
+      WVAT: stepper1Form.WVAT || "",
+      OTH_ADD: "",
+      WEBSITE: stepper1Form.WEBSITE || "",
+      CST: stepper1Form.CST || "",
+      IE_CODE: stepper1Form.IE_CODE || "",
+      EXCISE_CODE: stepper1Form.EXCISE_CODE || "",
+      EXCISE_RANG: stepper1Form.EXCISE_RANG || "",
+      EXCISE_DIV: stepper1Form.EXCISE_DIV || "",
+      PAN_NO: stepper1Form.PAN_NO || "",
+      TAN_NO: stepper1Form.TAN_NO || "",
+      STATUS: "1",
+      CREATED_BY: 1,
+      CREATED_DT: new Date().toISOString(),
+      TDS_CIRCLE: stepper1Form.TDS_CIRCLE || "",
+      TDS_PERSON: stepper1Form.TDS_PERSON || "",
+      TDS_P_DESIG: stepper1Form.TDS_P_DESIG || "",
+      CLIENT_KEY: stepper1Form.CLIENT_KEY || "1",
+      CINNO: stepper1Form.CINNo || "",
+      OWN_MOBNO: stepper1Form.OWN_MOBNO || "",
+      BANK_ACC: stepper1Form.BANK_ACC || "",
+      GSTTIN_NO: stepper1Form.GSTTIN_NO || "",
+      PLACE: stepper1Form.PLACE || "",
+      PINCODE: stepper1Form.PINCODE || "",
+      PRINT_NAME: stepper1Form.PRINT_NAME || "",
+      CO_DIV_KEY: stepper1Form.CO_DIV_KEY || "",
+      COBRENTITIES: stepper2Branches.map((branch) => ({
+        DBFLAG: branch.DBFLAG || "I",
+        COBR_ID: branch.COBR_ID || "",
+        CO_ID: stepper1Form.CO_ID || "",
+        COBR_NAME: branch.COBR_NAME || "",
+        COBR_ABRV: branch.COBR_ABRV || "",
+        COBRLOC_KEY: branch.COBRLOC_KEY || "",
+        COBR_ADD: branch.COBR_ADD || "",
+        TEL_NO: branch.TEL_NO || "",
+        FAX_NO: branch.FAX_NO || "",
+        E_MAIL: branch.E_MAIL || "",
+        OTH_ADD: "",
+        LST: branch.LST || "",
+        VAT: branch.VAT || "",
+        EXCISE_CODE: branch.EXCISE_CODE || "",
+        EXCISE_RANG: branch.EXCISE_RANG || "",
+        EXCISE_DIV: branch.EXCISE_DIV || "",
+        MAIN_BRANCH: "0",
+        STATUS: "1",
+        BRANCH_OWN_MOBNO: branch.BRANCH_OWN_MOBNO || "",
+        BANK_ACC: branch.BANK_ACC || "",
+        GSTTIN_NO: branch.GSTTIN_NO || "",
+        PLACE: branch.PLACE || "",
+        PINCODE: branch.PINCODE || "",
+        PRINT_NAME: branch.PRINT_NAME || "",
+        CO_DIV_KEY: branch.CO_DIV_KEY || "",
+        ORD_SYNCSTATUS: branch.ORD_SYNCSTATUS || ""
+      }))
+    }
+    ];
+    try {
+      const response = await axiosInstance.post(apiUrl, payload);
+      const { data } = response;
+      if (data?.RESPONSESTATUSCODE === 1) {
+        toast.success(data?.MESSAGE);
+        setTableData((prevData) => [...prevData]);
+        // resetFunc();
+        setMode(FORM_MODE.read);
+      } else {
+        toast.error(data?.MESSAGE);
+      }
+    } catch (error) {
+      console.error("Error submitting data:", error.response?.data || error.message);
+      toast.error("Submission failed");
+    }
+  };
+
+  const handleFirst = () => { }
+  const handleLast = async () => {
+    await fetchRetriveData(1, "L");
+    // setForm((prev) => ({
+    //     ...prev,
+    //     SearchByCd: ''
+    // }));
+  }
+  const handlePrevious = async () => {
+    await fetchRetriveData(currentCO_ID, "P");
+    // setForm((prev) => ({
+    //     ...prev,
+    //     SearchByCd: ''
+    // }));
+  };
+  const handleNext = async () => {
+    if (currentCO_ID) {
+      await fetchRetriveData(currentCO_ID, "N");
+    }
+    // setForm((prev) => ({
+    //     ...prev,
+    //     SearchByCd: ''
+    // }));
+  };
+  const handleCancel = async () => {
+    if (mode === FORM_MODE.add) {
+      await fetchRetriveData(1, "L");
+      // setStepper1Form(initialStepper1Form);
+      // setStepper2Branches([]);
+    }
+    else {
+      await fetchRetriveData(currentCO_ID, "R");
+    }
+    setMode(FORM_MODE.read);
+    // setForm((prev) => ({
+    //     ...prev,
+    //     SearchByCd: ''
+    // }));
+  };
+
+  const handleTabChange = (event, newValue) => {
+    setTabIndex(newValue);
+  };
+
+  const Buttonsx = {
+    backgroundColor: '#39ace2',
+    margin: { xs: '0 4px', sm: '0 6px' },
+    minWidth: { xs: 40, sm: 46, md: 60 },
+    height: { xs: 40, sm: 46, md: 27 },
+  };
+
+  return (
+    <Grid>
+      <ToastContainer />
+      <Box sx={{ marginTop: "10px", display: 'flex', justifyContent: 'center', width: '100%' }}>
+
+        <ConfirmDelDialog
+          open={openDialog}
+          title="Confirm Deletion"
+          description="Are you sure you want to delete this record?"
+          onConfirm={handleConfirmDelete}
+          onCancel={handleDelCancel}
+        />
+        <Grid container spacing={2}>
+          {/* Wrap Tabs + Heading + Stepper in the same Grid item for perfect alignment */}
+          <Grid item xs={12} sx={{ mx: '0%' }}>
+            {/* Tabs + Heading */}
+            <Grid
+              container
+              alignItems="center"
+              justifyContent="space-between"
+              sx={{
+                marginTop: "2px",
+                mb: 0,
+                flexWrap: 'wrap',
+                marginInline: '15%'
+              }}
+            >
+              {/* Tabs */}
+              <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                <Tabs
+                  value={tabIndex}
+                  onChange={handleTabChange}
+                  variant="scrollable"
+                  scrollButtons="auto"
+                  aria-label="Main Branch Tabs"
+                  sx={{
+                    minHeight: '36px',
+                    '.MuiTabs-indicator': {
+                      height: '3px',
+                      backgroundColor: '#635BFF',
+                    },
+                  }}
+                >
+                  <Tab
+                    label="Main"
+                    sx={{
+                      minHeight: '36px',
+                      padding: '6px 16px',
+                      textTransform: 'none',
+                      lineHeight: 1,
+                      backgroundColor: tabIndex === 0 ? '#e0e0ff' : 'transparent',
+                      '&.Mui-selected': {
+                        color: '#000',
+                        fontWeight: 'bold',
+                      },
+                    }}
+                  />
+                  <Tab
+                    label="Branch"
+                    sx={{
+                      minHeight: '36px',
+                      padding: '6px 16px',
+                      textTransform: 'none',
+                      lineHeight: 1,
+                      backgroundColor: tabIndex === 1 ? '#e0e0ff' : 'transparent',
+                      '&.Mui-selected': {
+                        color: '#000',
+                        fontWeight: 'bold',
+                      },
+                    }}
+                  />
+                </Tabs>
+              </Box>
+              {/* Heading */}
+              <Typography variant="h5" sx={{ fontWeight: 500, ml: 2 }}>
+                {tabIndex === 0 ? "Company Master" : "Branch Details"}
+              </Typography>
+            </Grid>
+
+            {/* Stepper Section */}
+<Box sx={{ mt: 1, width: '100%', maxWidth: { xs: '100%', md: '1500px' }, mx: 'auto' }}>
+  {tabIndex === 0 ? (
+    <StepperMst1 form={stepper1Form} setForm={setStepper1Form} mode={mode} />
+  ) : (
+    <StepperMst2
+      TableData={stepper2Branches}
+      setTableData={setStepper2Branches}
+      IsButtonSubmit={isButtonSubmit}
+      mode={mode}
+      defaultFormValues={{
+        TEL_NO: stepper1Form.RTEL_NO,
+        E_MAIL: stepper1Form.RE_MAIL,
+        COBR_ADD: stepper1Form.WORK_ADD,
+        PLACE: stepper1Form.PLACE,
+        BRANCH_OWN_MOBNO: stepper1Form.OWN_MOBNO,
+        GSTTIN_NO: stepper1Form.GSTTIN_NO,
+        EXCISE_CODE: stepper1Form.EXCISE_CODE,
+        EXCISE_RANG: stepper1Form.EXCISE_RANG,
+        EXCISE_DIV: stepper1Form.EXCISE_DIV,
+        BANK_ACC: stepper1Form.BANK_ACC,
+        PRINT_NAME: stepper1Form.PRINT_NAME,
+        COBR_ID: stepper1Form.CO_ID,
+        COBR_NAME: stepper1Form.CO_NAME,
+      }}
+    />
+  )}
+</Box>
+          </Grid>
+          {/* Pagination and CRUD buttons only show for Main tab */}
+          {tabIndex === 0 && (
+            <Grid container alignItems="center"
+              justifyContent="center" spacing={1} sx={{ marginTop: "0px", marginInline: '15%', width: '100%' }}>
+              <Grid sx={{
+                display: 'flex', justifyContent: {
+                  xs: 'center',
+                  sm: 'flex-start',
+                },
+                width: { xs: '100%', sm: 'auto' },
+              }}>
+                <Stack direction="row" spacing={1}>
+                  <PaginationButtons
+                    mode={mode}
+                    FORM_MODE={FORM_MODE}
+                    currentKey={currentCO_ID}
+                    onFirst={handleFirst}
+                    onPrevious={handlePrevious}
+                    onNext={handleNext}
+                    onLast={handleLast}
+                    sx={{ mt: 2 }}
+                    buttonSx={Buttonsx}
+                  />
+                </Stack>
+              </Grid>
+              <Grid>
+                <Stack direction="row" spacing={{ xs: 0.5, sm: 1 }}  >
+                  <CrudButtons
+                    mode={mode}
+                    onAdd={mode === FORM_MODE.read ? handleAdd : handleSubmit}
+                    onEdit={mode === FORM_MODE.read ? handleEdit : handleCancel}
+                    onView={handlePrint}
+                    onDelete={handleDelete}
+                    onExit={handleExit}
+                    readOnlyMode={mode === FORM_MODE.read}
+                  />
+                </Stack>
+              </Grid>
+            </Grid>
+          )}
+        </Grid>
+      </Box>
+    </Grid>
+  );
+};
+
+export default CompanyMst;
