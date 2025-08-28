@@ -11,6 +11,7 @@ import {
   StepLabel,
   Tooltip,
   StepConnector,
+  TextField,
   Tabs,
   Tab,
   Stack,
@@ -86,107 +87,168 @@ const PartyMst = () => {
     backgroundColor: '#39ace2',
     margin: { xs: '0 4px', sm: '0 6px' },
     minWidth: { xs: 40, sm: 46, md: 60 },
-    height: { xs: 40, sm: 46, md: 27 },
+    height: { xs: 40, sm: 46, md: 30 },
+  };
+
+  const textInputSx = {
+    '& .MuiInputBase-root': {
+      height: 36,
+      fontSize: '14px',
+    },
+    '& .MuiInputLabel-root': {
+      fontSize: '14px',
+      top: '-8px',
+    },
+    '& .MuiFilledInput-root': {
+      backgroundColor: '#e0f7fa',
+      border: '1px solid #e0e0e0',
+      borderRadius: '6px',
+      overflow: 'hidden',
+      height: 36,
+      fontSize: '14px',
+    },
+    '& .MuiFilledInput-root:before': {
+      display: 'none',
+    },
+    '& .MuiFilledInput-root:after': {
+      display: 'none',
+    },
+    '& .MuiInputBase-input': {
+      padding: '10px 12px !important',
+      fontSize: '14px !important',
+      lineHeight: '1.4',
+    },
   };
 
   return (
     <Box>
       <ToastContainer />
-      <Box>
 
-        <Grid container alignItems="center"
-          justifyContent="space-between" spacing={2} sx={{
-            marginTop: { xs: '10px', sm: '10px', md: '10px', lg: '10px', xl: '10px' },
-            marginInline: { xs: '20px', sm: '20px', md: '20px', lg: '20px', xl: '20px' }
-          }}>
+      <Grid container alignItems="center"
+        justifyContent="center" spacing={2}
+      >
 
-          <Grid sx={{ flexGrow: 1 }}>
-            <Typography align="center" variant="h6">
-              {tabIndex === 0 ? "Debtors/Customer Master" : tabIndex === 1 ? "Branch Details" : "Terms Details"}
-            </Typography>
+        <Grid>
+          <Typography align="center" variant="h6">
+            {tabIndex === 0 ? "Debtors/Customer Master" : tabIndex === 1 ? "Branch Details" : "Terms Details"}
+          </Typography>
 
-          </Grid>
         </Grid>
 
+        <Grid sx={{ position: 'relative', right: -192 }}>
+          {/* <TextField
+            placeholder="Search By Code"
+            variant="filled"
+            sx={{
+              width: { xs: '100%', sm: '50%', md: '100%' }, marginBottom: '1px', borderRadius: '20px',
+              backgroundColor: '#e0f7fa',
+              '& .MuiInputBase-input': {
+                padding: { xs: '8px 0px', md: '2px 0px' },
+              },
+              '& .css-voecp4-MuiInputBase-input-MuiFilledInput-input': {
+                fontSize: '14px',
+              },
+            }}
+            value={''}
+          /> */}
+          <TextField
+            label="Search By Code"
+            disabled={""}
+            variant="filled"
+            fullWidth
+            value={""}
+            onChange={(e) => console.log(e.target.value)}
+            sx={textInputSx}
+            inputProps={{
+              style: {
+                padding: '6px 8px',
+                fontSize: '12px',
+              },
+            }}
+          />
+        </Grid>
+      </Grid>
 
-        <Grid xs={12} sx={{ ml: '20%' }}>
-          <Box sx={{ display: 'flex', justifyContent: 'left' }}>
-            <Tabs
-              value={tabIndex}
-              onChange={handleTabChange}
-              variant="scrollable"
-              scrollButtons="auto"
-              aria-label="Main Branch Tabs"
+
+      <Grid xs={12} sx={{ ml: '5%', mb: '0.5%' }}>
+        <Box sx={{ display: 'flex' }}>
+          <Tabs
+            value={tabIndex}
+            onChange={handleTabChange}
+            variant="scrollable"
+            scrollButtons="auto"
+            aria-label="Main Branch Tabs"
+            sx={{
+              minHeight: '36px',
+              '.MuiTabs-indicator': {
+                height: '3px',
+                backgroundColor: '#635BFF',
+              },
+            }}
+          >
+            <Tab
+              label="Main"
               sx={{
                 minHeight: '36px',
-                '.MuiTabs-indicator': {
-                  height: '3px',
-                  backgroundColor: '#635BFF',
+                padding: '6px 16px',
+                textTransform: 'none',
+                lineHeight: 1,
+                backgroundColor: tabIndex === 0 ? '#e0e0ff' : 'transparent',
+                '&.Mui-selected': {
+                  color: '#000',
+                  fontWeight: 'bold',
                 },
               }}
-            >
-              <Tab
-                label="Main"
-                sx={{
-                  minHeight: '36px',
-                  padding: '6px 16px',
-                  textTransform: 'none',
-                  lineHeight: 1,
-                  backgroundColor: tabIndex === 0 ? '#e0e0ff' : 'transparent',
-                  '&.Mui-selected': {
-                    color: '#000',
-                    fontWeight: 'bold',
-                  },
-                }}
-              />
-              <Tab
-                label="Branches"
-                sx={{
-                  minHeight: '36px',
-                  padding: '6px 16px',
-                  textTransform: 'none',
-                  lineHeight: 1,
-                  backgroundColor: tabIndex === 1 ? '#e0e0ff' : 'transparent',
-                  '&.Mui-selected': {
-                    color: '#000',
-                    fontWeight: 'bold',
-                  },
-                }}
-              />
-              <Tab
-                label="Terms"
-                sx={{
-                  minHeight: '36px',
-                  padding: '6px 16px',
-                  textTransform: 'none',
-                  lineHeight: 1,
-                  backgroundColor: tabIndex === 2 ? '#e0e0ff' : 'transparent',
-                  '&.Mui-selected': {
-                    color: '#000',
-                    fontWeight: 'bold',
-                  },
-                }}
-              />
-            </Tabs>
-          </Box>
-        </Grid>
-        <Grid xs={12} sx={{ mt: '0.2%' }}>
+            />
+            <Tab
+              label="Branches"
+              sx={{
+                minHeight: '36px',
+                padding: '6px 16px',
+                textTransform: 'none',
+                lineHeight: 1,
+                backgroundColor: tabIndex === 1 ? '#e0e0ff' : 'transparent',
+                '&.Mui-selected': {
+                  color: '#000',
+                  fontWeight: 'bold',
+                },
+              }}
+            />
+            <Tab
+              label="Terms"
+              sx={{
+                minHeight: '36px',
+                padding: '6px 16px',
+                textTransform: 'none',
+                lineHeight: 1,
+                backgroundColor: tabIndex === 2 ? '#e0e0ff' : 'transparent',
+                '&.Mui-selected': {
+                  color: '#000',
+                  fontWeight: 'bold',
+                },
+              }}
+            />
+          </Tabs>
+        </Box>
+      </Grid>
+      <Grid xs={12}>
 
-          {tabIndex === 0 ? (
-            <StepperMst1
-              index={Index}
-            />
-          ) : tabIndex === 1 ? (
-            <StepperMst2
-            />
-          ) : (
-            <StepperMst3
-            />
-          )}
-        </Grid>
+        {tabIndex === 0 ? (
+          <StepperMst1
+            index={Index}
+          />
+        ) : tabIndex === 1 ? (
+          <StepperMst2
+          />
+        ) : (
+          <StepperMst3
+          />
+        )}
+      </Grid>
 
+      {tabIndex === 0 && (
         <Grid container alignItems="center"
-          justifyContent="center" spacing={1} sx={{ marginTop: "30px", marginInline: '20px' }}>
+          justifyContent="center" spacing={1} sx={{ marginTop: "20px", marginInline: '20px' }}>
           <Grid sx={{
             width: { xs: '100%', sm: 'auto' },
           }}>
@@ -218,8 +280,8 @@ const PartyMst = () => {
             </Stack>
           </Grid>
         </Grid>
+      )}
 
-      </Box>
     </Box>
   );
 };

@@ -29,7 +29,7 @@ const CrudButtons = ({
         backgroundColor: '#39ace2',
         margin: { xs: '0 4px', sm: '0 6px' },
         minWidth: { xs: 40, sm: 46, md: 60 },
-        height: { xs: 40, sm: 46, md: 27 },
+        height: { xs: 40, sm: 46, md: 30 },
         "&:disabled": {
             backgroundColor: "rgba(0, 0, 0, 0.12)",
             color: "rgba(0, 0, 0, 0.26)",
