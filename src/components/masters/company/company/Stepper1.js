@@ -9,45 +9,11 @@ import {
 } from "@mui/material";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { getFormMode } from "../../../lib/helpers";
 import CustomAutocomplete from "@/GlobalFunction/CustomAutoComplete/CustomNew";
+import { getFormMode } from "@/lib/helpers";
 
 const FORM_MODE = getFormMode();
-
-const StepperMst1 = ({ mode }) => {
-  const [form, setForm] = useState({
-    COMPANY_NAME: '',
-    ABBR: '',
-    GSTIN: '',
-    JURISDICTION: '',
-    PRINT_INFO: '',
-    WORK_ADDRESS: '',
-    ADDRESS: '',
-    PLACE: '',
-    REGD_ADDRESS: '',
-    PINCODE: '',
-    CIN_NO: '',
-    IE_CODE: '',
-    TEL: '',
-    EMAIL: '',
-    WEBSITE: '',
-    OWNER_MOBILE_NO: '',
-    PAN: '',
-    TAN: '',
-    TDS_CIRCLE: '',
-    TDS_PERSON: '',
-    DESIGNATION: '',
-    CST: '',
-    EXCISE_CD: '',
-    EXCISE_DIV: '',
-    VAT_REG_OFF: '',
-    EXCISE_RNG: '',
-    EXCISE_COMM: '',
-    MSME_NO: '',
-    CO_DIVISION_ACTIVE: false,
-    SMALL_INPUT: '',
-    BIG_INPUT: '',
-  });
+const StepperMst1 = ({  form, setForm, mode  }) => {
 
   const handleFileChange = (event) => {
     const file = event.target.files[0];
@@ -71,12 +37,13 @@ const StepperMst1 = ({ mode }) => {
   };
 
   const renderLabelInput = (label, value, onChange, width, fullWidth) => (
-    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-      <Typography sx={{ width: 150, fontSize: '14px' }}>{label}</Typography>
+    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1}}>
+      <Typography sx={{ width: 110, fontSize: '14px' }}>{label}</Typography>
       <TextField
         value={value}
         onChange={onChange}
         size="small"
+        disabled={mode === FORM_MODE.read} 
         fullWidth={fullWidth}
         sx={{
           width: width,
@@ -99,8 +66,8 @@ const StepperMst1 = ({ mode }) => {
         display: 'flex',
         flexDirection: 'column',
         gap: 1,
-        marginInline: { xs: '5%', sm: '10%', md: '20%' },
-        marginTop: { xs: '15px', sm: '20px', md: '0px' },
+        marginInline: { xs: '5%', sm: '10%', md: '15%' },
+        marginTop: { xs: '15px', sm: '20px', md: '2px' },
       }}
     >
       {/* First Row: Company + Image */}
@@ -125,11 +92,11 @@ const StepperMst1 = ({ mode }) => {
         >
           {/* Row 1: Company */}
           <Box sx={{ display: 'flex', alignItems: 'center', width: '100%', gap: 1 }}>
-            <Typography sx={{ width: 150 ,fontSize: '14px' }}>Company:</Typography>
+            <Typography sx={{ width: 110 ,fontSize: '14px' }}>Company:</Typography>
 
             <TextField
-              value={form.SMALL_INPUT}
-              onChange={(e) => setForm({ ...form, SMALL_INPUT: e.target.value })}
+              value={form.CO_ID}
+              onChange={(e) => setForm({ ...form, CO_ID: e.target.value })}
               size="small"
               disabled={mode === FORM_MODE.read}
               sx={{
@@ -141,12 +108,12 @@ const StepperMst1 = ({ mode }) => {
             />
 
             <TextField
-              value={form.BIG_INPUT}
-              onChange={(e) => setForm({ ...form, BIG_INPUT: e.target.value })}
+              value={form.CO_NAME}
+              onChange={(e) => setForm({ ...form, CO_NAME: e.target.value })}
               size="small"
               disabled={mode === FORM_MODE.read}
               sx={{
-                width: 450,
+                width: 640,
                 '& .MuiInputBase-root': { height: '28px', fontSize: '12px' },
                 '& input': { padding: '6px 8px', fontSize: '12px' },
               }}
@@ -156,41 +123,42 @@ const StepperMst1 = ({ mode }) => {
 
           {/* Row 2: Abvr */}
           <Box sx={{ display: 'flex', alignItems: 'center', width: '100%', gap: 1 }}>
-            <Typography sx={{ width: 430 ,fontSize: '14px' }}>Abvr:</Typography>
+            <Typography sx={{ width: 300 ,fontSize: '14px' }}>Abvr:</Typography>
 
             <TextField
-              value={form.ABBR}
-              onChange={(e) => setForm({ ...form, ABBR: e.target.value })}
+              value={form.CO_ABRV}
+              onChange={(e) => setForm({ ...form, CO_ABRV: e.target.value })}
               size="small"
               disabled={mode === FORM_MODE.read}
               sx={{
-                width: 180,
+                width: 250,
                 '& .MuiInputBase-root': { height: '28px', fontSize: '12px' },
                 '& input': { padding: '6px 8px', fontSize: '12px' },
               }}
               inputProps={{ style: { fontSize: '13px' } }}
             />
-            <Typography sx={{ width: 90 ,fontSize: '14px' }}>GSTINNO:</Typography>
+            <Typography sx={{ width: 90 ,fontSize: '14px' }}>GSTTIN_NO:</Typography>
             <TextField
-              value={form.GSTIN}
-              onChange={(e) => setForm({ ...form, GSTIN: e.target.value })}
+              value={form.GSTTIN_NO}
+              onChange={(e) => setForm({ ...form, GSTTIN_NO: e.target.value })}
               size="small"
               disabled={mode === FORM_MODE.read}
               sx={{
-                width: 190,
+                width: 400,
                 '& .MuiInputBase-root': { height: '28px', fontSize: '12px' },
                 '& input': { padding: '6px 8px', fontSize: '12px' },
               }}
               inputProps={{ style: { fontSize: '13px' } }}
             />
 
-            <Typography sx={{ width: 80,fontSize: '14px'  }}>Jurisdiction:</Typography>
+            <Typography sx={{ width: 80,fontSize: '14px',marginLeft:"10px"  }}>Jurisdiction:</Typography>
 
             <CustomAutocomplete
               value={form.JURISDICTION}
               onChange={(value) => setForm({ ...form, JURISDICTION: value })}
-              disabled={mode === FORM_MODE.read}
-              sx={{ width: 200 }}
+              // disabled={mode === FORM_MODE.read}
+              disabled={true}
+              sx={{ width: 300 }}
             />
           </Box>
         </Box>
@@ -212,29 +180,29 @@ const StepperMst1 = ({ mode }) => {
           display: 'flex',
           justifyContent: 'space-between',
           flexWrap: 'wrap',
-          gap: 4,
+          gap: 1,
           marginTop: 0,
         }}
       >
         {/* Left Column */}
-        <Box sx={{ flex: 1, minWidth: '300px', display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+        <Box sx={{ flex: 1, minWidth: '350px', display: 'flex', flexDirection: 'column', gap: 0.5 }}>
           {[
-            { label: 'Print Name:', key: 'PRINT_INFO' },
-            { label: 'Address:', key: 'ADDRESS' },
-            { label: 'Regd Add:', key: 'REGD_ADDRESS' },
-            { label: 'CIN NO.:', key: 'CIN_NO' },
+            { label: 'Print Name:', key: 'PRINT_NAME' },
+            { label: 'Address:', key: 'OTH_ADD' },
+            { label: 'Regd Add:', key: 'REG_ADD' },
+            { label: 'CIN NO.:', key: 'CINNo' },
             { label: 'IE Code:', key: 'IE_CODE' },
-            { label: 'Tel:', key: 'TEL' },
-            { label: 'Email:', key: 'EMAIL' },
+            { label: 'Tel:', key: 'RTEL_NO' },
+            { label: 'Email:', key: 'RE_MAIL' },
             { label: 'Website:', key: 'WEBSITE' },
-            { label: 'OwnerMobNo:', key: 'OWNER_MOBILE_NO' },
+            { label: 'OwnerMobNo:', key: 'OWN_MOBNO' },
           ].map(({ label, key }) => (
             <Box key={key}>
               {renderLabelInput(
                 label,
                 form[key],
                 (e) => setForm({ ...form, [key]: e.target.value }),
-                300,
+                370,
                 true
               )}
             </Box>
@@ -244,7 +212,7 @@ const StepperMst1 = ({ mode }) => {
         {/* Right Column */}
         <Box sx={{ flex: 1, minWidth: '300px', display: 'flex', flexDirection: 'column', gap: 0.5 }}>
           {[
-            { label: 'Work Add:', key: 'WORK_ADDRESS' },
+            { label: 'Work Add:', key: 'WORK_ADD' },
             { label: 'Place:', key: 'PLACE' },
             { label: 'PinCode:', key: 'PINCODE' },
           ].map(({ label, key }) => (
@@ -253,7 +221,7 @@ const StepperMst1 = ({ mode }) => {
                 label,
                 form[key],
                 (e) => setForm({ ...form, [key]: e.target.value }),
-                300,
+                380,
                 true
               )}
             </Box>
@@ -281,18 +249,18 @@ const StepperMst1 = ({ mode }) => {
               TDS Details
             </Typography>
             {[
-              { label: 'PAN:', key: 'PAN' },
-              { label: 'TAN:', key: 'TAN' },
+              { label: 'PAN:', key: 'PAN_NO' },
+              { label: 'TAN:', key: 'TAN_NO' },
               { label: 'TDS Circle:', key: 'TDS_CIRCLE' },
               { label: 'TDS Person:', key: 'TDS_PERSON' },
-              { label: 'Designation:', key: 'DESIGNATION' },
+              { label: 'Designation:', key: 'TDS_P_DESIG' },
             ].map(({ label, key }) => (
               <Box key={key} sx={{ marginBottom: 0.5 }}>
                 {renderLabelInput(
                   label,
                   form[key],
                   (e) => setForm({ ...form, [key]: e.target.value }),
-                  280,
+                  380,
                   true
                 )}
               </Box>
@@ -316,7 +284,7 @@ const StepperMst1 = ({ mode }) => {
   <Box sx={{ display: 'flex', flexDirection: 'row', gap: 1 }}>
     {[
       { label: 'C.S.T', key: 'CST' },
-      { label: 'Excise Cd', key: 'EXCISE_CD' },
+      { label: 'Excise Cd', key: 'EXCISE_CODE' },
       { label: 'Excise Div', key: 'EXCISE_DIV' },
     ].map(({ label, key }, idx) => (
       <Box key={key} sx={{ flex: idx === 0 ? 1 : 0.5 }}>
@@ -324,7 +292,7 @@ const StepperMst1 = ({ mode }) => {
           label,
           form[key],
           (e) => setForm({ ...form, [key]: e.target.value }),
-          '100%', // width managed by flex
+          '73%', // width managed by flex
           true
         )}
       </Box>
@@ -334,8 +302,8 @@ const StepperMst1 = ({ mode }) => {
   {/* Second Row */}
   <Box sx={{ display: 'flex', flexDirection: 'row', gap: 1 }}>
     {[
-      { label: 'VAT(Reg.Off)', key: 'VAT_REG_OFF' },
-      { label: 'Excise Rng', key: 'EXCISE_RNG' },
+      { label: 'VAT(Reg.Off)', key: 'RVAT' },
+      { label: 'Excise Rng', key: 'EXCISE_RANG' },
       { label: 'ExciseComm', key: 'EXCISE_COMM' },
     ].map(({ label, key }, idx) => (
       <Box key={key} sx={{ flex: idx === 0 ? 1 : 0.5 }}>
@@ -343,7 +311,7 @@ const StepperMst1 = ({ mode }) => {
           label,
           form[key],
           (e) => setForm({ ...form, [key]: e.target.value }),
-          '100%',
+          '73%',
           true
         )}
       </Box>
@@ -357,7 +325,7 @@ const StepperMst1 = ({ mode }) => {
         'MSME No',
         form['MSME_NO'],
         (e) => setForm({ ...form, MSME_NO: e.target.value }),
-        '100%',
+        '73%',
         true
       )}
     </Box>
@@ -366,9 +334,9 @@ const StepperMst1 = ({ mode }) => {
       <FormControlLabel
         control={
           <Checkbox
-            checked={form.CO_DIVISION_ACTIVE || false}
+            checked={form.CO_DIV_KEY || false}
             onChange={(e) =>
-              setForm({ ...form, CO_DIVISION_ACTIVE: e.target.checked })
+              setForm({ ...form, CO_DIV_KEY: e.target.checked })
             }
             disabled={mode === FORM_MODE.read}
           />

@@ -61,7 +61,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
           icon: FaBuilding,
           path: '/masters/company',
           children: [
-            { name: 'Company', icon: MdDomain, path: '/masters/company' },
+            { name: 'Company', icon: MdDomain, path: '/masters/company/company' },
             { name: 'Company Area', icon: MdMap, path: '#' },
             { name: 'Company Division', icon: MdOutlineGroupWork, path: '#' },
             { name: 'Stock Type', icon: MdCategory, path: '#' },
