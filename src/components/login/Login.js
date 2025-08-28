@@ -20,7 +20,7 @@ import {
 import PersonIcon from '@mui/icons-material/Person';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
-import Login3 from '@/assets/images/Login3.jpg';
+import Login3 from '../../public/images/Login3.jpg'
 import BusinessIcon from '@mui/icons-material/Business';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
@@ -29,6 +29,7 @@ import { useRouter } from "next/navigation";
 import { toast, ToastContainer } from 'react-toastify';
 import axiosInstance from '@/lib/axios';
 import CoBrModal from './CoBrModal';
+import Image from 'next/image';
 
 const roles = [
   { label: 'User     ', value: 'user', icon: <PersonIcon /> },
@@ -267,6 +268,8 @@ useEffect(() => {
         position: 'relative', 
       }}
     >
+    
+
       <ToastContainer />
       {showLogin ? (
         <Paper
