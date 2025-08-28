@@ -1,50 +1,54 @@
 'use client';
-import React, { useState, useEffect } from "react";
-
+import React, { useEffect, useState, useCallback, Suspense } from 'react';
 import {
   Box,
-  Grid,
   Button,
-  TextField,
-  Typography,
-  Stepper,
-  Step,
+  Stack,
+  FormControlLabel,
+  FormLabel,
   Radio,
   RadioGroup,
-  FormLabel,
-  StepLabel,
-  FormControl,
   Checkbox,
-  FormGroup,
-  FormControlLabel,
-
-} from "@mui/material";
-import { toast } from "react-toastify";
+  Grid, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, TextField, InputAdornment
+} from '@mui/material';
+import { useSearchParams, useRouter } from 'next/navigation';
+import debounce from 'lodash.debounce';
+import { toast, ToastContainer } from 'react-toastify';
+import KeyboardArrowLeftIcon from "@mui/icons-material/KeyboardArrowLeft";
+import NavigateNextIcon from "@mui/icons-material/NavigateNext";
+import CrudButton from '../../../../GlobalFunction/CrudButton';
 import AutoVibe from '../../../../GlobalFunction/CustomAutoComplete/AutoVibe';
-import "react-toastify/dist/ReactToastify.css";
+import axiosInstance from '../../../../lib/axios';
+import { getFormMode } from '../../../../lib/helpers';
+import EditableTable from '@/atoms/EditTable';
+import CrudButtons from "@/GlobalFunction/CrudButtons";
+import PaginationButtons from '@/GlobalFunction/PaginationButtons';
+import z from 'zod';
+import AddIcon from '@mui/icons-material/Add';
+import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/Delete';
+import SearchIcon from "@mui/icons-material/Search";
 
-import { getFormMode } from "../../../../lib/helpers";
 const FORM_MODE = getFormMode();
 
-const StepperMst2 = () => {
-  const [isFormDisabled, setIsFormDisabled] = useState(true);
+const Stepper2 = () => {
 
   const textInputSx = {
     '& .MuiInputBase-root': {
-      height: 30,
-      fontSize: '12px',
+      height: 36,
+      fontSize: '14px',
     },
     '& .MuiInputLabel-root': {
-      fontSize: '12px',
-      top: '-6px',
+      fontSize: '14px',
+      top: '-8px',
     },
     '& .MuiFilledInput-root': {
       backgroundColor: '#fafafa',
       border: '1px solid #e0e0e0',
-      borderRadius: '5px',
+      borderRadius: '6px',
       overflow: 'hidden',
-      height: 30,
-      fontSize: '12px',
+      height: 36,
+      fontSize: '14px',
     },
     '& .MuiFilledInput-root:before': {
       display: 'none',
@@ -53,27 +57,59 @@ const StepperMst2 = () => {
       display: 'none',
     },
     '& .MuiInputBase-input': {
-      padding: '15px 12px 1px!important'
-    }
+      padding: '10px 12px !important',
+      fontSize: '14px !important',
+      lineHeight: '1.4',
+    },
+  };
+
+  const doubleInputSx = {
+    '& .MuiInputBase-root': {
+      height: 76,
+      fontSize: '14px',
+    },
+    '& .MuiInputLabel-root': {
+      fontSize: '14px',
+      top: '-8px',
+    },
+    '& .MuiFilledInput-root': {
+      backgroundColor: '#fafafa',
+      border: '1px solid #e0e0e0',
+      borderRadius: '6px',
+      overflow: 'hidden',
+      height: 76,
+      fontSize: '14px',
+    },
+    '& .MuiFilledInput-root:before': {
+      display: 'none',
+    },
+    '& .MuiFilledInput-root:after': {
+      display: 'none',
+    },
+    '& .MuiInputBase-input': {
+      padding: '10px 12px !important',
+      fontSize: '14px !important',
+      lineHeight: '1.4',
+    },
   };
 
   const DropInputSx = {
     '& .MuiInputBase-root': {
-      height: 30,
-      fontSize: '12px',
+      height: 36,
+      fontSize: '14px',
     },
     '& .MuiInputLabel-root': {
-      fontSize: '12px',
-      top: '-6px',
+      fontSize: '14px',
+      top: '-4px',
     },
     '& .MuiFilledInput-root': {
       backgroundColor: '#fafafa',
       border: '1px solid #e0e0e0',
-      borderRadius: '5px',
+      borderRadius: '6px',
       overflow: 'hidden',
-      height: 30,
-      fontSize: '12px',
-      paddingRight: '32px', // Space for the icon
+      height: 36,
+      fontSize: '14px',
+      paddingRight: '36px',
     },
     '& .MuiFilledInput-root:before': {
       display: 'none',
@@ -82,240 +118,232 @@ const StepperMst2 = () => {
       display: 'none',
     },
     '& .MuiInputBase-input': {
-      padding: '6px 12px',
-      fontSize: '12px',
-      lineHeight: '1.2',
+      padding: '10px 12px',
+      fontSize: '14px',
+      lineHeight: '1.4',
     },
     '& .MuiAutocomplete-endAdornment': {
       top: '50%',
       transform: 'translateY(-50%)',
-      right: '8px', // spacing from the right
+      right: '10px',
     },
   };
 
+  const handleInputChange = (event) => {
+    const { name, value } = event.target;
+  };
+
+  const columns = [
+    { id: "name", label: "Name", minWidth: 50, align: "left" },
+    { id: "age", label: "Age", minWidth: 50, align: "left" },
+    { id: "city", label: "City", minWidth: 50, align: "left" },
+    { id: "name", label: "Name", minWidth: 50, align: "left" },
+    { id: "age", label: "Age", minWidth: 50, align: "left" },
+    { id: "city", label: "City", minWidth: 50, align: "left" }
+  ];
+
+  const rows = [
+    { name: "John", age: 25, city: "New York" },
+    { name: "Alice", age: 30, city: "London" },
+    { name: "Bob", age: 28, city: "Paris" },
+    { name: "John", age: 25, city: "New York" },
+    { name: "Alice", age: 30, city: "London" },
+    { name: "Bob", age: 28, city: "Paris" },
+    { name: "John", age: 25, city: "New York" },
+    { name: "Alice", age: 30, city: "London" },
+    { name: "Bob", age: 28, city: "Paris" },
+    { name: "John", age: 25, city: "New York" },
+    { name: "Alice", age: 30, city: "London" },
+    { name: "Bob", age: 28, city: "Paris" }
+  ];
+
   return (
-    <>
+    <Box>
+
       <Box
         sx={{
           display: 'flex',
           flexDirection: 'column',
           gap: { xs: 1.5, sm: 1.5, md: 0.7 },
-          marginInline: { xs: '5%', sm: '5%', md: '15%' },
-          marginTop: { xs: '15px', sm: '20px', md: '10px' },
+          marginInline: { xs: '5%', sm: '5%', md: '5%' }
         }}
 
       >
-        <Box sx={{
-          display: 'flex',
-          flexDirection: { xs: 'column', sm: 'row', md: 'row' },
-          justifyContent: 'space-between',
-          gap: { xs: 1, sm: 1, md: 2 },
-        }}>
-          <Box sx={{ width: { xs: '100%', sm: '20%', md: '20%' } }}>
-            <TextField
-              label="Code"
-              disabled={isFormDisabled}
-              variant="filled"
-              fullWidth
-              value={""}
-              onChange={(e) => console.log(e.target.value)}
-              sx={textInputSx}
-              inputProps={{
-                style: {
-                  padding: '6px 8px',
-                  fontSize: '12px',
-                },
-              }}
-            />
-          </Box>
-          <Box sx={{ width: { xs: '100%', sm: '20%', md: '20%' } }}>
-            <TextField
-              label="Alt Cd"
-              disabled={isFormDisabled}
-              variant="filled"
-              fullWidth
-              value={""}
-              onChange={(e) => console.log(e.target.value)}
-              sx={textInputSx}
-              inputProps={{
-                style: {
-                  padding: '6px 8px',
-                  fontSize: '12px',
-                },
-              }}
-            />
-          </Box>
-          <Box sx={{ width: { xs: '100%', sm: '20%', md: '20%' } }}>
-            <TextField
-              label="Abbr"
-              disabled={isFormDisabled}
-              variant="filled"
-              fullWidth
-              value={""}
-              onChange={(e) => console.log(e.target.value)}
-              sx={textInputSx}
-              inputProps={{
-                style: {
-                  padding: '6px 8px',
-                  fontSize: '12px',
-                },
-              }}
-            />
-          </Box>
-          <Box sx={{ width: { xs: '100%', sm: '60%', md: '40%' }, display: 'flex', alignItems: 'center' }}>
-            <FormLabel sx={{ margin: '7px 14px 0px 10px', fontSize: '12px', fontWeight: 'bold', color: 'black' }} component="legend">RD/URD</FormLabel>
-            <RadioGroup
-              row
-              name="RDOFF"
-              onChange={(e) => console.log(e.target.value)}
-              disabled={isFormDisabled}
-              value={""}
-              sx={{ margin: '5px 0px 0px 0px' }}
-            >
-              <FormControlLabel disabled={isFormDisabled}
-                value="option1" control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
-                label={<Typography sx={{ fontSize: '12px' }}>RD</Typography>} />
-              <FormControlLabel disabled={isFormDisabled}
-                value="option2" control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
-                label={<Typography sx={{ fontSize: '12px' }}>URD</Typography>} />
-              <FormControlLabel disabled={isFormDisabled}
-                value="option3" control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
-                label={<Typography sx={{ fontSize: '12px' }}>Composition</Typography>} />
-            </RadioGroup>
-          </Box>
-        </Box>
+        <Grid item xs={12}>
+          <Paper
+            elevation={1}
+            sx={{
+              width: "99.3%",
+              borderRadius: 2,
+              overflow: "hidden",
+              backgroundColor: "#fff",
+              border: "1px solid #e0e0e0",
+            }}
+          >
+            <TableContainer sx={{ maxHeight: 150 }}>
+              <Table stickyHeader size="small">
+                <TableHead>
+                  <TableRow>
+                    {columns.map((column) => (
+                      <TableCell
+                        key={column.id}
+                        align={column.align}
+                        sx={{
+                          backgroundColor: "#f5f5f5",
+                          fontWeight: "bold",
+                          fontSize: "0.8rem",
+                          padding: "2px 4px",
+                          borderBottom: "1px solid #ddd",
+                        }}
+                      >
+                        <Typography variant="caption" sx={{ fontWeight: 600 }}>
+                          {column.label}
+                        </Typography>
+                        <TextField
+                          variant="outlined"
+                          size="small"
+                          placeholder="Search"
+                          fullWidth
+                          InputProps={{
+                            startAdornment: (
+                              <InputAdornment position="start">
+                                <SearchIcon sx={{ fontSize: 16 }} />
+                              </InputAdornment>
+                            ),
+                          }}
+                          sx={{
+                            mt: 0.5,
+                            "& .MuiOutlinedInput-root": {
+                              height: 28,
+                              fontSize: "0.75rem",
+                              borderRadius: "4px",
+                              padding: "0px",
+                              backgroundColor: "#fff",
+                            },
+                            "& input": {
+                              padding: "0px 6px",
+                            },
+                          }}
+                        />
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                </TableHead>
+
+                <TableBody>
+                  {rows.map((row, index) => (
+                    <TableRow
+                      key={index}
+                      hover
+                      sx={{
+                        backgroundColor: index % 2 === 0 ? "#fafafa" : "#fff",
+                        "&:hover": { backgroundColor: "#e3f2fd" },
+                      }}
+                    >
+                      {columns.map((column) => (
+                        <TableCell
+                          key={column.id}
+                          align={column.align}
+                          sx={{
+                            fontSize: "0.75rem",
+                            padding: "6px 8px",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          {row[column.id] || "—"}
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </Paper>
+        </Grid>
+
+        <Stack direction="row" spacing={2}>
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            sx={{
+              background: 'linear-gradient(45deg, #2196f3, #64b5f6)',
+              color: 'white',
+              margin: { xs: '0 4px', sm: '0 6px' },
+              minWidth: { xs: 40, sm: 46, md: 60 },
+              height: { xs: 40, sm: 46, md: 30 },
+            }}
+          >
+            Add
+          </Button>
+
+          <Button
+            variant="contained"
+            startIcon={<EditIcon />}
+            sx={{
+              background: 'linear-gradient(45deg, #ffa726, #ffcc80)',
+              color: 'white',
+              margin: { xs: '0 4px', sm: '0 6px' },
+              minWidth: { xs: 40, sm: 46, md: 60 },
+              height: { xs: 40, sm: 46, md: 30 },
+            }}
+          >
+            Edit
+          </Button>
+
+          <Button
+            variant="contained"
+            startIcon={<DeleteIcon />}
+            sx={{
+              background: 'linear-gradient(45deg, #e53935, #ef5350)',
+              color: 'white',
+              margin: { xs: '0 4px', sm: '0 6px' },
+              minWidth: { xs: 40, sm: 46, md: 60 },
+              height: { xs: 40, sm: 46, md: 30 },
+            }}
+          >
+            Delete
+          </Button>
+        </Stack>
 
         <Box sx={{
           display: 'flex',
           flexDirection: { xs: 'column', sm: 'row', md: 'row' },
           gap: { xs: 1, sm: 1, md: 2 },
         }}>
-          <Box sx={{ width: { xs: '100%', sm: '20%', md: '39.7%' } }}>
-            <TextField
-              label="Name"
-              disabled={isFormDisabled}
-              variant="filled"
-              fullWidth
-              value={""}
-              onChange={(e) => console.log(e.target.value)}
-              sx={textInputSx}
-              inputProps={{
-                style: {
-                  padding: '6px 8px',
-                  fontSize: '12px',
-                },
-              }}
-            />
-          </Box>
-          <Box sx={{ width: { xs: '100%', sm: '20%', md: '39.7%' } }}>
-            <TextField
-              label="Print Name"
-              disabled={isFormDisabled}
-              variant="filled"
-              fullWidth
-              value={""}
-              onChange={(e) => console.log(e.target.value)}
-              sx={textInputSx}
-              inputProps={{
-                style: {
-                  padding: '6px 8px',
-                  fontSize: '12px',
-                },
-              }}
-            />
-          </Box>
-          <Box sx={{ width: { xs: '100%', sm: '20%', md: '19.7%' } }}>
-            <TextField
-              label="Pincode"
-              disabled={isFormDisabled}
-              variant="filled"
-              fullWidth
-              value={""}
-              onChange={(e) => console.log(e.target.value)}
-              sx={textInputSx}
-              inputProps={{
-                style: {
-                  padding: '6px 8px',
-                  fontSize: '12px',
-                },
-              }}
-            />
-          </Box>
-        </Box>
-
-        <Box sx={{
-          display: 'flex',
-          flexDirection: { xs: 'column', sm: 'row', md: 'row' },
-          gap: { xs: 1, sm: 1, md: 2 },
-        }}>
-          <Box sx={{ width: { xs: '100%', sm: '20%', md: '39.7%' } }}>
+          <Box sx={{ width: { xs: '100%', sm: '20%', md: '33.5%' } }}>
             <TextField
               label="Address"
-              disabled={isFormDisabled}
               variant="filled"
               fullWidth
+              onChange={handleInputChange}
               value={""}
-              onChange={(e) => console.log(e.target.value)}
-              sx={textInputSx}
+              disabled={""}
+              name=""
+              sx={doubleInputSx}
               inputProps={{
                 style: {
                   padding: '6px 8px',
-                  fontSize: '12px',
+                  fontSize: '12px'
                 },
               }}
             />
           </Box>
-          <Box sx={{ width: { xs: '100%', sm: '20%', md: '39.7%' } }}>
-            <TextField
-              label="Place"
-              disabled={isFormDisabled}
-              variant="filled"
-              fullWidth
-              value={""}
-              onChange={(e) => console.log(e.target.value)}
-              sx={textInputSx}
-              inputProps={{
-                style: {
-                  padding: '6px 8px',
-                  fontSize: '12px',
-                },
-              }}
-            />
-          </Box>
-          <Box sx={{ width: { xs: '100%', sm: '20%', md: '19.7%' } }}>
-            <TextField
-              label="Tel"
-              disabled={isFormDisabled}
-              variant="filled"
-              fullWidth
-              value={""}
-              onChange={(e) => console.log(e.target.value)}
-              sx={textInputSx}
-              inputProps={{
-                style: {
-                  padding: '6px 8px',
-                  fontSize: '12px',
-                },
-              }}
-            />
-          </Box>
-        </Box>
 
-        <Box sx={{
-          display: 'flex',
-          flexDirection: { xs: 'column', sm: 'row', md: 'row' },
-          gap: { xs: 1, sm: 1, md: 2 },
-        }}>
-          <Box sx={{ width: { xs: '100%', sm: '20%', md: '39.7%' } }}>
+          <Box sx={{
+            display: 'flex',
+            flexDirection: { xs: 'column', sm: 'row', md: 'column' },
+            gap: { xs: 1, sm: 1, md: 0.5 },
+            width: { xs: '100%', sm: '20%', md: '20.5%' }
+          }}>
             <AutoVibe
-              id=""
-              disabled={isFormDisabled}
+              id="UNIT_KEY"
+              disabled={""}
               getOptionLabel={(option) => option || ''}
               options={[]}
               label="Country"
-              name=""
-              value={''}
-              onChange={(e) => console.log(e.target.value)}
+              name="UNIT_KEY"
+              value={""}
+              onChange={handleInputChange}
               sx={DropInputSx}
               inputProps={{
                 style: {
@@ -324,19 +352,213 @@ const StepperMst2 = () => {
                 },
               }}
             />
+            <Box sx={{
+              display: 'flex',
+              flexDirection: { xs: 'column', sm: 'row', md: 'row' },
+              gap: { xs: 1, sm: 1, md: 0.5 },
+            }}>
+              <TextField
+                label="Pincode"
+                variant="filled"
+                fullWidth
+                onChange={handleInputChange}
+                value={""}
+                disabled={""}
+                name=""
+                sx={textInputSx}
+                inputProps={{
+                  style: {
+                    padding: '6px 8px',
+                    fontSize: '12px'
+                  },
+                }}
+              />
+              <AutoVibe
+                id="UNIT_KEY"
+                disabled={""}
+                getOptionLabel={(option) => option || ''}
+                options={[]}
+                label="Pincode"
+                name="UNIT_KEY"
+                value={""}
+                onChange={handleInputChange}
+                sx={DropInputSx}
+                inputProps={{
+                  style: {
+                    padding: '6px 8px',
+                    fontSize: '12px',
+                  },
+                }}
+              />
+            </Box>
           </Box>
 
-          <Box sx={{ width: { xs: '100%', sm: '20%', md: '39.7%' } }}>
-            <AutoVibe
-              id=""
-              disabled={isFormDisabled}
-              getOptionLabel={(option) => option || ''}
-              options={[]}
-              label="State"
+          <Box sx={{
+            display: 'flex',
+            flexDirection: { xs: 'column', sm: 'row', md: 'column' },
+            gap: { xs: 1, sm: 1, md: 0.5 },
+            width: { xs: '100%', sm: '20%', md: '20.5%' }
+          }}>
+            <Box sx={{
+              display: 'flex',
+              flexDirection: { xs: 'column', sm: 'row', md: 'row' },
+              gap: { xs: 1, sm: 1, md: 2 },
+              width: { xs: '100%', sm: '20%', md: '207.7%' }
+            }}>
+              <AutoVibe
+                id="UNIT_KEY"
+                disabled={""}
+                getOptionLabel={(option) => option || ''}
+                options={[]}
+                label="State"
+                name="UNIT_KEY"
+                value={""}
+                onChange={handleInputChange}
+                sx={DropInputSx}
+                inputProps={{
+                  style: {
+                    padding: '6px 8px',
+                    fontSize: '12px',
+                  },
+                }}
+              />
+              <AutoVibe
+                id="UNIT_KEY"
+                disabled={""}
+                getOptionLabel={(option) => option || ''}
+                options={[]}
+                label="City/District"
+                name="UNIT_KEY"
+                value={""}
+                onChange={handleInputChange}
+                sx={DropInputSx}
+                inputProps={{
+                  style: {
+                    padding: '6px 8px',
+                    fontSize: '12px',
+                  },
+                }}
+              />
+            </Box>
+            <Box sx={{
+              display: 'flex',
+              flexDirection: { xs: 'column', sm: 'row', md: 'row' },
+              gap: { xs: 1, sm: 1, md: 2 },
+              width: { xs: '100%', sm: '20%', md: '207.7%' }
+            }}>
+              <Box sx={{
+                display: 'flex',
+                flexDirection: { xs: 'column', sm: 'row', md: 'row' },
+                gap: { xs: 1, sm: 1, md: 2 },
+                width: { xs: '100%', sm: '20%', md: '100%' }
+              }}>
+
+                <TextField
+                  label="Tel"
+                  variant="filled"
+                  fullWidth
+                  onChange={handleInputChange}
+                  value={""}
+                  disabled={""}
+                  name=""
+                  sx={textInputSx}
+                  inputProps={{
+                    style: {
+                      padding: '6px 8px',
+                      fontSize: '12px'
+                    },
+                  }}
+                />
+              </Box>
+              <TextField
+                label="Email"
+                variant="filled"
+                fullWidth
+                onChange={handleInputChange}
+                value={""}
+                disabled={""}
+                name=""
+                sx={textInputSx}
+                inputProps={{
+                  style: {
+                    padding: '6px 8px',
+                    fontSize: '12px'
+                  },
+                }}
+              />
+            </Box>
+          </Box>
+        </Box>
+
+        <Box sx={{
+          display: 'flex',
+          flexDirection: { xs: 'column', sm: 'row', md: 'row' },
+          gap: { xs: 1, sm: 1.5, md: 2 }
+        }}>
+          <Box sx={{ width: { xs: '100%', sm: '20%', md: '33.5%' } }}>
+            <TextField
+              label="Cont Person"
+              variant="filled"
+              fullWidth
+              onChange={handleInputChange}
+              value={""}
+              disabled={""}
               name=""
-              value={''}
+              sx={textInputSx}
+              inputProps={{
+                style: {
+                  padding: '6px 8px',
+                  fontSize: '12px'
+                },
+              }}
+            />
+          </Box>
+          <Box sx={{ width: { xs: '100%', sm: '20%', md: '20.5%' } }}>
+            <TextField
+              label="Mobile"
+              variant="filled"
+              fullWidth
+              onChange={handleInputChange}
+              value={""}
+              disabled={""}
+              name=""
+              sx={textInputSx}
+              inputProps={{
+                style: {
+                  padding: '6px 8px',
+                  fontSize: '12px'
+                },
+              }}
+            />
+          </Box>
+          <Box sx={{ width: { xs: '100%', sm: '20%', md: '20.6%' } }}>
+            <TextField
+              label="Website"
+              variant="filled"
+              fullWidth
+              onChange={handleInputChange}
+              value={""}
+              disabled={""}
+              name=""
+              sx={textInputSx}
+              inputProps={{
+                style: {
+                  padding: '6px 8px',
+                  fontSize: '12px'
+                },
+              }}
+            />
+          </Box>
+          <Box sx={{ width: { xs: '100%', sm: '48%', md: '9%' } }}>
+            <TextField
+              label="Alt Cd"
+              variant="filled"
+              fullWidth
               onChange={(e) => console.log(e.target.value)}
-              sx={DropInputSx}
+              name="LASTID"
+              value={""}
+              disabled={true}
+              sx={textInputSx}
               inputProps={{
                 style: {
                   padding: '6px 8px',
@@ -345,17 +567,16 @@ const StepperMst2 = () => {
               }}
             />
           </Box>
-          <Box sx={{ width: { xs: '100%', sm: '20%', md: '39.7%' } }}>
-            <AutoVibe
-              id=""
-              disabled={isFormDisabled}
-              getOptionLabel={(option) => option || ''}
-              options={[]}
-              label="City/District"
-              name=""
-              value={''}
+          <Box sx={{ width: { xs: '100%', sm: '48%', md: '10.2%' } }}>
+            <TextField
+              label="LBT"
+              variant="filled"
+              fullWidth
               onChange={(e) => console.log(e.target.value)}
-              sx={DropInputSx}
+              name="LASTID"
+              value={""}
+              disabled={true}
+              sx={textInputSx}
               inputProps={{
                 style: {
                   padding: '6px 8px',
@@ -369,18 +590,81 @@ const StepperMst2 = () => {
         <Box sx={{
           display: 'flex',
           flexDirection: { xs: 'column', sm: 'row', md: 'row' },
-          justifyContent: 'space-between',
           gap: { xs: 1, sm: 1, md: 2 },
         }}>
-          <Box sx={{ width: { xs: '100%', sm: '20%', md: '40%' } }}>
+
+          <Box sx={{
+            display: 'flex',
+            flexDirection: { xs: 'column', sm: 'row', md: 'column' },
+            gap: { xs: 1, sm: 1, md: 0.5 },
+            width: { xs: '100%', sm: '20%', md: '16%' }
+          }}>
             <TextField
-              label="Email"
-              disabled={isFormDisabled}
+              label="Fax"
               variant="filled"
               fullWidth
+              onChange={handleInputChange}
               value={""}
-              onChange={(e) => console.log(e.target.value)}
+              disabled={""}
+              name=""
               sx={textInputSx}
+              inputProps={{
+                style: {
+                  padding: '6px 8px',
+                  fontSize: '12px'
+                },
+              }}
+            />
+            <TextField
+              label="Spl Mark Down"
+              variant="filled"
+              fullWidth
+              onChange={handleInputChange}
+              value={""}
+              disabled={""}
+              name=""
+              sx={textInputSx}
+              inputProps={{
+                style: {
+                  padding: '6px 8px',
+                  fontSize: '12px'
+                },
+              }}
+            />
+          </Box>
+
+          <Box sx={{
+            display: 'flex',
+            flexDirection: { xs: 'column', sm: 'row', md: 'column' },
+            gap: { xs: 1, sm: 1, md: 0.5 },
+            width: { xs: '100%', sm: '20%', md: '16%' }
+          }}>
+            <TextField
+              label="Excise"
+              variant="filled"
+              fullWidth
+              onChange={handleInputChange}
+              value={""}
+              disabled={""}
+              name=""
+              sx={textInputSx}
+              inputProps={{
+                style: {
+                  padding: '6px 8px',
+                  fontSize: '12px'
+                },
+              }}
+            />
+            <AutoVibe
+              id="UNIT_KEY"
+              disabled={""}
+              getOptionLabel={(option) => option || ''}
+              options={[]}
+              label="Trade Disc"
+              name="UNIT_KEY"
+              value={""}
+              onChange={handleInputChange}
+              sx={DropInputSx}
               inputProps={{
                 style: {
                   padding: '6px 8px',
@@ -389,551 +673,299 @@ const StepperMst2 = () => {
               }}
             />
           </Box>
-          <Box sx={{ width: { xs: '100%', sm: '60%', md: '40%' }, display: 'flex', alignItems: 'center' }}>
-            <FormLabel sx={{ margin: '7px 14px 0px 10px', fontSize: '12px', fontWeight: 'bold', color: 'black' }} component="legend">MSME Reg</FormLabel>
+
+          <Box sx={{
+            display: 'flex',
+            flexDirection: { xs: 'column', sm: 'row', md: 'column' },
+            gap: { xs: 1, sm: 1, md: 0.5 },
+            width: { xs: '100%', sm: '20%', md: '20.5%' }
+          }}>
+            <TextField
+              label="VAT"
+              variant="filled"
+              fullWidth
+              onChange={handleInputChange}
+              value={""}
+              disabled={""}
+              name=""
+              sx={textInputSx}
+              inputProps={{
+                style: {
+                  padding: '6px 8px',
+                  fontSize: '12px'
+                },
+              }}
+            />
+            <AutoVibe
+              id="UNIT_KEY"
+              disabled={""}
+              getOptionLabel={(option) => option || ''}
+              options={[]}
+              label="Transporter"
+              name="UNIT_KEY"
+              value={""}
+              onChange={handleInputChange}
+              sx={DropInputSx}
+              inputProps={{
+                style: {
+                  padding: '6px 8px',
+                  fontSize: '12px',
+                },
+              }}
+            />
+          </Box>
+
+          <Box sx={{
+            display: 'flex',
+            flexDirection: { xs: 'column', sm: 'row', md: 'column' },
+            gap: { xs: 1, sm: 1, md: 0.5 },
+            width: { xs: '100%', sm: '20%', md: '20.7%' }
+          }}>
+            <TextField
+              label="CST"
+              variant="filled"
+              fullWidth
+              onChange={handleInputChange}
+              value={""}
+              disabled={""}
+              name=""
+              sx={textInputSx}
+              inputProps={{
+                style: {
+                  padding: '6px 8px',
+                  fontSize: '12px'
+                },
+              }}
+            />
+            <AutoVibe
+              id="UNIT_KEY"
+              disabled={""}
+              getOptionLabel={(option) => option || ''}
+              options={[]}
+              label="Tax Appl"
+              name="UNIT_KEY"
+              value={""}
+              onChange={handleInputChange}
+              sx={DropInputSx}
+              inputProps={{
+                style: {
+                  padding: '6px 8px',
+                  fontSize: '12px',
+                },
+              }}
+            />
+          </Box>
+
+          <Box sx={{
+            display: 'flex',
+            flexDirection: { xs: 'column', sm: 'row', md: 'column' },
+            gap: { xs: 1, sm: 1, md: 0.5 },
+            width: { xs: '100%', sm: '20%', md: '20.6%' }
+          }}>
+            <AutoVibe
+              id="UNIT_KEY"
+              disabled={""}
+              getOptionLabel={(option) => option || ''}
+              options={[]}
+              label="Form Type"
+              name="UNIT_KEY"
+              value={""}
+              onChange={handleInputChange}
+              sx={DropInputSx}
+              inputProps={{
+                style: {
+                  padding: '6px 8px',
+                  fontSize: '12px',
+                },
+              }}
+            />
+            <TextField
+              label="GSTIN No"
+              variant="filled"
+              fullWidth
+              onChange={handleInputChange}
+              value={""}
+              disabled={""}
+              name=""
+              sx={textInputSx}
+              inputProps={{
+                style: {
+                  padding: '6px 8px',
+                  fontSize: '12px'
+                },
+              }}
+            />
+          </Box>
+        </Box>
+
+        <Box sx={{
+          display: 'flex',
+          flexDirection: { xs: 'column', sm: 'row', md: 'row' },
+          gap: { xs: 1, sm: 1, md: 2 },
+        }}>
+          <Box sx={{ width: { xs: '100%', sm: '20%', md: '33.5%' } }}>
+            <TextField
+              label="Remark"
+              variant="filled"
+              fullWidth
+              onChange={handleInputChange}
+              value={""}
+              disabled={""}
+              name=""
+              sx={textInputSx}
+              inputProps={{
+                style: {
+                  padding: '6px 8px',
+                  fontSize: '12px'
+                },
+              }}
+            />
+          </Box>
+
+          <Box sx={{
+            display: 'flex', alignItems: 'center',
+            width: { xs: '100%', sm: '48%', md: '19%' }
+          }}>
             <RadioGroup
               row
               name="RDOFF"
               onChange={(e) => console.log(e.target.value)}
-              disabled={isFormDisabled}
+              disabled={''}
               value={""}
               sx={{ margin: '5px 0px 0px 0px' }}
             >
-              <FormControlLabel disabled={isFormDisabled}
+              <FormControlLabel disabled={''}
                 value="option1" control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
-                label={<Typography sx={{ fontSize: '12px' }}>Yes</Typography>} />
-              <FormControlLabel disabled={isFormDisabled}
+                label={<Typography sx={{ fontSize: '12px' }}>None</Typography>} />
+              <FormControlLabel disabled={''}
                 value="option2" control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
-                label={<Typography sx={{ fontSize: '12px' }}>No</Typography>} />
+                label={<Typography sx={{ fontSize: '12px' }}>Nearest Re</Typography>} />
+              <FormControlLabel disabled={''}
+                value="option3" control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
+                label={<Typography sx={{ fontSize: '12px' }}>Rs.5</Typography>} />
             </RadioGroup>
           </Box>
-          <Box sx={{ width: { xs: '100%', sm: '20%', md: '40%' } }}>
-            <TextField
-              label="MSME No"
-              disabled={isFormDisabled}
-              variant="filled"
-              fullWidth
-              value={""}
-              onChange={(e) => console.log(e.target.value)}
-              sx={textInputSx}
-              inputProps={{
-                style: {
-                  padding: '6px 8px',
-                  fontSize: '12px',
-                },
-              }}
-            />
-          </Box>
-        </Box>
 
-        <Box sx={{
-          display: 'flex',
-          flexDirection: { xs: 'column', sm: 'row', md: 'row' },
-          gap: { xs: 1, sm: 1, md: 2 },
-        }}>
-          <Box sx={{ width: { xs: '100%', sm: '20%', md: '39.7%' } }}>
-            <TextField
-              label="Contact Person"
-              disabled={isFormDisabled}
-              variant="filled"
-              fullWidth
-              value={""}
-              onChange={(e) => console.log(e.target.value)}
-              sx={textInputSx}
-              inputProps={{
-                style: {
-                  padding: '6px 8px',
-                  fontSize: '12px',
-                },
-              }}
-            />
-          </Box>
-
-          <Box sx={{ width: { xs: '100%', sm: '20%', md: '39.7%' } }}>
-            <TextField
-              label="Degn"
-              disabled={isFormDisabled}
-              variant="filled"
-              fullWidth
-              value={""}
-              onChange={(e) => console.log(e.target.value)}
-              sx={textInputSx}
-              inputProps={{
-                style: {
-                  padding: '6px 8px',
-                  fontSize: '12px',
-                },
-              }}
-            />
-          </Box>
-
-          <Box sx={{ width: { xs: '100%', sm: '20%', md: '39.7%' } }}>
-            <AutoVibe
-              id=""
-              disabled={isFormDisabled}
-              getOptionLabel={(option) => option || ''}
-              options={[]}
-              label="MSME Trade"
-              name=""
-              value={''}
-              onChange={(e) => console.log(e.target.value)}
-              sx={DropInputSx}
-              inputProps={{
-                style: {
-                  padding: '6px 8px',
-                  fontSize: '12px',
-                },
-              }}
-            />
-          </Box>
-          <Box sx={{ width: { xs: '100%', sm: '20%', md: '39.7%' } }}>
-            <AutoVibe
-              id=""
-              disabled={isFormDisabled}
-              getOptionLabel={(option) => option || ''}
-              options={[]}
-              label="MSME Act"
-              name=""
-              value={''}
-              onChange={(e) => console.log(e.target.value)}
-              sx={DropInputSx}
-              inputProps={{
-                style: {
-                  padding: '6px 8px',
-                  fontSize: '12px',
-                },
-              }}
-            />
-          </Box>
-        </Box>
-
-        <Box sx={{
-          display: 'flex',
-          flexDirection: { xs: 'column', sm: 'row', md: 'row' },
-          gap: { xs: 1, sm: 1, md: 2 },
-        }}>
-          <Box sx={{ width: { xs: '100%', sm: '20%', md: '39.7%' } }}>
-            <TextField
-              label="Mobile"
-              disabled={isFormDisabled}
-              variant="filled"
-              fullWidth
-              value={""}
-              onChange={(e) => console.log(e.target.value)}
-              sx={textInputSx}
-              inputProps={{
-                style: {
-                  padding: '6px 8px',
-                  fontSize: '12px',
-                },
-              }}
-            />
-          </Box>
-
-          <Box sx={{ width: { xs: '100%', sm: '20%', md: '39.7%' } }}>
-            <AutoVibe
-              id=""
-              disabled={isFormDisabled}
-              getOptionLabel={(option) => option || ''}
-              options={[]}
-              label="MSME Class"
-              name=""
-              value={''}
-              onChange={(e) => console.log(e.target.value)}
-              sx={DropInputSx}
-              inputProps={{
-                style: {
-                  padding: '6px 8px',
-                  fontSize: '12px',
-                },
-              }}
-            />
-          </Box>
-
-          <Box sx={{ width: { xs: '100%', sm: '20%', md: '39.7%' } }}>
-            <TextField
-              label="Website"
-              disabled={isFormDisabled}
-              variant="filled"
-              fullWidth
-              value={""}
-              onChange={(e) => console.log(e.target.value)}
-              sx={textInputSx}
-              inputProps={{
-                style: {
-                  padding: '6px 8px',
-                  fontSize: '12px',
-                },
-              }}
-            />
-          </Box>
-
-          <Box sx={{ width: { xs: '100%', sm: '20%', md: '39.7%' } }}>
-            <FormControlLabel
-              control={<Checkbox name="ISSERVICE" size="small" checked={"1"}
-                onChange={(e) => console.log(e.target.value)} />}
-              disabled={isFormDisabled}
-              label="Manual WSP"
-              sx={{
-                '& .MuiFormControlLabel-label': { fontSize: '12px' }
-              }}
-            />
-
-          </Box>
-        </Box>
-
-        <Box sx={{
-          display: 'flex',
-          flexDirection: { xs: 'column', sm: 'row', md: 'row' },
-          gap: { xs: 1, sm: 1, md: 2 },
-        }}>
-          <Box sx={{ width: { xs: '100%', sm: '20%', md: '39.7%' } }}>
-            <TextField
-              label="Excise No"
-              disabled={isFormDisabled}
-              variant="filled"
-              fullWidth
-              value={""}
-              onChange={(e) => console.log(e.target.value)}
-              sx={textInputSx}
-              inputProps={{
-                style: {
-                  padding: '6px 8px',
-                  fontSize: '12px',
-                },
-              }}
-            />
-          </Box>
-
-          <Box sx={{ width: { xs: '100%', sm: '20%', md: '39.7%' } }}>
-            <TextField
-              label="CST"
-              disabled={isFormDisabled}
-              variant="filled"
-              fullWidth
-              value={""}
-              onChange={(e) => console.log(e.target.value)}
-              sx={textInputSx}
-              inputProps={{
-                style: {
-                  padding: '6px 8px',
-                  fontSize: '12px',
-                },
-              }}
-            />
-          </Box>
-
-          <Box sx={{ width: { xs: '100%', sm: '20%', md: '39.7%' } }}>
-            <AutoVibe
-              id=""
-              disabled={isFormDisabled}
-              getOptionLabel={(option) => option || ''}
-              options={[]}
-              label="Regd Off"
-              name=""
-              value={''}
-              onChange={(e) => console.log(e.target.value)}
-              sx={DropInputSx}
-              inputProps={{
-                style: {
-                  padding: '6px 8px',
-                  fontSize: '12px',
-                },
-              }}
-            />
-          </Box>
-
-          <Box sx={{ width: { xs: '100%', sm: '20%', md: '39.7%' } }}>
-            <TextField
-              label="VAT"
-              disabled={isFormDisabled}
-              variant="filled"
-              fullWidth
-              value={""}
-              onChange={(e) => console.log(e.target.value)}
-              sx={textInputSx}
-              inputProps={{
-                style: {
-                  padding: '6px 8px',
-                  fontSize: '12px',
-                },
-              }}
-            />
-          </Box>
-        </Box>
-
-        <Box sx={{
-          display: 'flex',
-          flexDirection: { xs: 'column', sm: 'row', md: 'row' },
-          gap: { xs: 1, sm: 1, md: 2 },
-        }}>
-
-          <Box sx={{ width: { xs: '100%', sm: '20%', md: '39.7%' } }}>
-            <AutoVibe
-              id=""
-              disabled={isFormDisabled}
-              getOptionLabel={(option) => option || ''}
-              options={[]}
-              label="GL-Control A/c"
-              name=""
-              value={''}
-              onChange={(e) => console.log(e.target.value)}
-              sx={DropInputSx}
-              inputProps={{
-                style: {
-                  padding: '6px 8px',
-                  fontSize: '12px',
-                },
-              }}
-            />
-          </Box>
-
-          <Box sx={{ width: { xs: '100%', sm: '20%', md: '39.7%' } }}>
-            <TextField
-              label="PAN"
-              disabled={isFormDisabled}
-              variant="filled"
-              fullWidth
-              value={""}
-              onChange={(e) => console.log(e.target.value)}
-              sx={textInputSx}
-              inputProps={{
-                style: {
-                  padding: '6px 8px',
-                  fontSize: '12px',
-                },
-              }}
-            />
-          </Box>
-
-          <Box sx={{ width: { xs: '100%', sm: '20%', md: '39.7%' } }}>
-            <TextField
-              label="IE Code"
-              disabled={isFormDisabled}
-              variant="filled"
-              fullWidth
-              value={""}
-              onChange={(e) => console.log(e.target.value)}
-              sx={textInputSx}
-              inputProps={{
-                style: {
-                  padding: '6px 8px',
-                  fontSize: '12px',
-                },
-              }}
-            />
-          </Box>
-
-          <Box sx={{ width: { xs: '100%', sm: '20%', md: '39.7%' } }}>
-            <TextField
-              label="UserName/Email"
-              disabled={isFormDisabled}
-              variant="filled"
-              fullWidth
-              value={""}
-              onChange={(e) => console.log(e.target.value)}
-              sx={textInputSx}
-              inputProps={{
-                style: {
-                  padding: '6px 8px',
-                  fontSize: '12px',
-                },
-              }}
-            />
-          </Box>
-        </Box>
-
-        <Box sx={{
-          display: 'flex',
-          flexDirection: { xs: 'column', sm: 'row', md: 'row' },
-          gap: { xs: 1, sm: 1, md: 2 },
-        }}>
-
-          <Box sx={{ width: { xs: '100%', sm: '20%', md: '19.7%' } }}>
-            <TextField
-              label="TAN"
-              disabled={isFormDisabled}
-              variant="filled"
-              fullWidth
-              value={""}
-              onChange={(e) => console.log(e.target.value)}
-              sx={textInputSx}
-              inputProps={{
-                style: {
-                  padding: '6px 8px',
-                  fontSize: '12px',
-                },
-              }}
-            />
-          </Box>
-
-          <Box sx={{ width: { xs: '100%', sm: '20%', md: '19.7%' } }}>
-            <AutoVibe
-              id=""
-              disabled={isFormDisabled}
-              getOptionLabel={(option) => option || ''}
-              options={[]}
-              label="Company"
-              name=""
-              value={''}
-              onChange={(e) => console.log(e.target.value)}
-              sx={DropInputSx}
-              inputProps={{
-                style: {
-                  padding: '6px 8px',
-                  fontSize: '12px',
-                },
-              }}
-            />
-          </Box>
-
-          <Box sx={{ width: { xs: '100%', sm: '20%', md: '19.7%' } }}>
-            <TextField
-              label="UserName/Password"
-              disabled={isFormDisabled}
-              variant="filled"
-              fullWidth
-              value={""}
-              onChange={(e) => console.log(e.target.value)}
-              sx={textInputSx}
-              inputProps={{
-                style: {
-                  padding: '6px 8px',
-                  fontSize: '12px',
-                },
-              }}
-            />
-          </Box>
-
-          <Box sx={{ width: { xs: '100%', sm: '20%', md: '19.7%' } }}>
-            <TextField
-              label="SMS Mobile No"
-              disabled={isFormDisabled}
-              variant="filled"
-              fullWidth
-              value={""}
-              onChange={(e) => console.log(e.target.value)}
-              sx={textInputSx}
-              inputProps={{
-                style: {
-                  padding: '6px 8px',
-                  fontSize: '12px',
-                },
-              }}
-            />
-          </Box>
-
-          <Box sx={{ width: { xs: '100%', sm: '20%', md: '19.7%' } }}>
-            <FormControlLabel
-              control={<Checkbox name="ISSERVICE" size="small" checked={"1"}
-                onChange={(e) => console.log(e.target.value)} />}
-              disabled={isFormDisabled}
-              label="Active"
-              sx={{
-                '& .MuiFormControlLabel-label': { fontSize: '12px' }
-              }}
-            />
-
-          </Box>
-        </Box>
-
-        <Box sx={{
-          display: 'flex',
-          flexDirection: { xs: 'column', sm: 'row', md: 'row' },
-          gap: { xs: 1, sm: 1, md: 2 },
-        }}>
-
-          <Box sx={{ width: { xs: '100%', sm: '20%', md: '24.7%' } }}>
-            <TextField
-              label="Party Class"
-              disabled={isFormDisabled}
-              variant="filled"
-              fullWidth
-              value={""}
-              onChange={(e) => console.log(e.target.value)}
-              sx={textInputSx}
-              inputProps={{
-                style: {
-                  padding: '6px 8px',
-                  fontSize: '12px',
-                },
-              }}
-            />
-          </Box>
-
-          <Box sx={{ width: { xs: '100%', sm: '20%', md: '19.7%' } }}>
-            <FormControlLabel
-              control={<Checkbox name="ISSERVICE" size="small" checked={"1"}
-                onChange={(e) => console.log(e.target.value)} />}
-              disabled={isFormDisabled}
-              label="Default Branch"
-              sx={{
-                '& .MuiFormControlLabel-label': { fontSize: '12px' }
-              }}
-            />
-
-          </Box>
-
-          <Box sx={{ width: { xs: '100%', sm: '20%', md: '19.7%' } }}>
-            <TextField
-              label="GSTIN No"
-              disabled={isFormDisabled}
-              variant="filled"
-              fullWidth
-              value={""}
-              onChange={(e) => console.log(e.target.value)}
-              sx={textInputSx}
-              inputProps={{
-                style: {
-                  padding: '6px 8px',
-                  fontSize: '12px',
-                },
-              }}
-            />
-          </Box>
-
-          <Box sx={{ width: { xs: '100%', sm: '20%', md: '19.7%' } }}>
-            <AutoVibe
-              id=""
-              disabled={isFormDisabled}
-              getOptionLabel={(option) => option || ''}
-              options={[]}
-              label="TCS"
-              name=""
-              value={''}
-              onChange={(e) => console.log(e.target.value)}
-              sx={DropInputSx}
-              inputProps={{
-                style: {
-                  padding: '6px 8px',
-                  fontSize: '12px',
-                },
-              }}
-            />
-          </Box>
-
-          <Box sx={{ width: { xs: '100%', sm: '60%', md: '40%' }, display: 'flex', alignItems: 'center' }}>
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              width: { xs: '100%', sm: '48%', md: '20%' },
+              margin: '0px 0px 0px 20px'
+            }}>
             <FormLabel sx={{ margin: '7px 14px 0px 10px', fontSize: '12px', fontWeight: 'bold', color: 'black' }} component="legend">Entity under SEZ</FormLabel>
             <RadioGroup
               row
               name="RDOFF"
               onChange={(e) => console.log(e.target.value)}
-              disabled={isFormDisabled}
+              disabled={''}
               value={""}
               sx={{ margin: '5px 0px 0px 0px' }}
             >
-              <FormControlLabel disabled={isFormDisabled}
+              <FormControlLabel disabled={''}
                 value="option1" control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
                 label={<Typography sx={{ fontSize: '12px' }}>Yes</Typography>} />
-              <FormControlLabel disabled={isFormDisabled}
+              <FormControlLabel disabled={''}
                 value="option2" control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
                 label={<Typography sx={{ fontSize: '12px' }}>No</Typography>} />
             </RadioGroup>
           </Box>
+
+        </Box>
+
+        <Box sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          flexDirection: { xs: 'column', sm: 'row', md: 'row' },
+          gap: { xs: 1, sm: 1, md: 0.5 }
+        }}>
+
+          <Box sx={{
+            display: 'flex',
+            alignItems: 'center',
+            width: { xs: '100%', sm: '48%', md: '25%' },
+          }}>
+            <FormLabel sx={{ margin: '7px 14px 0px 10px', fontSize: '12px', fontWeight: 'bold', color: 'black' }} component="legend">RD/URD</FormLabel>
+            <RadioGroup
+              row
+              name="RDOFF"
+              onChange={(e) => console.log(e.target.value)}
+              disabled={''}
+              value={""}
+              sx={{ margin: '5px 0px 0px 0px' }}
+            >
+              <FormControlLabel disabled={''}
+                value="option1" control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
+                label={<Typography sx={{ fontSize: '12px' }}>RD</Typography>} />
+              <FormControlLabel disabled={''}
+                value="option2" control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
+                label={<Typography sx={{ fontSize: '12px' }}>URD</Typography>} />
+              <FormControlLabel disabled={''}
+                value="option3" control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
+                label={<Typography sx={{ fontSize: '12px' }}>Composition</Typography>} />
+            </RadioGroup>
+          </Box>
+
+          <FormControlLabel
+            control={<Checkbox name="ISSERVICE" size="small" checked={"1"}
+              onChange={handleInputChange} />}
+            disabled={""}
+            label="Active"
+            sx={{
+              '& .MuiFormControlLabel-label': { fontSize: '12px' }
+            }}
+          />
+          <FormControlLabel
+            control={<Checkbox name="ISSERVICE" size="small" checked={"1"}
+              onChange={handleInputChange} />}
+            disabled={""}
+            label="Default Branch"
+            sx={{
+              '& .MuiFormControlLabel-label': { fontSize: '12px' }
+            }}
+          />
+          <Stack direction="row" spacing={2} sx={{ position: 'relative' }}>
+            <Button
+              sx={{
+                background: 'linear-gradient(45deg, #4caf50, #81c784)',
+                margin: { xs: '0 4px', sm: '0 6px' },
+                minWidth: { xs: 40, sm: 46, md: 60 },
+                height: { xs: 40, sm: 46, md: 30 },
+              }}
+              variant="contained"
+            >
+              Confirm
+            </Button>
+            <Button
+              sx={{
+                background: 'linear-gradient(45deg, #e53935, #ef5350)',
+                margin: { xs: '0 4px', sm: '0 6px' },
+                minWidth: { xs: 40, sm: 46, md: 60 },
+                height: { xs: 40, sm: 46, md: 30 },
+              }}
+              variant="contained"
+            >
+              Cancel
+            </Button>
+          </Stack>
         </Box>
       </Box>
-    </>
-  );
-};
 
-export default StepperMst2;
+    </Box>
+  )
+}
+
+export default function Wrapper() {
+  return (
+    <Suspense fallback={<Box>Loading...</Box>}>
+      <Stepper2 />
+    </Suspense>
+  );
+}
+
+
+
+
+
+
+
