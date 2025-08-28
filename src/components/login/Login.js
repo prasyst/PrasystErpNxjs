@@ -20,7 +20,6 @@ import {
 import PersonIcon from '@mui/icons-material/Person';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
-import Login3 from '../../public/images/Login3.jpg'
 import BusinessIcon from '@mui/icons-material/Business';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
@@ -259,7 +258,7 @@ useEffect(() => {
         minHeight: '100vh',
         display: 'flex',
         background: 'linear-gradient(135deg, #1f1c2c, #928dab)',
-        backgroundImage: `url(${Login3.src})`,
+        backgroundImage: "url('/images/Login3.jpg')",
         backgroundRepeat: 'no-repeat',
         backgroundSize: 'cover',
         alignItems: 'center',
