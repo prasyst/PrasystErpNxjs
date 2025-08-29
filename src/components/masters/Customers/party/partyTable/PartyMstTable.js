@@ -2,7 +2,7 @@ import React from 'react';
 
 const PartyMstTable = () => {
   return (
-    <div>PartyMstTable</div>
+    <div></div>
   )
 }
 
