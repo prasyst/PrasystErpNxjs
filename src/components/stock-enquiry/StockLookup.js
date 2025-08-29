@@ -406,15 +406,7 @@ export default function StockLookup() {
             >
               New
             </Button>
-            <Button
-              variant="contained"
-              size="small"
-              onClick={handleReset}
-              sx={addButtonStyles}
-              startIcon={<RestoreIcon />}
-            >
-              Reset
-            </Button>
+            
           </Box>
         </Box>
 
