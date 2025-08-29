@@ -33,6 +33,7 @@ import DialogContent from "@mui/material/DialogContent";
 import DialogTitle from "@mui/material/DialogTitle";
 import DialogContentText from "@mui/material/DialogContentText";
 
+import { useSearchParams, useRouter } from 'next/navigation';
 import CrudButtons from "@/GlobalFunction/CrudButtons";
 import PaginationButtons from '@/GlobalFunction/PaginationButtons';
 
@@ -46,17 +47,21 @@ const steps = ["Company Details", "Branch Details", "Terms Details"];
 const FORM_MODE = getFormMode();
 
 const PartyMst = () => {
+  const router = useRouter();
 
   const [tabIndex, setTabIndex] = useState(0);
 
   const [openDialog, setopenDialog] = useState(false);
   const [activeStep, setActiveStep] = useState(0);
+  const [isFormDisabled, setIsFormDisabled] = useState(true);
   const [mode, setMode] = useState("view");
   const [Index, setIndex] = useState(0);
 
 
   const handlePrint = () => { }
-  const handleExit = () => { }
+  const handleExit = () => {
+    router.push('/dashboard');
+  };
 
   const handleAdd = () => {
     // Your existing logic
@@ -118,6 +123,10 @@ const PartyMst = () => {
       fontSize: '14px !important',
       lineHeight: '1.4',
     },
+  };
+
+  const handleTable = () => {
+    router.push('/masters/customers/partyTable');
   };
 
   return (
@@ -274,8 +283,9 @@ const PartyMst = () => {
                 onEdit={mode === FORM_MODE.read ? handleEdit : ''}
                 onView={handlePrint}
                 onDelete={handleDelete}
+                onSearch={handleTable}
                 onExit={handleExit}
-                readOnlyMode={mode === FORM_MODE.read}
+                readOnlyMode={mode === "view"}
               />
             </Stack>
           </Grid>
