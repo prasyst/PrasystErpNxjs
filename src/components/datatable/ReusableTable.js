@@ -235,6 +235,7 @@ const ReusableTable = ({
   defaultColDef = {},
   autoSizeStrategy = null,
   compactMode = false,
+    exportParams = {},
   ...otherProps
 }) => {
   const gridRef = useRef(null);
@@ -280,48 +281,50 @@ const ReusableTable = ({
     setQuickFilterText(e.target.value);
   }, []);
 
-  // Export Current Page
-  const onExportCurrentPage = useCallback(() => {
-    if (gridRef.current?.api) {
-      const fileName = `current_page_export_${new Date().toISOString().split('T')[0]}.xlsx`;
-      
-      // Get current page displayed rows
-      const displayedRows = [];
-      gridRef.current.api.forEachNodeAfterFilterAndSort((node, index) => {
-        const startIndex = gridRef.current.api.paginationGetCurrentPage() * gridRef.current.api.paginationGetPageSize();
-        const endIndex = startIndex + gridRef.current.api.paginationGetPageSize();
-        if (index >= startIndex && index < endIndex) {
-          displayedRows.push(node.data);
+
+// Export Current Page
+const onExportCurrentPage = useCallback(() => {
+  if (gridRef.current?.api) {
+    const fileName = exportParams.fileName || `current_page_export_${new Date().toISOString().split('T')[0]}.xlsx`;
+
+    const displayedRows = [];
+    gridRef.current.api.forEachNodeAfterFilterAndSort((node, index) => {
+      const startIndex = gridRef.current.api.paginationGetCurrentPage() * gridRef.current.api.paginationGetPageSize();
+      const endIndex = startIndex + gridRef.current.api.paginationGetPageSize();
+      if (index >= startIndex && index < endIndex) {
+        displayedRows.push(node.data);
+      }
+    });
+
+    if (displayedRows.length > 0) {
+      gridRef.current.api.exportDataAsExcel({
+        fileName: fileName,
+        onlySelected: false,
+        suppressTextAsCDATA: exportParams.suppressTextAsCDATA || true, 
+        sheetName: exportParams.sheetName,
+        shouldRowBeSkipped: (params) => {
+          const currentPageRows = [];
+          gridRef.current.api.forEachNodeAfterFilterAndSort((node, index) => {
+            const startIndex = gridRef.current.api.paginationGetCurrentPage() * gridRef.current.api.paginationGetPageSize();
+            const endIndex = startIndex + gridRef.current.api.paginationGetPageSize();
+            if (index >= startIndex && index < endIndex) {
+              currentPageRows.push(node.data);
+            }
+          });
+          return !currentPageRows.some(row => row === params.node.data);
+        },
+        processHeaderCallback: (params) => {
+          if (params.column.getColDef().checkboxSelection) {
+            return null;
+          }
+          return params.column.getColDef().headerName || params.column.getColId();
         }
       });
-
-      if (displayedRows.length > 0) {
-        gridRef.current.api.exportDataAsExcel({
-          fileName: fileName,
-          onlySelected: false,
-          shouldRowBeSkipped: (params) => {
-            // Only export rows that are on current page
-            const currentPageRows = [];
-            gridRef.current.api.forEachNodeAfterFilterAndSort((node, index) => {
-              const startIndex = gridRef.current.api.paginationGetCurrentPage() * gridRef.current.api.paginationGetPageSize();
-              const endIndex = startIndex + gridRef.current.api.paginationGetPageSize();
-              if (index >= startIndex && index < endIndex) {
-                currentPageRows.push(node.data);
-              }
-            });
-            return !currentPageRows.some(row => row === params.node.data);
-          },
-          processHeaderCallback: (params) => {
-            if (params.column.getColDef().checkboxSelection) {
-              return null;
-            }
-            return params.column.getColDef().headerName || params.column.getColId();
-          }
-        });
-      }
-      setShowExportDropdown(false);
     }
-  }, []);
+    setShowExportDropdown(false);
+  }
+}, [exportParams]); 
+
 
   // Export All Records
   const onExportAllRecords = useCallback(() => {
@@ -331,6 +334,8 @@ const ReusableTable = ({
       gridRef.current.api.exportDataAsExcel({
         fileName: fileName,
         onlySelected: false,
+                suppressTextAsCDATA: exportParams.suppressTextAsCDATA || true, 
+        sheetName: exportParams.sheetName,
         processHeaderCallback: (params) => {
           if (params.column.getColDef().checkboxSelection) {
             return null;
@@ -340,7 +345,7 @@ const ReusableTable = ({
       });
       setShowExportDropdown(false);
     }
-  }, []);
+  }, [exportParams]);
 
   // Export Selected Rows
   const onExportSelectedRows = useCallback(() => {
@@ -357,6 +362,8 @@ const ReusableTable = ({
       gridRef.current.api.exportDataAsExcel({
         fileName: fileName,
         onlySelected: true,
+          suppressTextAsCDATA: exportParams.suppressTextAsCDATA || true, 
+        sheetName: exportParams.sheetName,
         processHeaderCallback: (params) => {
           if (params.column.getColDef().checkboxSelection) {
             return null;
@@ -366,7 +373,7 @@ const ReusableTable = ({
       });
       setShowExportDropdown(false);
     }
-  }, []);
+  }, [exportParams]);
 
   // Processed column definitions based on checkbox requirement
   const processedColumnDefs = useMemo(() => {
