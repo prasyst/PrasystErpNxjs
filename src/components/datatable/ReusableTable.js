@@ -4,11 +4,15 @@ import {
   ClientSideRowModelModule,
   ModuleRegistry,
 } from "ag-grid-community";
+import { 
+  Button, 
+} from "@mui/material";
 import {
   ExcelExportModule,
   MultiFilterModule,
   SetFilterModule,
 } from "ag-grid-enterprise";
+import RestoreIcon from '@mui/icons-material/Restore';
 import { AgGridReact } from "ag-grid-react";
 
 
@@ -389,7 +393,7 @@ const onExportCurrentPage = useCallback(() => {
     return columnDefs;
   }, [columnDefs, enableCheckbox]);
 
-  // Grid options
+
   const gridOptions = useMemo(() => ({
     onRowClicked: onRowClick,
     onRowDoubleClicked: onRowDoubleClick,
@@ -401,6 +405,17 @@ const onExportCurrentPage = useCallback(() => {
     ensureDomOrder: true,
     ...customGridOptions
   }), [onRowClick, onRowDoubleClick, onSelectionChanged, customGridOptions, enableCheckbox]);
+
+ const handleReset = useCallback(() => {
+  if (gridRef.current?.api) {
+    gridRef.current.api.setFilterModel(null);
+    setQuickFilterText("");
+    gridRef.current.api.resetColumnState();
+    if (pagination) {
+      gridRef.current.api.paginationGoToPage(0);
+    }
+  }
+}, [pagination]);
 
   return (
     <div style={{ 
@@ -488,7 +503,17 @@ const onExportCurrentPage = useCallback(() => {
             {selectedRows.length} row{selectedRows.length > 1 ? 's' : ''} selected
           </div>
         )}
-        
+          <Button
+    variant="contained"
+    size="small"
+    onClick={handleReset}
+    startIcon={<RestoreIcon />}
+    style={{
+      marginLeft: 'auto' 
+    }}
+  >
+    Reset
+  </Button>
         {enableExport && (
           <div style={{ position: 'relative' }} ref={exportDropdownRef}>
             <button
@@ -541,7 +566,7 @@ const onExportCurrentPage = useCallback(() => {
                   onClick={onExportCurrentPage}
                   style={{
                     width: '100%',
-                    padding: '12px 16px',
+                    padding: '7px 16px',
                     border: 'none',
                     backgroundColor: 'transparent',
                     textAlign: 'left',
@@ -558,7 +583,7 @@ const onExportCurrentPage = useCallback(() => {
                     e.target.style.backgroundColor = 'transparent';
                   }}
                 >
-                  Export Current Page
+                 Current Page
                 </button>
                 <div style={{
                   height: '1px',
@@ -569,7 +594,7 @@ const onExportCurrentPage = useCallback(() => {
                   onClick={onExportAllRecords}
                   style={{
                     width: '100%',
-                    padding: '12px 16px',
+                    padding: '7px 16px',
                     border: 'none',
                     backgroundColor: 'transparent',
                     textAlign: 'left',
@@ -585,7 +610,7 @@ const onExportCurrentPage = useCallback(() => {
                     e.target.style.backgroundColor = 'transparent';
                   }}
                 >
-                  Export All Records
+                  All Records
                 </button>
                 {enableCheckbox && (
                   <>
@@ -598,7 +623,7 @@ const onExportCurrentPage = useCallback(() => {
                       onClick={onExportSelectedRows}
                       style={{
                         width: '100%',
-                        padding: '12px 16px',
+                        padding: '7px 16px',
                         border: 'none',
                         backgroundColor: 'transparent',
                         textAlign: 'left',
@@ -615,7 +640,7 @@ const onExportCurrentPage = useCallback(() => {
                         e.target.style.backgroundColor = 'transparent';
                       }}
                     >
-                      Export Selected Rows
+                      Selected Rows
                     </button>
                   </>
                 )}
