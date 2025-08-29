@@ -450,6 +450,11 @@ export default function StockLookup() {
                 enableCellTextSelection: true,
                 ensureDomOrder: true
               }}
+                exportParams={{
+    suppressTextAsCDATA: true,
+    fileName: 'Order_Details',
+    sheetName: 'Order Details'
+  }}
             />
           )}
         </div>
