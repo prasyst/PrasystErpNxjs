@@ -12,6 +12,7 @@ import AddIcon from "@mui/icons-material/Add";
 import axiosInstance from '../../lib/axios';
 import ReusableTable, { getCustomDateFilter } from '../../components/datatable/ReusableTable';
 import { useRouter } from 'next/navigation';
+import RestoreIcon from '@mui/icons-material/Restore';
 
 // Column definitions for AG Grid with Serial No and Checkbox
 const columnDefs = [
@@ -278,6 +279,10 @@ export default function StockLookup() {
     },
   };
 
+  const handleReset=async()=>{
+    await fetchTableData()
+  }
+
   return (
     <div className="p-2 w-full">
       <div className="w-full mx-auto" style={{ maxWidth: '100%' }}>
@@ -400,6 +405,15 @@ export default function StockLookup() {
               startIcon={<AddIcon />}
             >
               New
+            </Button>
+            <Button
+              variant="contained"
+              size="small"
+              onClick={handleReset}
+              sx={addButtonStyles}
+              startIcon={<RestoreIcon />}
+            >
+              Reset
             </Button>
           </Box>
         </Box>

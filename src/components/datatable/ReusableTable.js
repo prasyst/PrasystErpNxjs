@@ -541,7 +541,7 @@ const onExportCurrentPage = useCallback(() => {
                   onClick={onExportCurrentPage}
                   style={{
                     width: '100%',
-                    padding: '12px 16px',
+                    padding: '7px 16px',
                     border: 'none',
                     backgroundColor: 'transparent',
                     textAlign: 'left',
@@ -558,7 +558,7 @@ const onExportCurrentPage = useCallback(() => {
                     e.target.style.backgroundColor = 'transparent';
                   }}
                 >
-                  Export Current Page
+                 Current Page
                 </button>
                 <div style={{
                   height: '1px',
@@ -569,7 +569,7 @@ const onExportCurrentPage = useCallback(() => {
                   onClick={onExportAllRecords}
                   style={{
                     width: '100%',
-                    padding: '12px 16px',
+                    padding: '7px 16px',
                     border: 'none',
                     backgroundColor: 'transparent',
                     textAlign: 'left',
@@ -585,7 +585,7 @@ const onExportCurrentPage = useCallback(() => {
                     e.target.style.backgroundColor = 'transparent';
                   }}
                 >
-                  Export All Records
+                  All Records
                 </button>
                 {enableCheckbox && (
                   <>
@@ -598,7 +598,7 @@ const onExportCurrentPage = useCallback(() => {
                       onClick={onExportSelectedRows}
                       style={{
                         width: '100%',
-                        padding: '12px 16px',
+                        padding: '7px 16px',
                         border: 'none',
                         backgroundColor: 'transparent',
                         textAlign: 'left',
@@ -615,7 +615,7 @@ const onExportCurrentPage = useCallback(() => {
                         e.target.style.backgroundColor = 'transparent';
                       }}
                     >
-                      Export Selected Rows
+                      Selected Rows
                     </button>
                   </>
                 )}
