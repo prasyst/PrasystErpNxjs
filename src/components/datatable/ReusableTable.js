@@ -4,11 +4,15 @@ import {
   ClientSideRowModelModule,
   ModuleRegistry,
 } from "ag-grid-community";
+import { 
+  Button, 
+} from "@mui/material";
 import {
   ExcelExportModule,
   MultiFilterModule,
   SetFilterModule,
 } from "ag-grid-enterprise";
+import RestoreIcon from '@mui/icons-material/Restore';
 import { AgGridReact } from "ag-grid-react";
 
 
@@ -235,6 +239,7 @@ const ReusableTable = ({
   defaultColDef = {},
   autoSizeStrategy = null,
   compactMode = false,
+    exportParams = {},
   ...otherProps
 }) => {
   const gridRef = useRef(null);
@@ -280,48 +285,50 @@ const ReusableTable = ({
     setQuickFilterText(e.target.value);
   }, []);
 
-  // Export Current Page
-  const onExportCurrentPage = useCallback(() => {
-    if (gridRef.current?.api) {
-      const fileName = `current_page_export_${new Date().toISOString().split('T')[0]}.xlsx`;
-      
-      // Get current page displayed rows
-      const displayedRows = [];
-      gridRef.current.api.forEachNodeAfterFilterAndSort((node, index) => {
-        const startIndex = gridRef.current.api.paginationGetCurrentPage() * gridRef.current.api.paginationGetPageSize();
-        const endIndex = startIndex + gridRef.current.api.paginationGetPageSize();
-        if (index >= startIndex && index < endIndex) {
-          displayedRows.push(node.data);
+
+// Export Current Page
+const onExportCurrentPage = useCallback(() => {
+  if (gridRef.current?.api) {
+    const fileName = exportParams.fileName || `current_page_export_${new Date().toISOString().split('T')[0]}.xlsx`;
+
+    const displayedRows = [];
+    gridRef.current.api.forEachNodeAfterFilterAndSort((node, index) => {
+      const startIndex = gridRef.current.api.paginationGetCurrentPage() * gridRef.current.api.paginationGetPageSize();
+      const endIndex = startIndex + gridRef.current.api.paginationGetPageSize();
+      if (index >= startIndex && index < endIndex) {
+        displayedRows.push(node.data);
+      }
+    });
+
+    if (displayedRows.length > 0) {
+      gridRef.current.api.exportDataAsExcel({
+        fileName: fileName,
+        onlySelected: false,
+        suppressTextAsCDATA: exportParams.suppressTextAsCDATA || true, 
+        sheetName: exportParams.sheetName,
+        shouldRowBeSkipped: (params) => {
+          const currentPageRows = [];
+          gridRef.current.api.forEachNodeAfterFilterAndSort((node, index) => {
+            const startIndex = gridRef.current.api.paginationGetCurrentPage() * gridRef.current.api.paginationGetPageSize();
+            const endIndex = startIndex + gridRef.current.api.paginationGetPageSize();
+            if (index >= startIndex && index < endIndex) {
+              currentPageRows.push(node.data);
+            }
+          });
+          return !currentPageRows.some(row => row === params.node.data);
+        },
+        processHeaderCallback: (params) => {
+          if (params.column.getColDef().checkboxSelection) {
+            return null;
+          }
+          return params.column.getColDef().headerName || params.column.getColId();
         }
       });
-
-      if (displayedRows.length > 0) {
-        gridRef.current.api.exportDataAsExcel({
-          fileName: fileName,
-          onlySelected: false,
-          shouldRowBeSkipped: (params) => {
-            // Only export rows that are on current page
-            const currentPageRows = [];
-            gridRef.current.api.forEachNodeAfterFilterAndSort((node, index) => {
-              const startIndex = gridRef.current.api.paginationGetCurrentPage() * gridRef.current.api.paginationGetPageSize();
-              const endIndex = startIndex + gridRef.current.api.paginationGetPageSize();
-              if (index >= startIndex && index < endIndex) {
-                currentPageRows.push(node.data);
-              }
-            });
-            return !currentPageRows.some(row => row === params.node.data);
-          },
-          processHeaderCallback: (params) => {
-            if (params.column.getColDef().checkboxSelection) {
-              return null;
-            }
-            return params.column.getColDef().headerName || params.column.getColId();
-          }
-        });
-      }
-      setShowExportDropdown(false);
     }
-  }, []);
+    setShowExportDropdown(false);
+  }
+}, [exportParams]); 
+
 
   // Export All Records
   const onExportAllRecords = useCallback(() => {
@@ -331,6 +338,8 @@ const ReusableTable = ({
       gridRef.current.api.exportDataAsExcel({
         fileName: fileName,
         onlySelected: false,
+                suppressTextAsCDATA: exportParams.suppressTextAsCDATA || true, 
+        sheetName: exportParams.sheetName,
         processHeaderCallback: (params) => {
           if (params.column.getColDef().checkboxSelection) {
             return null;
@@ -340,7 +349,7 @@ const ReusableTable = ({
       });
       setShowExportDropdown(false);
     }
-  }, []);
+  }, [exportParams]);
 
   // Export Selected Rows
   const onExportSelectedRows = useCallback(() => {
@@ -357,6 +366,8 @@ const ReusableTable = ({
       gridRef.current.api.exportDataAsExcel({
         fileName: fileName,
         onlySelected: true,
+          suppressTextAsCDATA: exportParams.suppressTextAsCDATA || true, 
+        sheetName: exportParams.sheetName,
         processHeaderCallback: (params) => {
           if (params.column.getColDef().checkboxSelection) {
             return null;
@@ -366,7 +377,7 @@ const ReusableTable = ({
       });
       setShowExportDropdown(false);
     }
-  }, []);
+  }, [exportParams]);
 
   // Processed column definitions based on checkbox requirement
   const processedColumnDefs = useMemo(() => {
@@ -382,7 +393,7 @@ const ReusableTable = ({
     return columnDefs;
   }, [columnDefs, enableCheckbox]);
 
-  // Grid options
+
   const gridOptions = useMemo(() => ({
     onRowClicked: onRowClick,
     onRowDoubleClicked: (params) => {
@@ -398,6 +409,17 @@ const ReusableTable = ({
     ensureDomOrder: true,
     ...customGridOptions
   }), [onRowClick, onRowDoubleClick, onSelectionChanged, customGridOptions, enableCheckbox]);
+
+ const handleReset = useCallback(() => {
+  if (gridRef.current?.api) {
+    gridRef.current.api.setFilterModel(null);
+    setQuickFilterText("");
+    gridRef.current.api.resetColumnState();
+    if (pagination) {
+      gridRef.current.api.paginationGoToPage(0);
+    }
+  }
+}, [pagination]);
 
   return (
     <div style={{ 
@@ -485,7 +507,17 @@ const ReusableTable = ({
             {selectedRows.length} row{selectedRows.length > 1 ? 's' : ''} selected
           </div>
         )}
-        
+          <Button
+    variant="contained"
+    size="small"
+    onClick={handleReset}
+    startIcon={<RestoreIcon />}
+    style={{
+      marginLeft: 'auto' 
+    }}
+  >
+    Reset
+  </Button>
         {enableExport && (
           <div style={{ position: 'relative' }} ref={exportDropdownRef}>
             <button
@@ -538,7 +570,7 @@ const ReusableTable = ({
                   onClick={onExportCurrentPage}
                   style={{
                     width: '100%',
-                    padding: '12px 16px',
+                    padding: '7px 16px',
                     border: 'none',
                     backgroundColor: 'transparent',
                     textAlign: 'left',
@@ -555,7 +587,7 @@ const ReusableTable = ({
                     e.target.style.backgroundColor = 'transparent';
                   }}
                 >
-                  Export Current Page
+                 Current Page
                 </button>
                 <div style={{
                   height: '1px',
@@ -566,7 +598,7 @@ const ReusableTable = ({
                   onClick={onExportAllRecords}
                   style={{
                     width: '100%',
-                    padding: '12px 16px',
+                    padding: '7px 16px',
                     border: 'none',
                     backgroundColor: 'transparent',
                     textAlign: 'left',
@@ -582,7 +614,7 @@ const ReusableTable = ({
                     e.target.style.backgroundColor = 'transparent';
                   }}
                 >
-                  Export All Records
+                  All Records
                 </button>
                 {enableCheckbox && (
                   <>
@@ -595,7 +627,7 @@ const ReusableTable = ({
                       onClick={onExportSelectedRows}
                       style={{
                         width: '100%',
-                        padding: '12px 16px',
+                        padding: '7px 16px',
                         border: 'none',
                         backgroundColor: 'transparent',
                         textAlign: 'left',
@@ -612,7 +644,7 @@ const ReusableTable = ({
                         e.target.style.backgroundColor = 'transparent';
                       }}
                     >
-                      Export Selected Rows
+                      Selected Rows
                     </button>
                   </>
                 )}

@@ -1,6 +1,6 @@
 
 // src/app/layout.js
-import { Geist, Geist_Mono } from "next/font/google";
+
 import "./globals.css";
 import { ThemeProvider } from './context/ThemeContext';
 import StoreProvider from './redux/providers';
@@ -15,7 +15,7 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body>
+      <body >
         <StoreProvider>
           <ThemeProvider>
             {children}
