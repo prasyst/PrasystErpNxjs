@@ -1681,50 +1681,6 @@ const ProductMst = () => {
               />
             </Box>
 
-            {/* <Box
-              sx={{
-                display: 'flex',
-                justifyContent: '',
-                gap: 1,
-                marginTop: '10px',
-                position: 'relative',
-                left: 140
-              }}>
-              {mode === 'view' && (
-                <>
-
-                  <Button variant="contained"
-                    sx={{ background: "#A8E2C5", height: '30px', fontSize: '12px' }}
-                    onClick={handleSubmit}
-                  >
-                    Submit
-                  </Button>
-                  <Button variant="contained"
-                    sx={{ background: "#BFBFBF", height: '30px', fontSize: '12px' }}
-                    onClick={handleCancel}
-                  >
-                    Cancel
-                  </Button>
-                </>
-              )}
-
-              {(mode === 'edit' || mode === 'add') && (
-                <>
-                  <Button variant="contained"
-                    sx={{ background: "#A8E2C5", height: '30px', fontSize: '12px' }}
-                    onClick={handleSubmit}
-                  >
-                    Submit
-                  </Button>
-                  <Button variant="contained"
-                    sx={{ background: "#BFBFBF", height: '30px', fontSize: '12px' }}
-                    onClick={handleCancel}
-                  >
-                    Cancel
-                  </Button>
-                </>
-              )}
-            </Box> */}
           </Box>
 
         </Box>

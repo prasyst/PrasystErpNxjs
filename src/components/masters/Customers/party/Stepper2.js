@@ -31,7 +31,7 @@ import SearchIcon from "@mui/icons-material/Search";
 
 const FORM_MODE = getFormMode();
 
-const Stepper2 = ({ formData, setFormData }) => {
+const Stepper2 = ({ formData, setFormData, isFormDisabled }) => {
 
   const textInputSx = {
     '& .MuiInputBase-root': {
@@ -334,13 +334,13 @@ const Stepper2 = ({ formData, setFormData }) => {
             width: { xs: '100%', sm: '20%', md: '20.5%' }
           }}>
             <AutoVibe
-              id=""
-              disabled={""}
+              id="CONT_KEY"
+              disabled={isFormDisabled}
               getOptionLabel={(option) => option || ''}
               options={[]}
               label="Country"
-              name=""
-              value={""}
+              name="CONT_KEY"
+              value={formData.CONT_KEY || 0}
               onChange={handleInputChange}
               sx={DropInputSx}
               inputProps={{
@@ -421,13 +421,13 @@ const Stepper2 = ({ formData, setFormData }) => {
                 }}
               />
               <AutoVibe
-                id=""
-                disabled={""}
+                id="CITY_KEY"
+                disabled={isFormDisabled}
                 getOptionLabel={(option) => option || ''}
                 options={[]}
                 label="City/District"
-                name=""
-                value={""}
+                name="CITY_KEY"
+                value={formData.CITY_KEY || 0}
                 onChange={handleInputChange}
                 sx={DropInputSx}
                 inputProps={{
@@ -654,13 +654,13 @@ const Stepper2 = ({ formData, setFormData }) => {
               }}
             />
             <AutoVibe
-              id=""
-              disabled={""}
+              id="TRADE_DISC"
+              disabled={isFormDisabled}
               getOptionLabel={(option) => option || ''}
               options={[]}
               label="Trade Disc"
-              name=""
-              value={""}
+              name="TRADE_DISC"
+              value={formData.TRADE_DISC || ""}
               onChange={handleInputChange}
               sx={DropInputSx}
               inputProps={{
@@ -695,13 +695,13 @@ const Stepper2 = ({ formData, setFormData }) => {
               }}
             />
             <AutoVibe
-              id=""
-              disabled={""}
+              id="TRSP_KEY"
+              disabled={isFormDisabled}
               getOptionLabel={(option) => option || ''}
               options={[]}
               label="Transporter"
-              name=""
-              value={""}
+              name="TRSP_KEY"
+              value={formData.TRSP_KEY || 0}
               onChange={handleInputChange}
               sx={DropInputSx}
               inputProps={{
@@ -736,13 +736,13 @@ const Stepper2 = ({ formData, setFormData }) => {
               }}
             />
             <AutoVibe
-              id=""
-              disabled={""}
+              id="TAX_KEY"
+              disabled={isFormDisabled}
               getOptionLabel={(option) => option || ''}
               options={[]}
               label="Tax Appl"
-              name=""
-              value={""}
+              name="TAX_KEY"
+              value={formData.TAX_KEY || ""}
               onChange={handleInputChange}
               sx={DropInputSx}
               inputProps={{
@@ -761,13 +761,13 @@ const Stepper2 = ({ formData, setFormData }) => {
             width: { xs: '100%', sm: '20%', md: '20.6%' }
           }}>
             <AutoVibe
-              id=""
-              disabled={""}
+              id="CFORM_FLG"
+              disabled={isFormDisabled}
               getOptionLabel={(option) => option || ''}
               options={[]}
               label="Form Type"
-              name=""
-              value={""}
+              name="CFORM_FLG"
+              value={formData.CFORM_FLG || 0}
               onChange={handleInputChange}
               sx={DropInputSx}
               inputProps={{
@@ -953,15 +953,17 @@ const Stepper2 = ({ formData, setFormData }) => {
   )
 }
 
-export default function Wrapper() {
-  const [formData, setFormData] = useState({});
+export default Stepper2;
 
-  return (
-    <Suspense fallback={<Box>Loading...</Box>}>
-      <Stepper2 formData={formData} setFormData={setFormData} />
-    </Suspense>
-  );
-}
+// export default function Wrapper() {
+//   const [formData, setFormData] = useState({});
+
+//   return (
+//     <Suspense fallback={<Box>Loading...</Box>}>
+//       <Stepper2 formData={formData} setFormData={setFormData} />
+//     </Suspense>
+//   );
+// }
 
 
 
