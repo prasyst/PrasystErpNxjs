@@ -37,9 +37,9 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import CrudButtons from "@/GlobalFunction/CrudButtons";
 import PaginationButtons from '@/GlobalFunction/PaginationButtons';
 
-import StepperMst1 from "./Stepper1";
-import StepperMst2 from "./Stepper2";
-import StepperMst3 from "./Stepper3";
+import Stepper1 from "@/components/masters/Customers/party/Stepper1";
+import Stepper2 from "@/components/masters/Customers/party/Stepper2";
+import Stepper3 from "@/components/masters/Customers/party/Stepper3";
 import { getFormMode } from "../../../../lib/helpers";
 
 const steps = ["Company Details", "Branch Details", "Terms Details"];
@@ -56,6 +56,9 @@ const PartyMst = () => {
   const [isFormDisabled, setIsFormDisabled] = useState(true);
   const [mode, setMode] = useState("view");
   const [Index, setIndex] = useState(0);
+  const [stepper1Data, setStepper1Data] = useState({});
+  const [stepper2Data, setStepper2Data] = useState({});
+  const [stepper3Data, setStepper3Data] = useState({});
 
 
   const handlePrint = () => { }
@@ -72,6 +75,14 @@ const PartyMst = () => {
   };
 
   const handleNextClick = () => {
+    // Your existing logic
+  };
+
+  const handleSubmit = async () => {
+    // Your existing logic
+  };
+
+  const handleCancel = async () => {
     // Your existing logic
   };
 
@@ -145,21 +156,6 @@ const PartyMst = () => {
         </Grid>
 
         <Grid sx={{ position: 'relative', right: -192 }}>
-          {/* <TextField
-            placeholder="Search By Code"
-            variant="filled"
-            sx={{
-              width: { xs: '100%', sm: '50%', md: '100%' }, marginBottom: '1px', borderRadius: '20px',
-              backgroundColor: '#e0f7fa',
-              '& .MuiInputBase-input': {
-                padding: { xs: '8px 0px', md: '2px 0px' },
-              },
-              '& .css-voecp4-MuiInputBase-input-MuiFilledInput-input': {
-                fontSize: '14px',
-              },
-            }}
-            value={''}
-          /> */}
           <TextField
             label="Search By Code"
             disabled={""}
@@ -243,14 +239,17 @@ const PartyMst = () => {
       <Grid xs={12}>
 
         {tabIndex === 0 ? (
-          <StepperMst1
+          <Stepper1
             index={Index}
+            formData={stepper1Data} setFormData={setStepper1Data}
           />
         ) : tabIndex === 1 ? (
-          <StepperMst2
+          <Stepper2
+            formData={stepper2Data} setFormData={setStepper2Data}
           />
         ) : (
-          <StepperMst3
+          <Stepper3
+            formData={stepper3Data} setFormData={setStepper3Data}
           />
         )}
       </Grid>
@@ -279,8 +278,8 @@ const PartyMst = () => {
             <Stack direction="row" spacing={{ xs: 0.5, sm: 1 }}>
               <CrudButtons
                 mode={mode}
-                onAdd={mode === FORM_MODE.read ? handleAdd : ''}
-                onEdit={mode === FORM_MODE.read ? handleEdit : ''}
+                onAdd={mode === "view" ? handleAdd : handleSubmit}
+                onEdit={mode === "view" ? handleEdit : handleCancel}
                 onView={handlePrint}
                 onDelete={handleDelete}
                 onSearch={handleTable}

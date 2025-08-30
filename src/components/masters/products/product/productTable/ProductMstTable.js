@@ -4,25 +4,86 @@ import axiosInstance from '../../../../../lib/axios';
 import {
   Button, Stack, Box
 } from '@mui/material';
-import ReusableHandsontable from '@/components/datatable/ReusableHandsontable';
+import ReusableTable, { getCustomDateFilter } from '@/components/datatable/ReusableTable';
 import { useRouter } from 'next/navigation';
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import LogoutIcon from "@mui/icons-material/Logout";
 
-const handsontableColumns = [
-  { field: "FGPRD_NAME", headerName: "Product", width: "16%", type: "text" },
-  { field: "FGPRD_ABRV", headerName: "FGPRDABRV", width: "16%", type: "text" },
-  { field: "FGMDW_RATE", headerName: "FGMDWRATE", width: "15%", type: "numeric" },
-  { field: "FGCAT_NAME", headerName: "Category", width: "15%", type: "text" },
-  { field: "UNIT_NAME", headerName: "UNIT", width: "15%", type: "text" },
-  { field: "HSN_CODE", headerName: "HSNCODE", width: "15%", type: "numeric" }
+// const handsontableColumns = [
+//   { field: "FGPRD_NAME", headerName: "Product", width: "16%", type: "text" },
+//   { field: "FGPRD_ABRV", headerName: "FGPRDABRV", width: "16%", type: "text" },
+//   { field: "FGMDW_RATE", headerName: "FGMDWRATE", width: "15%", type: "numeric" },
+//   { field: "FGCAT_NAME", headerName: "Category", width: "15%", type: "text" },
+//   { field: "UNIT_NAME", headerName: "UNIT", width: "15%", type: "text" },
+//   { field: "HSN_CODE", headerName: "HSNCODE", width: "15%", type: "numeric" }
+// ];
+
+// Column definitions for AG Grid with Serial No and Checkbox
+const columnDefs = [
+  {
+    headerName: "Select",
+    width: 50,
+    maxWidth: 40,
+    checkboxSelection: true,
+    headerCheckboxSelection: true,
+    lockPosition: true,
+    suppressMenu: true,
+    sortable: false,
+    filter: false,
+    resizable: false,
+
+    headerClass: 'checkbox-header'
+  },
+  {
+    field: "FGPRD_NAME",
+    headerName: "Product",
+    width: 130,
+    maxWidth: 140,
+    filter: true,
+    sortable: true
+  },
+  {
+    field: "FGPRD_ABRV",
+    headerName: "Product Abrv",
+    width: 160,
+    filter: true,
+    sortable: true
+  },
+  {
+    field: "FGMDW_RATE",
+    headerName: "FGMDW_RATE",
+    width: 230,
+    filter: true,
+    sortable: true
+  },
+  {
+    field: "FGCAT_NAME",
+    headerName: "FGCAT_NAME",
+    width: 140,
+    filter: true,
+    sortable: true
+  },
+  {
+    field: "UNIT_NAME",
+    headerName: "UNIT",
+    width: 120,
+    maxWidth: 130,
+    filter: 'agNumberColumnFilter',
+  },
+  {
+    field: "HSN_CODE",
+    headerName: "HSNCODE",
+    width: 130,
+    filter: 'agNumberColumnFilter',
+  }
 ];
 
-export default function ProductMstTable() {
+export default function PartyMstTable() {
 
   const [isLoading, setIsLoading] = useState(true);
   const [rows, setRows] = useState([]);
   const router = useRouter();
+  const [selectedRows, setSelectedRows] = useState([]);
 
   useEffect(() => {
     fetchTableData();
@@ -48,17 +109,7 @@ export default function ProductMstTable() {
     }
   };
 
-  const handleAfterChange = (changes, source) => {
-    if (source === 'edit') {
-      console.log('Data changed:', changes);
-    }
-  };
-
-  const handleAfterSelection = (row, column, row2, column2) => {
-    console.log('Selection changed:', { row, column, row2, column2 });
-  };
-
-  const handleRowClick = (row) => {
+  const handleRowDoubleClick = (row) => {
     const params = new URLSearchParams({
       FGPRD_KEY: row.FGPRD_KEY,
       mode: "view"
@@ -74,34 +125,41 @@ export default function ProductMstTable() {
     router.push('/dashboard');
   };
 
+  const handleSelectionChanged = useCallback((event) => {
+    const selectedNodes = event.api.getSelectedNodes();
+    const selectedData = selectedNodes.map(node => node.data);
+    setSelectedRows(selectedData);
+    console.log('Selected rows:', selectedData);
+  }, []);
+
   return (
     <div className="p-2 w-full">
       <div className="w-full mx-auto" style={{ maxWidth: '100%' }}>
         <div className="mb-4 flex flex-wrap gap-4 items-center">
 
-        <Box width="100%" display="flex" justifyContent="flex-end">
-          <Stack direction="row" spacing={2} alignItems="center">
-            {/* Back Button */}
-            <Button
-              onClick={handleBack}
-              variant="outlined"
-              color="primary"
-              startIcon={<ArrowBackIcon />}
-            >
-              Back
-            </Button>
+          <Box width="100%" display="flex" justifyContent="flex-end">
+            <Stack direction="row" spacing={2} alignItems="center">
+              {/* Back Button */}
+              <Button
+                onClick={handleBack}
+                variant="outlined"
+                color="primary"
+                startIcon={<ArrowBackIcon />}
+              >
+                Back
+              </Button>
 
-            {/* Logout Button */}
-            <Button
-              onClick={Exit}
-              variant="outlined"
-              color="error"
-              startIcon={<LogoutIcon />}
-            >
-              Exit
-            </Button>
-          </Stack>
-        </Box>
+              {/* Logout Button */}
+              <Button
+                onClick={Exit}
+                variant="outlined"
+                color="error"
+                startIcon={<LogoutIcon />}
+              >
+                Exit
+              </Button>
+            </Stack>
+          </Box>
         </div>
 
         <div style={{ height: 'calc(100vh - 180px)', width: '100%' }}>
@@ -115,29 +173,41 @@ export default function ProductMstTable() {
               Loading...
             </div>
           ) : (
-            <ReusableHandsontable
-              data={rows}
-              columns={handsontableColumns}
-              height="auto"
-              width="100%"
-              colHeaders={true}
-              rowHeaders={true}
-              afterChange={handleAfterChange}
-              handleRowDoubleClick={handleRowClick}
-              afterSelection={handleAfterSelection}
-              readOnly={true}
-              customSettings={{
-                stretchH: 'all',
-                dropdownMenu: true,
-                filters: {
-                  indicators: true,
-                  showOperators: true
-                },
-                contextMenu: true,
-                search: true,
-                filteringCaseSensitive: false,
-                filteringIndicator: true,
-                licenseKey: "non-commercial-and-evaluation"
+            <ReusableTable
+              columnDefs={columnDefs}
+              rowData={rows}
+              height="100%"
+              theme="ag-theme-quartz"
+              isDarkMode={false}
+              pagination={true}
+              paginationPageSize={25}
+              paginationPageSizeSelector={[25, 50, 100, 250, 500, 1000]}
+              quickFilter={true}
+              onRowClick={(params) => {
+                console.log('Row clicked:', params);
+              }}
+              onRowDoubleClick={handleRowDoubleClick}
+              onSelectionChanged={handleSelectionChanged}
+              loading={isLoading}
+              enableExport={true}
+              exportSelectedOnly={true}
+              selectedRows={selectedRows}
+              enableCheckbox={true}
+              compactMode={true}
+              rowHeight={24}
+              defaultColDef={{
+                resizable: true,
+                sortable: true,
+                filter: true,
+                flex: 1,
+                minWidth: 100
+              }}
+              customGridOptions={{
+                suppressRowClickSelection: true,
+                rowSelection: 'multiple',
+                animateRows: true,
+                enableCellTextSelection: true,
+                ensureDomOrder: true
               }}
             />
           )}
