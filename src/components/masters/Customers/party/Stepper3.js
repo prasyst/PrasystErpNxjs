@@ -30,7 +30,7 @@ import z from 'zod';
 
 const FORM_MODE = getFormMode();
 
-const Stepper3 = () => {
+const Stepper3 = ({ formData, setFormData }) => {
 
   const textInputSx = {
     '& .MuiInputBase-root': {
@@ -128,8 +128,22 @@ const Stepper3 = () => {
     },
   };
 
-  const handleInputChange = (event) => {
-    const { name, value } = event.target;
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleChangeStatus = (event) => {
+    const { name, checked } = event.target;
+    const updatedStatus = checked ? "1" : "0";
+
+    setFormData(prev => ({
+      ...prev,
+      [name]: updatedStatus
+    }));
   };
 
   return (
@@ -161,12 +175,12 @@ const Stepper3 = () => {
 
           <Box sx={{ width: { xs: '100%', sm: '20%', md: '20.5%' } }}>
             <AutoVibe
-              id="UNIT_KEY"
+              id=""
               disabled={""}
               getOptionLabel={(option) => option || ''}
               options={[]}
               label="Group"
-              name="UNIT_KEY"
+              name=""
               value={""}
               onChange={handleInputChange}
               sx={DropInputSx}
@@ -181,12 +195,12 @@ const Stepper3 = () => {
 
           <Box sx={{ width: { xs: '100%', sm: '20%', md: '20.5%' } }}>
             <AutoVibe
-              id="UNIT_KEY"
+              id=""
               disabled={""}
               getOptionLabel={(option) => option || ''}
               options={[]}
               label="Category"
-              name="UNIT_KEY"
+              name=""
               value={""}
               onChange={handleInputChange}
               sx={DropInputSx}
@@ -201,12 +215,12 @@ const Stepper3 = () => {
 
           <Box sx={{ width: { xs: '100%', sm: '20%', md: '20.5%' } }}>
             <AutoVibe
-              id="UNIT_KEY"
+              id=""
               disabled={""}
               getOptionLabel={(option) => option || ''}
               options={[]}
               label="Sale Type"
-              name="UNIT_KEY"
+              name=""
               value={""}
               onChange={handleInputChange}
               sx={DropInputSx}
@@ -227,12 +241,12 @@ const Stepper3 = () => {
         }}>
           <Box sx={{ width: { xs: '100%', sm: '20%', md: '16.1%' } }}>
             <AutoVibe
-              id="UNIT_KEY"
+              id=""
               disabled={""}
               getOptionLabel={(option) => option || ''}
               options={[]}
               label="Salesperson 1"
-              name="UNIT_KEY"
+              name=""
               value={""}
               onChange={handleInputChange}
               sx={DropInputSx}
@@ -246,12 +260,12 @@ const Stepper3 = () => {
           </Box>
           <Box sx={{ width: { xs: '100%', sm: '20%', md: '16.1%' } }}>
             <AutoVibe
-              id="UNIT_KEY"
+              id=""
               disabled={""}
               getOptionLabel={(option) => option || ''}
               options={[]}
               label="Salesperson 2"
-              name="UNIT_KEY"
+              name=""
               value={""}
               onChange={handleInputChange}
               sx={DropInputSx}
@@ -265,12 +279,12 @@ const Stepper3 = () => {
           </Box>
           <Box sx={{ width: { xs: '100%', sm: '20%', md: '20.5%' } }}>
             <AutoVibe
-              id="UNIT_KEY"
+              id=""
               disabled={""}
               getOptionLabel={(option) => option || ''}
               options={[]}
               label="Broker"
-              name="UNIT_KEY"
+              name=""
               value={""}
               onChange={handleInputChange}
               sx={DropInputSx}
@@ -285,12 +299,12 @@ const Stepper3 = () => {
 
           <Box sx={{ width: { xs: '100%', sm: '20%', md: '20.5%' } }}>
             <AutoVibe
-              id="BRAND_KEY"
+              id=""
               disabled={""}
               getOptionLabel={(option) => option || ''}
               options={[]}
               label="Broker1"
-              name="BRAND_KEY"
+              name=""
               value={""}
               onChange={handleInputChange}
               sx={DropInputSx}
@@ -305,12 +319,12 @@ const Stepper3 = () => {
 
           <Box sx={{ width: { xs: '100%', sm: '20%', md: '20.6%' } }}>
             <AutoVibe
-              id="BRAND_KEY"
+              id=""
               disabled={""}
               getOptionLabel={(option) => option || ''}
               options={[]}
               label="Transporter"
-              name="BRAND_KEY"
+              name=""
               value={""}
               onChange={handleInputChange}
               sx={DropInputSx}
@@ -332,12 +346,12 @@ const Stepper3 = () => {
         }}>
           <Box sx={{ width: { xs: '100%', sm: '20%', md: '16.1%' } }}>
             <AutoVibe
-              id="UNIT_KEY"
+              id=""
               disabled={""}
               getOptionLabel={(option) => option || ''}
               options={[]}
               label="Trade Disc"
-              name="UNIT_KEY"
+              name=""
               value={""}
               onChange={handleInputChange}
               sx={DropInputSx}
@@ -375,9 +389,9 @@ const Stepper3 = () => {
               variant="filled"
               fullWidth
               onChange={handleInputChange}
-              value={""}
+              value={formData.COMM_RATE || ""}
               disabled={""}
-              name=""
+              name="COMM_RATE"
               sx={textInputSx}
               inputProps={{
                 style: {
@@ -389,8 +403,8 @@ const Stepper3 = () => {
           </Box>
           <Box sx={{ width: { xs: '100%', sm: '20%', md: '16.5%' } }}>
             <FormControlLabel
-              control={<Checkbox name="ISSERVICE" size="small" checked={"1"}
-                onChange={handleInputChange} />}
+              control={<Checkbox name="COMM_ONGROSS" size="small" checked={formData.COMM_ONGROSS === "1"}
+              onChange={handleChangeStatus} />}
               disabled={""}
               label="Commission On Gross Amt"
               sx={{
@@ -410,12 +424,12 @@ const Stepper3 = () => {
 
           <Box sx={{ width: { xs: '100%', sm: '20%', md: '15.4%' } }}>
             <AutoVibe
-              id="UNIT_KEY"
+              id=""
               disabled={""}
               getOptionLabel={(option) => option || ''}
               options={[]}
               label="Form Type"
-              name="UNIT_KEY"
+              name=""
               value={""}
               onChange={handleInputChange}
               sx={DropInputSx}
@@ -436,12 +450,12 @@ const Stepper3 = () => {
         }}>
           <Box sx={{ width: { xs: '100%', sm: '20%', md: '33.5%' } }}>
             <AutoVibe
-              id="BRAND_KEY"
+              id=""
               disabled={""}
               getOptionLabel={(option) => option || ''}
               options={[]}
               label="Cash Desc"
-              name="BRAND_KEY"
+              name=""
               value={""}
               onChange={handleInputChange}
               sx={DropInputSx}
@@ -460,9 +474,9 @@ const Stepper3 = () => {
               variant="filled"
               fullWidth
               onChange={handleInputChange}
-              value={""}
+              value={formData.CR_LIMIT || ""}
               disabled={""}
-              name=""
+              name="CR_LIMIT"
               sx={textInputSx}
               inputProps={{
                 style: {
@@ -479,9 +493,9 @@ const Stepper3 = () => {
               variant="filled"
               fullWidth
               onChange={handleInputChange}
-              value={""}
+              value={formData.CR_PERIOD || ""}
               disabled={""}
-              name=""
+              name="CR_PERIOD"
               sx={textInputSx}
               inputProps={{
                 style: {
@@ -496,19 +510,19 @@ const Stepper3 = () => {
             <RadioGroup
               row
               name="RDOFF"
-              onChange={(e) => console.log(e.target.value)}
+              onChange={handleInputChange}
               disabled={''}
-              value={""}
+              value={formData.RDOFF || ""}
               sx={{ margin: '5px 0px 0px 0px' }}
             >
               <FormControlLabel disabled={''}
-                value="option1" control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
+                value="N" control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
                 label={<Typography sx={{ fontSize: '12px' }}>None</Typography>} />
               <FormControlLabel disabled={''}
-                value="option2" control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
+                value="NR" control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
                 label={<Typography sx={{ fontSize: '12px' }}>Nearest Re</Typography>} />
               <FormControlLabel disabled={''}
-                value="option3" control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
+                value="R" control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
                 label={<Typography sx={{ fontSize: '12px' }}>Rs.5</Typography>} />
             </RadioGroup>
           </Box>
@@ -519,9 +533,9 @@ const Stepper3 = () => {
               variant="filled"
               fullWidth
               onChange={handleInputChange}
-              value={""}
+              value={formData.INT_PERC || ""}
               disabled={""}
-              name=""
+              name="INT_PERC"
               sx={textInputSx}
               inputProps={{
                 style: {
@@ -540,8 +554,8 @@ const Stepper3 = () => {
         }}>
           <Box sx={{ width: { xs: '100%', sm: '20%', md: '16.1%' } }}>
             <FormControlLabel
-              control={<Checkbox name="ISSERVICE" size="small" checked={"1"}
-                onChange={handleInputChange} />}
+              control={<Checkbox name="STOP_DESP" size="small" checked={formData.STOP_DESP === "1"}
+                onChange={handleChangeStatus} />}
               disabled={""}
               label="Stop Dispatch"
               sx={{
@@ -591,9 +605,9 @@ const Stepper3 = () => {
               variant="filled"
               fullWidth
               onChange={handleInputChange}
-              value={""}
+              value={formData.DLV_PLACE || ""}
               disabled={""}
-              name=""
+              name="DLV_PLACE"
               sx={textInputSx}
               inputProps={{
                 style: {
@@ -616,9 +630,9 @@ const Stepper3 = () => {
               variant="filled"
               fullWidth
               onChange={handleInputChange}
-              value={""}
+              value={formData.RATING || ""}
               disabled={""}
-              name=""
+              name="RATING"
               sx={textInputSx}
               inputProps={{
                 style: {
@@ -634,9 +648,9 @@ const Stepper3 = () => {
               variant="filled"
               fullWidth
               onChange={handleInputChange}
-              value={""}
+              value={formData.INSURANCE || ""}
               disabled={""}
-              name=""
+              name="INSURANCE"
               sx={textInputSx}
               inputProps={{
                 style: {
@@ -652,9 +666,9 @@ const Stepper3 = () => {
               variant="filled"
               fullWidth
               onChange={handleInputChange}
-              value={""}
+              value={formData.UsageRemk || ""}
               disabled={""}
-              name=""
+              name="UsageRemk"
               sx={textInputSx}
               inputProps={{
                 style: {
@@ -666,12 +680,12 @@ const Stepper3 = () => {
           </Box>
           <Box sx={{ width: { xs: '100%', sm: '20%', md: '20.5%' } }}>
             <AutoVibe
-              id="UNIT_KEY"
+              id=""
               disabled={""}
               getOptionLabel={(option) => option || ''}
               options={[]}
               label="Tax Appbl"
-              name="UNIT_KEY"
+              name=""
               value={""}
               onChange={handleInputChange}
               sx={DropInputSx}
@@ -696,9 +710,9 @@ const Stepper3 = () => {
               variant="filled"
               fullWidth
               onChange={handleInputChange}
-              value={""}
+              value={formData.Area || ""}
               disabled={""}
-              name=""
+              name="Area"
               sx={textInputSx}
               inputProps={{
                 style: {
@@ -714,9 +728,9 @@ const Stepper3 = () => {
               variant="filled"
               fullWidth
               onChange={handleInputChange}
-              value={""}
+              value={formData.Product || ""}
               disabled={""}
-              name=""
+              name="Product"
               sx={textInputSx}
               inputProps={{
                 style: {
@@ -732,9 +746,9 @@ const Stepper3 = () => {
               variant="filled"
               fullWidth
               onChange={handleInputChange}
-              value={""}
+              value={formData.TARGET_PERC || ""}
               disabled={""}
-              name=""
+              name="TARGET_PERC"
               sx={textInputSx}
               inputProps={{
                 style: {
@@ -757,9 +771,9 @@ const Stepper3 = () => {
               variant="filled"
               fullWidth
               onChange={handleInputChange}
-              value={""}
+              value={formData.SPL_INSTR || ""}
               disabled={""}
-              name=""
+              name="SPL_INSTR"
               sx={doubleInputSx}
               inputProps={{
                 style: {
@@ -781,9 +795,9 @@ const Stepper3 = () => {
               variant="filled"
               fullWidth
               onChange={handleInputChange}
-              value={""}
+              value={formData.SETTELEMENT_REMK || ""}
               disabled={""}
-              name=""
+              name="SETTELEMENT_REMK"
               sx={doubleInputSx}
               inputProps={{
                 style: {
@@ -801,12 +815,12 @@ const Stepper3 = () => {
             width: { xs: '100%', sm: '20%', md: '20.5%' }
           }}>
             <AutoVibe
-              id="UNIT_KEY"
+              id=""
               disabled={""}
               getOptionLabel={(option) => option || ''}
               options={[]}
               label="Date"
-              name="UNIT_KEY"
+              name=""
               value={""}
               onChange={handleInputChange}
               sx={DropInputSx}
@@ -822,9 +836,9 @@ const Stepper3 = () => {
               variant="filled"
               fullWidth
               onChange={handleInputChange}
-              value={""}
+              value={formData.SETTELEMENT_AMT || ""}
               disabled={""}
-              name=""
+              name="SETTELEMENT_AMT"
               sx={textInputSx}
               inputProps={{
                 style: {
@@ -843,9 +857,11 @@ const Stepper3 = () => {
 }
 
 export default function Wrapper() {
+  const [formData, setFormData] = useState({});
+
   return (
     <Suspense fallback={<Box>Loading...</Box>}>
-      <Stepper3 />
+      <Stepper3 formData={formData} setFormData={setFormData}/>
     </Suspense>
   );
 }

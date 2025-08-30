@@ -396,7 +396,11 @@ const onExportCurrentPage = useCallback(() => {
 
   const gridOptions = useMemo(() => ({
     onRowClicked: onRowClick,
-    onRowDoubleClicked: onRowDoubleClick,
+    onRowDoubleClicked: (params) => {
+      if (onRowDoubleClick) {
+        onRowDoubleClick(params.data);
+      }
+    },
     onSelectionChanged: onSelectionChanged,
     suppressRowClickSelection: enableCheckbox ? true : false,
     rowSelection: enableCheckbox ? 'multiple' : 'single',

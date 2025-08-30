@@ -31,7 +31,7 @@ import SearchIcon from "@mui/icons-material/Search";
 
 const FORM_MODE = getFormMode();
 
-const Stepper2 = () => {
+const Stepper2 = ({ formData, setFormData }) => {
 
   const textInputSx = {
     '& .MuiInputBase-root': {
@@ -129,32 +129,30 @@ const Stepper2 = () => {
     },
   };
 
-  const handleInputChange = (event) => {
-    const { name, value } = event.target;
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleChangeStatus = (event) => {
+    const { name, checked } = event.target;
+    const updatedStatus = checked ? "1" : "0";
+
+    setFormData(prev => ({
+      ...prev,
+      [name]: updatedStatus
+    }));
   };
 
   const columns = [
-    { id: "name", label: "Name", minWidth: 50, align: "left" },
-    { id: "age", label: "Age", minWidth: 50, align: "left" },
-    { id: "city", label: "City", minWidth: 50, align: "left" },
-    { id: "name", label: "Name", minWidth: 50, align: "left" },
-    { id: "age", label: "Age", minWidth: 50, align: "left" },
-    { id: "city", label: "City", minWidth: 50, align: "left" }
+
   ];
 
   const rows = [
-    { name: "John", age: 25, city: "New York" },
-    { name: "Alice", age: 30, city: "London" },
-    { name: "Bob", age: 28, city: "Paris" },
-    { name: "John", age: 25, city: "New York" },
-    { name: "Alice", age: 30, city: "London" },
-    { name: "Bob", age: 28, city: "Paris" },
-    { name: "John", age: 25, city: "New York" },
-    { name: "Alice", age: 30, city: "London" },
-    { name: "Bob", age: 28, city: "Paris" },
-    { name: "John", age: 25, city: "New York" },
-    { name: "Alice", age: 30, city: "London" },
-    { name: "Bob", age: 28, city: "Paris" }
+
   ];
 
   return (
@@ -316,9 +314,9 @@ const Stepper2 = () => {
               variant="filled"
               fullWidth
               onChange={handleInputChange}
-              value={""}
+              value={formData.ADDR || ""}
               disabled={""}
-              name=""
+              name="ADDR"
               sx={doubleInputSx}
               inputProps={{
                 style: {
@@ -336,12 +334,12 @@ const Stepper2 = () => {
             width: { xs: '100%', sm: '20%', md: '20.5%' }
           }}>
             <AutoVibe
-              id="UNIT_KEY"
+              id=""
               disabled={""}
               getOptionLabel={(option) => option || ''}
               options={[]}
               label="Country"
-              name="UNIT_KEY"
+              name=""
               value={""}
               onChange={handleInputChange}
               sx={DropInputSx}
@@ -362,9 +360,9 @@ const Stepper2 = () => {
                 variant="filled"
                 fullWidth
                 onChange={handleInputChange}
-                value={""}
+                value={formData.PINCODE || ""}
                 disabled={""}
-                name=""
+                name="PINCODE"
                 sx={textInputSx}
                 inputProps={{
                   style: {
@@ -374,12 +372,12 @@ const Stepper2 = () => {
                 }}
               />
               <AutoVibe
-                id="UNIT_KEY"
+                id=""
                 disabled={""}
                 getOptionLabel={(option) => option || ''}
                 options={[]}
                 label="Pincode"
-                name="UNIT_KEY"
+                name=""
                 value={""}
                 onChange={handleInputChange}
                 sx={DropInputSx}
@@ -406,12 +404,12 @@ const Stepper2 = () => {
               width: { xs: '100%', sm: '20%', md: '207.7%' }
             }}>
               <AutoVibe
-                id="UNIT_KEY"
+                id=""
                 disabled={""}
                 getOptionLabel={(option) => option || ''}
                 options={[]}
                 label="State"
-                name="UNIT_KEY"
+                name=""
                 value={""}
                 onChange={handleInputChange}
                 sx={DropInputSx}
@@ -423,12 +421,12 @@ const Stepper2 = () => {
                 }}
               />
               <AutoVibe
-                id="UNIT_KEY"
+                id=""
                 disabled={""}
                 getOptionLabel={(option) => option || ''}
                 options={[]}
                 label="City/District"
-                name="UNIT_KEY"
+                name=""
                 value={""}
                 onChange={handleInputChange}
                 sx={DropInputSx}
@@ -458,9 +456,9 @@ const Stepper2 = () => {
                   variant="filled"
                   fullWidth
                   onChange={handleInputChange}
-                  value={""}
+                  value={formData.TEL_NO || ""}
                   disabled={""}
-                  name=""
+                  name="TEL_NO"
                   sx={textInputSx}
                   inputProps={{
                     style: {
@@ -475,9 +473,9 @@ const Stepper2 = () => {
                 variant="filled"
                 fullWidth
                 onChange={handleInputChange}
-                value={""}
+                value={formData.E_MAIL || ""}
                 disabled={""}
-                name=""
+                name="E_MAIL"
                 sx={textInputSx}
                 inputProps={{
                   style: {
@@ -501,9 +499,9 @@ const Stepper2 = () => {
               variant="filled"
               fullWidth
               onChange={handleInputChange}
-              value={""}
+              value={formData.CONTACT_PERSON || ""}
               disabled={""}
-              name=""
+              name="CONTACT_PERSON"
               sx={textInputSx}
               inputProps={{
                 style: {
@@ -519,9 +517,9 @@ const Stepper2 = () => {
               variant="filled"
               fullWidth
               onChange={handleInputChange}
-              value={""}
+              value={formData.MOBILE_NO || ""}
               disabled={""}
-              name=""
+              name="MOBILE_NO"
               sx={textInputSx}
               inputProps={{
                 style: {
@@ -537,9 +535,9 @@ const Stepper2 = () => {
               variant="filled"
               fullWidth
               onChange={handleInputChange}
-              value={""}
+              value={formData.WEBSITE || ""}
               disabled={""}
-              name=""
+              name="WEBSITE"
               sx={textInputSx}
               inputProps={{
                 style: {
@@ -554,8 +552,8 @@ const Stepper2 = () => {
               label="Alt Cd"
               variant="filled"
               fullWidth
-              onChange={(e) => console.log(e.target.value)}
-              name="LASTID"
+              onChange={handleInputChange}
+              name=""
               value={""}
               disabled={true}
               sx={textInputSx}
@@ -572,8 +570,8 @@ const Stepper2 = () => {
               label="LBT"
               variant="filled"
               fullWidth
-              onChange={(e) => console.log(e.target.value)}
-              name="LASTID"
+              onChange={handleInputChange}
+              name=""
               value={""}
               disabled={true}
               sx={textInputSx}
@@ -604,9 +602,9 @@ const Stepper2 = () => {
               variant="filled"
               fullWidth
               onChange={handleInputChange}
-              value={""}
+              value={formData.FAX_NO || ""}
               disabled={""}
-              name=""
+              name="FAX_NO"
               sx={textInputSx}
               inputProps={{
                 style: {
@@ -644,9 +642,9 @@ const Stepper2 = () => {
               variant="filled"
               fullWidth
               onChange={handleInputChange}
-              value={""}
+              value={formData.EXCISE_CODE || ""}
               disabled={""}
-              name=""
+              name="EXCISE_CODE"
               sx={textInputSx}
               inputProps={{
                 style: {
@@ -656,12 +654,12 @@ const Stepper2 = () => {
               }}
             />
             <AutoVibe
-              id="UNIT_KEY"
+              id=""
               disabled={""}
               getOptionLabel={(option) => option || ''}
               options={[]}
               label="Trade Disc"
-              name="UNIT_KEY"
+              name=""
               value={""}
               onChange={handleInputChange}
               sx={DropInputSx}
@@ -685,9 +683,9 @@ const Stepper2 = () => {
               variant="filled"
               fullWidth
               onChange={handleInputChange}
-              value={""}
+              value={formData.VAT || ""}
               disabled={""}
-              name=""
+              name="VAT"
               sx={textInputSx}
               inputProps={{
                 style: {
@@ -697,12 +695,12 @@ const Stepper2 = () => {
               }}
             />
             <AutoVibe
-              id="UNIT_KEY"
+              id=""
               disabled={""}
               getOptionLabel={(option) => option || ''}
               options={[]}
               label="Transporter"
-              name="UNIT_KEY"
+              name=""
               value={""}
               onChange={handleInputChange}
               sx={DropInputSx}
@@ -726,9 +724,9 @@ const Stepper2 = () => {
               variant="filled"
               fullWidth
               onChange={handleInputChange}
-              value={""}
+              value={formData.CST || ""}
               disabled={""}
-              name=""
+              name="CST"
               sx={textInputSx}
               inputProps={{
                 style: {
@@ -738,12 +736,12 @@ const Stepper2 = () => {
               }}
             />
             <AutoVibe
-              id="UNIT_KEY"
+              id=""
               disabled={""}
               getOptionLabel={(option) => option || ''}
               options={[]}
               label="Tax Appl"
-              name="UNIT_KEY"
+              name=""
               value={""}
               onChange={handleInputChange}
               sx={DropInputSx}
@@ -763,12 +761,12 @@ const Stepper2 = () => {
             width: { xs: '100%', sm: '20%', md: '20.6%' }
           }}>
             <AutoVibe
-              id="UNIT_KEY"
+              id=""
               disabled={""}
               getOptionLabel={(option) => option || ''}
               options={[]}
               label="Form Type"
-              name="UNIT_KEY"
+              name=""
               value={""}
               onChange={handleInputChange}
               sx={DropInputSx}
@@ -784,9 +782,9 @@ const Stepper2 = () => {
               variant="filled"
               fullWidth
               onChange={handleInputChange}
-              value={""}
+              value={formData.GSTTIN_NO || ""}
               disabled={""}
-              name=""
+              name="GSTTIN_NO"
               sx={textInputSx}
               inputProps={{
                 style: {
@@ -809,9 +807,9 @@ const Stepper2 = () => {
               variant="filled"
               fullWidth
               onChange={handleInputChange}
-              value={""}
+              value={formData.REMK || ""}
               disabled={""}
-              name=""
+              name="REMK"
               sx={textInputSx}
               inputProps={{
                 style: {
@@ -829,19 +827,19 @@ const Stepper2 = () => {
             <RadioGroup
               row
               name="RDOFF"
-              onChange={(e) => console.log(e.target.value)}
+              onChange={handleInputChange}
               disabled={''}
-              value={""}
+              value={formData.RDOFF || ""}
               sx={{ margin: '5px 0px 0px 0px' }}
             >
               <FormControlLabel disabled={''}
-                value="option1" control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
+                value="N" control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
                 label={<Typography sx={{ fontSize: '12px' }}>None</Typography>} />
               <FormControlLabel disabled={''}
-                value="option2" control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
+                value="NR" control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
                 label={<Typography sx={{ fontSize: '12px' }}>Nearest Re</Typography>} />
               <FormControlLabel disabled={''}
-                value="option3" control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
+                value="R" control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
                 label={<Typography sx={{ fontSize: '12px' }}>Rs.5</Typography>} />
             </RadioGroup>
           </Box>
@@ -856,17 +854,17 @@ const Stepper2 = () => {
             <FormLabel sx={{ margin: '7px 14px 0px 10px', fontSize: '12px', fontWeight: 'bold', color: 'black' }} component="legend">Entity under SEZ</FormLabel>
             <RadioGroup
               row
-              name="RDOFF"
-              onChange={(e) => console.log(e.target.value)}
+              name="SEZ"
+              onChange={handleInputChange}
               disabled={''}
-              value={""}
+              value={formData.SEZ || ""}
               sx={{ margin: '5px 0px 0px 0px' }}
             >
               <FormControlLabel disabled={''}
-                value="option1" control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
+                value="Y" control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
                 label={<Typography sx={{ fontSize: '12px' }}>Yes</Typography>} />
               <FormControlLabel disabled={''}
-                value="option2" control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
+                value="N" control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
                 label={<Typography sx={{ fontSize: '12px' }}>No</Typography>} />
             </RadioGroup>
           </Box>
@@ -888,27 +886,27 @@ const Stepper2 = () => {
             <FormLabel sx={{ margin: '7px 14px 0px 10px', fontSize: '12px', fontWeight: 'bold', color: 'black' }} component="legend">RD/URD</FormLabel>
             <RadioGroup
               row
-              name="RDOFF"
-              onChange={(e) => console.log(e.target.value)}
+              name="RD_URD"
+              onChange={handleInputChange}
               disabled={''}
-              value={""}
+              value={formData.RD_URD || ""}
               sx={{ margin: '5px 0px 0px 0px' }}
             >
               <FormControlLabel disabled={''}
-                value="option1" control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
+                value="R" control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
                 label={<Typography sx={{ fontSize: '12px' }}>RD</Typography>} />
               <FormControlLabel disabled={''}
-                value="option2" control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
+                value="U" control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
                 label={<Typography sx={{ fontSize: '12px' }}>URD</Typography>} />
               <FormControlLabel disabled={''}
-                value="option3" control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
+                value="C" control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
                 label={<Typography sx={{ fontSize: '12px' }}>Composition</Typography>} />
             </RadioGroup>
           </Box>
 
           <FormControlLabel
-            control={<Checkbox name="ISSERVICE" size="small" checked={"1"}
-              onChange={handleInputChange} />}
+            control={<Checkbox name="STATUS" size="small" checked={formData.STATUS === "1"}
+            onChange={handleChangeStatus} />}
             disabled={""}
             label="Active"
             sx={{
@@ -916,8 +914,8 @@ const Stepper2 = () => {
             }}
           />
           <FormControlLabel
-            control={<Checkbox name="ISSERVICE" size="small" checked={"1"}
-              onChange={handleInputChange} />}
+            control={<Checkbox name="DEFAULT_BRANCH" size="small" checked={formData.DEFAULT_BRANCH === "1"}
+            onChange={handleChangeStatus} />}
             disabled={""}
             label="Default Branch"
             sx={{
@@ -956,9 +954,11 @@ const Stepper2 = () => {
 }
 
 export default function Wrapper() {
+  const [formData, setFormData] = useState({});
+
   return (
     <Suspense fallback={<Box>Loading...</Box>}>
-      <Stepper2 />
+      <Stepper2 formData={formData} setFormData={setFormData} />
     </Suspense>
   );
 }
