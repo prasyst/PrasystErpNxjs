@@ -30,7 +30,7 @@ import z from 'zod';
 
 const FORM_MODE = getFormMode();
 
-const Stepper3 = ({ formData, setFormData }) => {
+const Stepper3 = ({ formData, setFormData, isFormDisabled }) => {
 
   const textInputSx = {
     '& .MuiInputBase-root': {
@@ -175,13 +175,13 @@ const Stepper3 = ({ formData, setFormData }) => {
 
           <Box sx={{ width: { xs: '100%', sm: '20%', md: '20.5%' } }}>
             <AutoVibe
-              id=""
-              disabled={""}
+              id="CLIENTGRP_KEY"
+              disabled={isFormDisabled}
               getOptionLabel={(option) => option || ''}
               options={[]}
               label="Group"
-              name=""
-              value={""}
+              name="CLIENTGRP_KEY"
+              value={formData.CLIENTGRP_KEY || 0}
               onChange={handleInputChange}
               sx={DropInputSx}
               inputProps={{
@@ -195,13 +195,13 @@ const Stepper3 = ({ formData, setFormData }) => {
 
           <Box sx={{ width: { xs: '100%', sm: '20%', md: '20.5%' } }}>
             <AutoVibe
-              id=""
-              disabled={""}
+              id="CLIENTCAT_KEY"
+              disabled={isFormDisabled}
               getOptionLabel={(option) => option || ''}
               options={[]}
               label="Category"
-              name=""
-              value={""}
+              name="CLIENTCAT_KEY"
+              value={formData.CLIENTCAT_KEY || 0}
               onChange={handleInputChange}
               sx={DropInputSx}
               inputProps={{
@@ -215,13 +215,13 @@ const Stepper3 = ({ formData, setFormData }) => {
 
           <Box sx={{ width: { xs: '100%', sm: '20%', md: '20.5%' } }}>
             <AutoVibe
-              id=""
-              disabled={""}
+              id="SaleType_Id"
+              disabled={isFormDisabled}
               getOptionLabel={(option) => option || ''}
               options={[]}
               label="Sale Type"
-              name=""
-              value={""}
+              name="SaleType_Id"
+              value={formData.SaleType_Id || ""}
               onChange={handleInputChange}
               sx={DropInputSx}
               inputProps={{
@@ -241,13 +241,13 @@ const Stepper3 = ({ formData, setFormData }) => {
         }}>
           <Box sx={{ width: { xs: '100%', sm: '20%', md: '16.1%' } }}>
             <AutoVibe
-              id=""
-              disabled={""}
+              id="SALEPERSON1_KEY"
+              disabled={isFormDisabled}
               getOptionLabel={(option) => option || ''}
               options={[]}
               label="Salesperson 1"
-              name=""
-              value={""}
+              name="SALEPERSON1_KEY"
+              value={formData.SALEPERSON1_KEY || 0}
               onChange={handleInputChange}
               sx={DropInputSx}
               inputProps={{
@@ -260,13 +260,13 @@ const Stepper3 = ({ formData, setFormData }) => {
           </Box>
           <Box sx={{ width: { xs: '100%', sm: '20%', md: '16.1%' } }}>
             <AutoVibe
-              id=""
-              disabled={""}
+              id="SALEPERSON2_KEY"
+              disabled={isFormDisabled}
               getOptionLabel={(option) => option || ''}
               options={[]}
               label="Salesperson 2"
-              name=""
-              value={""}
+              name="SALEPERSON2_KEY"
+              value={formData.SALEPERSON2_KEY || 0}
               onChange={handleInputChange}
               sx={DropInputSx}
               inputProps={{
@@ -279,13 +279,13 @@ const Stepper3 = ({ formData, setFormData }) => {
           </Box>
           <Box sx={{ width: { xs: '100%', sm: '20%', md: '20.5%' } }}>
             <AutoVibe
-              id=""
-              disabled={""}
+              id="BROKER_KEY"
+              disabled={isFormDisabled}
               getOptionLabel={(option) => option || ''}
               options={[]}
               label="Broker"
-              name=""
-              value={""}
+              name="BROKER_KEY"
+              value={formData.BROKER_KEY || 0}
               onChange={handleInputChange}
               sx={DropInputSx}
               inputProps={{
@@ -299,13 +299,13 @@ const Stepper3 = ({ formData, setFormData }) => {
 
           <Box sx={{ width: { xs: '100%', sm: '20%', md: '20.5%' } }}>
             <AutoVibe
-              id=""
-              disabled={""}
+              id="BROKER1_KEY"
+              disabled={isFormDisabled}
               getOptionLabel={(option) => option || ''}
               options={[]}
               label="Broker1"
-              name=""
-              value={""}
+              name="BROKER1_KEY"
+              value={formData.BROKER1_KEY || 0}
               onChange={handleInputChange}
               sx={DropInputSx}
               inputProps={{
@@ -319,13 +319,13 @@ const Stepper3 = ({ formData, setFormData }) => {
 
           <Box sx={{ width: { xs: '100%', sm: '20%', md: '20.6%' } }}>
             <AutoVibe
-              id=""
-              disabled={""}
+              id="TRSP_KEY"
+              disabled={isFormDisabled}
               getOptionLabel={(option) => option || ''}
               options={[]}
               label="Transporter"
-              name=""
-              value={""}
+              name="TRSP_KEY"
+              value={formData.TRSP_KEY || ""}
               onChange={handleInputChange}
               sx={DropInputSx}
               inputProps={{
@@ -346,13 +346,13 @@ const Stepper3 = ({ formData, setFormData }) => {
         }}>
           <Box sx={{ width: { xs: '100%', sm: '20%', md: '16.1%' } }}>
             <AutoVibe
-              id=""
-              disabled={""}
+              id="TRADE_DISC"
+              disabled={isFormDisabled}
               getOptionLabel={(option) => option || ''}
               options={[]}
               label="Trade Disc"
-              name=""
-              value={""}
+              name="TRADE_DISC"
+              value={formData.TRADE_DISC || 0}
               onChange={handleInputChange}
               sx={DropInputSx}
               inputProps={{
@@ -404,7 +404,7 @@ const Stepper3 = ({ formData, setFormData }) => {
           <Box sx={{ width: { xs: '100%', sm: '20%', md: '16.5%' } }}>
             <FormControlLabel
               control={<Checkbox name="COMM_ONGROSS" size="small" checked={formData.COMM_ONGROSS === "1"}
-              onChange={handleChangeStatus} />}
+                onChange={handleChangeStatus} />}
               disabled={""}
               label="Commission On Gross Amt"
               sx={{
@@ -424,13 +424,13 @@ const Stepper3 = ({ formData, setFormData }) => {
 
           <Box sx={{ width: { xs: '100%', sm: '20%', md: '15.4%' } }}>
             <AutoVibe
-              id=""
-              disabled={""}
+              id="CFORM_FLG"
+              disabled={isFormDisabled}
               getOptionLabel={(option) => option || ''}
               options={[]}
               label="Form Type"
-              name=""
-              value={""}
+              name="CFORM_FLG"
+              value={formData.CFORM_FLG || 0}
               onChange={handleInputChange}
               sx={DropInputSx}
               inputProps={{
@@ -450,13 +450,13 @@ const Stepper3 = ({ formData, setFormData }) => {
         }}>
           <Box sx={{ width: { xs: '100%', sm: '20%', md: '33.5%' } }}>
             <AutoVibe
-              id=""
-              disabled={""}
+              id="DISC_KEY"
+              disabled={isFormDisabled}
               getOptionLabel={(option) => option || ''}
               options={[]}
               label="Cash Desc"
-              name=""
-              value={""}
+              name="DISC_KEY"
+              value={formData.DISC_KEY || ""}
               onChange={handleInputChange}
               sx={DropInputSx}
               inputProps={{
@@ -511,7 +511,7 @@ const Stepper3 = ({ formData, setFormData }) => {
               row
               name="RDOFF"
               onChange={handleInputChange}
-              disabled={''}
+              disabled={isFormDisabled}
               value={formData.RDOFF || ""}
               sx={{ margin: '5px 0px 0px 0px' }}
             >
@@ -565,19 +565,17 @@ const Stepper3 = ({ formData, setFormData }) => {
           </Box>
           <Box sx={{ width: { xs: '100%', sm: '20%', md: '16.1%' } }}>
             <TextField
+              type="date"
               label="Date"
               variant="filled"
               fullWidth
               onChange={handleInputChange}
-              value={""}
               disabled={""}
+              value={""}
               name=""
               sx={textInputSx}
-              inputProps={{
-                style: {
-                  padding: '6px 8px',
-                  fontSize: '12px'
-                },
+              InputLabelProps={{
+                shrink: true,
               }}
             />
           </Box>
@@ -680,13 +678,13 @@ const Stepper3 = ({ formData, setFormData }) => {
           </Box>
           <Box sx={{ width: { xs: '100%', sm: '20%', md: '20.5%' } }}>
             <AutoVibe
-              id=""
-              disabled={""}
+              id="TAX_KEY"
+              disabled={isFormDisabled}
               getOptionLabel={(option) => option || ''}
               options={[]}
               label="Tax Appbl"
-              name=""
-              value={""}
+              name="TAX_KEY"
+              value={formData.TAX_KEY || ""}
               onChange={handleInputChange}
               sx={DropInputSx}
               inputProps={{
@@ -814,21 +812,18 @@ const Stepper3 = ({ formData, setFormData }) => {
             gap: { xs: 1, sm: 1, md: 0.5 },
             width: { xs: '100%', sm: '20%', md: '20.5%' }
           }}>
-            <AutoVibe
-              id=""
-              disabled={""}
-              getOptionLabel={(option) => option || ''}
-              options={[]}
+            <TextField
+              type="date"
               label="Date"
-              name=""
-              value={""}
+              variant="filled"
+              fullWidth
               onChange={handleInputChange}
-              sx={DropInputSx}
-              inputProps={{
-                style: {
-                  padding: '6px 8px',
-                  fontSize: '12px',
-                },
+              disabled={isFormDisabled}
+              value={formData.SETTELEMENT_DT || 0}
+              name="SETTELEMENT_DT"
+              sx={textInputSx}
+              InputLabelProps={{
+                shrink: true,
               }}
             />
             <TextField
@@ -856,15 +851,17 @@ const Stepper3 = ({ formData, setFormData }) => {
   )
 }
 
-export default function Wrapper() {
-  const [formData, setFormData] = useState({});
+export default Stepper3;
 
-  return (
-    <Suspense fallback={<Box>Loading...</Box>}>
-      <Stepper3 formData={formData} setFormData={setFormData}/>
-    </Suspense>
-  );
-}
+// export default function Wrapper() {
+//   const [formData, setFormData] = useState({});
+
+//   return (
+//     <Suspense fallback={<Box>Loading...</Box>}>
+//       <Stepper3 formData={formData} setFormData={setFormData}/>
+//     </Suspense>
+//   );
+// }
 
 
 
