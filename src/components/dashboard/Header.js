@@ -5,70 +5,9 @@ import { useEffect, useState, useRef } from 'react';
 import { useTheme } from '../../../src/app/context/ThemeContext';
 import { IoIosSearch, IoIosPin } from "react-icons/io";
 import { useRouter } from "next/navigation";
-import {
-  MdDashboard, MdSearch, MdOutlineApartment, MdClose, MdMenu, MdChevronRight,
-  MdDomain, MdMap, MdOutlineGroupWork, MdCategory, MdWarehouse, MdWork,
-  MdAccountBox, MdEmojiPeople, MdAccessibility, MdLocalShipping, MdPeople,
-  MdPersonAdd, MdClass, MdLocalOffer, MdStars, MdRateReview, MdBuild,
-  MdLocalMall, MdCollectionsBookmark, MdStraighten, MdBrandingWatermark,
-  MdReceipt, MdGavel, MdAssignment, MdAttachMoney, MdEvent, MdAnalytics,
-  MdSettings, MdInventory, MdAccountBalance, MdPayments, MdSummarize,
-  MdPushPin, MdOutlinePushPin
-} from 'react-icons/md';
-
-import { FaBuilding, FaTruck, FaUserTag, FaHandshake, FaBalanceScale, FaBoxOpen, FaBoxes, FaUserTie } from 'react-icons/fa';
-import { FiUser } from 'react-icons/fi';
-import { AiOutlineUsergroupAdd, AiOutlineNodeIndex } from 'react-icons/ai';
+import { MdPushPin } from 'react-icons/md';
 import { usePin } from '../../app/hooks/usePin';
-
-const iconMap = {
-  MdDashboard,
-  MdSearch,
-  MdOutlineApartment,
-  MdDomain,
-  MdMap,
-  MdOutlineGroupWork,
-  MdCategory,
-  MdWarehouse,
-  MdWork,
-  MdAccountBox,
-  MdEmojiPeople,
-  MdAccessibility,
-  MdLocalShipping,
-  MdPeople,
-  MdPersonAdd,
-  MdClass,
-  MdLocalOffer,
-  MdStars,
-  MdRateReview,
-  MdBuild,
-  MdLocalMall,
-  MdCollectionsBookmark,
-  MdStraighten,
-  MdBrandingWatermark,
-  MdReceipt,
-  MdGavel,
-  MdAssignment,
-  MdAttachMoney,
-  MdEvent,
-  MdAnalytics,
-  MdSettings,
-  MdInventory,
-  MdAccountBalance,
-  MdPayments,
-  MdSummarize,
-  FaBuilding,
-  FaTruck,
-  FaUserTag,
-  FaHandshake,
-  FaBalanceScale,
-  FaBoxOpen,
-  FaBoxes,
-  FaUserTie,
-  FiUser,
-  AiOutlineUsergroupAdd,
-  AiOutlineNodeIndex
-};
+import { getAllMenuItemsWithPaths, getIconComponent } from './menuData'; // Import from shared file
 import Link from 'next/link';
 
 const Header = ({ isSidebarCollapsed }) => {
@@ -84,6 +23,9 @@ const Header = ({ isSidebarCollapsed }) => {
   const searchRef = useRef(null);
   const { pinnedModules, unpinModule } = usePin();
   const [showUnpinConfirm, setShowUnpinConfirm] = useState(null);
+
+  // Get all searchable items from shared menu data
+  const searchableItems = getAllMenuItemsWithPaths();
 
   useEffect(() => {
     const storedName = localStorage.getItem('USER_NAME');
@@ -106,36 +48,7 @@ const Header = ({ isSidebarCollapsed }) => {
     };
   }, []);
 
-  // Function to find all menu items with valid paths
-  const findAllItemsWithPaths = (items) => {
-    let result = [];
-    
-    items.forEach(item => {
-      if (item.path && item.path !== '#') {
-        result.push({
-          name: item.name,
-          path: item.path,
-          icon: item.icon
-        });
-      }
-      
-      if (item.children) {
-        result = result.concat(findAllItemsWithPaths(item.children));
-      }
-    });
-    
-    return result;
-  };
-
-  // Sample menu items (you should import your actual menu structure)
-  const menuItems = [
-    // ... your menu items structure
-  ];
-
-  // Get all searchable items
-  const searchableItems = findAllItemsWithPaths(menuItems);
-
-  // Handle search input change
+  // Handle search input change with auto-suggest
   const handleSearchChange = (e) => {
     const query = e.target.value;
     setSearchQuery(query);
@@ -147,8 +60,8 @@ const Header = ({ isSidebarCollapsed }) => {
       setSearchResults(results);
       setShowSearchResults(true);
     } else {
-      setSearchResults([]);
-      setShowSearchResults(false);
+      setSearchResults(results.length > 0 ? searchableItems.slice(0, 10) : searchableItems.slice(0, 10));
+      setShowSearchResults(true);
     }
   };
 
@@ -156,7 +69,26 @@ const Header = ({ isSidebarCollapsed }) => {
   const handleSearchResultClick = (path) => {
     setSearchQuery('');
     setShowSearchResults(false);
+    setIsSearchExpanded(false); // Collapse search after selection
     router.push(path);
+  };
+
+  // Handle search icon click
+  const handleSearchIconClick = () => {
+    setIsSearchExpanded(!isSearchExpanded);
+    if (!isSearchExpanded) {
+      // Show all items when expanded
+      setSearchResults(searchableItems.slice(0, 10)); // Show first 10 items
+      setShowSearchResults(true);
+      // Focus input after expansion animation
+      setTimeout(() => {
+        const input = searchRef.current?.querySelector('input');
+        input?.focus();
+      }, 300);
+    } else {
+      setShowSearchResults(false);
+      setSearchQuery('');
+    }
   };
 
   const getInitial = (name) => name?.charAt(0)?.toUpperCase() || '?';
@@ -178,11 +110,7 @@ const Header = ({ isSidebarCollapsed }) => {
     setShowUnpinConfirm(null);
   };
 
-  const getIconComponent = (iconName) => {
-    return iconMap[iconName] || null;
-  };
-
-return (
+  return (
     <header 
       style={{
         backgroundColor: '#1b69e7ff',
@@ -199,30 +127,28 @@ return (
     >
       
       <div className="flex items-center gap-4">
-       
-
-        {/* Search Bar */}
+        {/* Enhanced Search Bar with Auto-suggest */}
         <div 
           ref={searchRef}
           className="flex items-center"
           style={{
-            backgroundColor: 'var(--card-bg)',
+            backgroundColor: 'rgba(255, 255, 255, 0.15)',
             borderRadius: '2rem',
             padding: '0.5rem',
-            overflow: 'hidden',
-            border: isSearchExpanded ? '1px solid var(--primary)' : 'none',
+            overflow: 'visible',
+            border: isSearchExpanded ? '2px solid white' : '2px solid transparent',
             transition: 'all 0.3s ease-out',
-            width: isSearchExpanded ? '250px' : '40px',
+            width: isSearchExpanded ? '300px' : '40px',
             position: 'relative',
           }}
         >
           <button 
-            onClick={() => setIsSearchExpanded(!isSearchExpanded)}
+            onClick={handleSearchIconClick}
             style={{
               background: 'none',
               border: 'none',
               cursor: 'pointer',
-              color: 'var(--text-color)',
+              color: 'white',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -232,11 +158,12 @@ return (
               transform: isSearchExpanded ? 'scale(1.1)' : 'scale(1)',
             }}
           >
-            <IoIosSearch size={20} color="var(--text-color)"  />
+            <IoIosSearch size={20} color="white" />
           </button>
+          
           <input 
             type="text" 
-            placeholder="Search..." 
+            placeholder="Search modules..." 
             value={searchQuery}
             onChange={handleSearchChange}
             onFocus={() => searchQuery.length > 0 && setShowSearchResults(true)}
@@ -244,17 +171,19 @@ return (
               background: 'none',
               border: 'none',
               outline: 'none',
-              color: 'var(--text-color)',
+              color: 'white',
               marginLeft: '0.5rem',
-              width: isSearchExpanded ? '200px' : '0',
+              width: isSearchExpanded ? '250px' : '0',
               padding: isSearchExpanded ? '0.25rem' : '0',
               opacity: isSearchExpanded ? 1 : 0,
               transition: 'all 0.3s ease-out',
+              fontSize: '0.9rem',
             }}
+            className="placeholder:text-white placeholder:text-opacity-70"
           />
 
-          {/* Search Results Dropdown */}
-          {showSearchResults && searchResults.length > 0 && (
+          {/* Auto-suggest Search Results Dropdown */}
+          {showSearchResults && searchResults.length > 0 && isSearchExpanded && (
             <div style={{
               position: 'absolute',
               top: '100%',
@@ -287,14 +216,38 @@ return (
                     className="hover:bg-gray-50"
                   >
                     {IconComponent && (
-                      <span style={{ marginRight: '0.75rem', color: '#666' }}>
+                      <span style={{ marginRight: '0.75rem', color: '#1b69e7' }}>
                         <IconComponent size={16} />
                       </span>
                     )}
-                    <span style={{ fontSize: '0.9rem' }}>{item.name}</span>
+                    <span style={{ fontSize: '0.9rem', color: '#333', fontWeight: '500' }}>
+                      {item.name}
+                    </span>
                   </div>
                 );
               })}
+            </div>
+          )}
+
+          {/* No results message */}
+          {showSearchResults && searchResults.length === 0 && searchQuery.length > 0 && isSearchExpanded && (
+            <div style={{
+              position: 'absolute',
+              top: '100%',
+              left: 0,
+              right: 0,
+              backgroundColor: 'white',
+              border: '1px solid #e0e0e0',
+              borderRadius: '0.5rem',
+              marginTop: '0.5rem',
+              padding: '1rem',
+              textAlign: 'center',
+              color: '#666',
+              fontSize: '0.9rem',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+              zIndex: 100,
+            }}>
+              No modules found for `{searchQuery}`
             </div>
           )}
         </div>
@@ -302,7 +255,6 @@ return (
 
       <div className="flex items-center gap-4 relative">
          {/* Pinned Modules Button */}
-        {/* {pinnedModules.length > 0 && ( */}
           <Link href="/pinned-modules" passHref>
             <button 
               style={{
@@ -324,7 +276,7 @@ return (
               <MdPushPin size={30} />
             </button>
           </Link>
-        {/* )} */}
+          
         {/* User Dropdown */}
         <div 
           style={{
@@ -341,18 +293,19 @@ return (
               width: '40px',
               height: '40px',
               borderRadius: '50%',
-              backgroundColor: 'var(--primary)',
+              backgroundColor: 'rgba(255, 255, 255, 0.2)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               color: 'white',
               fontWeight: 'bold',
+              border: '2px solid rgba(255, 255, 255, 0.3)',
             }}
           >
              {getInitial(userName)}
           </div>
 
-          <span style={{ color: 'white' }}> {userName || 'User'}!</span>
+          <span style={{ color: 'white', fontWeight: '500' }}> {userName || 'User'}!</span>
 
           {isDropdownOpen && (
             <div 
@@ -360,41 +313,45 @@ return (
                 position: 'absolute',
                 top: '100%',
                 right: 0,
-                backgroundColor: 'var(--card-bg)',
-                border: '1px solid var(--border-color)',
+                backgroundColor: 'white',
+                border: '1px solid #e0e0e0',
                 borderRadius: '0.5rem',
                 padding: '0.5rem 0',
                 width: '200px',
                 zIndex: 100,
-                boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                marginTop: '0.5rem',
               }}
             >
-              <ul style={{ listStyle: 'none' }}>
+              <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>
                 <li style={{ 
-                  padding: '0.5rem 1rem', 
-                  color: 'var(--text-color)',
+                  padding: '0.75rem 1rem', 
+                  color: '#333',
                   transition: 'background-color 0.2s',
+                  cursor: 'pointer',
                 }} 
-                  className="hover:bg-opacity-10 hover:bg-white"
+                  className="hover:bg-gray-50"
                 >
                   Profile
                 </li>
                 <li style={{ 
-                  padding: '0.5rem 1rem', 
-                  color: 'var(--text-color)',
+                  padding: '0.75rem 1rem', 
+                  color: '#333',
                   transition: 'background-color 0.2s',
+                  cursor: 'pointer',
                 }} 
-                  className="hover:bg-opacity-10 hover:bg-white"
+                  className="hover:bg-gray-50"
                 >
                   Change Password
                 </li>
                 <li style={{ 
-                  padding: '0.5rem 1rem', 
-                  color: 'var(--text-color)',
+                  padding: '0.75rem 1rem', 
+                  color: '#333',
                   transition: 'background-color 0.2s',
+                  cursor: 'pointer',
                 }} 
                 onClick={handleLogout}
-                  className="hover:bg-opacity-10 hover:bg-white"
+                  className="hover:bg-gray-50"
                 >
                   Logout
                 </li>
@@ -403,94 +360,6 @@ return (
           )}
         </div>
       </div>
-
-      {/* Pinned Modules Menu */}
-      {isPinnedMenuOpen && (
-        <div style={{
-          position: 'absolute',
-          top: '100%',
-          left: '1rem',
-          backgroundColor: 'white',
-          border: '1px solid #e0e0e0',
-          borderRadius: '0.5rem',
-          padding: '1rem',
-          width: '300px',
-          zIndex: 100,
-          boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-        }}>
-          <h3 style={{ margin: '0 0 1rem 0', display: 'flex', alignItems: 'center' }}>
-            <IoIosPin style={{ marginRight: '0.5rem' }} />
-            Pinned Modules
-          </h3>
-          
-          {pinnedModules.length === 0 ? (
-            <p style={{ margin: 0, color: '#666', textAlign: 'center' }}>No pinned modules yet</p>
-          ) : (
-            <div style={{ 
-              display: 'grid', 
-              gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', 
-              gap: '0.75rem' 
-            }}>
-              {pinnedModules.map((module, index) => {
-                const IconComponent = getIconComponent(module.icon);
-                
-                return (
-                  <div
-                    key={index}
-                    style={{
-                      padding: '0.75rem',
-                      backgroundColor: '#f8f9fa',
-                      borderRadius: '0.5rem',
-                      textAlign: 'center',
-                      cursor: 'pointer',
-                      position: 'relative',
-                      transition: 'all 0.2s',
-                    }}
-                    className="hover:shadow-md"
-                    onClick={() => router.push(module.path)}
-                  >
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setShowUnpinConfirm(module);
-                      }}
-                      style={{
-                        position: 'absolute',
-                        top: '0.25rem',
-                        right: '0.25rem',
-                        background: 'none',
-                        border: 'none',
-                        cursor: 'pointer',
-                        color: '#999',
-                        fontSize: '0.75rem',
-                      }}
-                      className="hover:text-red-500"
-                    >
-                      ×
-                    </button>
-                    
-                    {IconComponent && (
-                      <div style={{ marginBottom: '0.5rem', color: '#1b69e7' }}>
-                        <IconComponent size={24} />
-                      </div>
-                    )}
-                    
-                    <div style={{ 
-                      fontSize: '0.75rem', 
-                      fontWeight: '500',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap'
-                    }}>
-                      {module.name}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      )}
 
       {/* Unpin Confirmation Modal */}
       {showUnpinConfirm && (

@@ -127,16 +127,16 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
           name: 'Customers',
           icon: MdPeople,
           // path: '/masters/customers',
-          children: [
+              children: [
             { name: 'Debtors/Customers', icon: MdPeople, path: '/masters/customers' },
-            { name: 'Category (For Rate)', icon: MdCategory, path: '/masters/customers/category' },
-            { name: 'Customer Group', icon: AiOutlineUsergroupAdd, path: '/masters/customers/group' },
-            { name: 'Consignee', icon: MdPersonAdd, path: '/masters/customers/consignee' },
-            { name: 'Party Class Master', icon: MdClass, path: '/masters/customers/debtors' },
-            { name: 'Party Wise Rate List', icon: MdLocalOffer, path: '/masters/customers/rate-list' },
-            { name: 'Party Brand Broker', icon: MdStars, path: '/masters/customers/brand-broker' },
-            { name: 'Party Rating Update', icon: MdRateReview, path: '/masters/customers/rating' },
-            { name: 'Party Brand Parameter', icon: MdBuild, path: '/masters/customers/brand-parameter' },
+            { name: 'Category (For Rate)', icon: MdCategory, path: '#' },
+            { name: 'Customer Group', icon: AiOutlineUsergroupAdd, path: '#' },
+            { name: 'Consignee', icon: MdPersonAdd, path: '#' },
+            { name: 'Party Class Master', icon: MdClass, path: '#' },
+            { name: 'Party Wise Rate List', icon: MdLocalOffer, path: '#' },
+            { name: 'Party Brand Broker', icon: MdStars, path: '#' },
+            { name: 'Party Rating Update', icon: MdRateReview, path: '#' },
+            { name: 'Party Brand Parameter', icon: MdBuild, path: '#' },
           ],
         },
         ,
@@ -413,7 +413,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
     },
   ];
 
-  // Close mega menu when clicking outside
+  
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (
@@ -445,21 +445,25 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
   };
 
   // Handle main menu hover
-  const handleMainMenuHover = (item, event) => {
-    if (item.children && item.children.length > 0) {
-      const rect = event.currentTarget.getBoundingClientRect();
-      setMegaMenuPosition({
-        top: rect.top,
-        left: isCollapsed ? 80 : 260
-      });
-      setOpenMegaMenu(item.name);
-      setHoveredItems([item]);
-      setMegaMenuLevels([item.children]);
-    } else {
-      // Close mega menu if the item has no children
-      closeMegaMenu();
-    }
-  };
+ const handleMainMenuHover = (item, event) => {
+  if (item.children && item.children.length > 0) {
+    const rect = event.currentTarget.getBoundingClientRect();
+    
+    // Fixed top position for all mega menus (100px from top)
+    const fixedTop = 100;
+    
+    setMegaMenuPosition({
+      top: fixedTop,
+      left: isCollapsed ? 80 : 260
+    });
+    setOpenMegaMenu(item.name);
+    setHoveredItems([item]);
+    setMegaMenuLevels([item.children]);
+  } else {
+    // Close mega menu if the item has no children
+    closeMegaMenu();
+  }
+};
 
   // Handle submenu hover
  const handleSubMenuHover = (subItem, levelIndex, event) => {
