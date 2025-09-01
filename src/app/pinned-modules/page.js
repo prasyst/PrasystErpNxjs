@@ -285,6 +285,6 @@
 
 import PinnedModulesPage from '../../components/headerpin/PinnedModulesPage';
 
-export default function OrderPage() {
+export default function PinnedModulesPages() {
   return <PinnedModulesPage />;
 }
