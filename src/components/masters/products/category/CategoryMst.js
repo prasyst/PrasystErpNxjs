@@ -714,7 +714,7 @@ const CategoryMst = () => {
                                 <CrudButtons
                                     mode={mode}
                                     onAdd={mode === FORM_MODE.read ? handleAdd : handleSubmit}
-                                    onEdit={mode === FORM_MODE.read ? handleEdit : handleCancel
+                                    onEdit={mode === FORM_MODE.read ? handleEdit : handleCancel}
                                     onView={handlePrint}
                                     onDelete={handleDelete}
                                     onExit={handleExit}

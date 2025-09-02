@@ -13,7 +13,7 @@ import CustomAutocomplete from "@/GlobalFunction/CustomAutoComplete/CustomNew";
 import { getFormMode } from "@/lib/helpers";
 
 const FORM_MODE = getFormMode();
-const StepperMst1 = ({  form, setForm, mode  }) => {
+const StepperMst1 = ({ form, setForm, mode }) => {
 
   const handleFileChange = (event) => {
     const file = event.target.files[0];
@@ -37,16 +37,26 @@ const StepperMst1 = ({  form, setForm, mode  }) => {
   };
 
   const renderLabelInput = (label, value, onChange, width, fullWidth) => (
-    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1}}>
-      <Typography sx={{ width: 110, fontSize: '14px' }}>{label}</Typography>
+    <Box sx={{ 
+      display: 'flex', 
+      alignItems: 'center', 
+      gap: 1,
+      flexDirection: { xs: 'column', sm: 'row' }, // Stack vertically on mobile
+      alignItems: { xs: 'flex-start', sm: 'center' }, // Align left on mobile
+    }}>
+      <Typography sx={{ 
+        width: { xs: '100%', sm: 110 }, 
+        fontSize: '14px',
+        mb: { xs: 0.5, sm: 0 } // Margin bottom on mobile
+      }}>{label}</Typography>
       <TextField
         value={value}
         onChange={onChange}
         size="small"
-        disabled={mode === FORM_MODE.read} 
+        disabled={mode === FORM_MODE.read}
         fullWidth={fullWidth}
         sx={{
-          width: width,
+          width: { xs: '100%', sm: width }, // Full width on mobile
           '& .MuiInputBase-root': {
             height: '26px',
             fontSize: '13px',
@@ -75,7 +85,7 @@ const StepperMst1 = ({  form, setForm, mode  }) => {
         sx={{
           display: 'flex',
           alignItems: 'flex-start',
-          flexDirection: 'row',
+          flexDirection: { xs: 'column', sm: 'row' }, // Stack vertically on mobile
           width: '100%',
           gap: 1,
         }}
@@ -85,14 +95,24 @@ const StepperMst1 = ({  form, setForm, mode  }) => {
           sx={{
             display: 'flex',
             flexDirection: 'column',
-            maxWidth: 'calc(100% - 150px)',
+            width: { xs: '100%', sm: 'calc(100% - 150px)' }, // Full width on mobile
             flexGrow: 1,
             gap: 0.5,
           }}
         >
           {/* Row 1: Company */}
-          <Box sx={{ display: 'flex', alignItems: 'center', width: '100%', gap: 1 }}>
-            <Typography sx={{ width: 110 ,fontSize: '14px' }}>Company:</Typography>
+          <Box sx={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            width: '100%', 
+            gap: 1,
+            flexDirection: { xs: 'column', sm: 'row' }, // Stack vertically on mobile
+          }}>
+            <Typography sx={{ 
+              width: { xs: '100%', sm: 90 }, 
+              fontSize: '14px',
+              mb: { xs: 0.5, sm: 0 }
+            }}>Company:</Typography>
 
             <TextField
               value={form.CO_ID}
@@ -100,7 +120,7 @@ const StepperMst1 = ({  form, setForm, mode  }) => {
               size="small"
               disabled={mode === FORM_MODE.read}
               sx={{
-                width: 90,
+                width: { xs: '100%', sm: 80 }, // Full width on mobile
                 '& .MuiInputBase-root': { height: '28px', fontSize: '12px' },
                 '& input': { padding: '6px 8px', fontSize: '12px' },
               }}
@@ -113,7 +133,9 @@ const StepperMst1 = ({  form, setForm, mode  }) => {
               size="small"
               disabled={mode === FORM_MODE.read}
               sx={{
-                width: 640,
+                 width: { xs: '100%', sm: 525, md: 600 }, // Increased width to 600px on md+
+                flexGrow: { sm: 1 }, // Allow it to grow to take available space
+                maxWidth: { sm: '100%' }, // Prevent overflow on smaller screens
                 '& .MuiInputBase-root': { height: '28px', fontSize: '12px' },
                 '& input': { padding: '6px 8px', fontSize: '12px' },
               }}
@@ -122,8 +144,18 @@ const StepperMst1 = ({  form, setForm, mode  }) => {
           </Box>
 
           {/* Row 2: Abvr */}
-          <Box sx={{ display: 'flex', alignItems: 'center', width: '100%', gap: 1 }}>
-            <Typography sx={{ width: 300 ,fontSize: '14px' }}>Abvr:</Typography>
+          <Box sx={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            width: '100%', 
+            gap: 1,
+            flexDirection: { xs: 'column', sm: 'row' }, // Stack vertically on mobile
+          }}>
+            <Typography sx={{ 
+              width: { xs: '100%', sm: 270 }, 
+              fontSize: '14px',
+              mb: { xs: 0.5, sm: 0 }
+            }}>Abvr:</Typography>
 
             <TextField
               value={form.CO_ABRV}
@@ -131,34 +163,49 @@ const StepperMst1 = ({  form, setForm, mode  }) => {
               size="small"
               disabled={mode === FORM_MODE.read}
               sx={{
-                width: 250,
+                width: { xs: '100%', sm: 250 }, // Full width on mobile
                 '& .MuiInputBase-root': { height: '28px', fontSize: '12px' },
                 '& input': { padding: '6px 8px', fontSize: '12px' },
               }}
               inputProps={{ style: { fontSize: '13px' } }}
             />
-            <Typography sx={{ width: 90 ,fontSize: '14px' }}>GSTTIN_NO:</Typography>
+            <Typography sx={{ 
+              width: { xs: '100%', sm: 90 }, 
+              fontSize: '14px',
+              mb: { xs: 0.5, sm: 0 },
+              marginLeft: { sm: '10px' }
+            }}>GSTTIN_NO:</Typography>
             <TextField
               value={form.GSTTIN_NO}
               onChange={(e) => setForm({ ...form, GSTTIN_NO: e.target.value })}
               size="small"
               disabled={mode === FORM_MODE.read}
               sx={{
-                width: 400,
+                width: { xs: '100%', sm: 400 }, // Full width on mobile
                 '& .MuiInputBase-root': { height: '28px', fontSize: '12px' },
                 '& input': { padding: '6px 8px', fontSize: '12px' },
               }}
               inputProps={{ style: { fontSize: '13px' } }}
             />
 
-            <Typography sx={{ width: 80,fontSize: '14px',marginLeft:"10px"  }}>Jurisdiction:</Typography>
+            <Typography sx={{ 
+              width: { xs: '100%', sm: 80 }, 
+              fontSize: '14px',
+              mb: { xs: 0.5, sm: 0 },
+              marginLeft: { sm: '10px' }
+            }}>Jurisdiction:</Typography>
 
             <CustomAutocomplete
               value={form.JURISDICTION}
               onChange={(value) => setForm({ ...form, JURISDICTION: value })}
-              // disabled={mode === FORM_MODE.read}
               disabled={true}
-              sx={{ width: 300 }}
+              // sx={{ width: { xs: '100%', sm: 230 } }} 
+                sx={{ 
+               width: { xs: '100%', sm: 'auto', md: 280 }, // Increased width for md+
+                flexGrow: { sm: 1 }, // Grow to take available space
+                minWidth: { sm: 150 }, // Minimum width to prevent collapse
+                maxWidth: { sm: '100%' },// Minimum width to prevent collapse
+              }}
             />
           </Box>
         </Box>
@@ -166,7 +213,7 @@ const StepperMst1 = ({  form, setForm, mode  }) => {
         {/* Right side image box */}
         <Box
           sx={{
-            width: '140px',
+            width: { xs: '100%', sm: '140px' }, // Full width on mobile
             height: '70px',
             border: '1px solid #ccc',
             borderRadius: 1,
@@ -182,10 +229,18 @@ const StepperMst1 = ({  form, setForm, mode  }) => {
           flexWrap: 'wrap',
           gap: 1,
           marginTop: 0,
+          flexDirection: { xs: 'column', sm: 'row' }, // Stack columns on mobile
         }}
       >
         {/* Left Column */}
-        <Box sx={{ flex: 1, minWidth: '350px', display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+        <Box sx={{ 
+          flex: 1, 
+          width: { xs: '100%', sm: '350px' }, // Full width on mobile
+          display: 'flex', 
+          flexDirection: 'column', 
+          gap: 0.5 ,
+          marginTop: -1
+        }}>
           {[
             { label: 'Print Name:', key: 'PRINT_NAME' },
             { label: 'Address:', key: 'OTH_ADD' },
@@ -202,7 +257,7 @@ const StepperMst1 = ({  form, setForm, mode  }) => {
                 label,
                 form[key],
                 (e) => setForm({ ...form, [key]: e.target.value }),
-                370,
+                { xs: '100%', sm: 370 }, // Full width on mobile
                 true
               )}
             </Box>
@@ -210,7 +265,13 @@ const StepperMst1 = ({  form, setForm, mode  }) => {
         </Box>
 
         {/* Right Column */}
-        <Box sx={{ flex: 1, minWidth: '300px', display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+        <Box sx={{ 
+          flex: 1, 
+          width: { xs: '100%', sm: '300px' }, // Full width on mobile
+          display: 'flex', 
+          flexDirection: 'column', 
+          gap: 0.5 
+        }}>
           {[
             { label: 'Work Add:', key: 'WORK_ADD' },
             { label: 'Place:', key: 'PLACE' },
@@ -221,7 +282,7 @@ const StepperMst1 = ({  form, setForm, mode  }) => {
                 label,
                 form[key],
                 (e) => setForm({ ...form, [key]: e.target.value }),
-                380,
+                { xs: '100%', sm: 380 }, // Full width on mobile
                 true
               )}
             </Box>
@@ -232,8 +293,7 @@ const StepperMst1 = ({  form, setForm, mode  }) => {
             sx={{
               display: 'flex',
               flexDirection: 'column',
-             
-              gap: 0, // spacing between heading and each field
+              gap: 0,
               marginTop: 0,
             }}
           >
@@ -260,7 +320,7 @@ const StepperMst1 = ({  form, setForm, mode  }) => {
                   label,
                   form[key],
                   (e) => setForm({ ...form, [key]: e.target.value }),
-                  380,
+                  { xs: '100%', sm: 380 }, // Full width on mobile
                   true
                 )}
               </Box>
@@ -277,77 +337,92 @@ const StepperMst1 = ({  form, setForm, mode  }) => {
           width: '100%',
         }}
       />
-     {/* Additional Fields */}
-{/* Additional Fields */}
-<Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-  {/* First Row */}
-  <Box sx={{ display: 'flex', flexDirection: 'row', gap: 1 }}>
-    {[
-      { label: 'C.S.T', key: 'CST' },
-      { label: 'Excise Cd', key: 'EXCISE_CODE' },
-      { label: 'Excise Div', key: 'EXCISE_DIV' },
-    ].map(({ label, key }, idx) => (
-      <Box key={key} sx={{ flex: idx === 0 ? 1 : 0.5 }}>
-        {renderLabelInput(
-          label,
-          form[key],
-          (e) => setForm({ ...form, [key]: e.target.value }),
-          '73%', // width managed by flex
-          true
-        )}
+      {/* Additional Fields */}
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+        {/* First Row */}
+        <Box sx={{ 
+          display: 'flex', 
+          flexDirection: { xs: 'column', sm: 'row' }, // Stack vertically on mobile
+          gap: 1 
+        }}>
+          {[
+            { label: 'C.S.T', key: 'CST' },
+            { label: 'Excise Cd', key: 'EXCISE_CODE' },
+            { label: 'Excise Div', key: 'EXCISE_DIV' },
+          ].map(({ label, key }, idx) => (
+            <Box key={key} sx={{ flex: { xs: 1, sm: idx === 0 ? 1 : 0.5 } }}>
+              {renderLabelInput(
+                label,
+                form[key],
+                (e) => setForm({ ...form, [key]: e.target.value }),
+                { xs: '100%', sm: '73%' }, // Full width on mobile
+                true
+              )}
+            </Box>
+          ))}
+        </Box>
+
+        {/* Second Row */}
+        <Box sx={{ 
+          display: 'flex', 
+          flexDirection: { xs: 'column', sm: 'row' }, // Stack vertically on mobile
+          gap: 1 
+        }}>
+          {[
+            { label: 'VAT(Reg.Off)', key: 'RVAT' },
+            { label: 'ExciseRng', key: 'EXCISE_RANG' },
+            { label: 'ExciseComm', key: 'EXCISE_COMM' },
+          ].map(({ label, key }, idx) => (
+            <Box key={key} sx={{ flex: { xs: 1, sm: idx === 0 ? 1 : 0.5 } }}>
+              {renderLabelInput(
+                label,
+                form[key],
+                (e) => setForm({ ...form, [key]: e.target.value }),
+                { xs: '100%', sm: '73%' }, // Full width on mobile
+                true
+              )}
+            </Box>
+          ))}
+        </Box>
+
+        {/* Third Row */}
+        <Box sx={{ 
+          display: 'flex', 
+          flexDirection: { xs: 'column', sm: 'row' }, // Stack vertically on mobile
+          gap: 1 
+        }}>
+          <Box sx={{ flex: 1 }}>
+            {renderLabelInput(
+              'MSME No',
+              form['MSME_NO'],
+              (e) => setForm({ ...form, MSME_NO: e.target.value }),
+              { xs: '100%', sm: '73%' }, // Full width on mobile
+              true
+            )}
+          </Box>
+
+          <Box sx={{ 
+            flex: 1, 
+            display: 'flex', 
+            alignItems: 'center',
+            width: { xs: '100%', sm: 'auto' } // Full width on mobile
+          }}>
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={form.CO_DIV_KEY || false}
+                  onChange={(e) =>
+                    setForm({ ...form, CO_DIV_KEY: e.target.checked })
+                  }
+                  disabled={mode === FORM_MODE.read}
+                />
+              }
+              label="Co-division Active"
+              sx={{ width: '100%', fontSize: '13px' }}
+            />
+          </Box>
+        </Box>
       </Box>
-    ))}
-  </Box>
-
-  {/* Second Row */}
-  <Box sx={{ display: 'flex', flexDirection: 'row', gap: 1 }}>
-    {[
-      { label: 'VAT(Reg.Off)', key: 'RVAT' },
-      { label: 'Excise Rng', key: 'EXCISE_RANG' },
-      { label: 'ExciseComm', key: 'EXCISE_COMM' },
-    ].map(({ label, key }, idx) => (
-      <Box key={key} sx={{ flex: idx === 0 ? 1 : 0.5 }}>
-        {renderLabelInput(
-          label,
-          form[key],
-          (e) => setForm({ ...form, [key]: e.target.value }),
-          '73%',
-          true
-        )}
-      </Box>
-    ))}
-  </Box>
-
-  {/* Third Row */}
-  <Box sx={{ display: 'flex', flexDirection: 'row', gap: 1 }}>
-    <Box sx={{ flex: 1 }}>
-      {renderLabelInput(
-        'MSME No',
-        form['MSME_NO'],
-        (e) => setForm({ ...form, MSME_NO: e.target.value }),
-        '73%',
-        true
-      )}
-    </Box>
-
-    <Box sx={{ flex: 1, display: 'flex', alignItems: 'center' }}>
-      <FormControlLabel
-        control={
-          <Checkbox
-            checked={form.CO_DIV_KEY || false}
-            onChange={(e) =>
-              setForm({ ...form, CO_DIV_KEY: e.target.checked })
-            }
-            disabled={mode === FORM_MODE.read}
-          />
-        }
-        label="Co-division Active"
-        sx={{ width: '100%', fontSize: '13px' }}
-      />
-    </Box>
-  </Box>
-</Box>
-
     </Box>
   );
 };
