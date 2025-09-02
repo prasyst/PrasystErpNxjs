@@ -61,10 +61,10 @@ const PartyMst = () => {
   const [stepper1Data, setStepper1Data] = useState({ LASTID: "" });
   const [stepper2Data, setStepper2Data] = useState({});
   const [stepper3Data, setStepper3Data] = useState({});
-  const FCYR_KEY = localStorage.getItem('FCYR_KEY');
-  const COBR_ID = localStorage.getItem('COBR_ID');
-  const UserName = localStorage.getItem('USER_NAME');
-  const CO_ID = localStorage.getItem('CO_ID');
+  // const FCYR_KEY = localStorage.getItem('FCYR_KEY');
+  // const COBR_ID = localStorage.getItem('COBR_ID');
+  // const UserName = localStorage.getItem('USER_NAME');
+  // const CO_ID = localStorage.getItem('CO_ID');
 
   const [formData, setFormData] = useState({
     LASTID: ""
