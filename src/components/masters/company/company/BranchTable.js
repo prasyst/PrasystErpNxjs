@@ -20,7 +20,7 @@ const BranchTable = ({ columns, data, selectedIndex, onRowClick }) => {
         border: "1px solid lightgray"
       }}
     >
-      <TableContainer sx={{ height: 120 /* Fixed height */ }}>
+      <TableContainer sx={{ height: 100 /* Fixed height */ }}>
         <Table stickyHeader>
           <TableHead>
             <TableRow>

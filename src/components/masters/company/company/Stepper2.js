@@ -222,28 +222,28 @@ const StepperMst2 = ({ TableData, setTableData, IsButtonSubmit, mode, defaultFor
     },
   };
 
-  const labelWidth = 120;
-  const inputWidth = 350;
-
+  const labelWidth = { xs: 100, sm: 120, md: 150 };
+  const inputWidth = { xs: '100%', sm: 350 };
+  const largerInputWidth = { xs: '100%', sm: 450 }; 
   return (
     <Box
       sx={{
         display: 'flex',
         flexDirection: 'column',
-        gap: 1,
-        marginInline: { xs: '5%', sm: '10%', md: '15%' },
-        marginTop: { xs: '15px', sm: '20px', md: '0px' },
+        gap: { xs: 0.5, sm: 1 },
+        marginInline: { xs: '2%', sm: '5%', md: '10%', lg: '15%' },
+        marginTop: { xs: '10px', sm: '15px', md: '0px' },
       }}
     >
       {/* Table Section */}
       <Box
         sx={{
-          width: "100%",
-          maxWidth: '100%',
-          margin: "0 auto",
-          mt: 0,
-          px: 0,
-        }}
+    width: "100%",
+    maxWidth: { xs: "100%", sm: "1200px", md: "1600px" }, // Increased maxWidth
+    margin: "0 auto", // Center the table
+    mt: 0,
+    px: { xs: 0, sm: 2 },
+  }}
       >
         <BranchTable
           columns={columns}
@@ -259,17 +259,18 @@ const StepperMst2 = ({ TableData, setTableData, IsButtonSubmit, mode, defaultFor
           display: "flex",
           justifyContent: "space-between",
           alignItems: "flex-start",
-          marginTop: "10px",
+          marginTop: { xs: "8px", sm: "10px", md: "1px" },
           width: "100%",
           flexWrap: "wrap",
+          gap: { xs: 1, sm: 2 },
         }}
       >
         {/* Left - Buttons */}
-        <Box sx={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+        <Box sx={{ display: "flex", gap: { xs: "4px", sm: "8px" }, flexWrap: "wrap" }}>
           <Button
             variant="contained"
             size="small"
-            sx={{ backgroundColor: "#39ace2" }}
+            sx={{ backgroundColor: "#39ace2", minWidth: { xs: 40, sm: 48 } }}
             onClick={handleClickAdd}
             disabled={AddDisabled || IsButtonSubmit}
           >
@@ -278,7 +279,7 @@ const StepperMst2 = ({ TableData, setTableData, IsButtonSubmit, mode, defaultFor
           <Button
             variant="contained"
             size="small"
-            sx={{ backgroundColor: "#39ace2", margin: "0px 10px" }}
+            sx={{ backgroundColor: "#39ace2", margin: { xs: "0 4px", sm: "0 10px" }, minWidth: { xs: 40, sm: 48 } }}
             onClick={handleClickEdit}
             disabled={AllButtonDisabled || IsButtonSubmit}
           >
@@ -287,7 +288,7 @@ const StepperMst2 = ({ TableData, setTableData, IsButtonSubmit, mode, defaultFor
           <Button
             variant="contained"
             size="small"
-            sx={{ backgroundColor: "#39ace2" }}
+            sx={{ backgroundColor: "#39ace2", minWidth: { xs: 40, sm: 48 } }}
             onClick={handleDelete}
             disabled={AllButtonDisabled || IsButtonSubmit}
           >
@@ -301,12 +302,13 @@ const StepperMst2 = ({ TableData, setTableData, IsButtonSubmit, mode, defaultFor
             display: "flex",
             flexDirection: "row",
             alignItems: "flex-start",
-            gap: 1,
-            marginTop: { xs: 2, sm: 0 },
-            minWidth: 400,
+            gap: { xs: 0.5, sm: 1 },
+            marginTop: { xs: 1, sm: 0 },
+            width: { xs: '100%', sm: 460 ,md:540},
+            minWidth: { xs: 'auto', sm: 300 },
           }}
         >
-          <Typography sx={{ width: 120, fontSize: "0.875rem", fontWeight: 540 }}>
+          <Typography sx={{ width: { xs: 100, sm: 110 ,md:140}, fontSize: { xs: "0.8rem", sm: "0.875rem" }, fontWeight: 540 }}>
             Bank Details:
           </Typography>
           <TextField
@@ -318,23 +320,22 @@ const StepperMst2 = ({ TableData, setTableData, IsButtonSubmit, mode, defaultFor
             multiline
             rows={2}
             sx={{
-              width: 320,
+              width: 400,//ncreased width
               "& .MuiOutlinedInput-root": {
-                padding: 1,
+                padding: { xs: 0.5, sm: 1 },
               },
               "& .MuiOutlinedInput-inputMultiline": {
                 overflowY: "auto",
-                padding: "8px",
+                padding: { xs: "6px", sm: "8px" },
               },
             }}
           />
         </Box>
       </Box>
-
-      {/* Form Section */}
-      <Box sx={{ display: "flex", justifyContent: "center", flexDirection: 'row', gap: 4, marginTop: "10px", alignItems: "flex-start", marginInline: '10%' }}>
+    {/* Form Section */}
+      <Box sx={{ display: "flex", justifyContent: "center", flexDirection: { xs: 'column', sm: 'row' }, gap: { xs: 1, sm: 4 }, marginTop: { xs: "8px", sm: "10px", md: "1px" }, alignItems: "flex-start", marginInline: { xs: '0%', sm: '10%' ,md:"0%"} }}>
         {/* Left Section */}
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
+        <Box sx={{ display: "flex", flexDirection: "column", gap: { xs: 0.5, sm: 0.5 }, width: { xs: '100%', sm: 'auto' }, minWidth: { xs: 'auto', sm: 400 } }}>
           {[
             {
               label: "Name",
@@ -346,7 +347,7 @@ const StepperMst2 = ({ TableData, setTableData, IsButtonSubmit, mode, defaultFor
                     value={form.COBR_ID}
                     onChange={handleInputChange}
                     disabled={!isEditing}
-                    sx={{ width: 45, ...textFieldSx }}
+                    sx={{ width: { xs: 60, sm: 45, md: 90 }, ...textFieldSx }}
                   />
                   <TextField
                     size="small"
@@ -354,7 +355,7 @@ const StepperMst2 = ({ TableData, setTableData, IsButtonSubmit, mode, defaultFor
                     value={form.COBR_NAME}
                     onChange={handleInputChange}
                     disabled={!isEditing}
-                    sx={{ width: 250, ...textFieldSx }}
+                    sx={{ width: { xs: 'calc(100% - 70px)', sm: 250 }, ...textFieldSx }}
                   />
                 </>
               ),
@@ -374,8 +375,8 @@ const StepperMst2 = ({ TableData, setTableData, IsButtonSubmit, mode, defaultFor
             const custom = typeof fieldOrObj === 'object' ? fieldOrObj.custom : null;
 
             return (
-              <Box key={label} sx={{ display: "flex", alignItems: "center", gap: 0.5, minWidth: 450 }}>
-                <Typography sx={{ width: labelWidth, textAlign: "left" }}>{label}:</Typography>
+              <Box key={label} sx={{ display: "flex", alignItems: "center", gap: { xs: 0.5, sm: 0.5 }, minWidth: { xs: '100%', sm: 400 } }}>
+                <Typography sx={{ width: labelWidth, textAlign: "left", fontSize: { xs: '0.8rem', sm: '0.875rem' } }}>{label}:</Typography>
                 {custom || (
                   <TextField
                     size="small"
@@ -394,19 +395,19 @@ const StepperMst2 = ({ TableData, setTableData, IsButtonSubmit, mode, defaultFor
         </Box>
 
         {/* Right Section */}
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
+        <Box sx={{ display: "flex", flexDirection: "column", gap: { xs: 0.5, sm: 0.5 }, width: { xs: '100%', sm: 'auto' }, minWidth: { xs: 'auto', sm: 350 ,md:540} }}>
           {[
             {
               label: "Abvr",
               custom: (
-                <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, minWidth: 320 }}>
+                <Box sx={{ display: "flex", gap: { xs: 0.5, sm: 0.5 }, minWidth: { xs: '100%', sm: 320,md:400 } }}>
                   <TextField
                     size="small"
                     name="COBR_ABRV"
                     value={form.COBR_ABRV}
                     onChange={handleInputChange}
                     disabled={!isEditing}
-                    sx={{ width: 170, ...textFieldSx }}
+                    sx={{ width: { xs: 'calc(100% - 100px)', sm: 170 ,md:180}, ...textFieldSx }}
                   />
                   <Button variant="text" size="small" onClick={() => setForm(prev => ({ ...prev, Image: "" }))}>
                     Clear Image
@@ -414,30 +415,61 @@ const StepperMst2 = ({ TableData, setTableData, IsButtonSubmit, mode, defaultFor
                 </Box>
               ),
             },
-            {
-              label: "Image & Tel",
-              custom: (
-                <Box sx={{ display: "flex", flexDirection: 'row', gap: 1, alignItems: "center" }}>
-                  <Box sx={{ width: 80, height: 60, border: "1px solid gray", borderRadius: 2, display: "flex", alignItems: "center", justifyContent: "center", backgroundColor: "#f9f9f9" }}>
-                    <Typography variant="caption" color="textSecondary">Image</Typography>
-                  </Box>
-                  <Box sx={{ display: "flex", flexDirection: 'column', gap: 0 }}>
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 0 }}>
-                      <Typography sx={{ width: 40 }}>Tel:</Typography>
-                      <TextField
-                        size="small"
-                        name="TEL_NO"
-                        value={form.TEL_NO}
-                        onChange={handleInputChange}
-                        disabled={!isEditing}
-                        sx={{ width: 160, ...textFieldSx }}
-                      />
-                    </Box>
-                    <Button variant="text" size="small">Browse...</Button>
-                  </Box>
-                </Box>
-              ),
-            },
+           {
+  label: "Image & Tel",
+  custom: (
+    <Box sx={{
+      display: "flex",
+      flexDirection: 'row',
+      gap: 5,
+      alignItems: 'center',
+      minHeight: 50,
+    }}>
+      {/* Image Placeholder */}
+      <Box sx={{
+        width: 100,
+        height: 70,
+        marginLeft:"-12px",
+        border: "1px solid #ccc",
+        borderRadius: 1,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        fontSize: "0.75rem",
+        color: "#666",
+        backgroundColor: "#f2f2f2",
+        flexShrink: 0,
+      }}>
+        Image
+      </Box>
+
+      {/* Tel Input & Browse */}
+      <Box sx={{ display: "flex", flexDirection: 'column', gap: 0.5 }}>
+        <TextField
+          size="small"
+          name="TEL_NO"
+          value={form.TEL_NO}
+          onChange={handleInputChange}
+          disabled={!isEditing}
+          placeholder="Tel No"
+          sx={{
+            width: 200,
+            height: 36,
+            ...textFieldSx,
+          }}
+        />
+        <Button
+          variant="text"
+          size="small"
+          sx={{ padding: 0, minHeight: 24, textTransform: 'none' }}
+        >
+          Browse...
+        </Button>
+      </Box>
+    </Box>
+  ),
+},
+
             "Email",
             "ExciseCd",
             "ExciseRng",
@@ -461,9 +493,13 @@ const StepperMst2 = ({ TableData, setTableData, IsButtonSubmit, mode, defaultFor
             const field = typeof fieldOrObj === 'string' ? fieldNameMap[fieldOrObj] : null;
             const custom = typeof fieldOrObj === 'object' ? fieldOrObj.custom : null;
 
+            // Define fields that need larger width
+            const largerFields = ["E_MAIL", "EXCISE_CODE", "EXCISE_RANG", "CO_DIV_KEY", "bank_acc","GSTTIN_NO"];
+            const fieldWidth = largerFields.includes(field) ? largerInputWidth : inputWidth;
+
             return (
-              <Box key={label} sx={{ display: "flex", alignItems: "center", gap: 1, minWidth: 320 }}>
-                <Typography sx={{ width: labelWidth, textAlign: "left" }}>{label}:</Typography>
+              <Box key={label} sx={{ display: "flex", alignItems: "center", gap: { xs: 0.5, sm: 1 }, minWidth: { xs: '100%', sm: 320 } }}>
+                <Typography sx={{ width: labelWidth, textAlign: "left", fontSize: { xs: '0.8rem', sm: '0.875rem' } }}>{label}:</Typography>
                 {custom || (
                   <TextField
                     size="small"
@@ -473,7 +509,7 @@ const StepperMst2 = ({ TableData, setTableData, IsButtonSubmit, mode, defaultFor
                     disabled={!isEditing}
                     multiline={field === "bank_acc"}
                     rows={field === "bank_acc" ? 1 : undefined}
-                    sx={{ width: inputWidth, ...textFieldSx }}
+                    sx={{ width: fieldWidth, ...textFieldSx }} // Use conditional width
                   />
                 )}
               </Box>
@@ -484,11 +520,12 @@ const StepperMst2 = ({ TableData, setTableData, IsButtonSubmit, mode, defaultFor
 
       {/* Confirm / Cancel Buttons at bottom of form */}
       {isEditing && (
-        <Box sx={{ display: "flex", justifyContent: "flex-end", marginTop: 0, gap: 2, width: "100%" }}>
+        <Box sx={{ display: "flex", justifyContent: "flex-end", marginTop: { xs: 1, sm: 0 }, gap: { xs: 1, sm: 2 }, width: "100%" }}>
           <Button
             variant="contained"
             onClick={handleConfirm}
             disabled={IsButtonSubmit || !isEditing}
+            sx={{ minWidth: { xs: 80, sm: 100 } }}
           >
             Confirm
           </Button>
@@ -496,6 +533,7 @@ const StepperMst2 = ({ TableData, setTableData, IsButtonSubmit, mode, defaultFor
             variant="outlined"
             color="secondary"
             onClick={handleCancel}
+            sx={{ minWidth: { xs: 80, sm: 100 } }}
           >
             Cancel
           </Button>
@@ -506,7 +544,6 @@ const StepperMst2 = ({ TableData, setTableData, IsButtonSubmit, mode, defaultFor
         open={openDialog}
         title="Confirm Deletion"
         description="Are you sure you want to delete this record?"
-       
         onConfirm={handleConfirmDelete}
         onCancel={handleDelCancel}
       />
