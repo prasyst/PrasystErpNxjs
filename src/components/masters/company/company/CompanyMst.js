@@ -4,7 +4,7 @@ import {
   Box,
   Grid,
   Button,
-  Typography, 
+  Typography,
   Tabs,
   Tab,
   Stack,
@@ -36,7 +36,7 @@ const initialStepper1Form = {
   RTEL_NO: "",
   RE_MAIL: "",
   WEBSITE: "",
-  OWN_MOBILENO: "",
+  OWN_MOBNO: "",
   WORK_ADD: "",
   PLACE: "",
   PINCODE: "",
@@ -76,77 +76,107 @@ const CompanyMst = () => {
   const COBR_ID = localStorage.getItem('COBR_ID');
   const CO_IDD = localStorage.getItem('CO_ID');
 
-  useEffect(() => {
-    if (stepper2Branches.length > 0 && Object.keys(stepper1Form).length > 0) {
-      const updatedBranches = stepper2Branches.map(branch => ({
-        ...branch,
-        CO_ID: stepper1Form.CO_ID || branch.CO_ID,
-        COBR_NAME: stepper1Form.CO_NAME || branch.COBR_NAME,
-        COBR_ABRV: stepper1Form.CO_ABRV || branch.COBR_ABRV,
-        COBR_ADD: stepper1Form.REGD_ADD || branch.COBR_ADD,  
-        TEL_NO: stepper1Form.RTEL_NO || branch.TEL_NO,      
-        E_MAIL: stepper1Form.RE_MAIL || branch.E_MAIL,     
-        PLACE: stepper1Form.PLACE || branch.PLACE,
-        BRANCH_OWN_MOBNO: stepper1Form.OWN_MOBNO || branch.BRANCH_OWN_MOBNO, 
-        GSTTIN_NO: stepper1Form.GSTTIN_NO || branch.GSTTIN_NO,             
-        EXCISE_CODE: stepper1Form.EXCISE_CODE || branch.EXCISE_CODE,         
-        EXCISE_RANG: stepper1Form.EXCISE_RANG || branch.EXCISE_RANG,        
-        EXCISE_DIV: stepper1Form.EXCISE_DIV || branch.EXCISE_DIV,
-        BANK_ACC: stepper1Form.BANK_ACC || branch.BANK_ACC,
-        PRINT_NAME: stepper1Form.PRINT_NAME || branch.PRINT_NAME,            
-        WORK_ADD: stepper1Form.WORK_ADD || branch.WORK_ADD,              
-        PINCODE: stepper1Form.PINCODE || branch.PINCODE,                   
-        Active: stepper1Form.Active || branch.Active,                
-        STATUS: "1",
-      }));
-      setStepper2Branches(updatedBranches);
-    }
-  }, [stepper1Form]);
+useEffect(() => {
+  updateFirstBranchWithStepper1Data();
+}, [stepper1Form, updateFirstBranchWithStepper1Data]);
 
-  useEffect(() => {
-    if (mode === FORM_MODE.add || mode === FORM_MODE.edit) {
-      const branchDefaults = {
-        TEL_NO: stepper1Form.RTEL_NO || '',
-        E_MAIL: stepper1Form.RE_MAIL || '',
-        COBR_ADD: stepper1Form.REGD_ADD || '',
-        PLACE: stepper1Form.PLACE || '',
-        BRANCH_OWN_MOBNO: stepper1Form.OWN_MOBNO || '',
-        GSTTIN_NO: stepper1Form.GSTTIN_NO || '',
-        EXCISE_CODE: stepper1Form.EXCISE_CODE || '',
-        EXCISE_RANG: stepper1Form.EXCISE_RANG || '',
-        EXCISE_DIV: stepper1Form.EXCISE_DIV || '',
-        BANK_ACC: stepper1Form.BANK_ACC || '',
-        PRINT_NAME: stepper1Form.PRINT_NAME || '',
-        COBR_ID: stepper1Form.CO_ID,
-        CO_ID: stepper1Form.CO_ID || '',
-        COBR_NAME: stepper1Form.CO_NAME || '',
-        COBR_ABRV: stepper1Form.CO_ABRV || '',
-        COBRLOC_KEY: '',
-        FAX_NO: '',
-        LST: '',
-        VAT: '',
-        STATUS: "1",
-        PINCODE: stepper1Form.PINCODE || '',
-        CO_DIV_KEY: stepper1Form.CO_DIV_KEY || '',
-        ORD_SYNCSTATUS: '',
-        WORK_ADD: stepper1Form.WORK_ADD || '',
-        Active: stepper1Form.Active || false,
-      };
 
-      setStepper2Branches((prevBranches) => {
-        const updatedBranches = [...prevBranches];
-        if (updatedBranches.length === 0) {
-          return [branchDefaults];
-        } else {
-          updatedBranches[0] = {
-            ...updatedBranches[0],
-            ...branchDefaults,
-          };
-          return updatedBranches;
-        }
-      });
+// const updateFirstBranchWithStepper1Data = () => {
+//   const defaultBranch = {
+//     COBR_ID: stepper1Form.CO_ID || "",
+//     CO_ID: stepper1Form.CO_ID || "",
+//     COBR_NAME: stepper1Form.CO_NAME || "",
+//     COBR_ABRV: stepper1Form.CO_ABRV || "",
+//     COBR_ADD: stepper1Form.REGD_ADD || "",
+//     TEL_NO: stepper1Form.RTEL_NO || "",
+//     E_MAIL: stepper1Form.RE_MAIL || "",
+//     PLACE: stepper1Form.PLACE || "",
+//     BRANCH_OWN_MOBNO: stepper1Form.OWN_MOBNO || "",
+//     GSTTIN_NO: stepper1Form.GSTTIN_NO || "",
+//     EXCISE_CODE: stepper1Form.EXCISE_CODE || "",
+//     EXCISE_RANG: stepper1Form.EXCISE_RANG || "",
+//     EXCISE_DIV: stepper1Form.EXCISE_DIV || "",
+//     bank_acc: stepper1Form.BANK_ACC || "",
+//     PRINT_NAME: stepper1Form.PRINT_NAME || "",
+//     WORK_ADD: stepper1Form.WORK_ADD || "",
+//     PINCODE: stepper1Form.PINCODE || "",
+//     Active: stepper1Form.Active || false,
+//     STATUS: "1",
+//     FAX_NO: "",
+//     LST: "",
+//     VAT: "",
+//     COBRLOC_KEY: "",
+//     OTH_ADD: "",
+//     ORD_SYNCSTATUS: "",
+//     CO_DIV_KEY: "",
+//   };
+
+//   const isEmpty = Object.values(defaultBranch).every(val => val === "" || val === false || val === "1");
+
+//   let updatedBranches = [...stepper2Branches];
+
+//   if (updatedBranches.length === 0) {
+//     if (!isEmpty) {
+//       updatedBranches = [defaultBranch];
+//     }
+//   } else {
+//     updatedBranches[0] = { ...updatedBranches[0], ...defaultBranch };
+//     const isFirstEmpty = Object.values(updatedBranches[0]).every(val => val === "" || val === false || val === "1");
+//     if (isFirstEmpty) {
+//       updatedBranches = updatedBranches.slice(1);
+//     }
+//   }
+
+//   setStepper2Branches(updatedBranches);
+// };
+const updateFirstBranchWithStepper1Data = useCallback(() => {
+  const defaultBranch = {
+    COBR_ID: stepper1Form.CO_ID || "",
+    CO_ID: stepper1Form.CO_ID || "",
+    COBR_NAME: stepper1Form.CO_NAME || "",
+    COBR_ABRV: stepper1Form.CO_ABRV || "",
+    COBR_ADD: stepper1Form.REGD_ADD || "",
+    TEL_NO: stepper1Form.RTEL_NO || "",
+    E_MAIL: stepper1Form.RE_MAIL || "",
+    PLACE: stepper1Form.PLACE || "",
+    BRANCH_OWN_MOBNO: stepper1Form.OWN_MOBNO || "",
+    GSTTIN_NO: stepper1Form.GSTTIN_NO || "",
+    EXCISE_CODE: stepper1Form.EXCISE_CODE || "",
+    EXCISE_RANG: stepper1Form.EXCISE_RANG || "",
+    EXCISE_DIV: stepper1Form.EXCISE_DIV || "",
+    bank_acc: stepper1Form.BANK_ACC || "",
+    PRINT_NAME: stepper1Form.PRINT_NAME || "",
+    WORK_ADD: stepper1Form.WORK_ADD || "",
+    PINCODE: stepper1Form.PINCODE || "",
+    Active: stepper1Form.Active || false,
+    STATUS: "1",
+    FAX_NO: "",
+    LST: "",
+    VAT: "",
+    COBRLOC_KEY: "",
+    OTH_ADD: "",
+    ORD_SYNCSTATUS: "",
+    CO_DIV_KEY: "",
+  };
+
+  const isEmpty = Object.values(defaultBranch).every(val => val === "" || val === false || val === "1");
+
+  let updatedBranches = [...stepper2Branches];
+
+  if (updatedBranches.length === 0) {
+    if (!isEmpty) {
+      updatedBranches = [defaultBranch];
     }
-  }, [stepper1Form, mode]);
+  } else {
+    updatedBranches[0] = { ...updatedBranches[0], ...defaultBranch };
+    const isFirstEmpty = Object.values(updatedBranches[0]).every(val => val === "" || val === false || val === "1");
+    if (isFirstEmpty) {
+      updatedBranches = updatedBranches.slice(1);
+    }
+  }
+
+  setStepper2Branches(updatedBranches);
+}, [stepper1Form, stepper2Branches]);
 
   const handlePrint = () => { };
   const handleExit = () => { router.push("/masters/company/company/companytable") };
@@ -169,27 +199,27 @@ const CompanyMst = () => {
     setopenDialog(false);
   };
 
-const handleConfirmDelete = async () => {
-  try {
-    const response = await axiosInstance.post(
-      `Company/DeleteCOMPANY?UserName=${UserName}&strCobrid=${COBR_ID}`,
-      { CO_ID: currentCO_ID },
-    );
-    const { data } = response;
-    if (data?.RESPONSESTATUSCODE === 1) {
-      toast.success(data.MESSAGE || "Deleted successfully");
+  const handleConfirmDelete = async () => {
+    try {
+      const response = await axiosInstance.post(
+        `Company/DeleteCOMPANY?UserName=${UserName}&strCobrid=${COBR_ID}`,
+        { CO_ID: currentCO_ID },
+      );
+      const { data } = response;
+      if (data?.RESPONSESTATUSCODE === 1) {
+        toast.success(data.MESSAGE || "Deleted successfully");
+        setopenDialog(false);
+        await fetchRetriveData(1, "L");
+      } else {
+        toast.error(data.MESSAGE || "Deletion failed");
+      }
+    } catch (error) {
+      console.error("Delete Error:", error);
+      toast.error("Error deleting company");
+    } finally {
       setopenDialog(false);
-      await fetchRetriveData(1, "L"); 
-    } else {
-      toast.error(data.MESSAGE || "Deletion failed");
     }
-  } catch (error) {
-    console.error("Delete Error:", error);
-    toast.error("Error deleting company");
-  } finally {
-    setopenDialog(false);
-  }
-};
+  };
 
   const fetchRetriveData = useCallback(async (currentCO_ID, flag = "R") => {
     try {
@@ -285,10 +315,21 @@ const handleConfirmDelete = async () => {
       fetchRetriveData(CO_ID);
       setMode(FORM_MODE.read);
     } else {
-      setMode(FORM_MODE.read);
+      setMode(FORM_MODE.add);
     }
     setMode(FORM_MODE.read);
   }, [CO_ID, fetchRetriveData]);
+
+//   useEffect(() => {
+//   if (CO_ID) {
+//     setCurrentCO_ID(CO_ID);
+//     fetchRetriveData(CO_ID);
+//     setMode(FORM_MODE.read);
+//   } else {
+  
+//     setMode(FORM_MODE.read);  
+//   }
+// }, [CO_ID, fetchRetriveData]);
 
   const handleSubmit = async () => {
     setIsSubmitting(true);
@@ -299,7 +340,7 @@ const handleConfirmDelete = async () => {
       CO_ID: stepper1Form.CO_ID || "",
       CO_NAME: stepper1Form.CO_NAME || "",
       CO_ABRV: stepper1Form.CO_ABRV || "",
-      COBRLOC_KEY: stepper1Form.COBRLOC_KEY || "CN001",
+      COBRLOC_KEY: stepper1Form.COBRLOC_KEY || "",
       CONDFORLOGO: "1",
       REG_ADD: stepper1Form.REGD_ADD || "",
       RTEL_NO: stepper1Form.RTEL_NO || "",
@@ -345,7 +386,7 @@ const handleConfirmDelete = async () => {
         CO_ID: stepper1Form.CO_ID || "",
         COBR_NAME: branch.COBR_NAME || "",
         COBR_ABRV: branch.COBR_ABRV || "",
-        COBRLOC_KEY: branch.COBRLOC_KEY || "CN001",
+        COBRLOC_KEY: branch.COBRLOC_KEY || "",
         COBR_ADD: branch.COBR_ADD || "",
         TEL_NO: branch.TEL_NO || "",
         FAX_NO: branch.FAX_NO || "",
@@ -358,7 +399,7 @@ const handleConfirmDelete = async () => {
         EXCISE_DIV: branch.EXCISE_DIV || "",
         MAIN_BRANCH: index === 0 ? "1" : "0",
         STATUS: "1",
-        BRANCH_OWN_MOBNO: branch.BRANCH_OWN_MOBNO || "",
+        BRANCH_OWN_MOBNO: branch.BRANCH_OWN_MOBNO || 0,
         BANK_ACC: branch.BANK_ACC || "",
         GSTTIN_NO: branch.GSTTIN_NO || "",
         PLACE: branch.PLACE || "",
@@ -372,12 +413,20 @@ const handleConfirmDelete = async () => {
     try {
       const response = await axiosInstance.post(apiUrl, payload);
       const { data } = response;
-      if (data?.RESPONSESTATUSCODE === 1) {
-        toast.success(data?.MESSAGE || "Company updated successfully");
-        setTableData((prevData) => [...prevData]);
-        setMode(FORM_MODE.read);
-      } else {
-        toast.error(data?.MESSAGE || "Failed to update company");
+      if (mode === FORM_MODE.add) {
+        if (data?.RESPONSESTATUSCODE === 1) {
+          toast.success(data?.MESSAGE);
+          setMode(FORM_MODE.read);
+        } else {
+          toast.error(data?.MESSAGE);
+        }
+      } else if (mode === FORM_MODE.edit) {
+        if (data?.STATUS === 0) {
+          toast.success("Update successfully");
+          setMode(FORM_MODE.read);
+        } else {
+          toast.error(data?.MESSAGE || "Update failed");
+        }
       }
     } catch (error) {
       console.error("Error submitting data:", error.response?.data || error.message);
@@ -387,7 +436,9 @@ const handleConfirmDelete = async () => {
     }
   };
 
-  const handleFirst = () => { };
+  const handleFirst = async () => { 
+      await fetchRetriveData(0, "F");
+  };
   const handleLast = async () => {
     await fetchRetriveData(1, "L");
   };
@@ -417,6 +468,25 @@ const handleConfirmDelete = async () => {
     margin: { xs: '0 4px', sm: '0 6px' },
     minWidth: { xs: 40, sm: 46, md: 60 },
     height: { xs: 40, sm: 46, md: 27 },
+  };
+
+  const handleBranchAddAttempt = () => {
+    if (tabIndex !== 0) {
+      setTabIndex(0);
+    }
+    toast.error("Branch cannot be blank");
+  };
+
+  const handleAddBranchInReadMode = () => {
+    setMode(FORM_MODE.edit);
+  };
+
+  const handleEditBranchInReadMode = () => {
+    setMode(FORM_MODE.edit);
+  };
+
+  const handleDeleteBranchInReadMode = () => {
+    setMode(FORM_MODE.edit);
   };
 
   return (
@@ -493,7 +563,7 @@ const handleConfirmDelete = async () => {
               </Typography>
             </Grid>
 
-            <Box sx={{ mt: 1, width: '100%', maxWidth: { xs: '100%', md: '1500px' }, mx: 'auto' }}>
+            <Box sx={{ mt: 1, width: '100%', maxWidth: { xs: '100%', md: '1600px' }, mx: 'auto' }}>
               {tabIndex === 0 ? (
                 <StepperMst1 form={stepper1Form} setForm={setStepper1Form} mode={mode} />
               ) : (
@@ -517,6 +587,10 @@ const handleConfirmDelete = async () => {
                     COBR_ID: stepper1Form.CO_ID,
                     COBR_NAME: stepper1Form.CO_NAME,
                   }}
+                  onAddBranchAttempt={handleBranchAddAttempt}
+                  onAddInReadMode={handleAddBranchInReadMode}
+                  onEditInReadMode={handleEditBranchInReadMode}
+                  onDeleteInReadMode={handleDeleteBranchInReadMode}
                 />
               )}
             </Box>
@@ -526,9 +600,9 @@ const handleConfirmDelete = async () => {
               container
               alignItems="center"
               justifyContent="center"
-              spacing={1}
+              spacing={0}
               sx={{
-                marginTop: "-15px", 
+                marginTop: "-15px",
                 marginInline: '15%',
                 width: '100%',
                 paddingTop: 0,
@@ -537,11 +611,15 @@ const handleConfirmDelete = async () => {
               <Grid
                 sx={{
                   display: 'flex',
+                  flexDirection: 'row',
+                  flexWrap: 'nowrap',      // Prevent wrapping
+                  overflowX: 'auto',
                   justifyContent: {
                     xs: 'center',
                     sm: 'flex-start',
+                    md:'flex-start'
                   },
-                  width: { xs: '100%', sm: 'auto' },
+                  width: { xs: '100%', sm: 'auto', md: 'auto' },
                 }}
               >
                 <Stack direction="row" spacing={1}>
@@ -559,7 +637,7 @@ const handleConfirmDelete = async () => {
                 </Stack>
               </Grid>
               <Grid>
-                <Stack direction="row" spacing={{ xs: 0.5, sm: 1 }}  >
+                <Stack direction="row" spacing={{ xs: 0.5, sm: 0 ,md:0}}  >
                   <CrudButtons
                     mode={mode}
                     onAdd={mode === FORM_MODE.read ? handleAdd : handleSubmit}
@@ -579,4 +657,4 @@ const handleConfirmDelete = async () => {
   );
 };
 
-export default CompanyMst;
+export default CompanyMst; 

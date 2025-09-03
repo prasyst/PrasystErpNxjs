@@ -12,6 +12,8 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import { getFormMode } from "@/lib/helpers";
 import ConfirmDelDialog from "@/GlobalFunction/ConfirmDelDialog";
 import BranchTable from "./BranchTable";
+import { toast } from "react-toastify";
+import CustomAutocomplete from "@/GlobalFunction/CustomAutoComplete/CustomNew";
 
 const FORM_MODE = getFormMode();
 const initialFormState = {
@@ -36,9 +38,10 @@ const initialFormState = {
   bank_acc: "",
   GSTTIN_NO: "",
   Active: false,
+  PINCODE: "",
 };
 
-const StepperMst2 = ({ TableData, setTableData, IsButtonSubmit, mode, defaultFormValues }) => {
+const StepperMst2 = ({ TableData, setTableData, IsButtonSubmit, mode, defaultFormValues, onAddBranchAttempt, onAddInReadMode, onEditInReadMode, onDeleteInReadMode }) => {
   const [selectedRowIndex, setSelectedRowIndex] = useState(null);
   const [AllButtonDisabled, setAllButtonDisabled] = useState(true);
   const [AddDisabled, setAddDisabled] = useState(false);
@@ -46,36 +49,41 @@ const StepperMst2 = ({ TableData, setTableData, IsButtonSubmit, mode, defaultFor
   const [isEditing, setIsEditing] = useState(false);
   const [openDialog, setOpenDialog] = useState(false);
 
+  useEffect(() => {
+    setAddDisabled(TableData.length === 0);
+  }, [TableData]);
+
   const columns = [
-    { id: 'COBR_NAME', label: 'Branch', minWidth: 150 },
-    { id: 'COBR_ID', label: 'Code', minWidth: 100 },
-    { id: 'COBR_ABRV', label: 'Abvr', minWidth: 100 },
-    { id: 'PLACE', label: 'Area', minWidth: 150 },
-    { id: 'PRINT_NAME', label: 'Print Name', minWidth: 150 },
-    { id: 'COBR_ADD', label: 'Address', minWidth: 200 },
-    { id: 'JURISDICTION', label: 'Jurisdiction', minWidth: 150 },
-    { id: 'FAX_NO', label: 'Fax', minWidth: 120 },
-    { id: 'VAT', label: 'Vat', minWidth: 120 },
-    { id: 'LBT', label: 'Lbt', minWidth: 120 },
-    { id: 'OTH_ADD', label: 'Work Add', minWidth: 150 },
-    { id: 'BRANCH_OWN_MOBNO', label: 'Owner Mob', minWidth: 150 },
-    { id: 'Image', label: 'Image', minWidth: 100 },
-    { id: 'TEL_NO', label: 'Tel', minWidth: 120 },
-    { id: 'E_MAIL', label: 'Email', minWidth: 180 },
-    { id: 'EXCISE_CODE', label: 'Excise Code', minWidth: 120 },
-    { id: 'EXCISE_RANG', label: 'Excise Rang', minWidth: 120 },
-    { id: 'CO_DIV_KEY', label: 'Co Division', minWidth: 150 },
-    { id: 'bank_acc', label: 'Bank Details', minWidth: 200 },
-    { id: 'GSTTIN_NO', label: 'GSTTIN NO', minWidth: 150 },
-    { id: 'Active', label: 'Active', minWidth: 60, align: 'center' },
+    { id: 'COBR_NAME', label: 'Branch', minWidth: 200 },
+    { id: 'COBR_ID', label: 'Code', minWidth: 120 },
+    { id: 'COBR_ABRV', label: 'Abvr', minWidth: 120 },
+    { id: 'PLACE', label: 'Area', minWidth: 180 },
+    { id: 'PINCODE', label: 'PinCode', minWidth: 120 },
+    { id: 'PRINT_NAME', label: 'Print Name', minWidth: 200 },
+    { id: 'COBR_ADD', label: 'Address', minWidth: 250 },
+    { id: 'JURISDICTION', label: 'Jurisdiction', minWidth: 180 },
+    { id: 'FAX_NO', label: 'Fax', minWidth: 140 },
+    { id: 'VAT', label: 'Vat', minWidth: 140 },
+    { id: 'LBT', label: 'Lbt', minWidth: 140 },
+    { id: 'OTH_ADD', label: 'Work Add', minWidth: 180 },
+    { id: 'BRANCH_OWN_MOBNO', label: 'Owner Mob', minWidth: 180 },
+    { id: 'Image', label: 'Image', minWidth: 120 },
+    { id: 'TEL_NO', label: 'Tel', minWidth: 140 },
+    { id: 'E_MAIL', label: 'Email', minWidth: 200 },
+    { id: 'EXCISE_CODE', label: 'Excise Code', minWidth: 140 },
+    { id: 'EXCISE_RANG', label: 'Excise Rang', minWidth: 140 },
+    { id: 'CO_DIV_KEY', label: 'Co Division', minWidth: 180 },
+    { id: 'bank_acc', label: 'Bank Details', minWidth: 250 },
+    { id: 'GSTTIN_NO', label: 'GSTTIN NO', minWidth: 180 },
+    { id: 'Active', label: 'Active', minWidth: 80, align: 'center' },
   ];
 
-  // Map user-friendly labels to exact form keys (case-sensitive)
   const fieldNameMap = {
     "Print Name": "PRINT_NAME",
     "Jurisdiction": "JURISDICTION",
     "Address": "COBR_ADD",
     "Place": "PLACE",
+    "PinCode": "PINCODE",
     "Fax": "FAX_NO",
     "VAT": "VAT",
     "LBT": "LBT",
@@ -89,38 +97,16 @@ const StepperMst2 = ({ TableData, setTableData, IsButtonSubmit, mode, defaultFor
     "GSTTINNO": "GSTTIN_NO",
   };
 
-  useEffect(() => {
-    if (TableData.length === 0 && defaultFormValues && defaultFormValues.TEL_NO) {
-      const firstBranch = {
-        ...initialFormState,
-        COBR_ID: "",
-        COBR_NAME: "",
-        TEL_NO: defaultFormValues.TEL_NO || "",
-        E_MAIL: defaultFormValues.E_MAIL || "",
-        OTH_ADD: defaultFormValues.COBR_ADD || "",
-        PLACE: defaultFormValues.PLACE || "",
-        BRANCH_OWN_MOBNO: defaultFormValues.BRANCH_OWN_MOBNO || "",
-        GSTTIN_NO: defaultFormValues.GSTTIN_NO || "",
-        EXCISE_CODE: defaultFormValues.EXCISE_CODE || "",
-        EXCISE_RANG: defaultFormValues.EXCISE_RANG || "",
-        CO_DIV_KEY: defaultFormValues.EXCISE_DIV || "",
-        bank_acc: defaultFormValues.bank_acc || "",
-        PRINT_NAME: defaultFormValues.PRINT_NAME || "",
-      };
-      setTableData([firstBranch]);
-    }
-  }, [defaultFormValues, TableData.length, setTableData]);
-
-  useEffect(() => {
-    if (TableData.length > 0) {
-      setForm(TableData[0]);
-      setSelectedRowIndex(0);
-    } else {
-      setForm(initialFormState);
-    }
-  }, [TableData]);
-
   const handleDelete = () => {
+    if (selectedRowIndex === 0) {
+      toast.error("The first branch record cannot be deleted.");
+      return;
+    }
+    if (mode === FORM_MODE.read) {
+      if (onDeleteInReadMode) {
+        onDeleteInReadMode();
+      }
+    }
     setOpenDialog(true);
   };
 
@@ -145,7 +131,30 @@ const StepperMst2 = ({ TableData, setTableData, IsButtonSubmit, mode, defaultFor
   };
 
   const handleClickAdd = () => {
-    setForm(initialFormState);
+    console.log('handleClickAdd - mode:', mode, 'TableData:', TableData, 'TableData.length:', TableData?.length);
+    if (mode === FORM_MODE.add && (!TableData || TableData.length === 0)) {
+      console.log('Triggering onAddBranchAttempt: mode is add and TableData is empty');
+      if (onAddBranchAttempt) {
+        onAddBranchAttempt();
+      }
+      return;
+    }
+
+    if (mode === FORM_MODE.read) {
+      console.log('Switching to edit mode via onAddInReadMode');
+      if (onAddInReadMode) {
+        onAddInReadMode();
+      }
+    }
+
+    console.log('Proceeding to add new branch form');
+    setForm({
+      ...initialFormState,
+      COBR_ID: defaultFormValues.CO_ID || "",
+      COBR_NAME: defaultFormValues.CO_NAME || "",
+      PRINT_NAME: defaultFormValues.CO_NAME || "",
+      PINCODE: defaultFormValues.PINCODE || "",
+    });
     setAddDisabled(true);
     setAllButtonDisabled(false);
     setSelectedRowIndex(null);
@@ -154,22 +163,48 @@ const StepperMst2 = ({ TableData, setTableData, IsButtonSubmit, mode, defaultFor
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setForm((prev) => ({
-      ...prev,
-      [name]: type === "checkbox" ? checked : value,
-    }));
+    let updates = { [name]: type === "checkbox" ? checked : value };
+
+    if (name === "COBR_NAME") {
+      updates.PRINT_NAME = value;
+    } else if (name === "PRINT_NAME") {
+      updates.COBR_NAME = value;
+    }
+
+    if (["TEL_NO", "BRANCH_OWN_MOBNO", "PINCODE"].includes(name)) {
+      const numericValue = value.replace(/\D/g, "");
+      if (numericValue.length > 15) return;
+      updates[name] = numericValue;
+    }
+
+    if (name === "E_MAIL") {
+      const emailRegex = /^[a-zA-Z0-9._%+-@]*$/;
+      if (!emailRegex.test(value)) return;
+      updates[name] = value;
+    }
+
+    setForm((prev) => ({ ...prev, ...updates }));
   };
 
   const handleRowClick = (index) => {
     setSelectedRowIndex(index);
-    setAllButtonDisabled(false);
+    setAllButtonDisabled(index === 0);
     setForm(TableData[index]);
     setIsEditing(false);
     setAddDisabled(false);
   };
 
   const handleClickEdit = () => {
+    if (selectedRowIndex === 0) {
+      toast.error("The first branch record cannot be edited.");
+      return;
+    }
     if (selectedRowIndex !== null) {
+      if (mode === FORM_MODE.read) {
+        if (onEditInReadMode) {
+          onEditInReadMode();
+        }
+      }
       setIsEditing(true);
       setAllButtonDisabled(true);
       setAddDisabled(true);
@@ -222,28 +257,27 @@ const StepperMst2 = ({ TableData, setTableData, IsButtonSubmit, mode, defaultFor
     },
   };
 
-  const labelWidth = { xs: 100, sm: 120, md: 150 };
+  const labelWidth = { xs: 100, sm: 120, md: 130 };
   const inputWidth = { xs: '100%', sm: 350 };
-  const largerInputWidth = { xs: '100%', sm: 450 }; 
+
   return (
     <Box
       sx={{
         display: 'flex',
         flexDirection: 'column',
         gap: { xs: 0.5, sm: 1 },
-        marginInline: { xs: '2%', sm: '5%', md: '10%', lg: '15%' },
+        marginInline: { xs: '0%', sm: '2%', md: '5%', lg: '5%' },
         marginTop: { xs: '10px', sm: '15px', md: '0px' },
       }}
     >
-      {/* Table Section */}
       <Box
         sx={{
-    width: "100%",
-    maxWidth: { xs: "100%", sm: "1200px", md: "1600px" }, // Increased maxWidth
-    margin: "0 auto", // Center the table
-    mt: 0,
-    px: { xs: 0, sm: 2 },
-  }}
+          width: "100%",
+          maxWidth: { xs: "100%", sm: "1400px", md: "2000px" },
+          margin: "0 auto",
+          mt: 0,
+          px: { xs: 0, sm: 0 },
+        }}
       >
         <BranchTable
           columns={columns}
@@ -252,8 +286,6 @@ const StepperMst2 = ({ TableData, setTableData, IsButtonSubmit, mode, defaultFor
           onRowClick={handleRowClick}
         />
       </Box>
-
-      {/* Action Buttons */}
       <Box
         sx={{
           display: "flex",
@@ -261,11 +293,11 @@ const StepperMst2 = ({ TableData, setTableData, IsButtonSubmit, mode, defaultFor
           alignItems: "flex-start",
           marginTop: { xs: "8px", sm: "10px", md: "1px" },
           width: "100%",
-          flexWrap: "wrap",
+          flexWrap: "nowrap",
           gap: { xs: 1, sm: 2 },
+          px: 0,
         }}
       >
-        {/* Left - Buttons */}
         <Box sx={{ display: "flex", gap: { xs: "4px", sm: "8px" }, flexWrap: "wrap" }}>
           <Button
             variant="contained"
@@ -295,8 +327,6 @@ const StepperMst2 = ({ TableData, setTableData, IsButtonSubmit, mode, defaultFor
             <DeleteIcon />
           </Button>
         </Box>
-
-        {/* Right - Bank Details Textarea */}
         <Box
           sx={{
             display: "flex",
@@ -304,11 +334,11 @@ const StepperMst2 = ({ TableData, setTableData, IsButtonSubmit, mode, defaultFor
             alignItems: "flex-start",
             gap: { xs: 0.5, sm: 1 },
             marginTop: { xs: 1, sm: 0 },
-            width: { xs: '100%', sm: 460 ,md:540},
+            width: { xs: '100%', sm: 350 },
             minWidth: { xs: 'auto', sm: 300 },
           }}
         >
-          <Typography sx={{ width: { xs: 100, sm: 110 ,md:140}, fontSize: { xs: "0.8rem", sm: "0.875rem" }, fontWeight: 540 }}>
+          <Typography sx={{ width: { xs: 100, sm: 110, md: 140 }, fontSize: { xs: "0.8rem", sm: "0.875rem" }, fontWeight: 540 }}>
             Bank Details:
           </Typography>
           <TextField
@@ -320,21 +350,14 @@ const StepperMst2 = ({ TableData, setTableData, IsButtonSubmit, mode, defaultFor
             multiline
             rows={2}
             sx={{
-              width: 400,//ncreased width
-              "& .MuiOutlinedInput-root": {
-                padding: { xs: 0.5, sm: 1 },
-              },
-              "& .MuiOutlinedInput-inputMultiline": {
-                overflowY: "auto",
-                padding: { xs: "6px", sm: "8px" },
-              },
+              width: inputWidth,
+              "& .MuiOutlinedInput-root": { padding: { xs: 0.5, sm: 1 } },
+              "& .MuiOutlinedInput-inputMultiline": { overflowY: "auto", padding: { xs: "6px", sm: "8px" } },
             }}
           />
         </Box>
       </Box>
-    {/* Form Section */}
-      <Box sx={{ display: "flex", justifyContent: "center", flexDirection: { xs: 'column', sm: 'row' }, gap: { xs: 1, sm: 4 }, marginTop: { xs: "8px", sm: "10px", md: "1px" }, alignItems: "flex-start", marginInline: { xs: '0%', sm: '10%' ,md:"0%"} }}>
-        {/* Left Section */}
+      <Box sx={{ display: "flex", justifyContent: "center", flexDirection: { xs: 'column', sm: 'row' }, gap: { xs: 1, sm: 4 }, marginTop: { xs: "8px", sm: "10px", md: "1px" }, alignItems: "flex-start", marginInline: { xs: '0%', sm: '0%', md: "0%" }, px: 0 }}>
         <Box sx={{ display: "flex", flexDirection: "column", gap: { xs: 0.5, sm: 0.5 }, width: { xs: '100%', sm: 'auto' }, minWidth: { xs: 'auto', sm: 400 } }}>
           {[
             {
@@ -360,19 +383,97 @@ const StepperMst2 = ({ TableData, setTableData, IsButtonSubmit, mode, defaultFor
                 </>
               ),
             },
-            "Print Name",
-            "Jurisdiction",
-            "Address",
-            "Place",
-            "Fax",
-            "VAT",
-            "LBT",
-            "WorkAddr",
-            "OwnerMobNo",
+            {
+              label: "Print Name",
+              field: "PRINT_NAME",
+            },
+            {
+              label: "Jurisdiction",
+              field: "JURISDICTION",
+            },
+            {
+              label: "Address",
+              field: "COBR_ADD",
+            },
+{
+  label: "Place&Pincode",
+  custom: (
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: "row",
+        gap: { xs: 0.5, sm: 1 },
+        width: inputWidth, // Match the width of other TextFields
+        alignItems: "center",
+        flexWrap: "nowrap",
+      }}
+    >
+      <TextField
+        size="small"
+        name="PLACE"
+        value={form.PLACE}
+        onChange={handleInputChange}
+        disabled={!isEditing}
+        placeholder="Place"
+        sx={{
+          flex: 1, // Take available space
+          minWidth: { xs: 100, sm: 150, md: 130 }, // Ensure minimum width
+          ...textFieldSx, // Existing styling for consistency
+        }}
+      />
+      <CustomAutocomplete
+        value={form.PINCODE}
+        onChange={(value) =>
+          handleInputChange({ target: { name: "PINCODE", value } })
+        }
+        disabled={!isEditing}
+        placeholder="Pincode"
+        sx={{
+          flex: 1, // Take available space
+          minWidth: { xs: 100, sm: 150, md: 130 }, // Ensure minimum width
+          ...textFieldSx, // Apply same styling as TextField
+          "& .MuiAutocomplete-inputRoot": {
+            padding: "4px 8px", // Match TextField padding
+            height: "26px", // Reduced height
+            minHeight: "20px",
+            fontSize: "0.89rem", // Match TextField font size
+          },
+          "& .MuiAutocomplete-input": {
+            padding: "0 !important", // Remove extra padding in input
+            height: "18px", // Match TextField input height
+          },
+          "& .MuiAutocomplete-endAdornment": {
+            top: "50%", // Center vertically
+            transform: "translateY(-50%)", // Adjust for exact centering
+          },
+        }}
+      />
+    </Box>
+  ),
+},       {
+              label: "Fax",
+              field: "FAX_NO",
+            },
+            {
+              label: "VAT",
+              field: "VAT",
+            },
+            {
+              label: "LBT",
+              field: "LBT",
+            },
+            {
+              label: "WorkAddr",
+              field: "OTH_ADD",
+            },
+            {
+              label: "OwnerMobNo",
+              field: "BRANCH_OWN_MOBNO",
+            },
           ].map((fieldOrObj) => {
-            const label = typeof fieldOrObj === 'string' ? fieldOrObj.replace(/([A-Z])/g, ' $1') : fieldOrObj.label;
-            const field = typeof fieldOrObj === 'string' ? fieldNameMap[fieldOrObj] : null;
-            const custom = typeof fieldOrObj === 'object' ? fieldOrObj.custom : null;
+            const label = fieldOrObj.label || (typeof fieldOrObj === 'string' ? fieldOrObj.replace(/([A-Z])/g, ' $1') : '');
+            const field = fieldOrObj.field || (typeof fieldOrObj === 'string' ? fieldNameMap[fieldOrObj] : null);
+            const custom = fieldOrObj.custom;
 
             return (
               <Box key={label} sx={{ display: "flex", alignItems: "center", gap: { xs: 0.5, sm: 0.5 }, minWidth: { xs: '100%', sm: 400 } }}>
@@ -393,21 +494,19 @@ const StepperMst2 = ({ TableData, setTableData, IsButtonSubmit, mode, defaultFor
             );
           })}
         </Box>
-
-        {/* Right Section */}
-        <Box sx={{ display: "flex", flexDirection: "column", gap: { xs: 0.5, sm: 0.5 }, width: { xs: '100%', sm: 'auto' }, minWidth: { xs: 'auto', sm: 350 ,md:540} }}>
+        <Box sx={{ display: "flex", flexDirection: "column", gap: { xs: 0.5, sm: 0.5 }, width: { xs: '100%', sm: 'auto' }, minWidth: { xs: 'auto', sm: 350, md: 540 } }}>
           {[
             {
               label: "Abvr",
               custom: (
-                <Box sx={{ display: "flex", gap: { xs: 0.5, sm: 0.5 }, minWidth: { xs: '100%', sm: 320,md:400 } }}>
+                <Box sx={{ display: "flex", gap: { xs: 0.5, sm: 0.5 }, minWidth: { xs: '100%', sm: 320, md: 400 } }}>
                   <TextField
                     size="small"
                     name="COBR_ABRV"
                     value={form.COBR_ABRV}
                     onChange={handleInputChange}
                     disabled={!isEditing}
-                    sx={{ width: { xs: 'calc(100% - 100px)', sm: 170 ,md:180}, ...textFieldSx }}
+                    sx={{ width: { xs: 'calc(100% - 100px)', sm: 170, md: 180 }, ...textFieldSx }}
                   />
                   <Button variant="text" size="small" onClick={() => setForm(prev => ({ ...prev, Image: "" }))}>
                     Clear Image
@@ -415,67 +514,86 @@ const StepperMst2 = ({ TableData, setTableData, IsButtonSubmit, mode, defaultFor
                 </Box>
               ),
             },
-           {
-  label: "Image & Tel",
-  custom: (
-    <Box sx={{
-      display: "flex",
-      flexDirection: 'row',
-      gap: 5,
-      alignItems: 'center',
-      minHeight: 50,
-    }}>
-      {/* Image Placeholder */}
-      <Box sx={{
-        width: 100,
-        height: 70,
-        marginLeft:"-12px",
-        border: "1px solid #ccc",
-        borderRadius: 1,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        fontSize: "0.75rem",
-        color: "#666",
-        backgroundColor: "#f2f2f2",
-        flexShrink: 0,
-      }}>
-        Image
-      </Box>
-
-      {/* Tel Input & Browse */}
-      <Box sx={{ display: "flex", flexDirection: 'column', gap: 0.5 }}>
-        <TextField
-          size="small"
-          name="TEL_NO"
-          value={form.TEL_NO}
-          onChange={handleInputChange}
-          disabled={!isEditing}
-          placeholder="Tel No"
-          sx={{
-            width: 200,
-            height: 36,
-            ...textFieldSx,
-          }}
-        />
-        <Button
-          variant="text"
-          size="small"
-          sx={{ padding: 0, minHeight: 24, textTransform: 'none' }}
-        >
-          Browse...
-        </Button>
-      </Box>
-    </Box>
-  ),
-},
-
-            "Email",
-            "ExciseCd",
-            "ExciseRng",
-            "CoDivision",
-            "BankDetails",
-            "GSTTINNO",
+            {
+              label: "Image",
+              custom: (
+                <Box sx={{
+                  display: "flex",
+                  flexDirection: 'row',
+                  gap: 1,
+                  alignItems: 'center',
+                  minHeight: 50,
+                  marginLeft:2
+                }}>
+                  <Box sx={{
+                    width: 120,
+                    height: 70,
+                    marginLeft: "-12px",
+                    border: "1px solid #ccc",
+                    borderRadius: 1,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: "0.75rem",
+                    color: "#666",
+                    backgroundColor: "#f2f2f2",
+                    flexShrink: 0,
+                  }}>
+                    Image
+                  </Box>
+                  <Box sx={{ display: "flex", flexDirection: 'column', gap: 0 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0 }}>
+                      <Typography sx={{ fontSize: '0.8rem', minWidth: 30 }}>Tel:</Typography>
+                      <TextField
+                        size="small"
+                        name="TEL_NO"
+                        value={form.TEL_NO}
+                        onChange={handleInputChange}
+                        disabled={!isEditing}
+                        placeholder="Tel No"
+                        inputProps={{
+                          inputMode: "numeric",
+                          pattern: "[0-9]*",
+                          maxLength: 15,
+                        }}
+                        sx={{ width: 200, height: 36, ...textFieldSx }}
+                      />
+                    </Box>
+                    <Button variant="text" size="small" sx={{ padding: 0, minHeight: 24, textTransform: 'none' }}>
+                      Browse...
+                    </Button>
+                  </Box>
+                </Box>
+              ),
+            },
+            {
+              label: "Tel",
+              field: "TEL_NO",
+            },
+            {
+              label: "Email",
+              field: "E_MAIL",
+            },
+            {
+              label: "ExciseCd",
+              field: "EXCISE_CODE",
+            },
+            {
+              label: "ExciseRng",
+              field: "EXCISE_RANG",
+            },
+            {
+              label: "CoDivision",
+              field: "CO_DIV_KEY",
+            },
+            {
+              label: "BankDetails",
+              field: "bank_acc",
+            },
+            {
+              label: "GSTTINNO",
+              field: "GSTTIN_NO",
+            },
             {
               label: "Active",
               custom: (
@@ -489,13 +607,9 @@ const StepperMst2 = ({ TableData, setTableData, IsButtonSubmit, mode, defaultFor
               ),
             },
           ].map((fieldOrObj) => {
-            const label = typeof fieldOrObj === 'string' ? fieldOrObj.replace(/([A-Z])/g, ' $1') : fieldOrObj.label;
-            const field = typeof fieldOrObj === 'string' ? fieldNameMap[fieldOrObj] : null;
-            const custom = typeof fieldOrObj === 'object' ? fieldOrObj.custom : null;
-
-            // Define fields that need larger width
-            const largerFields = ["E_MAIL", "EXCISE_CODE", "EXCISE_RANG", "CO_DIV_KEY", "bank_acc","GSTTIN_NO"];
-            const fieldWidth = largerFields.includes(field) ? largerInputWidth : inputWidth;
+            const label = fieldOrObj.label || (typeof fieldOrObj === 'string' ? fieldOrObj.replace(/([A-Z])/g, ' $1') : '');
+            const field = fieldOrObj.field || (typeof fieldOrObj === 'string' ? fieldNameMap[fieldOrObj] : null);
+            const custom = fieldOrObj.custom;
 
             return (
               <Box key={label} sx={{ display: "flex", alignItems: "center", gap: { xs: 0.5, sm: 1 }, minWidth: { xs: '100%', sm: 320 } }}>
@@ -509,7 +623,7 @@ const StepperMst2 = ({ TableData, setTableData, IsButtonSubmit, mode, defaultFor
                     disabled={!isEditing}
                     multiline={field === "bank_acc"}
                     rows={field === "bank_acc" ? 1 : undefined}
-                    sx={{ width: fieldWidth, ...textFieldSx }} // Use conditional width
+                    sx={{ width: inputWidth, ...textFieldSx }}
                   />
                 )}
               </Box>
@@ -517,10 +631,8 @@ const StepperMst2 = ({ TableData, setTableData, IsButtonSubmit, mode, defaultFor
           })}
         </Box>
       </Box>
-
-      {/* Confirm / Cancel Buttons at bottom of form */}
       {isEditing && (
-        <Box sx={{ display: "flex", justifyContent: "flex-end", marginTop: { xs: 1, sm: 0 }, gap: { xs: 1, sm: 2 }, width: "100%" }}>
+        <Box sx={{ display: "flex", justifyContent: "flex-end", marginTop: { xs: 1, sm: 0 }, gap: { xs: 1, sm: 2 }, width: "100%", px: 0 }}>
           <Button
             variant="contained"
             onClick={handleConfirm}
@@ -539,7 +651,6 @@ const StepperMst2 = ({ TableData, setTableData, IsButtonSubmit, mode, defaultFor
           </Button>
         </Box>
       )}
-
       <ConfirmDelDialog
         open={openDialog}
         title="Confirm Deletion"

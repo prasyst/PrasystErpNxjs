@@ -1,6 +1,6 @@
 'use client';
 import React, { useState, useEffect, useCallback } from "react";
-import {Button} from '@mui/material';
+import { Button } from '@mui/material';
 import AddIcon from "@mui/icons-material/Add";
 import axiosInstance from "@/lib/axios";
 import ReusableHandsontable from "@/components/datatable/ReusableHandsontable";
@@ -9,7 +9,7 @@ import { useRouter } from "next/navigation";
 const handsontableColumns = [
     // { field: "ROWNUM", headerName: "SrNo", width: "16%", type: "numeric" },
     { field: "CO_ID", headerName: "Code", width: "16%", type: "text" },
-     { field: "CO_NAME", headerName: "Name", width: "25%", type: "text" },
+    { field: "CO_NAME", headerName: "Name", width: "25%", type: "text" },
     { field: "CO_ABRV", headerName: "Abrv", width: "15%", type: "text" },
     { field: "REG_ADD", headerName: "Reg ADD", width: "25%", type: "text" },
     { field: "STATUS", headerName: "Status", width: "15%", type: "numeric" }
