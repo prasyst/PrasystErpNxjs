@@ -76,110 +76,79 @@ const CompanyMst = () => {
   const COBR_ID = localStorage.getItem('COBR_ID');
   const CO_IDD = localStorage.getItem('CO_ID');
 
-useEffect(() => {
-  updateFirstBranchWithStepper1Data();
-}, [stepper1Form, updateFirstBranchWithStepper1Data]);
+  const updateFirstBranchWithStepper1Data = useCallback(() => {
+    const defaultBranch = {
+      COBR_ID: stepper1Form.CO_ID || "",
+      CO_ID: stepper1Form.CO_ID || "",
+      COBR_NAME: stepper1Form.CO_NAME || "",
+      COBR_ABRV: stepper1Form.CO_ABRV || "",
+      COBR_ADD: stepper1Form.REGD_ADD || "",
+      TEL_NO: stepper1Form.RTEL_NO || "",
+      E_MAIL: stepper1Form.RE_MAIL || "",
+      PLACE: stepper1Form.PLACE || "",
+      BRANCH_OWN_MOBNO: stepper1Form.OWN_MOBNO || "",
+      GSTTIN_NO: stepper1Form.GSTTIN_NO || "",
+      EXCISE_CODE: stepper1Form.EXCISE_CODE || "",
+      EXCISE_RANG: stepper1Form.EXCISE_RANG || "",
+      EXCISE_DIV: stepper1Form.EXCISE_DIV || "",
+      bank_acc: stepper1Form.BANK_ACC || "",
+      PRINT_NAME: stepper1Form.PRINT_NAME || "",
+      WORK_ADD: stepper1Form.WORK_ADD || "",
+      PINCODE: stepper1Form.PINCODE || "",
+      Active: stepper1Form.Active || false,
+      STATUS: "1",
+      FAX_NO: "",
+      LST: "",
+      VAT: "",
+      COBRLOC_KEY: "",
+      OTH_ADD: "",
+      ORD_SYNCSTATUS: "",
+      CO_DIV_KEY: "",
+    };
 
+    const isEmpty = Object.values(defaultBranch).every(
+      (val) => val === "" || val === false || val === "1"
+    );
 
-// const updateFirstBranchWithStepper1Data = () => {
-//   const defaultBranch = {
-//     COBR_ID: stepper1Form.CO_ID || "",
-//     CO_ID: stepper1Form.CO_ID || "",
-//     COBR_NAME: stepper1Form.CO_NAME || "",
-//     COBR_ABRV: stepper1Form.CO_ABRV || "",
-//     COBR_ADD: stepper1Form.REGD_ADD || "",
-//     TEL_NO: stepper1Form.RTEL_NO || "",
-//     E_MAIL: stepper1Form.RE_MAIL || "",
-//     PLACE: stepper1Form.PLACE || "",
-//     BRANCH_OWN_MOBNO: stepper1Form.OWN_MOBNO || "",
-//     GSTTIN_NO: stepper1Form.GSTTIN_NO || "",
-//     EXCISE_CODE: stepper1Form.EXCISE_CODE || "",
-//     EXCISE_RANG: stepper1Form.EXCISE_RANG || "",
-//     EXCISE_DIV: stepper1Form.EXCISE_DIV || "",
-//     bank_acc: stepper1Form.BANK_ACC || "",
-//     PRINT_NAME: stepper1Form.PRINT_NAME || "",
-//     WORK_ADD: stepper1Form.WORK_ADD || "",
-//     PINCODE: stepper1Form.PINCODE || "",
-//     Active: stepper1Form.Active || false,
-//     STATUS: "1",
-//     FAX_NO: "",
-//     LST: "",
-//     VAT: "",
-//     COBRLOC_KEY: "",
-//     OTH_ADD: "",
-//     ORD_SYNCSTATUS: "",
-//     CO_DIV_KEY: "",
-//   };
+    setStepper2Branches((prevBranches) => {
+      let updatedBranches = [...prevBranches];
 
-//   const isEmpty = Object.values(defaultBranch).every(val => val === "" || val === false || val === "1");
+      if (updatedBranches.length === 0) {
+        if (!isEmpty) {
+          updatedBranches = [defaultBranch];
+        }
+      } else {
+        updatedBranches[0] = { ...updatedBranches[0], ...defaultBranch };
+        const isFirstEmpty = Object.values(updatedBranches[0]).every(
+          (val) => val === "" || val === false || val === "1"
+        );
+        if (isFirstEmpty) {
+          updatedBranches = updatedBranches.slice(1);
+        }
+      }
 
-//   let updatedBranches = [...stepper2Branches];
+      if (JSON.stringify(prevBranches) === JSON.stringify(updatedBranches)) {
+        return prevBranches;
+      }
 
-//   if (updatedBranches.length === 0) {
-//     if (!isEmpty) {
-//       updatedBranches = [defaultBranch];
-//     }
-//   } else {
-//     updatedBranches[0] = { ...updatedBranches[0], ...defaultBranch };
-//     const isFirstEmpty = Object.values(updatedBranches[0]).every(val => val === "" || val === false || val === "1");
-//     if (isFirstEmpty) {
-//       updatedBranches = updatedBranches.slice(1);
-//     }
-//   }
+      return updatedBranches;
+    });
+  }, [stepper1Form]);
 
-//   setStepper2Branches(updatedBranches);
-// };
-const updateFirstBranchWithStepper1Data = useCallback(() => {
-  const defaultBranch = {
-    COBR_ID: stepper1Form.CO_ID || "",
-    CO_ID: stepper1Form.CO_ID || "",
-    COBR_NAME: stepper1Form.CO_NAME || "",
-    COBR_ABRV: stepper1Form.CO_ABRV || "",
-    COBR_ADD: stepper1Form.REGD_ADD || "",
-    TEL_NO: stepper1Form.RTEL_NO || "",
-    E_MAIL: stepper1Form.RE_MAIL || "",
-    PLACE: stepper1Form.PLACE || "",
-    BRANCH_OWN_MOBNO: stepper1Form.OWN_MOBNO || "",
-    GSTTIN_NO: stepper1Form.GSTTIN_NO || "",
-    EXCISE_CODE: stepper1Form.EXCISE_CODE || "",
-    EXCISE_RANG: stepper1Form.EXCISE_RANG || "",
-    EXCISE_DIV: stepper1Form.EXCISE_DIV || "",
-    bank_acc: stepper1Form.BANK_ACC || "",
-    PRINT_NAME: stepper1Form.PRINT_NAME || "",
-    WORK_ADD: stepper1Form.WORK_ADD || "",
-    PINCODE: stepper1Form.PINCODE || "",
-    Active: stepper1Form.Active || false,
-    STATUS: "1",
-    FAX_NO: "",
-    LST: "",
-    VAT: "",
-    COBRLOC_KEY: "",
-    OTH_ADD: "",
-    ORD_SYNCSTATUS: "",
-    CO_DIV_KEY: "",
+  useEffect(() => {
+    updateFirstBranchWithStepper1Data();
+  }, [stepper1Form, updateFirstBranchWithStepper1Data]);
+
+  const handlePrint = () => {};
+  const handleExit = () => {
+    console.log("Navigating to company table");
+    try {
+      router.push("/masters/company/company/companytable");
+    } catch (error) {
+      console.error("Navigation error:", error);
+      toast.error("Failed to navigate to company table");
+    }
   };
-
-  const isEmpty = Object.values(defaultBranch).every(val => val === "" || val === false || val === "1");
-
-  let updatedBranches = [...stepper2Branches];
-
-  if (updatedBranches.length === 0) {
-    if (!isEmpty) {
-      updatedBranches = [defaultBranch];
-    }
-  } else {
-    updatedBranches[0] = { ...updatedBranches[0], ...defaultBranch };
-    const isFirstEmpty = Object.values(updatedBranches[0]).every(val => val === "" || val === false || val === "1");
-    if (isFirstEmpty) {
-      updatedBranches = updatedBranches.slice(1);
-    }
-  }
-
-  setStepper2Branches(updatedBranches);
-}, [stepper1Form, stepper2Branches]);
-
-  const handlePrint = () => { };
-  const handleExit = () => { router.push("/masters/company/company/companytable") };
 
   const handleAdd = () => {
     setMode(FORM_MODE.add);
@@ -222,6 +191,7 @@ const updateFirstBranchWithStepper1Data = useCallback(() => {
   };
 
   const fetchRetriveData = useCallback(async (currentCO_ID, flag = "R") => {
+    console.log("Fetching data with CO_ID:", currentCO_ID, "Flag:", flag);
     try {
       const response = await axiosInstance.post('Company/RetriveCOMPANY', {
         "FLAG": flag,
@@ -315,21 +285,9 @@ const updateFirstBranchWithStepper1Data = useCallback(() => {
       fetchRetriveData(CO_ID);
       setMode(FORM_MODE.read);
     } else {
-      setMode(FORM_MODE.add);
+      setMode(FORM_MODE.read);
     }
-    setMode(FORM_MODE.read);
   }, [CO_ID, fetchRetriveData]);
-
-//   useEffect(() => {
-//   if (CO_ID) {
-//     setCurrentCO_ID(CO_ID);
-//     fetchRetriveData(CO_ID);
-//     setMode(FORM_MODE.read);
-//   } else {
-  
-//     setMode(FORM_MODE.read);  
-//   }
-// }, [CO_ID, fetchRetriveData]);
 
   const handleSubmit = async () => {
     setIsSubmitting(true);
@@ -351,6 +309,8 @@ const updateFirstBranchWithStepper1Data = useCallback(() => {
       WORK_ADD: stepper1Form.WORK_ADD || "",
       WTEL_NO: stepper1Form.WTEL_NO || "",
       WFAX_NO: stepper1Form.WFAX_NO || "",
+
+
       WE_MAIL: stepper1Form.RE_MAIL || "",
       WLST: stepper1Form.WLST || "",
       WVAT: stepper1Form.WVAT || "",
@@ -436,8 +396,8 @@ const updateFirstBranchWithStepper1Data = useCallback(() => {
     }
   };
 
-  const handleFirst = async () => { 
-      await fetchRetriveData(0, "F");
+  const handleFirst = async () => {
+    await fetchRetriveData(0, "F");
   };
   const handleLast = async () => {
     await fetchRetriveData(1, "L");
@@ -612,12 +572,12 @@ const updateFirstBranchWithStepper1Data = useCallback(() => {
                 sx={{
                   display: 'flex',
                   flexDirection: 'row',
-                  flexWrap: 'nowrap',      // Prevent wrapping
+                  flexWrap: 'nowrap',
                   overflowX: 'auto',
                   justifyContent: {
                     xs: 'center',
                     sm: 'flex-start',
-                    md:'flex-start'
+                    md: 'flex-start'
                   },
                   width: { xs: '100%', sm: 'auto', md: 'auto' },
                 }}
@@ -637,7 +597,7 @@ const updateFirstBranchWithStepper1Data = useCallback(() => {
                 </Stack>
               </Grid>
               <Grid>
-                <Stack direction="row" spacing={{ xs: 0.5, sm: 0 ,md:0}}  >
+                <Stack direction="row" spacing={{ xs: 0.5, sm: 0, md: 0 }}>
                   <CrudButtons
                     mode={mode}
                     onAdd={mode === FORM_MODE.read ? handleAdd : handleSubmit}
@@ -657,4 +617,4 @@ const updateFirstBranchWithStepper1Data = useCallback(() => {
   );
 };
 
-export default CompanyMst; 
+export default CompanyMst;
