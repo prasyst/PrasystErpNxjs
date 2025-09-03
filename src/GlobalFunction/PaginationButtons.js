@@ -77,6 +77,8 @@
 // };
 
 // export default PaginationButtons;
+
+
 'use client'
 import React from 'react';
 import { Button, Grid, Stack, Tooltip } from '@mui/material';
@@ -97,8 +99,6 @@ const PaginationButtons = ({
     buttonSx = {}
 }) => {
     const isReadMode = mode === FORM_MODE.read || mode === "view";
-    const isFirstDisabled = !isReadMode || !currentKey || currentKey === 1;
-    const isNavDisabled = !isReadMode || !currentKey;
 
     const renderButtonWithTooltip = (title, onClick, disabled, className, icon) => (
         <Tooltip title={title}>
@@ -119,15 +119,14 @@ const PaginationButtons = ({
 
     return (
         <Grid sx={{ width: { xs: '100%', sm: 'auto' }, ...sx }}>
-            <Stack direction="row" spacing={1}>
-                {renderButtonWithTooltip("First", onFirst, isFirstDisabled, "three-d-button-first", <FirstPageIcon />)}
-                {renderButtonWithTooltip("Previous", onPrevious, isFirstDisabled, "three-d-button-previous", <KeyboardArrowLeftIcon />)}
-                {renderButtonWithTooltip("Next", onNext, isNavDisabled, "three-d-button-next", <NavigateNextIcon />)}
-                {renderButtonWithTooltip("Last", onLast, isNavDisabled, "three-d-button-last", <LastPageIcon />)}
+            <Stack direction="row" spacing={0}>
+                {renderButtonWithTooltip("First", onFirst, !isReadMode, "three-d-button-first", <FirstPageIcon />)}
+                {renderButtonWithTooltip("Previous", onPrevious, !isReadMode, "three-d-button-previous", <KeyboardArrowLeftIcon />)}
+                {renderButtonWithTooltip("Next", onNext, !isReadMode, "three-d-button-next", <NavigateNextIcon />)}
+                {renderButtonWithTooltip("Last", onLast, !isReadMode, "three-d-button-last", <LastPageIcon />)}
             </Stack>
         </Grid>
     );
 };
 
 export default PaginationButtons;
-
