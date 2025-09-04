@@ -135,7 +135,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled }) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: value,
+      // [name]: value,
       CLIENTTERMSEntities: [{
         ...prev.CLIENTTERMSEntities?.[0],
         [name]: value

@@ -32,7 +32,48 @@ import SearchIcon from "@mui/icons-material/Search";
 const FORM_MODE = getFormMode();
 
 const Stepper2 = ({ formData, setFormData, isFormDisabled }) => {
-  console.log("Stepper2 full formData:", formData);
+  console.log("Stepper2 full formData:", formData?.PartyDtlEntities?.[0]);
+
+  const [rows, setRows] = useState([]);
+  const [inputData, setInputData] = useState(
+    {
+      DBFLAG: '',
+      PARTYDTL_ID: "",
+      PARTY_KEY: "",
+      ADDR: "",
+      CONT_KEY: 0,
+      CITY_KEY: 0,
+      TEL_NO: "",
+      FAX_NO: "",
+      E_MAIL: "",
+      WEBSITE: "",
+      CONTACT_PERSON: "",
+      MOBILE_NO: "",
+      SST: "",
+      CST: "",
+      EXCISE_CODE: "",
+      REMK: "",
+      STATUS: "",
+      PLACE: "",
+      VAT: "",
+      MAIN_BRANCH: "",
+      RD_URD: "",
+      PINCODE: "",
+      GSTTIN_NO: "",
+      TAX_KEY: 0,
+      TERM_KEY: "",
+      TRSP_KEY: 0,
+      TRADE_DISC: 0,
+      RDOFF: "",
+      CFORM_FLG: 0,
+      PARTY_ALT_CODE: "",
+      ORD_SYNCSTATUS: "",
+      SEZ: "",
+      DEFAULT_BRANCH: "",
+    },
+  );
+  const [selectedIndex, setSelectedIndex] = useState(null);
+  const [mode, setMode] = useState(null);
 
   const partyData = formData?.PartyDtlEntities?.[0];
 
@@ -136,12 +177,203 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled }) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: value,
+      // [name]: value,
       PartyDtlEntities: [{
         ...prev.PartyDtlEntities?.[0],
         [name]: value
       }]
     }));
+    setInputData((prev) => ({
+      ...prev, [name]: value,
+      PartyDtlEntities: [{
+        ...prev.PartyDtlEntities?.[0],
+        [name]: value
+      }]
+    }));
+  };
+
+  const handleAdd = () => {
+    setInputData(
+      {
+        DBFLAG: '',
+        PARTYDTL_ID: "",
+        PARTY_KEY: "",
+        ADDR: "",
+        CONT_KEY: 0,
+        CITY_KEY: 0,
+        TEL_NO: "",
+        FAX_NO: "",
+        E_MAIL: "",
+        WEBSITE: "",
+        CONTACT_PERSON: "",
+        MOBILE_NO: "",
+        SST: "",
+        CST: "",
+        EXCISE_CODE: "",
+        REMK: "",
+        STATUS: "",
+        PLACE: "",
+        VAT: "",
+        MAIN_BRANCH: "",
+        RD_URD: "",
+        PINCODE: "",
+        GSTTIN_NO: "",
+        TAX_KEY: 0,
+        TERM_KEY: "",
+        TRSP_KEY: 0,
+        TRADE_DISC: 0,
+        RDOFF: "",
+        CFORM_FLG: 0,
+        PARTY_ALT_CODE: "",
+        ORD_SYNCSTATUS: "",
+        SEZ: "",
+        DEFAULT_BRANCH: "",
+      },
+    );
+    setMode('add');
+    setSelectedIndex(null);
+  };
+
+  const handleEdit = () => {
+    if (selectedIndex === null) return;
+    setInputData(rows[selectedIndex]);
+    setMode('edit');
+  };
+
+  const handleDelete = () => {
+    if (selectedIndex === null) return;
+    const updated = rows.filter((_, i) => i !== selectedIndex);
+    setRows(updated);
+    setSelectedIndex(null);
+    setInputData(
+      {
+        DBFLAG: '',
+        PARTYDTL_ID: "",
+        PARTY_KEY: "",
+        ADDR: "",
+        CONT_KEY: 0,
+        CITY_KEY: 0,
+        TEL_NO: "",
+        FAX_NO: "",
+        E_MAIL: "",
+        WEBSITE: "",
+        CONTACT_PERSON: "",
+        MOBILE_NO: "",
+        SST: "",
+        CST: "",
+        EXCISE_CODE: "",
+        REMK: "",
+        STATUS: "",
+        PLACE: "",
+        VAT: "",
+        MAIN_BRANCH: "",
+        RD_URD: "",
+        PINCODE: "",
+        GSTTIN_NO: "",
+        TAX_KEY: 0,
+        TERM_KEY: "",
+        TRSP_KEY: 0,
+        TRADE_DISC: 0,
+        RDOFF: "",
+        CFORM_FLG: 0,
+        PARTY_ALT_CODE: "",
+        ORD_SYNCSTATUS: "",
+        SEZ: "",
+        DEFAULT_BRANCH: "",
+      },
+    );
+    setMode(null);
+  };
+
+  const handleConfirm = () => {
+    if (mode === "add") {
+      setRows([...rows, inputData]);
+    } else if (mode === "edit" && selectedIndex !== null) {
+      const updated = [...rows];
+      updated[selectedIndex] = inputData;
+      setRows(updated);
+    }
+    setInputData(
+      {
+        DBFLAG: '',
+        PARTYDTL_ID: "",
+        PARTY_KEY: "",
+        ADDR: "",
+        CONT_KEY: 0,
+        CITY_KEY: 0,
+        TEL_NO: "",
+        FAX_NO: "",
+        E_MAIL: "",
+        WEBSITE: "",
+        CONTACT_PERSON: "",
+        MOBILE_NO: "",
+        SST: "",
+        CST: "",
+        EXCISE_CODE: "",
+        REMK: "",
+        STATUS: "",
+        PLACE: "",
+        VAT: "",
+        MAIN_BRANCH: "",
+        RD_URD: "",
+        PINCODE: "",
+        GSTTIN_NO: "",
+        TAX_KEY: 0,
+        TERM_KEY: "",
+        TRSP_KEY: 0,
+        TRADE_DISC: 0,
+        RDOFF: "",
+        CFORM_FLG: 0,
+        PARTY_ALT_CODE: "",
+        ORD_SYNCSTATUS: "",
+        SEZ: "",
+        DEFAULT_BRANCH: "",
+      },
+    );
+    setSelectedIndex(null);
+    setMode(null);
+  };
+
+  const handleCancel = () => {
+    setInputData(
+      {
+        DBFLAG: '',
+        PARTYDTL_ID: "",
+        PARTY_KEY: "",
+        ADDR: "",
+        CONT_KEY: 0,
+        CITY_KEY: 0,
+        TEL_NO: "",
+        FAX_NO: "",
+        E_MAIL: "",
+        WEBSITE: "",
+        CONTACT_PERSON: "",
+        MOBILE_NO: "",
+        SST: "",
+        CST: "",
+        EXCISE_CODE: "",
+        REMK: "",
+        STATUS: "",
+        PLACE: "",
+        VAT: "",
+        MAIN_BRANCH: "",
+        RD_URD: "",
+        PINCODE: "",
+        GSTTIN_NO: "",
+        TAX_KEY: 0,
+        TERM_KEY: "",
+        TRSP_KEY: 0,
+        TRADE_DISC: 0,
+        RDOFF: "",
+        CFORM_FLG: 0,
+        PARTY_ALT_CODE: "",
+        ORD_SYNCSTATUS: "",
+        SEZ: "",
+        DEFAULT_BRANCH: "",
+      },
+    );
+    setSelectedIndex(null);
+    setMode(null);
   };
 
   const handleChangeStatus = (event) => {
@@ -166,9 +398,12 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled }) => {
     { id: 'PINCODE', label: 'Pincode', minWidth: 150 },
   ];
 
-  const rows = [
-
-  ];
+  const Buttonsx = {
+    backgroundColor: '#39ace2',
+    margin: { xs: '0 4px', sm: '0 6px' },
+    minWidth: { xs: 40, sm: 46, md: 60 },
+    height: { xs: 40, sm: 46, md: 30 },
+  };
 
   return (
     <Box>
@@ -194,14 +429,13 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled }) => {
               border: "1px solid #e0e0e0",
             }}
           >
-            <TableContainer sx={{ maxHeight: 150 }}>
+            <TableContainer component={Paper} sx={{ maxHeight: 200 }}>
               <Table stickyHeader size="small">
                 <TableHead>
                   <TableRow>
-                    {columns.map((column) => (
+                    {columns.map((col) => (
                       <TableCell
-                        key={column.id}
-                        align={column.align}
+                        key={col.id}
                         sx={{
                           backgroundColor: "#f5f5f5",
                           fontWeight: "bold",
@@ -210,35 +444,26 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled }) => {
                           borderBottom: "1px solid #ddd",
                         }}
                       >
-                        <Typography variant="caption" sx={{ fontWeight: 600 }}>
-                          {column.label}
-                        </Typography>
+                        <Typography variant="caption">{col.label}</Typography>
                       </TableCell>
                     ))}
                   </TableRow>
                 </TableHead>
-
                 <TableBody>
                   {rows.map((row, index) => (
                     <TableRow
                       key={index}
                       hover
+                      onClick={() => setSelectedIndex(index)}
+                      selected={selectedIndex === index}
                       sx={{
-                        backgroundColor: index % 2 === 0 ? "#fafafa" : "#fff",
-                        "&:hover": { backgroundColor: "#e3f2fd" },
+                        backgroundColor: selectedIndex === index ? "#e3f2fd" : index % 2 === 0 ? "#fafafa" : "#fff",
+                        cursor: 'pointer'
                       }}
                     >
-                      {columns.map((column) => (
-                        <TableCell
-                          key={column.id}
-                          align={column.align}
-                          sx={{
-                            fontSize: "0.75rem",
-                            padding: "6px 8px",
-                            whiteSpace: "nowrap",
-                          }}
-                        >
-                          {row[column.id] || "—"}
+                      {columns.map((col) => (
+                        <TableCell key={col.id} sx={{ fontSize: "0.75rem", padding: "6px 8px" }}>
+                          {row[col.id] || "—"}
                         </TableCell>
                       ))}
                     </TableRow>
@@ -254,13 +479,15 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled }) => {
           <Button
             variant="contained"
             startIcon={<AddIcon />}
-            sx={{
-              background: 'linear-gradient(45deg, #2196f3, #64b5f6)',
-              color: 'white',
-              margin: { xs: '0 4px', sm: '0 6px' },
-              minWidth: { xs: 40, sm: 46, md: 60 },
-              height: { xs: 40, sm: 46, md: 30 },
-            }}
+            onClick={handleAdd}
+            // sx={{
+            //   background: 'linear-gradient(45deg, #2196f3, #64b5f6)',
+            //   color: 'white',
+            //   margin: { xs: '0 4px', sm: '0 6px' },
+            //   minWidth: { xs: 40, sm: 46, md: 60 },
+            //   height: { xs: 40, sm: 46, md: 30 },
+            // }}
+            sx={Buttonsx}
           >
             Add
           </Button>
@@ -268,13 +495,16 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled }) => {
           <Button
             variant="contained"
             startIcon={<EditIcon />}
-            sx={{
-              background: 'linear-gradient(45deg, #ffa726, #ffcc80)',
-              color: 'white',
-              margin: { xs: '0 4px', sm: '0 6px' },
-              minWidth: { xs: 40, sm: 46, md: 60 },
-              height: { xs: 40, sm: 46, md: 30 },
-            }}
+            onClick={handleEdit}
+            disabled={selectedIndex === null}
+            // sx={{
+            //   background: 'linear-gradient(45deg, #ffa726, #ffcc80)',
+            //   color: 'white',
+            //   margin: { xs: '0 4px', sm: '0 6px' },
+            //   minWidth: { xs: 40, sm: 46, md: 60 },
+            //   height: { xs: 40, sm: 46, md: 30 },
+            // }}
+            sx={Buttonsx}
           >
             Edit
           </Button>
@@ -282,13 +512,15 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled }) => {
           <Button
             variant="contained"
             startIcon={<DeleteIcon />}
-            sx={{
-              background: 'linear-gradient(45deg, #e53935, #ef5350)',
-              color: 'white',
-              margin: { xs: '0 4px', sm: '0 6px' },
-              minWidth: { xs: 40, sm: 46, md: 60 },
-              height: { xs: 40, sm: 46, md: 30 },
-            }}
+            onClick={handleDelete}
+            disabled={selectedIndex === null}
+            // sx={{
+            //   background: 'linear-gradient(45deg, #e53935, #ef5350)',
+            //   color: 'white',
+            //   margin: { xs: '0 4px', sm: '0 6px' },
+            //   minWidth: { xs: 40, sm: 46, md: 60 },
+            //   height: { xs: 40, sm: 46, md: 30 },
+            // }}
           >
             Delete
           </Button>
@@ -299,6 +531,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled }) => {
           flexDirection: { xs: 'column', sm: 'row', md: 'row' },
           gap: { xs: 1, sm: 1, md: 2 },
         }}>
+
           <Box sx={{ width: { xs: '100%', sm: '20%', md: '33.5%' } }}>
             <TextField
               label="Address"
@@ -915,23 +1148,29 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled }) => {
           />
           <Stack direction="row" spacing={2} sx={{ position: 'relative' }}>
             <Button
-              sx={{
-                background: 'linear-gradient(45deg, #4caf50, #81c784)',
-                margin: { xs: '0 4px', sm: '0 6px' },
-                minWidth: { xs: 40, sm: 46, md: 60 },
-                height: { xs: 40, sm: 46, md: 30 },
-              }}
+              // sx={{
+              //   background: 'linear-gradient(45deg, #4caf50, #81c784)',
+              //   margin: { xs: '0 4px', sm: '0 6px' },
+              //   minWidth: { xs: 40, sm: 46, md: 60 },
+              //   height: { xs: 40, sm: 46, md: 30 },
+              // }}
+              sx={Buttonsx}
               variant="contained"
+              onClick={handleConfirm}
+              disabled={mode === null}
             >
               Confirm
             </Button>
             <Button
-              sx={{
-                background: 'linear-gradient(45deg, #e53935, #ef5350)',
-                margin: { xs: '0 4px', sm: '0 6px' },
-                minWidth: { xs: 40, sm: 46, md: 60 },
-                height: { xs: 40, sm: 46, md: 30 },
-              }}
+              // sx={{
+              //   background: 'linear-gradient(45deg, #e53935, #ef5350)',
+              //   margin: { xs: '0 4px', sm: '0 6px' },
+              //   minWidth: { xs: 40, sm: 46, md: 60 },
+              //   height: { xs: 40, sm: 46, md: 30 },
+              // }}
+              sx={Buttonsx}
+              onClick={handleCancel}
+              disabled={mode === null}
               variant="contained"
             >
               Cancel
