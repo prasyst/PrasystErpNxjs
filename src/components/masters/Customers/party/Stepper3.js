@@ -31,6 +31,9 @@ import z from 'zod';
 const FORM_MODE = getFormMode();
 
 const Stepper3 = ({ formData, setFormData, isFormDisabled }) => {
+  console.log("Stepper3 full formData:", formData?.CLIENTTERMSEntities?.[0]?.Area);
+
+  const clientData = formData?.CLIENTTERMSEntities?.[0];
 
   const textInputSx = {
     '& .MuiInputBase-root': {
@@ -132,7 +135,11 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled }) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: value
+      [name]: value,
+      CLIENTTERMSEntities: [{
+        ...prev.CLIENTTERMSEntities?.[0],
+        [name]: value
+      }]
     }));
   };
 
@@ -142,7 +149,11 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled }) => {
 
     setFormData(prev => ({
       ...prev,
-      [name]: updatedStatus
+      [name]: updatedStatus,
+      CLIENTTERMSEntities: [{
+        ...prev.CLIENTTERMSEntities?.[0],
+        [name]: updatedStatus
+      }]
     }));
   };
 
@@ -181,7 +192,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled }) => {
               options={[]}
               label="Group"
               name="CLIENTGRP_KEY"
-              value={formData.CLIENTGRP_KEY || 0}
+              value={clientData?.CLIENTGRP_KEY || 0}
               onChange={handleInputChange}
               sx={DropInputSx}
               inputProps={{
@@ -201,7 +212,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled }) => {
               options={[]}
               label="Category"
               name="CLIENTCAT_KEY"
-              value={formData.CLIENTCAT_KEY || 0}
+              value={clientData?.CLIENTCAT_KEY || 0}
               onChange={handleInputChange}
               sx={DropInputSx}
               inputProps={{
@@ -221,7 +232,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled }) => {
               options={[]}
               label="Sale Type"
               name="SaleType_Id"
-              value={formData.SaleType_Id || ""}
+              value={clientData?.SaleType_Id || ""}
               onChange={handleInputChange}
               sx={DropInputSx}
               inputProps={{
@@ -247,7 +258,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled }) => {
               options={[]}
               label="Salesperson 1"
               name="SALEPERSON1_KEY"
-              value={formData.SALEPERSON1_KEY || 0}
+              value={clientData?.SALEPERSON1_KEY || 0}
               onChange={handleInputChange}
               sx={DropInputSx}
               inputProps={{
@@ -266,7 +277,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled }) => {
               options={[]}
               label="Salesperson 2"
               name="SALEPERSON2_KEY"
-              value={formData.SALEPERSON2_KEY || 0}
+              value={clientData?.SALEPERSON2_KEY || 0}
               onChange={handleInputChange}
               sx={DropInputSx}
               inputProps={{
@@ -285,7 +296,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled }) => {
               options={[]}
               label="Broker"
               name="BROKER_KEY"
-              value={formData.BROKER_KEY || 0}
+              value={clientData?.BROKER_KEY || 0}
               onChange={handleInputChange}
               sx={DropInputSx}
               inputProps={{
@@ -305,7 +316,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled }) => {
               options={[]}
               label="Broker1"
               name="BROKER1_KEY"
-              value={formData.BROKER1_KEY || 0}
+              value={clientData?.BROKER1_KEY || 0}
               onChange={handleInputChange}
               sx={DropInputSx}
               inputProps={{
@@ -325,7 +336,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled }) => {
               options={[]}
               label="Transporter"
               name="TRSP_KEY"
-              value={formData.TRSP_KEY || ""}
+              value={clientData?.TRSP_KEY || ""}
               onChange={handleInputChange}
               sx={DropInputSx}
               inputProps={{
@@ -352,7 +363,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled }) => {
               options={[]}
               label="Trade Disc"
               name="TRADE_DISC"
-              value={formData.TRADE_DISC || 0}
+              value={clientData?.TRADE_DISC || 0}
               onChange={handleInputChange}
               sx={DropInputSx}
               inputProps={{
@@ -389,8 +400,8 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled }) => {
               variant="filled"
               fullWidth
               onChange={handleInputChange}
-              value={formData.COMM_RATE || ""}
-              disabled={""}
+              value={clientData?.COMM_RATE || ""}
+              disabled={isFormDisabled}
               name="COMM_RATE"
               sx={textInputSx}
               inputProps={{
@@ -403,9 +414,9 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled }) => {
           </Box>
           <Box sx={{ width: { xs: '100%', sm: '20%', md: '16.5%' } }}>
             <FormControlLabel
-              control={<Checkbox name="COMM_ONGROSS" size="small" checked={formData.COMM_ONGROSS === "1"}
+              control={<Checkbox name="COMM_ONGROSS" size="small" checked={clientData?.COMM_ONGROSS === "1"}
                 onChange={handleChangeStatus} />}
-              disabled={""}
+              disabled={isFormDisabled}
               label="Commission On Gross Amt"
               sx={{
                 '& .MuiFormControlLabel-label': { fontSize: '12px' }
@@ -430,7 +441,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled }) => {
               options={[]}
               label="Form Type"
               name="CFORM_FLG"
-              value={formData.CFORM_FLG || 0}
+              value={clientData?.CFORM_FLG || 0}
               onChange={handleInputChange}
               sx={DropInputSx}
               inputProps={{
@@ -456,7 +467,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled }) => {
               options={[]}
               label="Cash Desc"
               name="DISC_KEY"
-              value={formData.DISC_KEY || ""}
+              value={clientData?.DISC_KEY || ""}
               onChange={handleInputChange}
               sx={DropInputSx}
               inputProps={{
@@ -474,8 +485,8 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled }) => {
               variant="filled"
               fullWidth
               onChange={handleInputChange}
-              value={formData.CR_LIMIT || ""}
-              disabled={""}
+              value={clientData?.CR_LIMIT || ""}
+              disabled={isFormDisabled}
               name="CR_LIMIT"
               sx={textInputSx}
               inputProps={{
@@ -493,8 +504,8 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled }) => {
               variant="filled"
               fullWidth
               onChange={handleInputChange}
-              value={formData.CR_PERIOD || ""}
-              disabled={""}
+              value={clientData?.CR_PERIOD || ""}
+              disabled={isFormDisabled}
               name="CR_PERIOD"
               sx={textInputSx}
               inputProps={{
@@ -512,16 +523,16 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled }) => {
               name="RDOFF"
               onChange={handleInputChange}
               disabled={isFormDisabled}
-              value={formData.RDOFF || ""}
+              value={clientData?.RDOFF || ""}
               sx={{ margin: '5px 0px 0px 0px' }}
             >
-              <FormControlLabel disabled={''}
+              <FormControlLabel disabled={isFormDisabled}
                 value="N" control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
                 label={<Typography sx={{ fontSize: '12px' }}>None</Typography>} />
-              <FormControlLabel disabled={''}
+              <FormControlLabel disabled={isFormDisabled}
                 value="NR" control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
                 label={<Typography sx={{ fontSize: '12px' }}>Nearest Re</Typography>} />
-              <FormControlLabel disabled={''}
+              <FormControlLabel disabled={isFormDisabled}
                 value="R" control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
                 label={<Typography sx={{ fontSize: '12px' }}>Rs.5</Typography>} />
             </RadioGroup>
@@ -533,8 +544,8 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled }) => {
               variant="filled"
               fullWidth
               onChange={handleInputChange}
-              value={formData.INT_PERC || ""}
-              disabled={""}
+              value={clientData?.INT_PERC || ""}
+              disabled={isFormDisabled}
               name="INT_PERC"
               sx={textInputSx}
               inputProps={{
@@ -554,9 +565,9 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled }) => {
         }}>
           <Box sx={{ width: { xs: '100%', sm: '20%', md: '16.1%' } }}>
             <FormControlLabel
-              control={<Checkbox name="STOP_DESP" size="small" checked={formData.STOP_DESP === "1"}
+              control={<Checkbox name="STOP_DESP" size="small" checked={clientData?.STOP_DESP === "1"}
                 onChange={handleChangeStatus} />}
-              disabled={""}
+              disabled={isFormDisabled}
               label="Stop Dispatch"
               sx={{
                 '& .MuiFormControlLabel-label': { fontSize: '12px' }
@@ -603,8 +614,8 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled }) => {
               variant="filled"
               fullWidth
               onChange={handleInputChange}
-              value={formData.DLV_PLACE || ""}
-              disabled={""}
+              value={clientData?.DLV_PLACE || ""}
+              disabled={isFormDisabled}
               name="DLV_PLACE"
               sx={textInputSx}
               inputProps={{
@@ -628,8 +639,8 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled }) => {
               variant="filled"
               fullWidth
               onChange={handleInputChange}
-              value={formData.RATING || ""}
-              disabled={""}
+              value={clientData?.RATING || ""}
+              disabled={isFormDisabled}
               name="RATING"
               sx={textInputSx}
               inputProps={{
@@ -646,8 +657,8 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled }) => {
               variant="filled"
               fullWidth
               onChange={handleInputChange}
-              value={formData.INSURANCE || ""}
-              disabled={""}
+              value={clientData?.INSURANCE || ""}
+              disabled={isFormDisabled}
               name="INSURANCE"
               sx={textInputSx}
               inputProps={{
@@ -664,8 +675,8 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled }) => {
               variant="filled"
               fullWidth
               onChange={handleInputChange}
-              value={formData.UsageRemk || ""}
-              disabled={""}
+              value={clientData?.UsageRemk || ""}
+              disabled={isFormDisabled}
               name="UsageRemk"
               sx={textInputSx}
               inputProps={{
@@ -684,7 +695,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled }) => {
               options={[]}
               label="Tax Appbl"
               name="TAX_KEY"
-              value={formData.TAX_KEY || ""}
+              value={clientData?.TAX_KEY || ""}
               onChange={handleInputChange}
               sx={DropInputSx}
               inputProps={{
@@ -708,8 +719,8 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled }) => {
               variant="filled"
               fullWidth
               onChange={handleInputChange}
-              value={formData.Area || ""}
-              disabled={""}
+              value={clientData?.Area || ""}
+              disabled={isFormDisabled}
               name="Area"
               sx={textInputSx}
               inputProps={{
@@ -726,8 +737,8 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled }) => {
               variant="filled"
               fullWidth
               onChange={handleInputChange}
-              value={formData.Product || ""}
-              disabled={""}
+              value={clientData?.Product || ""}
+              disabled={isFormDisabled}
               name="Product"
               sx={textInputSx}
               inputProps={{
@@ -744,8 +755,8 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled }) => {
               variant="filled"
               fullWidth
               onChange={handleInputChange}
-              value={formData.TARGET_PERC || ""}
-              disabled={""}
+              value={clientData?.TARGET_PERC || ""}
+              disabled={isFormDisabled}
               name="TARGET_PERC"
               sx={textInputSx}
               inputProps={{
@@ -769,8 +780,8 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled }) => {
               variant="filled"
               fullWidth
               onChange={handleInputChange}
-              value={formData.SPL_INSTR || ""}
-              disabled={""}
+              value={clientData?.SPL_INSTR || ""}
+              disabled={isFormDisabled}
               name="SPL_INSTR"
               sx={doubleInputSx}
               inputProps={{
@@ -793,8 +804,8 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled }) => {
               variant="filled"
               fullWidth
               onChange={handleInputChange}
-              value={formData.SETTELEMENT_REMK || ""}
-              disabled={""}
+              value={clientData?.SETTELEMENT_REMK || ""}
+              disabled={isFormDisabled}
               name="SETTELEMENT_REMK"
               sx={doubleInputSx}
               inputProps={{
@@ -819,7 +830,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled }) => {
               fullWidth
               onChange={handleInputChange}
               disabled={isFormDisabled}
-              value={formData.SETTELEMENT_DT || 0}
+              value={clientData?.SETTELEMENT_DT || 0}
               name="SETTELEMENT_DT"
               sx={textInputSx}
               InputLabelProps={{
@@ -831,8 +842,8 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled }) => {
               variant="filled"
               fullWidth
               onChange={handleInputChange}
-              value={formData.SETTELEMENT_AMT || ""}
-              disabled={""}
+              value={clientData?.SETTELEMENT_AMT || ""}
+              disabled={isFormDisabled}
               name="SETTELEMENT_AMT"
               sx={textInputSx}
               inputProps={{
@@ -852,20 +863,3 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled }) => {
 }
 
 export default Stepper3;
-
-// export default function Wrapper() {
-//   const [formData, setFormData] = useState({});
-
-//   return (
-//     <Suspense fallback={<Box>Loading...</Box>}>
-//       <Stepper3 formData={formData} setFormData={setFormData}/>
-//     </Suspense>
-//   );
-// }
-
-
-
-
-
-
-

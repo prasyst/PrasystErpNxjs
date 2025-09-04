@@ -32,6 +32,9 @@ import SearchIcon from "@mui/icons-material/Search";
 const FORM_MODE = getFormMode();
 
 const Stepper2 = ({ formData, setFormData, isFormDisabled }) => {
+  console.log("Stepper2 full formData:", formData);
+
+  const partyData = formData?.PartyDtlEntities?.[0];
 
   const textInputSx = {
     '& .MuiInputBase-root': {
@@ -133,7 +136,11 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled }) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: value
+      [name]: value,
+      PartyDtlEntities: [{
+        ...prev.PartyDtlEntities?.[0],
+        [name]: value
+      }]
     }));
   };
 
@@ -143,12 +150,20 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled }) => {
 
     setFormData(prev => ({
       ...prev,
-      [name]: updatedStatus
+      [name]: updatedStatus,
+      PartyDtlEntities: [{
+        ...prev.PartyDtlEntities?.[0],
+        [name]: updatedStatus
+      }]
     }));
   };
 
   const columns = [
-
+    { id: 'MAIN_BRANCH', label: 'Branch', minWidth: 150 },
+    { id: 'E_MAIL', label: 'Email', minWidth: 150 },
+    { id: 'WEBSITE', label: 'Website', minWidth: 150 },
+    { id: 'MOBILE_NO', label: 'MOBILE', minWidth: 150 },
+    { id: 'PINCODE', label: 'Pincode', minWidth: 150 },
   ];
 
   const rows = [
@@ -168,6 +183,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled }) => {
 
       >
         <Grid item xs={12}>
+
           <Paper
             elevation={1}
             sx={{
@@ -197,32 +213,6 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled }) => {
                         <Typography variant="caption" sx={{ fontWeight: 600 }}>
                           {column.label}
                         </Typography>
-                        <TextField
-                          variant="outlined"
-                          size="small"
-                          placeholder="Search"
-                          fullWidth
-                          InputProps={{
-                            startAdornment: (
-                              <InputAdornment position="start">
-                                <SearchIcon sx={{ fontSize: 16 }} />
-                              </InputAdornment>
-                            ),
-                          }}
-                          sx={{
-                            mt: 0.5,
-                            "& .MuiOutlinedInput-root": {
-                              height: 28,
-                              fontSize: "0.75rem",
-                              borderRadius: "4px",
-                              padding: "0px",
-                              backgroundColor: "#fff",
-                            },
-                            "& input": {
-                              padding: "0px 6px",
-                            },
-                          }}
-                        />
                       </TableCell>
                     ))}
                   </TableRow>
@@ -257,6 +247,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled }) => {
               </Table>
             </TableContainer>
           </Paper>
+
         </Grid>
 
         <Stack direction="row" spacing={2}>
@@ -314,8 +305,8 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled }) => {
               variant="filled"
               fullWidth
               onChange={handleInputChange}
-              value={formData.ADDR || ""}
-              disabled={""}
+              value={partyData?.ADDR || ""}
+              disabled={isFormDisabled}
               name="ADDR"
               sx={doubleInputSx}
               inputProps={{
@@ -340,7 +331,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled }) => {
               options={[]}
               label="Country"
               name="CONT_KEY"
-              value={formData.CONT_KEY || 0}
+              value={partyData?.CONT_KEY || 0}
               onChange={handleInputChange}
               sx={DropInputSx}
               inputProps={{
@@ -360,8 +351,8 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled }) => {
                 variant="filled"
                 fullWidth
                 onChange={handleInputChange}
-                value={formData.PINCODE || ""}
-                disabled={""}
+                value={partyData?.PINCODE || ""}
+                disabled={isFormDisabled}
                 name="PINCODE"
                 sx={textInputSx}
                 inputProps={{
@@ -427,7 +418,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled }) => {
                 options={[]}
                 label="City/District"
                 name="CITY_KEY"
-                value={formData.CITY_KEY || 0}
+                value={partyData?.CITY_KEY || 0}
                 onChange={handleInputChange}
                 sx={DropInputSx}
                 inputProps={{
@@ -456,8 +447,8 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled }) => {
                   variant="filled"
                   fullWidth
                   onChange={handleInputChange}
-                  value={formData.TEL_NO || ""}
-                  disabled={""}
+                  value={partyData?.TEL_NO || ""}
+                  disabled={isFormDisabled}
                   name="TEL_NO"
                   sx={textInputSx}
                   inputProps={{
@@ -473,8 +464,8 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled }) => {
                 variant="filled"
                 fullWidth
                 onChange={handleInputChange}
-                value={formData.E_MAIL || ""}
-                disabled={""}
+                value={partyData?.E_MAIL || ""}
+                disabled={isFormDisabled}
                 name="E_MAIL"
                 sx={textInputSx}
                 inputProps={{
@@ -499,8 +490,8 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled }) => {
               variant="filled"
               fullWidth
               onChange={handleInputChange}
-              value={formData.CONTACT_PERSON || ""}
-              disabled={""}
+              value={partyData?.CONTACT_PERSON || ""}
+              disabled={isFormDisabled}
               name="CONTACT_PERSON"
               sx={textInputSx}
               inputProps={{
@@ -517,8 +508,8 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled }) => {
               variant="filled"
               fullWidth
               onChange={handleInputChange}
-              value={formData.MOBILE_NO || ""}
-              disabled={""}
+              value={partyData?.MOBILE_NO || ""}
+              disabled={isFormDisabled}
               name="MOBILE_NO"
               sx={textInputSx}
               inputProps={{
@@ -535,8 +526,8 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled }) => {
               variant="filled"
               fullWidth
               onChange={handleInputChange}
-              value={formData.WEBSITE || ""}
-              disabled={""}
+              value={partyData?.WEBSITE || ""}
+              disabled={isFormDisabled}
               name="WEBSITE"
               sx={textInputSx}
               inputProps={{
@@ -602,8 +593,8 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled }) => {
               variant="filled"
               fullWidth
               onChange={handleInputChange}
-              value={formData.FAX_NO || ""}
-              disabled={""}
+              value={partyData?.FAX_NO || ""}
+              disabled={isFormDisabled}
               name="FAX_NO"
               sx={textInputSx}
               inputProps={{
@@ -642,8 +633,8 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled }) => {
               variant="filled"
               fullWidth
               onChange={handleInputChange}
-              value={formData.EXCISE_CODE || ""}
-              disabled={""}
+              value={partyData?.EXCISE_CODE || ""}
+              disabled={isFormDisabled}
               name="EXCISE_CODE"
               sx={textInputSx}
               inputProps={{
@@ -660,7 +651,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled }) => {
               options={[]}
               label="Trade Disc"
               name="TRADE_DISC"
-              value={formData.TRADE_DISC || ""}
+              value={partyData?.TRADE_DISC || ""}
               onChange={handleInputChange}
               sx={DropInputSx}
               inputProps={{
@@ -683,8 +674,8 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled }) => {
               variant="filled"
               fullWidth
               onChange={handleInputChange}
-              value={formData.VAT || ""}
-              disabled={""}
+              value={partyData?.VAT || ""}
+              disabled={isFormDisabled}
               name="VAT"
               sx={textInputSx}
               inputProps={{
@@ -701,7 +692,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled }) => {
               options={[]}
               label="Transporter"
               name="TRSP_KEY"
-              value={formData.TRSP_KEY || 0}
+              value={partyData?.TRSP_KEY || 0}
               onChange={handleInputChange}
               sx={DropInputSx}
               inputProps={{
@@ -724,8 +715,8 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled }) => {
               variant="filled"
               fullWidth
               onChange={handleInputChange}
-              value={formData.CST || ""}
-              disabled={""}
+              value={partyData?.CST || ""}
+              disabled={isFormDisabled}
               name="CST"
               sx={textInputSx}
               inputProps={{
@@ -742,7 +733,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled }) => {
               options={[]}
               label="Tax Appl"
               name="TAX_KEY"
-              value={formData.TAX_KEY || ""}
+              value={partyData?.TAX_KEY || ""}
               onChange={handleInputChange}
               sx={DropInputSx}
               inputProps={{
@@ -767,7 +758,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled }) => {
               options={[]}
               label="Form Type"
               name="CFORM_FLG"
-              value={formData.CFORM_FLG || 0}
+              value={partyData?.CFORM_FLG || 0}
               onChange={handleInputChange}
               sx={DropInputSx}
               inputProps={{
@@ -782,8 +773,8 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled }) => {
               variant="filled"
               fullWidth
               onChange={handleInputChange}
-              value={formData.GSTTIN_NO || ""}
-              disabled={""}
+              value={partyData?.GSTTIN_NO || ""}
+              disabled={isFormDisabled}
               name="GSTTIN_NO"
               sx={textInputSx}
               inputProps={{
@@ -807,8 +798,8 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled }) => {
               variant="filled"
               fullWidth
               onChange={handleInputChange}
-              value={formData.REMK || ""}
-              disabled={""}
+              value={partyData?.REMK || ""}
+              disabled={isFormDisabled}
               name="REMK"
               sx={textInputSx}
               inputProps={{
@@ -828,17 +819,17 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled }) => {
               row
               name="RDOFF"
               onChange={handleInputChange}
-              disabled={''}
-              value={formData.RDOFF || ""}
+              disabled={isFormDisabled}
+              value={partyData?.RDOFF || ""}
               sx={{ margin: '5px 0px 0px 0px' }}
             >
-              <FormControlLabel disabled={''}
+              <FormControlLabel disabled={isFormDisabled}
                 value="N" control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
                 label={<Typography sx={{ fontSize: '12px' }}>None</Typography>} />
-              <FormControlLabel disabled={''}
+              <FormControlLabel disabled={isFormDisabled}
                 value="NR" control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
                 label={<Typography sx={{ fontSize: '12px' }}>Nearest Re</Typography>} />
-              <FormControlLabel disabled={''}
+              <FormControlLabel disabled={isFormDisabled}
                 value="R" control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
                 label={<Typography sx={{ fontSize: '12px' }}>Rs.5</Typography>} />
             </RadioGroup>
@@ -856,14 +847,14 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled }) => {
               row
               name="SEZ"
               onChange={handleInputChange}
-              disabled={''}
-              value={formData.SEZ || ""}
+              disabled={isFormDisabled}
+              value={partyData?.SEZ || ""}
               sx={{ margin: '5px 0px 0px 0px' }}
             >
-              <FormControlLabel disabled={''}
+              <FormControlLabel disabled={isFormDisabled}
                 value="Y" control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
                 label={<Typography sx={{ fontSize: '12px' }}>Yes</Typography>} />
-              <FormControlLabel disabled={''}
+              <FormControlLabel disabled={isFormDisabled}
                 value="N" control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
                 label={<Typography sx={{ fontSize: '12px' }}>No</Typography>} />
             </RadioGroup>
@@ -888,35 +879,35 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled }) => {
               row
               name="RD_URD"
               onChange={handleInputChange}
-              disabled={''}
-              value={formData.RD_URD || ""}
+              disabled={isFormDisabled}
+              value={partyData?.RD_URD || ""}
               sx={{ margin: '5px 0px 0px 0px' }}
             >
-              <FormControlLabel disabled={''}
+              <FormControlLabel disabled={isFormDisabled}
                 value="R" control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
                 label={<Typography sx={{ fontSize: '12px' }}>RD</Typography>} />
-              <FormControlLabel disabled={''}
+              <FormControlLabel disabled={isFormDisabled}
                 value="U" control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
                 label={<Typography sx={{ fontSize: '12px' }}>URD</Typography>} />
-              <FormControlLabel disabled={''}
+              <FormControlLabel disabled={isFormDisabled}
                 value="C" control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
                 label={<Typography sx={{ fontSize: '12px' }}>Composition</Typography>} />
             </RadioGroup>
           </Box>
 
           <FormControlLabel
-            control={<Checkbox name="STATUS" size="small" checked={formData.STATUS === "1"}
-            onChange={handleChangeStatus} />}
-            disabled={""}
+            control={<Checkbox name="STATUS" size="small" checked={partyData?.STATUS === "1"}
+              onChange={handleChangeStatus} />}
+            disabled={isFormDisabled}
             label="Active"
             sx={{
               '& .MuiFormControlLabel-label': { fontSize: '12px' }
             }}
           />
           <FormControlLabel
-            control={<Checkbox name="DEFAULT_BRANCH" size="small" checked={formData.DEFAULT_BRANCH === "1"}
-            onChange={handleChangeStatus} />}
-            disabled={""}
+            control={<Checkbox name="DEFAULT_BRANCH" size="small" checked={partyData?.DEFAULT_BRANCH === "1"}
+              onChange={handleChangeStatus} />}
+            disabled={isFormDisabled}
             label="Default Branch"
             sx={{
               '& .MuiFormControlLabel-label': { fontSize: '12px' }
@@ -954,20 +945,3 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled }) => {
 }
 
 export default Stepper2;
-
-// export default function Wrapper() {
-//   const [formData, setFormData] = useState({});
-
-//   return (
-//     <Suspense fallback={<Box>Loading...</Box>}>
-//       <Stepper2 formData={formData} setFormData={setFormData} />
-//     </Suspense>
-//   );
-// }
-
-
-
-
-
-
-

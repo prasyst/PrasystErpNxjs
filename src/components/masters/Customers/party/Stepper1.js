@@ -30,7 +30,7 @@ import z from 'zod';
 const FORM_MODE = getFormMode();
 
 const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
-  console.log("Stepper1 received abc:", formData?.LASTID);
+  console.log("Stepper1 full formData:", formData);
 
   const textInputSx = {
     '& .MuiInputBase-root': {
@@ -169,7 +169,7 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
           <Box sx={{ width: { xs: '100%', sm: '20%', md: '33.5%' } }}>
             <TextField
               label="Name"
-              disabled={""}
+              disabled={isFormDisabled}
               name="PARTY_NAME"
               variant="filled"
               fullWidth
@@ -190,8 +190,8 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
               disabled={isFormDisabled}
               variant="filled"
               fullWidth
-              name="LASTID"
-              value={formData.LASTID || ""}
+              name="ID"
+              value={formData?.ID || ""}
               onChange={handleInputChange}
               sx={textInputSx}
               inputProps={{
@@ -209,7 +209,7 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
               fullWidth
               onChange={handleInputChange}
               name="PARTY_ALT_CODE"
-              value={formData.PARTY_ALT_CODE || ""}
+              value={formData?.PARTY_ALT_CODE || ""}
               disabled={true}
               sx={textInputSx}
               inputProps={{
@@ -226,9 +226,9 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
               variant="filled"
               fullWidth
               name="PARTY_ABRV"
-              value={formData.PARTY_ABRV || ""}
+              value={formData?.PARTY_ABRV || ""}
               onChange={handleInputChange}
-              disabled={""}
+              disabled={isFormDisabled}
               sx={textInputSx}
               inputProps={{
                 style: {
@@ -244,8 +244,8 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
               row
               name="RD_URD"
               onChange={handleInputChange}
-              disabled={''}
-              value={formData.RD_URD || ""}
+              disabled={isFormDisabled}
+              value={formData?.RD_URD || ""}
               sx={{ margin: '5px 0px 0px 0px' }}
             >
               <FormControlLabel disabled={''}
@@ -272,9 +272,9 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
               variant="filled"
               fullWidth
               onChange={handleInputChange}
-              value={formData.PRINTNAME || ""}
+              value={formData?.PRINTNAME || ""}
               name="PRINTNAME"
-              disabled={""}
+              disabled={isFormDisabled}
               sx={textInputSx}
               inputProps={{
                 style: {
@@ -292,7 +292,7 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
               options={[]}
               label="Country"
               name="CONT_KEY"
-              value={formData.CONT_KEY || 0}
+              value={formData?.CONT_KEY || 0}
               onChange={handleInputChange}
               sx={DropInputSx}
               inputProps={{
@@ -335,8 +335,8 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
               variant="filled"
               fullWidth
               onChange={handleInputChange}
-              value={formData.ADDR || ""}
-              disabled={""}
+              value={formData?.ADDR || ""}
+              disabled={isFormDisabled}
               name="ADDR"
               sx={doubleInputSx}
               inputProps={{
@@ -361,7 +361,7 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
               options={[]}
               label="City/District"
               name="CITY_KEY"
-              value={formData.CITY_KEY || 0}
+              value={formData?.CITY_KEY || 0}
               onChange={handleInputChange}
               sx={DropInputSx}
               inputProps={{
@@ -381,7 +381,7 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
                 variant="filled"
                 fullWidth
                 onChange={handleInputChange}
-                value={formData.PINCODE || ""}
+                value={formData?.PINCODE || ""}
                 disabled={isFormDisabled}
                 name="PINCODE"
                 sx={textInputSx}
@@ -423,8 +423,8 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
               variant="filled"
               fullWidth
               onChange={handleInputChange}
-              value={formData.PLACE || ""}
-              disabled={""}
+              value={formData?.PLACE || ""}
+              disabled={isFormDisabled}
               name="PLACE"
               sx={textInputSx}
               inputProps={{
@@ -452,8 +452,8 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
                   variant="filled"
                   fullWidth
                   onChange={handleInputChange}
-                  value={formData.TEL_NO || ""}
-                  disabled={""}
+                  value={formData?.TEL_NO || ""}
+                  disabled={isFormDisabled}
                   name="TEL_NO"
                   sx={textInputSx}
                   inputProps={{
@@ -469,8 +469,8 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
                 variant="filled"
                 fullWidth
                 onChange={handleInputChange}
-                value={formData.E_MAIL || ""}
-                disabled={""}
+                value={formData?.E_MAIL || ""}
+                disabled={isFormDisabled}
                 name="E_MAIL"
                 sx={textInputSx}
                 inputProps={{
@@ -496,7 +496,7 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
               name="MSME_FLAG"
               onChange={handleInputChange}
               disabled={isFormDisabled}
-              value={formData.MSME_FLAG || ""}
+              value={formData?.MSME_FLAG || ""}
               sx={{ margin: '5px 0px 0px 0px' }}
             >
               <FormControlLabel disabled={''}
@@ -513,7 +513,7 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
               variant="filled"
               fullWidth
               onChange={handleInputChange}
-              value={formData.MSME_NO || ""}
+              value={formData?.MSME_NO || ""}
               disabled={isFormDisabled}
               name="MSME_NO"
               sx={textInputSx}
@@ -533,7 +533,7 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
               options={[]}
               label="MSME Trade"
               name="MSME_TR"
-              value={formData.MSME_TR || 0}
+              value={formData?.MSME_TR || 0}
               onChange={handleInputChange}
               sx={DropInputSx}
               inputProps={{
@@ -552,7 +552,7 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
               options={[]}
               label="MSME Act"
               name="MSME_ACT"
-              value={formData.MSME_ACT || 0}
+              value={formData?.MSME_ACT || 0}
               onChange={handleInputChange}
               sx={DropInputSx}
               inputProps={{
@@ -571,7 +571,7 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
               options={[]}
               label="MSME Class"
               name="MSME_CLASS"
-              value={formData.MSME_CLASS || 0}
+              value={formData?.MSME_CLASS || 0}
               onChange={handleInputChange}
               sx={DropInputSx}
               inputProps={{
@@ -595,8 +595,8 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
               variant="filled"
               fullWidth
               onChange={handleInputChange}
-              value={formData.CONTACT_PERSON || ""}
-              disabled={""}
+              value={formData?.CONTACT_PERSON || ""}
+              disabled={isFormDisabled}
               name="CONTACT_PERSON"
               sx={textInputSx}
               inputProps={{
@@ -615,7 +615,7 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
               options={[]}
               label="Degn"
               name="CONTDESG"
-              value={formData.CONTDESG || 0}
+              value={formData?.CONTDESG || 0}
               onChange={handleInputChange}
               sx={DropInputSx}
               inputProps={{
@@ -632,8 +632,8 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
               variant="filled"
               fullWidth
               onChange={handleInputChange}
-              value={formData.MOBILE_NO || ""}
-              disabled={""}
+              value={formData?.MOBILE_NO || ""}
+              disabled={isFormDisabled}
               name="MOBILE_NO"
               sx={textInputSx}
               inputProps={{
@@ -650,8 +650,8 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
               variant="filled"
               fullWidth
               onChange={handleInputChange}
-              value={formData.WEBSITE}
-              disabled={""}
+              value={formData?.WEBSITE}
+              disabled={isFormDisabled}
               name="WEBSITE"
               sx={textInputSx}
               inputProps={{
@@ -664,9 +664,9 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
           </Box>
           <Box sx={{ width: { xs: '100%', sm: '20%', md: '20.6%' } }}>
             <FormControlLabel
-              control={<Checkbox name="MANUAL_WSP" size="small" checked={formData.MANUAL_WSP === "1"}
+              control={<Checkbox name="MANUAL_WSP" size="small" checked={formData?.MANUAL_WSP === "1"}
               onChange={handleChangeStatus} />}
-              disabled={""}
+              disabled={isFormDisabled}
               label="Manual WSP"
               sx={{
                 '& .MuiFormControlLabel-label': { fontSize: '12px' }
@@ -686,8 +686,8 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
               variant="filled"
               fullWidth
               onChange={handleInputChange}
-              value={formData.REG_ADD || ""}
-              disabled={""}
+              value={formData?.REG_ADD || ""}
+              disabled={isFormDisabled}
               name="REG_ADD"
               sx={doubleInputSx}
               inputProps={{
@@ -710,8 +710,8 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
               variant="filled"
               fullWidth
               onChange={handleInputChange}
-              value={formData.EXCISE_CODE || ""}
-              disabled={""}
+              value={formData?.EXCISE_CODE || ""}
+              disabled={isFormDisabled}
               name="EXCISE_CODE"
               sx={textInputSx}
               inputProps={{
@@ -726,8 +726,8 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
               variant="filled"
               fullWidth
               onChange={handleInputChange}
-              value={formData.CST || ""}
-              disabled={""}
+              value={formData?.CST || ""}
+              disabled={isFormDisabled}
               name="CST"
               sx={textInputSx}
               inputProps={{
@@ -750,8 +750,8 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
               variant="filled"
               fullWidth
               onChange={handleInputChange}
-              value={formData.VAT || ""}
-              disabled={""}
+              value={formData?.VAT || ""}
+              disabled={isFormDisabled}
               name="VAT"
               sx={textInputSx}
               inputProps={{
@@ -768,7 +768,7 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
               options={[]}
               label="GL-Control A/c"
               name="ACCLED_ID"
-              value={formData.ACCLED_ID || 0}
+              value={formData?.ACCLED_ID || 0}
               onChange={handleInputChange}
               sx={DropInputSx}
               inputProps={{
@@ -791,8 +791,8 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
               variant="filled"
               fullWidth
               onChange={handleInputChange}
-              value={formData.PAN_NO || ""}
-              disabled={""}
+              value={formData?.PAN_NO || ""}
+              disabled={isFormDisabled}
               name="PAN_NO"
               sx={textInputSx}
               inputProps={{
@@ -807,8 +807,8 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
               variant="filled"
               fullWidth
               onChange={handleInputChange}
-              value={formData.TAN_NO || ""}
-              disabled={""}
+              value={formData?.TAN_NO || ""}
+              disabled={isFormDisabled}
               name="TAN_NO"
               sx={textInputSx}
               inputProps={{
@@ -832,8 +832,8 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
               variant="filled"
               fullWidth
               onChange={handleInputChange}
-              value={formData.WebUserName || ""}
-              disabled={""}
+              value={formData?.WebUserName || ""}
+              disabled={isFormDisabled}
               name="WebUserName"
               sx={textInputSx}
               inputProps={{
@@ -850,8 +850,8 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
               variant="filled"
               fullWidth
               onChange={handleInputChange}
-              value={formData.WebPassword || ""}
-              disabled={""}
+              value={formData?.WebPassword || ""}
+              disabled={isFormDisabled}
               name="WebPassword"
               sx={textInputSx}
               inputProps={{
@@ -870,7 +870,7 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
               options={[]}
               label="Company"
               name="CO_ID" 
-              value={formData.CO_ID || 0}
+              value={formData?.CO_ID || 0}
               onChange={handleInputChange}
               sx={DropInputSx}
               inputProps={{
@@ -887,8 +887,8 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
               variant="filled"
               fullWidth
               onChange={handleInputChange}
-              value={formData.SMS_MOBILENO || ""}
-              disabled={""}
+              value={formData?.SMS_MOBILENO || ""}
+              disabled={isFormDisabled}
               name="SMS_MOBILENO"
               sx={textInputSx}
               inputProps={{
@@ -901,9 +901,9 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
           </Box>
           <Box sx={{ width: { xs: '100%', sm: '20%', md: '0%' } }}>
             <FormControlLabel
-              control={<Checkbox name="STATUS" size="small" checked={formData.STATUS === "1"}
+              control={<Checkbox name="STATUS" size="small" checked={formData?.STATUS === "1"}
                 onChange={handleChangeStatus} />}
-              disabled={""}
+              disabled={isFormDisabled}
               label="Active"
               sx={{
                 '& .MuiFormControlLabel-label': { fontSize: '12px' }
@@ -925,7 +925,7 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
               options={[]}
               label="Party Class"
               name="PARTY_CLASS_KEY"
-              value={formData.PARTY_CLASS_KEY || 0}
+              value={formData?.PARTY_CLASS_KEY || 0}
               onChange={handleInputChange}
               sx={DropInputSx}
               inputProps={{
@@ -938,9 +938,9 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
           </Box>
           <Box sx={{ width: { xs: '100%', sm: '20%', md: '11%' } }}>
             <FormControlLabel
-              control={<Checkbox name="DEFAULT_BRANCH" size="small" checked={formData.DEFAULT_BRANCH === "1"}
+              control={<Checkbox name="DEFAULT_BRANCH" size="small" checked={formData?.DEFAULT_BRANCH === "1"}
               onChange={handleChangeStatus} />}
-              disabled={""}
+              disabled={isFormDisabled}
               label="Default Branch"
               sx={{
                 '& .MuiFormControlLabel-label': { fontSize: '12px' }
@@ -953,8 +953,8 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
               variant="filled"
               fullWidth
               onChange={handleInputChange}
-              value={formData.GSTTIN_NO || ""}
-              disabled={""}
+              value={formData?.GSTTIN_NO || ""}
+              disabled={isFormDisabled}
               name="GSTTIN_NO"
               sx={textInputSx}
               inputProps={{
@@ -973,7 +973,7 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
               options={[]}
               label="TCS"
               name="TCS_TERM_KEY"
-              value={formData.TCS_TERM_KEY || 0}
+              value={formData?.TCS_TERM_KEY || 0}
               onChange={handleInputChange}
               sx={DropInputSx}
               inputProps={{
@@ -996,13 +996,13 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
               name="SEZ"
               onChange={handleInputChange}
               disabled={isFormDisabled}
-              value={formData.SEZ || ""}
+              value={formData?.SEZ || ""}
               sx={{ margin: '5px 0px 0px 0px' }}
             >
-              <FormControlLabel disabled={''}
+              <FormControlLabel disabled={isFormDisabled}
                 value="Y" control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
                 label={<Typography sx={{ fontSize: '12px' }}>Yes</Typography>} />
-              <FormControlLabel disabled={''}
+              <FormControlLabel disabled={isFormDisabled}
                 value="N" control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
                 label={<Typography sx={{ fontSize: '12px' }}>No</Typography>} />
             </RadioGroup>
@@ -1016,21 +1016,3 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
 }
 
 export default Stepper1;
-
-// export default function Wrapper() {
-
-//   const [formData, setFormData] = useState({});
-
-//   return (
-//     <Suspense fallback={<Box>Loading...</Box>}>
-//       <Stepper1 formData={formData} setFormData={setFormData}/>
-//     </Suspense>
-//   );
-// }
-
-
-
-
-
-
-

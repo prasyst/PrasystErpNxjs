@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 
 import {
   Box,
@@ -58,33 +58,388 @@ const PartyMst = () => {
   const [isFormDisabled, setIsFormDisabled] = useState(true);
   const [mode, setMode] = useState("view");
   const [Index, setIndex] = useState(0);
-  const [stepper1Data, setStepper1Data] = useState({ LASTID: "" });
-  const [stepper2Data, setStepper2Data] = useState({});
-  const [stepper3Data, setStepper3Data] = useState({});
+  const [currentPARTY_KEY, setCurrentPARTY_KEY] = useState(null);
+  const [abcValue, setAbcValue] = useState("");
   // const FCYR_KEY = localStorage.getItem('FCYR_KEY');
   // const COBR_ID = localStorage.getItem('COBR_ID');
   // const UserName = localStorage.getItem('USER_NAME');
   // const CO_ID = localStorage.getItem('CO_ID');
+  const searchParams = useSearchParams();
+  const FG = searchParams.get('PARTY_KEY');
 
-  const [formData, setFormData] = useState({
-    LASTID: ""
-  });
+  const [formData, setFormData] = useState([{
+    ID: "",
+    DBFLAG: '',
+    PARTY_KEY: "",
+    PARTY_ALT_CODE: "",
+    PARTY_CAT: "",
+    PARTY_NAME: "",
+    PARTY_ABRV: "",
+    ADDR: "",
+    REG_ADD: "",
+    WORK_ADD: "",
+    CONT_KEY: 0,
+    CITY_KEY: 0,
+    TEL_NO: "",
+    FAX_NO: "",
+    E_MAIL: "",
+    WEBSITE: "",
+    CONTACT_PERSON: "",
+    MOBILE_NO: "",
+    SST: "",
+    CST: "",
+    IE_CODE: "",
+    EXCISE_CODE: "",
+    PAN_NO: "",
+    TAN_NO: "",
+    STATUS: "",
+    CREATED_BY: 0,
+    CREATED_DT: "",
+    PLACE: "",
+    VAT: "",
+    PARTY_IMG: "",
+    PYTTYPE_KEY: "",
+    DEDTYPE_KEY: "",
+    PYTTYPEDTL_ID: 0,
+    NET_TDS: 0,
+    ROFF: "",
+    SMS_MOBILENO: "",
+    ACCLED_ID: 0,
+    CONTDESG: 0,
+    PRINTNAME: "",
+    GSTTIN_NO: "",
+    PARTY_TYPE: "",
+    RD_URD: "",
+    PINCODE: "",
+    CO_ID: 0,
+    WebUserName: "",
+    WebPassword: "",
+    SEZ: "",
+    WSTKLOC_KEY: "",
+    PARTY_CLASS_KEY: 0,
+    INTERNAL_PROCESS: "",
+    MANUAL_WSP: "",
+    MSME_FLAG: "",
+    MSME_NO: "",
+    MSME_TR: 0,
+    MSME_CLASS: 0,
+    MSME_ACT: 0,
+    DEFAULT_BRANCH: "",
+    PartyDtlEntities: [{
+      DBFLAG: '',
+      PARTYDTL_ID: "",
+      PARTY_KEY: "",
+      ADDR: "",
+      CONT_KEY: 0,
+      CITY_KEY: 0,
+      TEL_NO: "",
+      FAX_NO: "",
+      E_MAIL: "",
+      WEBSITE: "",
+      CONTACT_PERSON: "",
+      MOBILE_NO: "",
+      SST: "",
+      CST: "",
+      EXCISE_CODE: "",
+      REMK: "",
+      STATUS: "",
+      PLACE: "",
+      VAT: "",
+      MAIN_BRANCH: "",
+      RD_URD: "",
+      PINCODE: "",
+      GSTTIN_NO: "",
+      TAX_KEY: 0,
+      TERM_KEY: "",
+      TRSP_KEY: 0,
+      TRADE_DISC: 0,
+      RDOFF: "",
+      CFORM_FLG: 0,
+      PARTY_ALT_CODE: "",
+      ORD_SYNCSTATUS: "",
+      SEZ: "",
+      DEFAULT_BRANCH: "",
+    }],
+    CLIENTTERMSEntities: [{
+      CLIENTTERMS_ID: "",
+      CLIENTTERMS_ALT_CODE: "",
+      PARTY_KEY: "",
+      CLIENTGRP_KEY: 0,
+      CLIENTCAT_KEY: 0,
+      BROKER_KEY: 0,
+      BANK_NAME: "",
+      BRANCH_NAME: "",
+      ACCOUNT_NO: "",
+      DLV_PLACE: "",
+      TRSP_KEY: 0,
+      DISC_KEY: 0,
+      CR_LIMIT: "",
+      CR_PERIOD: "",
+      INT_PERC: "",
+      TRADE_DISC: 0,
+      INSURANCE: "",
+      RATING: "",
+      STOP_DESP: "",
+      STOP_DESC_DT: "",
+      STOP_DESP_REASON: "",
+      CFORM_FLG: 0,
+      RDOFF: "",
+      TAX_KEY: 0,
+      TERM_KEY: "",
+      DISTBTR_KEY: "",
+      SALEPERSON1_KEY: 0,
+      SALEPERSON2_KEY: 0,
+      SPL_INSTR: "",
+      COMM_RATE: "",
+      COMM_ONGROSS: "",
+      Op_Date: "",
+      Cl_Date: "",
+      Franch_Status: "0",
+      Master_Franch: "",
+      ShowRoom_Area: 0,
+      Settelment_Period: "",
+      Comm_Sale: 0.0,
+      Franch_Comm_Rate: 0.0,
+      CommAppl_Amt: 0.0,
+      Deposit_Amt: 0.0,
+      Deposit_Accled_Id: 0,
+      FranchAccPm1_Key: "",
+      Amount1: 0.0,
+      SaleType_Id: 0,
+      UsageRemk: "",
+      Area: "",
+      Product: "",
+      SETTELEMENT_REMK: "",
+      SETTELEMENT_DT: '',
+      SETTELEMENT_AMT: 0.0,
+      IFSC_CODE: "",
+      TARGET_PERC: 0,
+      TCS_TERM_KEY: 0,
+      BROKER1_KEY: 0
+    }]
 
-  const handlePrint = () => { }
+  }]);
+
+  const handlePrint = () => { };
+
   const handleExit = () => {
     router.push('/dashboard');
   };
 
+  const fetchPartyData = useCallback(async (currentPARTY_KEY, flag = "R") => {
+
+    const CO_ID = localStorage.getItem('CO_ID');
+
+    try {
+      const response = await axiosInstance.post(`Party/RetriveParty`, {
+        "FLAG": flag,
+        "TBLNAME": "PARTY",
+        "FLDNAME": "PARTY_KEY",
+        "ID": currentPARTY_KEY,
+        "ORDERBYFLD": "",
+        "CWHAER": "",
+        "CO_ID": CO_ID,
+        "PARTY_CAT": "PC"
+      });
+
+      if (response.data.STATUS === 0 && response.data.RESPONSESTATUSCODE === 1) {
+        const partyData = response?.data?.DATA?.PARTYList[0];
+
+        setFormData({
+          DBFLAG: mode === 'retrieve' ? 'R' : mode === 'edit' ? 'U' : '',
+          PARTY_KEY: partyData?.PARTY_KEY || "",
+          PARTY_ALT_CODE: partyData?.PARTY_ALT_CODE || "",
+          PARTY_CAT: partyData?.PARTY_CAT || "",
+          PARTY_NAME: partyData?.PARTY_NAME || "",
+          PARTY_ABRV: partyData?.PARTY_ABRV || "",
+          ADDR: partyData?.ADDR || "",
+          REG_ADD: partyData?.REG_ADD || "",
+          WORK_ADD: partyData?.WORK_ADD || "",
+          CONT_KEY: partyData?.CONT_KEY || 0,
+          CITY_KEY: partyData?.CITY_KEY || 0,
+          TEL_NO: partyData?.TEL_NO || "",
+          FAX_NO: partyData?.FAX_NO || "",
+          E_MAIL: partyData?.E_MAIL || "",
+          WEBSITE: partyData?.WEBSITE || "",
+          CONTACT_PERSON: partyData?.CONTACT_PERSON || "",
+          MOBILE_NO: partyData?.MOBILE_NO || "",
+          SST: partyData?.SST || "",
+          CST: partyData?.CST || "",
+          IE_CODE: partyData?.IE_CODE || "",
+          EXCISE_CODE: partyData?.EXCISE_CODE || "",
+          PAN_NO: partyData?.PAN_NO || "",
+          TAN_NO: partyData?.TAN_NO || "",
+          STATUS: partyData?.STATUS || "",
+          CREATED_BY: partyData?.CREATED_BY || 0,
+          CREATED_DT: partyData?.CREATED_DT || "2025-07-30T10:30:00",
+          PLACE: partyData?.PLACE || "",
+          VAT: partyData?.VAT || "",
+          PARTY_IMG: partyData?.PARTY_IMG || "",
+          PYTTYPE_KEY: partyData?.PYTTYPE_KEY || "",
+          DEDTYPE_KEY: partyData?.DEDTYPE_KEY || "",
+          PYTTYPEDTL_ID: partyData?.PYTTYPEDTL_ID || 0,
+          NET_TDS: partyData?.NET_TDS || 0,
+          ROFF: partyData?.ROFF || "",
+          SMS_MOBILENO: partyData?.SMS_MOBILENO || "",
+          ACCLED_ID: partyData?.ACCLED_ID || 0,
+          CONTDESG: partyData?.CONTDESG || 0,
+          PRINTNAME: partyData?.PRINTNAME || "",
+          GSTTIN_NO: partyData?.GSTTIN_NO || "",
+          PARTY_TYPE: partyData?.PARTY_TYPE || "",
+          RD_URD: partyData?.RD_URD || "",
+          PINCODE: partyData?.PINCODE || "",
+          CO_ID: partyData?.CO_ID || 0,
+          WebUserName: partyData?.WebUserName || "",
+          WebPassword: partyData?.WebPassword || "",
+          SEZ: partyData?.SEZ || "",
+          WSTKLOC_KEY: partyData?.WSTKLOC_KEY || "",
+          PARTY_CLASS_KEY: partyData?.PARTY_CLASS_KEY || 0,
+          INTERNAL_PROCESS: partyData?.INTERNAL_PROCESS || "",
+          MANUAL_WSP: partyData?.MANUAL_WSP || "",
+          MSME_FLAG: partyData?.MSME_FLAG || "",
+          MSME_NO: partyData?.MSME_NO || "",
+          MSME_TR: partyData?.MSME_TR || 0,
+          MSME_CLASS: partyData?.MSME_CLASS || 0,
+          MSME_ACT: partyData?.MSME_ACT || 0,
+          DEFAULT_BRANCH: partyData?.DEFAULT_BRANCH || "",
+          PartyDtlEntities: partyData?.PartyDtlEntities?.map(item => ({
+            DBFLAG: mode === 'retrieve' ? 'R' : mode === 'edit' ? 'U' : '',
+            PARTYDTL_ID: item.PARTYDTL_ID || "",
+            PARTY_KEY: item.PARTY_KEY || "",
+            ADDR: item.ADDR || "",
+            CONT_KEY: item.CONT_KEY || 0,
+            CITY_KEY: item.CITY_KEY || 0,
+            TEL_NO: item.TEL_NO || "",
+            FAX_NO: item.FAX_NO || "",
+            E_MAIL: item.E_MAIL || "",
+            WEBSITE: item.WEBSITE || "",
+            CONTACT_PERSON: item.CONTACT_PERSON || "",
+            MOBILE_NO: item.MOBILE_NO || "",
+            SST: item.SST || "",
+            CST: item.CST || "",
+            EXCISE_CODE: item.EXCISE_CODE || "",
+            REMK: item.REMK || "",
+            STATUS: item.STATUS || "",
+            PLACE: item.PLACE || "",
+            VAT: item.VAT || "",
+            MAIN_BRANCH: item.MAIN_BRANCH || "",
+            RD_URD: item.RD_URD || "",
+            PINCODE: item.PINCODE || "",
+            GSTTIN_NO: item.GSTTIN_NO || "",
+            TAX_KEY: item.TAX_KEY || 0,
+            TERM_KEY: item.TERM_KEY || "",
+            TRSP_KEY: item.TRSP_KEY || 0,
+            TRADE_DISC: item.TRADE_DISC || 0,
+            RDOFF: item.RDOFF || "",
+            CFORM_FLG: item.CFORM_FLG || 0,
+            PARTY_ALT_CODE: item.PARTY_ALT_CODE || "",
+            ORD_SYNCSTATUS: item.ORD_SYNCSTATUS || "",
+            SEZ: item.SEZ || "",
+            DEFAULT_BRANCH: item.DEFAULT_BRANCH || "",
+          })),
+          CLIENTTERMSEntities: partyData?.CLIENTTERMSEntities?.map(item => ({
+            CLIENTTERMS_ID: item.CLIENTTERMS_ID || "",
+            CLIENTTERMS_ALT_CODE: item.CLIENTTERMS_ALT_CODE || "",
+            PARTY_KEY: item.PARTY_KEY || "",
+            CLIENTGRP_KEY: item.CLIENTGRP_KEY || 0,
+            CLIENTCAT_KEY: item.CLIENTCAT_KEY || 0,
+            BROKER_KEY: item.BROKER_KEY || 0,
+            BANK_NAME: item.BANK_NAME || "",
+            BRANCH_NAME: item.BRANCH_NAME || "",
+            ACCOUNT_NO: item.ACCOUNT_NO || "",
+            DLV_PLACE: item.DLV_PLACE || "",
+            TRSP_KEY: item.TRSP_KEY || 0,
+            DISC_KEY: item.DISC_KEY || 0,
+            CR_LIMIT: item.CR_LIMIT || "",
+            CR_PERIOD: item.CR_PERIOD || "",
+            INT_PERC: item.INT_PERC || "",
+            TRADE_DISC: item.TRADE_DISC || 0,
+            INSURANCE: item.INSURANCE || "",
+            RATING: item.RATING || "",
+            STOP_DESP: item.STOP_DESP || "",
+            STOP_DESC_DT: item.STOP_DESC_DT || "1900-01-01T00:00:00",
+            STOP_DESP_REASON: item.STOP_DESP_REASON || "",
+            CFORM_FLG: item.CFORM_FLG || 0,
+            RDOFF: item.RDOFF || "",
+            TAX_KEY: item.TAX_KEY || 0,
+            TERM_KEY: item.TERM_KEY || "",
+            DISTBTR_KEY: item.DISTBTR_KEY || "",
+            SALEPERSON1_KEY: item.SALEPERSON1_KEY || 0,
+            SALEPERSON2_KEY: item.SALEPERSON2_KEY || 0,
+            SPL_INSTR: item.SPL_INSTR || "",
+            COMM_RATE: item.COMM_RATE || "",
+            COMM_ONGROSS: item.COMM_ONGROSS || "",
+            Op_Date: item.Op_Date || "1900-01-01T00:00:00",
+            Cl_Date: item.Cl_Date || "2021-09-17T00:00:00",
+            Franch_Status: item.Franch_Status || "0",
+            Master_Franch: item.Master_Franch || "",
+            ShowRoom_Area: item.ShowRoom_Area || 0,
+            Settelment_Period: item.Settelment_Period || "",
+            Comm_Sale: item.Comm_Sale || 0.0,
+            Franch_Comm_Rate: item.Franch_Comm_Rate || 0.0,
+            CommAppl_Amt: item.CommAppl_Amt || 0.0,
+            Deposit_Amt: item.Deposit_Amt || 0.0,
+            Deposit_Accled_Id: item.Deposit_Accled_Id || 0,
+            FranchAccPm1_Key: item.FranchAccPm1_Key || "",
+            Amount1: item.Amount1 || 0.0,
+            SaleType_Id: item.SaleType_Id || 0,
+            UsageRemk: item.UsageRemk || "",
+            Area: item.Area || "",
+            Product: item.Product || "",
+            SETTELEMENT_REMK: item.SETTELEMENT_REMK || "",
+            SETTELEMENT_DT: item?.SETTELEMENT_DT ? item.SETTELEMENT_DT.split('T')[0] : '1900-01-01T00:00:00',
+            SETTELEMENT_AMT: item.SETTELEMENT_AMT || 0.0,
+            IFSC_CODE: item.IFSC_CODE || "",
+            TARGET_PERC: item.TARGET_PERC || 0,
+            TCS_TERM_KEY: item.TCS_TERM_KEY || 0,
+            BROKER1_KEY: item.BROKER1_KEY || 0
+          }))
+
+        });
+
+        setIsFormDisabled(true);
+        setCurrentPARTY_KEY(partyData?.PARTY_KEY);
+        const newParams = new URLSearchParams();
+        newParams.set("PARTY_KEY", partyData?.PARTY_KEY);
+        router.replace(`/masters/customers?${newParams.toString()}`);
+
+        console.log("fetch", partyData);
+
+      } else if (response.data.STATUS === 1 && response.data.RESPONSESTATUSCODE === 2) {
+        toast.info(response.data.MESSAGE);
+      } else {
+      }
+    } catch (error) {
+      console.error('Error fetching party data:', error);
+      toast.error('Error fetching party data. Please try again.');
+    }
+  }, [router]);
+
+  useEffect(() => {
+    if (FG) {
+      setCurrentPARTY_KEY(FG);
+      fetchPartyData(FG);
+      setMode('view');
+    } else {
+      setMode('view');
+      // setIsFormDisabled(true);
+    }
+    setMode('view');
+  }, [FG, fetchPartyData]);
+
   const handleAdd = async () => {
+
+    const FCYR_KEY = localStorage.getItem('FCYR_KEY');
+    const COBR_ID = localStorage.getItem('COBR_ID');
 
     setMode('add');
     setIsFormDisabled(false);
     setFormData({
 
-      LASTID: ""
+      ID: ""
 
     });
-    // setCurrentFGPRD_KEY(null);
+    setCurrentPARTY_KEY(null);
 
     try {
       const responseSecond = await axiosInstance.post(`GetSeriesSettings/GetSeriesLastNewKey`, {
@@ -92,7 +447,7 @@ const PartyMst = () => {
         MODULENAME: "Party",
         TBLNAME: "Party",
         FLDNAME: "Party_KEY",
-        NCOLLEN: 5,
+        NCOLLEN: 6,
         CPREFIX: "PC",
         COBR_ID: COBR_ID,
         FCYR_KEY: FCYR_KEY,
@@ -107,27 +462,12 @@ const PartyMst = () => {
       ) {
         setSeriesData(responseSecond.data.DATA);
 
-        // setFormData((prev) => ({
-        //   ...prev,
-        //   LASTID: responseSecond.data.DATA[0]?.LASTID || ""
-        // })
-
-        const abcValue = responseSecond.data.DATA[0]?.LASTID || "";
-
-        // setFormData((prev) => {
-        //   const updated = { ...prev, LASTID: responseSecond.data.DATA[0]?.LASTID || "" };
-        //   console.log("Updated formData:", updated);
-        //   return updated;
-        // });
+        const abcValue = responseSecond.data.DATA[0]?.ID || "";
+        setAbcValue(abcValue);
 
         setFormData((prev) => ({
           ...prev,
-          LASTID: abcValue
-        }));
-
-        setStepper1Data((prev) => ({
-          ...prev,
-          LASTID: abcValue
+          ID: abcValue
         }));
 
       } else {
@@ -140,77 +480,85 @@ const PartyMst = () => {
 
   };
 
-  const handlePrevClick = () => {
+  const handleFirst = () => { };
 
+  const handleLast = async () => {
+    await fetchPartyData(1, "L");
+  }
+
+  const handlePrevClick = async () => {
+    await fetchPartyData(currentPARTY_KEY, "P");
   };
 
-  const handleNextClick = () => {
-
+  const handleNextClick = async () => {
+    if (currentPARTY_KEY) {
+      await fetchPartyData(currentPARTY_KEY, "N");
+    }
   };
 
   const handleSubmit = async () => {
 
     const payload = [{
-      DBFLAG: stepper1Data.DBFLAG || "I",
-      PARTY_KEY: stepper1Data.PARTY_KEY || "",
-      PARTY_ALT_CODE: stepper1Data.PARTY_ALT_CODE || "",
-      PARTY_CAT: stepper1Data.PARTY_CAT || "",
-      PARTY_NAME: stepper1Data.PARTY_NAME || "",
-      PARTY_ABRV: stepper1Data.PARTY_ABRV || "",
-      ADDR: stepper1Data.ADDR || "",
-      REG_ADD: stepper1Data.REG_ADD || "",
-      WORK_ADD: stepper1Data.WORK_ADD || "",
-      CONT_KEY: stepper1Data.CONT_KEY || "",
-      CITY_KEY: stepper1Data.CITY_KEY || "",
-      TEL_NO: stepper1Data.TEL_NO || "",
-      FAX_NO: stepper1Data.FAX_NO || "",
-      E_MAIL: stepper1Data.E_MAIL || "",
-      WEBSITE: stepper1Data.WEBSITE || "",
-      CONTACT_PERSON: stepper1Data.CONTACT_PERSON || "",
-      MOBILE_NO: stepper1Data.MOBILE_NO || "",
-      SST: stepper1Data.SST || "",
-      CST: stepper1Data.CST || "",
-      IE_CODE: stepper1Data.IE_CODE || "",
-      EXCISE_CODE: stepper1Data.EXCISE_CODE || "",
-      PAN_NO: stepper1Data.PAN_NO || "",
-      TAN_NO: stepper1Data.TAN_NO || "",
-      STATUS: stepper1Data.STATUS || "",
-      CREATED_BY: stepper1Data.CREATED_BY || "",
-      CREATED_DT: stepper1Data.CREATED_DT || "2025-07-30T10:30:00",
-      PLACE: stepper1Data.PLACE || "",
-      VAT: stepper1Data.VAT || "",
-      PARTY_IMG: stepper1Data.PARTY_IMG || "",
-      PYTTYPE_KEY: stepper1Data.PYTTYPE_KEY || "",
-      DEDTYPE_KEY: stepper1Data.DEDTYPE_KEY || "",
-      PYTTYPEDTL_ID: stepper1Data.PYTTYPEDTL_ID || "",
-      NET_TDS: stepper1Data.NET_TDS || "",
-      ROFF: stepper1Data.ROFF || "",
-      SMS_MOBILENO: stepper1Data.SMS_MOBILENO || "",
-      ACCLED_ID: stepper1Data.ACCLED_ID || "",
-      CONTDESG: stepper1Data.CONTDESG || "",
-      PRINTNAME: stepper1Data.PRINTNAME || "",
-      GSTTIN_NO: stepper1Data.GSTTIN_NO || "",
-      PARTY_TYPE: stepper1Data.PARTY_TYPE || "",
-      RD_URD: stepper1Data.RD_URD || "",
-      PINCODE: stepper1Data.PINCODE || "",
-      CO_ID: stepper1Data.CO_ID || "",
-      WebUserName: stepper1Data.WebUserName || "",
-      WebPassword: stepper1Data.WebPassword || "",
-      SEZ: stepper1Data.SEZ || "",
-      WSTKLOC_KEY: stepper1Data.WSTKLOC_KEY || "",
-      PARTY_CLASS_KEY: stepper1Data.PARTY_CLASS_KEY || "",
-      INTERNAL_PROCESS: stepper1Data.INTERNAL_PROCESS || "",
-      MANUAL_WSP: stepper1Data.MANUAL_WSP || "",
-      MSME_FLAG: stepper1Data.MSME_FLAG || "",
-      MSME_NO: stepper1Data.MSME_NO || "",
-      MSME_TR: stepper1Data.MSME_TR || "",
-      MSME_CLASS: stepper1Data.MSME_CLASS || "",
-      MSME_ACT: stepper1Data.MSME_ACT || "",
-      DEFAULT_BRANCH: stepper1Data.DEFAULT_BRANCH || "",
-      PartyDtlEntities: stepper2Data.map((data) => ({
-        DBFLAG: data.DBFLAG || "I",
+      DBFLAG: mode === 'add' ? 'I' : mode === 'edit' ? 'U' : '',
+      PARTY_KEY: abcValue,
+      PARTY_ALT_CODE: abcValue,
+      PARTY_CAT: formData.PARTY_CAT || "",
+      PARTY_NAME: formData.PARTY_NAME || "",
+      PARTY_ABRV: formData.PARTY_ABRV || "",
+      ADDR: formData.ADDR || "",
+      REG_ADD: formData.REG_ADD || "",
+      WORK_ADD: formData.WORK_ADD || "",
+      CONT_KEY: formData.CONT_KEY || "",
+      CITY_KEY: formData.CITY_KEY || "",
+      TEL_NO: formData.TEL_NO || "",
+      FAX_NO: formData.FAX_NO || "",
+      E_MAIL: formData.E_MAIL || "",
+      WEBSITE: formData.WEBSITE || "",
+      CONTACT_PERSON: formData.CONTACT_PERSON || "",
+      MOBILE_NO: formData.MOBILE_NO || "",
+      SST: formData.SST || "",
+      CST: formData.CST || "",
+      IE_CODE: formData.IE_CODE || "",
+      EXCISE_CODE: formData.EXCISE_CODE || "",
+      PAN_NO: formData.PAN_NO || "",
+      TAN_NO: formData.TAN_NO || "",
+      STATUS: formData.STATUS || "",
+      // CREATED_BY: formData.CREATED_BY || 0,
+      CREATED_DT: formData.CREATED_DT || "2025-07-30T10:30:00",
+      PLACE: formData.PLACE || "",
+      VAT: formData.VAT || "",
+      PARTY_IMG: formData.PARTY_IMG || "",
+      PYTTYPE_KEY: formData.PYTTYPE_KEY || "",
+      DEDTYPE_KEY: formData.DEDTYPE_KEY || "",
+      PYTTYPEDTL_ID: formData.PYTTYPEDTL_ID || 0,
+      NET_TDS: formData.NET_TDS || 0,
+      ROFF: formData.ROFF || "",
+      SMS_MOBILENO: formData.SMS_MOBILENO || "",
+      ACCLED_ID: formData.ACCLED_ID || 0,
+      CONTDESG: formData.CONTDESG || "",
+      PRINTNAME: formData.PRINTNAME || "",
+      GSTTIN_NO: formData.GSTTIN_NO || "",
+      PARTY_TYPE: formData.PARTY_TYPE || "",
+      RD_URD: formData.RD_URD || "",
+      PINCODE: formData.PINCODE || "",
+      CO_ID: formData.CO_ID || 0,
+      WebUserName: formData.WebUserName || "",
+      WebPassword: formData.WebPassword || "",
+      SEZ: formData.SEZ || "",
+      WSTKLOC_KEY: formData.WSTKLOC_KEY || "",
+      PARTY_CLASS_KEY: formData.PARTY_CLASS_KEY || 0,
+      INTERNAL_PROCESS: formData.INTERNAL_PROCESS || "",
+      MANUAL_WSP: formData.MANUAL_WSP || "",
+      MSME_FLAG: formData.MSME_FLAG || "",
+      MSME_NO: formData.MSME_NO || "",
+      MSME_TR: formData.MSME_TR || 0,
+      MSME_CLASS: formData.MSME_CLASS || 0,
+      MSME_ACT: formData.MSME_ACT || 0,
+      DEFAULT_BRANCH: formData.DEFAULT_BRANCH || "",
+      PartyDtlEntities: Array.isArray(formData) ? formData?.map((data) => ({
+        DBFLAG: mode === 'add' ? 'I' : mode === 'edit' ? 'U' : '',
         PARTYDTL_ID: data.PARTYDTL_ID || "",
-        PARTY_KEY: data.PARTY_KEY || "",
+        PARTY_KEY: abcValue,
         ADDR: data.ADDR || "",
         CONT_KEY: data.CONT_KEY || "",
         CITY_KEY: data.CITY_KEY || "",
@@ -231,84 +579,91 @@ const PartyMst = () => {
         RD_URD: data.RD_URD || "",
         PINCODE: data.PINCODE || "",
         GSTTIN_NO: data.GSTTIN_NO || "",
-        TAX_KEY: data.TAX_KEY || "",
+        TAX_KEY: data.TAX_KEY || 0,
         TERM_KEY: data.TERM_KEY || "",
-        TRSP_KEY: data.TRSP_KEY || "",
-        TRADE_DISC: data.TRADE_DISC || "",
+        TRSP_KEY: data.TRSP_KEY || 0,
+        TRADE_DISC: data.TRADE_DISC || 0,
         RDOFF: data.RDOFF || "",
-        CFORM_FLG: data.CFORM_FLG || "",
+        CFORM_FLG: data.CFORM_FLG || 0,
         PARTY_ALT_CODE: data.PARTY_ALT_CODE || "",
         ORD_SYNCSTATUS: data.ORD_SYNCSTATUS || "",
         SEZ: data.SEZ || "",
         DEFAULT_BRANCH: data.DEFAULT_BRANCH || "",
-      })),
-      CLIENTTERMSEntities: stepper3Data.map((item) => ({
-        DBFLAG: item.DBFLAG || "I",
+      })) : [],
+      CLIENTTERMSEntities: Array.isArray(formData) ? formData?.map((item) => ({
+        DBFLAG: mode === 'add' ? 'I' : mode === 'edit' ? 'U' : '',
         CLIENTTERMS_ID: item.CLIENTTERMS_ID || "",
         CLIENTTERMS_ALT_CODE: item.CLIENTTERMS_ALT_CODE || "",
-        PARTY_KEY: item.PARTY_KEY || "",
-        CLIENTGRP_KEY: item.CLIENTGRP_KEY || "",
-        CLIENTCAT_KEY: item.CLIENTCAT_KEY || "",
-        BROKER_KEY: item.BROKER_KEY || "",
+        PARTY_KEY: abcValue,
+        CLIENTGRP_KEY: item.CLIENTGRP_KEY || 0,
+        CLIENTCAT_KEY: item.CLIENTCAT_KEY || 0,
+        BROKER_KEY: item.BROKER_KEY || 0,
         BANK_NAME: item.BANK_NAME || "",
         BRANCH_NAME: item.BRANCH_NAME || "",
         ACCOUNT_NO: item.ACCOUNT_NO || "",
         DLV_PLACE: item.DLV_PLACE || "",
-        TRSP_KEY: item.TRSP_KEY || "",
-        DISC_KEY: item.DISC_KEY || "",
+        TRSP_KEY: item.TRSP_KEY || 0,
+        DISC_KEY: item.DISC_KEY || 0,
         CR_LIMIT: item.CR_LIMIT || "",
         CR_PERIOD: item.CR_PERIOD || "",
         INT_PERC: item.INT_PERC || "",
-        TRADE_DISC: item.TRADE_DISC || "",
+        TRADE_DISC: item.TRADE_DISC || 0,
         INSURANCE: item.INSURANCE || "",
         RATING: item.RATING || "",
         STOP_DESP: item.STOP_DESP || "",
         STOP_DESC_DT: item.STOP_DESC_DT || "1900-01-01T00:00:00",
         STOP_DESP_REASON: item.STOP_DESP_REASON || "",
-        CFORM_FLG: item.CFORM_FLG || "",
+        CFORM_FLG: item.CFORM_FLG || 0,
         RDOFF: item.RDOFF || "",
-        TAX_KEY: item.TAX_KEY || "",
+        TAX_KEY: item.TAX_KEY || 0,
         TERM_KEY: item.TERM_KEY || "",
         DISTBTR_KEY: item.DISTBTR_KEY || "",
-        SALEPERSON1_KEY: item.SALEPERSON1_KEY || "",
-        SALEPERSON2_KEY: item.SALEPERSON2_KEY || "",
+        SALEPERSON1_KEY: item.SALEPERSON1_KEY || 0,
+        SALEPERSON2_KEY: item.SALEPERSON2_KEY || 0,
         SPL_INSTR: item.SPL_INSTR || "",
         COMM_RATE: item.COMM_RATE || "",
         COMM_ONGROSS: item.COMM_ONGROSS || "",
-        Op_Date: "1900-01-01T00:00:00",
-        Cl_Date: "2021-09-17T00:00:00",
-        Franch_Status: "0",
-        Master_Franch: "",
-        ShowRoom_Area: 0,
-        Settelment_Period: "",
-        Comm_Sale: 0.0,
-        Franch_Comm_Rate: 0.0,
-        CommAppl_Amt: 0.0,
-        Deposit_Amt: 0.0,
-        Deposit_Accled_Id: 0,
-        FranchAccPm1_Key: "",
-        Amount1: 0.0,
-        SaleType_Id: 14,
-        UsageRemk: "",
-        Area: "",
-        Product: "",
-        SETTELEMENT_REMK: "",
-        SETTELEMENT_DT: "1900-01-01T00:00:00",
-        SETTELEMENT_AMT: 0.0,
-        IFSC_CODE: "",
-        TARGET_PERC: 30,
-        TCS_TERM_KEY: "",
-        BROKER1_KEY: ""
-      }))
+        Op_Date: item.Op_Date || "1900-01-01T00:00:00",
+        Cl_Date: item.Cl_Date || "2021-09-17T00:00:00",
+        Franch_Status: item.Franch_Status || "0",
+        Master_Franch: item.Master_Franch || "",
+        ShowRoom_Area: item.ShowRoom_Area || 0,
+        Settelment_Period: item.Settelment_Period || "",
+        Comm_Sale: item.Comm_Sale || 0.0,
+        Franch_Comm_Rate: item.Franch_Comm_Rate || 0.0,
+        CommAppl_Amt: item.CommAppl_Amt || 0.0,
+        Deposit_Amt: item.Deposit_Amt || 0.0,
+        Deposit_Accled_Id: item.Deposit_Accled_Id || 0,
+        FranchAccPm1_Key: item.FranchAccPm1_Key || "",
+        Amount1: item.Amount1 || 0.0,
+        SaleType_Id: item.SaleType_Id || 0,
+        UsageRemk: item.UsageRemk || "",
+        Area: item.Area || "",
+        Product: item.Product || "",
+        SETTELEMENT_REMK: item.SETTELEMENT_REMK || "",
+        SETTELEMENT_DT: item.SETTELEMENT_DT || "1900-01-01T00:00:00",
+        SETTELEMENT_AMT: item.SETTELEMENT_AMT || 0.0,
+        IFSC_CODE: item.IFSC_CODE || "",
+        TARGET_PERC: item.TARGET_PERC || 0,
+        TCS_TERM_KEY: item.TCS_TERM_KEY || 0,
+        BROKER1_KEY: item.BROKER1_KEY || 0
+      })) : []
     }];
+
+    const userRole = localStorage.getItem('userRole');
+    const username = localStorage.getItem('USER_NAME');
+    const PARTY_KEY = localStorage.getItem('PARTY_KEY');
+    const COBR_ID = localStorage.getItem('COBR_ID');
+
+    const UserName = userRole === 'user' ? username : PARTY_KEY;
 
     let response;
     if (mode === 'edit') {
-      // payload.FGPRD_KEY = currentFGPRD_KEY;
-      // payload.UPDATED_BY = 2;
-      // response = await axiosInstance.patch(`Product/ManageFgPrdSize?UserName=${(UserName)}&strCobrid=${COBR_ID}`, payload);
+      payload.PARTY_KEY = currentPARTY_KEY;
+      payload.UPDATED_BY = 2;
+      response = await axiosInstance.patch(`Party/ManagePartyBranch?UserName=${(UserName)}&strCobrid=${COBR_ID}`, payload);
 
-      // console.log("payload", payload);
+      console.log("payload", payload);
     } else {
       payload.CREATED_BY = 2;
       response = await axiosInstance.post(`Party/ManagePartyBranch?UserName=${UserName}&strCobrid=${COBR_ID}`, payload);
@@ -325,15 +680,41 @@ const PartyMst = () => {
   };
 
   const handleCancel = async () => {
-
+    if (mode === 'add') {
+      await fetchPartyData(1, "L");
+    }
+    else {
+      await fetchPartyData(currentPARTY_KEY, "R");
+    }
+    setMode('view');
   };
 
-  const handleEdit = async () => {
-
+  const handleEdit = () => {
+    setMode('edit');
+    setIsFormDisabled(false);
   };
+
+  // const handleDelete = async () => {
+  //   setopenDialog(true);
+  // };
 
   const handleDelete = async () => {
-    setopenDialog(true);
+    try {
+
+      const response = await axiosInstance.post('Party/DeleteParty', {
+        PARTY_KEY: currentPARTY_KEY
+      });
+
+      const { data: { STATUS, MESSAGE } } = response;
+      if (STATUS === 0) {
+        toast.success(MESSAGE, { autoClose: 500 });
+        await fetchPartyData(currentPARTY_KEY, 'P');
+      } else {
+        toast.error(MESSAGE);
+      }
+    } catch (error) {
+      console.error("Delete Error:", error);
+    }
   };
 
   const handleTabChange = (event, newValue) => {
@@ -380,8 +761,6 @@ const PartyMst = () => {
   const handleTable = () => {
     router.push('/masters/customers/partyTable');
   };
-
-  console.log("MainForm formData:", formData);
 
   return (
     <Box>
@@ -484,17 +863,17 @@ const PartyMst = () => {
         {tabIndex === 0 ? (
           <Stepper1
             index={Index}
-            formData={stepper1Data} setFormData={setStepper1Data}
+            formData={formData} setFormData={setFormData}
             isFormDisabled={isFormDisabled}
           />
         ) : tabIndex === 1 ? (
           <Stepper2
-            formData={stepper2Data} setFormData={setStepper2Data}
+            formData={formData} setFormData={setFormData}
             isFormDisabled={isFormDisabled}
           />
         ) : (
           <Stepper3
-            formData={stepper3Data} setFormData={setStepper3Data}
+            formData={formData} setFormData={setFormData}
             isFormDisabled={isFormDisabled}
           />
         )}
@@ -510,11 +889,11 @@ const PartyMst = () => {
               <PaginationButtons
                 mode={mode}
                 FORM_MODE={FORM_MODE}
-                currentKey={''}
-                onFirst={(e) => console.log(e.target.value)}
-                onPrevious={(e) => console.log(e.target.value)}
-                onNext={(e) => console.log(e.target.value)}
-                onLast={(e) => console.log(e.target.value)}
+                currentKey={currentPARTY_KEY}
+                onFirst={handleFirst}
+                onPrevious={handlePrevClick}
+                onNext={handleNextClick}
+                onLast={handleLast}
                 sx={{ mt: 2 }}
                 buttonSx={Buttonsx}
               />
