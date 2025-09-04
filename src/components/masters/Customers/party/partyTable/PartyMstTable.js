@@ -26,6 +26,14 @@ const columnDefs = [
     headerClass: 'checkbox-header'
   },
   {
+    field: "PARTY_KEY",
+    headerName: "CODE",
+    width: 130,
+    maxWidth: 140,
+    filter: true,
+    sortable: true
+  },
+  {
     field: "PARTY_NAME",
     headerName: "PARTYNAME",
     width: 130,
@@ -126,10 +134,10 @@ export default function PartyMstTable() {
 
   const handleRowDoubleClick = (row) => {
     const params = new URLSearchParams({
-      FGPRD_KEY: row.FGPRD_KEY,
+      PARTY_KEY: row.PARTY_KEY,
       mode: "view"
     }).toString();
-    router.push(`/masters/products/product?${params}`);
+    router.push(`/masters/customers?${params}`);
   };
 
   const handleBack = () => {
