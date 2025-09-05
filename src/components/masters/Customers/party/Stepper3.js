@@ -31,7 +31,7 @@ import z from 'zod';
 const FORM_MODE = getFormMode();
 
 const Stepper3 = ({ formData, setFormData, isFormDisabled }) => {
-  console.log("Stepper3 full formData:", formData?.CLIENTTERMSEntities?.[0]?.Area);
+  console.log("Stepper3 full formData:", formData);
 
   const clientData = formData?.CLIENTTERMSEntities?.[0];
 
@@ -135,11 +135,11 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled }) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      // [name]: value,
-      CLIENTTERMSEntities: [{
-        ...prev.CLIENTTERMSEntities?.[0],
-        [name]: value
-      }]
+      CLIENTTERMSEntities: [{ ...prev?.CLIENTTERMSEntities?.[0], [name]: value }]
+      // CLIENTTERMSEntities: [{
+      //   ...prev.CLIENTTERMSEntities,
+      //   [name]: value
+      // }]
     }));
   };
 
@@ -149,11 +149,11 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled }) => {
 
     setFormData(prev => ({
       ...prev,
-      [name]: updatedStatus,
-      CLIENTTERMSEntities: [{
-        ...prev.CLIENTTERMSEntities?.[0],
-        [name]: updatedStatus
-      }]
+      CLIENTTERMSEntities: [{ ...prev?.CLIENTTERMSEntities?.[0], [name]: updatedStatus }]
+      // CLIENTTERMSEntities: [{
+      //   ...prev.CLIENTTERMSEntities,
+      //   [name]: updatedStatus
+      // }]
     }));
   };
 
