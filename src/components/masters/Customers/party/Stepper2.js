@@ -32,7 +32,7 @@ import SearchIcon from "@mui/icons-material/Search";
 const FORM_MODE = getFormMode();
 
 const Stepper2 = ({ formData, setFormData, isFormDisabled }) => {
-  console.log("Stepper2 full formData:", formData?.PartyDtlEntities?.[0]);
+  console.log("Stepper2 full formData:", formData);
 
   const [rows, setRows] = useState([]);
   const [inputData, setInputData] = useState(
@@ -177,18 +177,18 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled }) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      // [name]: value,
-      PartyDtlEntities: [{
-        ...prev.PartyDtlEntities?.[0],
-        [name]: value
-      }]
+      PartyDtlEntities: [{ ...prev?.PartyDtlEntities?.[0], [name]: value }]
+      // PartyDtlEntities: [{
+      //   ...prev.PartyDtlEntities,
+      //   [name]: value
+      // }]
     }));
     setInputData((prev) => ({
-      ...prev, [name]: value,
-      PartyDtlEntities: [{
-        ...prev.PartyDtlEntities?.[0],
-        [name]: value
-      }]
+      ...prev, PartyDtlEntities: [{ ...prev?.PartyDtlEntities?.[0], [name]: value }]
+      // PartyDtlEntities: [{
+      //   ...prev.PartyDtlEntities,
+      //   [name]: value
+      // }]
     }));
   };
 
@@ -382,11 +382,11 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled }) => {
 
     setFormData(prev => ({
       ...prev,
-      [name]: updatedStatus,
-      PartyDtlEntities: [{
-        ...prev.PartyDtlEntities?.[0],
-        [name]: updatedStatus
-      }]
+      PartyDtlEntities: [{ ...prev?.PartyDtlEntities?.[0], [name]: updatedStatus }]
+      // PartyDtlEntities: [{
+      //   ...prev.PartyDtlEntities,
+      //   [name]: updatedStatus
+      // }]
     }));
   };
 
