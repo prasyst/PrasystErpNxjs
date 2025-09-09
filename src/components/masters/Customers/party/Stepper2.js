@@ -141,11 +141,25 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, rows, setRows, curren
     },
   };
 
+  // const handleInputChange = (e) => {
+  //   const { name, value } = e.target;
+  //   setFormData(prev => ({
+  //     ...prev,
+  //     PartyDtlEntities: [{ ...prev?.PartyDtlEntities?.[0], [name]: value }]
+  //   }));
+  // };
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      PartyDtlEntities: [{ ...prev?.PartyDtlEntities?.[0], [name]: value }]
+      PartyDtlEntities: [
+        {
+          ...(prev?.PartyDtlEntities?.[0] || {}),
+          [name]: value,
+        },
+        ...(prev?.PartyDtlEntities?.slice(1) || []),
+      ],
     }));
   };
 
@@ -188,6 +202,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, rows, setRows, curren
         DEFAULT_BRANCH: "",
       }],
     }));
+    
     setMode('add');
     setSelectedIndex(null);
   };
@@ -485,7 +500,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, rows, setRows, curren
               variant="filled"
               fullWidth
               onChange={handleInputChange}
-              value={partyData?.ADDR || formData?.PartyDtlEntities?.ADDR}
+              value={partyData?.ADDR}
               disabled={isFormDisabled}
               name="ADDR"
               sx={doubleInputSx}
