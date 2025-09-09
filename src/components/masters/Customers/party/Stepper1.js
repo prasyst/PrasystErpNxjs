@@ -248,13 +248,13 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
               value={formData?.RD_URD || ""}
               sx={{ margin: '5px 0px 0px 0px' }}
             >
-              <FormControlLabel disabled={''}
+              <FormControlLabel disabled={isFormDisabled}
                 value="R" control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
                 label={<Typography sx={{ fontSize: '12px' }}>RD</Typography>} />
-              <FormControlLabel disabled={''}
+              <FormControlLabel disabled={isFormDisabled}
                 value="U" control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
                 label={<Typography sx={{ fontSize: '12px' }}>URD</Typography>} />
-              <FormControlLabel disabled={''}
+              <FormControlLabel disabled={isFormDisabled}
                 value="C" control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
                 label={<Typography sx={{ fontSize: '12px' }}>Composition</Typography>} />
             </RadioGroup>
@@ -306,7 +306,7 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
           <Box sx={{ width: { xs: '100%', sm: '20%', md: '20.5%' } }}>
             <AutoVibe
               id=""
-              disabled={""}
+              disabled={isFormDisabled}
               getOptionLabel={(option) => option || ''}
               options={[]}
               label="State"
@@ -394,7 +394,7 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
               />
               <AutoVibe
                 id=""
-                disabled={""}
+                disabled={isFormDisabled}
                 getOptionLabel={(option) => option || ''}
                 options={[]}
                 label="Pincode"
@@ -499,10 +499,10 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
               value={formData?.MSME_FLAG || ""}
               sx={{ margin: '5px 0px 0px 0px' }}
             >
-              <FormControlLabel disabled={''}
+              <FormControlLabel disabled={isFormDisabled}
                 value="Y" control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
                 label={<Typography sx={{ fontSize: '12px' }}>Yes</Typography>} />
-              <FormControlLabel disabled={''}
+              <FormControlLabel disabled={isFormDisabled}
                 value="N" control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
                 label={<Typography sx={{ fontSize: '12px' }}>No</Typography>} />
             </RadioGroup>
