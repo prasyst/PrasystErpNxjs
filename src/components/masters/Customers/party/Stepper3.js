@@ -136,10 +136,6 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled }) => {
     setFormData(prev => ({
       ...prev,
       CLIENTTERMSEntities: [{ ...prev?.CLIENTTERMSEntities?.[0], [name]: value }]
-      // CLIENTTERMSEntities: [{
-      //   ...prev.CLIENTTERMSEntities,
-      //   [name]: value
-      // }]
     }));
   };
 
@@ -150,10 +146,6 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled }) => {
     setFormData(prev => ({
       ...prev,
       CLIENTTERMSEntities: [{ ...prev?.CLIENTTERMSEntities?.[0], [name]: updatedStatus }]
-      // CLIENTTERMSEntities: [{
-      //   ...prev.CLIENTTERMSEntities,
-      //   [name]: updatedStatus
-      // }]
     }));
   };
 
@@ -382,7 +374,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled }) => {
               fullWidth
               onChange={handleInputChange}
               value={""}
-              disabled={""}
+              disabled={isFormDisabled}
               name=""
               sx={textInputSx}
               inputProps={{
@@ -581,7 +573,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled }) => {
               variant="filled"
               fullWidth
               onChange={handleInputChange}
-              disabled={""}
+              disabled={isFormDisabled}
               value={""}
               name=""
               sx={textInputSx}
@@ -597,7 +589,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled }) => {
               fullWidth
               onChange={handleInputChange}
               value={""}
-              disabled={""}
+              disabled={isFormDisabled}
               name=""
               sx={textInputSx}
               inputProps={{
