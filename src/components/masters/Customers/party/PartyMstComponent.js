@@ -1432,11 +1432,20 @@ const PartyMst = () => {
       // }));
 
       setFormData((prev) => {
-        const updatedParty = [{
-          ...prev?.PartyDtlEntities?.[0],
-          ...updatedABC,
-        }];
+        // const updatedParty = [{
+        //   ...prev?.PartyDtlEntities,
+        //   ...updatedABC,
+        // }];
 
+        const updatedParty = prev?.PartyDtlEntities?.map((item, index) => {
+          if (index === 0) {
+            return {
+              ...item,
+              ...updatedABC,
+            };
+          }
+          return item;
+        });
 
         setRows(updatedParty);
 
