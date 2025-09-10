@@ -661,7 +661,7 @@ const PartyMst = () => {
       setMode('view');
     } else {
       setMode('view');
-      // setIsFormDisabled(true);
+      setIsFormDisabled(true);
     }
     setMode('view');
   }, [FG, fetchPartyData]);
@@ -677,7 +677,7 @@ const PartyMst = () => {
       {
         SearchByCd: "",
         ID: "",
-        DBFLAG: '',
+        DBFLAG: 'I',
         PARTY_KEY: "",
         PARTY_ALT_CODE: "",
         PARTY_CAT: "",
@@ -736,7 +736,7 @@ const PartyMst = () => {
         MSME_ACT: 0,
         DEFAULT_BRANCH: "",
         PartyDtlEntities: [{
-          DBFLAG: '',
+          DBFLAG: 'I',
           PARTYDTL_ID: "",
           PARTY_KEY: "",
           ADDR: "",
@@ -955,7 +955,7 @@ const PartyMst = () => {
       PAN_NO: formData.PAN_NO || "",
       TAN_NO: formData.TAN_NO || "",
       STATUS: formData.STATUS || "",
-      PLACE: formData.PLACE || "XYZ",
+      PLACE: formData.PLACE || "PLACE",
       VAT: formData.VAT || "",
       PARTY_IMG: formData.PARTY_IMG || "",
       PYTTYPE_KEY: formData.PYTTYPE_KEY || "",
@@ -1005,7 +1005,7 @@ const PartyMst = () => {
           SST: data.SST || "",
           CST: data.CST || "",
           EXCISE_CODE: data.EXCISE_CODE || "",
-          REMK: data.REMK || "",
+          REMK: data.REMK || "REMK",
           STATUS: data.STATUS || "",
           PLACE: data.PLACE || "PLACE",
           VAT: data.VAT || "",
@@ -1188,7 +1188,7 @@ const PartyMst = () => {
           SST: data.SST || "",
           CST: data.CST || "",
           EXCISE_CODE: data.EXCISE_CODE || "",
-          REMK: data.REMK || "",
+          REMK: data.REMK || "REMK",
           STATUS: data.STATUS || "",
           PLACE: data.PLACE || "PLACE",
           VAT: data.VAT || "",
@@ -1413,8 +1413,11 @@ const PartyMst = () => {
   };
 
   useEffect(() => {
-    const updatedFields = Object?.keys(formData)?.filter((key) =>
-      formData[key] !== formData?.PartyDtlEntities?.[0]?.[key]
+    
+    const baseFields = Object.keys(formData?.PartyDtlEntities?.[0] || {});
+
+    const updatedFields = baseFields.filter((key) =>
+      formData[key] !== formData.PartyDtlEntities?.[0][key]
     );
 
     if (updatedFields?.length > 0) {
@@ -1423,30 +1426,20 @@ const PartyMst = () => {
         return acc;
       }, {});
 
-      // setFormData((prev) => ({
-      //   ...prev,
-      //   PartyDtlEntities: [{
-      //     ...prev?.PartyDtlEntities?.[0],
-      //     ...updatedABC,
-      //   }],
-      // }));
-
       setFormData((prev) => {
-        // const updatedParty = [{
-        //   ...prev?.PartyDtlEntities,
-        //   ...updatedABC,
-        // }];
 
         const updatedParty = prev?.PartyDtlEntities?.map((item, index) => {
           if (index === 0) {
             return {
               ...item,
               ...updatedABC,
+              
             };
           }
           return item;
         });
 
+        console.log("Updated xyz array (setRows):", updatedParty);
         setRows(updatedParty);
 
         return {
@@ -1482,8 +1475,8 @@ const PartyMst = () => {
     formData?.STATUS,
     formData?.CREATED_BY,
     formData?.CREATED_DT,
-    formData?.UPDATED_BY,
-    formData?.UPDATED_DT,
+    // formData?.UPDATED_BY,
+    // formData?.UPDATED_DT,
     formData?.PLACE,
     formData?.VAT,
     formData?.PARTY_IMG,
@@ -1515,7 +1508,6 @@ const PartyMst = () => {
     formData?.MSME_ACT,
     formData?.DEFAULT_BRANCH,
   ]);
-
 
   return (
     <Box>
