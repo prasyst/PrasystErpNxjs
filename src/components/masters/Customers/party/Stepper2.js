@@ -32,7 +32,7 @@ import SearchIcon from "@mui/icons-material/Search";
 const FORM_MODE = getFormMode();
 
 const Stepper2 = ({ formData, setFormData, isFormDisabled, rows, setRows, currentPARTY_KEY }) => {
-  console.log("Stepper2 full formData:", formData);
+  console.log("Stepper2 full formData:", formData.PartyDtlEntities?.[0]);
 
   const [selectedIndex, setSelectedIndex] = useState(null);
   const [mode, setMode] = useState(null);
@@ -202,7 +202,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, rows, setRows, curren
         DEFAULT_BRANCH: "",
       }],
     }));
-    
+
     setMode('add');
     setSelectedIndex(null);
   };
@@ -261,47 +261,6 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, rows, setRows, curren
       }]
     }));
     setMode(null);
-  };
-
-  const clearPartyForm = () => {
-    setFormData(prev => ({
-      ...prev,
-      PartyDtlEntities: [{
-        DBFLAG: '',
-        PARTYDTL_ID: "",
-        PARTY_KEY: "",
-        ADDR: "",
-        CONT_KEY: 0,
-        CITY_KEY: 0,
-        TEL_NO: "",
-        FAX_NO: "",
-        E_MAIL: "",
-        WEBSITE: "",
-        CONTACT_PERSON: "",
-        MOBILE_NO: "",
-        SST: "",
-        CST: "",
-        EXCISE_CODE: "",
-        REMK: "",
-        STATUS: "",
-        PLACE: "",
-        VAT: "",
-        MAIN_BRANCH: "",
-        RD_URD: "",
-        PINCODE: "",
-        GSTTIN_NO: "",
-        TAX_KEY: 0,
-        TERM_KEY: "",
-        TRSP_KEY: 0,
-        TRADE_DISC: 0,
-        RDOFF: "",
-        CFORM_FLG: 0,
-        PARTY_ALT_CODE: "",
-        ORD_SYNCSTATUS: "",
-        SEZ: "",
-        DEFAULT_BRANCH: "",
-      }]
-    }));
   };
 
   const handleConfirm = () => {
@@ -434,18 +393,28 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, rows, setRows, curren
                 </TableHead>
                 <TableBody>
                   {rows.map((row, index) => (
+
                     <TableRow
                       key={index}
-                      hover
-                      onClick={() => setSelectedIndex(index)}
-                      selected={selectedIndex === index}
+                      hover={index !== 0}
+                      onClick={index !== 0 ? () => setSelectedIndex(index) : undefined}
+                      selected={index !== 0 && selectedIndex === index}
                       sx={{
-                        backgroundColor: selectedIndex === index ? "#e3f2fd" : index % 2 === 0 ? "#fafafa" : "#fff",
-                        cursor: 'pointer'
+                        backgroundColor:
+                          index === 0
+                            ? "#f5f5f5"
+                            : selectedIndex === index
+                              ? "#e3f2fd"
+                              : index % 2 === 0
+                                ? "#fafafa"
+                                : "#fff",
+                        cursor: index === 0 ? "not-allowed" : "pointer",
+                        opacity: index === 0 ? 0.5 : 1
                       }}
                     >
                       {columns.map((col) => (
-                        <TableCell key={col.id} sx={{ fontSize: "0.75rem", padding: "6px 8px" }}>
+                        <TableCell key={col.id}
+                          sx={{ fontSize: "0.75rem", padding: "6px 8px", color: index === 0 ? "text.disabled" : "inherit" }}>
                           {row[col.id]}
                         </TableCell>
                       ))}
