@@ -202,7 +202,7 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
               }}
             />
           </Box>
-          <Box sx={{ width: { xs: '100%', sm: '48%', md: '9%' } }}>
+          <Box sx={{ width: { xs: '100%', sm: '48%', md: '9.3%' } }}>
             <TextField
               label="Alt Cd"
               variant="filled"
@@ -292,7 +292,7 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
               options={[]}
               label="Country"
               name="CONT_KEY"
-              value={formData?.CONT_KEY || 0}
+              value={formData?.CONT_KEY || ""}
               onChange={handleInputChange}
               sx={DropInputSx}
               inputProps={{
@@ -303,7 +303,7 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
               }}
             />
           </Box>
-          <Box sx={{ width: { xs: '100%', sm: '20%', md: '20.5%' } }}>
+          <Box sx={{ width: { xs: '100%', sm: '20%', md: '20.6%' } }}>
             <AutoVibe
               id=""
               disabled={isFormDisabled}
@@ -361,7 +361,7 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
               options={[]}
               label="City/District"
               name="CITY_KEY"
-              value={formData?.CITY_KEY || 0}
+              value={formData?.CITY_KEY || ""}
               onChange={handleInputChange}
               sx={DropInputSx}
               inputProps={{
@@ -416,16 +416,20 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
             display: 'flex',
             flexDirection: { xs: 'column', sm: 'row', md: 'column' },
             gap: { xs: 1, sm: 1, md: 0.5 },
-            width: { xs: '100%', sm: '20%', md: '20.5%' }
+            width: { xs: '100%', sm: '20%', md: '20.6%' }
           }}>
             <TextField
-              label="Place"
               variant="filled"
               fullWidth
               onChange={handleInputChange}
               value={formData?.PLACE || ""}
               disabled={isFormDisabled}
               name="PLACE"
+              label={
+                <span>
+                  PLACE <span style={{ color: 'red' }}>*</span>
+                </span>
+              }
               sx={textInputSx}
               inputProps={{
                 style: {
@@ -438,7 +442,7 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
               display: 'flex',
               flexDirection: { xs: 'column', sm: 'row', md: 'row' },
               gap: { xs: 1, sm: 1, md: 2 },
-              width: { xs: '100%', sm: '20%', md: '207.7%' }
+              width: { xs: '100%', sm: '20%', md: '206%' }
             }}>
               <Box sx={{
                 display: 'flex',
@@ -507,7 +511,7 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
                 label={<Typography sx={{ fontSize: '12px' }}>No</Typography>} />
             </RadioGroup>
           </Box>
-          <Box sx={{ width: { xs: '100%', sm: '20%', md: '15.1%' } }}>
+          <Box sx={{ width: { xs: '100%', sm: '20%', md: '15.3%' } }}>
             <TextField
               label="MSME No"
               variant="filled"
@@ -607,7 +611,7 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
               }}
             />
           </Box>
-          <Box sx={{ width: { xs: '100%', sm: '20%', md: '15.1%' } }}>
+          <Box sx={{ width: { xs: '100%', sm: '20%', md: '15.3%' } }}>
             <AutoVibe
               id="CONTDESG"
               disabled={isFormDisabled}
@@ -644,7 +648,7 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
               }}
             />
           </Box>
-          <Box sx={{ width: { xs: '100%', sm: '20%', md: '20.6%' } }}>
+          <Box sx={{ width: { xs: '100%', sm: '20%', md: '20.5%' } }}>
             <TextField
               label="Website"
               variant="filled"
@@ -665,7 +669,7 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
           <Box sx={{ width: { xs: '100%', sm: '20%', md: '20.6%' } }}>
             <FormControlLabel
               control={<Checkbox name="MANUAL_WSP" size="small" checked={formData?.MANUAL_WSP === "1"}
-              onChange={handleChangeStatus} />}
+                onChange={handleChangeStatus} />}
               disabled={isFormDisabled}
               label="Manual WSP"
               sx={{
@@ -784,7 +788,7 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
             display: 'flex',
             flexDirection: { xs: 'column', sm: 'row', md: 'column' },
             gap: { xs: 1, sm: 1, md: 0.5 },
-            width: { xs: '100%', sm: '20%', md: '20.5%' }
+            width: { xs: '100%', sm: '20%', md: '20.8%' }
           }}>
             <TextField
               label="PAN"
@@ -869,7 +873,7 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
               getOptionLabel={(option) => option || ''}
               options={[]}
               label="Company"
-              name="CO_ID" 
+              name="CO_ID"
               value={formData?.CO_ID || 0}
               onChange={handleInputChange}
               sx={DropInputSx}
@@ -939,7 +943,7 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
           <Box sx={{ width: { xs: '100%', sm: '20%', md: '11%' } }}>
             <FormControlLabel
               control={<Checkbox name="DEFAULT_BRANCH" size="small" checked={formData?.DEFAULT_BRANCH === "1"}
-              onChange={handleChangeStatus} />}
+                onChange={handleChangeStatus} />}
               disabled={isFormDisabled}
               label="Default Branch"
               sx={{
@@ -947,7 +951,7 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
               }}
             />
           </Box>
-          <Box sx={{ width: { xs: '100%', sm: '20%', md: '20.5%', marginLeft: '7.5px' } }}>
+          <Box sx={{ width: { xs: '100%', sm: '20%', md: '20.6%', marginLeft: '8.5px' } }}>
             <TextField
               label="GSTIN No"
               variant="filled"

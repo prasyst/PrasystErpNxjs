@@ -334,6 +334,12 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, rows, setRows, curren
   };
 
   const columns = [
+    { id: 'ADDR', label: 'Address', minWidth: 150 },
+    { id: 'PLACE', label: 'Place', minWidth: 150 },
+    { id: 'CONTACT_PERSON', label: 'Cont Person', minWidth: 150 },
+    { id: 'MOBILE_NO', label: 'Mobile', minWidth: 150 },
+    { id: 'TEL_NO', label: 'Tel No', minWidth: 150 },
+    { id: 'FAX_NO', label: 'Fax', minWidth: 150 },
     { id: 'E_MAIL', label: 'Email', minWidth: 150 },
     { id: 'WEBSITE', label: 'Website', minWidth: 150 },
     { id: 'MOBILE_NO', label: 'MOBILE', minWidth: 150 },
@@ -381,7 +387,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, rows, setRows, curren
                         sx={{
                           backgroundColor: "#f5f5f5",
                           fontWeight: "bold",
-                          fontSize: "0.8rem",
+                          fontSize: "1rem",
                           padding: "2px 4px",
                           borderBottom: "1px solid #ddd",
                         }}
@@ -495,7 +501,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, rows, setRows, curren
               options={[]}
               label="Country"
               name="CONT_KEY"
-              value={partyData?.CONT_KEY || 0}
+              value={partyData?.CONT_KEY || ""}
               onChange={handleInputChange}
               sx={DropInputSx}
               inputProps={{
@@ -582,7 +588,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, rows, setRows, curren
                 options={[]}
                 label="City/District"
                 name="CITY_KEY"
-                value={partyData?.CITY_KEY || 0}
+                value={partyData?.CITY_KEY || ""}
                 onChange={handleInputChange}
                 sx={DropInputSx}
                 inputProps={{
@@ -684,7 +690,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, rows, setRows, curren
               }}
             />
           </Box>
-          <Box sx={{ width: { xs: '100%', sm: '20%', md: '20.6%' } }}>
+          <Box sx={{ width: { xs: '100%', sm: '20%', md: '20.7%' } }}>
             <TextField
               label="Website"
               variant="filled"
@@ -720,7 +726,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, rows, setRows, curren
               }}
             />
           </Box>
-          <Box sx={{ width: { xs: '100%', sm: '48%', md: '10.2%' } }}>
+          <Box sx={{ width: { xs: '100%', sm: '48%', md: '10.5%' } }}>
             <TextField
               label="LBT"
               variant="filled"
@@ -790,7 +796,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, rows, setRows, curren
             display: 'flex',
             flexDirection: { xs: 'column', sm: 'row', md: 'column' },
             gap: { xs: 1, sm: 1, md: 0.5 },
-            width: { xs: '100%', sm: '20%', md: '16%' }
+            width: { xs: '100%', sm: '20%', md: '16.3%' }
           }}>
             <TextField
               label="Excise"
@@ -872,7 +878,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, rows, setRows, curren
             display: 'flex',
             flexDirection: { xs: 'column', sm: 'row', md: 'column' },
             gap: { xs: 1, sm: 1, md: 0.5 },
-            width: { xs: '100%', sm: '20%', md: '20.7%' }
+            width: { xs: '100%', sm: '20%', md: '20.6%' }
           }}>
             <TextField
               label="CST"
