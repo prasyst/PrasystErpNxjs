@@ -119,20 +119,20 @@ const ProductMst = () => {
 
   // const textInputSx = {
   //   '& .MuiInputBase-root': {
-  //     height: 30,
-  //     fontSize: '12px',
+  //     height: 36, 
+  //     fontSize: '14px', 
   //   },
   //   '& .MuiInputLabel-root': {
-  //     fontSize: '12px',
-  //     top: '-6px',
+  //     fontSize: '14px',
+  //     top: '-8px', 
   //   },
   //   '& .MuiFilledInput-root': {
   //     backgroundColor: '#fafafa',
   //     border: '1px solid #e0e0e0',
-  //     borderRadius: '5px',
+  //     borderRadius: '6px',
   //     overflow: 'hidden',
-  //     height: 30,
-  //     fontSize: '12px',
+  //     height: 36,
+  //     fontSize: '14px',
   //   },
   //   '& .MuiFilledInput-root:before': {
   //     display: 'none',
@@ -141,18 +141,20 @@ const ProductMst = () => {
   //     display: 'none',
   //   },
   //   '& .MuiInputBase-input': {
-  //     padding: '15px 12px 1px!important'
-  //   }
+  //     padding: '10px 12px !important',
+  //     fontSize: '14px !important',
+  //     lineHeight: '1.4',
+  //   },
   // };
 
   const textInputSx = {
     '& .MuiInputBase-root': {
-      height: 36, // Match dropdown height
-      fontSize: '14px', // Match dropdown font size
+      height: 36,
+      fontSize: '14px',
     },
     '& .MuiInputLabel-root': {
       fontSize: '14px',
-      top: '-8px', // Aligned better for larger input
+      top: '-8px',
     },
     '& .MuiFilledInput-root': {
       backgroundColor: '#fafafa',
@@ -169,7 +171,7 @@ const ProductMst = () => {
       display: 'none',
     },
     '& .MuiInputBase-input': {
-      padding: '10px 12px !important', // Align text vertically
+      padding: '10px 12px !important',
       fontSize: '14px !important',
       lineHeight: '1.4',
     },
@@ -177,21 +179,21 @@ const ProductMst = () => {
 
   // const DropInputSx = {
   //   '& .MuiInputBase-root': {
-  //     height: 30,
-  //     fontSize: '12px',
+  //     height: 36, 
+  //     fontSize: '14px', 
   //   },
   //   '& .MuiInputLabel-root': {
-  //     fontSize: '12px',
-  //     top: '-6px',
+  //     fontSize: '14px',
+  //     top: '-4px', 
   //   },
   //   '& .MuiFilledInput-root': {
   //     backgroundColor: '#fafafa',
   //     border: '1px solid #e0e0e0',
-  //     borderRadius: '5px',
+  //     borderRadius: '6px',
   //     overflow: 'hidden',
-  //     height: 30,
-  //     fontSize: '12px',
-  //     paddingRight: '32px', // Space for the icon
+  //     height: 36,
+  //     fontSize: '14px',
+  //     paddingRight: '36px', 
   //   },
   //   '& .MuiFilledInput-root:before': {
   //     display: 'none',
@@ -200,25 +202,25 @@ const ProductMst = () => {
   //     display: 'none',
   //   },
   //   '& .MuiInputBase-input': {
-  //     padding: '6px 12px',
-  //     fontSize: '12px',
-  //     lineHeight: '1.2',
+  //     padding: '10px 12px',
+  //     fontSize: '14px',
+  //     lineHeight: '1.4',
   //   },
   //   '& .MuiAutocomplete-endAdornment': {
   //     top: '50%',
   //     transform: 'translateY(-50%)',
-  //     right: '8px', // spacing from the right
+  //     right: '10px',
   //   },
   // };
 
   const DropInputSx = {
     '& .MuiInputBase-root': {
-      height: 36, // Increased height
-      fontSize: '14px', // Slightly larger font
+      height: 36,
+      fontSize: '14px',
     },
     '& .MuiInputLabel-root': {
       fontSize: '14px',
-      top: '-4px', // Adjusted for better vertical alignment
+      top: '-4px',
     },
     '& .MuiFilledInput-root': {
       backgroundColor: '#fafafa',
@@ -227,7 +229,7 @@ const ProductMst = () => {
       overflow: 'hidden',
       height: 36,
       fontSize: '14px',
-      paddingRight: '36px', // Slightly more space for icon
+      paddingRight: '36px',
     },
     '& .MuiFilledInput-root:before': {
       display: 'none',
@@ -236,14 +238,14 @@ const ProductMst = () => {
       display: 'none',
     },
     '& .MuiInputBase-input': {
-      padding: '10px 12px', // More padding for bigger size
+      padding: '10px 12px',
       fontSize: '14px',
       lineHeight: '1.4',
     },
     '& .MuiAutocomplete-endAdornment': {
       top: '50%',
       transform: 'translateY(-50%)',
-      right: '10px', // Adjusted spacing from the right
+      right: '10px',
     },
   };
 
@@ -252,11 +254,6 @@ const ProductMst = () => {
     margin: { xs: '0 4px', sm: '0 6px' },
     minWidth: { xs: 40, sm: 46, md: 60 },
     height: { xs: 40, sm: 46, md: 27 },
-    // "&:disabled": {
-    //   backgroundColor: "rgba(0, 0, 0, 0.12)",
-    //   color: "rgba(0, 0, 0, 0.26)",
-    //   boxShadow: "none",
-    // }
   };
 
   const handleInputChange = (event) => {
@@ -1020,7 +1017,7 @@ const ProductMst = () => {
         justifyContent: 'center',
         alignItems: 'center',
         boxSizing: 'border-box',
-        backgroundColor: 'rgb(236, 238, 240)',
+        // backgroundColor: 'rgb(236, 238, 240)',
         minHeight: '91vh',
         overflowX: 'hidden',
         overflowY: 'auto',
@@ -1310,7 +1307,7 @@ const ProductMst = () => {
                   },
                 }}
               />
-              
+
               <TextField
                 label="Mark Down Rt %"
                 variant="filled"
@@ -1327,7 +1324,7 @@ const ProductMst = () => {
                   },
                 }}
               />
-              
+
             </Box>
           </Box>
 
@@ -1536,23 +1533,23 @@ const ProductMst = () => {
                   width: { xs: '100%', sm: '48%', md: '48.5%' },
                 }}
               >
-              <AutoVibe
-                id=""
-                disabled={isFormDisabled || form.QC_REQ === 'option2'}
-                getOptionLabel={(option) => option || ''}
-                options={[]}
-                label="Qc SubGroup"
-                name=""
-                value={''}
-                onChange={handleInputChange}
-                sx={DropInputSx}
-                inputProps={{
-                  style: {
-                    padding: '6px 8px',
-                    fontSize: '12px',
-                  },
-                }}
-              />
+                <AutoVibe
+                  id=""
+                  disabled={isFormDisabled || form.QC_REQ === 'option2'}
+                  getOptionLabel={(option) => option || ''}
+                  options={[]}
+                  label="Qc SubGroup"
+                  name=""
+                  value={''}
+                  onChange={handleInputChange}
+                  sx={DropInputSx}
+                  inputProps={{
+                    style: {
+                      padding: '6px 8px',
+                      fontSize: '12px',
+                    },
+                  }}
+                />
               </Box>
               <FormLabel sx={{ marginTop: '7px', fontSize: '14px', fontWeight: 'bold', color: 'black' }} component="legend">Qc Req</FormLabel>
               <RadioGroup

@@ -82,8 +82,8 @@ const PartyMst = () => {
     ADDR: "",
     REG_ADD: "",
     WORK_ADD: "",
-    CONT_KEY: 0,
-    CITY_KEY: 0,
+    CONT_KEY: "COUNTRY",
+    CITY_KEY: "CITY",
     TEL_NO: "",
     FAX_NO: "",
     E_MAIL: "",
@@ -136,8 +136,8 @@ const PartyMst = () => {
       PARTYDTL_ID: "",
       PARTY_KEY: "",
       ADDR: "",
-      CONT_KEY: 0,
-      CITY_KEY: 0,
+      CONT_KEY: "COUNTRY",
+      CITY_KEY: "CITY",
       TEL_NO: "",
       FAX_NO: "",
       E_MAIL: "",
@@ -459,8 +459,8 @@ const PartyMst = () => {
               ADDR: "",
               REG_ADD: "",
               WORK_ADD: "",
-              CONT_KEY: 0,
-              CITY_KEY: 0,
+              CONT_KEY: "COUNTRY",
+              CITY_KEY: "CITY",
               TEL_NO: "",
               FAX_NO: "",
               E_MAIL: "",
@@ -513,8 +513,8 @@ const PartyMst = () => {
                 PARTYDTL_ID: "",
                 PARTY_KEY: "",
                 ADDR: "",
-                CONT_KEY: 0,
-                CITY_KEY: 0,
+                CONT_KEY: "COUNTRY",
+                CITY_KEY: "CITY",
                 TEL_NO: "",
                 FAX_NO: "",
                 E_MAIL: "",
@@ -686,8 +686,8 @@ const PartyMst = () => {
         ADDR: "",
         REG_ADD: "",
         WORK_ADD: "",
-        CONT_KEY: 0,
-        CITY_KEY: 0,
+        CONT_KEY: "COUNTRY",
+        CITY_KEY: "CITY",
         TEL_NO: "",
         FAX_NO: "",
         E_MAIL: "",
@@ -703,8 +703,8 @@ const PartyMst = () => {
         STATUS: "",
         CREATED_BY: 0,
         CREATED_DT: "",
-        UPDATED_BY: 0,
-        UPDATED_DT: "",
+        // UPDATED_BY: 0,
+        // UPDATED_DT: "",
         PLACE: "",
         VAT: "",
         PARTY_IMG: "",
@@ -740,8 +740,8 @@ const PartyMst = () => {
           PARTYDTL_ID: "",
           PARTY_KEY: "",
           ADDR: "",
-          CONT_KEY: 0,
-          CITY_KEY: 0,
+          CONT_KEY: "COUNTRY",
+          CITY_KEY: "CITY",
           TEL_NO: "",
           FAX_NO: "",
           E_MAIL: "",
@@ -1413,7 +1413,20 @@ const PartyMst = () => {
   };
 
   useEffect(() => {
-    
+
+    const defaultValues = {
+      PARTYDTL_ID: 0,
+      CFORM_FLG: 0,
+      MAIN_BRANCH: "",
+      ORD_SYNCSTATUS: "",
+      RDOFF: "",
+      REMK: "",
+      TAX_KEY: 0,
+      TERM_KEY: "",
+      TRSP_KEY: 0,
+      TRADE_DISC: 0,
+    };
+
     const baseFields = Object.keys(formData?.PartyDtlEntities?.[0] || {});
 
     const updatedFields = baseFields.filter((key) =>
@@ -1422,7 +1435,7 @@ const PartyMst = () => {
 
     if (updatedFields?.length > 0) {
       const updatedABC = updatedFields?.reduce((acc, key) => {
-        acc[key] = formData[key];
+        acc[key] = formData[key] ?? defaultValues[key];
         return acc;
       }, {});
 
@@ -1433,7 +1446,7 @@ const PartyMst = () => {
             return {
               ...item,
               ...updatedABC,
-              
+
             };
           }
           return item;

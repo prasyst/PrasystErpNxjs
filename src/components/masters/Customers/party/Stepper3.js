@@ -425,7 +425,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled }) => {
             </Link>
           </Box>
 
-          <Box sx={{ width: { xs: '100%', sm: '20%', md: '15.4%' } }}>
+          <Box sx={{ width: { xs: '100%', sm: '20%', md: '15.5%' } }}>
             <AutoVibe
               id="CFORM_FLG"
               disabled={isFormDisabled}
