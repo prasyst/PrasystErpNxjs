@@ -1645,8 +1645,7 @@ const PartyMst = () => {
           />
         )}
       </Grid>
-
-      {tabIndex === 0 && (
+      { tabIndex === 0 && (
         <Grid container alignItems="center"
           justifyContent="center" spacing={1} sx={{ marginTop: "20px", marginInline: '20px' }}>
           <Grid sx={{
@@ -1682,7 +1681,6 @@ const PartyMst = () => {
           </Grid>
         </Grid>
       )}
-
     </Box>
   );
 };
