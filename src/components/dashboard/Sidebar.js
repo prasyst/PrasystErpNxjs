@@ -325,6 +325,14 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
       icon: MdInventory,
       children: [
         { name: 'Stock Management', icon: FaBoxes, path: '#' },
+        { name: 'Sales', icon: FaBoxes, path: '#',
+           children: [
+       
+        { name: 'Sales Offline', icon: FaBoxes, path: '/inverntory/inventory-offline/' },
+       
+        
+      ],
+         },
         { name: 'Inventory Reports', icon: MdSummarize, path: '#' },
         { name: 'Stock Adjustment', icon: MdBuild, path: '#' },
         { name: 'Inventory Valuation', icon: MdAttachMoney, path: '#' },
@@ -361,7 +369,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
       ],
     },
     {
-      name: 'HR/PayRoll',
+      name: 'HR & Operation',
       icon: FaUserTie,
       children: [
         { name: 'Employee Management', icon: MdPeople, path: '#' },
