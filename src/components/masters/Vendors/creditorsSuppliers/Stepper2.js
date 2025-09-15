@@ -35,6 +35,10 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, rows, setRows, curren
   console.log("Stepper2 full formData:", formData.PartyDtlEntities?.[0]);
 
   const [selectedIndex, setSelectedIndex] = useState(null);
+  const [isAddButtonDisabled, setIsAddButtonDisabled] = useState(false);
+  const [isAddFormDisabled, setIsAddFormDisabled] = useState(false);
+  const [isEditButtonDisabled, setIsEditButtonDisabled] = useState(false);
+  const [isDeleteButtonDisabled, setIsDeleteButtonDisabled] = useState(false);
   const [mode, setMode] = useState(null);
 
   const partyData = formData?.PartyDtlEntities?.[0];
@@ -204,6 +208,9 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, rows, setRows, curren
     }));
 
     setMode('add');
+    setIsAddButtonDisabled(true);
+    setIsEditButtonDisabled(true);
+    setIsDeleteButtonDisabled(true);
     setSelectedIndex(null);
   };
 
@@ -215,6 +222,9 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, rows, setRows, curren
       PartyDtlEntities: [{ ...selectedRow, DBFLAG: 'U' }]
     }));
     setMode('edit');
+    setIsEditButtonDisabled(true);
+    setIsAddButtonDisabled(true);
+    setIsDeleteButtonDisabled(true);
   };
 
   const handleDelete = () => {
@@ -261,6 +271,9 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, rows, setRows, curren
       }]
     }));
     setMode(null);
+    setIsDeleteButtonDisabled(true);
+    setIsAddButtonDisabled(true);
+    setIsEditButtonDisabled(true);
   };
 
   const handleConfirm = () => {
@@ -321,6 +334,9 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, rows, setRows, curren
     }));
     setSelectedIndex(null);
     setMode(null);
+    setIsAddButtonDisabled(false);
+    setIsEditButtonDisabled(false);
+    setIsDeleteButtonDisabled(false);
   };
 
   const handleChangeStatus = (event) => {
@@ -377,7 +393,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, rows, setRows, curren
               border: "1px solid #e0e0e0",
             }}
           >
-            <TableContainer component={Paper} sx={{ maxHeight: 200 }}>
+            <TableContainer component={Paper} sx={{ maxHeight: 160 }}>
               <Table stickyHeader size="small">
                 <TableHead>
                   <TableRow>
@@ -403,8 +419,16 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, rows, setRows, curren
                     <TableRow
                       key={index}
                       hover={index !== 0}
-                      onClick={index !== 0 ? () => setSelectedIndex(index) : undefined}
+                      onClick={index !== 0 ? () => {
+                        setSelectedIndex(index);
+                        const selectedRow = rows[index];
+                        setFormData(prev => ({
+                          ...prev,
+                          PartyDtlEntities: [{ ...selectedRow }]
+                        }));
+                      } : undefined}
                       selected={index !== 0 && selectedIndex === index}
+                      disabled={isFormDisabled}
                       sx={{
                         backgroundColor:
                           index === 0
@@ -438,6 +462,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, rows, setRows, curren
             variant="contained"
             startIcon={<AddIcon />}
             onClick={handleAdd}
+            disabled={isFormDisabled || isAddButtonDisabled}
             sx={Buttonsx}
           >
             Add
@@ -447,7 +472,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, rows, setRows, curren
             variant="contained"
             startIcon={<EditIcon />}
             onClick={handleEdit}
-            disabled={selectedIndex === null}
+            disabled={isFormDisabled || isEditButtonDisabled}
             sx={Buttonsx}
           >
             Edit
@@ -457,7 +482,8 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, rows, setRows, curren
             variant="contained"
             startIcon={<DeleteIcon />}
             onClick={handleDelete}
-            disabled={selectedIndex === null}
+            disabled={isFormDisabled || isDeleteButtonDisabled}
+            sx={Buttonsx}
           >
             Delete
           </Button>
@@ -476,7 +502,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, rows, setRows, curren
               fullWidth
               onChange={handleInputChange}
               value={partyData?.ADDR}
-              disabled={isFormDisabled}
+              disabled={!isEditButtonDisabled && !isAddButtonDisabled}
               name="ADDR"
               sx={doubleInputSx}
               inputProps={{
@@ -496,7 +522,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, rows, setRows, curren
           }}>
             <AutoVibe
               id="CONT_KEY"
-              disabled={isFormDisabled}
+              disabled={!isEditButtonDisabled && !isAddButtonDisabled}
               getOptionLabel={(option) => option || ''}
               options={[]}
               label="Country"
@@ -522,7 +548,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, rows, setRows, curren
                 fullWidth
                 onChange={handleInputChange}
                 value={partyData?.PINCODE || ""}
-                disabled={isFormDisabled}
+                disabled={!isEditButtonDisabled && !isAddButtonDisabled}
                 name="PINCODE"
                 sx={textInputSx}
                 inputProps={{
@@ -534,7 +560,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, rows, setRows, curren
               />
               <AutoVibe
                 id=""
-                disabled={isFormDisabled}
+                disabled={!isEditButtonDisabled && !isAddButtonDisabled}
                 getOptionLabel={(option) => option || ''}
                 options={[]}
                 label="Pincode"
@@ -566,7 +592,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, rows, setRows, curren
             }}>
               <AutoVibe
                 id=""
-                disabled={isFormDisabled}
+                disabled={!isEditButtonDisabled && !isAddButtonDisabled}
                 getOptionLabel={(option) => option || ''}
                 options={[]}
                 label="State"
@@ -583,7 +609,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, rows, setRows, curren
               />
               <AutoVibe
                 id="CITY_KEY"
-                disabled={isFormDisabled}
+                disabled={!isEditButtonDisabled && !isAddButtonDisabled}
                 getOptionLabel={(option) => option || ''}
                 options={[]}
                 label="City/District"
@@ -618,7 +644,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, rows, setRows, curren
                   fullWidth
                   onChange={handleInputChange}
                   value={partyData?.TEL_NO || ""}
-                  disabled={isFormDisabled}
+                  disabled={!isEditButtonDisabled && !isAddButtonDisabled}
                   name="TEL_NO"
                   sx={textInputSx}
                   inputProps={{
@@ -635,7 +661,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, rows, setRows, curren
                 fullWidth
                 onChange={handleInputChange}
                 value={partyData?.E_MAIL || ""}
-                disabled={isFormDisabled}
+                disabled={!isEditButtonDisabled && !isAddButtonDisabled}
                 name="E_MAIL"
                 sx={textInputSx}
                 inputProps={{
@@ -661,7 +687,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, rows, setRows, curren
               fullWidth
               onChange={handleInputChange}
               value={partyData?.CONTACT_PERSON || ""}
-              disabled={isFormDisabled}
+              disabled={!isEditButtonDisabled && !isAddButtonDisabled}
               name="CONTACT_PERSON"
               sx={textInputSx}
               inputProps={{
@@ -679,7 +705,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, rows, setRows, curren
               fullWidth
               onChange={handleInputChange}
               value={partyData?.MOBILE_NO || ""}
-              disabled={isFormDisabled}
+              disabled={!isEditButtonDisabled && !isAddButtonDisabled}
               name="MOBILE_NO"
               sx={textInputSx}
               inputProps={{
@@ -697,7 +723,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, rows, setRows, curren
               fullWidth
               onChange={handleInputChange}
               value={partyData?.WEBSITE || ""}
-              disabled={isFormDisabled}
+              disabled={!isEditButtonDisabled && !isAddButtonDisabled}
               name="WEBSITE"
               sx={textInputSx}
               inputProps={{
@@ -764,7 +790,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, rows, setRows, curren
               fullWidth
               onChange={handleInputChange}
               value={partyData?.FAX_NO || ""}
-              disabled={isFormDisabled}
+              disabled={!isEditButtonDisabled && !isAddButtonDisabled}
               name="FAX_NO"
               sx={textInputSx}
               inputProps={{
@@ -780,7 +806,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, rows, setRows, curren
               fullWidth
               onChange={handleInputChange}
               value={""}
-              disabled={isFormDisabled}
+              disabled={!isEditButtonDisabled && !isAddButtonDisabled}
               name=""
               sx={textInputSx}
               inputProps={{
@@ -804,7 +830,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, rows, setRows, curren
               fullWidth
               onChange={handleInputChange}
               value={partyData?.EXCISE_CODE || ""}
-              disabled={isFormDisabled}
+              disabled={!isEditButtonDisabled && !isAddButtonDisabled}
               name="EXCISE_CODE"
               sx={textInputSx}
               inputProps={{
@@ -816,7 +842,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, rows, setRows, curren
             />
             <AutoVibe
               id="TRADE_DISC"
-              disabled={isFormDisabled}
+              disabled={!isEditButtonDisabled && !isAddButtonDisabled}
               getOptionLabel={(option) => option || ''}
               options={[]}
               label="Trade Disc"
@@ -845,7 +871,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, rows, setRows, curren
               fullWidth
               onChange={handleInputChange}
               value={partyData?.VAT || ""}
-              disabled={isFormDisabled}
+              disabled={!isEditButtonDisabled && !isAddButtonDisabled}
               name="VAT"
               sx={textInputSx}
               inputProps={{
@@ -857,7 +883,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, rows, setRows, curren
             />
             <AutoVibe
               id="TRSP_KEY"
-              disabled={isFormDisabled}
+              disabled={!isEditButtonDisabled && !isAddButtonDisabled}
               getOptionLabel={(option) => option || ''}
               options={[]}
               label="Transporter"
@@ -886,7 +912,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, rows, setRows, curren
               fullWidth
               onChange={handleInputChange}
               value={partyData?.CST || ""}
-              disabled={isFormDisabled}
+              disabled={!isEditButtonDisabled && !isAddButtonDisabled}
               name="CST"
               sx={textInputSx}
               inputProps={{
@@ -898,7 +924,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, rows, setRows, curren
             />
             <AutoVibe
               id="TAX_KEY"
-              disabled={isFormDisabled}
+              disabled={!isEditButtonDisabled && !isAddButtonDisabled}
               getOptionLabel={(option) => option || ''}
               options={[]}
               label="Tax Appl"
@@ -923,7 +949,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, rows, setRows, curren
           }}>
             <AutoVibe
               id="CFORM_FLG"
-              disabled={isFormDisabled}
+              disabled={!isEditButtonDisabled && !isAddButtonDisabled}
               getOptionLabel={(option) => option || ''}
               options={[]}
               label="Form Type"
@@ -944,7 +970,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, rows, setRows, curren
               fullWidth
               onChange={handleInputChange}
               value={partyData?.GSTTIN_NO || ""}
-              disabled={isFormDisabled}
+              disabled={!isEditButtonDisabled && !isAddButtonDisabled}
               name="GSTTIN_NO"
               sx={textInputSx}
               inputProps={{
@@ -969,7 +995,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, rows, setRows, curren
               fullWidth
               onChange={handleInputChange}
               value={partyData?.REMK || ""}
-              disabled={isFormDisabled}
+              disabled={!isEditButtonDisabled && !isAddButtonDisabled}
               name="REMK"
               sx={textInputSx}
               inputProps={{
@@ -989,17 +1015,17 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, rows, setRows, curren
               row
               name="RDOFF"
               onChange={handleInputChange}
-              disabled={isFormDisabled}
+              disabled={!isEditButtonDisabled && !isAddButtonDisabled}
               value={partyData?.RDOFF || ""}
               sx={{ margin: '5px 0px 0px 0px' }}
             >
-              <FormControlLabel disabled={isFormDisabled}
+              <FormControlLabel disabled={!isEditButtonDisabled && !isAddButtonDisabled}
                 value="N" control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
                 label={<Typography sx={{ fontSize: '12px' }}>None</Typography>} />
-              <FormControlLabel disabled={isFormDisabled}
+              <FormControlLabel disabled={!isEditButtonDisabled && !isAddButtonDisabled}
                 value="NR" control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
                 label={<Typography sx={{ fontSize: '12px' }}>Nearest Re</Typography>} />
-              <FormControlLabel disabled={isFormDisabled}
+              <FormControlLabel disabled={!isEditButtonDisabled && !isAddButtonDisabled}
                 value="R" control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
                 label={<Typography sx={{ fontSize: '12px' }}>Rs.5</Typography>} />
             </RadioGroup>
@@ -1017,14 +1043,14 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, rows, setRows, curren
               row
               name="SEZ"
               onChange={handleInputChange}
-              disabled={isFormDisabled}
+              disabled={!isEditButtonDisabled && !isAddButtonDisabled}
               value={partyData?.SEZ || ""}
               sx={{ margin: '5px 0px 0px 0px' }}
             >
-              <FormControlLabel disabled={isFormDisabled}
+              <FormControlLabel disabled={!isEditButtonDisabled && !isAddButtonDisabled}
                 value="Y" control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
                 label={<Typography sx={{ fontSize: '12px' }}>Yes</Typography>} />
-              <FormControlLabel disabled={isFormDisabled}
+              <FormControlLabel disabled={!isEditButtonDisabled && !isAddButtonDisabled}
                 value="N" control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
                 label={<Typography sx={{ fontSize: '12px' }}>No</Typography>} />
             </RadioGroup>
@@ -1049,17 +1075,17 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, rows, setRows, curren
               row
               name="RD_URD"
               onChange={handleInputChange}
-              disabled={isFormDisabled}
+              disabled={!isEditButtonDisabled && !isAddButtonDisabled}
               value={partyData?.RD_URD || ""}
               sx={{ margin: '5px 0px 0px 0px' }}
             >
-              <FormControlLabel disabled={isFormDisabled}
+              <FormControlLabel disabled={!isEditButtonDisabled && !isAddButtonDisabled}
                 value="R" control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
                 label={<Typography sx={{ fontSize: '12px' }}>RD</Typography>} />
-              <FormControlLabel disabled={isFormDisabled}
+              <FormControlLabel disabled={!isEditButtonDisabled && !isAddButtonDisabled}
                 value="U" control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
                 label={<Typography sx={{ fontSize: '12px' }}>URD</Typography>} />
-              <FormControlLabel disabled={isFormDisabled}
+              <FormControlLabel disabled={!isEditButtonDisabled && !isAddButtonDisabled}
                 value="C" control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
                 label={<Typography sx={{ fontSize: '12px' }}>Composition</Typography>} />
             </RadioGroup>
@@ -1068,7 +1094,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, rows, setRows, curren
           <FormControlLabel
             control={<Checkbox name="STATUS" size="small" checked={partyData?.STATUS === "1"}
               onChange={handleChangeStatus} />}
-            disabled={isFormDisabled}
+            disabled={!isEditButtonDisabled && !isAddButtonDisabled}
             label="Active"
             sx={{
               '& .MuiFormControlLabel-label': { fontSize: '12px' }
@@ -1077,7 +1103,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, rows, setRows, curren
           <FormControlLabel
             control={<Checkbox name="DEFAULT_BRANCH" size="small" checked={partyData?.DEFAULT_BRANCH === "1"}
               onChange={handleChangeStatus} />}
-            disabled={isFormDisabled}
+            disabled={!isEditButtonDisabled && !isAddButtonDisabled}
             label="Default Branch"
             sx={{
               '& .MuiFormControlLabel-label': { fontSize: '12px' }

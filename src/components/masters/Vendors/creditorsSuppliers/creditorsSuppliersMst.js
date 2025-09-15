@@ -273,7 +273,7 @@ const CreditorsSuppliersMst = () => {
         "ORDERBYFLD": "",
         "CWHAER": "",
         "CO_ID": CO_ID,
-        "PARTY_CAT": "PC"
+        "PARTY_CAT": "PS"
       });
 
       if (response.data.STATUS === 0 && response.data.RESPONSESTATUSCODE === 1) {
@@ -437,7 +437,7 @@ const CreditorsSuppliersMst = () => {
         setCurrentPARTY_KEY(partyData?.PARTY_KEY);
         const newParams = new URLSearchParams();
         newParams.set("PARTY_KEY", partyData?.PARTY_KEY);
-        router.replace(`/masters/customers?${newParams.toString()}`);
+        router.replace(`/masters/vendors?${newParams.toString()}`);
 
         console.log("fetch", partyData);
 
@@ -868,7 +868,7 @@ const CreditorsSuppliersMst = () => {
         TBLNAME: "Party",
         FLDNAME: "Party_KEY",
         NCOLLEN: 6,
-        CPREFIX: "PC",
+        CPREFIX: "PS",
         COBR_ID: COBR_ID,
         FCYR_KEY: FCYR_KEY,
         TRNSTYPE: "M",
@@ -1646,7 +1646,7 @@ const CreditorsSuppliersMst = () => {
         )}
       </Grid>
 
-      {tabIndex === 0 && (
+      {tabIndex === 0  && (
         <Grid container alignItems="center"
           justifyContent="center" spacing={1} sx={{ marginTop: "20px", marginInline: '20px' }}>
           <Grid sx={{
@@ -1682,7 +1682,6 @@ const CreditorsSuppliersMst = () => {
           </Grid>
         </Grid>
       )}
-
     </Box>
   );
 };

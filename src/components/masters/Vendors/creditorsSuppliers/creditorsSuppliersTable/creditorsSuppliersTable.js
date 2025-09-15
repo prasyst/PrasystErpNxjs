@@ -115,7 +115,7 @@ export default function CreditorsSuppliersTable() {
     try {
       const response = await axiosInstance.post(`Party/GetPartyDashBoard?currentPage=1&limit=25`, {
         "SearchText": "",
-        "PARTY_CAT": "PC",
+        "PARTY_CAT": "PS",
         "FLAG": ""
       });
       const { data: { STATUS, DATA } } = response;
@@ -137,7 +137,7 @@ export default function CreditorsSuppliersTable() {
       PARTY_KEY: row.PARTY_KEY,
       mode: "view"
     }).toString();
-    router.push(`/masters/customers?${params}`);
+    router.push(`/masters/vendors?${params}`);
   };
 
   const handleBack = () => {

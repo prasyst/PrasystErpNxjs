@@ -574,8 +574,8 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled }) => {
               fullWidth
               onChange={handleInputChange}
               disabled={isFormDisabled}
-              value={""}
-              name=""
+              value={clientData?.STOP_DESC_DT || 0}
+              name="STOP_DESC_DT"
               sx={textInputSx}
               InputLabelProps={{
                 shrink: true,
