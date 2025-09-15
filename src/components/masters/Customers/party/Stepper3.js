@@ -31,7 +31,7 @@ import z from 'zod';
 const FORM_MODE = getFormMode();
 
 const Stepper3 = ({ formData, setFormData, isFormDisabled }) => {
-  console.log("Stepper3 full formData:", formData);
+  console.log("Stepper3 full formData:", formData?.PARTY_NAME || "");
 
   const clientData = formData?.CLIENTTERMSEntities?.[0];
 
@@ -172,7 +172,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled }) => {
         >
           <Box sx={{ width: { xs: '100%', sm: '20%', md: '33.5%' } }}>
             <Typography variant="h6" component="h2">
-              Alicia Deane
+              {formData?.PARTY_NAME || ""}
             </Typography>
           </Box>
 

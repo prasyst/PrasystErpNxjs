@@ -24,6 +24,10 @@ import AutoVibe from '../../../../GlobalFunction/CustomAutoComplete/AutoVibe';
 import "react-toastify/dist/ReactToastify.css";
 
 import { getFormMode } from "../../../../lib/helpers";
+import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
+import UploadIcon from '@mui/icons-material/Upload';
+import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
+
 const FORM_MODE = getFormMode();
 
 const StepperMst1 = ({ formData, setFormData }) => {
@@ -129,7 +133,8 @@ const StepperMst1 = ({ formData, setFormData }) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: value
+      [name]: value,
+      ...(name === "PARTY_NAME" && {PRINTNAME: value})
     }));
   };
 
@@ -141,6 +146,35 @@ const StepperMst1 = ({ formData, setFormData }) => {
       ...prev,
       [name]: updatedStatus
     }));
+  };
+
+  const handleImageChange = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+
+      const readFileAsBase64 = (file) => {
+        return new Promise((resolve, reject) => {
+          reader.onloadend = () => {
+            resolve(reader.result);
+          };
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        });
+      };
+
+      readFileAsBase64(file)
+        .then(base64String => {
+          setFormData(prevData => ({
+            ...prevData,
+            PARTY_IMG: base64String
+          }));
+        })
+        .catch(err => {
+          console.error('Error reading file:', err);
+          toast.error('Error reading file. Please try again.');
+        });
+    }
   };
 
   return (
@@ -258,121 +292,112 @@ const StepperMst1 = ({ formData, setFormData }) => {
           </Box>
         </Box>
 
-        <Box sx={{
-          display: 'flex',
-          flexDirection: { xs: 'column', sm: 'row', md: 'row' },
-          gap: { xs: 1, sm: 1, md: 2 }
-        }}>
-          <Box sx={{ width: { xs: '100%', sm: '20%', md: '33.5%' } }}>
-            <TextField
-              label="Print Name"
-              variant="filled"
-              fullWidth
-              onChange={handleInputChange}
-              value={formData?.PRINTNAME || ""}
-              name="PRINTNAME"
-              disabled={isFormDisabled}
-              sx={textInputSx}
-              inputProps={{
-                style: {
-                  padding: '6px 8px',
-                  fontSize: '12px',
-                },
-              }}
-            />
-          </Box>
-          <Box sx={{ width: { xs: '100%', sm: '20%', md: '20.5%' } }}>
-            <AutoVibe
-              id="CONT_KEY"
-              disabled={isFormDisabled}
-              getOptionLabel={(option) => option || ''}
-              options={[]}
-              label="Country"
-              name="CONT_KEY"
-              value={formData?.CONT_KEY || ""}
-              onChange={handleInputChange}
-              sx={DropInputSx}
-              inputProps={{
-                style: {
-                  padding: '6px 8px',
-                  fontSize: '12px',
-                },
-              }}
-            />
-          </Box>
-          <Box sx={{ width: { xs: '100%', sm: '20%', md: '20.6%' } }}>
-            <AutoVibe
-              id=""
-              disabled={isFormDisabled}
-              getOptionLabel={(option) => option || ''}
-              options={[]}
-              label="State"
-              name=""
-              value={""}
-              onChange={handleInputChange}
-              sx={DropInputSx}
-              inputProps={{
-                style: {
-                  padding: '6px 8px',
-                  fontSize: '12px',
-                },
-              }}
-            />
-          </Box>
-        </Box>
-
-        <Box sx={{
-          display: 'flex',
-          flexDirection: { xs: 'column', sm: 'row', md: 'row' },
-          gap: { xs: 1, sm: 1, md: 2 },
-        }}>
-          <Box sx={{ width: { xs: '100%', sm: '20%', md: '33.5%' } }}>
-            <TextField
-              label="Address"
-              variant="filled"
-              fullWidth
-              onChange={handleInputChange}
-              value={formData?.ADDR || ""}
-              disabled={isFormDisabled}
-              name="ADDR"
-              sx={doubleInputSx}
-              inputProps={{
-                style: {
-                  padding: '6px 8px',
-                  fontSize: '12px'
-                },
-              }}
-            />
-          </Box>
-
-          <Box sx={{
+        <Box
+          sx={{
             display: 'flex',
-            flexDirection: { xs: 'column', sm: 'row', md: 'column' },
-            gap: { xs: 1, sm: 1, md: 0.5 },
-            width: { xs: '100%', sm: '20%', md: '20.5%' }
-          }}>
-            <AutoVibe
-              id="CITY_KEY"
-              disabled={isFormDisabled}
-              getOptionLabel={(option) => option || ''}
-              options={[]}
-              label="City/District"
-              name="CITY_KEY"
-              value={formData?.CITY_KEY || ""}
-              onChange={handleInputChange}
-              sx={DropInputSx}
-              inputProps={{
-                style: {
-                  padding: '6px 8px',
-                  fontSize: '12px',
-                },
-              }}
-            />
-            <Box sx={{
+            flexDirection: { xs: 'column', sm: 'row', md: 'flex' },
+            gap: { xs: 1, sm: 1, md: 2.1 },
+          }}
+        >
+          <Box
+            sx={{
               display: 'flex',
-              flexDirection: { xs: 'column', sm: 'row', md: 'row' },
+              flexDirection: { xs: 'column', sm: 'row', md: 'column' },
               gap: { xs: 1, sm: 1, md: 0.5 },
-            }}>
+              width: { xs: '100%', sm: '20%', md: '33.5%' }
+            }}
+          >
+            <Box>
+              <TextField
+                label="Print Name"
+                variant="filled"
+                fullWidth
+                onChange={handleInputChange}
+                value={formData?.PRINTNAME || ""}
+                name="PRINTNAME"
+                disabled={isFormDisabled}
+                sx={textInputSx}
+                inputProps={{
+                  style: {
+                    padding: '6px 8px',
+                    fontSize: '12px',
+                  },
+                }}
+              />
+            </Box>
+            <Box>
+              <TextField
+                label="Address"
+                variant="filled"
+                fullWidth
+                onChange={handleInputChange}
+                value={formData?.ADDR || ""}
+                disabled={isFormDisabled}
+                name="ADDR"
+                sx={doubleInputSx}
+                inputProps={{
+                  style: {
+                    padding: '6px 8px',
+                    fontSize: '12px'
+                  },
+                }}
+              />
+            </Box>
+          </Box>
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: { xs: 'column', sm: 'row', md: 'column' },
+              gap: { xs: 1, sm: 1, md: 0.5 },
+              width: { xs: '100%', sm: '20%', md: '20.4%' }
+            }}
+          >
+            <Box>
+              <AutoVibe
+                id="CONT_KEY"
+                disabled={isFormDisabled}
+                getOptionLabel={(option) => option || ''}
+                options={[]}
+                label="Country"
+                name="CONT_KEY"
+                value={formData?.CONT_KEY || ""}
+                onChange={handleInputChange}
+                sx={DropInputSx}
+                inputProps={{
+                  style: {
+                    padding: '6px 8px',
+                    fontSize: '12px',
+                  },
+                }}
+              />
+            </Box>
+            <Box>
+              <AutoVibe
+                id="CITY_KEY"
+                disabled={isFormDisabled}
+                getOptionLabel={(option) => option || ''}
+                options={[]}
+                label="City/District"
+                name="CITY_KEY"
+                value={formData?.CITY_KEY || ""}
+                onChange={handleInputChange}
+                sx={DropInputSx}
+                inputProps={{
+                  style: {
+                    padding: '6px 8px',
+                    fontSize: '12px',
+                  },
+                }}
+              />
+            </Box>
+            <Box
+              sx={{
+                display: 'flex',
+                flexDirection: { xs: 'column', sm: 'row', md: 'row' },
+                gap: { xs: 1, sm: 1, md: 0.5 },
+                width: { xs: '100%', sm: '20%', md: '100%' }
+              }}
+            >
               <TextField
                 label="Pincode"
                 variant="filled"
@@ -409,62 +434,188 @@ const StepperMst1 = ({ formData, setFormData }) => {
             </Box>
           </Box>
 
-          <Box sx={{
-            display: 'flex',
-            flexDirection: { xs: 'column', sm: 'row', md: 'column' },
-            gap: { xs: 1, sm: 1, md: 0.5 },
-            width: { xs: '100%', sm: '20%', md: '20.6%' }
-          }}>
-            <TextField
-              variant="filled"
-              fullWidth
-              onChange={handleInputChange}
-              value={formData?.PLACE || ""}
-              disabled={isFormDisabled}
-              name="PLACE"
-              label={
-                <span>
-                  PLACE <span style={{ color: 'red' }}>*</span>
-                </span>
-              }
-              sx={textInputSx}
-              inputProps={{
-                style: {
-                  padding: '6px 8px',
-                  fontSize: '12px'
-                },
-              }}
-            />
-            <Box sx={{
+          <Box
+            sx={{
               display: 'flex',
-              flexDirection: { xs: 'column', sm: 'row', md: 'row' },
-              gap: { xs: 1, sm: 1, md: 2 },
-              width: { xs: '100%', sm: '20%', md: '206%' }
-            }}>
-              <Box sx={{
+              flexDirection: { xs: 'column', sm: 'row', md: 'column' },
+              gap: { xs: 1, sm: 1, md: 0.5 },
+              width: { xs: '100%', sm: '20%', md: '20.6%' }
+            }}
+          >
+            <Box>
+              <AutoVibe
+                id=""
+                disabled={isFormDisabled}
+                getOptionLabel={(option) => option || ''}
+                options={[]}
+                label="State"
+                name=""
+                value={""}
+                onChange={handleInputChange}
+                sx={DropInputSx}
+                inputProps={{
+                  style: {
+                    padding: '6px 8px',
+                    fontSize: '12px',
+                  },
+                }}
+              />
+            </Box>
+            <Box>
+              <TextField
+                variant="filled"
+                fullWidth
+                onChange={handleInputChange}
+                value={formData?.PLACE || ""}
+                disabled={isFormDisabled}
+                name="PLACE"
+                label={
+                  <span>
+                    PLACE <span style={{ color: 'red' }}>*</span>
+                  </span>
+                }
+                sx={textInputSx}
+                inputProps={{
+                  style: {
+                    padding: '6px 8px',
+                    fontSize: '12px'
+                  },
+                }}
+              />
+            </Box>
+            <Box>
+              <TextField
+                label="Tel"
+                variant="filled"
+                fullWidth
+                onChange={handleInputChange}
+                value={formData?.TEL_NO || ""}
+                disabled={isFormDisabled}
+                name="TEL_NO"
+                sx={textInputSx}
+                inputProps={{
+                  style: {
+                    padding: '6px 8px',
+                    fontSize: '12px'
+                  },
+                }}
+              />
+            </Box>
+          </Box>
+
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: { xs: 'column', sm: 'row', md: 'column' },
+              gap: { xs: 1, sm: 1, md: 0.5 },
+              width: { xs: '100%', sm: '20%', md: '20.6%' }
+            }}
+          >
+            <Box
+              sx={{
                 display: 'flex',
                 flexDirection: { xs: 'column', sm: 'row', md: 'row' },
-                gap: { xs: 1, sm: 1, md: 2 },
-                width: { xs: '100%', sm: '20%', md: '100%' }
-              }}>
-
-                <TextField
-                  label="Tel"
-                  variant="filled"
-                  fullWidth
-                  onChange={handleInputChange}
-                  value={formData?.TEL_NO || ""}
-                  disabled={isFormDisabled}
-                  name="TEL_NO"
-                  sx={textInputSx}
-                  inputProps={{
-                    style: {
-                      padding: '6px 8px',
-                      fontSize: '12px'
-                    },
-                  }}
-                />
+                gap: { xs: 1, sm: 1, md: 0.5 },
+              }}
+            >
+              <Box
+                display="flex"
+                flexDirection="column"
+                alignItems="center"
+                justifyContent="center"
+                gap={2}
+                border="1px solid #ccc"
+                borderRadius={1}
+                width={100}
+                height={76}
+                overflow="hidden"
+                position="relative"
+              >
+                {formData.PARTY_IMG ? (
+                  <img
+                    src={formData.PARTY_IMG}
+                    alt="Uploaded Preview"
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover',
+                      marginTop: "4px"
+                    }}
+                  />
+                ) : (
+                  <Typography
+                    variant="body2"
+                    color="textSecondary"
+                    style={{ textAlign: 'center' }}
+                  >
+                    <PhotoCameraIcon />
+                  </Typography>
+                )}
               </Box>
+              <Box sx={{ marginTop: '25px', display: 'flex' }}>
+                <input
+                  accept="image/*"
+                  style={{ display: 'none' }}
+                  id="upload-photo"
+                  type="file"
+                  onChange={handleImageChange}
+                  disabled={isFormDisabled}
+                />
+                <label htmlFor="upload-photo">
+                  <Box
+                    sx={{
+                      borderRadius: '8px',
+                      display: 'inline-block',
+                      mr: 1,
+                    }}
+                  >
+                    <Button
+                      component="span"
+                      variant="contained"
+                      startIcon={<UploadIcon />}
+                      sx={{
+                        minHeight: '10px',
+                        padding: '1px 4px',
+                        fontSize: '0.675rem',
+                      }}
+                    >
+                      Upload
+                    </Button>
+                  </Box>
+                </label>
+                <input
+                  accept="image/*"
+                  style={{ display: 'none' }}
+                  id="upload-photo"
+                  type="file"
+                  // onChange={handleImageChange}
+                  disabled={isFormDisabled}
+                />
+                <label htmlFor="upload-photo">
+                  <Box
+                    sx={{
+                      borderRadius: '8px',
+                      display: 'inline-block',
+                    }}
+                  >
+                    <Button
+                      component="span"
+                      variant="contained"
+                      startIcon={<DeleteForeverIcon />}
+                      sx={{
+                        minHeight: '10px',
+                        padding: '1px 4px',
+                        fontSize: '0.675rem',
+                        backgroundColor: '#FF0000'
+                      }}
+                    >
+                      Clear
+                    </Button>
+                  </Box>
+                </label>
+              </Box>
+            </Box>
+            <Box>
               <TextField
                 label="Email"
                 variant="filled"

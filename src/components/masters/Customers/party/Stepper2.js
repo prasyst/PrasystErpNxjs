@@ -463,7 +463,12 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, rows, setRows, curren
             startIcon={<AddIcon />}
             onClick={handleAdd}
             disabled={isFormDisabled || isAddButtonDisabled}
-            sx={Buttonsx}
+            sx={{
+              backgroundColor: '#007bff',
+              margin: { xs: '0 4px', sm: '0 6px' },
+              minWidth: { xs: 40, sm: 46, md: 60 },
+              height: { xs: 40, sm: 46, md: 30 },
+            }}
           >
             Add
           </Button>
@@ -473,7 +478,12 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, rows, setRows, curren
             startIcon={<EditIcon />}
             onClick={handleEdit}
             disabled={isFormDisabled || isEditButtonDisabled}
-            sx={Buttonsx}
+            sx={{
+              backgroundColor: '#20c997',
+              margin: { xs: '0 4px', sm: '0 6px' },
+              minWidth: { xs: 40, sm: 46, md: 60 },
+              height: { xs: 40, sm: 46, md: 30 },
+            }}
           >
             Edit
           </Button>
@@ -483,7 +493,12 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, rows, setRows, curren
             startIcon={<DeleteIcon />}
             onClick={handleDelete}
             disabled={isFormDisabled || isDeleteButtonDisabled}
-            sx={Buttonsx}
+            sx={{
+              backgroundColor: '#dc3545',
+              margin: { xs: '0 4px', sm: '0 6px' },
+              minWidth: { xs: 40, sm: 46, md: 60 },
+              height: { xs: 40, sm: 46, md: 30 },
+            }}
           >
             Delete
           </Button>
@@ -1111,7 +1126,12 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, rows, setRows, curren
           />
           <Stack direction="row" spacing={2} sx={{ position: 'relative' }}>
             <Button
-              sx={Buttonsx}
+              sx={{
+                backgroundColor: '#28a745',
+                margin: { xs: '0 4px', sm: '0 6px' },
+                minWidth: { xs: 40, sm: 46, md: 60 },
+                height: { xs: 40, sm: 46, md: 30 },
+              }}
               variant="contained"
               onClick={handleConfirm}
               disabled={mode === null}
@@ -1119,7 +1139,12 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, rows, setRows, curren
               Confirm
             </Button>
             <Button
-              sx={Buttonsx}
+              sx={{
+                backgroundColor: '#6c757d',
+                margin: { xs: '0 4px', sm: '0 6px' },
+                minWidth: { xs: 40, sm: 46, md: 60 },
+                height: { xs: 40, sm: 46, md: 30 },
+              }}
               onClick={handleCancel}
               disabled={mode === null}
               variant="contained"
