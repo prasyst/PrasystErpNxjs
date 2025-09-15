@@ -319,7 +319,7 @@ const PartyMst = () => {
           SMS_MOBILENO: partyData?.SMS_MOBILENO || "",
           ACCLED_ID: partyData?.ACCLED_ID || 0,
           CONTDESG: partyData?.CONTDESG || 0,
-          PRINTNAME: partyData?.PRINTNAME || "",
+          PRINTNAME: partyData?.PrintName || "",
           GSTTIN_NO: partyData?.GSTTIN_NO || "",
           PARTY_TYPE: partyData?.PARTY_TYPE || "",
           RD_URD: partyData?.RD_URD || "",

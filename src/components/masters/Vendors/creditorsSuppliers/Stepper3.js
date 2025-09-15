@@ -172,7 +172,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled }) => {
         >
           <Box sx={{ width: { xs: '100%', sm: '20%', md: '33.5%' } }}>
             <Typography variant="h6" component="h2">
-              Alicia Deane
+              {formData?.PARTY_NAME || ""}
             </Typography>
           </Box>
 
