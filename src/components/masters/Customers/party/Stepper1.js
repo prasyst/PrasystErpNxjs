@@ -10,6 +10,7 @@ import {
   FormControlLabel,
   FormLabel,
   Radio,
+  Link,
   RadioGroup,
   Checkbox,
 } from '@mui/material';
@@ -136,7 +137,7 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
     setFormData(prev => ({
       ...prev,
       [name]: value,
-      ...(name === "PARTY_NAME" && { PRINTNAME: value }), 
+      ...(name === "PARTY_NAME" && { PRINTNAME: value }),
     }));
   };
 
@@ -1120,7 +1121,41 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
               }}
             />
           </Box>
-          <Box sx={{ width: { xs: '100%', sm: '20%', md: '20.5%' } }}>
+          <Box sx={{
+            width: { xs: '100%', sm: '20%', md: '10%' }, display: 'flex',
+            alignItems: 'center'
+          }}>
+            <Link sx={{ fontSize: '14px', textDecoration: 'none', cursor: 'pointer' }}>
+              Verify GSTIN
+            </Link>
+          </Box>
+
+          <Box sx={{
+            width: { xs: '100%', sm: '20%', md: '10%' }, display: 'flex',
+            alignItems: 'center'
+          }}>
+            <Link sx={{ fontSize: '14px', textDecoration: 'none', cursor: 'pointer' }}>
+              Cust Card
+            </Link>
+          </Box>
+
+          <Box sx={{
+            width: { xs: '100%', sm: '20%', md: '10%' }, display: 'flex',
+            alignItems: 'center'
+          }}>
+            <Link sx={{ fontSize: '14px', textDecoration: 'none', cursor: 'pointer' }}>
+              Document
+            </Link>
+          </Box>
+
+        </Box>
+
+        <Box sx={{
+          display: 'flex',
+          flexDirection: { xs: 'column', sm: 'row', md: 'row' },
+          gap: { xs: 1, sm: 1.5, md: 2 }
+        }}>
+          <Box sx={{ width: { xs: '100%', sm: '20%', md: '33.4%' } }}>
             <AutoVibe
               id="TCS_TERM_KEY"
               disabled={isFormDisabled}

@@ -1648,7 +1648,7 @@ const CreditorsSuppliersMst = () => {
 
       {tabIndex === 0  && (
         <Grid container alignItems="center"
-          justifyContent="center" spacing={1} sx={{ marginTop: "20px", marginInline: '20px' }}>
+          justifyContent="center" spacing={1} sx={{ marginTop: "10px", marginInline: '20px' }}>
           <Grid sx={{
             width: { xs: '100%', sm: 'auto' },
           }}>

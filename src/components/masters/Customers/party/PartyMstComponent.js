@@ -1318,6 +1318,7 @@ const PartyMst = () => {
     if (response.data.STATUS === 0 && response.data.RESPONSESTATUSCODE === 1) {
       toast.success(response.data.MESSAGE);
       setIsFormDisabled(true);
+      setMode('view');
 
     } else {
       toast.error(response.data.MESSAGE || 'Operation failed');
@@ -1647,7 +1648,7 @@ const PartyMst = () => {
       </Grid>
       { tabIndex === 0 && (
         <Grid container alignItems="center"
-          justifyContent="center" spacing={1} sx={{ marginTop: "20px", marginInline: '20px' }}>
+          justifyContent="center" spacing={1} sx={{ marginTop: "10px", marginInline: '20px' }}>
           <Grid sx={{
             width: { xs: '100%', sm: 'auto' },
           }}>
