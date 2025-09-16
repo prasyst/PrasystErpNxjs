@@ -580,46 +580,39 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
     setShowUnpinConfirm(null);
   };
 
-  // // Check if an item is pinned
-  // const isPinned = (path) => {
-  //   return pinnedModules.some(module => module.path === path);
-  // };
-
-  // Render a single menu level
-// In your Sidebar component, update the renderMenuLevel function:
 const renderMenuLevel = (items, levelIndex, title = null) => {
-    return (
-      <div key={levelIndex} style={{
-        width: '250px',
-        borderRight: levelIndex < megaMenuLevels.length - 1 ? '1px solid #f0f0f0' : 'none',
-        padding: '0.5rem 0',
-        overflowY: 'auto',
-        backgroundColor: levelIndex === 0 ? '#fafbfc' : '#fff',
-      }}>
-        {title && (
-          <div style={{
-            padding: '0.75rem 1rem',
-            fontWeight: '600',
-            color: '#1b69e7',
-            fontSize: '0.9rem',
-            borderBottom: '1px solid #e8f0fe',
-            marginBottom: '0.5rem',
-            backgroundColor: '#fff',
-          }}>
-            {title}
-          </div>
-        )}
-        
-        {items.map((item, index) => {
-          const IconComponent = iconMap[item.icon]; // Use the icon map
-          const hasChildren = item.children && item.children.length > 0;
-          const isActive = activeItem === item.path;
-          const isHovered = hoveredItems[levelIndex + 1]?.name === item.name;
-          const hasValidPath = item.path && item.path !== '#';
+  return (
+    <div key={levelIndex} style={{
+      width: '250px',
+      borderRight: levelIndex < megaMenuLevels.length - 1 ? '1px solid #f0f0f0' : 'none',
+      padding: '0.5rem 0',
+      overflowY: 'auto',
+      backgroundColor: levelIndex === 0 ? '#fafbfc' : '#fff',
+    }}>
+      {title && (
+        <div style={{
+          padding: '0.75rem 1rem',
+          fontWeight: '600',
+          color: '#1b69e7',
+          fontSize: '0.9rem',
+          borderBottom: '1px solid #e8f0fe',
+          marginBottom: '0.5rem',
+          backgroundColor: '#fff',
+        }}>
+          {title}
+        </div>
+      )}
+      
+      {items.map((item, index) => {
+        const IconComponent = iconMap[item.icon];
+        const hasChildren = item.children && item.children.length > 0;
+        const isActive = activeItem === item.path;
+        const isHovered = hoveredItems[levelIndex + 1]?.name === item.name;
+        const hasValidPath = item.path && item.path !== '#';
 
-          return (
+        return (
+          <div key={`${item.name}-${levelIndex}-${index}`}>
             <div
-              key={`${item.name}-${levelIndex}-${index}`}
               onMouseEnter={(e) => hasChildren && handleSubMenuHover(item, levelIndex, e)}
               onClick={(e) => {
                 e.preventDefault();
@@ -688,11 +681,21 @@ const renderMenuLevel = (items, levelIndex, title = null) => {
                 />
               )}
             </div>
-          );
-        })}
-      </div>
-    );
-  };
+            
+            {/* Add divider after each menu item except the last one */}
+            {index < items.length - 1 && (
+              <div style={{
+                height: '1px',
+                backgroundColor: '#e8f0fe',
+                margin: '0.1rem 0.8rem',
+              }} />
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+};
   // Render mega menu with all levels
   const renderMegaMenu = () => {
     if (!openMegaMenu || megaMenuLevels.length === 0) return null;
