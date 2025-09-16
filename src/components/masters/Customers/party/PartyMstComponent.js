@@ -36,6 +36,7 @@ import DialogContentText from "@mui/material/DialogContentText";
 
 import { useSearchParams, useRouter } from 'next/navigation';
 import CrudButtons from "@/GlobalFunction/CrudButtons";
+import CrudButton from "@/GlobalFunction/CrudButton";
 import PaginationButtons from '@/GlobalFunction/PaginationButtons';
 
 import Stepper1 from "@/components/masters/Customers/party/Stepper1";
@@ -1527,10 +1528,29 @@ const PartyMst = () => {
     <Box>
       <ToastContainer />
 
-      <Grid container alignItems="center"
-        justifyContent="center" spacing={2}
+      <Grid container justifyContent="space-between" sx={{ ml: '4.5%', mr: '5%' }}
+        spacing={2}
       >
-
+        <Grid>
+          <Button
+            variant="contained"
+            size="small"
+            sx={Buttonsx}
+            disabled={isFormDisabled}
+            onClick={handlePrevClick}
+          >
+            <KeyboardArrowLeftIcon />
+          </Button>
+          <Button
+            variant="contained"
+            size="small"
+            sx={Buttonsx}
+            disabled={isFormDisabled}
+            onClick={handleNextClick}
+          >
+            <NavigateNextIcon />
+          </Button>
+        </Grid>
         <Grid>
           <Typography align="center" variant="h6">
             {tabIndex === 0 ? "Debtors/Customer Master" : tabIndex === 1 ? "Branch Details" : "Terms Details"}
@@ -1538,7 +1558,7 @@ const PartyMst = () => {
 
         </Grid>
 
-        <Grid sx={{ position: 'relative', right: -192 }}>
+        <Grid sx={{ width: { xs: '100%', sm: '48%', md: '11%' } }}>
           <TextField
             label="Search By Code"
             variant="filled"
@@ -1559,10 +1579,24 @@ const PartyMst = () => {
             }}
           />
         </Grid>
+
+        <Grid sx={{ display: "flex", justifyContent: "end" }}>
+          <CrudButton
+            moduleName=""
+            mode={mode}
+            onAdd={handleAdd}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+            onExit={handleExit}
+            readOnlyMode={mode === "view"}
+            onPrevious={handlePrevClick}
+            onNext={handleNextClick}
+          />
+        </Grid>
       </Grid>
 
 
-      <Grid xs={12} sx={{ ml: '5%', mb: '0.5%' }}>
+      <Grid xs={12} sx={{ ml: '5%', mb: '0.5%', mt: '0.5%' }}>
         <Box sx={{ display: 'flex' }}>
           <Tabs
             value={tabIndex}
@@ -1646,40 +1680,59 @@ const PartyMst = () => {
           />
         )}
       </Grid>
-      { tabIndex === 0 && (
-        <Grid container alignItems="center"
-          justifyContent="center" spacing={1} sx={{ marginTop: "10px", marginInline: '20px' }}>
-          <Grid sx={{
-            width: { xs: '100%', sm: 'auto' },
-          }}>
-            <Stack direction="row" spacing={1}>
-              <PaginationButtons
-                mode={mode}
-                FORM_MODE={FORM_MODE}
-                currentKey={currentPARTY_KEY}
-                onFirst={handleFirst}
-                onPrevious={handlePrevClick}
-                onNext={handleNextClick}
-                onLast={handleLast}
-                sx={{ mt: 2 }}
-                buttonSx={Buttonsx}
-              />
-            </Stack>
-          </Grid>
-          <Grid>
-            <Stack direction="row" spacing={{ xs: 0.5, sm: 1 }}>
-              <CrudButtons
-                mode={mode}
-                onAdd={mode === "view" ? handleAdd : handleSubmit}
-                onEdit={mode === "view" ? handleEdit : handleCancel}
-                onView={handlePrint}
-                onDelete={handleDelete}
-                onSearch={handleTable}
-                onExit={handleExit}
-                readOnlyMode={mode === "view"}
-              />
-            </Stack>
-          </Grid>
+
+      {tabIndex === 0 && (
+        <Grid xs={12} sx={{ display: "flex", justifyContent: "end", mr: '4.5%' }}>
+          {mode === 'view' && (
+            <>
+              <Button variant="contained"
+                sx={{
+                  backgroundColor: '#28a745',
+                  margin: { xs: '0 4px', sm: '0 6px' },
+                  minWidth: { xs: 40, sm: 46, md: 60 },
+                  height: { xs: 40, sm: 46, md: 30 },
+                }}
+                onClick={handleAdd} disabled>
+                Submit
+              </Button>
+              <Button variant="contained"
+                sx={{
+                  backgroundColor: '#6c757d',
+                  margin: { xs: '0 4px', sm: '0 6px' },
+                  minWidth: { xs: 40, sm: 46, md: 60 },
+                  height: { xs: 40, sm: 46, md: 30 },
+                }}
+                onClick={handleEdit}
+                disabled
+              >
+                Cancel
+              </Button>
+            </>
+          )}
+          {(mode === 'edit' || mode === 'add') && (
+            <>
+
+              <Button variant="contained"
+                sx={{
+                  margin: { xs: '0 4px', sm: '0 6px' },
+                  minWidth: { xs: 40, sm: 46, md: 60 },
+                  height: { xs: 40, sm: 46, md: 30 },
+                }}
+                onClick={handleSubmit}>
+                Submit
+              </Button>
+              <Button variant="contained"
+                sx={{
+                  margin: { xs: '0 4px', sm: '0 6px' },
+                  minWidth: { xs: 40, sm: 46, md: 60 },
+                  height: { xs: 40, sm: 46, md: 30 },
+                }}
+                onClick={handleCancel}>
+                Cancel
+              </Button>
+
+            </>
+          )}
         </Grid>
       )}
     </Box>
