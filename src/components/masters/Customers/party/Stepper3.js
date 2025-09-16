@@ -420,7 +420,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled }) => {
             width: { xs: '100%', sm: '20%', md: '18%' }, display: 'flex',
             alignItems: 'center'
           }}>
-            <Link sx={{ fontSize: '14px' }}>
+            <Link sx={{ fontSize: '14px', textDecoration: 'none', cursor: 'pointer' }}>
               Update Broker in All Transactions
             </Link>
           </Box>
