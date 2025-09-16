@@ -41,7 +41,6 @@ const CrudButton = ({
                 flexWrap: 'nowrap',
                 overflowX: 'hidden',
                 justifyContent: 'center',
-                mt: 2,
                 gap: 0,
             }}
         >
