@@ -9,12 +9,14 @@ import {
   MdLocalMall, MdCollectionsBookmark, MdStraighten, MdBrandingWatermark,
   MdReceipt, MdGavel, MdAssignment, MdAttachMoney, MdEvent, MdAnalytics,
   MdSettings, MdInventory, MdAccountBalance, MdPayments, MdSummarize,
-  MdPushPin, MdOutlinePushPin
+  MdPushPin, MdOutlinePushPin, MdOutlineInventory , 
 } from 'react-icons/md';
 
 import { FaBuilding, FaTruck, FaUserTag, FaHandshake, FaBalanceScale, FaBoxOpen, FaBoxes, FaUserTie } from 'react-icons/fa';
 import { FiUser } from 'react-icons/fi';
+import { RiFileChartLine, RiAdminLine } from "react-icons/ri";
 import { AiOutlineUsergroupAdd, AiOutlineNodeIndex } from 'react-icons/ai';
+import { IoIosConstruct } from 'react-icons/io';
 import { usePin } from '../../app/hooks/usePin';
 
 const iconMap = {
@@ -350,7 +352,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
     },
      {
       name: 'Inventory Report',
-      icon: MdAccountBalance,
+      icon: MdOutlineInventory,
       children: [
         { name: 'General Ledger', icon: MdAssignment, path: '#' },
         { name: 'Accounts Payable', icon: MdPayments, path: '#' },
@@ -360,7 +362,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
     },
     {
       name: 'Accounts Report',
-      icon: MdAccountBalance,
+      icon: RiFileChartLine,
       children: [
         { name: 'General Ledger', icon: MdAssignment, path: '#' },
         { name: 'Accounts Payable', icon: MdPayments, path: '#' },
@@ -380,7 +382,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
     },
       {
       name: 'Administrator',
-      icon: FaUserTie,
+      icon: RiAdminLine,
       children: [
         { name: 'Employee Management', icon: MdPeople, path: '#' },
         { name: 'Payroll Processing', icon: MdPayments, path: '#' },
@@ -391,7 +393,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
     ,
       {
       name: 'Utility',
-      icon: FaUserTie,
+      icon: IoIosConstruct,
       children: [
         { name: 'Employee Management', icon: MdPeople, path: '#' },
         { name: 'Payroll Processing', icon: MdPayments, path: '#' },
