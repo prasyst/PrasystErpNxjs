@@ -36,7 +36,10 @@ const columnDefs = [
     headerName: "ORDER NO", 
     width: 130,
     maxWidth: 140,
-    filter: true,
+    filter: 'agSetColumnFilter',
+    filterParams: {
+      defaultToNothingSelected: true, // This ensures all options are initially unchecked
+    },
     sortable: true
   },
   { 
@@ -66,7 +69,10 @@ const columnDefs = [
     field: "PORD_REF", 
     headerName: "P ORDER REF", 
     width: 160,
-    filter: true,
+    filter: 'agSetColumnFilter',
+    filterParams: {
+      defaultToNothingSelected: true, // This ensures all options are initially unchecked
+    },
     sortable: true
   },
   { 
@@ -94,14 +100,20 @@ const columnDefs = [
     field: "PARTY_NAME", 
     headerName: "PARTY NAME", 
     width: 230,
-    filter: true,
+     filter: 'agSetColumnFilter',
+    filterParams: {
+      defaultToNothingSelected: true, // This ensures all options are initially unchecked
+    },
     sortable: true
   },
   { 
     field: "BROKER_NAME", 
     headerName: "BROKER NAME", 
     width: 140,
-    filter: true,
+     filter: 'agSetColumnFilter',
+    filterParams: {
+      defaultToNothingSelected: true, // This ensures all options are initially unchecked
+    },
     sortable: true
   },
   { 
