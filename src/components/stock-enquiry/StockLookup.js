@@ -102,7 +102,7 @@ const columnDefs = [
     width: 230,
      filter: 'agSetColumnFilter',
     filterParams: {
-      defaultToNothingSelected: true, // This ensures all options are initially unchecked
+      defaultToNothingSelected: true, 
     },
     sortable: true
   },
