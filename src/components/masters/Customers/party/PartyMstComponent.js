@@ -24,6 +24,7 @@ import {
   Delete as DeleteIcon,
   CancelPresentation as CancelPresentationIcon,
 } from "@mui/icons-material";
+import { TbListSearch } from "react-icons/tb";
 
 import "react-toastify/dist/ReactToastify.css";
 import { toast, ToastContainer } from "react-toastify";
@@ -1558,7 +1559,7 @@ const PartyMst = () => {
 
         </Grid>
 
-        <Grid sx={{ width: { xs: '100%', sm: '48%', md: '11%' } }}>
+        <Grid sx={{ width: { xs: '100%', sm: '48%', md: '16%', display: 'flex' } }}>
           <TextField
             label="Search By Code"
             variant="filled"
@@ -1573,11 +1574,12 @@ const PartyMst = () => {
             sx={textInputSx}
             inputProps={{
               style: {
-                padding: '6px 8px',
+                padding: '4px 8px',
                 fontSize: '12px',
               },
             }}
           />
+           <TbListSearch onClick={handleTable}  style={{ color: 'rgb(99, 91, 255)', width: '40%' , height: '62%' }} />
         </Grid>
 
         <Grid sx={{ display: "flex", justifyContent: "end" }}>
@@ -1596,7 +1598,7 @@ const PartyMst = () => {
       </Grid>
 
 
-      <Grid xs={12} sx={{ ml: '5%', mb: '0.5%', mt: '0.5%' }}>
+      <Grid xs={12} sx={{ ml: '5%', mb: '0.5%', mt: '-0.5%' }}>
         <Box sx={{ display: 'flex' }}>
           <Tabs
             value={tabIndex}

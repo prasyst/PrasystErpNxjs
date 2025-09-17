@@ -175,6 +175,9 @@ const ProductMst = () => {
       fontSize: '14px !important',
       lineHeight: '1.4',
     },
+    '& .MuiFilledInput-root.Mui-disabled': {
+      backgroundColor: '#fff'
+    }
   };
 
   // const DropInputSx = {
@@ -247,6 +250,9 @@ const ProductMst = () => {
       transform: 'translateY(-50%)',
       right: '10px',
     },
+    '& .MuiFilledInput-root.Mui-disabled': {
+      backgroundColor: '#fff'
+    }
   };
 
   const Buttonsx = {
@@ -1064,26 +1070,24 @@ const ProductMst = () => {
 
           </Grid>
 
-          <Grid sx={{ width: { xs: '100%', sm: '48%', md: '12%' } }}>
+          <Grid sx={{ width: { xs: '100%', sm: '48%', md: '13%' } }}>
             <TextField
-              placeholder="Search By Code"
+              label="Search By Code"
               variant="filled"
-              sx={{
-                width: { xs: '100%', sm: '50%', md: '100%' }, marginBottom: '1px',
-                backgroundColor: '#e0f7fa',
-                '& .MuiInputBase-input': {
-                  padding: { xs: '8px 0px', md: '2px 0px' },
-                },
-                '& .css-voecp4-MuiInputBase-input-MuiFilledInput-input': {
-                  fontSize: '14px',
-                },
-              }}
+              fullWidth
               value={form.SearchByCd}
               onChange={(e) => setForm({ ...form, SearchByCd: e.target.value })}
               onKeyPress={(e) => {
                 if (e.key === 'Enter') {
                   fetchProductData(e.target.value, 'R', true);
                 }
+              }}
+              sx={textInputSx}
+              inputProps={{
+                style: {
+                  padding: '4px 8px',
+                  fontSize: '12px',
+                },
               }}
             />
           </Grid>
@@ -1719,12 +1723,17 @@ const ProductMst = () => {
 
       </Box>
 
-      <Grid xs={12} sx={{ display: "flex", justifyContent: "end", ml: '55.2%' }}>
+      <Grid xs={12} sx={{
+        display: "flex",
+        justifyContent: "end",
+        ml: '56.8%',
+        position: 'relative',
+        top: -10
+      }}>
         {mode === 'view' && (
           <>
             <Button variant="contained"
               sx={{
-                backgroundColor: '#28a745',
                 margin: { xs: '0 4px', sm: '0 6px' },
                 minWidth: { xs: 40, sm: 46, md: 60 },
                 height: { xs: 40, sm: 46, md: 30 },
@@ -1734,7 +1743,6 @@ const ProductMst = () => {
             </Button>
             <Button variant="contained"
               sx={{
-                backgroundColor: '#6c757d',
                 margin: { xs: '0 4px', sm: '0 6px' },
                 minWidth: { xs: 40, sm: 46, md: 60 },
                 height: { xs: 40, sm: 46, md: 30 },
@@ -1751,6 +1759,8 @@ const ProductMst = () => {
 
             <Button variant="contained"
               sx={{
+                backgroundColor: '#28a745',
+                color: '#fff',
                 margin: { xs: '0 4px', sm: '0 6px' },
                 minWidth: { xs: 40, sm: 46, md: 60 },
                 height: { xs: 40, sm: 46, md: 30 },
@@ -1760,6 +1770,8 @@ const ProductMst = () => {
             </Button>
             <Button variant="contained"
               sx={{
+                backgroundColor: '#6c757d',
+                color: '#fff',
                 margin: { xs: '0 4px', sm: '0 6px' },
                 minWidth: { xs: 40, sm: 46, md: 60 },
                 height: { xs: 40, sm: 46, md: 30 },
