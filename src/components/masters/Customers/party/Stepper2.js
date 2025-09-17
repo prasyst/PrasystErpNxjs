@@ -1024,7 +1024,8 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, rows, setRows, curren
 
           <Box sx={{
             display: 'flex', alignItems: 'center',
-            width: { xs: '100%', sm: '48%', md: '19%' }
+            width: { xs: '100%', sm: '48%', md: '22%' },
+            position: 'relative', right: -10
           }}>
             <RadioGroup
               row
@@ -1032,7 +1033,11 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, rows, setRows, curren
               onChange={handleInputChange}
               disabled={!isEditButtonDisabled && !isAddButtonDisabled}
               value={partyData?.RDOFF || ""}
-              sx={{ margin: '5px 0px 0px 0px' }}
+              sx={{
+                margin: 0, padding: 0,
+                display: 'flex',
+                alignItems: 'center',
+              }}
             >
               <FormControlLabel disabled={!isEditButtonDisabled && !isAddButtonDisabled}
                 value="N" control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
@@ -1051,16 +1056,28 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, rows, setRows, curren
               display: 'flex',
               alignItems: 'center',
               width: { xs: '100%', sm: '48%', md: '20%' },
-              margin: '0px 0px 0px 20px'
+              gap: '10px',
             }}>
-            <FormLabel sx={{ margin: '7px 14px 0px 10px', fontSize: '12px', fontWeight: 'bold', color: 'black' }} component="legend">Entity under SEZ</FormLabel>
+            <FormLabel
+              sx={{
+                fontSize: '12px',
+                fontWeight: 'bold',
+                color: 'black',
+                whiteSpace: 'nowrap',
+                lineHeight: '1.5',
+                display: 'flex',
+                alignItems: 'center',
+                padding: 0,
+                margin: 0,
+              }}
+              component="legend">Entity under SEZ</FormLabel>
             <RadioGroup
               row
               name="SEZ"
               onChange={handleInputChange}
               disabled={!isEditButtonDisabled && !isAddButtonDisabled}
               value={partyData?.SEZ || ""}
-              sx={{ margin: '5px 0px 0px 0px' }}
+              sx={{ margin: 0, padding: 0 }}
             >
               <FormControlLabel disabled={!isEditButtonDisabled && !isAddButtonDisabled}
                 value="Y" control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
@@ -1084,15 +1101,28 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, rows, setRows, curren
             display: 'flex',
             alignItems: 'center',
             width: { xs: '100%', sm: '48%', md: '25%' },
+            gap: '10px',
           }}>
-            <FormLabel sx={{ margin: '7px 14px 0px 10px', fontSize: '12px', fontWeight: 'bold', color: 'black' }} component="legend">RD/URD</FormLabel>
+            <FormLabel
+              sx={{
+                fontSize: '12px',
+                fontWeight: 'bold',
+                color: 'black',
+                whiteSpace: 'nowrap',
+                lineHeight: '1.5',
+                display: 'flex',
+                alignItems: 'center',
+                padding: 0,
+                margin: 0,
+              }}
+              component="legend">RD/URD</FormLabel>
             <RadioGroup
               row
               name="RD_URD"
               onChange={handleInputChange}
               disabled={!isEditButtonDisabled && !isAddButtonDisabled}
               value={partyData?.RD_URD || ""}
-              sx={{ margin: '5px 0px 0px 0px' }}
+              sx={{ margin: 0, padding: 0 }}
             >
               <FormControlLabel disabled={!isEditButtonDisabled && !isAddButtonDisabled}
                 value="R" control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}

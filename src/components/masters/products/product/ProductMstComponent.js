@@ -1037,7 +1037,7 @@ const ProductMst = () => {
           display: 'flex',
           flexDirection: 'column',
           gap: { xs: 1.5, sm: 1.5, md: 0.7 },
-          marginInline: { xs: '5%', sm: '5%', md: '15%' }
+          marginInline: { xs: '5%', sm: '5%', md: '13%' }
         }}
 
       >
