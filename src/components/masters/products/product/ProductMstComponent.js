@@ -26,6 +26,7 @@ import EditableTable from '@/atoms/EditTable';
 import CrudButtons from "@/GlobalFunction/CrudButtons";
 import PaginationButtons from '@/GlobalFunction/PaginationButtons';
 import z from 'zod';
+import { TbListSearch } from "react-icons/tb";
 
 const columns = [
   { label: 'Size', field: 'FGSIZE_NAME', type: 'text' },
@@ -1040,15 +1041,15 @@ const ProductMst = () => {
         }}
 
       >
-        <Grid container justifyContent="space-between" sx={{ ml: '-0.5%', mr: '-0.5%' }}
+        <Grid container justifyContent="space-between" sx={{ ml: '0%', mr: '-0.5%' }}
           spacing={2}
         >
           <Grid>
             <Button
               variant="contained"
               size="small"
-              sx={Buttonsx}
-              disabled={isFormDisabled}
+              sx={{ background: 'linear-gradient(290deg, #d4d4d4, #d4d4d4) !important' }}
+              disabled={mode !== 'view'}
               onClick={handlePrevious}
             >
               <KeyboardArrowLeftIcon />
@@ -1056,8 +1057,8 @@ const ProductMst = () => {
             <Button
               variant="contained"
               size="small"
-              sx={Buttonsx}
-              disabled={isFormDisabled}
+              sx={{ background: 'linear-gradient(290deg, #b9d0e9, #e9f2fa) !important', ml: 1 }}
+              disabled={mode !== 'view'}
               onClick={handleNext}
             >
               <NavigateNextIcon />
@@ -1070,7 +1071,7 @@ const ProductMst = () => {
 
           </Grid>
 
-          <Grid sx={{ width: { xs: '100%', sm: '48%', md: '13%' } }}>
+          <Grid sx={{ width: { xs: '100%', sm: '48%', md: '18%', display: 'flex'  } }}>
             <TextField
               label="Search By Code"
               variant="filled"
@@ -1090,6 +1091,7 @@ const ProductMst = () => {
                 },
               }}
             />
+            <TbListSearch onClick={handleTable}  style={{ color: 'rgb(99, 91, 255)', width: '40%' , height: '62%' }} />
           </Grid>
 
           <Grid sx={{ display: "flex", justifyContent: "end" }}>
@@ -1654,17 +1656,18 @@ const ProductMst = () => {
                 shrink: true,
               }}
             />
-            <Button variant="contained" color="primary" sx={{
+            <Button variant="contained" sx={{
               paddingBlock: '4px', paddingInline: '0px', fontSize: '10px', whiteSpace: 'nowrap',
               textOverflow: 'ellipsis',
-              overflow: 'hidden',
+              overflow: 'hidden', background: '#635bff'
             }}>Mandatory Acc In Bom</Button>
-            <Button variant="contained" color="primary" sx={{ paddingBlock: '4px', paddingInline: '0px', fontSize: '10px' }}>Allocate Type</Button>
-            <Button variant="contained" color="primary"
+            <Button variant="contained" sx={{ paddingBlock: '4px', background: '#635bff', paddingInline: '0px', fontSize: '10px' }}>Allocate Type</Button>
+            <Button variant="contained"
               onClick={handleDeleteIndex}
               disabled={selectedRowIndex === null || isFormDisabled}
               sx={{
                 paddingBlock: '4px',
+                background: '#635bff',
                 paddingInline: '0px',
                 fontSize: '10px'
               }}>
@@ -1734,6 +1737,7 @@ const ProductMst = () => {
           <>
             <Button variant="contained"
               sx={{
+                background: 'linear-gradient(290deg, #d4d4d4, #ffffff)',
                 margin: { xs: '0 4px', sm: '0 6px' },
                 minWidth: { xs: 40, sm: 46, md: 60 },
                 height: { xs: 40, sm: 46, md: 30 },
@@ -1743,6 +1747,7 @@ const ProductMst = () => {
             </Button>
             <Button variant="contained"
               sx={{
+                background: 'linear-gradient(290deg, #a7c5e9, #ffffff)',
                 margin: { xs: '0 4px', sm: '0 6px' },
                 minWidth: { xs: 40, sm: 46, md: 60 },
                 height: { xs: 40, sm: 46, md: 30 },
@@ -1759,7 +1764,7 @@ const ProductMst = () => {
 
             <Button variant="contained"
               sx={{
-                backgroundColor: '#28a745',
+                backgroundColor: '#635bff',
                 color: '#fff',
                 margin: { xs: '0 4px', sm: '0 6px' },
                 minWidth: { xs: 40, sm: 46, md: 60 },
@@ -1770,7 +1775,7 @@ const ProductMst = () => {
             </Button>
             <Button variant="contained"
               sx={{
-                backgroundColor: '#6c757d',
+                backgroundColor: '#635bff',
                 color: '#fff',
                 margin: { xs: '0 4px', sm: '0 6px' },
                 minWidth: { xs: 40, sm: 46, md: 60 },

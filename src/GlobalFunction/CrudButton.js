@@ -21,7 +21,8 @@ const CrudButton = ({
     hideExit = false
 }) => {
     const buttonSx = {
-        backgroundColor: '#39ace2',
+        // backgroundColor: '#39ace2',
+        backgroundColor: '#635bff',
         margin: { xs: '0 4px', sm: '0 6px' },
         minWidth: { xs: 40, sm: 46, md: 60 },
         height: { xs: 40, sm: 46, md: 27 },

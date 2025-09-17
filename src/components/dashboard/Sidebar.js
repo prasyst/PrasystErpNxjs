@@ -82,7 +82,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
 
   // Sample menu structure with multiple nested levels
   const menuItems = [
-    { name: 'Dashboard', icon: MdDashboard, path: '/dashboard' },
+    { name: 'Dashboard', icon: MdDashboard, path: '/dashboard', },
     { name: 'Stock Enquiry', icon: MdSearch, path: '/dashboard/stock-enquiry-table' },
     {
       name: 'Masters',
@@ -788,7 +788,8 @@ const renderMenuLevel = (items, levelIndex, title = null) => {
                 display: 'flex',
                 justifyContent: 'center',
                 marginRight: isCollapsed ? 0 : '0.75rem',
-                color: isActive ? '#1b69e7' : isHovered ? '#1b69e7' : '#555',
+                // color: isActive ? '#1b69e7' : isHovered ? '#1b69e7' : '#555',
+                color: '#635bff',
                 transition: 'color 0.2s ease'
               }}>
                 <IconComponent size={20} />
@@ -893,7 +894,7 @@ const renderMenuLevel = (items, levelIndex, title = null) => {
               e.currentTarget.style.backgroundColor = 'transparent';
             }}
           >
-            {isCollapsed ? <MdMenu size={22} /> : <MdClose size={22} />}
+            {isCollapsed ? <MdMenu color={'#635bff'} size={22} /> : <MdClose size={22} />}
           </button>
         </div>
 

@@ -556,7 +556,12 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
                   </Typography>
                 )}
               </Box>
-              <Box sx={{ marginTop: '25px', display: 'flex' }}>
+              <Box sx={{
+                marginTop: '15px',
+                display: 'flex',
+                flexDirection: { xs: 'column', sm: 'column', md: 'column' },
+                gap: { xs: 1, sm: 1, md: 0.5 },
+              }}>
                 <input
                   accept="image/*"
                   style={{ display: 'none' }}
