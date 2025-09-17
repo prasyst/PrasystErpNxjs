@@ -272,15 +272,32 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
               }}
             />
           </Box>
-          <Box sx={{ display: 'flex', alignItems: 'center', width: { xs: '100%', sm: '48%', md: '25%' } }}>
-            <FormLabel sx={{ margin: '7px 14px 0px 10px', fontSize: '12px', fontWeight: 'bold', color: 'black' }} component="legend">RD/URD</FormLabel>
+          <Box sx={{
+            display: 'flex',
+            alignItems: 'center',
+            width: { xs: '100%', sm: '48%', md: '25%' },
+            gap: '10px'
+          }}>
+            <FormLabel
+              sx={{
+                fontSize: '12px',
+                fontWeight: 'bold',
+                color: 'black',
+                whiteSpace: 'nowrap',
+                lineHeight: '1.5',
+                display: 'flex',
+                alignItems: 'center',
+                padding: 0,
+                margin: 0,
+              }}
+              component="legend">RD/URD</FormLabel>
             <RadioGroup
               row
               name="RD_URD"
               onChange={handleInputChange}
               disabled={isFormDisabled}
               value={formData?.RD_URD || ""}
-              sx={{ margin: '5px 0px 0px 0px' }}
+              sx={{ margin: 0, padding: 0 }}
             >
               <FormControlLabel disabled={isFormDisabled}
                 value="R" control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
@@ -650,15 +667,34 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
           flexDirection: { xs: 'column', sm: 'row', md: 'row' },
           gap: { xs: 1, sm: 1.5, md: 2 }
         }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', width: { xs: '100%', sm: '20%', md: '17%' } }}>
-            <FormLabel sx={{ margin: '7px 14px 0px 10px', fontSize: '12px', fontWeight: 'bold', color: 'black' }} component="legend">MSME Reg</FormLabel>
+          <Box sx={{
+            display: 'flex',
+            alignItems: 'center', width: { xs: '100%', sm: '20%', md: '15.7%' },
+            gap: '6px'
+          }}>
+            <FormLabel
+              sx={{
+                fontSize: '12px',
+                fontWeight: 'bold',
+                color: 'black',
+                whiteSpace: 'nowrap',
+                lineHeight: '1.5',
+                display: 'flex',
+                alignItems: 'center',
+                padding: 0,
+                margin: 0,
+              }}
+              component="legend">MSME Reg</FormLabel>
             <RadioGroup
               row
               name="MSME_FLAG"
               onChange={handleInputChange}
               disabled={isFormDisabled}
               value={formData?.MSME_FLAG || ""}
-              sx={{ margin: '5px 0px 0px 0px' }}
+              sx={{
+                padding: 0,
+                margin: 0,
+              }}
             >
               <FormControlLabel disabled={isFormDisabled}
                 value="Y" control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
@@ -668,7 +704,7 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
                 label={<Typography sx={{ fontSize: '12px' }}>No</Typography>} />
             </RadioGroup>
           </Box>
-          <Box sx={{ width: { xs: '100%', sm: '20%', md: '15.3%' } }}>
+          <Box sx={{ width: { xs: '100%', sm: '20%', md: '16.4%' } }}>
             <TextField
               label="MSME No"
               variant="filled"
@@ -1097,18 +1133,23 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
               }}
             />
           </Box>
-          <Box sx={{ width: { xs: '100%', sm: '20%', md: '11%' } }}>
+          <Box sx={{
+            width: { xs: '100%', sm: '20%', md: '11.5%' },
+            display: 'flex',
+            alignItems: 'center',
+          }}>
             <FormControlLabel
               control={<Checkbox name="DEFAULT_BRANCH" size="small" checked={formData?.DEFAULT_BRANCH === "1"}
                 onChange={handleChangeStatus} />}
               disabled={isFormDisabled}
               label="Default Branch"
               sx={{
+                margin: 0,
                 '& .MuiFormControlLabel-label': { fontSize: '12px' }
               }}
             />
           </Box>
-          <Box sx={{ width: { xs: '100%', sm: '20%', md: '20.6%', marginLeft: '8.5px' } }}>
+          <Box sx={{ width: { xs: '100%', sm: '20%', md: '20.6%' } }}>
             <TextField
               label="GSTIN No"
               variant="filled"

@@ -411,6 +411,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled }) => {
               disabled={isFormDisabled}
               label="Commission On Gross Amt"
               sx={{
+                margin: 0,
                 '& .MuiFormControlLabel-label': { fontSize: '12px' }
               }}
             />
@@ -508,15 +509,31 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled }) => {
               }}
             />
           </Box>
-          <Box sx={{ display: 'flex', alignItems: 'center', width: { xs: '100%', sm: '48%', md: '26%' } }}>
-            <FormLabel sx={{ margin: '7px 14px 0px 8px', fontSize: '12px', fontWeight: 'bold', color: 'black' }} component="legend">Round Off</FormLabel>
+          <Box sx={{
+            display: 'flex', alignItems: 'center',
+            width: { xs: '100%', sm: '48%', md: '28%' },
+            gap: '10px'
+          }}>
+            <FormLabel
+              sx={{
+                fontSize: '12px',
+                fontWeight: 'bold',
+                color: 'black',
+                whiteSpace: 'nowrap',
+                lineHeight: '1.5',
+                display: 'flex',
+                alignItems: 'center',
+                padding: 0,
+                margin: 0,
+              }}
+              component="legend">Round Off</FormLabel>
             <RadioGroup
               row
               name="RDOFF"
               onChange={handleInputChange}
               disabled={isFormDisabled}
               value={clientData?.RDOFF || ""}
-              sx={{ margin: '5px 0px 0px 0px' }}
+              sx={{ margin: 0, padding: 0 }}
             >
               <FormControlLabel disabled={isFormDisabled}
                 value="N" control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
@@ -530,7 +547,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled }) => {
             </RadioGroup>
           </Box>
 
-          <Box sx={{ width: { xs: '100%', sm: '20%', md: '9.5%' } }}>
+          <Box sx={{ width: { xs: '100%', sm: '20%', md: '7.5%' } }}>
             <TextField
               label="Interest Rate %"
               variant="filled"
