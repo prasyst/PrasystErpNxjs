@@ -48,49 +48,70 @@ const columnDefs = [
     field: "FGCAT_NAME", 
     headerName: "Category", 
     width: 140,
-    filter: true,
+     filter: 'agSetColumnFilter',
+    filterParams: {
+      defaultToNothingSelected: true, 
+    },
     sortable: true
   },
   { 
     field: "FGPRD_ABRV", 
     headerName: "Product", 
     width: 200,
-    filter: true,
+      filter: 'agSetColumnFilter',
+    filterParams: {
+      defaultToNothingSelected: true, 
+    },
     sortable: true
   },
   { 
     field: "COLLECTION_NAME", 
     headerName: "Series", 
     width: 130,
-    filter: true,
+     filter: 'agSetColumnFilter',
+    filterParams: {
+      defaultToNothingSelected: true, 
+    },
     sortable: true
   },
   { 
     field: "FGSTYLE_CODE", 
     headerName: "StyleCode", 
     width: 130,
-    filter: true,
+      filter: 'agSetColumnFilter',
+    filterParams: {
+      defaultToNothingSelected: true, 
+    },
     sortable: true
   },
   { 
     field: "FGSTYLE_NAME", 
     headerName: "Style", 
     width: 130,
-    filter: true,
+     filter: 'agSetColumnFilter',
+    filterParams: {
+      defaultToNothingSelected: true, 
+    },
     sortable: true
   },
   { 
     field: "FGSHADE_NAME", 
     headerName: "Shade", 
     width: 130,
-    filter: true,
+      filter: 'agSetColumnFilter',
+    filterParams: {
+      defaultToNothingSelected: true, 
+    },
     sortable: true
   },
   { 
     field: "STYSIZE_NAME", 
     headerName: "Size", 
     width: 130,
-    filter: true,
+     filter: 'agSetColumnFilter',
+    filterParams: {
+      defaultToNothingSelected: true, 
+    },
     sortable: true
   },
   { 
@@ -138,14 +159,20 @@ const columnDefs = [
     field: "BARCODE", 
     headerName: "Barcode", 
     width: 130,
-    filter: true,
+      filter: 'agSetColumnFilter',
+    filterParams: {
+      defaultToNothingSelected: true, 
+    },
     sortable: true
   },
   { 
     field: "EAN_CODE", 
     headerName: "EAN", 
     width: 130,
-    filter: true,
+      filter: 'agSetColumnFilter',
+    filterParams: {
+      defaultToNothingSelected: true, 
+    },
     sortable: true
   },
 ];
