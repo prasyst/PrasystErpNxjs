@@ -1529,15 +1529,15 @@ const PartyMst = () => {
     <Box>
       <ToastContainer />
 
-      <Grid container justifyContent="space-between" sx={{ ml: '4.5%', mr: '5%' }}
+      <Grid container justifyContent="space-between" sx={{ ml: '4.9%', mr: '5%' }}
         spacing={2}
       >
         <Grid>
           <Button
             variant="contained"
             size="small"
-            sx={Buttonsx}
-            disabled={isFormDisabled}
+            sx={{ background: 'linear-gradient(290deg, #d4d4d4, #d4d4d4) !important' }}
+            disabled={mode !== 'view'}
             onClick={handlePrevClick}
           >
             <KeyboardArrowLeftIcon />
@@ -1545,8 +1545,8 @@ const PartyMst = () => {
           <Button
             variant="contained"
             size="small"
-            sx={Buttonsx}
-            disabled={isFormDisabled}
+            sx={{ background: 'linear-gradient(290deg, #b9d0e9, #e9f2fa) !important', ml: 1 }}
+            disabled={mode !== 'view'}
             onClick={handleNextClick}
           >
             <NavigateNextIcon />
@@ -1689,7 +1689,7 @@ const PartyMst = () => {
             <>
               <Button variant="contained"
                 sx={{
-                  backgroundColor: '#28a745',
+                  background: 'linear-gradient(290deg, #d4d4d4, #ffffff)',
                   margin: { xs: '0 4px', sm: '0 6px' },
                   minWidth: { xs: 40, sm: 46, md: 60 },
                   height: { xs: 40, sm: 46, md: 30 },
@@ -1699,7 +1699,7 @@ const PartyMst = () => {
               </Button>
               <Button variant="contained"
                 sx={{
-                  backgroundColor: '#6c757d',
+                  background: 'linear-gradient(290deg, #a7c5e9, #ffffff)',
                   margin: { xs: '0 4px', sm: '0 6px' },
                   minWidth: { xs: 40, sm: 46, md: 60 },
                   height: { xs: 40, sm: 46, md: 30 },
@@ -1717,6 +1717,7 @@ const PartyMst = () => {
               <Button variant="contained"
                 sx={{
                   margin: { xs: '0 4px', sm: '0 6px' },
+                  backgroundColor: '#635bff',
                   minWidth: { xs: 40, sm: 46, md: 60 },
                   height: { xs: 40, sm: 46, md: 30 },
                 }}
@@ -1726,6 +1727,7 @@ const PartyMst = () => {
               <Button variant="contained"
                 sx={{
                   margin: { xs: '0 4px', sm: '0 6px' },
+                  backgroundColor: '#635bff',
                   minWidth: { xs: 40, sm: 46, md: 60 },
                   height: { xs: 40, sm: 46, md: 30 },
                 }}

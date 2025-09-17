@@ -114,7 +114,7 @@ const Header = ({ isSidebarCollapsed }) => {
     <header 
       style={{
         backgroundColor: '#635bff',
-        padding: '0.5rem',
+        padding: '0.2rem',
         position: 'fixed',
         top: 0,
         right: 0,
