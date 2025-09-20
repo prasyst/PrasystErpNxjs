@@ -1016,7 +1016,7 @@ const ProductMst = () => {
   };
 
   return (
-    <Box
+    <Grid
       sx={{
         width: '100%',
         display: 'flex',
@@ -1031,16 +1031,17 @@ const ProductMst = () => {
     >
       <ToastContainer />
 
-      <Box
+      <Grid container
         sx={{
           display: 'flex',
           flexDirection: 'column',
-          gap: { xs: 1.5, sm: 1.5, md: 0.7 },
-          marginInline: { xs: '5%', sm: '5%', md: '13%' }
+          marginInline: { xs: '5%', sm: '5%', md: '5%', lg: '15%', xl: '5%' },
         }}
-
+        spacing={0.5}
       >
-        <Grid container justifyContent="space-between" sx={{ ml: '0%', mr: '-0.5%' }}
+
+        <Grid container justifyContent="space-between"
+          sx={{ marginInline: { xs: '5%', sm: '5%', md: '5%', lg: '0%', xl: '0%' } }}
           spacing={2}
         >
           <Grid>
@@ -1070,7 +1071,7 @@ const ProductMst = () => {
 
           </Grid>
 
-          <Grid sx={{ width: { xs: '100%', sm: '48%', md: '18%', display: 'flex'  } }}>
+          <Grid sx={{ width: { xs: '100%', sm: '48%', md: '18%', display: 'flex' } }}>
             <TextField
               label="Search By Code"
               variant="filled"
@@ -1090,10 +1091,10 @@ const ProductMst = () => {
                 },
               }}
             />
-            <TbListSearch onClick={handleTable}  style={{ color: 'rgb(99, 91, 255)', width: '40%' , height: '62%' }} />
+            <TbListSearch onClick={handleTable} style={{ color: 'rgb(99, 91, 255)', width: '40%', height: '62%' }} />
           </Grid>
 
-          <Grid sx={{ display: "flex", justifyContent: "end" }}>
+          <Grid sx={{ display: "flex", justifyContent: "end", marginRight: '-6px' }}>
             <CrudButton
               moduleName=""
               mode={mode}
@@ -1108,15 +1109,8 @@ const ProductMst = () => {
           </Grid>
         </Grid>
 
-        <Box
-          sx={{
-            display: 'flex',
-            flexDirection: { xs: 'column', sm: 'row', md: 'row' },
-            gap: { xs: 1, sm: 1, md: 2 },
-            width: { xs: '100%', sm: '48%', md: '100%' }
-          }}
-        >
-          <Box sx={{ flex: 1 }}>
+        <Grid container spacing={0.5}>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <TextField
               label="Series"
               disabled={isFormDisabled}
@@ -1132,8 +1126,8 @@ const ProductMst = () => {
                 },
               }}
             />
-          </Box>
-          <Box sx={{ flex: 1 }}>
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <TextField
               label="Last Code"
               variant="filled"
@@ -1150,8 +1144,8 @@ const ProductMst = () => {
                 },
               }}
             />
-          </Box>
-          <Box sx={{ flex: 1 }}>
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <TextField
               label="Code"
               variant="filled"
@@ -1168,8 +1162,8 @@ const ProductMst = () => {
                 },
               }}
             />
-          </Box>
-          <Box sx={{ flex: 1 }}>
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <TextField
               label="PrdSeries"
               variant="filled"
@@ -1186,17 +1180,9 @@ const ProductMst = () => {
                 },
               }}
             />
-          </Box>
-        </Box>
+          </Grid>
 
-        <Box sx={{
-          display: 'flex',
-          flexDirection: { xs: 'column', sm: 'row', md: 'row' },
-          justifyContent: 'space-between',
-          gap: { xs: 1, sm: 1, md: 2 },
-          width: { xs: '100%', sm: '48%', md: '100%' },
-        }}>
-          <Box sx={{ flex: 1 }}>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <AutoVibe
               id="FGCAT_KEY"
               disabled={isFormDisabled}
@@ -1235,8 +1221,8 @@ const ProductMst = () => {
                 },
               }}
             />
-          </Box>
-          <Box sx={{ flex: 2.1 }}>
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6, md: 6 }}>
             <TextField
               label={
                 <span>
@@ -1257,8 +1243,8 @@ const ProductMst = () => {
                 },
               }}
             />
-          </Box>
-          <Box sx={{ flex: 1 }}>
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <AutoVibe
               id="PRODGRP_KEY"
               disabled={isFormDisabled}
@@ -1281,42 +1267,28 @@ const ProductMst = () => {
                 },
               }}
             />
-          </Box>
-        </Box>
+          </Grid>
 
-        <Box sx={{
-          display: 'flex',
-          flexDirection: { xs: 'column', sm: 'row', md: 'row' },
-          justifyContent: 'space-between',
-          gap: { xs: 1, sm: 1, md: 2 },
-          width: { xs: '100%', sm: '48%', md: '99.6%' },
-        }}>
-          <TextField
-            label="Description"
-            variant="filled"
-            fullWidth
-            onChange={handleInputChange}
-            value={form.FGPRD_NAME || ""}
-            disabled={isFormDisabled}
-            name="FGPRD_NAME"
-            sx={textInputSx}
-            inputProps={{
-              style: {
-                padding: '6px 8px',
-                fontSize: '12px',
-              },
-            }}
-          />
-          <Box
-            sx={{
-              display: 'flex',
-              flexDirection: { xs: 'column', sm: 'row' },
-              gap: 1,
-              width: { xs: '100%', sm: '48%', md: '100%' },
-              position: 'relative',
-              left: 2
-            }}
-          >
+          <Grid size={{ xs: 12, sm: 6, md: 6 }}>
+            <TextField
+              label="Description"
+              variant="filled"
+              fullWidth
+              onChange={handleInputChange}
+              value={form.FGPRD_NAME || ""}
+              disabled={isFormDisabled}
+              name="FGPRD_NAME"
+              sx={textInputSx}
+              inputProps={{
+                style: {
+                  padding: '6px 8px',
+                  fontSize: '12px',
+                },
+              }}
+            />
+          </Grid>
+
+          <Grid size={{ xs: 12, sm: 6, md: 2 }}>
             <TextField
               label="Mark UP Rt %"
               variant="filled"
@@ -1333,6 +1305,8 @@ const ProductMst = () => {
                 },
               }}
             />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6, md: 2 }}>
             <TextField
               label="Mark.Dn Pur%"
               variant="filled"
@@ -1349,7 +1323,8 @@ const ProductMst = () => {
                 },
               }}
             />
-
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6, md: 2 }}>
             <TextField
               label="Mark Down Rt %"
               variant="filled"
@@ -1366,69 +1341,61 @@ const ProductMst = () => {
                 },
               }}
             />
+          </Grid>
 
-          </Box>
-        </Box>
-
-        <Box sx={{
-          display: 'flex',
-          flexDirection: { xs: 'column', sm: 'row', md: 'row' },
-          justifyContent: 'space-between',
-          gap: { xs: 1, sm: 1.5, md: 2 },
-          width: { xs: '100%', sm: '48%', md: '100%' },
-        }}>
-          <AutoVibe
-            id="UNIT_KEY"
-            disabled={isFormDisabled}
-            getOptionLabel={(option) => option.UNIT_NAME || ''}
-            options={unit}
-            label="Unit"
-            name="UNIT_KEY"
-            value={unit.find(option => option.UNIT_KEY === form.UNIT_NAME) || null}
-            onChange={(e, newValue) => {
-              setForm((prevForm) => ({
-                ...prevForm,
-                UNIT_NAME: newValue ? newValue.UNIT_KEY : '',
-              }));
-            }}
-            sx={DropInputSx}
-            inputProps={{
-              style: {
-                padding: '6px 8px',
-                fontSize: '12px',
-              },
-            }}
-          />
-          <AutoVibe
-            id="TAX_KEY"
-            disabled={isFormDisabled}
-            getOptionLabel={(option) => option.TAX_NAME || ""}
-            options={Tax}
-            label="Tax"
-            name="TAX_KEY"
-            value={Tax.find(option => option.TAX_KEY === form.TAX_NAME) || null || ""}
-            onChange={(e, newValue) => {
-              setForm((prevForm) => ({
-                ...prevForm,
-                TAX_NAME: newValue ? newValue.TAX_KEY : '',
-              }));
-            }}
-            sx={DropInputSx}
-            inputProps={{
-              style: {
-                padding: '6px 8px',
-                fontSize: '12px',
-              },
-            }}
-          />
-          <Box
-            sx={{
-              display: 'flex',
-              flexDirection: { xs: 'column', sm: 'row' },
-              gap: 1,
-              width: { xs: '100%', sm: '48%', md: '209%' },
-            }}
-          >
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <AutoVibe
+              id="UNIT_KEY"
+              disabled={isFormDisabled}
+              getOptionLabel={(option) => option.UNIT_NAME || ''}
+              options={unit}
+              label="Unit"
+              name="UNIT_KEY"
+              value={unit.find(option => option.UNIT_KEY === form.UNIT_NAME) || null}
+              onChange={(e, newValue) => {
+                setForm((prevForm) => ({
+                  ...prevForm,
+                  UNIT_NAME: newValue ? newValue.UNIT_KEY : '',
+                }));
+              }}
+              sx={DropInputSx}
+              inputProps={{
+                style: {
+                  padding: '6px 8px',
+                  fontSize: '12px',
+                },
+              }}
+            />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <AutoVibe
+              id="TAX_KEY"
+              disabled={isFormDisabled}
+              getOptionLabel={(option) => option.TAX_NAME || ""}
+              options={Tax}
+              label="Tax"
+              name="TAX_KEY"
+              value={Tax.find(option => option.TAX_KEY === form.TAX_NAME) || null || ""}
+              onChange={(e, newValue) => {
+                setForm((prevForm) => ({
+                  ...prevForm,
+                  TAX_NAME: newValue ? newValue.TAX_KEY : '',
+                }));
+              }}
+              sx={DropInputSx}
+              inputProps={{
+                style: {
+                  padding: '6px 8px',
+                  fontSize: '12px',
+                },
+              }}
+            />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6, md: 6 }} sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px'
+          }}>
             <FormLabel sx={{ margin: '8px 14px 4px 2px', fontSize: '14px', fontWeight: 'bold', color: 'black' }} component="legend">Round Off</FormLabel>
             <RadioGroup
               row
@@ -1450,150 +1417,127 @@ const ProductMst = () => {
                 value="option4" control={<Radio sx={{ transform: 'scale(0.8)', padding: '4px' }} />}
                 label={<Typography sx={{ fontSize: '14px' }}>Rs. 10</Typography>} />
             </RadioGroup>
-          </Box>
-        </Box>
+          </Grid>
 
-        <Box sx={{
-          display: 'flex',
-          flexDirection: { xs: 'column', sm: 'row', md: 'row' },
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          gap: { xs: 1, sm: 1.5, md: 2 },
-          width: { xs: '100%', sm: '48%', md: '100%' }
-        }}>
-          <AutoVibe
-            id="BRAND_KEY"
-            disabled={isFormDisabled}
-            getOptionLabel={(option) => option.BRAND_NAME || ''}
-            options={brand}
-            label="Brand"
-            name="BRAND_KEY"
-            value={brand.find(option => option.BRAND_KEY === form.BRAND_NAME) || null}
-            onChange={(e, newValue) => {
-              setForm((prevForm) => ({
-                ...prevForm,
-                BRAND_NAME: newValue ? newValue.BRAND_KEY : '',
-              }));
-            }}
-            sx={DropInputSx}
-            inputProps={{
-              style: {
-                padding: '6px 8px',
-                fontSize: '12px',
-              },
-            }}
-          />
-          <AutoVibe
-            id=""
-            disabled={isFormDisabled}
-            options={options || []}
-            getOptionLabel={(option) => option}
-            label="Excise Tariff"
-            name=""
-            value={''}
-            onChange={handleInputChange}
-            sx={DropInputSx}
-            inputProps={{
-              style: {
-                padding: '6px 8px',
-                fontSize: '12px',
-              },
-            }}
-          />
-          <Box
-            sx={{
-              display: 'flex',
-              flexDirection: { xs: 'column', sm: 'row' },
-              gap: 1,
-              width: { xs: '100%', sm: '48%', md: '209%' },
-              position: 'relative',
-              left: 2
-            }}
-          >
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <AutoVibe
+              id="BRAND_KEY"
+              disabled={isFormDisabled}
+              getOptionLabel={(option) => option.BRAND_NAME || ''}
+              options={brand}
+              label="Brand"
+              name="BRAND_KEY"
+              value={brand.find(option => option.BRAND_KEY === form.BRAND_NAME) || null}
+              onChange={(e, newValue) => {
+                setForm((prevForm) => ({
+                  ...prevForm,
+                  BRAND_NAME: newValue ? newValue.BRAND_KEY : '',
+                }));
+              }}
+              sx={DropInputSx}
+              inputProps={{
+                style: {
+                  padding: '6px 8px',
+                  fontSize: '12px',
+                },
+              }}
+            />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <AutoVibe
+              id=""
+              disabled={isFormDisabled}
+              options={options || []}
+              getOptionLabel={(option) => option}
+              label="Excise Tariff"
+              name=""
+              value={''}
+              onChange={handleInputChange}
+              sx={DropInputSx}
+              inputProps={{
+                style: {
+                  padding: '6px 8px',
+                  fontSize: '12px',
+                },
+              }}
+            />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6, md: 6 }} sx={{ display: 'flex', alignItems: 'center' }}>
             <Typography>
               Excise Tariff Grp Heading ...
             </Typography>
-          </Box>
-        </Box>
+          </Grid>
 
-        <Box sx={{
-          display: 'flex',
-          flexDirection: { xs: 'column', sm: 'row', md: 'row' },
-          justifyContent: 'space-between',
-          gap: { xs: 1, sm: 1, md: 2 },
-          width: { xs: '100%', sm: '48%', md: '100%' },
-        }}>
-          <AutoVibe
-            id=""
-            disabled={isFormDisabled || form.Excise_appl !== "1"}
-            getOptionLabel={(option) => option || ''}
-            options={[]}
-            label="Excise"
-            name=""
-            value={''}
-            onChange={handleInputChange}
-            sx={DropInputSx}
-            inputProps={{
-              style: {
-                padding: '6px 8px',
-                fontSize: '12px',
-              },
-            }}
-          />
-          <AutoVibe
-            id="HSNCODE_KEY"
-            disabled={isFormDisabled}
-            getOptionLabel={(option) => option.HSN_CODE || ''}
-            options={HSNCODE}
-            label="HSN Code"
-            name="HSNCODE_KEY"
-            value={HSNCODE.find(option => option.HSNCODE_KEY === form.HSN_CODE) || null}
-            onChange={(e, newValue) => {
-              setForm((prevForm) => ({
-                ...prevForm,
-                HSN_CODE: newValue ? newValue.HSNCODE_KEY : '',
-              }));
-            }}
-            sx={DropInputSx}
-            inputProps={{
-              style: {
-                padding: '6px 8px',
-                fontSize: '12px',
-              },
-            }}
-          />
-          <Box
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <AutoVibe
+              id=""
+              disabled={isFormDisabled || form.Excise_appl !== "1"}
+              getOptionLabel={(option) => option || ''}
+              options={[]}
+              label="Excise"
+              name=""
+              value={''}
+              onChange={handleInputChange}
+              sx={DropInputSx}
+              inputProps={{
+                style: {
+                  padding: '6px 8px',
+                  fontSize: '12px',
+                },
+              }}
+            />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <AutoVibe
+              id="HSNCODE_KEY"
+              disabled={isFormDisabled}
+              getOptionLabel={(option) => option.HSN_CODE || ''}
+              options={HSNCODE}
+              label="HSN Code"
+              name="HSNCODE_KEY"
+              value={HSNCODE.find(option => option.HSNCODE_KEY === form.HSN_CODE) || null}
+              onChange={(e, newValue) => {
+                setForm((prevForm) => ({
+                  ...prevForm,
+                  HSN_CODE: newValue ? newValue.HSNCODE_KEY : '',
+                }));
+              }}
+              sx={DropInputSx}
+              inputProps={{
+                style: {
+                  padding: '6px 8px',
+                  fontSize: '12px',
+                },
+              }}
+            />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <AutoVibe
+              id=""
+              disabled={isFormDisabled || form.QC_REQ === 'option2'}
+              getOptionLabel={(option) => option || ''}
+              options={[]}
+              label="Qc SubGroup"
+              name=""
+              value={''}
+              onChange={handleInputChange}
+              sx={DropInputSx}
+              inputProps={{
+                style: {
+                  padding: '6px 8px',
+                  fontSize: '12px',
+                },
+              }}
+            />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}
             sx={{
               display: 'flex',
-              flexDirection: { xs: 'column', sm: 'row' },
-              gap: 3,
-              width: { xs: '100%', sm: '48%', md: '209%' },
+              alignItems: 'center',
+              gap: '10px'
             }}
           >
-            <Box
-              sx={{
-                width: { xs: '100%', sm: '48%', md: '48.5%' },
-              }}
-            >
-              <AutoVibe
-                id=""
-                disabled={isFormDisabled || form.QC_REQ === 'option2'}
-                getOptionLabel={(option) => option || ''}
-                options={[]}
-                label="Qc SubGroup"
-                name=""
-                value={''}
-                onChange={handleInputChange}
-                sx={DropInputSx}
-                inputProps={{
-                  style: {
-                    padding: '6px 8px',
-                    fontSize: '12px',
-                  },
-                }}
-              />
-            </Box>
-            <FormLabel sx={{ marginTop: '7px', fontSize: '14px', fontWeight: 'bold', color: 'black' }} component="legend">Qc Req</FormLabel>
+            <FormLabel sx={{ margin: '8px 14px 4px 2px', fontSize: '14px', fontWeight: 'bold', color: 'black' }} component="legend">Qc Req</FormLabel>
             <RadioGroup
               row
               name="QC_REQ"
@@ -1608,187 +1552,187 @@ const ProductMst = () => {
                 value="option2" control={<Radio sx={{ transform: 'scale(0.8)', padding: '4px' }} />}
                 label={<Typography sx={{ fontSize: '14px' }}>No</Typography>} />
             </RadioGroup>
+          </Grid>
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: { xs: 'column', sm: 'row', md: 'row' },
+              justifyContent: 'space-between',
+              gap: { xs: 1, sm: 1, md: 1 },
+              marginTop: '0px'
+            }}
+          >
+            <EditableTable
+              data={visibleData}
+              columns={columns}
+              onCellChange={handleCellChange}
+              disabled={isFormDisabled}
+              selectedRowIndex={selectedRowIndex}
+              onRowClick={handleRowClick}
+            />
+            <Box
+              sx={{
+                display: 'flex',
+                flexDirection: { xs: 'column', sm: 'row', md: 'column' },
+                justifyContent: 'flex-start',
+                marginTop: '14px',
+                gap: { xs: 1, sm: 1, md: 1 },
+              }}
+            >
+              <TextField
+                type="date"
+                label={
+                  <span>
+                    Eff Date <span style={{ color: 'red' }}>*</span>
+                  </span>
+                }
+                variant="filled"
+                fullWidth
+                onChange={handleInputChange}
+                disabled={isFormDisabled}
+                value={form.EFF_DT || ""}
+                name="EFF_DT"
+                sx={textInputSx}
+                InputLabelProps={{
+                  shrink: true,
+                }}
+              />
+              <Button variant="contained" sx={{
+                paddingBlock: '4px', paddingInline: '0px', fontSize: '10px', whiteSpace: 'nowrap',
+                textOverflow: 'ellipsis',
+                overflow: 'hidden', background: '#635bff'
+              }}>Mandatory Acc In Bom</Button>
+              <Button variant="contained" sx={{ paddingBlock: '4px', background: '#635bff', paddingInline: '0px', fontSize: '10px' }}>Allocate Type</Button>
+              <Button variant="contained"
+                onClick={handleDeleteIndex}
+                disabled={selectedRowIndex === null || isFormDisabled}
+                sx={{
+                  paddingBlock: '4px',
+                  background: '#635bff',
+                  paddingInline: '0px',
+                  fontSize: '10px'
+                }}>
+                Del Size
+              </Button>
+            </Box>
           </Box>
-        </Box>
 
-        <Box
-          sx={{
+          <Box sx={{
             display: 'flex',
             flexDirection: { xs: 'column', sm: 'row', md: 'row' },
             justifyContent: 'space-between',
             gap: { xs: 1, sm: 1, md: 1 },
-            marginTop: '0px'
-          }}
-        >
-          <EditableTable
-            data={visibleData}
-            columns={columns}
-            onCellChange={handleCellChange}
-            disabled={isFormDisabled}
-            selectedRowIndex={selectedRowIndex}
-            onRowClick={handleRowClick}
-          />
-          <Box
-            sx={{
-              display: 'flex',
-              flexDirection: { xs: 'column', sm: 'row', md: 'column' },
-              justifyContent: 'flex-start',
-              marginTop: '14px',
-              gap: { xs: 1, sm: 1, md: 1 },
-            }}
-          >
-            <TextField
-              type="date"
-              label={
-                <span>
-                  Eff Date <span style={{ color: 'red' }}>*</span>
-                </span>
-              }
-              variant="filled"
-              fullWidth
-              onChange={handleInputChange}
-              disabled={isFormDisabled}
-              value={form.EFF_DT || ""}
-              name="EFF_DT"
-              sx={textInputSx}
-              InputLabelProps={{
-                shrink: true,
-              }}
-            />
-            <Button variant="contained" sx={{
-              paddingBlock: '4px', paddingInline: '0px', fontSize: '10px', whiteSpace: 'nowrap',
-              textOverflow: 'ellipsis',
-              overflow: 'hidden', background: '#635bff'
-            }}>Mandatory Acc In Bom</Button>
-            <Button variant="contained" sx={{ paddingBlock: '4px', background: '#635bff', paddingInline: '0px', fontSize: '10px' }}>Allocate Type</Button>
-            <Button variant="contained"
-              onClick={handleDeleteIndex}
-              disabled={selectedRowIndex === null || isFormDisabled}
-              sx={{
-                paddingBlock: '4px',
-                background: '#635bff',
-                paddingInline: '0px',
-                fontSize: '10px'
-              }}>
-              Del Size
-            </Button>
-          </Box>
-        </Box>
+            // paddingBottom: '60px',
+          }}>
+            <Box>
+              <FormControlLabel
+                control={<Checkbox name="ISSERVICE" size="small" checked={form.ISSERVICE === "1"}
+                  onChange={handleChangeStatus} />}
+                disabled={isFormDisabled}
+                label="Is Service"
+                sx={{
+                  '& .MuiFormControlLabel-label': { fontSize: '12px' }
+                }}
+              />
+              <FormControlLabel
+                control={<Checkbox name="Excise_appl" size="small" checked={form.Excise_appl === "1"}
+                  onChange={handleChangeStatus} />}
+                disabled={isFormDisabled}
+                label="Excise Appl"
+                sx={{
+                  '& .MuiFormControlLabel-label': { fontSize: '12px' }
+                }}
+              />
+              <FormControlLabel
+                control={<Checkbox name="Is_Unique" size="small" checked={form.Is_Unique === "1"}
+                  onChange={handleChangeStatus} />}
+                disabled={isFormDisabled}
+                label="Is Unique"
+                sx={{
+                  '& .MuiFormControlLabel-label': { fontSize: '12px' }
+                }}
+              />
+              <FormControlLabel
+                control={<Checkbox name="STATUS" size="small" checked={form.STATUS === "1"}
+                  onChange={handleChangeStatus} />}
+                disabled={isFormDisabled}
+                label="Active"
+                sx={{
+                  '& .MuiFormControlLabel-label': { fontSize: '12px' }
+                }}
+              />
+            </Box>
 
-        <Box sx={{
-          display: 'flex',
-          flexDirection: { xs: 'column', sm: 'row', md: 'row' },
-          justifyContent: 'space-between',
-          gap: { xs: 1, sm: 1, md: 1 },
-          // paddingBottom: '60px',
+          </Box>
+
+        </Grid>
+
+        <Grid xs={12} sx={{
+          display: "flex",
+          justifyContent: "end",
+          ml: '56.8%',
+          position: 'relative',
+          top: -10
         }}>
-          <Box>
-            <FormControlLabel
-              control={<Checkbox name="ISSERVICE" size="small" checked={form.ISSERVICE === "1"}
-                onChange={handleChangeStatus} />}
-              disabled={isFormDisabled}
-              label="Is Service"
-              sx={{
-                '& .MuiFormControlLabel-label': { fontSize: '12px' }
-              }}
-            />
-            <FormControlLabel
-              control={<Checkbox name="Excise_appl" size="small" checked={form.Excise_appl === "1"}
-                onChange={handleChangeStatus} />}
-              disabled={isFormDisabled}
-              label="Excise Appl"
-              sx={{
-                '& .MuiFormControlLabel-label': { fontSize: '12px' }
-              }}
-            />
-            <FormControlLabel
-              control={<Checkbox name="Is_Unique" size="small" checked={form.Is_Unique === "1"}
-                onChange={handleChangeStatus} />}
-              disabled={isFormDisabled}
-              label="Is Unique"
-              sx={{
-                '& .MuiFormControlLabel-label': { fontSize: '12px' }
-              }}
-            />
-            <FormControlLabel
-              control={<Checkbox name="STATUS" size="small" checked={form.STATUS === "1"}
-                onChange={handleChangeStatus} />}
-              disabled={isFormDisabled}
-              label="Active"
-              sx={{
-                '& .MuiFormControlLabel-label': { fontSize: '12px' }
-              }}
-            />
-          </Box>
+          {mode === 'view' && (
+            <>
+              <Button variant="contained"
+                sx={{
+                  background: 'linear-gradient(290deg, #d4d4d4, #ffffff)',
+                  margin: { xs: '0 4px', sm: '0 6px' },
+                  minWidth: { xs: 40, sm: 46, md: 60 },
+                  height: { xs: 40, sm: 46, md: 30 },
+                }}
+                onClick={handleAdd} disabled>
+                Submit
+              </Button>
+              <Button variant="contained"
+                sx={{
+                  background: 'linear-gradient(290deg, #a7c5e9, #ffffff)',
+                  margin: { xs: '0 4px', sm: '0 6px' },
+                  minWidth: { xs: 40, sm: 46, md: 60 },
+                  height: { xs: 40, sm: 46, md: 30 },
+                }}
+                onClick={handleEdit}
+                disabled
+              >
+                Cancel
+              </Button>
+            </>
+          )}
+          {(mode === 'edit' || mode === 'add') && (
+            <>
 
-        </Box>
+              <Button variant="contained"
+                sx={{
+                  backgroundColor: '#635bff',
+                  color: '#fff',
+                  margin: { xs: '0 4px', sm: '0 6px' },
+                  minWidth: { xs: 40, sm: 46, md: 60 },
+                  height: { xs: 40, sm: 46, md: 30 },
+                }}
+                onClick={handleSubmit}>
+                Submit
+              </Button>
+              <Button variant="contained"
+                sx={{
+                  backgroundColor: '#635bff',
+                  color: '#fff',
+                  margin: { xs: '0 4px', sm: '0 6px' },
+                  minWidth: { xs: 40, sm: 46, md: 60 },
+                  height: { xs: 40, sm: 46, md: 30 },
+                }}
+                onClick={handleCancel}>
+                Cancel
+              </Button>
 
-      </Box>
+            </>
+          )}
+        </Grid>
 
-      <Grid xs={12} sx={{
-        display: "flex",
-        justifyContent: "end",
-        ml: '56.8%',
-        position: 'relative',
-        top: -10
-      }}>
-        {mode === 'view' && (
-          <>
-            <Button variant="contained"
-              sx={{
-                background: 'linear-gradient(290deg, #d4d4d4, #ffffff)',
-                margin: { xs: '0 4px', sm: '0 6px' },
-                minWidth: { xs: 40, sm: 46, md: 60 },
-                height: { xs: 40, sm: 46, md: 30 },
-              }}
-              onClick={handleAdd} disabled>
-              Submit
-            </Button>
-            <Button variant="contained"
-              sx={{
-                background: 'linear-gradient(290deg, #a7c5e9, #ffffff)',
-                margin: { xs: '0 4px', sm: '0 6px' },
-                minWidth: { xs: 40, sm: 46, md: 60 },
-                height: { xs: 40, sm: 46, md: 30 },
-              }}
-              onClick={handleEdit}
-              disabled
-            >
-              Cancel
-            </Button>
-          </>
-        )}
-        {(mode === 'edit' || mode === 'add') && (
-          <>
+      </Grid >
 
-            <Button variant="contained"
-              sx={{
-                backgroundColor: '#635bff',
-                color: '#fff',
-                margin: { xs: '0 4px', sm: '0 6px' },
-                minWidth: { xs: 40, sm: 46, md: 60 },
-                height: { xs: 40, sm: 46, md: 30 },
-              }}
-              onClick={handleSubmit}>
-              Submit
-            </Button>
-            <Button variant="contained"
-              sx={{
-                backgroundColor: '#635bff',
-                color: '#fff',
-                margin: { xs: '0 4px', sm: '0 6px' },
-                minWidth: { xs: 40, sm: 46, md: 60 },
-                height: { xs: 40, sm: 46, md: 30 },
-              }}
-              onClick={handleCancel}>
-              Cancel
-            </Button>
-
-          </>
-        )}
-      </Grid>
-
-    </Box>
+    </Grid >
 
   )
 }

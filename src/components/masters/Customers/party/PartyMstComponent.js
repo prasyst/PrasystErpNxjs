@@ -1526,10 +1526,13 @@ const PartyMst = () => {
   ]);
 
   return (
-    <>
+    <Grid>
       <ToastContainer />
 
-      <Grid container justifyContent="space-between" sx={{ marginInline: { xs: '5%', sm: '5%', md: '5%' } }}
+      <Grid container justifyContent="space-between"
+        sx={{
+          marginInline: { xs: '5%', sm: '5%', md: '5%', lg: '5%', xl: '5%' },
+        }}
         spacing={2}
       >
         <Grid>
@@ -1579,7 +1582,7 @@ const PartyMst = () => {
               },
             }}
           />
-           <TbListSearch onClick={handleTable}  style={{ color: 'rgb(99, 91, 255)', width: '40%' , height: '62%' }} />
+          <TbListSearch onClick={handleTable} style={{ color: 'rgb(99, 91, 255)', width: '40%', height: '62%' }} />
         </Grid>
 
         <Grid sx={{ display: "flex", justifyContent: "end" }}>
@@ -1598,7 +1601,7 @@ const PartyMst = () => {
       </Grid>
 
 
-      <Grid sx={{ marginInline: { xs: '5%', sm: '5%', md: '12.5%' } }}>
+      <Grid sx={{ marginInline: { xs: '5%', sm: '5%', md: '12.5%', lg: '12.5%', xl: '12.5%' } }}>
         <Box sx={{ display: 'flex', mb: 1 }}>
           <Tabs
             value={tabIndex}
@@ -1659,7 +1662,9 @@ const PartyMst = () => {
           </Tabs>
         </Box>
       </Grid>
-      <Grid sx={{ marginInline: { xs: '5%', sm: '5%', md: '5%' } }}>
+      <Grid sx={{
+        marginInline: { xs: '5%', sm: '5%', md: '5%', lg: '5%', xl: '5%' },
+      }}>
 
         {tabIndex === 0 ? (
           <Stepper1
@@ -1739,7 +1744,7 @@ const PartyMst = () => {
           )}
         </Grid>
       )}
-    </>
+    </Grid>
   );
 };
 
