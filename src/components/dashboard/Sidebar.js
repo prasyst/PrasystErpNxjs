@@ -9,10 +9,10 @@ import {
   MdLocalMall, MdCollectionsBookmark, MdStraighten, MdBrandingWatermark,
   MdReceipt, MdGavel, MdAssignment, MdAttachMoney, MdEvent, MdAnalytics,
   MdSettings, MdInventory, MdAccountBalance, MdPayments, MdSummarize,
-  MdPushPin, MdOutlinePushPin, MdOutlineInventory , 
+  MdPushPin, MdOutlinePushPin, MdOutlineInventory,
 } from 'react-icons/md';
 
-import { FaBuilding, FaTruck, FaUserTag, FaHandshake, FaBalanceScale, FaBoxOpen, FaBoxes, FaUserTie } from 'react-icons/fa';
+import { FaBuilding, FaTruck, FaUserTag, FaHandshake, FaBalanceScale, FaBoxOpen, FaBoxes, FaUserTie, FaRupeeSign  } from 'react-icons/fa';
 import { FiUser } from 'react-icons/fi';
 import { RiFileChartLine, RiAdminLine } from "react-icons/ri";
 import { AiOutlineUsergroupAdd, AiOutlineNodeIndex } from 'react-icons/ai';
@@ -76,13 +76,14 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
   const [openMegaMenu, setOpenMegaMenu] = useState(null);
   const [megaMenuPosition, setMegaMenuPosition] = useState({ top: 0, left: 0 });
   const [megaMenuLevels, setMegaMenuLevels] = useState([]);
-    const { pinnedModules, pinModule, unpinModule, isPinned } = usePin();
+  const { pinnedModules, pinModule, unpinModule, isPinned } = usePin();
   const [showPinConfirm, setShowPinConfirm] = useState(null);
   const [showUnpinConfirm, setShowUnpinConfirm] = useState(null);
 
   // Sample menu structure with multiple nested levels
   const menuItems = [
     { name: 'Dashboard', icon: MdDashboard, path: '/dashboard', },
+    { name: 'SalesDash', icon: FaRupeeSign  , path: '/dashboard/sales-dashboard', },
     { name: 'Stock Enquiry', icon: MdSearch, path: '/dashboard/stock-enquiry-table' },
     {
       name: 'Masters',
@@ -112,7 +113,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
           path: '#',
           // children: [
           //   { name: 'Broker', icon: FaHandshake, path: '#' },
-         
+
           // ],
         },
         {
@@ -129,7 +130,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
           name: 'Customers',
           icon: MdPeople,
           // path: '/masters/customers',
-              children: [
+          children: [
             { name: 'Debtors/Customers', icon: MdPeople, path: '/masters/customers' },
             { name: 'Category (For Rate)', icon: MdCategory, path: '#' },
             { name: 'Customer Group', icon: AiOutlineUsergroupAdd, path: '#' },
@@ -148,7 +149,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
           path: '#',
           // children: [
           //   { name: 'Broker', icon: FaHandshake, path: '#' },
-         
+
           // ],
         },
         {
@@ -203,7 +204,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
           path: '#',
           children: [
             { name: 'Broker', icon: FaHandshake, path: '#' },
-         
+
           ],
         },
         ,
@@ -213,7 +214,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
           path: '#',
           children: [
             { name: 'Broker', icon: FaHandshake, path: '#' },
-         
+
           ],
         },
         ,
@@ -223,7 +224,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
           path: '#',
           children: [
             { name: 'Broker', icon: FaHandshake, path: '#' },
-         
+
           ],
         },
         {
@@ -234,14 +235,14 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
             { name: 'Season Master', icon: MdEvent, path: '/masters/season/season' },
           ],
         },
-        
+
         {
           name: 'Managers',
           icon: FaTruck,
           path: '#',
           children: [
             { name: 'Broker', icon: FaHandshake, path: '#' },
-         
+
           ],
         }
         ,
@@ -251,7 +252,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
           path: '#',
           children: [
             { name: 'Broker', icon: FaHandshake, path: '#' },
-         
+
           ],
         },
         ,
@@ -261,7 +262,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
           path: '#',
           children: [
             { name: 'Broker', icon: FaHandshake, path: '#' },
-         
+
           ],
         }
         ,
@@ -271,25 +272,25 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
           path: '#',
           children: [
             { name: 'Broker', icon: FaHandshake, path: '#' },
-         
+
           ],
         },
-         {
+        {
           name: 'Rate term',
           icon: FaTruck,
           path: '#',
           children: [
             { name: 'Broker', icon: FaHandshake, path: '#' },
-         
+
           ],
         },
-         {
+        {
           name: 'Approval Settings',
           icon: FaTruck,
           path: '#',
           children: [
             { name: 'Broker', icon: FaHandshake, path: '#' },
-         
+
           ],
         },
         {
@@ -298,7 +299,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
           path: '#',
           children: [
             { name: 'Broker', icon: FaHandshake, path: '#' },
-         
+
           ],
         },
         {
@@ -307,7 +308,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
           path: '#',
           children: [
             { name: 'Broker', icon: FaHandshake, path: '#' },
-         
+
           ],
         },
         {
@@ -316,10 +317,10 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
           path: '#',
           children: [
             { name: 'Broker', icon: FaHandshake, path: '#' },
-         
+
           ],
         },
-      
+
       ],
     },
     {
@@ -327,14 +328,15 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
       icon: MdInventory,
       children: [
         { name: 'Stock Management', icon: FaBoxes, path: '#' },
-        { name: 'Sales', icon: FaBoxes, path: '#',
-           children: [
-       
-        { name: 'Sales Offline', icon: FaBoxes, path: '/inverntory/inventory-offline/' },
-       
-        
-      ],
-         },
+        {
+          name: 'Sales', icon: FaBoxes, path: '#',
+          children: [
+
+            { name: 'Sales Offline', icon: FaBoxes, path: '/inverntory/inventory-offline/' },
+
+
+          ],
+        },
         { name: 'Inventory Reports', icon: MdSummarize, path: '#' },
         { name: 'Stock Adjustment', icon: MdBuild, path: '#' },
         { name: 'Inventory Valuation', icon: MdAttachMoney, path: '#' },
@@ -350,7 +352,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
         { name: 'Financial Reports', icon: MdAnalytics, path: '#' },
       ],
     },
-     {
+    {
       name: 'Inventory Report',
       icon: MdOutlineInventory,
       children: [
@@ -380,7 +382,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
         { name: 'HR Reports', icon: MdSummarize, path: '#' },
       ],
     },
-      {
+    {
       name: 'Administrator',
       icon: RiAdminLine,
       children: [
@@ -391,7 +393,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
       ],
     },
     ,
-      {
+    {
       name: 'Utility',
       icon: IoIosConstruct,
       children: [
@@ -423,13 +425,13 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
     },
   ];
 
-  
+
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (
-        sidebarRef.current && 
+        sidebarRef.current &&
         !sidebarRef.current.contains(event.target) &&
-        megaMenuRef.current && 
+        megaMenuRef.current &&
         !megaMenuRef.current.contains(event.target)
       ) {
         closeMegaMenu();
@@ -455,40 +457,40 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
   };
 
   // Handle main menu hover
- const handleMainMenuHover = (item, event) => {
-  if (item.children && item.children.length > 0) {
-    const rect = event.currentTarget.getBoundingClientRect();
-    
-    // Fixed top position for all mega menus (100px from top)
-    const fixedTop = 100;
-    
-    setMegaMenuPosition({
-      top: fixedTop,
-      left: isCollapsed ? 80 : 260
-    });
-    setOpenMegaMenu(item.name);
-    setHoveredItems([item]);
-    setMegaMenuLevels([item.children]);
-  } else {
-    // Close mega menu if the item has no children
-    closeMegaMenu();
-  }
-};
+  const handleMainMenuHover = (item, event) => {
+    if (item.children && item.children.length > 0) {
+      const rect = event.currentTarget.getBoundingClientRect();
+
+      // Fixed top position for all mega menus (100px from top)
+      const fixedTop = 100;
+
+      setMegaMenuPosition({
+        top: fixedTop,
+        left: isCollapsed ? 80 : 260
+      });
+      setOpenMegaMenu(item.name);
+      setHoveredItems([item]);
+      setMegaMenuLevels([item.children]);
+    } else {
+      // Close mega menu if the item has no children
+      closeMegaMenu();
+    }
+  };
 
   // Handle submenu hover
- const handleSubMenuHover = (subItem, levelIndex, event) => {
-  // Clear all levels beyond the current one
-  const newHoveredItems = hoveredItems.slice(0, levelIndex + 1);
-  const newLevels = megaMenuLevels.slice(0, levelIndex + 1);
-  
-  if (subItem.children && subItem.children.length > 0) {
-    newHoveredItems[levelIndex + 1] = subItem;
-    newLevels[levelIndex + 1] = subItem.children;
-  }
-  
-  setHoveredItems(newHoveredItems);
-  setMegaMenuLevels(newLevels);
-};
+  const handleSubMenuHover = (subItem, levelIndex, event) => {
+    // Clear all levels beyond the current one
+    const newHoveredItems = hoveredItems.slice(0, levelIndex + 1);
+    const newLevels = megaMenuLevels.slice(0, levelIndex + 1);
+
+    if (subItem.children && subItem.children.length > 0) {
+      newHoveredItems[levelIndex + 1] = subItem;
+      newLevels[levelIndex + 1] = subItem.children;
+    }
+
+    setHoveredItems(newHoveredItems);
+    setMegaMenuLevels(newLevels);
+  };
 
   // Close mega menu
   const closeMegaMenu = () => {
@@ -510,7 +512,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
 
   const findAllItemsWithPaths = (items) => {
     let result = [];
-    
+
     items.forEach(item => {
       if (item.path && item.path !== '#') {
         result.push({
@@ -519,12 +521,12 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
           icon: item.icon
         });
       }
-      
+
       if (item.children) {
         result = result.concat(findAllItemsWithPaths(item.children));
       }
     });
-    
+
     return result;
   };
 
@@ -535,9 +537,9 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (
-        sidebarRef.current && 
+        sidebarRef.current &&
         !sidebarRef.current.contains(event.target) &&
-        megaMenuRef.current && 
+        megaMenuRef.current &&
         !megaMenuRef.current.contains(event.target)
       ) {
         closeMegaMenu();
@@ -553,7 +555,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
   // Handle pin confirmation
   const handlePinClick = (item, event) => {
     event.stopPropagation();
-    
+
     if (isPinned(item.path)) {
       setShowUnpinConfirm(item);
     } else {
@@ -580,122 +582,122 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
     setShowUnpinConfirm(null);
   };
 
-const renderMenuLevel = (items, levelIndex, title = null) => {
-  return (
-    <div key={levelIndex} style={{
-      width: '250px',
-      borderRight: levelIndex < megaMenuLevels.length - 1 ? '1px solid #f0f0f0' : 'none',
-      padding: '0.5rem 0',
-      overflowY: 'auto',
-      backgroundColor: levelIndex === 0 ? '#fafbfc' : '#fff',
-    }}>
-      {title && (
-        <div style={{
-          padding: '0.75rem 1rem',
-          fontWeight: '600',
-          color: '#1b69e7',
-          fontSize: '0.9rem',
-          borderBottom: '1px solid #e8f0fe',
-          marginBottom: '0.5rem',
-          backgroundColor: '#fff',
-        }}>
-          {title}
-        </div>
-      )}
-      
-      {items.map((item, index) => {
-        const IconComponent = iconMap[item.icon];
-        const hasChildren = item.children && item.children.length > 0;
-        const isActive = activeItem === item.path;
-        const isHovered = hoveredItems[levelIndex + 1]?.name === item.name;
-        const hasValidPath = item.path && item.path !== '#';
+  const renderMenuLevel = (items, levelIndex, title = null) => {
+    return (
+      <div key={levelIndex} style={{
+        width: '250px',
+        borderRight: levelIndex < megaMenuLevels.length - 1 ? '1px solid #f0f0f0' : 'none',
+        padding: '0.5rem 0',
+        overflowY: 'auto',
+        backgroundColor: levelIndex === 0 ? '#fafbfc' : '#fff',
+      }}>
+        {title && (
+          <div style={{
+            padding: '0.75rem 1rem',
+            fontWeight: '600',
+            color: '#1b69e7',
+            fontSize: '0.9rem',
+            borderBottom: '1px solid #e8f0fe',
+            marginBottom: '0.5rem',
+            backgroundColor: '#fff',
+          }}>
+            {title}
+          </div>
+        )}
 
-        return (
-          <div key={`${item.name}-${levelIndex}-${index}`}>
-            <div
-              onMouseEnter={(e) => hasChildren && handleSubMenuHover(item, levelIndex, e)}
-              onClick={(e) => {
-                e.preventDefault();
-                if (hasValidPath) {
-                  handleNavigation(item.path);
-                } else if (hasChildren) {
-                  handleSubMenuHover(item, levelIndex, e);
-                }
-              }}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                padding: '0.18rem 0.8rem',
-                cursor: hasValidPath || hasChildren ? 'pointer' : 'default',
-                backgroundColor: isActive ? '#e8f0fe' : isHovered ? '#f0f8ff' : 'transparent',
-                borderLeft: isActive ? '4px solid #1b69e7' : isHovered ? '4px solid #a0c4ff' : '4px solid transparent',
-                transition: 'all 0.2s ease',
-                margin: '0.1rem 0',
-                borderRadius: '0 4px 4px 0',
-                position: 'relative',
-              }}
-            >
-              {IconComponent && (
-                <IconComponent 
-                  size={18} 
-                  style={{ 
-                    marginRight: '0.75rem', 
-                    color: isActive ? '#1b69e7' : isHovered ? '#1b69e7' : '#555',
-                    transition: 'color 0.2s ease'
-                  }} 
-                />
-              )}
-              <span style={{
-                flex: 1,
-                fontSize: '0.85rem',
-                color: isActive ? '#1b69e7' : isHovered ? '#1b69e7' : '#333',
-                fontWeight: isActive ? '600' : isHovered ? '500' : '400',
-                transition: 'all 0.2s ease'
-              }}>
-                {item.name}
-              </span>
-              
-              {hasValidPath && (
-                <div 
-                  style={{
-                    marginLeft: '0.5rem',
-                    cursor: 'pointer',
-                    color: isPinned(item.path) ? '#1b69e7' : '#999',
-                    transition: 'color 0.2s ease'
-                  }}
-                  onClick={(e) => handlePinClick(item, e)}
-                  onMouseEnter={(e) => e.stopPropagation()}
-                >
-                  {/* {isPinned(item.path) ? <MdPushPin size={20} /> : <MdOutlinePushPin size={20} />} */}
-                </div>
-              )}
-              
-              {hasChildren && (
-                <MdChevronRight 
-                  size={16} 
-                  style={{ 
-                    color: isHovered ? '#1b69e7' : '#777',
-                    transition: 'color 0.2s ease',
-                    marginLeft: '0.5rem'
-                  }} 
-                />
+        {items.map((item, index) => {
+          const IconComponent = iconMap[item.icon];
+          const hasChildren = item.children && item.children.length > 0;
+          const isActive = activeItem === item.path;
+          const isHovered = hoveredItems[levelIndex + 1]?.name === item.name;
+          const hasValidPath = item.path && item.path !== '#';
+
+          return (
+            <div key={`${item.name}-${levelIndex}-${index}`}>
+              <div
+                onMouseEnter={(e) => hasChildren && handleSubMenuHover(item, levelIndex, e)}
+                onClick={(e) => {
+                  e.preventDefault();
+                  if (hasValidPath) {
+                    handleNavigation(item.path);
+                  } else if (hasChildren) {
+                    handleSubMenuHover(item, levelIndex, e);
+                  }
+                }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  padding: '0.18rem 0.8rem',
+                  cursor: hasValidPath || hasChildren ? 'pointer' : 'default',
+                  backgroundColor: isActive ? '#e8f0fe' : isHovered ? '#f0f8ff' : 'transparent',
+                  borderLeft: isActive ? '4px solid #1b69e7' : isHovered ? '4px solid #a0c4ff' : '4px solid transparent',
+                  transition: 'all 0.2s ease',
+                  margin: '0.1rem 0',
+                  borderRadius: '0 4px 4px 0',
+                  position: 'relative',
+                }}
+              >
+                {IconComponent && (
+                  <IconComponent
+                    size={18}
+                    style={{
+                      marginRight: '0.75rem',
+                      color: isActive ? '#1b69e7' : isHovered ? '#1b69e7' : '#555',
+                      transition: 'color 0.2s ease'
+                    }}
+                  />
+                )}
+                <span style={{
+                  flex: 1,
+                  fontSize: '0.85rem',
+                  color: isActive ? '#1b69e7' : isHovered ? '#1b69e7' : '#333',
+                  fontWeight: isActive ? '600' : isHovered ? '500' : '400',
+                  transition: 'all 0.2s ease'
+                }}>
+                  {item.name}
+                </span>
+
+                {hasValidPath && (
+                  <div
+                    style={{
+                      marginLeft: '0.5rem',
+                      cursor: 'pointer',
+                      color: isPinned(item.path) ? '#1b69e7' : '#999',
+                      transition: 'color 0.2s ease'
+                    }}
+                    onClick={(e) => handlePinClick(item, e)}
+                    onMouseEnter={(e) => e.stopPropagation()}
+                  >
+                    {/* {isPinned(item.path) ? <MdPushPin size={20} /> : <MdOutlinePushPin size={20} />} */}
+                  </div>
+                )}
+
+                {hasChildren && (
+                  <MdChevronRight
+                    size={16}
+                    style={{
+                      color: isHovered ? '#1b69e7' : '#777',
+                      transition: 'color 0.2s ease',
+                      marginLeft: '0.5rem'
+                    }}
+                  />
+                )}
+              </div>
+
+              {/* Add divider after each menu item except the last one */}
+              {index < items.length - 1 && (
+                <div style={{
+                  height: '1px',
+                  backgroundColor: '#e8f0fe',
+                  margin: '0.1rem 0.8rem',
+                }} />
               )}
             </div>
-            
-            {/* Add divider after each menu item except the last one */}
-            {index < items.length - 1 && (
-              <div style={{
-                height: '1px',
-                backgroundColor: '#e8f0fe',
-                margin: '0.1rem 0.8rem',
-              }} />
-            )}
-          </div>
-        );
-      })}
-    </div>
-  );
-};
+          );
+        })}
+      </div>
+    );
+  };
   // Render mega menu with all levels
   const renderMegaMenu = () => {
     if (!openMegaMenu || megaMenuLevels.length === 0) return null;
@@ -722,10 +724,10 @@ const renderMenuLevel = (items, levelIndex, title = null) => {
           }}
           onMouseLeave={closeMegaMenu}
         >
-          {megaMenuLevels.map((level, index) => 
+          {megaMenuLevels.map((level, index) =>
             renderMenuLevel(
-              level, 
-              index, 
+              level,
+              index,
               index === 0 ? hoveredItems[0]?.name : null
             )
           )}
@@ -806,7 +808,7 @@ const renderMenuLevel = (items, levelIndex, title = null) => {
                   {item.name}
                 </span>
                 {hasChildren && (
-                  <span style={{ 
+                  <span style={{
                     color: isHovered ? '#1b69e7' : '#777',
                     transition: 'color 0.2s ease'
                   }}>
@@ -821,7 +823,7 @@ const renderMenuLevel = (items, levelIndex, title = null) => {
     });
   };
 
- return (
+  return (
     <>
       <div
         ref={sidebarRef}
@@ -906,9 +908,9 @@ const renderMenuLevel = (items, levelIndex, title = null) => {
           maxHeight: 'calc(100vh - 100px)',
           paddingRight: '4px',
         }}>
-          <ul style={{ 
-            listStyle: 'none', 
-            padding: 0, 
+          <ul style={{
+            listStyle: 'none',
+            padding: 0,
             margin: 0,
           }}>
             {renderMainMenu(menuItems)}
