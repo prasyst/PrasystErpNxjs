@@ -1024,10 +1024,9 @@ const ProductMst = () => {
         justifyContent: 'center',
         alignItems: 'center',
         boxSizing: 'border-box',
-        // backgroundColor: 'rgb(236, 238, 240)',
         minHeight: '91vh',
         overflowX: 'hidden',
-        overflowY: 'auto',
+        overflowY: 'auto'
       }}
     >
       <ToastContainer />

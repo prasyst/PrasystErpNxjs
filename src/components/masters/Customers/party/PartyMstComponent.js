@@ -1526,10 +1526,10 @@ const PartyMst = () => {
   ]);
 
   return (
-    <Box>
+    <>
       <ToastContainer />
 
-      <Grid container justifyContent="space-between" sx={{ ml: '4.9%', mr: '5%' }}
+      <Grid container justifyContent="space-between" sx={{ marginInline: { xs: '5%', sm: '5%', md: '5%' } }}
         spacing={2}
       >
         <Grid>
@@ -1559,7 +1559,7 @@ const PartyMst = () => {
 
         </Grid>
 
-        <Grid sx={{ width: { xs: '100%', sm: '48%', md: '16%', display: 'flex' } }}>
+        <Grid sx={{ display: 'flex' }}>
           <TextField
             label="Search By Code"
             variant="filled"
@@ -1598,8 +1598,8 @@ const PartyMst = () => {
       </Grid>
 
 
-      <Grid xs={12} sx={{ ml: '5%', mb: '0.5%', mt: '-0.5%' }}>
-        <Box sx={{ display: 'flex' }}>
+      <Grid sx={{ marginInline: { xs: '5%', sm: '5%', md: '12.5%' } }}>
+        <Box sx={{ display: 'flex', mb: 1 }}>
           <Tabs
             value={tabIndex}
             onChange={handleTabChange}
@@ -1659,7 +1659,7 @@ const PartyMst = () => {
           </Tabs>
         </Box>
       </Grid>
-      <Grid xs={12}>
+      <Grid sx={{ marginInline: { xs: '5%', sm: '5%', md: '5%' } }}>
 
         {tabIndex === 0 ? (
           <Stepper1
@@ -1684,7 +1684,7 @@ const PartyMst = () => {
       </Grid>
 
       {tabIndex === 0 && (
-        <Grid xs={12} sx={{ display: "flex", justifyContent: "end", mr: '4.5%' }}>
+        <Grid sx={{ display: "flex", justifyContent: "end", mr: '5%' }}>
           {mode === 'view' && (
             <>
               <Button variant="contained"
@@ -1739,7 +1739,7 @@ const PartyMst = () => {
           )}
         </Grid>
       )}
-    </Box>
+    </>
   );
 };
 
