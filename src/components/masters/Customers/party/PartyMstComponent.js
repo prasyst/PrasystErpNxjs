@@ -1526,7 +1526,18 @@ const PartyMst = () => {
   ]);
 
   return (
-    <Grid>
+    <Grid
+      sx={{
+        width: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        boxSizing: 'border-box',
+        minHeight: '91vh',
+        overflowX: 'hidden',
+        overflowY: 'auto'
+      }}
+    >
       <ToastContainer />
 
       <Grid container justifyContent="space-between"

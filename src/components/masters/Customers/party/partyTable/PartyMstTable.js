@@ -158,9 +158,14 @@ export default function PartyMstTable() {
   return (
     <div className="p-2 w-full">
       <div className="w-full mx-auto" style={{ maxWidth: '100%' }}>
-        <div className="mb-4 flex flex-wrap gap-4 items-center">
+        <div className="flex flex-wrap gap-4 items-center">
 
-          <Box width="100%" display="flex" justifyContent="flex-end">
+          <Box width="100%" display="flex" justifyContent="flex-end"
+            sx={{ 
+              position: 'relative',
+              top: 38
+            }}
+          >
             <Stack direction="row" spacing={2} alignItems="center">
               {/* Back Button */}
               <Button
