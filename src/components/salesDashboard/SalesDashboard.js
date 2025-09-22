@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import dynamic from "next/dynamic";
 import {
     Box, Typography, Grid, Paper, IconButton, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Avatar, Button,
     styled, useTheme,
@@ -10,8 +11,10 @@ import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
 import PeopleIcon from "@mui/icons-material/People";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
-import { GaugeComponent } from 'react-gauge-component';
-import CountUp from 'react-countup';
+// import { GaugeComponent } from 'react-gauge-component';
+// import CountUp from 'react-countup';
+const GaugeComponent = dynamic(() => import('react-gauge-component'), { ssr: false });
+const CountUp = dynamic(() => import('react-countup'), { ssr: false });
 
 import {
     ResponsiveContainer,
