@@ -4,8 +4,8 @@ import {
   ClientSideRowModelModule,
   ModuleRegistry,
 } from "ag-grid-community";
-import { 
-  Button, 
+import {
+  Button, Box, Stack
 } from "@mui/material";
 import {
   ExcelExportModule,
@@ -14,7 +14,8 @@ import {
 } from "ag-grid-enterprise";
 import RestoreIcon from '@mui/icons-material/Restore';
 import { AgGridReact } from "ag-grid-react";
-
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import LogoutIcon from "@mui/icons-material/Logout";
 
 ModuleRegistry.registerModules([
   AllCommunityModule,
@@ -77,8 +78,8 @@ const DateFilterComponent = ({ model, onModelChange, filterParams }) => {
   return (
     <div style={{ padding: '10px', width: '250px' }}>
       <div style={{ marginBottom: '10px' }}>
-        <select 
-          value={filterType} 
+        <select
+          value={filterType}
           onChange={onFilterTypeChange}
           style={{ width: '100%', padding: '5px' }}
         >
@@ -96,24 +97,24 @@ const DateFilterComponent = ({ model, onModelChange, filterParams }) => {
           <option value="nextMonth">Next Month</option>
         </select>
       </div>
-      
-      {(filterType !== 'empty' && filterType !== 'notEmpty' && 
+
+      {(filterType !== 'empty' && filterType !== 'notEmpty' &&
         !filterType.includes('Month') && filterType !== 'today' && filterType !== 'yesterday') && (
-        <div style={{ marginBottom: '10px' }}>
-          <input 
-            type="date" 
-            value={date1} 
-            onChange={onDate1Change}
-            style={{ width: '100%', padding: '5px' }}
-          />
-        </div>
-      )}
-      
+          <div style={{ marginBottom: '10px' }}>
+            <input
+              type="date"
+              value={date1}
+              onChange={onDate1Change}
+              style={{ width: '100%', padding: '5px' }}
+            />
+          </div>
+        )}
+
       {filterType === 'inRange' && (
         <div style={{ marginBottom: '10px' }}>
-          <input 
-            type="date" 
-            value={date2} 
+          <input
+            type="date"
+            value={date2}
             onChange={onDate2Change}
             style={{ width: '100%', padding: '5px' }}
             placeholder="End date"
@@ -130,29 +131,29 @@ const getCustomDateFilter = () => {
     doesFilterPass: (params) => {
       const cellValue = params.data[params.colDef.field];
       if (!cellValue) return false;
-      
+
       const filterModel = params.filterInstance.getModel();
       if (!filterModel) return true;
-      
+
       const cellDate = new Date(cellValue);
       const filterDate1 = filterModel.date1 ? new Date(filterModel.date1) : null;
       const filterDate2 = filterModel.date2 ? new Date(filterModel.date2) : null;
-      
+
       const today = new Date();
       today.setHours(0, 0, 0, 0);
-      
+
       const yesterday = new Date(today);
       yesterday.setDate(yesterday.getDate() - 1);
-      
+
       const thisMonthStart = new Date(today.getFullYear(), today.getMonth(), 1);
       const thisMonthEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-      
+
       const lastMonthStart = new Date(today.getFullYear(), today.getMonth() - 1, 1);
       const lastMonthEnd = new Date(today.getFullYear(), today.getMonth(), 0);
-      
+
       const nextMonthStart = new Date(today.getFullYear(), today.getMonth() + 1, 1);
       const nextMonthEnd = new Date(today.getFullYear(), today.getMonth() + 2, 0);
-      
+
       switch (filterModel.type) {
         case 'equals':
           return cellDate.getTime() === filterDate1.getTime();
@@ -182,22 +183,22 @@ const getCustomDateFilter = () => {
           return true;
       }
     },
-    
-    getModel: function() {
+
+    getModel: function () {
       return this.model;
     },
-    
-    setModel: function(model) {
+
+    setModel: function (model) {
       this.model = model;
     },
-    
-    isFilterActive: function() {
+
+    isFilterActive: function () {
       return this.model !== null;
     },
-    
-    getModelAsString: function(model) {
+
+    getModelAsString: function (model) {
       if (!model) return '';
-      
+
       switch (model.type) {
         case 'equals': return `= ${model.date1}`;
         case 'notEqual': return `≠ ${model.date1}`;
@@ -239,7 +240,7 @@ const ReusableTable = ({
   defaultColDef = {},
   autoSizeStrategy = null,
   compactMode = false,
-    exportParams = {},
+  exportParams = {},
   ...otherProps
 }) => {
   const gridRef = useRef(null);
@@ -272,7 +273,7 @@ const ReusableTable = ({
   }), [defaultColDef]);
 
   // Auto size strategy
-  const autoSizeStrategyMemo = useMemo(() => 
+  const autoSizeStrategyMemo = useMemo(() =>
     autoSizeStrategy || {
       // type: "fitGridWidth",
     }, [autoSizeStrategy]);
@@ -286,59 +287,59 @@ const ReusableTable = ({
   }, []);
 
 
-// Export Current Page
-const onExportCurrentPage = useCallback(() => {
-  if (gridRef.current?.api) {
-    const fileName = exportParams.fileName || `current_page_export_${new Date().toISOString().split('T')[0]}.xlsx`;
+  // Export Current Page
+  const onExportCurrentPage = useCallback(() => {
+    if (gridRef.current?.api) {
+      const fileName = exportParams.fileName || `current_page_export_${new Date().toISOString().split('T')[0]}.xlsx`;
 
-    const displayedRows = [];
-    gridRef.current.api.forEachNodeAfterFilterAndSort((node, index) => {
-      const startIndex = gridRef.current.api.paginationGetCurrentPage() * gridRef.current.api.paginationGetPageSize();
-      const endIndex = startIndex + gridRef.current.api.paginationGetPageSize();
-      if (index >= startIndex && index < endIndex) {
-        displayedRows.push(node.data);
-      }
-    });
-
-    if (displayedRows.length > 0) {
-      gridRef.current.api.exportDataAsExcel({
-        fileName: fileName,
-        onlySelected: false,
-        suppressTextAsCDATA: exportParams.suppressTextAsCDATA || true, 
-        sheetName: exportParams.sheetName,
-        shouldRowBeSkipped: (params) => {
-          const currentPageRows = [];
-          gridRef.current.api.forEachNodeAfterFilterAndSort((node, index) => {
-            const startIndex = gridRef.current.api.paginationGetCurrentPage() * gridRef.current.api.paginationGetPageSize();
-            const endIndex = startIndex + gridRef.current.api.paginationGetPageSize();
-            if (index >= startIndex && index < endIndex) {
-              currentPageRows.push(node.data);
-            }
-          });
-          return !currentPageRows.some(row => row === params.node.data);
-        },
-        processHeaderCallback: (params) => {
-          if (params.column.getColDef().checkboxSelection) {
-            return null;
-          }
-          return params.column.getColDef().headerName || params.column.getColId();
+      const displayedRows = [];
+      gridRef.current.api.forEachNodeAfterFilterAndSort((node, index) => {
+        const startIndex = gridRef.current.api.paginationGetCurrentPage() * gridRef.current.api.paginationGetPageSize();
+        const endIndex = startIndex + gridRef.current.api.paginationGetPageSize();
+        if (index >= startIndex && index < endIndex) {
+          displayedRows.push(node.data);
         }
       });
+
+      if (displayedRows.length > 0) {
+        gridRef.current.api.exportDataAsExcel({
+          fileName: fileName,
+          onlySelected: false,
+          suppressTextAsCDATA: exportParams.suppressTextAsCDATA || true,
+          sheetName: exportParams.sheetName,
+          shouldRowBeSkipped: (params) => {
+            const currentPageRows = [];
+            gridRef.current.api.forEachNodeAfterFilterAndSort((node, index) => {
+              const startIndex = gridRef.current.api.paginationGetCurrentPage() * gridRef.current.api.paginationGetPageSize();
+              const endIndex = startIndex + gridRef.current.api.paginationGetPageSize();
+              if (index >= startIndex && index < endIndex) {
+                currentPageRows.push(node.data);
+              }
+            });
+            return !currentPageRows.some(row => row === params.node.data);
+          },
+          processHeaderCallback: (params) => {
+            if (params.column.getColDef().checkboxSelection) {
+              return null;
+            }
+            return params.column.getColDef().headerName || params.column.getColId();
+          }
+        });
+      }
+      setShowExportDropdown(false);
     }
-    setShowExportDropdown(false);
-  }
-}, [exportParams]); 
+  }, [exportParams]);
 
 
   // Export All Records
   const onExportAllRecords = useCallback(() => {
     if (gridRef.current?.api) {
       const fileName = `all_records_export_${new Date().toISOString().split('T')[0]}.xlsx`;
-      
+
       gridRef.current.api.exportDataAsExcel({
         fileName: fileName,
         onlySelected: false,
-                suppressTextAsCDATA: exportParams.suppressTextAsCDATA || true, 
+        suppressTextAsCDATA: exportParams.suppressTextAsCDATA || true,
         sheetName: exportParams.sheetName,
         processHeaderCallback: (params) => {
           if (params.column.getColDef().checkboxSelection) {
@@ -355,18 +356,18 @@ const onExportCurrentPage = useCallback(() => {
   const onExportSelectedRows = useCallback(() => {
     if (gridRef.current?.api) {
       const selectedNodes = gridRef.current.api.getSelectedNodes();
-      
+
       if (selectedNodes.length === 0) {
         alert('Please select at least one row to export.');
         return;
       }
 
       const fileName = `selected_rows_export_${new Date().toISOString().split('T')[0]}.xlsx`;
-      
+
       gridRef.current.api.exportDataAsExcel({
         fileName: fileName,
         onlySelected: true,
-          suppressTextAsCDATA: exportParams.suppressTextAsCDATA || true, 
+        suppressTextAsCDATA: exportParams.suppressTextAsCDATA || true,
         sheetName: exportParams.sheetName,
         processHeaderCallback: (params) => {
           if (params.column.getColDef().checkboxSelection) {
@@ -383,10 +384,10 @@ const onExportCurrentPage = useCallback(() => {
   const processedColumnDefs = useMemo(() => {
     if (!enableCheckbox) {
       // Remove checkbox and serial number columns if checkbox is not enabled
-      return columnDefs.filter(col => 
-        !col.checkboxSelection && 
-        col.field !== 'serialNo' && 
-        col.headerName !== 'Select' && 
+      return columnDefs.filter(col =>
+        !col.checkboxSelection &&
+        col.field !== 'serialNo' &&
+        col.headerName !== 'Select' &&
         col.headerName !== 'S.No'
       );
     }
@@ -410,36 +411,37 @@ const onExportCurrentPage = useCallback(() => {
     ...customGridOptions
   }), [onRowClick, onRowDoubleClick, onSelectionChanged, customGridOptions, enableCheckbox]);
 
- const handleReset = useCallback(() => {
-  if (gridRef.current?.api) {
-    gridRef.current.api.setFilterModel(null);
-    setQuickFilterText("");
-    gridRef.current.api.resetColumnState();
-    if (pagination) {
-      gridRef.current.api.paginationGoToPage(0);
+  const handleReset = useCallback(() => {
+    if (gridRef.current?.api) {
+      gridRef.current.api.setFilterModel(null);
+      setQuickFilterText("");
+      gridRef.current.api.resetColumnState();
+      if (pagination) {
+        gridRef.current.api.paginationGoToPage(0);
+      }
     }
-  }
-}, [pagination]);
+  }, [pagination]);
 
   return (
-    <div style={{ 
-      width: '100%', 
+    <div style={{
+      width: '100%',
       height,
       display: 'flex',
       flexDirection: 'column',
       gap: '12px'
     }}>
       {/* Header with search and export */}
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
+      <div style={{
+        display: 'flex',
+        // justifyContent: 'space-between', 
         alignItems: 'center',
-        margin: '0 16px'
+        margin: '0 16px',
+        gap: '12px'
       }}>
         {quickFilter && (
-          <div style={{ 
-            position: 'relative', 
-            display: 'flex', 
+          <div style={{
+            position: 'relative',
+            display: 'flex',
             alignItems: 'center',
             flex: 1,
             maxWidth: '300px'
@@ -492,7 +494,7 @@ const onExportCurrentPage = useCallback(() => {
             />
           </div>
         )}
-        
+
         {/* Show selected count if checkboxes are enabled */}
         {enableCheckbox && selectedRows.length > 0 && (
           <div style={{
@@ -507,23 +509,23 @@ const onExportCurrentPage = useCallback(() => {
             {selectedRows.length} row{selectedRows.length > 1 ? 's' : ''} selected
           </div>
         )}
-          <Button
-    variant="contained"
-    size="small"
-    onClick={handleReset}
-    startIcon={<RestoreIcon />}
-    style={{
-      marginLeft: 'auto' 
-    }}
-  >
-    Reset
-  </Button>
+        <Button
+          variant="contained"
+          size="small"
+          onClick={handleReset}
+          startIcon={<RestoreIcon />}
+        // style={{
+        //   marginLeft: 'auto'
+        // }}
+        >
+          Reset
+        </Button>
         {enableExport && (
           <div style={{ position: 'relative' }} ref={exportDropdownRef}>
             <button
               onClick={() => setShowExportDropdown(!showExportDropdown)}
               style={{
-                padding: '8px 16px',
+                padding: '7px 16px',
                 borderRadius: '6px',
                 border: '1px solid #d0d5dd',
                 backgroundColor: '#3CB371',
@@ -545,14 +547,15 @@ const onExportCurrentPage = useCallback(() => {
               }}
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M13 11H18L12 17L6 11H11V3H13V11ZM4 19H20V12H22V20C22 20.5523 21.5523 21 21 21H3C2.44772 21 2 20.5523 2 20V12H4V19Z" fill="currentColor"/>
+                <path d="M13 11H18L12 17L6 11H11V3H13V11ZM4 19H20V12H22V20C22 20.5523 21.5523 21 21 21H3C2.44772 21 2 20.5523 2 20V12H4V19Z" fill="currentColor" />
               </svg>
-              Export Excel
+              Export
               <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ marginLeft: '4px' }}>
-                <path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </button>
-            
+
+
             {showExportDropdown && (
               <div style={{
                 position: 'absolute',
@@ -587,7 +590,7 @@ const onExportCurrentPage = useCallback(() => {
                     e.target.style.backgroundColor = 'transparent';
                   }}
                 >
-                 Current Page
+                  Current Page
                 </button>
                 <div style={{
                   height: '1px',
@@ -655,9 +658,9 @@ const onExportCurrentPage = useCallback(() => {
       </div>
 
       {/* AG Grid */}
-      <div 
-        className={themeClass} 
-        style={{ 
+      <div
+        className={themeClass}
+        style={{
           flex: 1,
           width: 'calc(100% - 32px)',
           margin: '0 16px',
