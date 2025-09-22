@@ -668,7 +668,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
                     onClick={(e) => handlePinClick(item, e)}
                     onMouseEnter={(e) => e.stopPropagation()}
                   >
-                    {/* {isPinned(item.path) ? <MdPushPin size={20} /> : <MdOutlinePushPin size={20} />} */}
+                    {isPinned(item.path) ? <MdPushPin size={20} /> : <MdOutlinePushPin size={20} />}
                   </div>
                 )}
 
