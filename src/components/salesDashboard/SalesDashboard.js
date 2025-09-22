@@ -10,7 +10,6 @@ import MonetizationOnIcon from "@mui/icons-material/MonetizationOn";
 import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
 import PeopleIcon from "@mui/icons-material/People";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
-import AccessTimeIcon from "@mui/icons-material/AccessTime";
 // import { GaugeComponent } from 'react-gauge-component';
 // import CountUp from 'react-countup';
 const GaugeComponent = dynamic(() => import('react-gauge-component'), { ssr: false });
@@ -213,19 +212,6 @@ const SalesDashboard = () => {
                 >
                     Sales Dashboard
                 </Typography>
-
-                <Box
-                    sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        color: "#666",
-                        gap: 1,
-                        fontWeight: "500",
-                    }}
-                >
-                    <AccessTimeIcon />
-                    <Typography>{new Date().toLocaleString()}</Typography>
-                </Box>
             </Box>
 
             {/* KPI Cards */}
@@ -501,6 +487,12 @@ const SalesDashboard = () => {
                                     width: '100%',
                                     maxWidth: 600,
                                     maxHeight: 600,
+                                    '& text[style*="font-size: 36.12px"]': {
+                                        fontSize: '16px !important',
+                                        bottom: '15px',
+                                        fill: '#031425ff !important',
+                                        textShadow: 'none !important',
+                                    },
                                 }}
                             >
                                 <GaugeComponent
@@ -524,10 +516,10 @@ const SalesDashboard = () => {
                                                 }
                                             },
                                             defaultTickLineConfig: {
-                                                color: "#FF00FF",    // tick line color
-                                                width: 2,              // line thickness
-                                                length: 10,            // how long the tick is
-                                                distanceFromArc: 3     // optional: how far from the arc
+                                                color: "#FF00FF",
+                                                width: 2,
+                                                length: 10,
+                                                distanceFromArc: 3
                                             }
                                         }
                                     }}
@@ -546,17 +538,6 @@ const SalesDashboard = () => {
                                         width: 8,
                                     }}
                                 />
-
-                                <style>
-                                    {`
-                                        text[style*="font-size: 36.12px"] {
-                                          font-size: 16px !important;
-                                          bottom: '15px';
-                                          fill: #031425ff !important;
-                                          text-shadow: none !important;
-                                        }
-                                    `}
-                                </style>
                             </Box>
                         </Box>
                     </Paper>
@@ -656,7 +637,7 @@ const SalesDashboard = () => {
                             {/* Animated Total Sales */}
                             <Box textAlign="right">
                                 <Typography variant="h4" fontWeight="bold" color="primary">
-                                    ₹ <CountUp end={totalSales} duration={2} separator="," />
+                                    ₹ <CountUp end={totalSales} duration={20} separator="," />
                                 </Typography>
                                 <Typography color="text.secondary" fontSize={14}>
                                     Total Sales This Period
@@ -683,14 +664,14 @@ const SalesDashboard = () => {
                                     <XAxis
                                         dataKey="month"
                                         tickMargin={12}
-                                        tickLine={false}
-                                        axisLine={false}
+                                        tickLine={true}
+                                        axisLine={true}
                                         style={{ fontWeight: 500 }}
                                     />
                                     <YAxis
                                         tickFormatter={(value) => `${(value / 1000).toFixed(0)}k`}
-                                        tickLine={false}
-                                        axisLine={false}
+                                        tickLine={true}
+                                        axisLine={true}
                                         style={{ fontWeight: 500 }}
                                     />
                                     <Tooltip
