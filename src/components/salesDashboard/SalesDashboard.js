@@ -10,10 +10,25 @@ import MonetizationOnIcon from "@mui/icons-material/MonetizationOn";
 import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
 import PeopleIcon from "@mui/icons-material/People";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
-// import { GaugeComponent } from 'react-gauge-component';
-// import CountUp from 'react-countup';
-const GaugeComponent = dynamic(() => import('react-gauge-component'), { ssr: false });
-const CountUp = dynamic(() => import('react-countup'), { ssr: false });
+// const GaugeComponent = dynamic(() => import('react-gauge-component'), { ssr: false });
+// const CountUp = dynamic(() => import('react-countup'), { ssr: false });
+
+const GaugeComponent = dynamic(
+    async () => {
+        const mod = await import("react-gauge-component");
+        return mod.default ? mod.default : mod.GaugeComponent;
+    },
+    { ssr: false }
+);
+
+// Dynamic import for CountUp
+const CountUp = dynamic(
+    async () => {
+        const mod = await import("react-countup");
+        return mod.default ? mod.default : mod.CountUp;
+    },
+    { ssr: false }
+);
 
 import {
     ResponsiveContainer,
