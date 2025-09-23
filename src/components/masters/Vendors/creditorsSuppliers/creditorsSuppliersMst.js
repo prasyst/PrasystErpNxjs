@@ -24,6 +24,7 @@ import {
   Delete as DeleteIcon,
   CancelPresentation as CancelPresentationIcon,
 } from "@mui/icons-material";
+import { TbListSearch } from "react-icons/tb";
 
 import "react-toastify/dist/ReactToastify.css";
 import { toast, ToastContainer } from "react-toastify";
@@ -36,11 +37,12 @@ import DialogContentText from "@mui/material/DialogContentText";
 
 import { useSearchParams, useRouter } from 'next/navigation';
 import CrudButtons from "@/GlobalFunction/CrudButtons";
+import CrudButton from "@/GlobalFunction/CrudButton";
 import PaginationButtons from '@/GlobalFunction/PaginationButtons';
 
-import Stepper1 from "@/components/masters/Customers/party/Stepper1";
-import Stepper2 from "@/components/masters/Customers/party/Stepper2";
-import Stepper3 from "@/components/masters/Customers/party/Stepper3";
+import Stepper1 from "@/components/masters/Vendors/creditorsSuppliers/Stepper1";
+import Stepper2 from "@/components/masters/Vendors/creditorsSuppliers/Stepper2";
+import Stepper3 from "@/components/masters/Vendors/creditorsSuppliers/Stepper3";
 import { getFormMode } from "../../../../lib/helpers";
 
 const steps = ["Company Details", "Branch Details", "Terms Details"];
@@ -63,10 +65,6 @@ const CreditorsSuppliersMst = () => {
   const [rows, setRows] = useState([]);
   const [series, setSeries] = useState([]);
   const [dataState, setDataState] = useState(null);
-  // const FCYR_KEY = localStorage.getItem('FCYR_KEY');
-  // const COBR_ID = localStorage.getItem('COBR_ID');
-  // const UserName = localStorage.getItem('USER_NAME');
-  // const CO_ID = localStorage.getItem('CO_ID');
   const searchParams = useSearchParams();
   const FG = searchParams.get('PARTY_KEY');
 
@@ -273,7 +271,7 @@ const CreditorsSuppliersMst = () => {
         "ORDERBYFLD": "",
         "CWHAER": "",
         "CO_ID": CO_ID,
-        "PARTY_CAT": "PS"
+        "PARTY_CAT": "PC"
       });
 
       if (response.data.STATUS === 0 && response.data.RESPONSESTATUSCODE === 1) {
@@ -1318,6 +1316,7 @@ const CreditorsSuppliersMst = () => {
     if (response.data.STATUS === 0 && response.data.RESPONSESTATUSCODE === 1) {
       toast.success(response.data.MESSAGE);
       setIsFormDisabled(true);
+      setMode('view');
 
     } else {
       toast.error(response.data.MESSAGE || 'Operation failed');
@@ -1523,13 +1522,46 @@ const CreditorsSuppliersMst = () => {
   ]);
 
   return (
-    <Box>
+    <Grid
+      sx={{
+        width: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        boxSizing: 'border-box',
+        minHeight: '91vh',
+        overflowX: 'hidden',
+        overflowY: 'auto'
+      }}
+    >
       <ToastContainer />
 
-      <Grid container alignItems="center"
-        justifyContent="center" spacing={2}
+      <Grid container justifyContent="space-between"
+        sx={{
+          marginInline: { xs: '5%', sm: '5%', md: '5%', lg: '5%', xl: '5%' },
+        }}
+        spacing={2}
       >
-
+        <Grid>
+          <Button
+            variant="contained"
+            size="small"
+            sx={{ background: 'linear-gradient(290deg, #d4d4d4, #d4d4d4) !important' }}
+            disabled={mode !== 'view'}
+            onClick={handlePrevClick}
+          >
+            <KeyboardArrowLeftIcon />
+          </Button>
+          <Button
+            variant="contained"
+            size="small"
+            sx={{ background: 'linear-gradient(290deg, #b9d0e9, #e9f2fa) !important', ml: 1 }}
+            disabled={mode !== 'view'}
+            onClick={handleNextClick}
+          >
+            <NavigateNextIcon />
+          </Button>
+        </Grid>
         <Grid>
           <Typography align="center" variant="h6">
             {tabIndex === 0 ? "Creditors/Supplier Master" : tabIndex === 1 ? "Branch Details" : "Terms Details"}
@@ -1537,7 +1569,7 @@ const CreditorsSuppliersMst = () => {
 
         </Grid>
 
-        <Grid sx={{ position: 'relative', right: -192 }}>
+        <Grid sx={{ display: 'flex' }}>
           <TextField
             label="Search By Code"
             variant="filled"
@@ -1552,17 +1584,32 @@ const CreditorsSuppliersMst = () => {
             sx={textInputSx}
             inputProps={{
               style: {
-                padding: '6px 8px',
+                padding: '4px 8px',
                 fontSize: '12px',
               },
             }}
+          />
+          <TbListSearch onClick={handleTable} style={{ color: 'rgb(99, 91, 255)', width: '40%', height: '62%' }} />
+        </Grid>
+
+        <Grid sx={{ display: "flex", justifyContent: "end" }}>
+          <CrudButton
+            moduleName=""
+            mode={mode}
+            onAdd={handleAdd}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+            onExit={handleExit}
+            readOnlyMode={mode === "view"}
+            onPrevious={handlePrevClick}
+            onNext={handleNextClick}
           />
         </Grid>
       </Grid>
 
 
-      <Grid xs={12} sx={{ ml: '5%', mb: '0.5%' }}>
-        <Box sx={{ display: 'flex' }}>
+      <Grid sx={{ marginInline: { xs: '5%', sm: '5%', md: '12.5%', lg: '12.5%', xl: '12.5%' } }}>
+        <Box sx={{ display: 'flex', mb: 1 }}>
           <Tabs
             value={tabIndex}
             onChange={handleTabChange}
@@ -1622,7 +1669,9 @@ const CreditorsSuppliersMst = () => {
           </Tabs>
         </Box>
       </Grid>
-      <Grid xs={12}>
+      <Grid sx={{
+        marginInline: { xs: '5%', sm: '5%', md: '5%', lg: '5%', xl: '5%' },
+      }}>
 
         {tabIndex === 0 ? (
           <Stepper1
@@ -1646,43 +1695,63 @@ const CreditorsSuppliersMst = () => {
         )}
       </Grid>
 
-      {tabIndex === 0  && (
-        <Grid container alignItems="center"
-          justifyContent="center" spacing={1} sx={{ marginTop: "10px", marginInline: '20px' }}>
-          <Grid sx={{
-            width: { xs: '100%', sm: 'auto' },
-          }}>
-            <Stack direction="row" spacing={1}>
-              <PaginationButtons
-                mode={mode}
-                FORM_MODE={FORM_MODE}
-                currentKey={currentPARTY_KEY}
-                onFirst={handleFirst}
-                onPrevious={handlePrevClick}
-                onNext={handleNextClick}
-                onLast={handleLast}
-                sx={{ mt: 2 }}
-                buttonSx={Buttonsx}
-              />
-            </Stack>
-          </Grid>
-          <Grid>
-            <Stack direction="row" spacing={{ xs: 0.5, sm: 1 }}>
-              <CrudButtons
-                mode={mode}
-                onAdd={mode === "view" ? handleAdd : handleSubmit}
-                onEdit={mode === "view" ? handleEdit : handleCancel}
-                onView={handlePrint}
-                onDelete={handleDelete}
-                onSearch={handleTable}
-                onExit={handleExit}
-                readOnlyMode={mode === "view"}
-              />
-            </Stack>
-          </Grid>
+      {tabIndex === 0 && (
+        <Grid sx={{ display: "flex", justifyContent: "end", mr: '5%' }}>
+          {mode === 'view' && (
+            <>
+              <Button variant="contained"
+                sx={{
+                  background: 'linear-gradient(290deg, #d4d4d4, #ffffff)',
+                  margin: { xs: '0 4px', sm: '0 6px' },
+                  minWidth: { xs: 40, sm: 46, md: 60 },
+                  height: { xs: 40, sm: 46, md: 30 },
+                }}
+                onClick={handleAdd} disabled>
+                Submit
+              </Button>
+              <Button variant="contained"
+                sx={{
+                  background: 'linear-gradient(290deg, #a7c5e9, #ffffff)',
+                  margin: { xs: '0 4px', sm: '0 6px' },
+                  minWidth: { xs: 40, sm: 46, md: 60 },
+                  height: { xs: 40, sm: 46, md: 30 },
+                }}
+                onClick={handleEdit}
+                disabled
+              >
+                Cancel
+              </Button>
+            </>
+          )}
+          {(mode === 'edit' || mode === 'add') && (
+            <>
+
+              <Button variant="contained"
+                sx={{
+                  margin: { xs: '0 4px', sm: '0 6px' },
+                  backgroundColor: '#635bff',
+                  minWidth: { xs: 40, sm: 46, md: 60 },
+                  height: { xs: 40, sm: 46, md: 30 },
+                }}
+                onClick={handleSubmit}>
+                Submit
+              </Button>
+              <Button variant="contained"
+                sx={{
+                  margin: { xs: '0 4px', sm: '0 6px' },
+                  backgroundColor: '#635bff',
+                  minWidth: { xs: 40, sm: 46, md: 60 },
+                  height: { xs: 40, sm: 46, md: 30 },
+                }}
+                onClick={handleCancel}>
+                Cancel
+              </Button>
+
+            </>
+          )}
         </Grid>
       )}
-    </Box>
+    </Grid>
   );
 };
 
