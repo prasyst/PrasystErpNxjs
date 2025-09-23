@@ -1,30 +1,8 @@
-
-
 'use client'
 import React, { useEffect, useState } from 'react';
 import {
-  Box,
-  Paper,
-  Typography,
-  TextField,
-  Button,
-  Avatar,
-  useTheme,
-  Card,
-  MenuItem,
-  Grow,
-  Snackbar,
-  InputAdornment,
-  IconButton,
-  useMediaQuery,
-  Modal,
-  Fade,
-  Divider,
-  Radio,
-  RadioGroup,
-  FormControlLabel,
-  FormControl,
-  FormLabel,
+  Box, Paper, Typography, TextField, Button, Avatar, useTheme, Card, MenuItem, Grow, Snackbar, InputAdornment, IconButton, useMediaQuery,
+  Modal, Fade, Divider, Radio, RadioGroup, FormControlLabel, FormControl, FormLabel,
 } from '@mui/material';
 import PersonIcon from '@mui/icons-material/Person';
 import Visibility from '@mui/icons-material/Visibility';
@@ -74,16 +52,15 @@ const Login = () => {
   const [isHovered, setIsHovered] = useState(false);
   const [colorIndex, setColorIndex] = useState(0);
   const colors = ['#3A7BD5', '#FF5733', '#28B463', '#8E44AD', '#F39C12', '#1ce6a9ff'];
-  
+
   useEffect(() => {
     const interval = setInterval(() => {
       setColorIndex((prevIndex) => (prevIndex + 1) % colors.length);
-    }, 1000); 
+    }, 1000);
 
     return () => clearInterval(interval);
   }, []);
 
-  
   const buttonStyles = {
     bgcolor: '#3A7BD5',
     color: '#fff',
@@ -182,22 +159,23 @@ const Login = () => {
         toast.error('Mobile number is not registered', { autoClose: 1000 });
       }
     } catch (error) {
-      console.error('Error sending OTP:', error);
       setOtpError(true);
       toast.error('Error sending OTP. Please try again.', { autoClose: 1000 });
     }
   };
 
   const handleVerifyOtp = () => {
-    console.log('Generated OTP:', generatedOtp);
-    console.log('Entered OTP:', otp);
+    if (!otp || otp.length !== 4) {
+      toast.info("Please enter a valid 4-digit otp.");
+    }
+
     if (otp.trim() === generatedOtp) {
       toast.success('OTP is verified. Login successfully.');
       const currentYear = new Date().getFullYear();
       const lastTwoDigits = currentYear.toString().slice(-2);
       localStorage.setItem('FCYR_KEY', lastTwoDigits);
       localStorage.setItem('authenticated', 'true');
-      localStorage.setItem('userRole', role); 
+      localStorage.setItem('userRole', role);
       setShowLogin(false);
       setModalOpen(true);
     } else {
@@ -206,6 +184,13 @@ const Login = () => {
   };
 
   const handleLogin = async () => {
+    if (role !== 'customer') {
+      if (!form.username.trim() || !form.password.trim()) {
+        toast.info("Please fill in the username & password.");
+        return;
+      }
+    }
+
     try {
       const encryptionResponse = await axiosInstance.post('USERS/Getpwdencryption', {
         USER_PWD: form.password,
@@ -218,20 +203,19 @@ const Login = () => {
 
       if (loginResponse.data.STATUS === 0) {
         const loginDetails = loginResponse.data.DATA[0];
-        const USER_NAME =loginDetails.USER_NAME;
+        const USER_NAME = loginDetails.USER_NAME;
         const currentYear = new Date().getFullYear();
         const lastTwoDigits = currentYear.toString().slice(-2);
-        localStorage.setItem('USER_NAME',USER_NAME);
+        localStorage.setItem('USER_NAME', USER_NAME);
         localStorage.setItem('FCYR_KEY', lastTwoDigits);
         localStorage.setItem('authenticated', 'true');
-          localStorage.setItem('userRole', role); 
+        localStorage.setItem('userRole', role);
         setShowLogin(false);
         setModalOpen(true);
       } else {
         setError(true);
       }
     } catch (err) {
-      console.error('Login error:', err);
       setError(true);
     }
   };
@@ -289,7 +273,7 @@ const Login = () => {
         },
       }}
     >
-      <ToastContainer 
+      <ToastContainer
         position="top-right"
         autoClose={3000}
         hideProgressBar={false}
@@ -301,7 +285,7 @@ const Login = () => {
         pauseOnHover
         theme="colored"
       />
-      
+
       {showLogin ? (
         <Fade in={showLogin} timeout={800}>
           <Paper
@@ -374,21 +358,21 @@ const Login = () => {
                     Secure Login
                   </Typography>
                 </Box>
-                
+
                 <Typography variant="h6" fontWeight="600" sx={{ mb: 1 }}>
                   Welcome Back!
                 </Typography>
-                
+
                 <Typography variant="body2" sx={{ opacity: 0.9, mb: 1 }}>
                   Sign in to access your account and manage your business operations efficiently.
                 </Typography>
-                
+
                 <Divider sx={{ bgcolor: 'rgba(255,255,255,0.2)', my: 1 }} />
-                
+
                 <Typography variant="body2" fontWeight="600" sx={{ mb: 1 }}>
                   Select Your Role:
                 </Typography>
-                
+
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
                   {roles.map((r) => (
                     <Card
@@ -411,23 +395,23 @@ const Login = () => {
                         },
                       }}
                     >
-                      <Avatar sx={{ 
-                        bgcolor: 'rgba(255,255,255,0.9)', 
-                        width: 32, 
-                        height: 32, 
+                      <Avatar sx={{
+                        bgcolor: 'rgba(255,255,255,0.9)',
+                        width: 32,
+                        height: 32,
                         mr: 2,
                         color: '#3A7BD5'
                       }}>
                         {r.icon}
                       </Avatar>
-                      <Typography fontWeight={500} fontSize="0.95rem" sx={{ userSelect: 'none',color:'white',fontWeight:'700' }}>
+                      <Typography fontWeight={500} fontSize="0.95rem" sx={{ userSelect: 'none', color: 'white', fontWeight: '700' }}>
                         {r.label}
                       </Typography>
                     </Card>
                   ))}
                 </Box>
               </Box>
-              
+
               <Typography variant="caption" sx={{ opacity: 0.7, display: 'block', mt: 2 }}>
                 © {currentYear} prasyst. All rights reserved.
               </Typography>
@@ -519,7 +503,7 @@ const Login = () => {
                     fullWidth
                     size="medium"
                     className='loginInput'
-                    sx={{ 
+                    sx={{
                       mb: 2,
                       '& .MuiOutlinedInput-root': {
                         borderRadius: 2,
@@ -550,7 +534,7 @@ const Login = () => {
                         </InputAdornment>
                       ),
                     }}
-                    sx={{ 
+                    sx={{
                       mb: 2,
                       '& .MuiOutlinedInput-root': {
                         borderRadius: 2,
@@ -578,7 +562,7 @@ const Login = () => {
                         </InputAdornment>
                       ),
                     }}
-                    sx={{ 
+                    sx={{
                       mb: 2,
                       '& .MuiOutlinedInput-root': {
                         borderRadius: 2,
@@ -665,7 +649,7 @@ const Login = () => {
                 onChange={(e) => setSelectedYear(e.target.value)}
                 fullWidth
                 size="medium"
-                sx={{ 
+                sx={{
                   mb: 2,
                   '& .MuiOutlinedInput-root': {
                     borderRadius: 2,
@@ -691,7 +675,11 @@ const Login = () => {
                 <Button
                   variant="contained"
                   onClick={handleLogin}
-                  disabled={role === 'customer' && !otpSent}
+                  // disabled={role === 'customer' && !otpSent}
+                  disabled={
+                    (role === 'customer' && (!form.mobile || !otpSent || !otp)) ||
+                    (role !== 'customer' && (!form.username.trim() || !form.password.trim()))
+                  }
                   sx={buttonStyles}
                   fullWidth
                 >
@@ -706,7 +694,7 @@ const Login = () => {
                   }}
                   sx={{
                     borderColor: '#ccc',
-                    color: '#666',
+                    color: '#b90909ff',
                     borderRadius: '12px',
                     fontSize: '1rem',
                     fontWeight: 600,
@@ -714,8 +702,7 @@ const Login = () => {
                     py: 1.5,
                     '&:hover': {
                       borderColor: '#999',
-                      color: '#333',
-                      bgcolor: 'rgba(0,0,0,0.04)',
+                      color: '#a00303ff',
                     },
                     transition: 'all 0.3s ease',
                   }}
