@@ -535,7 +535,7 @@ const SalesDashboard = () => {
                                                 width: 2,
                                                 length: 10,
                                                 distanceFromArc: 3
-                                            }
+                                            },
                                         }
                                     }}
                                     arc={{
