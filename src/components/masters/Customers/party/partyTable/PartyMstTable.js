@@ -6,8 +6,6 @@ import {
 } from '@mui/material';
 import ReusableTable, { getCustomDateFilter } from '@/components/datatable/ReusableTable';
 import { useRouter } from 'next/navigation';
-import ArrowBackIcon from "@mui/icons-material/ArrowBack";
-import LogoutIcon from "@mui/icons-material/Logout";
 
 // Column definitions for AG Grid with Serial No and Checkbox
 const columnDefs = [
@@ -30,7 +28,10 @@ const columnDefs = [
     headerName: "CODE",
     width: 130,
     maxWidth: 140,
-    filter: true,
+    filter: 'agSetColumnFilter',
+    filterParams: {
+      defaultToNothingSelected: true,
+    },
     sortable: true
   },
   {
@@ -38,7 +39,10 @@ const columnDefs = [
     headerName: "PARTYNAME",
     width: 130,
     maxWidth: 140,
-    filter: true,
+    filter: 'agSetColumnFilter',
+    filterParams: {
+      defaultToNothingSelected: true,
+    },
     sortable: true
   },
   {
@@ -46,7 +50,10 @@ const columnDefs = [
     headerName: "Address",
     width: 190,
     maxWidth: 200,
-    filter: true,
+    filter: 'agSetColumnFilter',
+    filterParams: {
+      defaultToNothingSelected: true,
+    },
     sortable: true
   },
   {
@@ -54,7 +61,10 @@ const columnDefs = [
     headerName: "Place",
     width: 130,
     maxWidth: 140,
-    filter: true,
+    filter: 'agSetColumnFilter',
+    filterParams: {
+      defaultToNothingSelected: true,
+    },
     sortable: true
   },
   {
@@ -62,7 +72,10 @@ const columnDefs = [
     headerName: "EMAIL",
     width: 130,
     maxWidth: 140,
-    filter: true,
+    filter: 'agSetColumnFilter',
+    filterParams: {
+      defaultToNothingSelected: true,
+    },
     sortable: true
   },
   {
@@ -70,7 +83,10 @@ const columnDefs = [
     headerName: "CONTACTPERSON",
     width: 130,
     maxWidth: 140,
-    filter: true,
+    filter: 'agSetColumnFilter',
+    filterParams: {
+      defaultToNothingSelected: true,
+    },
     sortable: true
   },
   {
@@ -78,7 +94,10 @@ const columnDefs = [
     headerName: "MOBILENO",
     width: 130,
     maxWidth: 140,
-    filter: true,
+    filter: 'agSetColumnFilter',
+    filterParams: {
+      defaultToNothingSelected: true,
+    },
     sortable: true
   },
   {
@@ -86,7 +105,10 @@ const columnDefs = [
     headerName: "PANNO",
     width: 130,
     maxWidth: 140,
-    filter: true,
+    filter: 'agSetColumnFilter',
+    filterParams: {
+      defaultToNothingSelected: true,
+    },
     sortable: true
   },
   {
@@ -94,7 +116,10 @@ const columnDefs = [
     headerName: "GSTTINNO",
     width: 130,
     maxWidth: 140,
-    filter: true,
+    filter: 'agSetColumnFilter',
+    filterParams: {
+      defaultToNothingSelected: true,
+    },
     sortable: true
   },
 ];
@@ -140,14 +165,6 @@ export default function PartyMstTable() {
     router.push(`/masters/customers?${params}`);
   };
 
-  const handleBack = () => {
-    window.history.back();
-  };
-
-  const Exit = () => {
-    router.push('/dashboard');
-  };
-
   const handleSelectionChanged = useCallback((event) => {
     const selectedNodes = event.api.getSelectedNodes();
     const selectedData = selectedNodes.map(node => node.data);
@@ -158,37 +175,6 @@ export default function PartyMstTable() {
   return (
     <div className="p-2 w-full">
       <div className="w-full mx-auto" style={{ maxWidth: '100%' }}>
-        <div className="flex flex-wrap gap-4 items-center">
-
-          <Box width="100%" display="flex" justifyContent="flex-end"
-            sx={{ 
-              position: 'relative',
-              top: 38
-            }}
-          >
-            <Stack direction="row" spacing={2} alignItems="center">
-              {/* Back Button */}
-              <Button
-                onClick={handleBack}
-                variant="outlined"
-                color="primary"
-                startIcon={<ArrowBackIcon />}
-              >
-                Back
-              </Button>
-
-              {/* Logout Button */}
-              <Button
-                onClick={Exit}
-                variant="outlined"
-                color="error"
-                startIcon={<LogoutIcon />}
-              >
-                Exit
-              </Button>
-            </Stack>
-          </Box>
-        </div>
 
         <div style={{ height: 'calc(100vh - 180px)', width: '100%' }}>
           {isLoading ? (
