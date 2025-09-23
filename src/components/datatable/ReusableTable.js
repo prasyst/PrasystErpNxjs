@@ -12,6 +12,7 @@ import {
   MultiFilterModule,
   SetFilterModule,
 } from "ag-grid-enterprise";
+import { useRouter } from 'next/navigation';
 import RestoreIcon from '@mui/icons-material/Restore';
 import { AgGridReact } from "ag-grid-react";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
@@ -247,6 +248,7 @@ const ReusableTable = ({
   const [quickFilterText, setQuickFilterText] = useState("");
   const [showExportDropdown, setShowExportDropdown] = useState(false);
   const exportDropdownRef = useRef(null);
+  const router = useRouter();
 
   // Handle outside clicks for export dropdown
   useEffect(() => {
@@ -422,6 +424,14 @@ const ReusableTable = ({
     }
   }, [pagination]);
 
+  const handleBack = () => {
+    window.history.back();
+  };
+
+  const handleExit = () => {
+    router.push('/dashboard');
+  };
+
   return (
     <div style={{
       width: '100%',
@@ -433,7 +443,7 @@ const ReusableTable = ({
       {/* Header with search and export */}
       <div style={{
         display: 'flex',
-        // justifyContent: 'space-between', 
+        justifyContent: 'space-between',
         alignItems: 'center',
         margin: '0 16px',
         gap: '12px'
@@ -509,23 +519,24 @@ const ReusableTable = ({
             {selectedRows.length} row{selectedRows.length > 1 ? 's' : ''} selected
           </div>
         )}
+        <div style={{ display: 'flex', marginRight: 'auto', gap: '4px' }}>
         <Button
           variant="contained"
           size="small"
           onClick={handleReset}
           startIcon={<RestoreIcon />}
-        // style={{
-        //   marginLeft: 'auto'
-        // }}
+          style={{
+            height: '30.8px'
+          }}
         >
           Reset
         </Button>
         {enableExport && (
-          <div style={{ position: 'relative' }} ref={exportDropdownRef}>
+          <div style={{ position: 'relative'  }} ref={exportDropdownRef}>
             <button
               onClick={() => setShowExportDropdown(!showExportDropdown)}
               style={{
-                padding: '7px 16px',
+                padding: '6.4px 16px',
                 borderRadius: '6px',
                 border: '1px solid #d0d5dd',
                 backgroundColor: '#3CB371',
@@ -655,6 +666,37 @@ const ReusableTable = ({
             )}
           </div>
         )}
+        </div>
+
+        <div className="flex flex-wrap gap-4 items-center">
+
+          <Box width="100%" display="flex" justifyContent="flex-end"
+          >
+            <Stack direction="row" spacing={2} alignItems="center">
+              {/* Back Button */}
+              <Button
+                onClick={handleBack}
+                variant="outlined"
+                size="small"
+                color="primary"
+                startIcon={<ArrowBackIcon />}
+              >
+                Back
+              </Button>
+
+              {/* Logout Button */}
+              <Button
+                onClick={handleExit}
+                variant="outlined"
+                size="small"
+                color="error"
+                startIcon={<LogoutIcon />}
+              >
+                Exit
+              </Button>
+            </Stack>
+          </Box>
+        </div>
       </div>
 
       {/* AG Grid */}

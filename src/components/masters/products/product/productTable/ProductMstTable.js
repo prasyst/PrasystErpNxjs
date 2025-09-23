@@ -6,19 +6,7 @@ import {
 } from '@mui/material';
 import ReusableTable, { getCustomDateFilter } from '@/components/datatable/ReusableTable';
 import { useRouter } from 'next/navigation';
-import ArrowBackIcon from "@mui/icons-material/ArrowBack";
-import LogoutIcon from "@mui/icons-material/Logout";
 
-// const handsontableColumns = [
-//   { field: "FGPRD_NAME", headerName: "Product", width: "16%", type: "text" },
-//   { field: "FGPRD_ABRV", headerName: "FGPRDABRV", width: "16%", type: "text" },
-//   { field: "FGMDW_RATE", headerName: "FGMDWRATE", width: "15%", type: "numeric" },
-//   { field: "FGCAT_NAME", headerName: "Category", width: "15%", type: "text" },
-//   { field: "UNIT_NAME", headerName: "UNIT", width: "15%", type: "text" },
-//   { field: "HSN_CODE", headerName: "HSNCODE", width: "15%", type: "numeric" }
-// ];
-
-// Column definitions for AG Grid with Serial No and Checkbox
 const columnDefs = [
   {
     headerName: "Select",
@@ -39,28 +27,40 @@ const columnDefs = [
     headerName: "Product",
     width: 130,
     maxWidth: 140,
-    filter: true,
+    filter: 'agSetColumnFilter',
+    filterParams: {
+      defaultToNothingSelected: true,
+    },
     sortable: true
   },
   {
     field: "FGPRD_ABRV",
     headerName: "Product Abrv",
     width: 160,
-    filter: true,
+    filter: 'agSetColumnFilter',
+    filterParams: {
+      defaultToNothingSelected: true,
+    },
     sortable: true
   },
   {
     field: "FGMDW_RATE",
-    headerName: "FGMDW_RATE",
+    headerName: "Mark Down Rt %",
     width: 230,
-    filter: true,
+    filter: 'agSetColumnFilter',
+    filterParams: {
+      defaultToNothingSelected: true,
+    },
     sortable: true
   },
   {
     field: "FGCAT_NAME",
-    headerName: "FGCAT_NAME",
+    headerName: "Category",
     width: 140,
-    filter: true,
+    filter: 'agSetColumnFilter',
+    filterParams: {
+      defaultToNothingSelected: true,
+    },
     sortable: true
   },
   {
@@ -68,13 +68,19 @@ const columnDefs = [
     headerName: "UNIT",
     width: 120,
     maxWidth: 130,
-    filter: 'agNumberColumnFilter',
+    filter: 'agSetColumnFilter',
+    filterParams: {
+      defaultToNothingSelected: true,
+    },
   },
   {
     field: "HSN_CODE",
     headerName: "HSNCODE",
     width: 130,
-    filter: 'agNumberColumnFilter',
+    filter: 'agSetColumnFilter',
+    filterParams: {
+      defaultToNothingSelected: true,
+    },
   }
 ];
 
@@ -117,14 +123,6 @@ export default function PartyMstTable() {
     router.push(`/masters/products/product?${params}`);
   };
 
-  const handleBack = () => {
-    window.history.back();
-  };
-
-  const Exit = () => {
-    router.push('/dashboard');
-  };
-
   const handleSelectionChanged = useCallback((event) => {
     const selectedNodes = event.api.getSelectedNodes();
     const selectedData = selectedNodes.map(node => node.data);
@@ -135,32 +133,6 @@ export default function PartyMstTable() {
   return (
     <div className="p-2 w-full">
       <div className="w-full mx-auto" style={{ maxWidth: '100%' }}>
-        <div className="mb-4 flex flex-wrap gap-4 items-center">
-
-          <Box width="100%" display="flex" justifyContent="flex-end">
-            <Stack direction="row" spacing={2} alignItems="center">
-              {/* Back Button */}
-              <Button
-                onClick={handleBack}
-                variant="outlined"
-                color="primary"
-                startIcon={<ArrowBackIcon />}
-              >
-                Back
-              </Button>
-
-              {/* Logout Button */}
-              <Button
-                onClick={Exit}
-                variant="outlined"
-                color="error"
-                startIcon={<LogoutIcon />}
-              >
-                Exit
-              </Button>
-            </Stack>
-          </Box>
-        </div>
 
         <div style={{ height: 'calc(100vh - 180px)', width: '100%' }}>
           {isLoading ? (
