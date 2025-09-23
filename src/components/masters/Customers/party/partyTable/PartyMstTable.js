@@ -176,7 +176,7 @@ export default function PartyMstTable() {
     <div className="p-2 w-full">
       <div className="w-full mx-auto" style={{ maxWidth: '100%' }}>
 
-        <div style={{ height: 'calc(100vh - 180px)', width: '100%' }}>
+        <div style={{ height: 'calc(100vh - 80px)', width: '100%' }}>
           {isLoading ? (
             <div style={{
               display: 'flex',

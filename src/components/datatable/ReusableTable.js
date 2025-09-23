@@ -520,152 +520,153 @@ const ReusableTable = ({
           </div>
         )}
         <div style={{ display: 'flex', marginRight: 'auto', gap: '4px' }}>
-        <Button
-          variant="contained"
-          size="small"
-          onClick={handleReset}
-          startIcon={<RestoreIcon />}
-          style={{
-            height: '30.8px'
-          }}
-        >
-          Reset
-        </Button>
-        {enableExport && (
-          <div style={{ position: 'relative'  }} ref={exportDropdownRef}>
-            <button
-              onClick={() => setShowExportDropdown(!showExportDropdown)}
-              style={{
-                padding: '6.4px 16px',
-                borderRadius: '6px',
-                border: '1px solid #d0d5dd',
-                backgroundColor: '#3CB371',
-                cursor: 'pointer',
-                fontSize: '14px',
-                fontWeight: '500',
-                color: '#ffffff',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
-                transition: 'all 0.2s ease',
-              }}
-              onMouseEnter={(e) => {
-                e.target.style.backgroundColor = '#2e8b57';
-              }}
-              onMouseLeave={(e) => {
-                e.target.style.backgroundColor = '#3CB371';
-              }}
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M13 11H18L12 17L6 11H11V3H13V11ZM4 19H20V12H22V20C22 20.5523 21.5523 21 21 21H3C2.44772 21 2 20.5523 2 20V12H4V19Z" fill="currentColor" />
-              </svg>
-              Export
-              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ marginLeft: '4px' }}>
-                <path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </button>
+          <Button
+            variant="contained"
+            size="small"
+            onClick={handleReset}
+            startIcon={<RestoreIcon />}
+            style={{
+              height: '28.4px',
+              margin: '1px 0px 0px 0px'
+            }}
+          >
+            Reset
+          </Button>
+          {enableExport && (
+            <div style={{ position: 'relative' }} ref={exportDropdownRef}>
+              <button
+                onClick={() => setShowExportDropdown(!showExportDropdown)}
+                style={{
+                  padding: '6px 8px 6px 8px',
+                  borderRadius: '6px',
+                  border: '1px solid #d0d5dd',
+                  backgroundColor: '#3CB371',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  color: '#ffffff',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
+                  transition: 'all 0.2s ease',
+                }}
+                onMouseEnter={(e) => {
+                  e.target.style.backgroundColor = '#2e8b57';
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.backgroundColor = '#3CB371';
+                }}
+              >
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M13 11H18L12 17L6 11H11V3H13V11ZM4 19H20V12H22V20C22 20.5523 21.5523 21 21 21H3C2.44772 21 2 20.5523 2 20V12H4V19Z" fill="currentColor" />
+                </svg>
+                Export
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ marginLeft: '4px' }}>
+                  <path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </button>
 
 
-            {showExportDropdown && (
-              <div style={{
-                position: 'absolute',
-                top: '100%',
-                right: 0,
-                marginTop: '4px',
-                backgroundColor: '#ffffff',
-                border: '1px solid #d0d5dd',
-                borderRadius: '6px',
-                boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-                zIndex: 1000,
-                minWidth: '180px'
-              }}>
-                <button
-                  onClick={onExportCurrentPage}
-                  style={{
-                    width: '100%',
-                    padding: '7px 16px',
-                    border: 'none',
-                    backgroundColor: 'transparent',
-                    textAlign: 'left',
-                    fontSize: '14px',
-                    color: '#374151',
-                    cursor: 'pointer',
-                    borderRadius: '6px 6px 0 0',
-                    transition: 'background-color 0.2s ease'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.target.style.backgroundColor = '#f9fafb';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.target.style.backgroundColor = 'transparent';
-                  }}
-                >
-                  Current Page
-                </button>
+              {showExportDropdown && (
                 <div style={{
-                  height: '1px',
-                  backgroundColor: '#e5e7eb',
-                  margin: '0 8px'
-                }}></div>
-                <button
-                  onClick={onExportAllRecords}
-                  style={{
-                    width: '100%',
-                    padding: '7px 16px',
-                    border: 'none',
-                    backgroundColor: 'transparent',
-                    textAlign: 'left',
-                    fontSize: '14px',
-                    color: '#374151',
-                    cursor: 'pointer',
-                    transition: 'background-color 0.2s ease'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.target.style.backgroundColor = '#f9fafb';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.target.style.backgroundColor = 'transparent';
-                  }}
-                >
-                  All Records
-                </button>
-                {enableCheckbox && (
-                  <>
-                    <div style={{
-                      height: '1px',
-                      backgroundColor: '#e5e7eb',
-                      margin: '0 8px'
-                    }}></div>
-                    <button
-                      onClick={onExportSelectedRows}
-                      style={{
-                        width: '100%',
-                        padding: '7px 16px',
-                        border: 'none',
-                        backgroundColor: 'transparent',
-                        textAlign: 'left',
-                        fontSize: '14px',
-                        color: '#374151',
-                        cursor: 'pointer',
-                        borderRadius: '0 0 6px 6px',
-                        transition: 'background-color 0.2s ease'
-                      }}
-                      onMouseEnter={(e) => {
-                        e.target.style.backgroundColor = '#f9fafb';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.target.style.backgroundColor = 'transparent';
-                      }}
-                    >
-                      Selected Rows
-                    </button>
-                  </>
-                )}
-              </div>
-            )}
-          </div>
-        )}
+                  position: 'absolute',
+                  top: '100%',
+                  right: 0,
+                  marginTop: '4px',
+                  backgroundColor: '#ffffff',
+                  border: '1px solid #d0d5dd',
+                  borderRadius: '6px',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                  zIndex: 1000,
+                  minWidth: '180px'
+                }}>
+                  <button
+                    onClick={onExportCurrentPage}
+                    style={{
+                      width: '100%',
+                      padding: '7px 16px',
+                      border: 'none',
+                      backgroundColor: 'transparent',
+                      textAlign: 'left',
+                      fontSize: '14px',
+                      color: '#374151',
+                      cursor: 'pointer',
+                      borderRadius: '6px 6px 0 0',
+                      transition: 'background-color 0.2s ease'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.target.style.backgroundColor = '#f9fafb';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.target.style.backgroundColor = 'transparent';
+                    }}
+                  >
+                    Current Page
+                  </button>
+                  <div style={{
+                    height: '1px',
+                    backgroundColor: '#e5e7eb',
+                    margin: '0 8px'
+                  }}></div>
+                  <button
+                    onClick={onExportAllRecords}
+                    style={{
+                      width: '100%',
+                      padding: '7px 16px',
+                      border: 'none',
+                      backgroundColor: 'transparent',
+                      textAlign: 'left',
+                      fontSize: '14px',
+                      color: '#374151',
+                      cursor: 'pointer',
+                      transition: 'background-color 0.2s ease'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.target.style.backgroundColor = '#f9fafb';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.target.style.backgroundColor = 'transparent';
+                    }}
+                  >
+                    All Records
+                  </button>
+                  {enableCheckbox && (
+                    <>
+                      <div style={{
+                        height: '1px',
+                        backgroundColor: '#e5e7eb',
+                        margin: '0 8px'
+                      }}></div>
+                      <button
+                        onClick={onExportSelectedRows}
+                        style={{
+                          width: '100%',
+                          padding: '7px 16px',
+                          border: 'none',
+                          backgroundColor: 'transparent',
+                          textAlign: 'left',
+                          fontSize: '14px',
+                          color: '#374151',
+                          cursor: 'pointer',
+                          borderRadius: '0 0 6px 6px',
+                          transition: 'background-color 0.2s ease'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.target.style.backgroundColor = '#f9fafb';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.target.style.backgroundColor = 'transparent';
+                        }}
+                      >
+                        Selected Rows
+                      </button>
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         <div className="flex flex-wrap gap-4 items-center">
@@ -680,6 +681,10 @@ const ReusableTable = ({
                 size="small"
                 color="primary"
                 startIcon={<ArrowBackIcon />}
+                style={{
+                  height: '29.5px'
+                }}
+                sx={{ backgroundColor: '#635bff', color: '#fff', '&:hover': { backgroundColor: '#635bff' } }}
               >
                 Back
               </Button>
@@ -689,7 +694,18 @@ const ReusableTable = ({
                 onClick={handleExit}
                 variant="outlined"
                 size="small"
-                color="error"
+                style={{
+                  height: '29.5px'
+                }}
+                sx={{
+                  backgroundColor: 'red',
+                  color: '#fff',
+                  borderColor: 'red',
+                  '&:hover': {
+                    backgroundColor: '#cc0000',
+                    borderColor: '#cc0000',
+                  },
+                }}
                 startIcon={<LogoutIcon />}
               >
                 Exit
