@@ -51,6 +51,7 @@ const Login = () => {
   const [otpRequests, setOtpRequests] = useState({});
   const [isHovered, setIsHovered] = useState(false);
   const [colorIndex, setColorIndex] = useState(0);
+  const [loading, setLoading] = useState(false);
   const colors = ['#3A7BD5', '#FF5733', '#28B463', '#8E44AD', '#F39C12', '#1ce6a9ff'];
 
   useEffect(() => {
@@ -79,8 +80,16 @@ const Login = () => {
   };
 
   useEffect(() => {
-    const isAuthenticated = localStorage.getItem('authenticated') === 'true';
-    if (isAuthenticated) {
+    // const isAuthenticated = localStorage.getItem('authenticated') === 'true';
+    // if (isAuthenticated) {
+    //   router.push('/dashboard', { replace: true });
+    // }
+
+    const expireTime = localStorage.getItem('authExpire');
+    if (!expireTime || Date.now() > Number(expireTime) || localStorage.getItem('authenticated') !== 'true') {
+      localStorage.removeItem('authenticated');
+      localStorage.removeItem('authExpire');
+    } else {
       router.push('/dashboard', { replace: true });
     }
   }, [router]);
@@ -190,6 +199,7 @@ const Login = () => {
         return;
       }
     }
+    setLoading(true);
 
     try {
       const encryptionResponse = await axiosInstance.post('USERS/Getpwdencryption', {
@@ -217,6 +227,8 @@ const Login = () => {
       }
     } catch (err) {
       setError(true);
+    }finally{
+      setLoading(false);
     }
   };
 
@@ -683,7 +695,7 @@ const Login = () => {
                   sx={buttonStyles}
                   fullWidth
                 >
-                  Sign In
+                 {loading ? 'Signing in...' : 'Sign In'}
                 </Button>
                 <Button
                   variant="outlined"
