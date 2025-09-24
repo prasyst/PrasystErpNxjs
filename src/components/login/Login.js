@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import {
   Box, Paper, Typography, TextField, Button, Avatar, useTheme, Card, MenuItem, Grow, Snackbar, InputAdornment, IconButton, useMediaQuery,
   Modal, Fade, Divider, Radio, RadioGroup, FormControlLabel, FormControl, FormLabel,
+  Grid,
 } from '@mui/material';
 import PersonIcon from '@mui/icons-material/Person';
 import Visibility from '@mui/icons-material/Visibility';
@@ -227,7 +228,7 @@ const Login = () => {
       }
     } catch (err) {
       setError(true);
-    }finally{
+    } finally {
       setLoading(false);
     }
   };
@@ -318,412 +319,704 @@ const Login = () => {
               border: '1px solid rgba(255, 255, 255, 0.2)',
             }}
           >
-            {/* Mobile View - Radio Button Selection */}
-            {isMobile && (
-              <Box sx={{ p: 2, bgcolor: '#f5f5f5', borderBottom: '1px solid #e0e0e0' }}>
-                <FormControl component="fieldset" fullWidth>
-                  <FormLabel component="legend" sx={{ fontWeight: 'bold', mb: 1, color: '#333' }}>
-                    Select Your Role:
-                  </FormLabel>
-                  <RadioGroup
-                    row
-                    value={role}
-                    onChange={(e) => handleRoleSelect(e.target.value)}
-                    sx={{ justifyContent: 'space-between' }}
-                  >
-                    {roles.map((r) => (
-                      <FormControlLabel
-                        key={r.value}
-                        value={r.value}
-                        control={<Radio />}
-                        label={r.label}
-                        sx={{
-                          margin: 0,
-                          '& .MuiFormControlLabel-label': {
-                            fontSize: '0.8rem',
-                          }
-                        }}
-                      />
-                    ))}
-                  </RadioGroup>
-                </FormControl>
-              </Box>
-            )}
-
-            <Box
-              sx={{
-                width: { xs: '100%', sm: '40%' },
-                display: { xs: 'none', sm: 'flex' },
-                background: 'linear-gradient(135deg, #3A7BD5 0%, #2A5DA8 100%)',
-                p: 3,
-                flexDirection: 'column',
-                justifyContent: 'space-between',
-                color: 'white',
-                position: 'relative',
-                overflow: 'hidden',
-              }}
-            >
-              <Box>
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                  <LockOutlinedIcon sx={{ mr: 1, fontSize: 32 }} />
-                  <Typography variant="h5" fontWeight="700">
-                    Secure Login
-                  </Typography>
-                </Box>
-
-                <Typography variant="h6" fontWeight="600" sx={{ mb: 1 }}>
-                  Welcome Back!
-                </Typography>
-
-                <Typography variant="body2" sx={{ opacity: 0.9, mb: 1 }}>
-                  Sign in to access your account and manage your business operations efficiently.
-                </Typography>
-
-                <Divider sx={{ bgcolor: 'rgba(255,255,255,0.2)', my: 1 }} />
-
-                <Typography variant="body2" fontWeight="600" sx={{ mb: 1 }}>
-                  Select Your Role:
-                </Typography>
-
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-                  {roles.map((r) => (
-                    <Card
-                      key={r.value}
-                      onClick={() => handleRoleSelect(r.value)}
-                      onMouseEnter={() => setIsHovered(r.value)}
-                      onMouseLeave={() => setIsHovered(false)}
-                      sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        p: 1.5,
-                        cursor: 'pointer',
-                        bgcolor: role === r.value ? 'rgba(255, 255, 255, 0.3)' : 'rgba(255,255,255,0.1)',
-                        border: role === r.value ? '1px solid rgba(255,255,255,0.5)' : '1px solid transparent',
-                        transition: 'all 0.3s ease',
-                        backdropFilter: 'blur(10px)',
-                        '&:hover': {
-                          bgcolor: 'rgba(255,255,255,0.2)',
-                          transform: 'translateX(5px)',
-                        },
-                      }}
-                    >
-                      <Avatar sx={{
-                        bgcolor: 'rgba(255,255,255,0.9)',
-                        width: 32,
-                        height: 32,
-                        mr: 2,
-                        color: '#3A7BD5'
-                      }}>
-                        {r.icon}
-                      </Avatar>
-                      <Typography fontWeight={500} fontSize="0.95rem" sx={{ userSelect: 'none', color: 'white', fontWeight: '700' }}>
-                        {r.label}
-                      </Typography>
-                    </Card>
-                  ))}
-                </Box>
-              </Box>
-
-              <Typography variant="caption" sx={{ opacity: 0.7, display: 'block', mt: 2 }}>
-                © {currentYear} prasyst. All rights reserved.
-              </Typography>
-            </Box>
-
-            <Box
-              sx={{
-                width: { xs: '100%', sm: '60%' },
-                padding: { xs: 3, sm: 4 },
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'center',
-              }}
-            >
-              <Box textAlign="center" sx={{ mb: 1.5 }}>
-                <Image
-                  src="/images/logo.jpg"
-                  alt="Profile"
-                  width={250}
-                  height={100}
-                />
-
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mt: 1 }}>
+            {isMobile ? (
+              <Box sx={{ width: '100%', p: 3 }}>
+                <Box textAlign="center" sx={{ mb: 1.5 }}>
                   <Image
-                    src="/images/download.png"
-                    alt="Company Logo"
-                    width={50}
-                    height={50}
-                    style={{ marginRight: '0px' }}
+                    src="/images/logo.jpg"
+                    alt="Profile"
+                    width={250}
+                    height={100}
                   />
-
-                  <Box sx={{ textAlign: 'left' }}>
-                    <Typography variant="body2" sx={{
-                      color: '#333',
-                      fontWeight: 500,
-                      lineHeight: 1.2,
-                      fontSize: '0.75rem',
-                      marginBottom: '2px'
-                    }}>
-                      Powered By :-
-                    </Typography>
-                    <Typography variant="body1" sx={{
-                      color: colors[colorIndex],
-                      fontWeight: 700,
-                      lineHeight: 1.1,
-                      fontSize: '0.85rem',
-                      marginBottom: '2px',
-                      transition: 'color 0.5s ease'
-                    }}>
-                      PRATHAM SYSTECH INDIA LTD.
-                    </Typography>
-                    <Typography variant="body2" sx={{
-                      color: '#666',
-                      fontWeight: 500,
-                      lineHeight: 1.2,
-                      fontSize: '0.70rem',
-                      fontStyle: 'italic',
-                      marginBottom: '2px'
-                    }}>
-                      The symbol of business integration
-                    </Typography>
-                    <Typography variant="body2" sx={{
-                      color: '#333',
-                      fontWeight: 600,
-                      lineHeight: 1.2,
-                      fontSize: '0.75rem',
-                      display: 'flex',
-                      alignItems: 'center'
-                    }}>
-                      <WhatsAppIcon sx={{
-                        color: '#25D366',
-                        fontSize: '1rem',
-                        marginRight: '4px'
-                      }} />
-                      8779163857
-                    </Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mt: 1 }}>
+                    <Image
+                      src="/images/download.png"
+                      alt="Company Logo"
+                      width={50}
+                      height={50}
+                      style={{ marginRight: '0px' }}
+                    />
+                    <Box sx={{ textAlign: 'left' }}>
+                      <Typography variant="body2" sx={{
+                        color: '#333',
+                        fontWeight: 500,
+                        lineHeight: 1.2,
+                        fontSize: '0.75rem',
+                        marginBottom: '2px'
+                      }}>
+                        Powered By :-
+                      </Typography>
+                      <Typography variant="body1" sx={{
+                        color: colors[colorIndex],
+                        fontWeight: 700,
+                        lineHeight: 1.1,
+                        fontSize: '0.85rem',
+                        marginBottom: '2px',
+                        transition: 'color 0.5s ease'
+                      }}>
+                        PRATHAM SYSTECH INDIA LTD.
+                      </Typography>
+                      <Typography variant="body2" sx={{
+                        color: '#666',
+                        fontWeight: 500,
+                        lineHeight: 1.2,
+                        fontSize: '0.70rem',
+                        fontStyle: 'italic',
+                        marginBottom: '2px'
+                      }}>
+                        The symbol of business integration
+                      </Typography>
+                      <Typography variant="body2" sx={{
+                        color: '#333',
+                        fontWeight: 600,
+                        lineHeight: 1.2,
+                        fontSize: '0.75rem',
+                        display: 'flex',
+                        alignItems: 'center'
+                      }}>
+                        <WhatsAppIcon sx={{
+                          color: '#25D366',
+                          fontSize: '1rem',
+                          marginRight: '4px'
+                        }} />
+                        8779163857
+                      </Typography>
+                    </Box>
                   </Box>
                 </Box>
-              </Box>
 
-              {['user', 'salesman', 'broker'].includes(role) && (
-                <>
-                  <TextField
-                    label="Username"
-                    variant="outlined"
-                    name="username"
-                    value={form.username}
-                    onChange={handleChange}
-                    fullWidth
-                    size="medium"
-                    className='loginInput'
-                    sx={{
-                      mb: 2,
-                      '& .MuiOutlinedInput-root': {
-                        borderRadius: 2,
-                        backgroundColor: '#f9f9f9',
-                      }
-                    }}
-                  />
-                  <TextField
-                    label="Password"
-                    type={showPwd ? 'text' : 'password'}
-                    variant="outlined"
-                    name="password"
-                    value={form.password}
-                    onChange={handleChange}
-                    fullWidth
-                    size="medium"
-                    InputProps={{
-                      endAdornment: (
-                        <InputAdornment position="end">
-                          <IconButton
-                            aria-label={showPwd ? "Hide password" : "Show password"}
-                            onClick={handleClickShowPassword}
-                            edge="end"
-                            sx={{ color: '#777' }}
-                          >
-                            {showPwd ? <Visibility /> : <VisibilityOff />}
-                          </IconButton>
-                        </InputAdornment>
-                      ),
-                    }}
-                    sx={{
-                      mb: 2,
-                      '& .MuiOutlinedInput-root': {
-                        borderRadius: 2,
-                        backgroundColor: '#f9f9f9',
-                      }
-                    }}
-                  />
-                </>
-              )}
+                {/* Role Selection */}
+                <Box sx={{ p: 2, bgcolor: '#ffffff', borderBottom: '1px solid #e0e0e0'}}>
+                  <FormControl component="fieldset" fullWidth>
+                    <FormLabel
+                      component="legend"
+                      sx={{ fontWeight: 'bold', color: '#333' }}
+                    >
+                      Select Your Role:
+                    </FormLabel>
 
-              {role === 'customer' && (
-                <>
-                  <TextField
-                    label="Mobile Number"
-                    variant="outlined"
-                    name="mobile"
-                    value={form.mobile}
-                    onChange={handleChange}
-                    fullWidth
-                    size="medium"
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <PhoneIphoneIcon sx={{ color: '#777' }} />
-                        </InputAdornment>
-                      ),
-                    }}
-                    sx={{
-                      mb: 2,
-                      '& .MuiOutlinedInput-root': {
-                        borderRadius: 2,
-                        backgroundColor: '#f9f9f9',
-                      }
-                    }}
-                  />
+                    <RadioGroup
+                      value={role}
+                      onChange={(e) => handleRoleSelect(e.target.value)}
+                    >
+                      <Grid container spacing={0}>
+                        {roles.map((r) => (
+                          <Grid size={{ xs: 6 }} key={r.value}>
+                            <FormControlLabel
+                              value={r.value}
+                              control={<Radio />}
+                              label={r.label}
+                              sx={{
+                                '& .MuiFormControlLabel-label': {
+                                  fontSize: '0.8rem',
+                                },
+                              }}
+                            />
+                          </Grid>
+                        ))}
+                      </Grid>
+                    </RadioGroup>
+                  </FormControl>
+                </Box>
 
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2, flexDirection: isMobile ? 'column' : 'row' }}>
-                    {form.mobile.length === 10 && !otpSent && (
-                      <Button
-                        variant="contained"
-                        onClick={handleGenerateOtp}
-                        fullWidth={isMobile}
-                        sx={{
-                          bgcolor: '#3A7BD5',
-                          color: '#fff',
+                {/* Form Fields */}
+                {['user', 'salesman', 'broker'].includes(role) && (
+                  <>
+                    <TextField
+                      label="Username"
+                      variant="outlined"
+                      name="username"
+                      value={form.username}
+                      onChange={handleChange}
+                      fullWidth
+                      size="medium"
+                      className='loginInput'
+                      sx={{
+                        mb: 2,
+                        '& .MuiOutlinedInput-root': {
                           borderRadius: 2,
-                          fontWeight: 600,
-                          textTransform: 'none',
-                          py: 1.2,
-                          boxShadow: '0 4px 8px rgba(58, 123, 213, 0.3)',
-                          '&:hover': {
-                            bgcolor: '#2A5DA8',
-                            boxShadow: '0 6px 12px rgba(58, 123, 213, 0.4)',
-                          },
-                          transition: 'all 0.3s ease',
-                        }}
-                      >
-                        Send OTP
-                      </Button>
-                    )}
+                          backgroundColor: '#f9f9f9',
+                        }
+                      }}
+                    />
+                    <TextField
+                      label="Password"
+                      type={showPwd ? 'text' : 'password'}
+                      variant="outlined"
+                      name="password"
+                      value={form.password}
+                      onChange={handleChange}
+                      fullWidth
+                      size="medium"
+                      InputProps={{
+                        endAdornment: (
+                          <InputAdornment position="end">
+                            <IconButton
+                              aria-label={showPwd ? "Hide password" : "Show password"}
+                              onClick={handleClickShowPassword}
+                              edge="end"
+                              sx={{ color: '#777' }}
+                            >
+                              {showPwd ? <Visibility /> : <VisibilityOff />}
+                            </IconButton>
+                          </InputAdornment>
+                        ),
+                      }}
+                      sx={{
+                        mb: 2,
+                        '& .MuiOutlinedInput-root': {
+                          borderRadius: 2,
+                          backgroundColor: '#f9f9f9',
+                        }
+                      }}
+                    />
+                  </>
+                )}
 
-                    {otpSent && (
-                      <>
-                        <TextField
-                          label="Enter OTP"
-                          variant="outlined"
-                          name="otp"
-                          value={otp}
-                          onChange={handleChange}
-                          size="medium"
-                          type="tel"
-                          sx={{
-                            flex: 1,
-                            '& .MuiOutlinedInput-root': {
-                              borderRadius: 2,
-                              backgroundColor: '#f9f9f9',
-                            }
-                          }}
-                        />
+                {role === 'customer' && (
+                  <>
+                    <TextField
+                      label="Mobile Number"
+                      variant="outlined"
+                      name="mobile"
+                      value={form.mobile}
+                      onChange={handleChange}
+                      fullWidth
+                      size="medium"
+                      InputProps={{
+                        startAdornment: (
+                          <InputAdornment position="start">
+                            <PhoneIphoneIcon sx={{ color: '#777' }} />
+                          </InputAdornment>
+                        ),
+                      }}
+                      sx={{
+                        mb: 2,
+                        '& .MuiOutlinedInput-root': {
+                          borderRadius: 2,
+                          backgroundColor: '#f9f9f9',
+                        }
+                      }}
+                    />
+
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2, flexDirection: isMobile ? 'column' : 'row' }}>
+                      {form.mobile.length === 10 && !otpSent && (
                         <Button
                           variant="contained"
-                          onClick={handleVerifyOtp}
+                          onClick={handleGenerateOtp}
+                          fullWidth={isMobile}
                           sx={{
-                            bgcolor: '#00B761',
+                            bgcolor: '#3A7BD5',
                             color: '#fff',
-                            fontWeight: 600,
                             borderRadius: 2,
+                            fontWeight: 600,
                             textTransform: 'none',
                             py: 1.2,
-                            px: 2,
-                            boxShadow: '0 4px 8px rgba(0, 183, 97, 0.3)',
+                            boxShadow: '0 4px 8px rgba(58, 123, 213, 0.3)',
                             '&:hover': {
-                              bgcolor: '#009650',
-                              boxShadow: '0 6px 12px rgba(0, 183, 97, 0.4)',
+                              bgcolor: '#2A5DA8',
+                              boxShadow: '0 6px 12px rgba(58, 123, 213, 0.4)',
                             },
                             transition: 'all 0.3s ease',
                           }}
                         >
-                          Verify
+                          Send OTP
                         </Button>
-                      </>
-                    )}
-                  </Box>
-                </>
-              )}
+                      )}
 
-              <TextField
-                select
-                label="Financial Year"
-                variant="outlined"
-                value={selectedYear}
-                onChange={(e) => setSelectedYear(e.target.value)}
-                fullWidth
-                size="medium"
-                sx={{
-                  mb: 2,
-                  '& .MuiOutlinedInput-root': {
-                    borderRadius: 2,
-                    backgroundColor: '#f9f9f9',
-                  }
-                }}
-              >
-                {years.map((year) => (
-                  <MenuItem key={year} value={year}>
-                    {year}
-                  </MenuItem>
-                ))}
-              </TextField>
-
-              <Box
-                sx={{
-                  display: 'flex',
-                  gap: 2,
-                  justifyContent: 'center',
-                  flexDirection: isMobile ? 'column' : 'row',
-                }}
-              >
-                <Button
-                  variant="contained"
-                  onClick={handleLogin}
-                  // disabled={role === 'customer' && !otpSent}
-                  disabled={
-                    (role === 'customer' && (!form.mobile || !otpSent || !otp)) ||
-                    (role !== 'customer' && (!form.username.trim() || !form.password.trim()))
-                  }
-                  sx={buttonStyles}
-                  fullWidth
-                >
-                 {loading ? 'Signing in...' : 'Sign In'}
-                </Button>
-                <Button
+                      {otpSent && (
+                        <>
+                          <TextField
+                            label="Enter OTP"
+                            variant="outlined"
+                            name="otp"
+                            value={otp}
+                            onChange={handleChange}
+                            size="medium"
+                            type="tel"
+                            sx={{
+                              flex: 1,
+                              '& .MuiOutlinedInput-root': {
+                                borderRadius: 2,
+                                backgroundColor: '#f9f9f9',
+                              }
+                            }}
+                          />
+                          <Button
+                            variant="contained"
+                            onClick={handleVerifyOtp}
+                            sx={{
+                              bgcolor: '#00B761',
+                              color: '#fff',
+                              fontWeight: 600,
+                              borderRadius: 2,
+                              textTransform: 'none',
+                              py: 1.2,
+                              px: 2,
+                              boxShadow: '0 4px 8px rgba(0, 183, 97, 0.3)',
+                              '&:hover': {
+                                bgcolor: '#009650',
+                                boxShadow: '0 6px 12px rgba(0, 183, 97, 0.4)',
+                              },
+                              transition: 'all 0.3s ease',
+                            }}
+                          >
+                            Verify
+                          </Button>
+                        </>
+                      )}
+                    </Box>
+                  </>
+                )}
+                <TextField
+                  select
+                  label="Financial Year"
                   variant="outlined"
-                  onClick={() => {
-                    setForm({ username: '', password: '', mobile: '' });
-                    setRole('user');
-                    setOtpSent(false);
-                  }}
-                  sx={{
-                    borderColor: '#ccc',
-                    color: '#b90909ff',
-                    borderRadius: '12px',
-                    fontSize: '1rem',
-                    fontWeight: 600,
-                    textTransform: 'none',
-                    py: 1.5,
-                    '&:hover': {
-                      borderColor: '#999',
-                      color: '#a00303ff',
-                    },
-                    transition: 'all 0.3s ease',
-                  }}
+                  value={selectedYear}
+                  onChange={(e) => setSelectedYear(e.target.value)}
                   fullWidth
+                  size="medium"
+                  sx={{
+                    mb: 2,
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: 2,
+                      backgroundColor: '#f9f9f9',
+                    }
+                  }}
                 >
-                  Clear
-                </Button>
+                  {years.map((year) => (
+                    <MenuItem key={year} value={year}>
+                      {year}
+                    </MenuItem>
+                  ))}
+                </TextField>
+
+                <Box
+                  sx={{
+                    display: 'flex',
+                    gap: 2,
+                    justifyContent: 'center',
+                    flexDirection: isMobile ? 'column' : 'row',
+                  }}
+                >
+                  <Button
+                    variant="contained"
+                    onClick={handleLogin}
+                    disabled={
+                      (role === 'customer' && (!form.mobile || !otpSent || !otp)) ||
+                      (role !== 'customer' && (!form.username.trim() || !form.password.trim()))
+                    }
+                    sx={buttonStyles}
+                    fullWidth
+                  >
+                    {loading ? 'Signing in...' : 'Sign In'}
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    onClick={() => {
+                      setForm({ username: '', password: '', mobile: '' });
+                      setRole('user');
+                      setOtpSent(false);
+                    }}
+                    sx={{
+                      borderColor: '#ccc',
+                      color: '#b90909ff',
+                      borderRadius: '12px',
+                      fontSize: '1rem',
+                      fontWeight: 600,
+                      textTransform: 'none',
+                      py: 1.5,
+                      '&:hover': {
+                        borderColor: '#999',
+                        color: '#a00303ff',
+                      },
+                      transition: 'all 0.3s ease',
+                    }}
+                    fullWidth
+                  >
+                    Clear
+                  </Button>
+                </Box>
               </Box>
-            </Box>
+            ) : (
+              <>
+                {/* Desktop View */}
+                <Box
+                  sx={{
+                    width: { xs: '100%', sm: '40%' },
+                    display: { xs: 'none', sm: 'flex' },
+                    background: 'linear-gradient(135deg, #3A7BD5 0%, #2A5DA8 100%)',
+                    p: 3,
+                    flexDirection: 'column',
+                    justifyContent: 'space-between',
+                    color: 'white',
+                    position: 'relative',
+                    overflow: 'hidden',
+                  }}
+                >
+                  <Box>
+                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                      <LockOutlinedIcon sx={{ mr: 1, fontSize: 32 }} />
+                      <Typography variant="h5" fontWeight="700">
+                        Secure Login
+                      </Typography>
+                    </Box>
+
+                    <Typography variant="h6" fontWeight="600" sx={{ mb: 1 }}>
+                      Welcome Back!
+                    </Typography>
+
+                    <Typography variant="body2" sx={{ opacity: 0.9, mb: 1 }}>
+                      Sign in to access your account and manage your business operations efficiently.
+                    </Typography>
+
+                    <Divider sx={{ bgcolor: 'rgba(255,255,255,0.2)', my: 1 }} />
+
+                    <Typography variant="body2" fontWeight="600" sx={{ mb: 1 }}>
+                      Select Your Role:
+                    </Typography>
+
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+                      {roles.map((r) => (
+                        <Card
+                          key={r.value}
+                          onClick={() => handleRoleSelect(r.value)}
+                          onMouseEnter={() => setIsHovered(r.value)}
+                          onMouseLeave={() => setIsHovered(false)}
+                          sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            p: 1.5,
+                            cursor: 'pointer',
+                            bgcolor: role === r.value ? 'rgba(255, 255, 255, 0.3)' : 'rgba(255,255,255,0.1)',
+                            border: role === r.value ? '1px solid rgba(255,255,255,0.5)' : '1px solid transparent',
+                            transition: 'all 0.3s ease',
+                            backdropFilter: 'blur(10px)',
+                            '&:hover': {
+                              bgcolor: 'rgba(255,255,255,0.2)',
+                              transform: 'translateX(5px)',
+                            },
+                          }}
+                        >
+                          <Avatar sx={{
+                            bgcolor: 'rgba(255,255,255,0.9)',
+                            width: 32,
+                            height: 32,
+                            mr: 2,
+                            color: '#3A7BD5'
+                          }}>
+                            {r.icon}
+                          </Avatar>
+                          <Typography fontWeight={500} fontSize="0.95rem" sx={{ userSelect: 'none', color: 'white', fontWeight: '700' }}>
+                            {r.label}
+                          </Typography>
+                        </Card>
+                      ))}
+                    </Box>
+                  </Box>
+
+                  <Typography variant="caption" sx={{ opacity: 0.7, display: 'block', mt: 2 }}>
+                    © {currentYear} prasyst. All rights reserved.
+                  </Typography>
+                </Box>
+
+                <Box
+                  sx={{
+                    width: { xs: '100%', sm: '60%' },
+                    padding: { xs: 3, sm: 4 },
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <Box textAlign="center" sx={{ mb: 1.5 }}>
+                    <Image
+                      src="/images/logo.jpg"
+                      alt="Profile"
+                      width={250}
+                      height={100}
+                    />
+
+                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mt: 1 }}>
+                      <Image
+                        src="/images/download.png"
+                        alt="Company Logo"
+                        width={50}
+                        height={50}
+                        style={{ marginRight: '0px' }}
+                      />
+
+                      <Box sx={{ textAlign: 'left' }}>
+                        <Typography variant="body2" sx={{
+                          color: '#333',
+                          fontWeight: 500,
+                          lineHeight: 1.2,
+                          fontSize: '0.75rem',
+                          marginBottom: '2px'
+                        }}>
+                          Powered By :-
+                        </Typography>
+                        <Typography variant="body1" sx={{
+                          color: colors[colorIndex],
+                          fontWeight: 700,
+                          lineHeight: 1.1,
+                          fontSize: '0.85rem',
+                          marginBottom: '2px',
+                          transition: 'color 0.5s ease'
+                        }}>
+                          PRATHAM SYSTECH INDIA LTD.
+                        </Typography>
+                        <Typography variant="body2" sx={{
+                          color: '#666',
+                          fontWeight: 500,
+                          lineHeight: 1.2,
+                          fontSize: '0.70rem',
+                          fontStyle: 'italic',
+                          marginBottom: '2px'
+                        }}>
+                          The symbol of business integration
+                        </Typography>
+                        <Typography variant="body2" sx={{
+                          color: '#333',
+                          fontWeight: 600,
+                          lineHeight: 1.2,
+                          fontSize: '0.75rem',
+                          display: 'flex',
+                          alignItems: 'center'
+                        }}>
+                          <WhatsAppIcon sx={{
+                            color: '#25D366',
+                            fontSize: '1rem',
+                            marginRight: '4px'
+                          }} />
+                          8779163857
+                        </Typography>
+                      </Box>
+                    </Box>
+                  </Box>
+
+                  {['user', 'salesman', 'broker'].includes(role) && (
+                    <>
+                      <TextField
+                        label="Username"
+                        variant="outlined"
+                        name="username"
+                        value={form.username}
+                        onChange={handleChange}
+                        fullWidth
+                        size="medium"
+                        className='loginInput'
+                        sx={{
+                          mb: 2,
+                          '& .MuiOutlinedInput-root': {
+                            borderRadius: 2,
+                            backgroundColor: '#f9f9f9',
+                          }
+                        }}
+                      />
+                      <TextField
+                        label="Password"
+                        type={showPwd ? 'text' : 'password'}
+                        variant="outlined"
+                        name="password"
+                        value={form.password}
+                        onChange={handleChange}
+                        fullWidth
+                        size="medium"
+                        InputProps={{
+                          endAdornment: (
+                            <InputAdornment position="end">
+                              <IconButton
+                                aria-label={showPwd ? "Hide password" : "Show password"}
+                                onClick={handleClickShowPassword}
+                                edge="end"
+                                sx={{ color: '#777' }}
+                              >
+                                {showPwd ? <Visibility /> : <VisibilityOff />}
+                              </IconButton>
+                            </InputAdornment>
+                          ),
+                        }}
+                        sx={{
+                          mb: 2,
+                          '& .MuiOutlinedInput-root': {
+                            borderRadius: 2,
+                            backgroundColor: '#f9f9f9',
+                          }
+                        }}
+                      />
+                    </>
+                  )}
+
+                  {role === 'customer' && (
+                    <>
+                      <TextField
+                        label="Mobile Number"
+                        variant="outlined"
+                        name="mobile"
+                        value={form.mobile}
+                        onChange={handleChange}
+                        fullWidth
+                        size="medium"
+                        InputProps={{
+                          startAdornment: (
+                            <InputAdornment position="start">
+                              <PhoneIphoneIcon sx={{ color: '#777' }} />
+                            </InputAdornment>
+                          ),
+                        }}
+                        sx={{
+                          mb: 2,
+                          '& .MuiOutlinedInput-root': {
+                            borderRadius: 2,
+                            backgroundColor: '#f9f9f9',
+                          }
+                        }}
+                      />
+
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2, flexDirection: isMobile ? 'column' : 'row' }}>
+                        {form.mobile.length === 10 && !otpSent && (
+                          <Button
+                            variant="contained"
+                            onClick={handleGenerateOtp}
+                            fullWidth={isMobile}
+                            sx={{
+                              bgcolor: '#3A7BD5',
+                              color: '#fff',
+                              borderRadius: 2,
+                              fontWeight: 600,
+                              textTransform: 'none',
+                              py: 1.2,
+                              boxShadow: '0 4px 8px rgba(58, 123, 213, 0.3)',
+                              '&:hover': {
+                                bgcolor: '#2A5DA8',
+                                boxShadow: '0 6px 12px rgba(58, 123, 213, 0.4)',
+                              },
+                              transition: 'all 0.3s ease',
+                            }}
+                          >
+                            Send OTP
+                          </Button>
+                        )}
+
+                        {otpSent && (
+                          <>
+                            <TextField
+                              label="Enter OTP"
+                              variant="outlined"
+                              name="otp"
+                              value={otp}
+                              onChange={handleChange}
+                              size="medium"
+                              type="tel"
+                              sx={{
+                                flex: 1,
+                                '& .MuiOutlinedInput-root': {
+                                  borderRadius: 2,
+                                  backgroundColor: '#f9f9f9',
+                                }
+                              }}
+                            />
+                            <Button
+                              variant="contained"
+                              onClick={handleVerifyOtp}
+                              sx={{
+                                bgcolor: '#00B761',
+                                color: '#fff',
+                                fontWeight: 600,
+                                borderRadius: 2,
+                                textTransform: 'none',
+                                py: 1.2,
+                                px: 2,
+                                boxShadow: '0 4px 8px rgba(0, 183, 97, 0.3)',
+                                '&:hover': {
+                                  bgcolor: '#009650',
+                                  boxShadow: '0 6px 12px rgba(0, 183, 97, 0.4)',
+                                },
+                                transition: 'all 0.3s ease',
+                              }}
+                            >
+                              Verify
+                            </Button>
+                          </>
+                        )}
+                      </Box>
+                    </>
+                  )}
+
+                  <TextField
+                    select
+                    label="Financial Year"
+                    variant="outlined"
+                    value={selectedYear}
+                    onChange={(e) => setSelectedYear(e.target.value)}
+                    fullWidth
+                    size="medium"
+                    sx={{
+                      mb: 2,
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: 2,
+                        backgroundColor: '#f9f9f9',
+                      }
+                    }}
+                  >
+                    {years.map((year) => (
+                      <MenuItem key={year} value={year}>
+                        {year}
+                      </MenuItem>
+                    ))}
+                  </TextField>
+
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      gap: 2,
+                      justifyContent: 'center',
+                      flexDirection: isMobile ? 'column' : 'row',
+                    }}
+                  >
+                    <Button
+                      variant="contained"
+                      onClick={handleLogin}
+                      disabled={role === 'customer' && !otpSent}
+                      // disabled={
+                      //   (role === 'customer' && (!form.mobile || !otpSent || !otp)) ||
+                      //   (role !== 'customer' && (!form.username.trim() || !form.password.trim()))
+                      // }
+                      sx={buttonStyles}
+                      fullWidth
+                    >
+                      {loading ? 'Signing in...' : 'Sign In'}
+                    </Button>
+                    <Button
+                      variant="outlined"
+                      onClick={() => {
+                        setForm({ username: '', password: '', mobile: '' });
+                        setRole('user');
+                        setOtpSent(false);
+                      }}
+                      sx={{
+                        borderColor: '#ccc',
+                        color: '#b90909ff',
+                        borderRadius: '12px',
+                        fontSize: '1rem',
+                        fontWeight: 600,
+                        textTransform: 'none',
+                        py: 1.5,
+                        '&:hover': {
+                          borderColor: '#999',
+                          color: '#a00303ff',
+                        },
+                        transition: 'all 0.3s ease',
+                      }}
+                      fullWidth
+                    >
+                      Clear
+                    </Button>
+                  </Box>
+                </Box>
+              </>
+            )}
           </Paper>
         </Fade>
       ) : (
