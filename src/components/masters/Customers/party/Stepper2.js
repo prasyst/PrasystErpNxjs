@@ -31,6 +31,19 @@ import SearchIcon from "@mui/icons-material/Search";
 
 const FORM_MODE = getFormMode();
 
+const columns = [
+  { id: 'ADDR', label: 'Address', minWidth: 150 },
+  { id: 'PLACE', label: 'Place', minWidth: 150 },
+  { id: 'CONTACT_PERSON', label: 'Cont Person', minWidth: 150 },
+  { id: 'MOBILE_NO', label: 'Mobile', minWidth: 150 },
+  { id: 'TEL_NO', label: 'Tel No', minWidth: 150 },
+  { id: 'FAX_NO', label: 'Fax', minWidth: 150 },
+  { id: 'E_MAIL', label: 'Email', minWidth: 150 },
+  { id: 'WEBSITE', label: 'Website', minWidth: 150 },
+  { id: 'MOBILE_NO', label: 'MOBILE', minWidth: 150 },
+  { id: 'PINCODE', label: 'Pincode', minWidth: 150 },
+];
+
 const Stepper2 = ({ formData, setFormData, isFormDisabled, rows, setRows, currentPARTY_KEY }) => {
   console.log("Stepper2 full formData:", formData.PartyDtlEntities?.[0]);
 
@@ -40,6 +53,12 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, rows, setRows, curren
   const [isEditButtonDisabled, setIsEditButtonDisabled] = useState(false);
   const [isDeleteButtonDisabled, setIsDeleteButtonDisabled] = useState(false);
   const [mode, setMode] = useState(null);
+  const [filters, setFilters] = useState(
+    columns.reduce((acc, col) => {
+      acc[col.id] = "";
+      return acc;
+    }, {})
+  );
 
   const partyData = formData?.PartyDtlEntities?.[0];
 
@@ -358,25 +377,30 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, rows, setRows, curren
     }));
   };
 
-  const columns = [
-    { id: 'ADDR', label: 'Address', minWidth: 150 },
-    { id: 'PLACE', label: 'Place', minWidth: 150 },
-    { id: 'CONTACT_PERSON', label: 'Cont Person', minWidth: 150 },
-    { id: 'MOBILE_NO', label: 'Mobile', minWidth: 150 },
-    { id: 'TEL_NO', label: 'Tel No', minWidth: 150 },
-    { id: 'FAX_NO', label: 'Fax', minWidth: 150 },
-    { id: 'E_MAIL', label: 'Email', minWidth: 150 },
-    { id: 'WEBSITE', label: 'Website', minWidth: 150 },
-    { id: 'MOBILE_NO', label: 'MOBILE', minWidth: 150 },
-    { id: 'PINCODE', label: 'Pincode', minWidth: 150 },
-  ];
-
   const Buttonsx = {
     backgroundColor: '#39ace2',
     margin: { xs: '0 4px', sm: '0 6px' },
     minWidth: { xs: 40, sm: 46, md: 60 },
     height: { xs: 40, sm: 46, md: 30 },
   };
+
+  const handleFilterChange = (columnId, value) => {
+    setFilters((prev) => ({
+      ...prev,
+      [columnId]: value,
+    }));
+  };
+
+  const filteredRows = rows.filter((row, index) => {
+
+    if (index === 0) return true;
+
+    return columns.every((col) => {
+      const filterValue = filters[col.id].toLowerCase();
+      const cellValue = String(row[col.id] || "").toLowerCase();
+      return cellValue.includes(filterValue);
+    });
+  });
 
   return (
     <>
@@ -387,7 +411,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, rows, setRows, curren
           <Paper
             elevation={1}
             sx={{
-              width: "99.3%",
+              width: "100%",
               borderRadius: 2,
               overflow: "hidden",
               backgroundColor: "#fff",
@@ -395,7 +419,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, rows, setRows, curren
             }}
           >
             <TableContainer component={Paper} sx={{ maxHeight: 160 }}>
-              <Table stickyHeader size="small">
+              <Table stickyHeader size="small" sx={{ tableLayout: "fixed", width: '100%' }}>
                 <TableHead>
                   <TableRow>
                     {columns.map((col) => (
@@ -407,22 +431,53 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, rows, setRows, curren
                           fontSize: "1rem",
                           padding: "2px 4px",
                           borderBottom: "1px solid #ddd",
+                          width: col.minWidth,
+                          maxWidth: col.minWidth,
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap"
                         }}
                       >
-                        <Typography variant="caption">{col.label}</Typography>
+                        <div style={{ display: "flex", flexDirection: "column" }}>
+                          <Typography variant="caption" noWrap
+                            sx={{
+                              fontWeight: "bold",
+                              fontSize: "0.75rem"
+                            }}
+                          >
+                            {col.label}
+                          </Typography>
+                          <TextField
+                            variant="standard"
+                            value={filters[col.id]}
+                            onChange={(e) => handleFilterChange(col.id, e.target.value)}
+                            placeholder="Search"
+                            InputProps={{
+                              disableUnderline: true,
+                              style: {
+                                fontSize: "0.75rem",
+                                marginTop: 1,
+                                background: "#fff",
+                              },
+                            }}
+                            sx={{
+                              width: "100%",
+                            }}
+                          />
+                        </div>
                       </TableCell>
                     ))}
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {rows.map((row, index) => (
+                  {filteredRows.map((row, index) => (
 
                     <TableRow
                       key={index}
                       hover={index !== 0}
                       onClick={index !== 0 ? () => {
                         setSelectedIndex(index);
-                        const selectedRow = rows[index];
+                        const selectedRow = filteredRows[index];
                         setFormData(prev => ({
                           ...prev,
                           PartyDtlEntities: [{ ...selectedRow }]
@@ -445,7 +500,16 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, rows, setRows, curren
                     >
                       {columns.map((col) => (
                         <TableCell key={col.id}
-                          sx={{ fontSize: "0.75rem", padding: "6px 8px", color: index === 0 ? "text.disabled" : "inherit" }}>
+                          sx={{
+                            fontSize: "0.75rem",
+                            padding: "6px 8px",
+                            color: index === 0 ? "text.disabled" : "inherit",
+                            width: col.minWidth,
+                            maxWidth: col.minWidth,
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            whiteSpace: "nowrap"
+                          }}>
                           {row[col.id]}
                         </TableCell>
                       ))}
@@ -998,10 +1062,11 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, rows, setRows, curren
           />
         </Grid>
 
-        <Grid size={{ xs: 12, sm: 6, md: 3 }} sx={{
+        <Grid size={{ xs: 12, sm: 6, md: 6 }} sx={{
           display: 'flex',
           alignItems: 'center',
-          gap: '10px'
+          position: 'relative',
+          left: 4
         }}>
           <RadioGroup
             row
@@ -1025,13 +1090,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, rows, setRows, curren
               value="R" control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
               label={<Typography sx={{ fontSize: '12px' }}>Rs.5</Typography>} />
           </RadioGroup>
-        </Grid>
 
-        <Grid size={{ xs: 12, sm: 6, md: 3 }} sx={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '10px'
-        }}>
           <FormLabel
             sx={{
               fontSize: '12px',
@@ -1039,6 +1098,8 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, rows, setRows, curren
               color: 'black',
               whiteSpace: 'nowrap',
               lineHeight: '1.5',
+              position: 'relative',
+              left: -8,
               display: 'flex',
               alignItems: 'center',
               padding: 0,
@@ -1061,6 +1122,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, rows, setRows, curren
               label={<Typography sx={{ fontSize: '12px' }}>No</Typography>} />
           </RadioGroup>
         </Grid>
+
         <Grid size={{ xs: 12, sm: 6, md: 1 }}></Grid>
 
         <Grid size={{ xs: 12, sm: 6, md: 1 }}></Grid>
@@ -1114,15 +1176,15 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, rows, setRows, curren
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 2 }}>
-        <FormControlLabel
-          control={<Checkbox name="DEFAULT_BRANCH" size="small" checked={partyData?.DEFAULT_BRANCH === "1"}
-            onChange={handleChangeStatus} />}
-          disabled={!isEditButtonDisabled && !isAddButtonDisabled}
-          label="Default Branch"
-          sx={{
-            '& .MuiFormControlLabel-label': { fontSize: '12px' }
-          }}
-        />
+          <FormControlLabel
+            control={<Checkbox name="DEFAULT_BRANCH" size="small" checked={partyData?.DEFAULT_BRANCH === "1"}
+              onChange={handleChangeStatus} />}
+            disabled={!isEditButtonDisabled && !isAddButtonDisabled}
+            label="Default Branch"
+            sx={{
+              '& .MuiFormControlLabel-label': { fontSize: '12px' }
+            }}
+          />
         </Grid>
         <Stack direction="row" spacing={2} sx={{ position: 'relative', left: 198 }}>
           <Button
@@ -1152,7 +1214,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, rows, setRows, curren
             Cancel
           </Button>
         </Stack>
-      </Grid >
+      </Grid>
 
     </>
   )

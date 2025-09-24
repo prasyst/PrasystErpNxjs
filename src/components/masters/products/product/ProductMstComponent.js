@@ -1110,7 +1110,7 @@ const ProductMst = () => {
         </Grid>
 
         <Grid container spacing={0.5}>
-          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+          <Grid size={{ xs: 12, sm: 6, md: 1.5 }}>
             <TextField
               label="Series"
               disabled={isFormDisabled}
@@ -1127,7 +1127,7 @@ const ProductMst = () => {
               }}
             />
           </Grid>
-          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+          <Grid size={{ xs: 12, sm: 6, md: 1.5 }}>
             <TextField
               label="Last Code"
               variant="filled"
@@ -1145,7 +1145,9 @@ const ProductMst = () => {
               }}
             />
           </Grid>
-          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+           <Grid size={{ xs: 12, sm: 6, md: 3 }}></Grid>
+           <Grid size={{ xs: 12, sm: 6, md: 3 }}></Grid>
+          <Grid size={{ xs: 12, sm: 6, md: 1.5 }}>
             <TextField
               label="Code"
               variant="filled"
@@ -1163,7 +1165,7 @@ const ProductMst = () => {
               }}
             />
           </Grid>
-          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+          <Grid size={{ xs: 12, sm: 6, md: 1.5 }}>
             <TextField
               label="PrdSeries"
               variant="filled"
@@ -1181,7 +1183,6 @@ const ProductMst = () => {
               }}
             />
           </Grid>
-
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <AutoVibe
               id="FGCAT_KEY"

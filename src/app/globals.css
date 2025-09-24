@@ -267,3 +267,7 @@ div[class*="Watermark"],
     left: -9999px !important;
 }
 
+.custom-ag-table .ag-header {
+  background-color: #E1BEE7;
+}
+
