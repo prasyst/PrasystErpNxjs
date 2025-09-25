@@ -209,6 +209,8 @@ export default function PartyMstTable() {
               enableCheckbox={true}
               compactMode={true}
               rowHeight={24}
+              headerHeight={30}
+              className="custom-ag-table"
               defaultColDef={{
                 resizable: true,
                 sortable: true,

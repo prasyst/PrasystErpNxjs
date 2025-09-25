@@ -1529,7 +1529,7 @@ const CreditorsSuppliersMst = () => {
         flexDirection: 'column',
         justifyContent: 'center',
         boxSizing: 'border-box',
-        minHeight: '91vh',
+        minHeight: '90vh',
         overflowX: 'hidden',
         overflowY: 'auto'
       }}
@@ -1669,9 +1669,11 @@ const CreditorsSuppliersMst = () => {
           </Tabs>
         </Box>
       </Grid>
-      <Grid sx={{
+      <Grid 
+      sx={{
         marginInline: { xs: '5%', sm: '5%', md: '5%', lg: '5%', xl: '5%' },
-      }}>
+      }}
+      >
 
         {tabIndex === 0 ? (
           <Stepper1
