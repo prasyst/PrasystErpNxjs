@@ -544,7 +544,22 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled }) => {
             }}
           />
         </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 1 }}></Grid>
+        <Grid size={{ xs: 12, sm: 6, md: 1 }}>
+          <Link sx={{ fontSize: '14px', textDecoration: 'none', cursor: 'pointer' }}>
+            <Button
+              component="span"
+              variant="contained"
+              sx={{
+                minHeight: '10px',
+                padding: '1px 4px',
+                marginTop: '7.5px',
+                fontSize: '0.675rem',
+              }}
+            >
+              Verify GSTIN
+            </Button>
+          </Link>
+        </Grid>
 
         <Grid size={{ xs: 12, sm: 6, md: 1 }}></Grid>
         <Grid size={{ xs: 12, sm: 6, md: 2 }}>
@@ -791,39 +806,39 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled }) => {
           alignItems: 'center',
           gap: '3px'
         }}>
-        <TextField
-          type="date"
-          label="Date"
-          variant="filled"
-          fullWidth
-          onChange={handleInputChange}
-          disabled={isFormDisabled}
-          value={clientData?.SETTELEMENT_DT || 0}
-          name="SETTELEMENT_DT"
-          sx={textInputSx}
-          InputLabelProps={{
-            shrink: true,
-          }}
-        />
-        <TextField
-          label="Amount"
-          variant="filled"
-          fullWidth
-          onChange={handleInputChange}
-          value={clientData?.SETTELEMENT_AMT || ""}
-          disabled={isFormDisabled}
-          name="SETTELEMENT_AMT"
-          sx={textInputSx}
-          inputProps={{
-            style: {
-              padding: '6px 8px',
-              fontSize: '12px'
-            },
-          }}
-        />
-      </Grid>
+          <TextField
+            type="date"
+            label="Date"
+            variant="filled"
+            fullWidth
+            onChange={handleInputChange}
+            disabled={isFormDisabled}
+            value={clientData?.SETTELEMENT_DT || 0}
+            name="SETTELEMENT_DT"
+            sx={textInputSx}
+            InputLabelProps={{
+              shrink: true,
+            }}
+          />
+          <TextField
+            label="Amount"
+            variant="filled"
+            fullWidth
+            onChange={handleInputChange}
+            value={clientData?.SETTELEMENT_AMT || ""}
+            disabled={isFormDisabled}
+            name="SETTELEMENT_AMT"
+            sx={textInputSx}
+            inputProps={{
+              style: {
+                padding: '6px 8px',
+                fontSize: '12px'
+              },
+            }}
+          />
+        </Grid>
 
-    </Grid >
+      </Grid >
 
     </>
   )

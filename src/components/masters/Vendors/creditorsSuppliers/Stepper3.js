@@ -192,13 +192,13 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled }) => {
 
         <Grid size={{ xs: 12, sm: 6, md: 2 }}>
           <AutoVibe
-            id="CLIENTCAT_KEY"
+            id="CLIENTGRP_KEY"
             disabled={isFormDisabled}
             getOptionLabel={(option) => option || ''}
             options={[]}
-            label="Category"
-            name="CLIENTCAT_KEY"
-            value={clientData?.CLIENTCAT_KEY || 0}
+            label="Bank"
+            name="CLIENTGRP_KEY"
+            value={clientData?.CLIENTGRP_KEY || 0}
             onChange={handleInputChange}
             sx={DropInputSx}
             inputProps={{
@@ -212,99 +212,95 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled }) => {
 
         <Grid size={{ xs: 12, sm: 6, md: 2 }}>
           <AutoVibe
-            id="SaleType_Id"
-            disabled={isFormDisabled}
-            getOptionLabel={(option) => option || ''}
-            options={[]}
-            label="Sale Type"
-            name="SaleType_Id"
-            value={clientData?.SaleType_Id || ""}
-            onChange={handleInputChange}
-            sx={DropInputSx}
-            inputProps={{
-              style: {
-                padding: '6px 8px',
-                fontSize: '12px',
-              },
-            }}
-          />
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 1 }}></Grid>
-
-        <Grid size={{ xs: 12, sm: 6, md: 1 }}></Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 2 }}>
-          <AutoVibe
-            id="SALEPERSON1_KEY"
-            disabled={isFormDisabled}
-            getOptionLabel={(option) => option || ''}
-            options={[]}
-            label="Salesperson 1"
-            name="SALEPERSON1_KEY"
-            value={clientData?.SALEPERSON1_KEY || 0}
-            onChange={handleInputChange}
-            sx={DropInputSx}
-            inputProps={{
-              style: {
-                padding: '6px 8px',
-                fontSize: '12px',
-              },
-            }}
-          />
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 2 }}>
-          <AutoVibe
-            id="SALEPERSON2_KEY"
-            disabled={isFormDisabled}
-            getOptionLabel={(option) => option || ''}
-            options={[]}
-            label="Salesperson 2"
-            name="SALEPERSON2_KEY"
-            value={clientData?.SALEPERSON2_KEY || 0}
-            onChange={handleInputChange}
-            sx={DropInputSx}
-            inputProps={{
-              style: {
-                padding: '6px 8px',
-                fontSize: '12px',
-              },
-            }}
-          />
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 2 }}>
-          <AutoVibe
-            id="BROKER_KEY"
-            disabled={isFormDisabled}
-            getOptionLabel={(option) => option || ''}
-            options={[]}
-            label="Broker"
-            name="BROKER_KEY"
-            value={clientData?.BROKER_KEY || 0}
-            onChange={handleInputChange}
-            sx={DropInputSx}
-            inputProps={{
-              style: {
-                padding: '6px 8px',
-                fontSize: '12px',
-              },
-            }}
-          />
-        </Grid>
-
-        <Grid size={{ xs: 12, sm: 6, md: 2 }}>
-          <AutoVibe
-            id="BROKER1_KEY"
+            id="CLIENTGRP_KEY"
             disabled={isFormDisabled}
             getOptionLabel={(option) => option || ''}
             options={[]}
             label="Broker1"
-            name="BROKER1_KEY"
-            value={clientData?.BROKER1_KEY || 0}
+            name="CLIENTGRP_KEY"
+            value={clientData?.CLIENTGRP_KEY || 0}
             onChange={handleInputChange}
             sx={DropInputSx}
             inputProps={{
               style: {
                 padding: '6px 8px',
                 fontSize: '12px',
+              },
+            }}
+          />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6, md: 1 }}></Grid>
+
+        <Grid size={{ xs: 12, sm: 6, md: 1 }}></Grid>
+        <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+          <TextField
+            label="Branch"
+            variant="filled"
+            fullWidth
+            onChange={handleInputChange}
+            value={""}
+            disabled={isFormDisabled}
+            name=""
+            sx={textInputSx}
+            inputProps={{
+              style: {
+                padding: '6px 8px',
+                fontSize: '12px'
+              },
+            }}
+          />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+          <TextField
+            label="IFSC Code"
+            variant="filled"
+            fullWidth
+            onChange={handleInputChange}
+            value={""}
+            disabled={isFormDisabled}
+            name=""
+            sx={textInputSx}
+            inputProps={{
+              style: {
+                padding: '6px 8px',
+                fontSize: '12px'
+              },
+            }}
+          />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+          <TextField
+            label="Account No"
+            variant="filled"
+            fullWidth
+            onChange={handleInputChange}
+            value={""}
+            disabled={isFormDisabled}
+            name=""
+            sx={textInputSx}
+            inputProps={{
+              style: {
+                padding: '6px 8px',
+                fontSize: '12px'
+              },
+            }}
+          />
+        </Grid>
+
+        <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+          <TextField
+            label="Chq P.Name"
+            variant="filled"
+            fullWidth
+            onChange={handleInputChange}
+            value={""}
+            disabled={isFormDisabled}
+            name=""
+            sx={textInputSx}
+            inputProps={{
+              style: {
+                padding: '6px 8px',
+                fontSize: '12px'
               },
             }}
           />
@@ -316,7 +312,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled }) => {
             disabled={isFormDisabled}
             getOptionLabel={(option) => option || ''}
             options={[]}
-            label="Transporter"
+            label="Trade Disc"
             name="TRSP_KEY"
             value={clientData?.TRSP_KEY || ""}
             onChange={handleInputChange}
@@ -338,7 +334,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled }) => {
             disabled={isFormDisabled}
             getOptionLabel={(option) => option || ''}
             options={[]}
-            label="Trade Disc"
+            label="Tax Appbl"
             name="TRADE_DISC"
             value={clientData?.TRADE_DISC || 0}
             onChange={handleInputChange}
@@ -353,98 +349,77 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled }) => {
         </Grid>
 
         <Grid size={{ xs: 12, sm: 6, md: 2 }}>
-          <TextField
-            label="Spl Mark Down"
-            variant="filled"
-            fullWidth
-            onChange={handleInputChange}
-            value={""}
+          <AutoVibe
+            id="TRADE_DISC"
             disabled={isFormDisabled}
-            name=""
-            sx={textInputSx}
+            getOptionLabel={(option) => option || ''}
+            options={[]}
+            label="Broker"
+            name="TRADE_DISC"
+            value={clientData?.TRADE_DISC || 0}
+            onChange={handleInputChange}
+            sx={DropInputSx}
             inputProps={{
               style: {
                 padding: '6px 8px',
-                fontSize: '12px'
+                fontSize: '12px',
               },
             }}
           />
         </Grid>
 
-        <Grid size={{ xs: 12, sm: 6, md: 1 }}>
-          <TextField
-            label="Comm Rate"
-            variant="filled"
-            fullWidth
-            onChange={handleInputChange}
-            value={clientData?.COMM_RATE || ""}
+        <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+          <AutoVibe
+            id="TRADE_DISC"
             disabled={isFormDisabled}
-            name="COMM_RATE"
-            sx={textInputSx}
+            getOptionLabel={(option) => option || ''}
+            options={[]}
+            label="Transporter"
+            name="TRADE_DISC"
+            value={clientData?.TRADE_DISC || 0}
+            onChange={handleInputChange}
+            sx={DropInputSx}
             inputProps={{
               style: {
                 padding: '6px 8px',
-                fontSize: '12px'
+                fontSize: '12px',
               },
             }}
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 2 }}>
-          <FormControlLabel
-            control={<Checkbox name="COMM_ONGROSS" size="small" checked={clientData?.COMM_ONGROSS === "1"}
-              onChange={handleChangeStatus} />}
-            disabled={isFormDisabled}
-            label="Commission On Gross Amt"
-            sx={{
-              margin: 0,
-              '& .MuiFormControlLabel-label': { fontSize: '12px' }
-            }}
-          />
-        </Grid>
-
-        <Grid size={{ xs: 12, sm: 6, md: 2 }} sx={{ display: 'flex', alignItems: 'center' }}>
-          <Link sx={{ fontSize: '14px', textDecoration: 'none', cursor: 'pointer' }}>
-            Update Broker in All Transactions
-          </Link>
-        </Grid>
-
-        <Grid size={{ xs: 12, sm: 6, md: 1 }}>
-          <AutoVibe
-            id="CFORM_FLG"
-            disabled={isFormDisabled}
-            getOptionLabel={(option) => option || ''}
-            options={[]}
-            label="Form Type"
-            name="CFORM_FLG"
-            value={clientData?.CFORM_FLG || 0}
+          <TextField
+            label="Spl Mark Down"
+            variant="filled"
+            fullWidth
             onChange={handleInputChange}
-            sx={DropInputSx}
+            value={clientData?.CR_LIMIT || ""}
+            disabled={isFormDisabled}
+            name="CR_LIMIT"
+            sx={textInputSx}
             inputProps={{
               style: {
                 padding: '6px 8px',
-                fontSize: '12px',
+                fontSize: '12px'
               },
             }}
           />
         </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 1 }}></Grid>
 
-        <Grid size={{ xs: 12, sm: 6, md: 1 }}></Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-          <AutoVibe
-            id="DISC_KEY"
-            disabled={isFormDisabled}
-            getOptionLabel={(option) => option || ''}
-            options={[]}
-            label="Cash Desc"
-            name="DISC_KEY"
-            value={clientData?.DISC_KEY || ""}
+        <Grid size={{ xs: 12, sm: 6, md: 1 }}>
+          <TextField
+            label="Cr Period"
+            variant="filled"
+            fullWidth
             onChange={handleInputChange}
-            sx={DropInputSx}
+            value={clientData?.CR_LIMIT || ""}
+            disabled={isFormDisabled}
+            name="CR_LIMIT"
+            sx={textInputSx}
             inputProps={{
               style: {
                 padding: '6px 8px',
-                fontSize: '12px',
+                fontSize: '12px'
               },
             }}
           />
@@ -468,152 +443,65 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled }) => {
             }}
           />
         </Grid>
-
         <Grid size={{ xs: 12, sm: 6, md: 1 }}>
-          <TextField
-            label="Cr Period Days"
-            variant="filled"
-            fullWidth
-            onChange={handleInputChange}
-            value={clientData?.CR_PERIOD || ""}
-            disabled={isFormDisabled}
-            name="CR_PERIOD"
-            sx={textInputSx}
-            inputProps={{
-              style: {
-                padding: '6px 8px',
-                fontSize: '12px'
-              },
-            }}
-          />
+          <Link sx={{ fontSize: '14px', textDecoration: 'none', cursor: 'pointer' }}>
+            <Button
+              component="span"
+              variant="contained"
+              sx={{
+                minHeight: '10px',
+                padding: '1px 4px',
+                marginTop: '7.5px',
+                fontSize: '0.675rem',
+              }}
+            >
+              Verify GSTIN
+            </Button>
+          </Link>
         </Grid>
-
-        <Grid size={{ xs: 12, sm: 6, md: 3 }} sx={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '10px'
-        }}>
-          <FormLabel
-            sx={{
-              fontSize: '12px',
-              fontWeight: 'bold',
-              color: 'black',
-              whiteSpace: 'nowrap',
-              lineHeight: '1.5',
-              display: 'flex',
-              alignItems: 'center',
-              padding: 0,
-              margin: 0,
-            }}
-            component="legend">Round Off</FormLabel>
-          <RadioGroup
-            row
-            name="RDOFF"
-            onChange={handleInputChange}
-            disabled={isFormDisabled}
-            value={clientData?.RDOFF || ""}
-            sx={{ margin: 0, padding: 0 }}
-          >
-            <FormControlLabel disabled={isFormDisabled}
-              value="N" control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
-              label={<Typography sx={{ fontSize: '12px' }}>None</Typography>} />
-            <FormControlLabel disabled={isFormDisabled}
-              value="NR" control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
-              label={<Typography sx={{ fontSize: '12px' }}>Nearest Re</Typography>} />
-            <FormControlLabel disabled={isFormDisabled}
-              value="R" control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
-              label={<Typography sx={{ fontSize: '12px' }}>Rs.5</Typography>} />
-          </RadioGroup>
-        </Grid>
-
-        <Grid size={{ xs: 12, sm: 6, md: 1 }}>
-          <TextField
-            label="Interest Rate %"
-            variant="filled"
-            fullWidth
-            onChange={handleInputChange}
-            value={clientData?.INT_PERC || ""}
-            disabled={isFormDisabled}
-            name="INT_PERC"
-            sx={textInputSx}
-            inputProps={{
-              style: {
-                padding: '6px 8px',
-                fontSize: '12px'
-              },
-            }}
-          />
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 1 }}></Grid>
 
         <Grid size={{ xs: 12, sm: 6, md: 1 }}></Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 2 }}>
-          <FormControlLabel
-            control={<Checkbox name="STOP_DESP" size="small" checked={clientData?.STOP_DESP === "1"}
-              onChange={handleChangeStatus} />}
-            disabled={isFormDisabled}
-            label="Stop Dispatch"
-            sx={{
-              '& .MuiFormControlLabel-label': { fontSize: '12px' }
-            }}
-          />
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 2 }}>
-          <TextField
-            type="date"
-            label="Date"
-            variant="filled"
-            fullWidth
-            onChange={handleInputChange}
-            disabled={isFormDisabled}
-            value={clientData?.STOP_DESC_DT || 0}
-            name="STOP_DESC_DT"
-            sx={textInputSx}
-            InputLabelProps={{
-              shrink: true,
-            }}
-          />
-        </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-          <TextField
-            label="Reason"
-            variant="filled"
-            fullWidth
-            onChange={handleInputChange}
-            value={""}
+          <AutoVibe
+            id="DISC_KEY"
             disabled={isFormDisabled}
-            name=""
-            sx={textInputSx}
+            getOptionLabel={(option) => option || ''}
+            options={[]}
+            label="Cash Desc"
+            name="DISC_KEY"
+            value={clientData?.DISC_KEY || ""}
+            onChange={handleInputChange}
+            sx={DropInputSx}
             inputProps={{
               style: {
                 padding: '6px 8px',
-                fontSize: '12px'
+                fontSize: '12px',
               },
             }}
           />
         </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 2 }}>
-          <TextField
-            label="Dlv Place"
-            variant="filled"
-            fullWidth
-            onChange={handleInputChange}
-            value={clientData?.DLV_PLACE || ""}
-            disabled={isFormDisabled}
-            name="DLV_PLACE"
-            sx={textInputSx}
-            inputProps={{
-              style: {
-                padding: '6px 8px',
-                fontSize: '12px'
-              },
-            }}
-          />
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 1 }}></Grid>
 
-        <Grid size={{ xs: 12, sm: 6, md: 1 }}></Grid>
         <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+          <AutoVibe
+            id="DISC_KEY"
+            disabled={isFormDisabled}
+            getOptionLabel={(option) => option || ''}
+            options={[]}
+            label="Form Type"
+            name="DISC_KEY"
+            value={clientData?.DISC_KEY || ""}
+            onChange={handleInputChange}
+            sx={DropInputSx}
+            inputProps={{
+              style: {
+                padding: '6px 8px',
+                fontSize: '12px',
+              },
+            }}
+          />
+        </Grid>
+
+        <Grid size={{ xs: 12, sm: 6, md: 1 }}>
           <TextField
             label="Rating"
             variant="filled"
@@ -631,24 +519,16 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled }) => {
             }}
           />
         </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 2 }}>
-          <TextField
-            label="Insurance"
-            variant="filled"
-            fullWidth
-            onChange={handleInputChange}
-            value={clientData?.INSURANCE || ""}
-            disabled={isFormDisabled}
-            name="INSURANCE"
-            sx={textInputSx}
-            inputProps={{
-              style: {
-                padding: '6px 8px',
-                fontSize: '12px'
-              },
-            }}
-          />
+
+        <Grid size={{ xs: 12, sm: 6, md: 3 }} sx={{ display: 'flex', alignItems: 'center' }}>
+          <Typography sx={{ fontSize: '14px', textDecoration: 'none', cursor: 'pointer', color: '#8B0000' }}>
+            Enter 'Z' to ignore FG Inward in Stock Aging
+          </Typography>
         </Grid>
+
+        <Grid size={{ xs: 12, sm: 6, md: 1 }}></Grid>
+
+        <Grid size={{ xs: 12, sm: 6, md: 1 }}></Grid>
         <Grid size={{ xs: 12, sm: 6, md: 4 }}>
           <TextField
             label="Usage Remark"
@@ -669,28 +549,6 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled }) => {
         </Grid>
 
         <Grid size={{ xs: 12, sm: 6, md: 2 }}>
-          <AutoVibe
-            id="TAX_KEY"
-            disabled={isFormDisabled}
-            getOptionLabel={(option) => option || ''}
-            options={[]}
-            label="Tax Appbl"
-            name="TAX_KEY"
-            value={clientData?.TAX_KEY || ""}
-            onChange={handleInputChange}
-            sx={DropInputSx}
-            inputProps={{
-              style: {
-                padding: '6px 8px',
-                fontSize: '12px',
-              },
-            }}
-          />
-        </Grid>
-
-        <Grid size={{ xs: 12, sm: 6, md: 1 }}></Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 1 }}></Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 4 }}>
           <TextField
             label="Area"
             variant="filled"
@@ -708,7 +566,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled }) => {
             }}
           />
         </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+        <Grid size={{ xs: 12, sm: 6, md: 2 }}>
           <TextField
             label="Product"
             variant="filled"
@@ -726,6 +584,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled }) => {
             }}
           />
         </Grid>
+
         <Grid size={{ xs: 12, sm: 6, md: 2 }}>
           <TextField
             label="Party Target"
@@ -744,18 +603,19 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled }) => {
             }}
           />
         </Grid>
+
         <Grid size={{ xs: 12, sm: 6, md: 1 }}></Grid>
 
         <Grid size={{ xs: 12, sm: 6, md: 1 }}></Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+        <Grid size={{ xs: 12, sm: 6, md: 6 }}>
           <TextField
-            label="Spl Instruction"
+            label="Profile"
             variant="filled"
             fullWidth
             onChange={handleInputChange}
-            value={clientData?.SPL_INSTR || ""}
+            value={clientData?.TARGET_PERC || ""}
             disabled={isFormDisabled}
-            name="SPL_INSTR"
+            name="TARGET_PERC"
             sx={doubleInputSx}
             inputProps={{
               style: {
@@ -766,64 +626,9 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled }) => {
           />
         </Grid>
 
-        <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-          <TextField
-            label="Settlement Remark"
-            variant="filled"
-            fullWidth
-            onChange={handleInputChange}
-            value={clientData?.SETTELEMENT_REMK || ""}
-            disabled={isFormDisabled}
-            name="SETTELEMENT_REMK"
-            sx={doubleInputSx}
-            inputProps={{
-              style: {
-                padding: '6px 8px',
-                fontSize: '12px'
-              },
-            }}
-          />
-        </Grid>
+        <Grid size={{ xs: 12, sm: 6, md: 5 }}></Grid>
 
-        <Grid size={{ xs: 12, sm: 6, md: 2 }} sx={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: '3px'
-        }}>
-        <TextField
-          type="date"
-          label="Date"
-          variant="filled"
-          fullWidth
-          onChange={handleInputChange}
-          disabled={isFormDisabled}
-          value={clientData?.SETTELEMENT_DT || 0}
-          name="SETTELEMENT_DT"
-          sx={textInputSx}
-          InputLabelProps={{
-            shrink: true,
-          }}
-        />
-        <TextField
-          label="Amount"
-          variant="filled"
-          fullWidth
-          onChange={handleInputChange}
-          value={clientData?.SETTELEMENT_AMT || ""}
-          disabled={isFormDisabled}
-          name="SETTELEMENT_AMT"
-          sx={textInputSx}
-          inputProps={{
-            style: {
-              padding: '6px 8px',
-              fontSize: '12px'
-            },
-          }}
-        />
-      </Grid>
-
-    </Grid >
+      </Grid >
 
     </>
   )
