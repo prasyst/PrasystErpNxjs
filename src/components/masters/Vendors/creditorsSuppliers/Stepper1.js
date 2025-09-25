@@ -618,7 +618,7 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 1 }}></Grid>
-        
+
         <Grid size={{ xs: 12, sm: 6, md: 1 }}></Grid>
         <Grid size={{ xs: 12, sm: 6, md: 2 }} sx={{
           display: 'flex',
@@ -733,7 +733,7 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 1 }}></Grid>
-        
+
         <Grid size={{ xs: 12, sm: 6, md: 1 }}></Grid>
         <Grid size={{ xs: 12, sm: 6, md: 2 }}>
           <TextField
@@ -819,7 +819,7 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
             }}
           />
         </Grid>
-        
+
         <Grid size={{ xs: 12, sm: 6, md: 1 }}></Grid>
         <Grid size={{ xs: 12, sm: 6, md: 4 }}>
           <TextField
@@ -962,7 +962,7 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
         </Grid>
 
         <Grid size={{ xs: 12, sm: 6, md: 1 }}></Grid>
-        
+
         <Grid size={{ xs: 12, sm: 6, md: 1 }}></Grid>
         <Grid size={{ xs: 12, sm: 6, md: 4 }}>
           <TextField
@@ -1002,13 +1002,13 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 2 }}>
           <AutoVibe
-            id="TCS_TERM_KEY"
+            id="CO_ID"
             disabled={isFormDisabled}
             getOptionLabel={(option) => option || ''}
             options={[]}
-            label="TCS"
-            name="TCS_TERM_KEY"
-            value={formData?.TCS_TERM_KEY || 0}
+            label="Company"
+            name="CO_ID"
+            value={formData?.CO_ID || 0}
             onChange={handleInputChange}
             sx={DropInputSx}
             inputProps={{
@@ -1048,7 +1048,7 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
             }}
           />
         </Grid>
-        
+
         <Grid size={{ xs: 12, sm: 6, md: 1 }}></Grid>
         <Grid size={{ xs: 12, sm: 6, md: 2 }}>
           <AutoVibe
@@ -1100,46 +1100,76 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 2 }} sx={{ display: 'flex', alignItems: 'center' }}>
-            <Link sx={{ fontSize: '14px', textDecoration: 'none', cursor: 'pointer' }}>
+          <Link sx={{ fontSize: '14px', textDecoration: 'none', cursor: 'pointer' }}>
+            <Button
+              component="span"
+              variant="contained"
+              sx={{
+                minHeight: '10px',
+                padding: '1px 4px',
+                fontSize: '0.675rem',
+              }}
+            >
               Verify GSTIN
-            </Link>
-            <Link sx={{ fontSize: '14px', textDecoration: 'none', cursor: 'pointer', ml: 8 }}>
+            </Button>
+          </Link>
+          <Link sx={{ fontSize: '14px', textDecoration: 'none', cursor: 'pointer', ml: 4 }}>
+            <Button
+              component="span"
+              variant="contained"
+              sx={{
+                minHeight: '10px',
+                padding: '1px 4px',
+                fontSize: '0.675rem',
+              }}
+            >
               Cust Card
-            </Link>
+            </Button>
+          </Link>
         </Grid>
 
         <Grid size={{ xs: 12, sm: 6, md: 1 }} sx={{ display: 'flex', alignItems: 'center' }}>
-          <Link sx={{ fontSize: '14px', textDecoration: 'none', cursor: 'pointer', ml: 8 }}>
-            Document
+          <Link sx={{ fontSize: '14px', textDecoration: 'none', cursor: 'pointer', ml: 1 }}>
+            <Button
+              component="span"
+              variant="contained"
+              sx={{
+                minHeight: '10px',
+                padding: '1px 4px',
+                backgroundColor: '#6C757D',
+                fontSize: '0.675rem',
+              }}
+            >
+              Document
+            </Button>
           </Link>
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 2 }}></Grid>
         <Grid size={{ xs: 12, sm: 6, md: 1 }}></Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-          <AutoVibe
-            id="CO_ID"
-            disabled={isFormDisabled}
-            getOptionLabel={(option) => option || ''}
-            options={[]}
-            label="Company"
-            name="CO_ID"
-            value={formData?.CO_ID || 0}
-            onChange={handleInputChange}
-            sx={DropInputSx}
-            inputProps={{
-              style: {
-                padding: '6px 8px',
-                fontSize: '12px',
-              },
-            }}
-          />
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }} sx={{
+
+        <Grid size={{ xs: 12, sm: 6, md: 6 }} sx={{
           display: 'flex',
           alignItems: 'center',
           gap: '10px'
         }}>
           <FormLabel sx={{ margin: '7px 14px 0px 2px', fontSize: '12px', fontWeight: 'bold', color: 'black' }} component="legend">Entity under SEZ</FormLabel>
+          <RadioGroup
+            row
+            name="SEZ"
+            onChange={handleInputChange}
+            disabled={isFormDisabled}
+            value={formData?.SEZ || ""}
+            sx={{ margin: '5px 0px 0px 0px' }}
+          >
+            <FormControlLabel disabled={isFormDisabled}
+              value="Y" control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
+              label={<Typography sx={{ fontSize: '12px' }}>Yes</Typography>} />
+            <FormControlLabel disabled={isFormDisabled}
+              value="N" control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
+              label={<Typography sx={{ fontSize: '12px' }}>No</Typography>} />
+          </RadioGroup>
+
+          <FormLabel sx={{ margin: '7px 14px 0px 2px', fontSize: '12px', fontWeight: 'bold', color: 'black' }} component="legend">Internal Process</FormLabel>
           <RadioGroup
             row
             name="SEZ"

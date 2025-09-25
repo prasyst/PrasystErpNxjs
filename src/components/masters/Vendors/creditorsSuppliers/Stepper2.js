@@ -9,6 +9,7 @@ import {
   Radio,
   RadioGroup,
   Checkbox,
+  Link,
   Grid, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, TextField, InputAdornment
 } from '@mui/material';
 import { useSearchParams, useRouter } from 'next/navigation';
@@ -1121,6 +1122,19 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, rows, setRows, curren
               value="N" control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
               label={<Typography sx={{ fontSize: '12px' }}>No</Typography>} />
           </RadioGroup>
+          <Link sx={{ fontSize: '14px', textDecoration: 'none', cursor: 'pointer' }}>
+            <Button
+              component="span"
+              variant="contained"
+              sx={{
+                minHeight: '10px',
+                padding: '1px 4px',
+                fontSize: '0.675rem',
+              }}
+            >
+              Verify GSTIN
+            </Button>
+          </Link>
         </Grid>
 
         <Grid size={{ xs: 12, sm: 6, md: 1 }}></Grid>

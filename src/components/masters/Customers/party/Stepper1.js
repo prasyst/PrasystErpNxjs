@@ -618,7 +618,7 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 1 }}></Grid>
-        
+
         <Grid size={{ xs: 12, sm: 6, md: 1 }}></Grid>
         <Grid size={{ xs: 12, sm: 6, md: 2 }} sx={{
           display: 'flex',
@@ -733,7 +733,7 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 1 }}></Grid>
-        
+
         <Grid size={{ xs: 12, sm: 6, md: 1 }}></Grid>
         <Grid size={{ xs: 12, sm: 6, md: 2 }}>
           <TextField
@@ -819,7 +819,7 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
             }}
           />
         </Grid>
-        
+
         <Grid size={{ xs: 12, sm: 6, md: 1 }}></Grid>
         <Grid size={{ xs: 12, sm: 6, md: 4 }}>
           <TextField
@@ -962,7 +962,7 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
         </Grid>
 
         <Grid size={{ xs: 12, sm: 6, md: 1 }}></Grid>
-        
+
         <Grid size={{ xs: 12, sm: 6, md: 1 }}></Grid>
         <Grid size={{ xs: 12, sm: 6, md: 4 }}>
           <TextField
@@ -1048,7 +1048,7 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
             }}
           />
         </Grid>
-        
+
         <Grid size={{ xs: 12, sm: 6, md: 1 }}></Grid>
         <Grid size={{ xs: 12, sm: 6, md: 2 }}>
           <AutoVibe
@@ -1100,17 +1100,48 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 2 }} sx={{ display: 'flex', alignItems: 'center' }}>
-            <Link sx={{ fontSize: '14px', textDecoration: 'none', cursor: 'pointer' }}>
+          <Link sx={{ fontSize: '14px', textDecoration: 'none', cursor: 'pointer' }}>
+            <Button
+              component="span"
+              variant="contained"
+              sx={{
+                minHeight: '10px',
+                padding: '1px 4px',
+                fontSize: '0.675rem',
+              }}
+            >
               Verify GSTIN
-            </Link>
-            <Link sx={{ fontSize: '14px', textDecoration: 'none', cursor: 'pointer', ml: 8 }}>
+            </Button>
+          </Link>
+          <Link sx={{ fontSize: '14px', textDecoration: 'none', cursor: 'pointer', ml: 4 }}>
+            <Button
+              component="span"
+              variant="contained"
+              sx={{
+                minHeight: '10px',
+                padding: '1px 4px',
+                fontSize: '0.675rem',
+              }}
+            >
               Cust Card
-            </Link>
+            </Button>
+          </Link>
         </Grid>
 
         <Grid size={{ xs: 12, sm: 6, md: 1 }} sx={{ display: 'flex', alignItems: 'center' }}>
-          <Link sx={{ fontSize: '14px', textDecoration: 'none', cursor: 'pointer', ml: 8 }}>
-            Document
+          <Link sx={{ fontSize: '14px', textDecoration: 'none', cursor: 'pointer', ml: 1 }}>
+            <Button
+              component="span"
+              variant="contained"
+              sx={{
+                minHeight: '10px',
+                padding: '1px 4px',
+                backgroundColor: '#6C757D',
+                fontSize: '0.675rem',
+              }}
+            >
+              Document
+            </Button>
           </Link>
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 2 }}></Grid>
