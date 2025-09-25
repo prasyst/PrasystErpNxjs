@@ -522,7 +522,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled }) => {
 
         <Grid size={{ xs: 12, sm: 6, md: 3 }} sx={{ display: 'flex', alignItems: 'center' }}>
           <Typography sx={{ fontSize: '14px', textDecoration: 'none', cursor: 'pointer', color: '#8B0000' }}>
-            Enter 'Z' to ignore FG Inward in Stock Aging
+            Enter &apos;Z&apos; to ignore FG Inward in Stock Aging
           </Typography>
         </Grid>
 
