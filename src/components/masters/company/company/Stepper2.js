@@ -1,665 +1,1225 @@
 'use client';
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback, Suspense } from 'react';
 import {
   Box,
-  TextField,
   Button,
-  Typography,
-} from "@mui/material";
+  Stack,
+  FormControlLabel,
+  FormLabel,
+  Radio,
+  RadioGroup,
+  Checkbox,
+  Link,
+  Grid, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, TextField, InputAdornment
+} from '@mui/material';
+import { useSearchParams, useRouter } from 'next/navigation';
+import debounce from 'lodash.debounce';
+import { toast, ToastContainer } from 'react-toastify';
+import KeyboardArrowLeftIcon from "@mui/icons-material/KeyboardArrowLeft";
+import NavigateNextIcon from "@mui/icons-material/NavigateNext";
+import CrudButton from '../../../../GlobalFunction/CrudButton';
+import AutoVibe from '../../../../GlobalFunction/CustomAutoComplete/AutoVibe';
+import axiosInstance from '../../../../lib/axios';
+import { getFormMode } from '../../../../lib/helpers';
+import EditableTable from '@/atoms/EditTable';
+import CrudButtons from "@/GlobalFunction/CrudButtons";
+import PaginationButtons from '@/GlobalFunction/PaginationButtons';
+import z from 'zod';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
-import { getFormMode } from "@/lib/helpers";
-import ConfirmDelDialog from "@/GlobalFunction/ConfirmDelDialog";
-import BranchTable from "./BranchTable";
-import { toast } from "react-toastify";
-import CustomAutocomplete from "@/GlobalFunction/CustomAutoComplete/CustomNew";
+import SearchIcon from "@mui/icons-material/Search";
 
 const FORM_MODE = getFormMode();
-const initialFormState = {
-  COBR_ID: "",
-  COBR_NAME: "",
-  PRINT_NAME: "",
-  JURISDICTION: "",
-  COBR_ADD: "",
-  PLACE: "",
-  FAX_NO: "",
-  VAT: "",
-  LBT: "",
-  OTH_ADD: "",
-  BRANCH_OWN_MOBNO: "",
-  COBR_ABRV: "",
-  Image: "",
-  TEL_NO: "",
-  E_MAIL: "",
-  EXCISE_CODE: "",
-  EXCISE_RANG: "",
-  CO_DIV_KEY: "",
-  bank_acc: "",
-  GSTTIN_NO: "",
-  Active: false,
-  PINCODE: "",
-};
 
-const StepperMst2 = ({ TableData, setTableData, IsButtonSubmit, mode, defaultFormValues, onAddBranchAttempt, onAddInReadMode, onEditInReadMode, onDeleteInReadMode }) => {
-  const [selectedRowIndex, setSelectedRowIndex] = useState(null);
-  const [AllButtonDisabled, setAllButtonDisabled] = useState(true);
-  const [AddDisabled, setAddDisabled] = useState(false);
-  const [form, setForm] = useState(initialFormState);
-  const [isEditing, setIsEditing] = useState(false);
-  const [openDialog, setOpenDialog] = useState(false);
+const columns = [
+  { id: 'ADDR', label: 'Address', minWidth: 150 },
+  { id: 'PLACE', label: 'Place', minWidth: 150 },
+  { id: 'CONTACT_PERSON', label: 'Cont Person', minWidth: 150 },
+  { id: 'MOBILE_NO', label: 'Mobile', minWidth: 150 },
+  { id: 'TEL_NO', label: 'Tel No', minWidth: 150 },
+  { id: 'FAX_NO', label: 'Fax', minWidth: 150 },
+  { id: 'E_MAIL', label: 'Email', minWidth: 150 },
+  { id: 'WEBSITE', label: 'Website', minWidth: 150 },
+  { id: 'MOBILE_NO', label: 'MOBILE', minWidth: 150 },
+  { id: 'PINCODE', label: 'Pincode', minWidth: 150 },
+];
+
+const Stepper2 = ({ formData, setFormData, isFormDisabled, rows, setRows, currentPARTY_KEY }) => {
+  console.log("Stepper2 full formData:", formData.PartyDtlEntities?.[0]);
+
+  const [selectedIndex, setSelectedIndex] = useState(null);
+  const [isAddButtonDisabled, setIsAddButtonDisabled] = useState(false);
+  const [isAddFormDisabled, setIsAddFormDisabled] = useState(false);
+  const [isEditButtonDisabled, setIsEditButtonDisabled] = useState(false);
+  const [isDeleteButtonDisabled, setIsDeleteButtonDisabled] = useState(false);
+  const [mode, setMode] = useState(null);
+  const [filters, setFilters] = useState(
+    columns.reduce((acc, col) => {
+      acc[col.id] = "";
+      return acc;
+    }, {})
+  );
+
+  const partyData = formData?.PartyDtlEntities?.[0];
 
   useEffect(() => {
-    setAddDisabled(TableData.length === 0);
-  }, [TableData]);
+    if (formData?.PartyDtlEntities?.length && rows.length === 0) {
+      setRows(formData?.PartyDtlEntities);
+    }
+  }, [formData]);
 
-  const columns = [
-    { id: 'COBR_NAME', label: 'Branch', minWidth: 200 },
-    { id: 'COBR_ID', label: 'Code', minWidth: 120 },
-    { id: 'COBR_ABRV', label: 'Abvr', minWidth: 120 },
-    { id: 'PLACE', label: 'Area', minWidth: 180 },
-    { id: 'PINCODE', label: 'PinCode', minWidth: 120 },
-    { id: 'PRINT_NAME', label: 'Print Name', minWidth: 200 },
-    { id: 'COBR_ADD', label: 'Address', minWidth: 250 },
-    { id: 'JURISDICTION', label: 'Jurisdiction', minWidth: 180 },
-    { id: 'FAX_NO', label: 'Fax', minWidth: 140 },
-    { id: 'VAT', label: 'Vat', minWidth: 140 },
-    { id: 'LBT', label: 'Lbt', minWidth: 140 },
-    { id: 'OTH_ADD', label: 'Work Add', minWidth: 180 },
-    { id: 'BRANCH_OWN_MOBNO', label: 'Owner Mob', minWidth: 180 },
-    { id: 'Image', label: 'Image', minWidth: 120 },
-    { id: 'TEL_NO', label: 'Tel', minWidth: 140 },
-    { id: 'E_MAIL', label: 'Email', minWidth: 200 },
-    { id: 'EXCISE_CODE', label: 'Excise Code', minWidth: 140 },
-    { id: 'EXCISE_RANG', label: 'Excise Rang', minWidth: 140 },
-    { id: 'CO_DIV_KEY', label: 'Co Division', minWidth: 180 },
-    { id: 'bank_acc', label: 'Bank Details', minWidth: 250 },
-    { id: 'GSTTIN_NO', label: 'GSTTIN NO', minWidth: 180 },
-    { id: 'Active', label: 'Active', minWidth: 80, align: 'center' },
-  ];
+  const textInputSx = {
+    '& .MuiInputBase-root': {
+      height: 36,
+      fontSize: '14px',
+    },
+    '& .MuiInputLabel-root': {
+      fontSize: '14px',
+      top: '-8px',
+    },
+    '& .MuiFilledInput-root': {
+      backgroundColor: '#fafafa',
+      border: '1px solid #e0e0e0',
+      borderRadius: '6px',
+      overflow: 'hidden',
+      height: 36,
+      fontSize: '14px',
+    },
+    '& .MuiFilledInput-root:before': {
+      display: 'none',
+    },
+    '& .MuiFilledInput-root:after': {
+      display: 'none',
+    },
+    '& .MuiInputBase-input': {
+      padding: '10px 12px !important',
+      fontSize: '14px !important',
+      lineHeight: '1.4',
+    },
+    '& .MuiFilledInput-root.Mui-disabled': {
+      backgroundColor: '#fff'
+    }
+  };
 
-  const fieldNameMap = {
-    "Print Name": "PRINT_NAME",
-    "Jurisdiction": "JURISDICTION",
-    "Address": "COBR_ADD",
-    "Place": "PLACE",
-    "PinCode": "PINCODE",
-    "Fax": "FAX_NO",
-    "VAT": "VAT",
-    "LBT": "LBT",
-    "WorkAddr": "OTH_ADD",
-    "OwnerMobNo": "BRANCH_OWN_MOBNO",
-    "Email": "E_MAIL",
-    "ExciseCd": "EXCISE_CODE",
-    "ExciseRng": "EXCISE_RANG",
-    "CoDivision": "CO_DIV_KEY",
-    "BankDetails": "bank_acc",
-    "GSTTINNO": "GSTTIN_NO",
+  const doubleInputSx = {
+    '& .MuiInputBase-root': {
+      height: 76,
+      fontSize: '14px',
+    },
+    '& .MuiInputLabel-root': {
+      fontSize: '14px',
+      top: '-8px',
+    },
+    '& .MuiFilledInput-root': {
+      backgroundColor: '#fafafa',
+      border: '1px solid #e0e0e0',
+      borderRadius: '6px',
+      overflow: 'hidden',
+      height: 76,
+      fontSize: '14px',
+    },
+    '& .MuiFilledInput-root:before': {
+      display: 'none',
+    },
+    '& .MuiFilledInput-root:after': {
+      display: 'none',
+    },
+    '& .MuiInputBase-input': {
+      padding: '10px 12px !important',
+      fontSize: '14px !important',
+      lineHeight: '1.4',
+    },
+    '& .MuiFilledInput-root.Mui-disabled': {
+      backgroundColor: '#fff'
+    }
+  };
+
+  const DropInputSx = {
+    '& .MuiInputBase-root': {
+      height: 36,
+      fontSize: '14px',
+    },
+    '& .MuiInputLabel-root': {
+      fontSize: '14px',
+      top: '-4px',
+    },
+    '& .MuiFilledInput-root': {
+      backgroundColor: '#fafafa',
+      border: '1px solid #e0e0e0',
+      borderRadius: '6px',
+      overflow: 'hidden',
+      height: 36,
+      fontSize: '14px',
+      paddingRight: '36px',
+    },
+    '& .MuiFilledInput-root:before': {
+      display: 'none',
+    },
+    '& .MuiFilledInput-root:after': {
+      display: 'none',
+    },
+    '& .MuiInputBase-input': {
+      padding: '10px 12px',
+      fontSize: '14px',
+      lineHeight: '1.4',
+    },
+    '& .MuiAutocomplete-endAdornment': {
+      top: '50%',
+      transform: 'translateY(-50%)',
+      right: '10px',
+    },
+    '& .MuiFilledInput-root.Mui-disabled': {
+      backgroundColor: '#fff'
+    }
+  };
+
+  // const handleInputChange = (e) => {
+  //   const { name, value } = e.target;
+  //   setFormData(prev => ({
+  //     ...prev,
+  //     PartyDtlEntities: [{ ...prev?.PartyDtlEntities?.[0], [name]: value }]
+  //   }));
+  // };
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      PartyDtlEntities: [
+        {
+          ...(prev?.PartyDtlEntities?.[0] || {}),
+          [name]: value,
+        },
+        ...(prev?.PartyDtlEntities?.slice(1) || []),
+      ],
+    }));
+  };
+
+  const handleAdd = () => {
+    setFormData(prev => ({
+      ...prev,
+      PartyDtlEntities: [{
+        DBFLAG: 'I',
+        PARTYDTL_ID: 0,
+        PARTY_KEY: currentPARTY_KEY,
+        ADDR: "",
+        CONT_KEY: "CN001",
+        CITY_KEY: "CT004",
+        TEL_NO: "",
+        FAX_NO: "",
+        E_MAIL: "",
+        WEBSITE: "",
+        CONTACT_PERSON: "",
+        MOBILE_NO: "",
+        SST: "",
+        CST: "",
+        EXCISE_CODE: "",
+        REMK: "",
+        STATUS: "",
+        PLACE: "Place",
+        VAT: "",
+        MAIN_BRANCH: "",
+        RD_URD: "",
+        PINCODE: "",
+        GSTTIN_NO: "",
+        TAX_KEY: 0,
+        TERM_KEY: "",
+        TRSP_KEY: 0,
+        TRADE_DISC: 0,
+        RDOFF: "",
+        CFORM_FLG: 0,
+        PARTY_ALT_CODE: "",
+        ORD_SYNCSTATUS: "",
+        SEZ: "",
+        DEFAULT_BRANCH: "",
+      }],
+    }));
+
+    setMode('add');
+    setIsAddButtonDisabled(true);
+    setIsEditButtonDisabled(true);
+    setIsDeleteButtonDisabled(true);
+    setSelectedIndex(null);
+  };
+
+  const handleEdit = () => {
+    if (selectedIndex === null) return;
+    const selectedRow = rows[selectedIndex];
+    setFormData(prev => ({
+      ...prev,
+      PartyDtlEntities: [{ ...selectedRow, DBFLAG: 'U' }]
+    }));
+    setMode('edit');
+    setIsEditButtonDisabled(true);
+    setIsAddButtonDisabled(true);
+    setIsDeleteButtonDisabled(true);
   };
 
   const handleDelete = () => {
-    if (selectedRowIndex === 0) {
-      toast.error("The first branch record cannot be deleted.");
-      return;
-    }
-    if (mode === FORM_MODE.read) {
-      if (onDeleteInReadMode) {
-        onDeleteInReadMode();
-      }
-    }
-    setOpenDialog(true);
-  };
-
-  const handleDelCancel = () => {
-    setOpenDialog(false);
-  };
-
-  const handleConfirmDelete = async () => {
-    if (selectedRowIndex !== null) {
-      setAllButtonDisabled(true);
-      setAddDisabled(true);
-      const newList = [...TableData];
-      newList.splice(selectedRowIndex, 1);
-      setTableData(newList);
-      setForm(initialFormState);
-      setSelectedRowIndex(null);
-      setIsEditing(false);
-      setAllButtonDisabled(true);
-      setAddDisabled(false);
-    }
-    setOpenDialog(false);
-  };
-
-  const handleClickAdd = () => {
-    console.log('handleClickAdd - mode:', mode, 'TableData:', TableData, 'TableData.length:', TableData?.length);
-    if (mode === FORM_MODE.add && (!TableData || TableData.length === 0)) {
-      console.log('Triggering onAddBranchAttempt: mode is add and TableData is empty');
-      if (onAddBranchAttempt) {
-        onAddBranchAttempt();
-      }
-      return;
-    }
-
-    if (mode === FORM_MODE.read) {
-      console.log('Switching to edit mode via onAddInReadMode');
-      if (onAddInReadMode) {
-        onAddInReadMode();
-      }
-    }
-
-    console.log('Proceeding to add new branch form');
-    setForm({
-      ...initialFormState,
-      COBR_ID: defaultFormValues.CO_ID || "",
-      COBR_NAME: defaultFormValues.CO_NAME || "",
-      PRINT_NAME: defaultFormValues.CO_NAME || "",
-      PINCODE: defaultFormValues.PINCODE || "",
-    });
-    setAddDisabled(true);
-    setAllButtonDisabled(false);
-    setSelectedRowIndex(null);
-    setIsEditing(true);
-  };
-
-  const handleInputChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    let updates = { [name]: type === "checkbox" ? checked : value };
-
-    if (name === "COBR_NAME") {
-      updates.PRINT_NAME = value;
-    } else if (name === "PRINT_NAME") {
-      updates.COBR_NAME = value;
-    }
-
-    if (["TEL_NO", "BRANCH_OWN_MOBNO", "PINCODE"].includes(name)) {
-      const numericValue = value.replace(/\D/g, "");
-      if (numericValue.length > 15) return;
-      updates[name] = numericValue;
-    }
-
-    if (name === "E_MAIL") {
-      const emailRegex = /^[a-zA-Z0-9._%+-@]*$/;
-      if (!emailRegex.test(value)) return;
-      updates[name] = value;
-    }
-
-    setForm((prev) => ({ ...prev, ...updates }));
-  };
-
-  const handleRowClick = (index) => {
-    setSelectedRowIndex(index);
-    setAllButtonDisabled(index === 0);
-    setForm(TableData[index]);
-    setIsEditing(false);
-    setAddDisabled(false);
-  };
-
-  const handleClickEdit = () => {
-    if (selectedRowIndex === 0) {
-      toast.error("The first branch record cannot be edited.");
-      return;
-    }
-    if (selectedRowIndex !== null) {
-      if (mode === FORM_MODE.read) {
-        if (onEditInReadMode) {
-          onEditInReadMode();
-        }
-      }
-      setIsEditing(true);
-      setAllButtonDisabled(true);
-      setAddDisabled(true);
-    }
+    if (selectedIndex === null) return;
+    const updated = rows.filter((_, i) => i !== selectedIndex);
+    setRows(updated);
+    setSelectedIndex(null);
+    setFormData(prev => ({
+      ...prev,
+      PartyDtlEntities: [{
+        DBFLAG: '',
+        PARTYDTL_ID: "",
+        PARTY_KEY: "",
+        ADDR: "",
+        CONT_KEY: 0,
+        CITY_KEY: 0,
+        TEL_NO: "",
+        FAX_NO: "",
+        E_MAIL: "",
+        WEBSITE: "",
+        CONTACT_PERSON: "",
+        MOBILE_NO: "",
+        SST: "",
+        CST: "",
+        EXCISE_CODE: "",
+        REMK: "",
+        STATUS: "",
+        PLACE: "",
+        VAT: "",
+        MAIN_BRANCH: "",
+        RD_URD: "",
+        PINCODE: "",
+        GSTTIN_NO: "",
+        TAX_KEY: 0,
+        TERM_KEY: "",
+        TRSP_KEY: 0,
+        TRADE_DISC: 0,
+        RDOFF: "",
+        CFORM_FLG: 0,
+        PARTY_ALT_CODE: "",
+        ORD_SYNCSTATUS: "",
+        SEZ: "",
+        DEFAULT_BRANCH: "",
+      }]
+    }));
+    setMode(null);
+    setIsDeleteButtonDisabled(true);
+    setIsAddButtonDisabled(true);
+    setIsEditButtonDisabled(true);
   };
 
   const handleConfirm = () => {
-    if (!form.COBR_ID || !form.COBR_NAME) {
-      alert("Please fill in both COBR_ID and Name");
-      return;
+
+    const currentData = formData?.PartyDtlEntities?.[0];
+    if (!currentData) return;
+
+    if (mode === "add") {
+      setRows([...rows, currentData]);
+    } else if (mode === "edit" && selectedIndex !== null) {
+      const updated = [...rows];
+      updated[selectedIndex] = currentData;
+      setRows(updated);
     }
 
-    setAllButtonDisabled(true);
-    setAddDisabled(true);
-
-    if (selectedRowIndex !== null) {
-      const updatedData = TableData.map((item, index) =>
-        index === selectedRowIndex ? form : item
-      );
-      setTableData(updatedData);
-    } else {
-      setTableData([...TableData, form]);
-    }
-
-    setForm(initialFormState);
-    setSelectedRowIndex(null);
-    setIsEditing(false);
-    setAllButtonDisabled(true);
-    setAddDisabled(false);
+    setSelectedIndex(null);
+    setMode(null);
   };
 
   const handleCancel = () => {
-    setForm(initialFormState);
-    setSelectedRowIndex(null);
-    setIsEditing(false);
-    setAllButtonDisabled(true);
-    setAddDisabled(false);
+    setFormData(prev => ({
+      ...prev,
+      PartyDtlEntities: [{
+        DBFLAG: '',
+        PARTYDTL_ID: "",
+        PARTY_KEY: "",
+        ADDR: "",
+        CONT_KEY: 0,
+        CITY_KEY: 0,
+        TEL_NO: "",
+        FAX_NO: "",
+        E_MAIL: "",
+        WEBSITE: "",
+        CONTACT_PERSON: "",
+        MOBILE_NO: "",
+        SST: "",
+        CST: "",
+        EXCISE_CODE: "",
+        REMK: "",
+        STATUS: "",
+        PLACE: "",
+        VAT: "",
+        MAIN_BRANCH: "",
+        RD_URD: "",
+        PINCODE: "",
+        GSTTIN_NO: "",
+        TAX_KEY: 0,
+        TERM_KEY: "",
+        TRSP_KEY: 0,
+        TRADE_DISC: 0,
+        RDOFF: "",
+        CFORM_FLG: 0,
+        PARTY_ALT_CODE: "",
+        ORD_SYNCSTATUS: "",
+        SEZ: "",
+        DEFAULT_BRANCH: "",
+      }],
+    }));
+    setSelectedIndex(null);
+    setMode(null);
+    setIsAddButtonDisabled(false);
+    setIsEditButtonDisabled(false);
+    setIsDeleteButtonDisabled(false);
   };
 
-  const textFieldSx = {
-    "& .MuiInputBase-root": {
-      paddingTop: "0px",
-      paddingBottom: "0px",
-      fontSize: "0.89rem",
-      minHeight: "20px",
-    },
-    "& .MuiOutlinedInput-input": {
-      padding: "4px 8px",
-      height: "18px",
-    },
+  const handleChangeStatus = (event) => {
+    const { name, checked } = event.target;
+    const updatedStatus = checked ? "1" : "0";
+
+    setFormData(prev => ({
+      ...prev,
+      PartyDtlEntities: [{ ...prev?.PartyDtlEntities?.[0], [name]: updatedStatus }]
+    }));
   };
 
-  const labelWidth = { xs: 100, sm: 120, md: 130 };
-  const inputWidth = { xs: '100%', sm: 350 };
+  const Buttonsx = {
+    backgroundColor: '#39ace2',
+    margin: { xs: '0 4px', sm: '0 6px' },
+    minWidth: { xs: 40, sm: 46, md: 60 },
+    height: { xs: 40, sm: 46, md: 30 },
+  };
+
+  const handleFilterChange = (columnId, value) => {
+    setFilters((prev) => ({
+      ...prev,
+      [columnId]: value,
+    }));
+  };
+
+  const filteredRows = rows.filter((row, index) => {
+
+    if (index === 0) return true;
+
+    return columns.every((col) => {
+      const filterValue = filters[col.id].toLowerCase();
+      const cellValue = String(row[col.id] || "").toLowerCase();
+      return cellValue.includes(filterValue);
+    });
+  });
 
   return (
-    <Box
-      sx={{
-        display: 'flex',
-        flexDirection: 'column',
-        gap: { xs: 0.5, sm: 1 },
-        marginInline: { xs: '0%', sm: '2%', md: '5%', lg: '5%' },
-        marginTop: { xs: '10px', sm: '15px', md: '0px' },
-      }}
-    >
-      <Box
-        sx={{
-          width: "100%",
-          maxWidth: { xs: "100%", sm: "1400px", md: "2000px" },
-          margin: "0 auto",
-          mt: 0,
-          px: { xs: 0, sm: 0 },
-        }}
-      >
-        <BranchTable
-          columns={columns}
-          data={TableData}
-          selectedIndex={selectedRowIndex}
-          onRowClick={handleRowClick}
-        />
-      </Box>
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "flex-start",
-          marginTop: { xs: "8px", sm: "10px", md: "1px" },
-          width: "100%",
-          flexWrap: "nowrap",
-          gap: { xs: 1, sm: 2 },
-          px: 0,
-        }}
-      >
-        <Box sx={{ display: "flex", gap: { xs: "4px", sm: "8px" }, flexWrap: "wrap" }}>
-          <Button
-            variant="contained"
-            size="small"
-            sx={{ backgroundColor: "#39ace2", minWidth: { xs: 40, sm: 48 } }}
-            onClick={handleClickAdd}
-            disabled={AddDisabled || IsButtonSubmit}
-          >
-            <AddIcon />
-          </Button>
-          <Button
-            variant="contained"
-            size="small"
-            sx={{ backgroundColor: "#39ace2", margin: { xs: "0 4px", sm: "0 10px" }, minWidth: { xs: 40, sm: 48 } }}
-            onClick={handleClickEdit}
-            disabled={AllButtonDisabled || IsButtonSubmit}
-          >
-            <EditIcon />
-          </Button>
-          <Button
-            variant="contained"
-            size="small"
-            sx={{ backgroundColor: "#39ace2", minWidth: { xs: 40, sm: 48 } }}
-            onClick={handleDelete}
-            disabled={AllButtonDisabled || IsButtonSubmit}
-          >
-            <DeleteIcon />
-          </Button>
-        </Box>
-        <Box
-          sx={{
-            display: "flex",
-            flexDirection: "row",
-            alignItems: "flex-start",
-            gap: { xs: 0.5, sm: 1 },
-            marginTop: { xs: 1, sm: 0 },
-            width: { xs: '100%', sm: 350 },
-            minWidth: { xs: 'auto', sm: 300 },
-          }}
-        >
-          <Typography sx={{ width: { xs: 100, sm: 110, md: 140 }, fontSize: { xs: "0.8rem", sm: "0.875rem" }, fontWeight: 540 }}>
-            Bank Details:
-          </Typography>
-          <TextField
-            size="small"
-            name="bank_acc"
-            value={form.bank_acc}
-            onChange={handleInputChange}
-            disabled={!isEditing}
-            multiline
-            rows={2}
+    <>
+
+      <Grid container spacing={0.5}>
+        
+        <Grid size={{ xs: 12, sm: 6, md: 12 }}>
+          <Paper
+            elevation={1}
             sx={{
-              width: inputWidth,
-              "& .MuiOutlinedInput-root": { padding: { xs: 0.5, sm: 1 } },
-              "& .MuiOutlinedInput-inputMultiline": { overflowY: "auto", padding: { xs: "6px", sm: "8px" } },
+              width: "100%",
+              borderRadius: 2,
+              overflow: "hidden",
+              backgroundColor: "#fff",
+              border: "1px solid #e0e0e0",
+            }}
+          >
+            <TableContainer component={Paper} sx={{ maxHeight: 160 }}>
+              <Table stickyHeader size="small" sx={{ tableLayout: "fixed", width: '100%' }}>
+                <TableHead>
+                  <TableRow>
+                    {columns.map((col) => (
+                      <TableCell
+                        key={col.id}
+                        sx={{
+                          backgroundColor: "#f5f5f5",
+                          fontWeight: "bold",
+                          fontSize: "1rem",
+                          padding: "2px 4px",
+                          borderBottom: "1px solid #ddd",
+                          width: col.minWidth,
+                          maxWidth: col.minWidth,
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap"
+                        }}
+                      >
+                        <div style={{ display: "flex", flexDirection: "column" }}>
+                          <Typography variant="caption" noWrap
+                            sx={{
+                              fontWeight: "bold",
+                              fontSize: "0.75rem"
+                            }}
+                          >
+                            {col.label}
+                          </Typography>
+                          <TextField
+                            variant="standard"
+                            value={filters[col.id]}
+                            onChange={(e) => handleFilterChange(col.id, e.target.value)}
+                            placeholder="Search"
+                            InputProps={{
+                              disableUnderline: true,
+                              style: {
+                                fontSize: "0.75rem",
+                                marginTop: 1,
+                                background: "#fff",
+                              },
+                            }}
+                            sx={{
+                              width: "100%",
+                            }}
+                          />
+                        </div>
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {filteredRows.map((row, index) => (
+
+                    <TableRow
+                      key={index}
+                      hover={index !== 0}
+                      onClick={index !== 0 ? () => {
+                        setSelectedIndex(index);
+                        const selectedRow = filteredRows[index];
+                        setFormData(prev => ({
+                          ...prev,
+                          PartyDtlEntities: [{ ...selectedRow }]
+                        }));
+                      } : undefined}
+                      selected={index !== 0 && selectedIndex === index}
+                      disabled={isFormDisabled}
+                      sx={{
+                        backgroundColor:
+                          index === 0
+                            ? "#f5f5f5"
+                            : selectedIndex === index
+                              ? "#e3f2fd"
+                              : index % 2 === 0
+                                ? "#fafafa"
+                                : "#fff",
+                        cursor: index === 0 ? "not-allowed" : "pointer",
+                        opacity: index === 0 ? 0.5 : 1
+                      }}
+                    >
+                      {columns.map((col) => (
+                        <TableCell key={col.id}
+                          sx={{
+                            fontSize: "0.75rem",
+                            padding: "6px 8px",
+                            color: index === 0 ? "text.disabled" : "inherit",
+                            width: col.minWidth,
+                            maxWidth: col.minWidth,
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            whiteSpace: "nowrap"
+                          }}>
+                          {row[col.id]}
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </Paper>
+        </Grid>
+
+        
+        <Grid size={{ xs: 12, sm: 6, md: 12 }}>
+          <Stack direction="row" spacing={2}>
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={handleAdd}
+              disabled={isFormDisabled || isAddButtonDisabled}
+              sx={{
+                backgroundColor: '#007bff',
+                margin: { xs: '0 4px', sm: '0 6px' },
+                minWidth: { xs: 40, sm: 46, md: 60 },
+                height: { xs: 40, sm: 46, md: 30 },
+              }}
+            >
+              Add
+            </Button>
+
+            <Button
+              variant="contained"
+              startIcon={<EditIcon />}
+              onClick={handleEdit}
+              disabled={isFormDisabled || isEditButtonDisabled}
+              sx={{
+                backgroundColor: '#20c997',
+                margin: { xs: '0 4px', sm: '0 6px' },
+                minWidth: { xs: 40, sm: 46, md: 60 },
+                height: { xs: 40, sm: 46, md: 30 },
+              }}
+            >
+              Edit
+            </Button>
+
+            <Button
+              variant="contained"
+              startIcon={<DeleteIcon />}
+              onClick={handleDelete}
+              disabled={isFormDisabled || isDeleteButtonDisabled}
+              sx={{
+                backgroundColor: '#dc3545',
+                margin: { xs: '0 4px', sm: '0 6px' },
+                minWidth: { xs: 40, sm: 46, md: 60 },
+                height: { xs: 40, sm: 46, md: 30 },
+              }}
+            >
+              Delete
+            </Button>
+          </Stack>
+        </Grid>
+
+
+        <Grid size={{ xs: 12, sm: 6, md: 6 }}>
+          <TextField
+            label="Address"
+            variant="filled"
+            fullWidth
+            onChange={handleInputChange}
+            value={partyData?.ADDR}
+            disabled={!isEditButtonDisabled && !isAddButtonDisabled}
+            name="ADDR"
+            sx={doubleInputSx}
+            inputProps={{
+              style: {
+                padding: '6px 8px',
+                fontSize: '12px'
+              },
             }}
           />
-        </Box>
-      </Box>
-      <Box sx={{ display: "flex", justifyContent: "center", flexDirection: { xs: 'column', sm: 'row' }, gap: { xs: 1, sm: 4 }, marginTop: { xs: "8px", sm: "10px", md: "1px" }, alignItems: "flex-start", marginInline: { xs: '0%', sm: '0%', md: "0%" }, px: 0 }}>
-        <Box sx={{ display: "flex", flexDirection: "column", gap: { xs: 0.5, sm: 0.5 }, width: { xs: '100%', sm: 'auto' }, minWidth: { xs: 'auto', sm: 400 } }}>
-          {[
-            {
-              label: "Name",
-              custom: (
-                <>
-                  <TextField
-                    size="small"
-                    name="COBR_ID"
-                    value={form.COBR_ID}
-                    onChange={handleInputChange}
-                    disabled={!isEditing}
-                    sx={{ width: { xs: 60, sm: 45, md: 90 }, ...textFieldSx }}
-                  />
-                  <TextField
-                    size="small"
-                    name="COBR_NAME"
-                    value={form.COBR_NAME}
-                    onChange={handleInputChange}
-                    disabled={!isEditing}
-                    sx={{ width: { xs: 'calc(100% - 70px)', sm: 250 }, ...textFieldSx }}
-                  />
-                </>
-              ),
-            },
-            {
-              label: "Print Name",
-              field: "PRINT_NAME",
-            },
-            {
-              label: "Jurisdiction",
-              field: "JURISDICTION",
-            },
-            {
-              label: "Address",
-              field: "COBR_ADD",
-            },
-{
-  label: "Place&Pincode",
-  custom: (
-    <Box
-      sx={{
-        display: "flex",
-        flexDirection: "row",
-        gap: { xs: 0.5, sm: 1 },
-        width: inputWidth, // Match the width of other TextFields
-        alignItems: "center",
-        flexWrap: "nowrap",
-      }}
-    >
-      <TextField
-        size="small"
-        name="PLACE"
-        value={form.PLACE}
-        onChange={handleInputChange}
-        disabled={!isEditing}
-        placeholder="Place"
-        sx={{
-          flex: 1, // Take available space
-          minWidth: { xs: 100, sm: 150, md: 130 }, // Ensure minimum width
-          ...textFieldSx, // Existing styling for consistency
-        }}
-      />
-      <CustomAutocomplete
-        value={form.PINCODE}
-        onChange={(value) =>
-          handleInputChange({ target: { name: "PINCODE", value } })
-        }
-        disabled={!isEditing}
-        placeholder="Pincode"
-        sx={{
-          flex: 1, // Take available space
-          minWidth: { xs: 100, sm: 150, md: 130 }, // Ensure minimum width
-          ...textFieldSx, // Apply same styling as TextField
-          "& .MuiAutocomplete-inputRoot": {
-            padding: "4px 8px", // Match TextField padding
-            height: "26px", // Reduced height
-            minHeight: "20px",
-            fontSize: "0.89rem", // Match TextField font size
-          },
-          "& .MuiAutocomplete-input": {
-            padding: "0 !important", // Remove extra padding in input
-            height: "18px", // Match TextField input height
-          },
-          "& .MuiAutocomplete-endAdornment": {
-            top: "50%", // Center vertically
-            transform: "translateY(-50%)", // Adjust for exact centering
-          },
-        }}
-      />
-    </Box>
-  ),
-},       {
-              label: "Fax",
-              field: "FAX_NO",
-            },
-            {
-              label: "VAT",
-              field: "VAT",
-            },
-            {
-              label: "LBT",
-              field: "LBT",
-            },
-            {
-              label: "WorkAddr",
-              field: "OTH_ADD",
-            },
-            {
-              label: "OwnerMobNo",
-              field: "BRANCH_OWN_MOBNO",
-            },
-          ].map((fieldOrObj) => {
-            const label = fieldOrObj.label || (typeof fieldOrObj === 'string' ? fieldOrObj.replace(/([A-Z])/g, ' $1') : '');
-            const field = fieldOrObj.field || (typeof fieldOrObj === 'string' ? fieldNameMap[fieldOrObj] : null);
-            const custom = fieldOrObj.custom;
+        </Grid>
 
-            return (
-              <Box key={label} sx={{ display: "flex", alignItems: "center", gap: { xs: 0.5, sm: 0.5 }, minWidth: { xs: '100%', sm: 400 } }}>
-                <Typography sx={{ width: labelWidth, textAlign: "left", fontSize: { xs: '0.8rem', sm: '0.875rem' } }}>{label}:</Typography>
-                {custom || (
-                  <TextField
-                    size="small"
-                    name={field}
-                    value={form[field]}
-                    onChange={handleInputChange}
-                    disabled={!isEditing}
-                    multiline={field === "COBR_ADD"}
-                    rows={field === "COBR_ADD" ? 1 : undefined}
-                    sx={{ width: inputWidth, ...textFieldSx }}
-                  />
-                )}
-              </Box>
-            );
-          })}
-        </Box>
-        <Box sx={{ display: "flex", flexDirection: "column", gap: { xs: 0.5, sm: 0.5 }, width: { xs: '100%', sm: 'auto' }, minWidth: { xs: 'auto', sm: 350, md: 540 } }}>
-          {[
-            {
-              label: "Abvr",
-              custom: (
-                <Box sx={{ display: "flex", gap: { xs: 0.5, sm: 0.5 }, minWidth: { xs: '100%', sm: 320, md: 400 } }}>
-                  <TextField
-                    size="small"
-                    name="COBR_ABRV"
-                    value={form.COBR_ABRV}
-                    onChange={handleInputChange}
-                    disabled={!isEditing}
-                    sx={{ width: { xs: 'calc(100% - 100px)', sm: 170, md: 180 }, ...textFieldSx }}
-                  />
-                  <Button variant="text" size="small" onClick={() => setForm(prev => ({ ...prev, Image: "" }))}>
-                    Clear Image
-                  </Button>
-                </Box>
-              ),
-            },
-            {
-              label: "Image",
-              custom: (
-                <Box sx={{
-                  display: "flex",
-                  flexDirection: 'row',
-                  gap: 1,
-                  alignItems: 'center',
-                  minHeight: 50,
-                  marginLeft:2
-                }}>
-                  <Box sx={{
-                    width: 120,
-                    height: 70,
-                    marginLeft: "-12px",
-                    border: "1px solid #ccc",
-                    borderRadius: 1,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontSize: "0.75rem",
-                    color: "#666",
-                    backgroundColor: "#f2f2f2",
-                    flexShrink: 0,
-                  }}>
-                    Image
-                  </Box>
-                  <Box sx={{ display: "flex", flexDirection: 'column', gap: 0 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0 }}>
-                      <Typography sx={{ fontSize: '0.8rem', minWidth: 30 }}>Tel:</Typography>
-                      <TextField
-                        size="small"
-                        name="TEL_NO"
-                        value={form.TEL_NO}
-                        onChange={handleInputChange}
-                        disabled={!isEditing}
-                        placeholder="Tel No"
-                        inputProps={{
-                          inputMode: "numeric",
-                          pattern: "[0-9]*",
-                          maxLength: 15,
-                        }}
-                        sx={{ width: 200, height: 36, ...textFieldSx }}
-                      />
-                    </Box>
-                    <Button variant="text" size="small" sx={{ padding: 0, minHeight: 24, textTransform: 'none' }}>
-                      Browse...
-                    </Button>
-                  </Box>
-                </Box>
-              ),
-            },
-            {
-              label: "Tel",
-              field: "TEL_NO",
-            },
-            {
-              label: "Email",
-              field: "E_MAIL",
-            },
-            {
-              label: "ExciseCd",
-              field: "EXCISE_CODE",
-            },
-            {
-              label: "ExciseRng",
-              field: "EXCISE_RANG",
-            },
-            {
-              label: "CoDivision",
-              field: "CO_DIV_KEY",
-            },
-            {
-              label: "BankDetails",
-              field: "bank_acc",
-            },
-            {
-              label: "GSTTINNO",
-              field: "GSTTIN_NO",
-            },
-            {
-              label: "Active",
-              custom: (
-                <input
-                  type="checkbox"
-                  name="Active"
-                  checked={form.Active}
-                  onChange={handleInputChange}
-                  disabled={!isEditing}
-                />
-              ),
-            },
-          ].map((fieldOrObj) => {
-            const label = fieldOrObj.label || (typeof fieldOrObj === 'string' ? fieldOrObj.replace(/([A-Z])/g, ' $1') : '');
-            const field = fieldOrObj.field || (typeof fieldOrObj === 'string' ? fieldNameMap[fieldOrObj] : null);
-            const custom = fieldOrObj.custom;
+        <Grid size={{ xs: 12, sm: 6, md: 2 }} sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: '3px'
+        }}>
+          <AutoVibe
+            id="CONT_KEY"
+            disabled={!isEditButtonDisabled && !isAddButtonDisabled}
+            getOptionLabel={(option) => option || ''}
+            options={[]}
+            label="Country"
+            name="CONT_KEY"
+            value={partyData?.CONT_KEY || ""}
+            onChange={handleInputChange}
+            sx={DropInputSx}
+            inputProps={{
+              style: {
+                padding: '6px 8px',
+                fontSize: '12px',
+              },
+            }}
+          />
+          <Grid size={{ xs: 12, sm: 6, md: 12 }} sx={{
+            display: 'flex',
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: '3px'
+          }}>
+            <TextField
+              label="Pincode"
+              variant="filled"
+              fullWidth
+              onChange={handleInputChange}
+              value={partyData?.PINCODE || ""}
+              disabled={!isEditButtonDisabled && !isAddButtonDisabled}
+              name="PINCODE"
+              sx={textInputSx}
+              inputProps={{
+                style: {
+                  padding: '6px 8px',
+                  fontSize: '12px'
+                },
+              }}
+            />
+            <AutoVibe
+              id=""
+              disabled={!isEditButtonDisabled && !isAddButtonDisabled}
+              getOptionLabel={(option) => option || ''}
+              options={[]}
+              label="Pincode"
+              name=""
+              value={""}
+              onChange={handleInputChange}
+              sx={DropInputSx}
+              inputProps={{
+                style: {
+                  padding: '6px 8px',
+                  fontSize: '12px',
+                },
+              }}
+            />
+          </Grid>
+        </Grid>
 
-            return (
-              <Box key={label} sx={{ display: "flex", alignItems: "center", gap: { xs: 0.5, sm: 1 }, minWidth: { xs: '100%', sm: 320 } }}>
-                <Typography sx={{ width: labelWidth, textAlign: "left", fontSize: { xs: '0.8rem', sm: '0.875rem' } }}>{label}:</Typography>
-                {custom || (
-                  <TextField
-                    size="small"
-                    name={field}
-                    value={form[field]}
-                    onChange={handleInputChange}
-                    disabled={!isEditing}
-                    multiline={field === "bank_acc"}
-                    rows={field === "bank_acc" ? 1 : undefined}
-                    sx={{ width: inputWidth, ...textFieldSx }}
-                  />
-                )}
-              </Box>
-            );
-          })}
-        </Box>
-      </Box>
-      {isEditing && (
-        <Box sx={{ display: "flex", justifyContent: "flex-end", marginTop: { xs: 1, sm: 0 }, gap: { xs: 1, sm: 2 }, width: "100%", px: 0 }}>
+        <Grid size={{ xs: 12, sm: 6, md: 2 }} sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: '3px'
+        }}>
+          <AutoVibe
+            id=""
+            disabled={!isEditButtonDisabled && !isAddButtonDisabled}
+            getOptionLabel={(option) => option || ''}
+            options={[]}
+            label="State"
+            name=""
+            value={""}
+            onChange={handleInputChange}
+            sx={DropInputSx}
+            inputProps={{
+              style: {
+                padding: '6px 8px',
+                fontSize: '12px',
+              },
+            }}
+          />
+          <TextField
+            label="Tel"
+            variant="filled"
+            fullWidth
+            onChange={handleInputChange}
+            value={partyData?.TEL_NO || ""}
+            disabled={!isEditButtonDisabled && !isAddButtonDisabled}
+            name="TEL_NO"
+            sx={textInputSx}
+            inputProps={{
+              style: {
+                padding: '6px 8px',
+                fontSize: '12px'
+              },
+            }}
+          />
+        </Grid>
+
+        <Grid size={{ xs: 12, sm: 6, md: 2 }} sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: '3px'
+        }}>
+          <AutoVibe
+            id="CITY_KEY"
+            disabled={!isEditButtonDisabled && !isAddButtonDisabled}
+            getOptionLabel={(option) => option || ''}
+            options={[]}
+            label="City/District"
+            name="CITY_KEY"
+            value={partyData?.CITY_KEY || ""}
+            onChange={handleInputChange}
+            sx={DropInputSx}
+            inputProps={{
+              style: {
+                padding: '6px 8px',
+                fontSize: '12px',
+              },
+            }}
+          />
+          <TextField
+            label="Email"
+            variant="filled"
+            fullWidth
+            onChange={handleInputChange}
+            value={partyData?.E_MAIL || ""}
+            disabled={!isEditButtonDisabled && !isAddButtonDisabled}
+            name="E_MAIL"
+            sx={textInputSx}
+            inputProps={{
+              style: {
+                padding: '6px 8px',
+                fontSize: '12px'
+              },
+            }}
+          />
+        </Grid>
+
+        <Grid size={{ xs: 12, sm: 6, md: 6 }}>
+          <TextField
+            label="Cont Person"
+            variant="filled"
+            fullWidth
+            onChange={handleInputChange}
+            value={partyData?.CONTACT_PERSON || ""}
+            disabled={!isEditButtonDisabled && !isAddButtonDisabled}
+            name="CONTACT_PERSON"
+            sx={textInputSx}
+            inputProps={{
+              style: {
+                padding: '6px 8px',
+                fontSize: '12px'
+              },
+            }}
+          />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+          <TextField
+            label="Mobile"
+            variant="filled"
+            fullWidth
+            onChange={handleInputChange}
+            value={partyData?.MOBILE_NO || ""}
+            disabled={!isEditButtonDisabled && !isAddButtonDisabled}
+            name="MOBILE_NO"
+            sx={textInputSx}
+            inputProps={{
+              style: {
+                padding: '6px 8px',
+                fontSize: '12px'
+              },
+            }}
+          />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+          <TextField
+            label="Website"
+            variant="filled"
+            fullWidth
+            onChange={handleInputChange}
+            value={partyData?.WEBSITE || ""}
+            disabled={!isEditButtonDisabled && !isAddButtonDisabled}
+            name="WEBSITE"
+            sx={textInputSx}
+            inputProps={{
+              style: {
+                padding: '6px 8px',
+                fontSize: '12px'
+              },
+            }}
+          />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6, md: 1 }}>
+          <TextField
+            label="Alt Cd"
+            variant="filled"
+            fullWidth
+            onChange={handleInputChange}
+            name=""
+            value={""}
+            disabled={true}
+            sx={textInputSx}
+            inputProps={{
+              style: {
+                padding: '6px 8px',
+                fontSize: '12px',
+              },
+            }}
+          />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6, md: 1 }}>
+          <TextField
+            label="LBT"
+            variant="filled"
+            fullWidth
+            onChange={handleInputChange}
+            name=""
+            value={""}
+            disabled={true}
+            sx={textInputSx}
+            inputProps={{
+              style: {
+                padding: '6px 8px',
+                fontSize: '12px',
+              },
+            }}
+          />
+        </Grid>
+
+        <Grid size={{ xs: 12, sm: 6, md: 2 }} sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: '3px'
+        }}>
+          <TextField
+            label="Fax"
+            variant="filled"
+            fullWidth
+            onChange={handleInputChange}
+            value={partyData?.FAX_NO || ""}
+            disabled={!isEditButtonDisabled && !isAddButtonDisabled}
+            name="FAX_NO"
+            sx={textInputSx}
+            inputProps={{
+              style: {
+                padding: '6px 8px',
+                fontSize: '12px'
+              },
+            }}
+          />
+          <TextField
+            label="Spl Mark Down"
+            variant="filled"
+            fullWidth
+            onChange={handleInputChange}
+            value={""}
+            disabled={!isEditButtonDisabled && !isAddButtonDisabled}
+            name=""
+            sx={textInputSx}
+            inputProps={{
+              style: {
+                padding: '6px 8px',
+                fontSize: '12px'
+              },
+            }}
+          />
+        </Grid>
+
+        <Grid size={{ xs: 12, sm: 6, md: 2 }} sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: '3px'
+        }}>
+          <TextField
+            label="Excise"
+            variant="filled"
+            fullWidth
+            onChange={handleInputChange}
+            value={partyData?.EXCISE_CODE || ""}
+            disabled={!isEditButtonDisabled && !isAddButtonDisabled}
+            name="EXCISE_CODE"
+            sx={textInputSx}
+            inputProps={{
+              style: {
+                padding: '6px 8px',
+                fontSize: '12px'
+              },
+            }}
+          />
+          <AutoVibe
+            id="TRADE_DISC"
+            disabled={!isEditButtonDisabled && !isAddButtonDisabled}
+            getOptionLabel={(option) => option || ''}
+            options={[]}
+            label="Trade Disc"
+            name="TRADE_DISC"
+            value={partyData?.TRADE_DISC || ""}
+            onChange={handleInputChange}
+            sx={DropInputSx}
+            inputProps={{
+              style: {
+                padding: '6px 8px',
+                fontSize: '12px',
+              },
+            }}
+          />
+        </Grid>
+
+        <Grid size={{ xs: 12, sm: 6, md: 2 }} sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: '3px'
+        }}>
+          <TextField
+            label="VAT"
+            variant="filled"
+            fullWidth
+            onChange={handleInputChange}
+            value={partyData?.VAT || ""}
+            disabled={!isEditButtonDisabled && !isAddButtonDisabled}
+            name="VAT"
+            sx={textInputSx}
+            inputProps={{
+              style: {
+                padding: '6px 8px',
+                fontSize: '12px'
+              },
+            }}
+          />
+          <AutoVibe
+            id="TRSP_KEY"
+            disabled={!isEditButtonDisabled && !isAddButtonDisabled}
+            getOptionLabel={(option) => option || ''}
+            options={[]}
+            label="Transporter"
+            name="TRSP_KEY"
+            value={partyData?.TRSP_KEY || 0}
+            onChange={handleInputChange}
+            sx={DropInputSx}
+            inputProps={{
+              style: {
+                padding: '6px 8px',
+                fontSize: '12px',
+              },
+            }}
+          />
+        </Grid>
+
+        <Grid size={{ xs: 12, sm: 6, md: 2 }} sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: '3px'
+        }}>
+          <TextField
+            label="CST"
+            variant="filled"
+            fullWidth
+            onChange={handleInputChange}
+            value={partyData?.CST || ""}
+            disabled={!isEditButtonDisabled && !isAddButtonDisabled}
+            name="CST"
+            sx={textInputSx}
+            inputProps={{
+              style: {
+                padding: '6px 8px',
+                fontSize: '12px'
+              },
+            }}
+          />
+          <AutoVibe
+            id="TAX_KEY"
+            disabled={!isEditButtonDisabled && !isAddButtonDisabled}
+            getOptionLabel={(option) => option || ''}
+            options={[]}
+            label="Tax Appl"
+            name="TAX_KEY"
+            value={partyData?.TAX_KEY || ""}
+            onChange={handleInputChange}
+            sx={DropInputSx}
+            inputProps={{
+              style: {
+                padding: '6px 8px',
+                fontSize: '12px',
+              },
+            }}
+          />
+        </Grid>
+
+        <Grid size={{ xs: 12, sm: 6, md: 4 }} sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: '3px'
+        }}>
+          <AutoVibe
+            id="CFORM_FLG"
+            disabled={!isEditButtonDisabled && !isAddButtonDisabled}
+            getOptionLabel={(option) => option || ''}
+            options={[]}
+            label="Form Type"
+            name="CFORM_FLG"
+            value={partyData?.CFORM_FLG || 0}
+            onChange={handleInputChange}
+            sx={DropInputSx}
+            inputProps={{
+              style: {
+                padding: '6px 8px',
+                fontSize: '12px',
+              },
+            }}
+          />
+          <TextField
+            label="GSTIN No"
+            variant="filled"
+            fullWidth
+            onChange={handleInputChange}
+            value={partyData?.GSTTIN_NO || ""}
+            disabled={!isEditButtonDisabled && !isAddButtonDisabled}
+            name="GSTTIN_NO"
+            sx={textInputSx}
+            inputProps={{
+              style: {
+                padding: '6px 8px',
+                fontSize: '12px'
+              },
+            }}
+          />
+        </Grid>
+
+        <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+          <TextField
+            label="Remark"
+            variant="filled"
+            fullWidth
+            onChange={handleInputChange}
+            value={partyData?.REMK || ""}
+            disabled={!isEditButtonDisabled && !isAddButtonDisabled}
+            name="REMK"
+            sx={textInputSx}
+            inputProps={{
+              style: {
+                padding: '6px 8px',
+                fontSize: '12px'
+              },
+            }}
+          />
+        </Grid>
+
+        <Grid size={{ xs: 12, sm: 6, md: 8 }} sx={{
+          display: 'flex',
+          alignItems: 'center',
+          position: 'relative',
+          left: 4
+        }}>
+          <RadioGroup
+            row
+            name="RDOFF"
+            onChange={handleInputChange}
+            disabled={!isEditButtonDisabled && !isAddButtonDisabled}
+            value={partyData?.RDOFF || ""}
+            sx={{
+              margin: 0, padding: 0,
+              display: 'flex',
+              alignItems: 'center',
+            }}
+          >
+            <FormControlLabel disabled={!isEditButtonDisabled && !isAddButtonDisabled}
+              value="N" control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
+              label={<Typography sx={{ fontSize: '12px' }}>None</Typography>} />
+            <FormControlLabel disabled={!isEditButtonDisabled && !isAddButtonDisabled}
+              value="NR" control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
+              label={<Typography sx={{ fontSize: '12px' }}>Nearest Re</Typography>} />
+            <FormControlLabel disabled={!isEditButtonDisabled && !isAddButtonDisabled}
+              value="R" control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
+              label={<Typography sx={{ fontSize: '12px' }}>Rs.5</Typography>} />
+          </RadioGroup>
+
+          <FormLabel
+            sx={{
+              fontSize: '12px',
+              fontWeight: 'bold',
+              color: 'black',
+              whiteSpace: 'nowrap',
+              lineHeight: '1.5',
+              position: 'relative',
+              left: -8,
+              display: 'flex',
+              alignItems: 'center',
+              padding: 0,
+              margin: 0,
+            }}
+            component="legend">Entity under SEZ</FormLabel>
+          <RadioGroup
+            row
+            name="SEZ"
+            onChange={handleInputChange}
+            disabled={!isEditButtonDisabled && !isAddButtonDisabled}
+            value={partyData?.SEZ || ""}
+            sx={{ margin: 0, padding: 0 }}
+          >
+            <FormControlLabel disabled={!isEditButtonDisabled && !isAddButtonDisabled}
+              value="Y" control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
+              label={<Typography sx={{ fontSize: '12px' }}>Yes</Typography>} />
+            <FormControlLabel disabled={!isEditButtonDisabled && !isAddButtonDisabled}
+              value="N" control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
+              label={<Typography sx={{ fontSize: '12px' }}>No</Typography>} />
+          </RadioGroup>
+
+          <Link sx={{ fontSize: '14px', textDecoration: 'none', cursor: 'pointer' }}>
+            <Button
+              component="span"
+              variant="contained"
+              sx={{
+                minHeight: '10px',
+                padding: '1px 4px',
+                fontSize: '0.675rem',
+              }}
+            >
+              Verify GSTIN
+            </Button>
+          </Link>
+        </Grid>
+
+        <Grid size={{ xs: 12, sm: 6, md: 4 }} sx={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '10px'
+        }}>
+          <FormLabel
+            sx={{
+              fontSize: '12px',
+              fontWeight: 'bold',
+              color: 'black',
+              whiteSpace: 'nowrap',
+              lineHeight: '1.5',
+              display: 'flex',
+              alignItems: 'center',
+              padding: 0,
+              margin: 0,
+            }}
+            component="legend">RD/URD</FormLabel>
+          <RadioGroup
+            row
+            name="RD_URD"
+            onChange={handleInputChange}
+            disabled={!isEditButtonDisabled && !isAddButtonDisabled}
+            value={partyData?.RD_URD || ""}
+            sx={{ margin: 0, padding: 0 }}
+          >
+            <FormControlLabel disabled={!isEditButtonDisabled && !isAddButtonDisabled}
+              value="R" control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
+              label={<Typography sx={{ fontSize: '12px' }}>RD</Typography>} />
+            <FormControlLabel disabled={!isEditButtonDisabled && !isAddButtonDisabled}
+              value="U" control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
+              label={<Typography sx={{ fontSize: '12px' }}>URD</Typography>} />
+            <FormControlLabel disabled={!isEditButtonDisabled && !isAddButtonDisabled}
+              value="C" control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
+              label={<Typography sx={{ fontSize: '12px' }}>Composition</Typography>} />
+          </RadioGroup>
+        </Grid>
+
+        <Grid size={{ xs: 12, sm: 6, md: 1 }}>
+          <FormControlLabel
+            control={<Checkbox name="STATUS" size="small" checked={partyData?.STATUS === "1"}
+              onChange={handleChangeStatus} />}
+            disabled={!isEditButtonDisabled && !isAddButtonDisabled}
+            label="Active"
+            sx={{
+              '& .MuiFormControlLabel-label': { fontSize: '12px' }
+            }}
+          />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+          <FormControlLabel
+            control={<Checkbox name="DEFAULT_BRANCH" size="small" checked={partyData?.DEFAULT_BRANCH === "1"}
+              onChange={handleChangeStatus} />}
+            disabled={!isEditButtonDisabled && !isAddButtonDisabled}
+            label="Default Branch"
+            sx={{
+              '& .MuiFormControlLabel-label': { fontSize: '12px' }
+            }}
+          />
+        </Grid>
+        <Stack direction="row" spacing={2} sx={{ position: 'relative', left: 198 }}>
           <Button
+            sx={{
+              backgroundColor: '#28a745',
+              margin: { xs: '0 4px', sm: '0 6px' },
+              minWidth: { xs: 40, sm: 46, md: 60 },
+              height: { xs: 40, sm: 46, md: 30 },
+            }}
             variant="contained"
             onClick={handleConfirm}
-            disabled={IsButtonSubmit || !isEditing}
-            sx={{ minWidth: { xs: 80, sm: 100 } }}
+            disabled={mode === null}
           >
             Confirm
           </Button>
           <Button
-            variant="outlined"
-            color="secondary"
+            sx={{
+              backgroundColor: '#6c757d',
+              margin: { xs: '0 4px', sm: '0 6px' },
+              minWidth: { xs: 40, sm: 46, md: 60 },
+              height: { xs: 40, sm: 46, md: 30 },
+            }}
             onClick={handleCancel}
-            sx={{ minWidth: { xs: 80, sm: 100 } }}
+            disabled={mode === null}
+            variant="contained"
           >
             Cancel
           </Button>
-        </Box>
-      )}
-      <ConfirmDelDialog
-        open={openDialog}
-        title="Confirm Deletion"
-        description="Are you sure you want to delete this record?"
-        onConfirm={handleConfirmDelete}
-        onCancel={handleDelCancel}
-      />
-    </Box>
-  );
-};
+        </Stack>
+      </Grid>
 
-export default StepperMst2;
+    </>
+  )
+}
+
+export default Stepper2;
