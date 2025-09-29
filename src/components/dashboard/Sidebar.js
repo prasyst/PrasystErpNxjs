@@ -230,7 +230,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
         {
           name: 'Season',
           icon: MdEvent,
-          path: '/masters/season',
+          // path: '/masters/season',
           children: [
             { name: 'Season Master', icon: MdEvent, path: '/masters/season/season' },
           ],
