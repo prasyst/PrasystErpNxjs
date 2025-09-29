@@ -10,7 +10,7 @@ const pinSlice = createSlice({
   initialState,
   reducers: {
     pinModule: (state, action) => {
-      // Check if module is already pinned
+    
       if (!state.pinnedModules.some(module => module.path === action.payload.path)) {
         state.pinnedModules.push(action.payload);
       }
