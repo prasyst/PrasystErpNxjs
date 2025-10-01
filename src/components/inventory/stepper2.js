@@ -43,14 +43,50 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled }) => {
   const [tableData, setTableData] = useState([
     {
       id: 1,
-      BarCode: "Br200",
+      BarCode: "Br201",
       product: "BS Boys-T-Shirts",
       style: "TS-002",
       type: "Premium",
       shade: "100/White",
       lotNo: "May-2025",
-      qty: 200.00,
+      qty: 250.00,
       rate: 177.43,
+      amount: 35486
+    },
+    {
+      id: 1,
+      BarCode: "Br200",
+      product: "BS Girls-T-Shirts",
+      style: "TS-390",
+      type: "Premium",
+      shade: "100/Pink",
+      lotNo: "May-2025",
+      qty: 300.00,
+      rate: 245,
+      amount: 35486
+    },
+    {
+      id: 1,
+      BarCode: "Br301",
+      product: "BS Kids-T-Shirts",
+      style: "TS-302",
+      type: "Premium",
+      shade: "100/Green",
+      lotNo: "May-2025",
+      qty: 217,
+      rate: 480,
+      amount: 35486
+    },
+    {
+      id: 1,
+      BarCode: "Br209",
+      product: "BS lifestyle-T-Shirts",
+      style: "TS-789",
+      type: "Premium",
+      shade: "100/blue",
+      lotNo: "May-2025",
+      qty: 450,
+      rate: 477.43,
       amount: 35486
     }
   ]);
@@ -189,11 +225,11 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled }) => {
   ];
 
   const sizeDetails = [
-    { size: 'BARDOL', qty: 50.00, amount: 8871.5, barcode: 'BC001' },
+    { size: 'Xl', qty: 50.00, amount: 8871.5, barcode: 'BC001' },
     { size: 'L', qty: 50.00, amount: 8871.5, barcode: 'BC002' },
     { size: 'M', qty: 50.00, amount: 8871.5, barcode: 'BC003' },
     { size: 'BARDOL', qty: 50.00, amount: 8871.5, barcode: 'BC001' },
-    { size: 'L', qty: 50.00, amount: 8871.5, barcode: 'BC002' },
+    { size: 'xxL', qty: 50.00, amount: 8871.5, barcode: 'BC002' },
    
   ];
 
