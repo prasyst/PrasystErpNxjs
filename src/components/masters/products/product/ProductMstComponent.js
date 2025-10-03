@@ -1071,7 +1071,7 @@ const ProductMst = () => {
 
           </Grid>
 
-          <Grid sx={{ width: { xs: '100%', sm: '48%', md: '18%', display: 'flex' } }}>
+          <Grid sx={{ display: 'flex' }}>
             <TextField
               label="Search By Code"
               variant="filled"
