@@ -252,6 +252,25 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
               />
             </Grid>
 
+            <Grid size={{ xs: 12, sm: 6, md: 4.8 }}>
+              <TextField
+                label="Print Name"
+                variant="filled"
+                fullWidth
+                onChange={handleInputChange}
+                value={formData?.PRINTNAME || ""}
+                name="PRINTNAME"
+                disabled={isFormDisabled}
+                sx={textInputSx}
+                inputProps={{
+                  style: {
+                    padding: '6px 8px',
+                    fontSize: '12px',
+                  },
+                }}
+              />
+            </Grid>
+
             <Grid size={{ xs: 12, sm: 6, md: 4 }}>
               <TextField
                 label="GSTIN_NO"
@@ -271,13 +290,13 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
               />
             </Grid>
 
-            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+            <Grid size={{ xs: 12, sm: 6, md: 3.2 }}>
               <AutoVibe
                 id="TRSP_KEY"
                 disabled={isFormDisabled}
                 getOptionLabel={(option) => option || ''}
                 options={[]}
-                label="Transporter"
+                label="Jurisdiction"
                 name="TRSP_KEY"
                 value={formData?.TRSP_KEY || 0}
                 onChange={handleInputChange}
@@ -291,24 +310,6 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
               />
             </Grid>
 
-            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-              <TextField
-                label="Print Name"
-                variant="filled"
-                fullWidth
-                onChange={handleInputChange}
-                value={formData?.PRINTNAME || ""}
-                name="PRINTNAME"
-                disabled={isFormDisabled}
-                sx={textInputSx}
-                inputProps={{
-                  style: {
-                    padding: '6px 8px',
-                    fontSize: '12px',
-                  },
-                }}
-              />
-            </Grid>
           </Grid>
           <Grid container size={{ xs: 12, sm: 6, md: 2 }}>
             <Box
