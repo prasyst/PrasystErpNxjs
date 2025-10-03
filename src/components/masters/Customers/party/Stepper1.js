@@ -30,10 +30,13 @@ import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
 import UploadIcon from '@mui/icons-material/Upload';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import z from 'zod';
+import { ImagePopup } from '@/atoms/ReusablePopup/Document';
 
 const FORM_MODE = getFormMode();
 
 const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
+
+  const [openConfirmDialog, setOpenConfirmDialog] = useState(false);
   console.log("Stepper1 full formData:", formData?.PrintName);
 
   const textInputSx = {
@@ -187,6 +190,14 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
           toast.error('Error reading file. Please try again.');
         });
     }
+  };
+
+  const handleDocument = () => {
+    setOpenConfirmDialog(true);
+  };
+
+  const closeDocument = () => {
+    setOpenConfirmDialog(false);
   };
 
   return (
@@ -1139,6 +1150,7 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
                 backgroundColor: '#6C757D',
                 fontSize: '0.675rem',
               }}
+              onClick={handleDocument}
             >
               Document
             </Button>
@@ -1190,6 +1202,10 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
 
       </Grid >
 
+      <ImagePopup
+        open={openConfirmDialog}
+        onClose={() => setOpenConfirmDialog(false)}
+      />
     </>
   )
 }
