@@ -1,3 +1,4 @@
+
 'use client';
 import React, { useState } from "react";
 import {
@@ -24,7 +25,7 @@ import Stepper1 from "./stepper1";
 import Stepper2 from "./stepper2";
 import Stepper3 from "./stepper3";
 
-const SalesOrderOffline = () => {
+const packagingBarcode = () => {
   const router = useRouter();
   const [tabIndex, setTabIndex] = useState(0);
   const [isFormDisabled, setIsFormDisabled] = useState(true);
@@ -180,14 +181,14 @@ const SalesOrderOffline = () => {
         </Grid>
         <Grid>
           <Typography align="center" variant="h6">
-            {tabIndex === 0 ? "Sales Order(Offline)" : tabIndex === 1 ? "Branch Details" : "Terms Details"}
+            {tabIndex === 0 ? "Packing Slip from Barcode" : tabIndex === 1 ? "Branch Details" : "Terms Details"}
           </Typography>
 
         </Grid>
 
         <Grid sx={{ width: { xs: '100%', sm: '48%', md: '16%', display: 'flex' } }}>
           <TextField
-            label="Search By Code"
+            label="Search By Package No"
             variant="filled"
             fullWidth
             value={formData.SearchByCd}
@@ -262,6 +263,20 @@ const SalesOrderOffline = () => {
                 textTransform: 'none',
                 lineHeight: 1,
                 backgroundColor: tabIndex === 1 ? '#e0e0ff' : 'transparent',
+                '&.Mui-selected': {
+                  color: '#000',
+                  fontWeight: 'bold',
+                },
+              }}
+            />
+            <Tab
+              label="Barcode Details"
+              sx={{
+                minHeight: '36px',
+                padding: '6px 16px',
+                textTransform: 'none',
+                lineHeight: 1,
+                backgroundColor: tabIndex === 2 ? '#e0e0ff' : 'transparent',
                 '&.Mui-selected': {
                   color: '#000',
                   fontWeight: 'bold',
@@ -391,4 +406,4 @@ const SalesOrderOffline = () => {
   );
 };
 
-export default SalesOrderOffline;
+export default packagingBarcode;
