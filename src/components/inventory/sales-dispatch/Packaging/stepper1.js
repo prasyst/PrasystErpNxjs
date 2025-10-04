@@ -17,9 +17,9 @@ import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { format } from "date-fns";
-import AutoVibe from '../../GlobalFunction/CustomAutoComplete/AutoVibe';
-import axiosInstance from '../../lib/axios';
-import { getFormMode } from '../../lib/helpers';
+import AutoVibe from '../../../../GlobalFunction/CustomAutoComplete/AutoVibe';
+import axiosInstance from '../../../../lib/axios';
+import { getFormMode } from '../../../../lib/helpers';
 
 const FORM_MODE = getFormMode();
 
@@ -240,12 +240,12 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
           </Box>
           <Box sx={{ width: { xs: '100%', sm: '20%', md: '20.5%' } }}>
             <TextField
-              label="Last Ord No"
+              label="Last Package No"
               variant="filled"
               fullWidth
               onChange={handleInputChange}
-              value={formData.LAST_ORD_NO || ""}
-              name="LAST_ORD_NO"
+              value={formData.LAST_PKG_NO || ""}
+              name="LAST_PKG_NO"
               disabled={isFormDisabled}
               sx={textInputSx}
               inputProps={{
@@ -258,12 +258,12 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
           </Box>
           <Box sx={{ width: { xs: '100%', sm: '20%', md: '20.5%' } }}>
             <TextField
-              label="Order No"
+              label="Package No"
               variant="filled"
               fullWidth
               onChange={handleInputChange}
-              value={formData.ORDER_NO || ""}
-              name="ORDER_NO"
+              value={formData.Package_No || ""}
+              name="Package_No"
               disabled={isFormDisabled}
               sx={textInputSx}
               inputProps={{
@@ -275,10 +275,10 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
             />
           </Box>
 
-          <Box sx={{ width: { xs: "100%", sm: "20%", md: "20.5%" } }}>
+          <Box sx={{ width: { xs: "100%", sm: "20%", md: "22%" } }}>
             <LocalizationProvider dateAdapter={AdapterDateFns}>
               <DatePicker
-                label="Org Div Dt"
+                label="Date"
                 value={formData.ORG_DIV_DT ? new Date(formData.ORG_DIV_DT.split("/").reverse().join("-")) : null}
                 onChange={(date) => handleDateChange(date, "ORG_DIV_DT")}
                 format="dd/MM/yyyy"
@@ -306,32 +306,14 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
           flexDirection: { xs: 'column', sm: 'row', md: 'row' },
           gap: { xs: 1, sm: 1.5, md: 2 }
         }}>
-          <Box sx={{ width: { xs: '100%', sm: '20%', md: '17%' } }}>
-            <TextField
-              label="Party Ord No"
-              variant="filled"
-              fullWidth
-              onChange={handleInputChange}
-              value={formData.PARTY_ORD_NO || ""}
-              disabled={isFormDisabled}
-              name="PARTY_ORD_NO"
-              sx={textInputSx}
-              inputProps={{
-                style: {
-                  padding: '6px 8px',
-                  fontSize: '12px'
-                },
-              }}
-            />
-          </Box>
-          <Box sx={{ width: { xs: '100%', sm: '20%', md: '15.1%' } }}>
+          <Box sx={{ width: { xs: '100%', sm: '20%', md: '25%' } }}>
             <AutoVibe
-              id="SEASON"
+              id="Party"
               disabled={isFormDisabled}
               getOptionLabel={(option) => option || ''}
               options={[]}
-              label="Season"
-              name="SEASON"
+              label="Party"
+              name="Party"
               value={formData.SEASON || 0}
               onChange={handleInputChange}
               sx={DropInputSx}
@@ -343,38 +325,265 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
               }}
             />
           </Box>
-          <Box sx={{ width: { xs: "100%", sm: "20%", md: "20.5%" } }}>
-            <LocalizationProvider dateAdapter={AdapterDateFns}>
-              <DatePicker
-                label="Ord Ref Dt"
-                value={formData.ORD_REF_DT ? new Date(formData.ORD_REF_DT.split("/").reverse().join("-")) : null}
-                onChange={(date) => handleDateChange(date, "ORD_REF_DT")}
-                format="dd/MM/yyyy"
-                disabled={isFormDisabled}
-                slotProps={{
-                  textField: {
-                    fullWidth: true,
-                    variant: "filled",
-                    sx: datePickerSx,
-                    InputProps: {
-                      sx: {
-                        height: "32px",
-                      },
-                    },
-                  },
-                }}
-              />
-            </LocalizationProvider>
+          <Box sx={{ width: { xs: '100%', sm: '20%', md: '25%' } }}>
+            <AutoVibe
+              id="ShippingParty"
+              disabled={isFormDisabled}
+              getOptionLabel={(option) => option || ''}
+              options={[]}
+              label="Shipping Party"
+              name="ShippingParty"
+              value={formData.ShippingParty || 0}
+              onChange={handleInputChange}
+              sx={DropInputSx}
+              inputProps={{
+                style: {
+                  padding: '6px 8px',
+                  fontSize: '12px',
+                },
+              }}
+            />
           </Box>
-          <Box sx={{ width: { xs: '100%', sm: '20%', md: '20.6%' } }}>
+          <Box sx={{ width: { xs: "100%", sm: "20%", md: "25%" } }}>
+           <AutoVibe
+              id="branch"
+              disabled={isFormDisabled}
+              getOptionLabel={(option) => option || ''}
+              options={[]}
+              label="Branch"
+              name="Branch"
+              value={formData.Branch || 0}
+              onChange={handleInputChange}
+              sx={DropInputSx}
+              inputProps={{
+                style: {
+                  padding: '6px 8px',
+                  fontSize: '12px',
+                },
+              }}
+            />
+          </Box>
+          <Box sx={{ width: { xs: '100%', sm: '20%', md: '25%' } }}>
+           
+            <AutoVibe
+              id="Shipping_PLC"
+              disabled={isFormDisabled}
+              getOptionLabel={(option) => option || ''}
+              options={[]}
+              label="Shipping Place"
+              name="Shipping_PLC"
+              value={formData.Shipping_PLC || 0}
+              onChange={handleInputChange}
+              sx={DropInputSx}
+              inputProps={{
+                style: {
+                  padding: '6px 8px',
+                  fontSize: '12px',
+                },
+              }}
+            />
+          </Box>
+          
+        </Box>
+
+        {/* Party Branch, Rack_Min, Quote No, Shipping Party Row */}
+        <Box sx={{
+          display: 'flex',
+          flexDirection: { xs: 'column', sm: 'row', md: 'row' },
+          gap: { xs: 1, sm: 1.5, md: 2 }
+        }}>
+          <Box sx={{ width: { xs: '100%', sm: '20%', md: '17%' } }}>
+            <AutoVibe
+              id="Broker"
+              disabled={isFormDisabled}
+              getOptionLabel={(option) => option || ''}
+              options={[]}
+              label="Broker"
+              name="Broker"
+              value={formData.Broker || 0}
+              onChange={handleInputChange}
+              sx={DropInputSx}
+              inputProps={{
+                style: {
+                  padding: '6px 8px',
+                  fontSize: '12px',
+                },
+              }}
+            />
+          </Box>
+          
+          <Box sx={{ width: { xs: "100%", sm: "20%", md: "20.5%" } }}>
             <TextField
-              label="Enq No"
+              label="Address"
               variant="filled"
               fullWidth
               onChange={handleInputChange}
-              value={formData.ENQ_NO || ""}
+              value={formData.Address || ""}
               disabled={isFormDisabled}
-              name="ENQ_NO"
+              name="Address"
+              sx={textInputSx}
+              inputProps={{
+                style: {
+                  padding: '6px 8px',
+                  fontSize: '12px'
+                },
+              }}
+            />
+          </Box>
+          <Box sx={{ width: { xs: '100%', sm: '20%', md: '20.6%' } }}>
+            <TextField
+              label="Ref No"
+              variant="filled"
+              fullWidth
+              onChange={handleInputChange}
+              value={formData.ref_no || ""}
+              disabled={isFormDisabled}
+              name="ref_no"
+              sx={textInputSx}
+              inputProps={{
+                style: {
+                  padding: '6px 8px',
+                  fontSize: '12px'
+                },
+              }}
+            />
+          </Box>
+          <Box sx={{ width: { xs: '100%', sm: '20%', md: '20.6%' } }}>
+            <AutoVibe
+              id="Broker1"
+              disabled={isFormDisabled}
+              getOptionLabel={(option) => option || ''}
+              options={[]}
+              label="Broker1"
+              name="Broker1"
+              value={formData.Broker1 || 0}
+              onChange={handleInputChange}
+              sx={DropInputSx}
+              inputProps={{
+                style: {
+                  padding: '6px 8px',
+                  fontSize: '12px',
+                },
+              }}
+            />
+          </Box>
+        </Box>
+
+        {/* Div Place, A.R.Sales, Shipping Place, PriceList Row */}
+        <Box sx={{
+          display: 'flex',
+          flexDirection: { xs: 'column', sm: 'row', md: 'row' },
+          gap: { xs: 1, sm: 1.5, md: 2 }
+        }}>
+          <Box sx={{ width: { xs: '100%', sm: '20%', md: '17%' } }}>
+            <AutoVibe
+              id="Transporter"
+              disabled={isFormDisabled}
+              getOptionLabel={(option) => option || ''}
+              options={[]}
+              label="Transporter"
+              name="Transporter"
+              value={formData.Transporter || 0}
+              onChange={handleInputChange}
+              sx={DropInputSx}
+              inputProps={{
+                style: {
+                  padding: '6px 8px',
+                  fontSize: '12px',
+                },
+              }}
+            />
+          </Box>
+          <Box sx={{ width: { xs: '100%', sm: '20%', md: '15.1%' } }}>
+            <TextField
+              label="Brokrage %"
+              variant="filled"
+              fullWidth
+              onChange={handleInputChange}
+              value={formData.Brokrage || ""}
+              disabled={isFormDisabled}
+              name="Brokrage"
+              sx={textInputSx}
+              inputProps={{
+                style: {
+                  padding: '6px 8px',
+                  fontSize: '12px'
+                },
+              }}
+            />
+          </Box>
+          <Box sx={{ width: { xs: "100%", sm: "20%", md: "20.5%" } }}>
+            <TextField
+              label="Packing Amt"
+              variant="filled"
+              fullWidth
+              onChange={handleInputChange}
+              value={formData.PackingAmt || ""}
+              disabled={isFormDisabled}
+              name="PackingAmt"
+              sx={textInputSx}
+              inputProps={{
+                style: {
+                  padding: '6px 8px',
+                  fontSize: '12px'
+                },
+              }}
+            />
+          </Box>
+          <Box sx={{ width: { xs: '100%', sm: '20%', md: '20.6%' } }}>
+            <TextField
+              label="Commble Amt"
+              variant="filled"
+              fullWidth
+              onChange={handleInputChange}
+              value={formData.CommbleAmt || ""}
+              disabled={isFormDisabled}
+              name="CommbleAmt"
+              sx={textInputSx}
+              inputProps={{
+                style: {
+                  padding: '6px 8px',
+                  fontSize: '12px'
+                },
+              }}
+            />
+          </Box>
+          
+        </Box>
+
+        {/* Broker Transporter, B-East-II, New Addr, Amount Row */}
+        <Box sx={{
+          display: 'flex',
+          flexDirection: { xs: 'column', sm: 'row', md: 'row' },
+          gap: { xs: 1, sm: 1.5, md: 2 }
+        }}>
+          <Box sx={{ width: { xs: '100%', sm: '20%', md: '17%' } }}>
+            <TextField
+              label="Round Off"
+              variant="filled"
+              fullWidth
+              onChange={handleInputChange}
+              value={formData.RoundOff || ""}
+              disabled={isFormDisabled}
+              name="RoundOff"
+              sx={textInputSx}
+              inputProps={{
+                style: {
+                  padding: '6px 8px',
+                  fontSize: '12px'
+                },
+              }}
+            />
+          </Box>
+          <Box sx={{ width: { xs: '100%', sm: '20%', md: '15.1%' } }}>
+            <TextField
+              label="L R No"
+              variant="filled"
+              fullWidth
+              onChange={handleInputChange}
+              value={formData.lrno || ""}
+              disabled={isFormDisabled}
+              name="lrno"
               sx={textInputSx}
               inputProps={{
                 style: {
@@ -407,52 +616,15 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
               />
             </LocalizationProvider>
           </Box>
-        </Box>
-
-        {/* Party Branch, Rack_Min, Quote No, Shipping Party Row */}
-        <Box sx={{
-          display: 'flex',
-          flexDirection: { xs: 'column', sm: 'row', md: 'row' },
-          gap: { xs: 1, sm: 1.5, md: 2 }
-        }}>
-          <Box sx={{ width: { xs: '100%', sm: '20%', md: '17%' } }}>
+          <Box sx={{ width: { xs: '100%', sm: '20%', md: '20.6%' } }}>
             <TextField
-              label="Party Branch"
+              label="Net Amount"
               variant="filled"
               fullWidth
               onChange={handleInputChange}
-              value={formData.PARTY_BRANCH || ""}
+              value={formData.netAMOUNT || ""}
               disabled={isFormDisabled}
-              name="PARTY_BRANCH"
-              sx={textInputSx}
-              inputProps={{
-                style: {
-                  padding: '6px 8px',
-                  fontSize: '12px'
-                },
-              }}
-            />
-          </Box>
-          <Box sx={{ width: { xs: '100%', sm: '20%', md: '15.1%' } }}>
-            <FormControlLabel
-              control={<Checkbox name="RACK_MIN" size="small" checked={formData.RACK_MIN === "1"}
-              onChange={handleChangeStatus} />}
-              disabled={isFormDisabled}
-              label="Rack_Min"
-              sx={{
-                '& .MuiFormControlLabel-label': { fontSize: '12px' }
-              }}
-            />
-          </Box>
-          <Box sx={{ width: { xs: "100%", sm: "20%", md: "20.5%" } }}>
-            <TextField
-              label="Quote No"
-              variant="filled"
-              fullWidth
-              onChange={handleInputChange}
-              value={formData.QUOTE_NO || ""}
-              disabled={isFormDisabled}
-              name="QUOTE_NO"
+              name="netAMOUNT"
               sx={textInputSx}
               inputProps={{
                 style: {
@@ -464,220 +636,13 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
           </Box>
           <Box sx={{ width: { xs: '100%', sm: '20%', md: '20.6%' } }}>
             <TextField
-              label="Shipping Party"
+              label="PYT Terms"
               variant="filled"
               fullWidth
               onChange={handleInputChange}
-              value={formData.SHIPPING_PARTY || ""}
+              value={formData.PYTTerms || ""}
               disabled={isFormDisabled}
-              name="SHIPPING_PARTY"
-              sx={textInputSx}
-              inputProps={{
-                style: {
-                  padding: '6px 8px',
-                  fontSize: '12px'
-                },
-              }}
-            />
-          </Box>
-          <Box sx={{ width: { xs: '100%', sm: '20%', md: '20.6%' } }}>
-            <FormControlLabel
-              control={<Checkbox name="REGISTERED_DEALER" size="small" checked={formData.REGISTERED_DEALER === "1"}
-              onChange={handleChangeStatus} />}
-              disabled={isFormDisabled}
-              label="Registered Dealer"
-              sx={{
-                '& .MuiFormControlLabel-label': { fontSize: '12px' }
-              }}
-            />
-          </Box>
-        </Box>
-
-        {/* Div Place, A.R.Sales, Shipping Place, PriceList Row */}
-        <Box sx={{
-          display: 'flex',
-          flexDirection: { xs: 'column', sm: 'row', md: 'row' },
-          gap: { xs: 1, sm: 1.5, md: 2 }
-        }}>
-          <Box sx={{ width: { xs: '100%', sm: '20%', md: '17%' } }}>
-            <TextField
-              label="Div Place"
-              variant="filled"
-              fullWidth
-              onChange={handleInputChange}
-              value={formData.DIV_PLACE || ""}
-              disabled={isFormDisabled}
-              name="DIV_PLACE"
-              sx={textInputSx}
-              inputProps={{
-                style: {
-                  padding: '6px 8px',
-                  fontSize: '12px'
-                },
-              }}
-            />
-          </Box>
-          <Box sx={{ width: { xs: '100%', sm: '20%', md: '15.1%' } }}>
-            <TextField
-              label="A.R.Sales"
-              variant="filled"
-              fullWidth
-              onChange={handleInputChange}
-              value={formData.AR_SALES || ""}
-              disabled={isFormDisabled}
-              name="AR_SALES"
-              sx={textInputSx}
-              inputProps={{
-                style: {
-                  padding: '6px 8px',
-                  fontSize: '12px'
-                },
-              }}
-            />
-          </Box>
-          <Box sx={{ width: { xs: "100%", sm: "20%", md: "20.5%" } }}>
-            <TextField
-              label="Shipping Place"
-              variant="filled"
-              fullWidth
-              onChange={handleInputChange}
-              value={formData.SHIPPING_PLACE || ""}
-              disabled={isFormDisabled}
-              name="SHIPPING_PLACE"
-              sx={textInputSx}
-              inputProps={{
-                style: {
-                  padding: '6px 8px',
-                  fontSize: '12px'
-                },
-              }}
-            />
-          </Box>
-          <Box sx={{ width: { xs: '100%', sm: '20%', md: '20.6%' } }}>
-            <TextField
-              label="PriceList"
-              variant="filled"
-              fullWidth
-              onChange={handleInputChange}
-              value={formData.PRICE_LIST || ""}
-              disabled={isFormDisabled}
-              name="PRICE_LIST"
-              sx={textInputSx}
-              inputProps={{
-                style: {
-                  padding: '6px 8px',
-                  fontSize: '12px'
-                },
-              }}
-            />
-          </Box>
-          <Box sx={{ width: { xs: '100%', sm: '20%', md: '20.6%' } }}>
-            <TextField
-              label="May-2025"
-              variant="filled"
-              fullWidth
-              onChange={handleInputChange}
-              value={formData.MAY_2025 || ""}
-              disabled={isFormDisabled}
-              name="MAY_2025"
-              sx={textInputSx}
-              inputProps={{
-                style: {
-                  padding: '6px 8px',
-                  fontSize: '12px'
-                },
-              }}
-            />
-          </Box>
-        </Box>
-
-        {/* Broker Transporter, B-East-II, New Addr, Amount Row */}
-        <Box sx={{
-          display: 'flex',
-          flexDirection: { xs: 'column', sm: 'row', md: 'row' },
-          gap: { xs: 1, sm: 1.5, md: 2 }
-        }}>
-          <Box sx={{ width: { xs: '100%', sm: '20%', md: '17%' } }}>
-            <TextField
-              label="Broker Transporter"
-              variant="filled"
-              fullWidth
-              onChange={handleInputChange}
-              value={formData.BROKER_TRANSPORTER || ""}
-              disabled={isFormDisabled}
-              name="BROKER_TRANSPORTER"
-              sx={textInputSx}
-              inputProps={{
-                style: {
-                  padding: '6px 8px',
-                  fontSize: '12px'
-                },
-              }}
-            />
-          </Box>
-          <Box sx={{ width: { xs: '100%', sm: '20%', md: '15.1%' } }}>
-            <TextField
-              label="B-East-II"
-              variant="filled"
-              fullWidth
-              onChange={handleInputChange}
-              value={formData.B_EAST_II || ""}
-              disabled={isFormDisabled}
-              name="B_EAST_II"
-              sx={textInputSx}
-              inputProps={{
-                style: {
-                  padding: '6px 8px',
-                  fontSize: '12px'
-                },
-              }}
-            />
-          </Box>
-          <Box sx={{ width: { xs: "100%", sm: "20%", md: "20.5%" } }}>
-            <TextField
-              label="New Addr"
-              variant="filled"
-              fullWidth
-              onChange={handleInputChange}
-              value={formData.NEW_ADDR || ""}
-              disabled={isFormDisabled}
-              name="NEW_ADDR"
-              sx={textInputSx}
-              inputProps={{
-                style: {
-                  padding: '6px 8px',
-                  fontSize: '12px'
-                },
-              }}
-            />
-          </Box>
-          <Box sx={{ width: { xs: '100%', sm: '20%', md: '20.6%' } }}>
-            <TextField
-              label="Amount"
-              variant="filled"
-              fullWidth
-              onChange={handleInputChange}
-              value={formData.AMOUNT || ""}
-              disabled={isFormDisabled}
-              name="AMOUNT"
-              sx={textInputSx}
-              inputProps={{
-                style: {
-                  padding: '6px 8px',
-                  fontSize: '12px'
-                },
-              }}
-            />
-          </Box>
-          <Box sx={{ width: { xs: '100%', sm: '20%', md: '20.6%' } }}>
-            <TextField
-              label="Gross Amount"
-              variant="filled"
-              fullWidth
-              onChange={handleInputChange}
-              value={formData.AMOUNT_1 || ""}
-              disabled={isFormDisabled}
-              name="AMOUNT_1"
+              name="PYTTerms"
               sx={textInputSx}
               inputProps={{
                 style: {
@@ -696,86 +661,94 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
           gap: { xs: 1, sm: 1.5, md: 2 }
         }}>
           <Box sx={{ width: { xs: '100%', sm: '20%', md: '17%' } }}>
-            <TextField
-              label="Gross Amt"
-              variant="filled"
-              fullWidth
-              onChange={handleInputChange}
-              value={formData.GROSS_AMT || ""}
-              disabled={isFormDisabled}
-              name="GROSS_AMT"
-              sx={textInputSx}
-              inputProps={{
-                style: {
-                  padding: '6px 8px',
-                  fontSize: '12px'
-                },
-              }}
-            />
+          <LocalizationProvider dateAdapter={AdapterDateFns}>
+              <DatePicker
+                label="Due Date"
+                value={formData.ORG_DIV_DT ? new Date(formData.ORG_DIV_DT.split("/").reverse().join("-")) : null}
+                onChange={(date) => handleDateChange(date, "ORG_DIV_DT")}
+                format="dd/MM/yyyy"
+                disabled={isFormDisabled}
+                slotProps={{
+                  textField: {
+                    fullWidth: true,
+                    variant: "filled",
+                    sx: datePickerSx,
+                    InputProps: {
+                      sx: {
+                        height: "32px",
+                      },
+                    },
+                  },
+                }}
+              />
+            </LocalizationProvider>
           </Box>
           <Box sx={{ width: { xs: '100%', sm: '20%', md: '15.1%' } }}>
-            <TextField
-              label="All New"
-              variant="filled"
-              fullWidth
-              onChange={handleInputChange}
-              value={formData.ALL_NEW || ""}
+             <AutoVibe
+              id="DiscTerm"
               disabled={isFormDisabled}
-              name="ALL_NEW"
-              sx={textInputSx}
+              getOptionLabel={(option) => option || ''}
+              options={[]}
+              label="Disc Term"
+              name="DiscTerm"
+              value={formData.DiscTerm || 0}
+              onChange={handleInputChange}
+              sx={DropInputSx}
               inputProps={{
                 style: {
                   padding: '6px 8px',
-                  fontSize: '12px'
+                  fontSize: '12px',
                 },
               }}
             />
           </Box>
           <Box sx={{ width: { xs: "100%", sm: "20%", md: "20.5%" } }}>
-            <TextField
-              label="New Comm"
-              variant="filled"
-              fullWidth
-              onChange={handleInputChange}
-              value={formData.NEW_COMM || ""}
+           <AutoVibe
+              id="Consignee"
               disabled={isFormDisabled}
-              name="NEW_COMM"
-              sx={textInputSx}
+              getOptionLabel={(option) => option || ''}
+              options={[]}
+              label="Consignee"
+              name="Consignee"
+              value={formData.Consignee || 0}
+              onChange={handleInputChange}
+              sx={DropInputSx}
               inputProps={{
                 style: {
                   padding: '6px 8px',
-                  fontSize: '12px'
+                  fontSize: '12px',
+                },
+              }}
+            />
+          </Box>
+          <Box sx={{ width: { xs: '100%', sm: '20%', md: '20.6%' } }}>
+            <AutoVibe
+              id="Currency"
+              disabled={isFormDisabled}
+              getOptionLabel={(option) => option || ''}
+              options={[]}
+              label="Currency"
+              name="Currency"
+              value={formData.Currency || 0}
+              onChange={handleInputChange}
+              sx={DropInputSx}
+              inputProps={{
+                style: {
+                  padding: '6px 8px',
+                  fontSize: '12px',
                 },
               }}
             />
           </Box>
           <Box sx={{ width: { xs: '100%', sm: '20%', md: '20.6%' } }}>
             <TextField
-              label="0.00"
+              label="EX Rate"
               variant="filled"
               fullWidth
               onChange={handleInputChange}
-              value={formData.AMOUNT_2 || ""}
+              value={formData.EXRate || ""}
               disabled={isFormDisabled}
-              name="AMOUNT_2"
-              sx={textInputSx}
-              inputProps={{
-                style: {
-                  padding: '6px 8px',
-                  fontSize: '12px'
-                },
-              }}
-            />
-          </Box>
-          <Box sx={{ width: { xs: '100%', sm: '20%', md: '20.6%' } }}>
-            <TextField
-              label="Net Amt"
-              variant="filled"
-              fullWidth
-              onChange={handleInputChange}
-              value={formData.NET_AMT || ""}
-              disabled={isFormDisabled}
-              name="NET_AMT"
+              name="EXRate"
               sx={textInputSx}
               inputProps={{
                 style: {
