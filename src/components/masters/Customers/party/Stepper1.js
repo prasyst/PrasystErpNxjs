@@ -1210,4 +1210,4 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
   )
 }
 
-export default Stepper1;
+export default Stepper1
