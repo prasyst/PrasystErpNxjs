@@ -1,5 +1,10 @@
-import PackagingBarcode from "@/components/inventory/sales-dispatch/Packaging/packagingBarcode";
+import PackagingBarcode from "@/components/inventory/sales-dispatch/Packaging/PackagingBarcode";
+import { Suspense } from 'react';
 
 export default function packaging() {
-  return <PackagingBarcode/>;
+  return (
+    <Suspense>
+      <PackagingBarcode />
+    </Suspense>
+  );
 }

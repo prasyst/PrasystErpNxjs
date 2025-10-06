@@ -1,4 +1,3 @@
-
 'use client';
 import React, { useState } from "react";
 import {
@@ -25,8 +24,10 @@ import Stepper1 from "./stepper1";
 import Stepper2 from "./stepper2";
 import Stepper3 from "./stepper3";
 
-const packagingBarcode = () => {
+const PackagingBarcode = () => {
+
   const router = useRouter();
+
   const [tabIndex, setTabIndex] = useState(0);
   const [isFormDisabled, setIsFormDisabled] = useState(true);
   const [mode, setMode] = useState("view");
@@ -61,7 +62,8 @@ const packagingBarcode = () => {
     SHORT_CLOSE: "0",
     READY_SI: "0"
   });
-    const Buttonsx = {
+
+  const Buttonsx = {
     backgroundColor: '#39ace2',
     margin: { xs: '0 4px', sm: '0 6px' },
     minWidth: { xs: 40, sm: 46, md: 60 },
@@ -206,8 +208,8 @@ const packagingBarcode = () => {
               },
             }}
           />
-           {/* <TbListSearch onClick={handleTable}  */}
-            {/* style={{ color: 'rgb(99, 91, 255)', width: '40%' , height: '62%' }} /> */}
+          {/* <TbListSearch onClick={handleTable}  */}
+          {/* style={{ color: 'rgb(99, 91, 255)', width: '40%' , height: '62%' }} /> */}
         </Grid>
 
         <Grid sx={{ display: "flex", justifyContent: "end" }}>
@@ -300,110 +302,110 @@ const packagingBarcode = () => {
           </Tabs>
         </Box>
       </Grid>
-      
+
       <Grid xs={12}>
-  {tabIndex === 0 ? (
-    <Stepper1 
-      formData={formData} 
-      setFormData={setFormData} 
-      isFormDisabled={isFormDisabled}
-      mode={mode}
-      onSubmit={handleSubmit}
-      onCancel={handleCancel}
-    />
-  ) : tabIndex === 1 ? (
-    <Stepper2 
-      formData={formData} 
-      setFormData={setFormData} 
-      isFormDisabled={isFormDisabled}
-      mode={mode}
-      onSubmit={handleSubmit}
-      onCancel={handleCancel}
-    />
-  ) : (
-    <Stepper3 
-      formData={formData} 
-      setFormData={setFormData} 
-      isFormDisabled={isFormDisabled}
-      mode={mode}
-      onSubmit={handleSubmit}
-      onCancel={handleCancel}
-    />
-  )}
+        {tabIndex === 0 ? (
+          <Stepper1
+            formData={formData}
+            setFormData={setFormData}
+            isFormDisabled={isFormDisabled}
+            mode={mode}
+            onSubmit={handleSubmit}
+            onCancel={handleCancel}
+          />
+        ) : tabIndex === 1 ? (
+          <Stepper2
+            formData={formData}
+            setFormData={setFormData}
+            isFormDisabled={isFormDisabled}
+            mode={mode}
+            onSubmit={handleSubmit}
+            onCancel={handleCancel}
+          />
+        ) : (
+          <Stepper3
+            formData={formData}
+            setFormData={setFormData}
+            isFormDisabled={isFormDisabled}
+            mode={mode}
+            onSubmit={handleSubmit}
+            onCancel={handleCancel}
+          />
+        )}
 
-  
-</Grid>
 
-{tabIndex === 0 && (
-  <Grid xs={12} sx={{ display: "flex", justifyContent: "end", mr: '4.5%' }}>
-    {mode === 'view' && (
-      <>
-        <Button
-          variant="contained"
-          sx={{
-            background: 'linear-gradient(290deg, #4e8cff, #1e3c72)', // blue gradient
-            color: '#fff', // white text
-            margin: { xs: '0 4px', sm: '0 6px' },
-            minWidth: { xs: 40, sm: 46, md: 60 },
-            height: { xs: 40, sm: 46, md: 30 },
-          }}
-          onClick={handleAdd}
-          disabled
-        >
-          Confirm
-        </Button>
-        <Button
-          variant="contained"
-          sx={{
-            background: 'linear-gradient(290deg, #4e8cff, #1e3c72)',
-            color: '#fff', // white text
-            margin: { xs: '0 4px', sm: '0 6px' },
-            minWidth: { xs: 40, sm: 46, md: 60 },
-            height: { xs: 40, sm: 46, md: 30 },
-          }}
-          onClick={handleEdit}
-          disabled
-        >
-          Cancel
-        </Button>
-      </>
-    )}
-    {(mode === 'edit' || mode === 'add') && (
-      <>
-        <Button
-          variant="contained"
-          sx={{
-            margin: { xs: '0 4px', sm: '0 6px' },
-            background: 'linear-gradient(290deg, #4e8cff, #1e3c72)',
-            color: '#fff', // white text
-            minWidth: { xs: 40, sm: 46, md: 60 },
-            height: { xs: 40, sm: 46, md: 30 },
-          }}
-          onClick={handleSubmit}
-        >
-          Confirm
-        </Button>
-        <Button
-          variant="contained"
-          sx={{
-            margin: { xs: '0 4px', sm: '0 6px' },
-            background: 'linear-gradient(290deg, #4e8cff, #1e3c72)',
-            color: '#fff', // white text
-            minWidth: { xs: 40, sm: 46, md: 60 },
-            height: { xs: 40, sm: 46, md: 30 },
-          }}
-          onClick={handleCancel}
-        >
-          Cancel
-        </Button>
-      </>
-    )}
-  </Grid>
-)}
+      </Grid>
+
+      {tabIndex === 0 && (
+        <Grid xs={12} sx={{ display: "flex", justifyContent: "end", mr: '4.5%' }}>
+          {mode === 'view' && (
+            <>
+              <Button
+                variant="contained"
+                sx={{
+                  background: 'linear-gradient(290deg, #4e8cff, #1e3c72)', // blue gradient
+                  color: '#fff', // white text
+                  margin: { xs: '0 4px', sm: '0 6px' },
+                  minWidth: { xs: 40, sm: 46, md: 60 },
+                  height: { xs: 40, sm: 46, md: 30 },
+                }}
+                onClick={handleAdd}
+                disabled
+              >
+                Confirm
+              </Button>
+              <Button
+                variant="contained"
+                sx={{
+                  background: 'linear-gradient(290deg, #4e8cff, #1e3c72)',
+                  color: '#fff', // white text
+                  margin: { xs: '0 4px', sm: '0 6px' },
+                  minWidth: { xs: 40, sm: 46, md: 60 },
+                  height: { xs: 40, sm: 46, md: 30 },
+                }}
+                onClick={handleEdit}
+                disabled
+              >
+                Cancel
+              </Button>
+            </>
+          )}
+          {(mode === 'edit' || mode === 'add') && (
+            <>
+              <Button
+                variant="contained"
+                sx={{
+                  margin: { xs: '0 4px', sm: '0 6px' },
+                  background: 'linear-gradient(290deg, #4e8cff, #1e3c72)',
+                  color: '#fff', // white text
+                  minWidth: { xs: 40, sm: 46, md: 60 },
+                  height: { xs: 40, sm: 46, md: 30 },
+                }}
+                onClick={handleSubmit}
+              >
+                Confirm
+              </Button>
+              <Button
+                variant="contained"
+                sx={{
+                  margin: { xs: '0 4px', sm: '0 6px' },
+                  background: 'linear-gradient(290deg, #4e8cff, #1e3c72)',
+                  color: '#fff', // white text
+                  minWidth: { xs: 40, sm: 46, md: 60 },
+                  height: { xs: 40, sm: 46, md: 30 },
+                }}
+                onClick={handleCancel}
+              >
+                Cancel
+              </Button>
+            </>
+          )}
+        </Grid>
+      )}
 
 
     </Box>
   );
 };
 
-export default packagingBarcode;
+export default PackagingBarcode;
