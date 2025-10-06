@@ -332,8 +332,8 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
           name: 'Sales', icon: FaBoxes, path: '#',
           children: [
 
-            // { name: 'Sales Offline', icon: FaBoxes, path: '/inverntory/inventory-offline/' },
-            { name: 'Sales Offline', icon: FaBoxes, path: '/inverntory/stock-enquiry-table' },
+            { name: 'Sales Offline', icon: FaBoxes, path: '/inverntory/inventory-offline/' },
+            // { name: 'Sales Offline', icon: FaBoxes, path: '/inverntory/stock-enquiry-table' },
  { name: 'Packaging/Barcode', icon: FaBoxes, path: '/inverntory/packeging-barcode/' },
 
           ],
