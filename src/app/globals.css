@@ -270,4 +270,9 @@ div[class*="Watermark"],
 .custom-ag-table .ag-header {
   background-color: #E1BEE7;
 }
-
+.css-paunca-MuiGrid-root{
+  min-height: 0 !important;
+}
+.css-1utmszj-MuiGrid-root{
+  min-height: 0 !important;
+}
