@@ -341,12 +341,15 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
           name: 'Sales', icon: FaBoxes, path: '#',
           children: [
 
-            { name: 'Sales Offline', icon: FaBoxes, path: '/inverntory/inventory-offline/' },
-            // { name: 'Sales Offline', icon: FaBoxes, path: '/inverntory/stock-enquiry-table' },
+
+            // { name: 'Sales Offline', icon: FaBoxes, path: '/inverntory/inventory-offline/' },
+            { name: 'Sales Offline', icon: FaBoxes, path: '/inverntory/stock-enquiry-table' },
+
             { name: 'Packaging/Barcode', icon: FaBoxes, path: '/inverntory/packeging-barcode/' },
 
           ],
         },
+        { name: 'Style Master', icon: MdSummarize, path: '/inverntory/style/' },
         { name: 'Inventory Reports', icon: MdSummarize, path: '#' },
         { name: 'Stock Adjustment', icon: MdBuild, path: '#' },
         { name: 'Inventory Valuation', icon: MdAttachMoney, path: '#' },
@@ -913,8 +916,8 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
         {/* Menu Items */}
         <div style={{
           flex: 1,
-          overflowY: 'auto',
-          overflowX: 'hidden',
+          // overflowY: 'auto',
+          // overflowX: 'hidden',
           maxHeight: 'calc(100vh - 100px)',
           paddingRight: '4px',
         }}>
