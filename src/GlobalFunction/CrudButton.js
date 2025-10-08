@@ -25,7 +25,7 @@ const CrudButton = ({
         backgroundColor: '#635bff',
         margin: { xs: '0 4px', sm: '0 6px' },
         minWidth: { xs: 40, sm: 46, md: 60 },
-        height: { xs: 40, sm: 46, md: 27 },
+        height: { xs: 40, sm: 46, md: 30 },
         "&:disabled": {
             backgroundColor: "rgba(0, 0, 0, 0.12)",
             color: "rgba(0, 0, 0, 0.26)",
@@ -34,7 +34,6 @@ const CrudButton = ({
     };
 
     return (
-
         <Box
             sx={{
                 display: 'flex',
@@ -46,7 +45,7 @@ const CrudButton = ({
             }}
         >
             {!hideAdd && (
-                <Tooltip title="Add">
+                <Tooltip title="Add" arrow>
                     <Button size="small" variant="contained" sx={buttonSx}
                         onClick={onAdd}
                         disabled={!readOnlyMode}
@@ -56,7 +55,7 @@ const CrudButton = ({
                 </Tooltip>
             )}
             {!hideEdit && (
-                <Tooltip title="Edit">
+                <Tooltip title="Edit" arrow>
                     <Button size="small" variant="contained"
                         sx={buttonSx} onClick={onEdit}
                         disabled={!readOnlyMode}
@@ -66,21 +65,21 @@ const CrudButton = ({
                 </Tooltip>
             )}
             {!hideDelete && (
-                <Tooltip title="Delete">
+                <Tooltip title="Delete" arrow>
                     <Button size="small" variant="contained" disabled={!readOnlyMode} sx={buttonSx} onClick={onDelete}>
                         <DeleteIcon />
                     </Button>
                 </Tooltip>
             )}
             {!hideView && (
-                <Tooltip title="Print">
+                <Tooltip title="Print" arrow>
                     <Button size="small" variant="contained" sx={buttonSx} disabled={!readOnlyMode} onClick={onView}>
                         <PrintIcon />
                     </Button>
                 </Tooltip>
             )}
             {!hideExit && (
-                <Tooltip title="Exit">
+                <Tooltip title="Exit" arrow>
                     <Button size="small" variant="contained" disabled={!readOnlyMode} sx={buttonSx} onClick={onExit}>
                         <ExitToAppIcon />
                     </Button>

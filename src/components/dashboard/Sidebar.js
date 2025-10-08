@@ -320,7 +320,16 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
 
           ],
         },
-
+        {
+          name: 'Ticketing',
+          icon: FaTruck,
+          path: '#',
+          children: [
+            { name: 'Ticket Category', icon: FaHandshake, path: '/masters/ticketing/ticketCategory' },
+            { name: 'Ticket SubCategory', icon: FaHandshake, path: '/masters/ticketing/ticketSubCat' },
+            { name: 'Service/Complaint', icon: FaHandshake, path: '/masters/ticketing/serviceComplaint' },
+          ],
+        },
       ],
     },
     {
@@ -332,8 +341,10 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
           name: 'Sales', icon: FaBoxes, path: '#',
           children: [
 
+
             // { name: 'Sales Offline', icon: FaBoxes, path: '/inverntory/inventory-offline/' },
             { name: 'Sales Offline', icon: FaBoxes, path: '/inverntory/stock-enquiry-table' },
+
             { name: 'Packaging/Barcode', icon: FaBoxes, path: '/inverntory/packeging-barcode/' },
 
           ],
