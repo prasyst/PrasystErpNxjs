@@ -12,7 +12,7 @@ import {
   MdPushPin, MdOutlinePushPin, MdOutlineInventory,
 } from 'react-icons/md';
 
-import { FaBuilding, FaTruck, FaUserTag, FaHandshake, FaBalanceScale, FaBoxOpen, FaBoxes, FaUserTie, FaRupeeSign  } from 'react-icons/fa';
+import { FaBuilding, FaTruck, FaUserTag, FaHandshake, FaBalanceScale, FaBoxOpen, FaBoxes, FaUserTie, FaRupeeSign } from 'react-icons/fa';
 import { FiUser } from 'react-icons/fi';
 import { RiFileChartLine, RiAdminLine } from "react-icons/ri";
 import { AiOutlineUsergroupAdd, AiOutlineNodeIndex } from 'react-icons/ai';
@@ -83,7 +83,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
   // Sample menu structure with multiple nested levels
   const menuItems = [
     { name: 'Dashboard', icon: MdDashboard, path: '/dashboard', },
-    { name: 'SalesDash', icon: FaRupeeSign  , path: '/dashboard/sales-dashboard', },
+    { name: 'SalesDash', icon: FaRupeeSign, path: '/dashboard/sales-dashboard', },
     { name: 'Stock Enquiry', icon: MdSearch, path: '/dashboard/stock-enquiry-table' },
     {
       name: 'Masters',
@@ -320,7 +320,16 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
 
           ],
         },
-
+        {
+          name: 'Ticketing',
+          icon: FaTruck,
+          path: '#',
+          children: [
+            { name: 'Ticket Category', icon: FaHandshake, path: '/masters/ticketing/ticketCategory' },
+            { name: 'Ticket SubCategory', icon: FaHandshake, path: '/masters/ticketing/ticketSubCat' },
+            { name: 'Service/Complaint', icon: FaHandshake, path: '/masters/ticketing/serviceComplaint' },
+          ],
+        },
       ],
     },
     {
@@ -334,7 +343,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
 
             { name: 'Sales Offline', icon: FaBoxes, path: '/inverntory/inventory-offline/' },
             // { name: 'Sales Offline', icon: FaBoxes, path: '/inverntory/stock-enquiry-table' },
- { name: 'Packaging/Barcode', icon: FaBoxes, path: '/inverntory/packeging-barcode/' },
+            { name: 'Packaging/Barcode', icon: FaBoxes, path: '/inverntory/packeging-barcode/' },
 
           ],
         },
