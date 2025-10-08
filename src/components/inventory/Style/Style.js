@@ -1041,7 +1041,7 @@ const Style = () => {
                             }}
                         />
                     </Grid>
-                    <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                    <Grid size={{ xs: 12, sm: 6, md: 1.5 }}>
                         <TextField
                             label="Last Style"
                             variant="filled"
@@ -1060,7 +1060,7 @@ const Style = () => {
                         />
                     </Grid>
 
-                    <Grid size={{ xs: 12, sm: 6, md: 3 }}></Grid>
+                    <Grid size={{ xs: 12, sm: 6, md: 4.5 }}></Grid>
                     <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                         <AutoVibe
                             id=""
@@ -1080,7 +1080,8 @@ const Style = () => {
                             }}
                         />
                     </Grid>
-                    <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+
+                    <Grid size={{ xs: 12, sm: 6, md: 1.5 }}>
                         <TextField
                             label="Article/Style"
                             variant="filled"
@@ -1098,7 +1099,7 @@ const Style = () => {
                             }}
                         />
                     </Grid>
-                    <Grid size={{ xs: 12, sm: 6, md: 6 }}>
+                    <Grid size={{ xs: 12, sm: 6, md: 1.5 }}>
                         <AutoVibe
                             id="FGCAT_KEY"
                             disabled={isFormDisabled}
@@ -1117,15 +1118,15 @@ const Style = () => {
                             }}
                         />
                     </Grid>
-                    <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                    <Grid size={{ xs: 12, sm: 6, md: 1.5 }}>
                         <TextField
                             label="MRP"
                             variant="filled"
                             fullWidth
                             onChange={''}
-                            value={""}
                             name=""
-                            disabled={isFormDisabled}
+                            value={""}
+                            disabled={true}
                             sx={textInputSx}
                             inputProps={{
                                 style: {
@@ -1135,7 +1136,190 @@ const Style = () => {
                             }}
                         />
                     </Grid>
-
+                    <Grid size={{ xs: 12, sm: 6, md: 1.5 }}>
+                        <TextField
+                            label="WSP"
+                            variant="filled"
+                            fullWidth
+                            onChange={''}
+                            name=""
+                            value={""}
+                            disabled={true}
+                            sx={textInputSx}
+                            inputProps={{
+                                style: {
+                                    padding: '6px 8px',
+                                    fontSize: '12px',
+                                },
+                            }}
+                        />
+                    </Grid>
+                    <Grid size={{ xs: 12, sm: 6, md: 1.5 }}>
+                        <TextField
+                            label="Pur Rt"
+                            variant="filled"
+                            fullWidth
+                            onChange={''}
+                            name=""
+                            value={""}
+                            disabled={true}
+                            sx={textInputSx}
+                            inputProps={{
+                                style: {
+                                    padding: '6px 8px',
+                                    fontSize: '12px',
+                                },
+                            }}
+                        />
+                    </Grid>
+                    <Grid size={{ xs: 12, sm: 6, md: 1.5 }}>
+                        <AutoVibe
+                            id="FGCAT_KEY"
+                            disabled={isFormDisabled}
+                            options={''}
+                            getOptionLabel={(option) => option || ""}
+                            label="Base/Quality"
+                            name=""
+                            value={""}
+                            onChange={''}
+                            sx={DropInputSx}
+                            inputProps={{
+                                style: {
+                                    padding: '6px 8px',
+                                    fontSize: '12px',
+                                },
+                            }}
+                        />
+                    </Grid>
+                    <Grid size={{ xs: 12, sm: 6, md: 1.5 }}>
+                        <AutoVibe
+                            id="FGCAT_KEY"
+                            disabled={isFormDisabled}
+                            options={''}
+                            getOptionLabel={(option) => option || ""}
+                            label="Brand"
+                            name=""
+                            value={""}
+                            onChange={''}
+                            sx={DropInputSx}
+                            inputProps={{
+                                style: {
+                                    padding: '6px 8px',
+                                    fontSize: '12px',
+                                },
+                            }}
+                        />
+                    </Grid>
+                    <Grid size={{ xs: 12, sm: 6, md: 1.5 }}>
+                        <AutoVibe
+                            id="FGCAT_KEY"
+                            disabled={isFormDisabled}
+                            options={''}
+                            getOptionLabel={(option) => option || ""}
+                            label="Unit"
+                            name=""
+                            value={""}
+                            onChange={''}
+                            sx={DropInputSx}
+                            inputProps={{
+                                style: {
+                                    padding: '6px 8px',
+                                    fontSize: '12px',
+                                },
+                            }}
+                        />
+                    </Grid>
+                    <Grid size={{ xs: 12, sm: 6, md: 1.5 }}>
+                        <TextField
+                            label="Design"
+                            variant="filled"
+                            fullWidth
+                            onChange={''}
+                            name=""
+                            value={""}
+                            disabled={true}
+                            sx={textInputSx}
+                            inputProps={{
+                                style: {
+                                    padding: '6px 8px',
+                                    fontSize: '12px',
+                                },
+                            }}
+                        />
+                    </Grid>
+                    <Grid size={{ xs: 12, sm: 6, md: 1.5 }}>
+                        <TextField
+                            label="Catalogue"
+                            variant="filled"
+                            fullWidth
+                            onChange={''}
+                            name=""
+                            value={""}
+                            disabled={true}
+                            sx={textInputSx}
+                            inputProps={{
+                                style: {
+                                    padding: '6px 8px',
+                                    fontSize: '12px',
+                                },
+                            }}
+                        />
+                    </Grid>
+                    <Grid size={{ xs: 12, sm: 6, md: 1.5 }}>
+                        <TextField
+                            label="Desc"
+                            variant="filled"
+                            fullWidth
+                            onChange={''}
+                            name=""
+                            value={""}
+                            disabled={true}
+                            sx={textInputSx}
+                            inputProps={{
+                                style: {
+                                    padding: '6px 8px',
+                                    fontSize: '12px',
+                                },
+                            }}
+                        />
+                    </Grid>
+                    <Grid size={{ xs: 12, sm: 6, md: 1.5 }}>
+                        <TextField
+                            label="Cut"
+                            variant="filled"
+                            fullWidth
+                            onChange={''}
+                            name=""
+                            value={""}
+                            disabled={true}
+                            sx={textInputSx}
+                            inputProps={{
+                                style: {
+                                    padding: '6px 8px',
+                                    fontSize: '12px',
+                                },
+                            }}
+                        />
+                    </Grid>
+                    <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                        <AutoVibe
+                            id="FGCAT_KEY"
+                            disabled={isFormDisabled}
+                            options={''}
+                            getOptionLabel={(option) => option || ""}
+                            label="Prod. Type"
+                            name=""
+                            value={""}
+                            onChange={''}
+                            sx={DropInputSx}
+                            inputProps={{
+                                style: {
+                                    padding: '6px 8px',
+                                    fontSize: '12px',
+                                },
+                            }}
+                        />
+                    </Grid>
                 </Grid>
 
                 <Grid xs={12} sx={{
