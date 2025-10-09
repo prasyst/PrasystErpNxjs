@@ -1,10 +1,11 @@
 
+
+"use client"
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
-// Create Context
 const TicketContext = createContext();
 
-// Ticket Provider Component
+
 export const TicketProvider = ({ children }) => {
   const [tickets, setTickets] = useState([]);
   const [categories, setCategories] = useState([
