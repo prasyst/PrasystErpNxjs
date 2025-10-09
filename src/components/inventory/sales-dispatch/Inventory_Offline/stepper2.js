@@ -37,12 +37,37 @@ import DeleteIcon from '@mui/icons-material/Delete';
 const FORM_MODE = getFormMode();
 
 const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCancel }) => {
-  console.log("Stepper2 received data:", formData);
-
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [selectedStyle, setSelectedStyle] = useState(null);
-  const [selectedRow, setSelectedRow] = useState(null); // Track selected row
-  const [sizeDetailsData, setSizeDetailsData] = useState([]); // Store size details for selected row
+  const [selectedRow, setSelectedRow] = useState(null);
+  const [sizeDetailsData, setSizeDetailsData] = useState([]);
+  const [isAddingNew, setIsAddingNew] = useState(false);
+  const [isEditingSize, setIsEditingSize] = useState(false);
+  const [editingRowData, setEditingRowData] = useState(null);
+  
+  const [newItemData, setNewItemData] = useState({
+    product: '',
+    barcode: '',
+    style: '',
+    type: '',
+    shade: '',
+    qty: '',
+    mrp: '',
+    setNo: '',
+    varPer: '',
+    stdQty: '',
+    convFact: '',
+    lotNo: '',
+    discount: '',
+    percent: '',
+    remark: '',
+    divDt: '',
+    rQty: '',
+    sets: ''
+  });
+
+  // State for updated table data
+  const [updatedTableData, setUpdatedTableData] = useState([]);
 
   const textInputSx = {
     '& .MuiInputBase-root': {
@@ -124,10 +149,8 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
     },
   };
 
-  console.log("table data formData", formData);
-
-  // Parse ORDBKSTYLIST data for table
-  const tableData = formData.apiResponseData?.ORDBKSTYLIST ? formData.apiResponseData.ORDBKSTYLIST.map((item, index) => ({
+  // Parse ORDBKSTYLIST data for table - initial data
+  const initialTableData = formData.apiResponseData?.ORDBKSTYLIST ? formData.apiResponseData.ORDBKSTYLIST.map((item, index) => ({
     id: item.ORDBKSTY_ID || index + 1,
     BarCode: item.FGITEM_KEY || "-",
     product: item.PRODUCT || "-",
@@ -140,16 +163,37 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
     amount: parseFloat(item.ITMAMT) || 0,
     varPer: parseFloat(item.DLV_VAR_PERC) || 0,
     varQty: parseFloat(item.DLV_VAR_QTY) || 0,
-    varAmt: 0, // Calculate if needed
+    varAmt: 0,
     discAmt: parseFloat(item.DISC_AMT) || 0,
     netAmt: parseFloat(item.NET_AMT) || 0,
     distributer: item.DISTBTR || "-",
     set: parseFloat(item.SETQTY) || 0,
-    // Original data for reference
     originalData: item
   })) : [];
 
-  console.log("table data ", tableData);
+  // Use updatedTableData if available, otherwise use initial data
+  const tableData = updatedTableData.length > 0 ? updatedTableData : initialTableData;
+
+  // Calculate totals from table data
+  const calculateTotals = () => {
+    const totalQty = tableData.reduce((sum, row) => sum + (row.qty || 0), 0);
+    const totalAmount = tableData.reduce((sum, row) => sum + (row.amount || 0), 0);
+    const totalNetAmt = tableData.reduce((sum, row) => sum + (row.netAmt || 0), 0);
+    const totalDiscount = tableData.reduce((sum, row) => sum + (row.discAmt || 0), 0);
+
+    setFormData(prev => ({
+      ...prev,
+      TOTAL_QTY: totalQty,
+      TOTAL_AMOUNT: totalAmount,
+      NET_AMOUNT: totalNetAmt,
+      DISCOUNT: totalDiscount
+    }));
+  };
+
+  // Calculate totals whenever tableData changes
+  useEffect(() => {
+    calculateTotals();
+  }, [tableData]);
 
   // Handle row click
   const handleRowClick = (row) => {
@@ -158,9 +202,44 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
     // Extract ORDBKSTYSZLIST from the clicked row
     const sizeDetails = row.originalData?.ORDBKSTYSZLIST || [];
     setSizeDetailsData(sizeDetails);
+
+    // If in edit mode, populate form fields with row data (read-only)
+    if (isEditingSize) {
+      populateFormFields(row);
+    }
     
     console.log("Selected row:", row);
     console.log("Size details:", sizeDetails);
+  };
+
+  // Populate form fields with row data for editing (read-only display)
+  const populateFormFields = (row) => {
+    setEditingRowData(row);
+    
+    // Calculate convFact from qty and size details
+    const totalSizeQty = row.originalData?.ORDBKSTYSZLIST?.reduce((sum, size) => sum + (parseFloat(size.QTY) || 0), 0) || row.qty;
+    const convFact = totalSizeQty / (parseFloat(row.qty) || 1);
+    
+    setNewItemData({
+      product: row.product || '',
+      barcode: row.BarCode || '',
+      style: row.style || '',
+      type: row.type || '',
+      shade: row.shade || '',
+      qty: row.qty?.toString() || '',
+      mrp: row.rate?.toString() || '',
+      setNo: '',
+      varPer: row.varPer?.toString() || '',
+      stdQty: '',
+      convFact: convFact.toString() || '1',
+      lotNo: row.lotNo || '',
+      discount: row.discAmt?.toString() || '',
+      percent: '',
+      remark: '',
+      divDt: '',
+      rQty: '',
+      sets: row.set?.toString() || ''
+    });
   };
 
   // Initialize with first row's size details when component loads
@@ -210,16 +289,314 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
     setSelectedStyle(value);
   };
 
+  const handleNewItemChange = (e) => {
+    const { name, value } = e.target;
+    setNewItemData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+
+    // Auto-calculate size details when qty and convFact are entered (only in add mode)
+    if (isAddingNew && (name === 'qty' || name === 'convFact') && newItemData.qty && newItemData.convFact) {
+      calculateSizeDetails();
+    }
+  };
+
+  const calculateSizeDetails = () => {
+    const qty = parseFloat(newItemData.qty) || 0;
+    const convFact = parseFloat(newItemData.convFact) || 1;
+    const calculatedQty = qty * convFact;
+    const mrp = parseFloat(newItemData.mrp) || 0;
+    const calculatedAmount = calculatedQty * mrp;
+
+    console.log("Calculating size details:", { qty, convFact, calculatedQty, mrp, calculatedAmount });
+
+    // Create size details based on calculated quantity
+    const newSizeDetails = [
+      {
+        STYSIZE_NAME: 'Standard',
+        QTY: calculatedQty,
+        ITM_AMT: calculatedAmount,
+        FGSTYLE_ID: newItemData.barcode || '-',
+        ORDER_QTY: calculatedQty
+      }
+    ];
+
+    setSizeDetailsData(newSizeDetails);
+    console.log("Updated size details:", newSizeDetails);
+  };
+
+  // Auto-calculate when qty or convFact changes (only in add mode)
+  useEffect(() => {
+    if (isAddingNew && newItemData.qty && newItemData.convFact) {
+      calculateSizeDetails();
+    }
+  }, [newItemData.qty, newItemData.convFact, isAddingNew]);
+
   const handleAddItem = () => {
-    console.log('Add new item');
+    setIsAddingNew(true);
+    setSizeDetailsData([]); // Clear size details for new item
+    setNewItemData({
+      product: '',
+      barcode: '',
+      style: '',
+      type: '',
+      shade: '',
+      qty: '',
+      mrp: '',
+      setNo: '',
+      varPer: '',
+      stdQty: '',
+      convFact: '',
+      lotNo: '',
+      discount: '',
+      percent: '',
+      remark: '',
+      divDt: '',
+      rQty: '',
+      sets: ''
+    });
+  };
+
+  const handleConfirmAdd = () => {
+    if (!newItemData.product || !newItemData.qty) {
+      alert("Please fill required fields: Product and Qty");
+      return;
+    }
+
+    // Create new item from form data
+    const calculatedQty = (parseFloat(newItemData.qty) || 0) * (parseFloat(newItemData.convFact) || 1);
+    const mrp = parseFloat(newItemData.mrp) || 0;
+    const amount = calculatedQty * mrp;
+    const discount = parseFloat(newItemData.discount) || 0;
+    const netAmount = amount - discount;
+
+    const newItem = {
+      id: Date.now(), // Temporary ID
+      BarCode: newItemData.barcode || "-",
+      product: newItemData.product,
+      style: newItemData.style || "-",
+      type: newItemData.type || "-",
+      shade: newItemData.shade || "-",
+      lotNo: newItemData.lotNo || "-",
+      qty: calculatedQty,
+      rate: mrp,
+      amount: amount,
+      varPer: parseFloat(newItemData.varPer) || 0,
+      varQty: 0,
+      varAmt: 0,
+      discAmt: discount,
+      netAmt: netAmount,
+      distributer: "-",
+      set: parseFloat(newItemData.sets) || 0,
+      originalData: {
+        ORDBKSTYSZLIST: sizeDetailsData
+      }
+    };
+
+    // Update the table data with new item
+    const newTableData = [...tableData, newItem];
+    setUpdatedTableData(newTableData);
+
+    // Also update formData for persistence
+    setFormData(prev => ({
+      ...prev,
+      apiResponseData: {
+        ...prev.apiResponseData,
+        ORDBKSTYLIST: [...(prev.apiResponseData?.ORDBKSTYLIST || []), {
+          ORDBKSTY_ID: newItem.id,
+          FGITEM_KEY: newItem.BarCode,
+          PRODUCT: newItem.product,
+          STYLE: newItem.style,
+          TYPE: newItem.type,
+          SHADE: newItem.shade,
+          ITMQTY: newItem.qty,
+          ITMRATE: newItem.rate,
+          ITMAMT: newItem.amount,
+          DLV_VAR_PERC: newItem.varPer,
+          DLV_VAR_QTY: newItem.varQty,
+          DISC_AMT: newItem.discAmt,
+          NET_AMT: newItem.netAmt,
+          DISTBTR: newItem.distributer,
+          SETQTY: newItem.set,
+          ORDBKSTYSZLIST: sizeDetailsData
+        }]
+      }
+    }));
+
+    // Reset form
+    setIsAddingNew(false);
+    setNewItemData({
+      product: '',
+      barcode: '',
+      style: '',
+      type: '',
+      shade: '',
+      qty: '',
+      mrp: '',
+      setNo: '',
+      varPer: '',
+      stdQty: '',
+      convFact: '',
+      lotNo: '',
+      discount: '',
+      percent: '',
+      remark: '',
+      divDt: '',
+      rQty: '',
+      sets: ''
+    });
+
+    alert("Item added successfully!");
+  };
+
+  const handleCancelAdd = () => {
+    setIsAddingNew(false);
+    setNewItemData({
+      product: '',
+      barcode: '',
+      style: '',
+      type: '',
+      shade: '',
+      qty: '',
+      mrp: '',
+      setNo: '',
+      varPer: '',
+      stdQty: '',
+      convFact: '',
+      lotNo: '',
+      discount: '',
+      percent: '',
+      remark: '',
+      divDt: '',
+      rQty: '',
+      sets: ''
+    });
   };
 
   const handleEditItem = () => {
-    console.log('Edit item');
+    if (!selectedRow) {
+      alert("Please select an item to edit");
+      return;
+    }
+    
+    if (isEditingSize) {
+      // Save mode - update the main table with edited size details
+      const updatedTable = tableData.map(row => {
+        if (row.id === selectedRow) {
+          // Calculate total qty from size details
+          const totalSizeQty = sizeDetailsData.reduce((sum, size) => sum + (parseFloat(size.QTY) || 0), 0);
+          
+          // Calculate amount based on size details total and rate
+          const rate = row.rate || 0;
+          const amount = totalSizeQty * rate;
+          const discount = row.discAmt || 0;
+          const netAmount = amount - discount;
+
+          return {
+            ...row,
+            qty: totalSizeQty, // Update main table qty with size details total
+            amount: amount,
+            netAmt: netAmount,
+            originalData: {
+              ...row.originalData,
+              ORDBKSTYSZLIST: sizeDetailsData
+            }
+          };
+        }
+        return row;
+      });
+      
+      setUpdatedTableData(updatedTable);
+      
+      // Also update formData
+      setFormData(prev => ({
+        ...prev,
+        apiResponseData: {
+          ...prev.apiResponseData,
+          ORDBKSTYLIST: prev.apiResponseData?.ORDBKSTYLIST?.map(item => {
+            if (item.ORDBKSTY_ID === selectedRow) {
+              const totalSizeQty = sizeDetailsData.reduce((sum, size) => sum + (parseFloat(size.QTY) || 0), 0);
+              const rate = item.ITMRATE || 0;
+              const amount = totalSizeQty * rate;
+              const discount = item.DISC_AMT || 0;
+              const netAmount = amount - discount;
+
+              return {
+                ...item,
+                ITMQTY: totalSizeQty, // Update main table qty
+                ITMAMT: amount,
+                NET_AMT: netAmount,
+                ORDBKSTYSZLIST: sizeDetailsData
+              };
+            }
+            return item;
+          }) || []
+        }
+      }));
+      
+      alert("Changes saved successfully!");
+    } else {
+      // Enter edit mode - populate form with selected row data if available
+      if (selectedRow) {
+        const selectedRowData = tableData.find(row => row.id === selectedRow);
+        if (selectedRowData) {
+          populateFormFields(selectedRowData);
+        }
+      }
+    }
+    
+    setIsEditingSize(!isEditingSize);
   };
 
   const handleDeleteItem = () => {
-    console.log('Delete item');
+    if (!selectedRow) {
+      alert("Please select an item to delete");
+      return;
+    }
+    
+    // Remove selected item from table data
+    const newTableData = tableData.filter(row => row.id !== selectedRow);
+    setUpdatedTableData(newTableData);
+    
+    // Also update formData
+    setFormData(prev => ({
+      ...prev,
+      apiResponseData: {
+        ...prev.apiResponseData,
+        ORDBKSTYLIST: (prev.apiResponseData?.ORDBKSTYLIST || []).filter(item => 
+          item.ORDBKSTY_ID !== selectedRow
+        )
+      }
+    }));
+
+    // Reset selection
+    if (newTableData.length > 0) {
+      setSelectedRow(newTableData[0].id);
+      setSizeDetailsData(newTableData[0].originalData?.ORDBKSTYSZLIST || []);
+    } else {
+      setSelectedRow(null);
+      setSizeDetailsData([]);
+    }
+
+    alert("Item deleted successfully!");
+  };
+
+  const handleSizeQtyChange = (index, newQty) => {
+    if (!isEditingSize) return;
+
+    const updatedSizeDetails = [...sizeDetailsData];
+    const oldQty = updatedSizeDetails[index].QTY;
+    const rate = updatedSizeDetails[index].ITM_AMT / (oldQty || 1);
+    
+    updatedSizeDetails[index] = {
+      ...updatedSizeDetails[index],
+      QTY: parseFloat(newQty) || 0,
+      ITM_AMT: (parseFloat(newQty) || 0) * rate,
+      ORDER_QTY: parseFloat(newQty) || 0
+    };
+
+    setSizeDetailsData(updatedSizeDetails);
   };
 
   // Helper function to format date for display
@@ -233,6 +610,12 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
       console.error('Error formatting date:', error);
       return "";
     }
+  };
+
+  // Determine if form fields should be disabled
+  const shouldDisableFields = () => {
+    // Fields should be enabled only when in add mode or edit mode
+    return !(isAddingNew || isEditingSize);
   };
 
   const columns = [
@@ -395,7 +778,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
             variant="contained"
             startIcon={<AddIcon />}
             onClick={handleAddItem}
-            disabled={isFormDisabled}
+            disabled={isFormDisabled || isEditingSize}
             sx={{
               background: 'linear-gradient(45deg, #2196f3, #64b5f6)',
               color: 'white',
@@ -413,21 +796,21 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
             onClick={handleEditItem}
             disabled={isFormDisabled}
             sx={{
-              background: 'linear-gradient(45deg, #ffa726, #ffcc80)',
+              background: isEditingSize ? '#4caf50' : 'linear-gradient(45deg, #ffa726, #ffcc80)',
               color: 'white',
               margin: { xs: '0 4px', sm: '0 6px' },
               minWidth: { xs: 40, sm: 46, md: 60 },
               height: { xs: 40, sm: 46, md: 30 },
             }}
           >
-            Edit
+            {isEditingSize ? 'Save' : 'Edit'}
           </Button>
 
           <Button
             variant="contained"
             startIcon={<DeleteIcon />}
             onClick={handleDeleteItem}
-            disabled={isFormDisabled}
+            disabled={isFormDisabled || isEditingSize}
             sx={{
               background: 'linear-gradient(45deg, #e53935, #ef5350)',
               color: 'white',
@@ -479,42 +862,216 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
           {/* LEFT: Text Fields Section */}
           <Box sx={{ flex: '0 0 60%' }}>
             <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 1 }}>
-              <TextField label="BarCode" variant="filled" disabled={isFormDisabled} sx={textInputSx} inputProps={{ style: { padding: '6px 8px', fontSize: '12px' } }} />
-              <TextField label="Style Cd" variant="filled" disabled={isFormDisabled} sx={textInputSx} inputProps={{ style: { padding: '6px 8px', fontSize: '12px' } }} />
-              <TextField label="Type" variant="filled" disabled={isFormDisabled} sx={textInputSx} inputProps={{ style: { padding: '6px 8px', fontSize: '12px' } }} />
-              
-              <TextField label="Shade" variant="filled" disabled={isFormDisabled} sx={textInputSx} inputProps={{ style: { padding: '6px 8px', fontSize: '12px' } }} />
               <AutoVibe
-                id="filterall"
-                disabled={isFormDisabled}
+                id="Product"
+                disabled={shouldDisableFields()} // Enable only in add/edit mode
                 getOptionLabel={(option) => option || ''}
                 options={productOptions}
-                label="Filter All"
-                name="filterall"
-                value={selectedProduct}
-                onChange={handleProductChange}
+                label="Product"
+                name="product"
+                value={isAddingNew || isEditingSize ? newItemData.product : selectedProduct}
+                onChange={(event, value) => {
+                  if (isAddingNew || isEditingSize) {
+                    setNewItemData(prev => ({ ...prev, product: value }));
+                  }
+                }}
                 sx={DropInputSx}
               />
-              <TextField label="Qty" variant="filled" disabled={isFormDisabled} sx={textInputSx} inputProps={{ style: { padding: '6px 8px', fontSize: '12px' } }} />
+              <TextField 
+                label="BarCode" 
+                variant="filled" 
+                disabled={shouldDisableFields()} // Enable only in add/edit mode
+                name="barcode"
+                value={isAddingNew || isEditingSize ? newItemData.barcode : ''}
+                onChange={handleNewItemChange}
+                sx={textInputSx} 
+                inputProps={{ style: { padding: '6px 8px', fontSize: '12px' } }} 
+              />
+              <AutoVibe
+                id="Style_Cd"
+                disabled={shouldDisableFields()} // Enable only in add/edit mode
+                getOptionLabel={(option) => option || ''}
+                options={styleOptions}
+                label="Style Cd"
+                name="style"
+                value={isAddingNew || isEditingSize ? newItemData.style : selectedStyle}
+                onChange={(event, value) => {
+                  if (isAddingNew || isEditingSize) {
+                    setNewItemData(prev => ({ ...prev, style: value }));
+                  }
+                }}
+                sx={DropInputSx}
+              />
+              <TextField 
+                label="Type" 
+                variant="filled" 
+                disabled={shouldDisableFields()} // Enable only in add/edit mode
+                name="type"
+                value={isAddingNew || isEditingSize ? newItemData.type : ''}
+                onChange={handleNewItemChange}
+                sx={textInputSx} 
+                inputProps={{ style: { padding: '6px 8px', fontSize: '12px' } }} 
+              />
+              <AutoVibe
+                id="Type"
+                disabled={shouldDisableFields()} // Enable only in add/edit mode
+                getOptionLabel={(option) => option || ''}
+                options={productOptions}
+                label="Type"
+                name="type"
+                value={isAddingNew || isEditingSize ? newItemData.type : ''}
+                onChange={(event, value) => {
+                  if (isAddingNew || isEditingSize) {
+                    setNewItemData(prev => ({ ...prev, type: value }));
+                  }
+                }}
+                sx={DropInputSx}
+              />
+              <TextField 
+                label="Shade" 
+                variant="filled" 
+                disabled={shouldDisableFields()} // Enable only in add/edit mode
+                name="shade"
+                value={isAddingNew || isEditingSize ? newItemData.shade : ''}
+                onChange={handleNewItemChange}
+                sx={textInputSx} 
+                inputProps={{ style: { padding: '6px 8px', fontSize: '12px' } }} 
+              />
+              <AutoVibe
+                id="Shade"
+                disabled={shouldDisableFields()} // Enable only in add/edit mode
+                getOptionLabel={(option) => option || ''}
+                options={productOptions}
+                label="Shade"
+                name="shade"
+                value={isAddingNew || isEditingSize ? newItemData.shade : ''}
+                onChange={(event, value) => {
+                  if (isAddingNew || isEditingSize) {
+                    setNewItemData(prev => ({ ...prev, shade: value }));
+                  }
+                }}
+                sx={DropInputSx}
+              />
+              <TextField 
+                label="Qty" 
+                variant="filled" 
+                disabled={shouldDisableFields()} // Enable only in add/edit mode
+                name="qty"
+                value={isAddingNew || isEditingSize ? newItemData.qty : ''}
+                onChange={handleNewItemChange}
+                sx={textInputSx} 
+                inputProps={{ style: { padding: '6px 8px', fontSize: '12px' } }} 
+              />
               
-              <TextField label="MRP" variant="filled" disabled={isFormDisabled} sx={textInputSx} inputProps={{ style: { padding: '6px 8px', fontSize: '12px' } }} />
-              <TextField label="Set No" variant="filled" disabled={isFormDisabled} sx={textInputSx} inputProps={{ style: { padding: '6px 8px', fontSize: '12px' } }} />
-              <TextField label="Qty(+/-)%" variant="filled" disabled={isFormDisabled} sx={textInputSx} inputProps={{ style: { padding: '6px 8px', fontSize: '12px' } }} />
+              <TextField 
+                label="MRP" 
+                variant="filled" 
+                disabled={shouldDisableFields()} // Enable only in add/edit mode
+                name="mrp"
+                value={isAddingNew || isEditingSize ? newItemData.mrp : ''}
+                onChange={handleNewItemChange}
+                sx={textInputSx} 
+                inputProps={{ style: { padding: '6px 8px', fontSize: '12px' } }} 
+              />
+              <TextField 
+                label="Set No" 
+                variant="filled" 
+                disabled={shouldDisableFields()} // Enable only in add/edit mode
+                name="setNo"
+                value={isAddingNew || isEditingSize ? newItemData.setNo : ''}
+                onChange={handleNewItemChange}
+                sx={textInputSx} 
+                inputProps={{ style: { padding: '6px 8px', fontSize: '12px' } }} 
+              />
+              <TextField 
+                label="Qty(+/-)%" 
+                variant="filled" 
+                disabled={shouldDisableFields()} // Enable only in add/edit mode
+                name="varPer"
+                value={isAddingNew || isEditingSize ? newItemData.varPer : ''}
+                onChange={handleNewItemChange}
+                sx={textInputSx} 
+                inputProps={{ style: { padding: '6px 8px', fontSize: '12px' } }} 
+              />
               
-              <TextField label="Std Qty" variant="filled" disabled={isFormDisabled} sx={textInputSx} inputProps={{ style: { padding: '6px 8px', fontSize: '12px' } }} />
-              <TextField label="Conv Fact" variant="filled" disabled={isFormDisabled} sx={textInputSx} inputProps={{ style: { padding: '6px 8px', fontSize: '12px' } }} />
-              <TextField label="Lot No" variant="filled" disabled={isFormDisabled} sx={textInputSx} inputProps={{ style: { padding: '6px 8px', fontSize: '12px' } }} />
-              
-              <TextField label="Percent" variant="filled" disabled={isFormDisabled} sx={textInputSx} inputProps={{ style: { padding: '6px 8px', fontSize: '12px' } }} />
-              <TextField label="Remark" variant="filled" disabled={isFormDisabled} sx={textInputSx} inputProps={{ style: { padding: '6px 8px', fontSize: '12px' } }} />
+              <TextField 
+                label="Std Qty" 
+                variant="filled" 
+                disabled={shouldDisableFields()} // Enable only in add/edit mode
+                name="stdQty"
+                value={isAddingNew || isEditingSize ? newItemData.stdQty : ''}
+                onChange={handleNewItemChange}
+                sx={textInputSx} 
+                inputProps={{ style: { padding: '6px 8px', fontSize: '12px' } }} 
+              />
+              <TextField 
+                label="Conv Fact" 
+                variant="filled" 
+                disabled={shouldDisableFields()} // Enable only in add/edit mode
+                name="convFact"
+                value={isAddingNew || isEditingSize ? newItemData.convFact : ''}
+                onChange={handleNewItemChange}
+                sx={textInputSx} 
+                inputProps={{ style: { padding: '6px 8px', fontSize: '12px' } }} 
+              />
+              <TextField 
+                label="Lot No" 
+                variant="filled" 
+                disabled={shouldDisableFields()} // Enable only in add/edit mode
+                name="lotNo"
+                value={isAddingNew || isEditingSize ? newItemData.lotNo : ''}
+                onChange={handleNewItemChange}
+                sx={textInputSx} 
+                inputProps={{ style: { padding: '6px 8px', fontSize: '12px' } }} 
+              />
+              <AutoVibe
+                id="Discount"
+                disabled={shouldDisableFields()} // Enable only in add/edit mode
+                getOptionLabel={(option) => option || ''}
+                options={productOptions}
+                label="Discount"
+                name="discount"
+                value={isAddingNew || isEditingSize ? newItemData.discount : ''}
+                onChange={(event, value) => {
+                  if (isAddingNew || isEditingSize) {
+                    setNewItemData(prev => ({ ...prev, discount: value }));
+                  }
+                }}
+                sx={DropInputSx}
+              />
+              <TextField 
+                label="Percent" 
+                variant="filled" 
+                disabled={shouldDisableFields()} // Enable only in add/edit mode
+                name="percent"
+                value={isAddingNew || isEditingSize ? newItemData.percent : ''}
+                onChange={handleNewItemChange}
+                sx={textInputSx} 
+                inputProps={{ style: { padding: '6px 8px', fontSize: '12px' } }} 
+              />
+              <TextField 
+                label="Remark" 
+                variant="filled" 
+                disabled={shouldDisableFields()} // Enable only in add/edit mode
+                name="remark"
+                value={isAddingNew || isEditingSize ? newItemData.remark : ''}
+                onChange={handleNewItemChange}
+                sx={textInputSx} 
+                inputProps={{ style: { padding: '6px 8px', fontSize: '12px' } }} 
+              />
               
               <LocalizationProvider dateAdapter={AdapterDateFns}>
                 <DatePicker
                   label="Div Dt"
-                  value={formData.DIV_DT ? parse(formData.DIV_DT, "dd/MM/yyyy", new Date()) : null}
-                  onChange={(date) => handleDateChange(date, "DIV_DT")}
+                  value={isAddingNew || isEditingSize ? (newItemData.divDt ? parse(newItemData.divDt, "dd/MM/yyyy", new Date()) : null) : (formData.DIV_DT ? parse(formData.DIV_DT, "dd/MM/yyyy", new Date()) : null)}
                   format="dd/MM/yyyy"
-                  disabled={isFormDisabled}
+                  disabled={shouldDisableFields()} // Enable only in add/edit mode
+                  onChange={(date) => {
+                    if (isAddingNew || isEditingSize) {
+                      const formattedDate = date ? format(date, "dd/MM/yyyy") : '';
+                      setNewItemData(prev => ({ ...prev, divDt: formattedDate }));
+                    }
+                  }}
                   slotProps={{
                     textField: {
                       fullWidth: true,
@@ -531,8 +1088,70 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
                   }}
                 />
               </LocalizationProvider>
-              <TextField label="RQty" variant="filled" disabled={isFormDisabled} sx={textInputSx} inputProps={{ style: { padding: '6px 8px', fontSize: '12px' } }} />
-              <TextField label="Sets" variant="filled" disabled={isFormDisabled} sx={textInputSx} inputProps={{ style: { padding: '6px 8px', fontSize: '12px' } }} />
+              <TextField 
+                label="RQty" 
+                variant="filled" 
+                disabled={shouldDisableFields()} // Enable only in add/edit mode
+                name="rQty"
+                value={isAddingNew || isEditingSize ? newItemData.rQty : ''}
+                onChange={handleNewItemChange}
+                sx={textInputSx} 
+                inputProps={{ style: { padding: '6px 8px', fontSize: '12px' } }} 
+              />
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <TextField 
+                  label="Sets" 
+                  variant="filled" 
+                  disabled={shouldDisableFields()} // Enable only in add/edit mode
+                  name="sets"
+                  value={isAddingNew || isEditingSize ? newItemData.sets : ''}
+                  onChange={handleNewItemChange}
+                  sx={{ ...textInputSx, flex: 1 }} 
+                  inputProps={{ style: { padding: '6px 8px', fontSize: '12px' } }} 
+                />
+                {(isAddingNew || isEditingSize) && (
+                  <>
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      onClick={isAddingNew ? handleConfirmAdd : handleEditItem}
+                      sx={{ minWidth: '60px', height: '36px' }}
+                    >
+                      {isAddingNew ? 'Add Qty' : 'Save'}
+                    </Button>
+                    <Button
+                      variant="outlined"
+                      color="secondary"
+                      onClick={isAddingNew ? handleCancelAdd : () => {
+                        setIsEditingSize(false);
+                        setNewItemData({
+                          product: '',
+                          barcode: '',
+                          style: '',
+                          type: '',
+                          shade: '',
+                          qty: '',
+                          mrp: '',
+                          setNo: '',
+                          varPer: '',
+                          stdQty: '',
+                          convFact: '',
+                          lotNo: '',
+                          discount: '',
+                          percent: '',
+                          remark: '',
+                          divDt: '',
+                          rQty: '',
+                          sets: ''
+                        });
+                      }}
+                      sx={{ minWidth: '60px', height: '36px' }}
+                    >
+                      Cancel
+                    </Button>
+                  </>
+                )}
+              </Box>
             </Box>
           </Box>
 
@@ -549,6 +1168,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
             }}>
               <Typography variant="subtitle2" sx={{ display: '', fontWeight: 'bold', mb: 1 }}>
                 Size Details {selectedRow && `(for ${tableData.find(row => row.id === selectedRow)?.product || 'Selected Item'})`}
+                {isEditingSize && <span style={{ color: 'red', marginLeft: '10px' }}> - Editing Mode</span>}
               </Typography>
               <TableContainer sx={{ width: '100%' }}>
                 <Table size="small">
@@ -569,7 +1189,20 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
                           "&:hover": { backgroundColor: "#e3f2fd" }
                         }}>
                           <TableCell sx={{ fontSize: '0.75rem', padding: '6px 8px' }}>{size.STYSIZE_NAME}</TableCell>
-                          <TableCell sx={{ fontSize: '0.75rem', padding: '6px 8px' }}>{size.QTY}</TableCell>
+                          <TableCell sx={{ fontSize: '0.75rem', padding: '6px 8px' }}>
+                            {isEditingSize ? (
+                              <TextField
+                                type="number"
+                                value={size.QTY}
+                                onChange={(e) => handleSizeQtyChange(index, e.target.value)}
+                                size="small"
+                                sx={{ width: '80px' }}
+                                inputProps={{ style: { fontSize: '0.75rem', padding: '4px' } }}
+                              />
+                            ) : (
+                              size.QTY
+                            )}
+                          </TableCell>
                           <TableCell sx={{ fontSize: '0.75rem', padding: '6px 8px' }}>{size.ITM_AMT || 0}</TableCell>
                           <TableCell sx={{ fontSize: '0.75rem', padding: '6px 8px' }}>{size.FGSTYLE_ID || "-"}</TableCell>
                           <TableCell sx={{ fontSize: '0.75rem', padding: '6px 8px' }}>{size.QTY}</TableCell>

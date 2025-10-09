@@ -786,13 +786,13 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
           </Box>
           <Box sx={{ width: { xs: '100%', sm: '20%', md: '15.1%' } }}>
             <TextField
-              label="E-ASM1[Brijnandan Kumar]"
+              label="Packets"
               variant="filled"
               fullWidth
               onChange={handleInputChange}
-              value={formData.E_ASM1 || ""}
+              value={formData.Packets || ""}
               disabled={isFormDisabled}
-              name="E_ASM1"
+              name="Packets"
               sx={textInputSx}
               inputProps={{
                 style: {
@@ -864,104 +864,46 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
           flexDirection: { xs: 'column', sm: 'row', md: 'row' },
           gap: { xs: 1, sm: 1.5, md: 2 }
         }}>
-          <Box sx={{ width: { xs: '100%', sm: '20%', md: '17%' } }}>
-            <TextField
-              label="Salesperson 2"
-              variant="filled"
-              fullWidth
-              onChange={handleInputChange}
-              value={formData.SALESPERSON_2 || ""}
+
+             <Box sx={{ width: { xs: '100%', sm: '20%', md: '20.6%' } }}>
+            <AutoVibe
+              id="SALESPERSON_2"
               disabled={isFormDisabled}
+              getOptionLabel={(option) => option || ''}
+              options={[]}
+              label="Salesperson 2"
               name="SALESPERSON_2"
-              sx={textInputSx}
+              value={formData.SALESPERSON_2 || 0}
+              onChange={handleInputChange}
+              sx={DropInputSx}
               inputProps={{
                 style: {
                   padding: '6px 8px',
-                  fontSize: '12px'
+                  fontSize: '12px',
                 },
               }}
             />
           </Box>
           <Box sx={{ width: { xs: '100%', sm: '20%', md: '15.1%' } }}>
-            <TextField
-              label="New"
-              variant="filled"
-              fullWidth
-              onChange={handleInputChange}
-              value={formData.NEW || ""}
+            <AutoVibe
+              id="SALESPERSON_1"
               disabled={isFormDisabled}
-              name="NEW"
-              sx={textInputSx}
+              getOptionLabel={(option) => option || ''}
+              options={[]}
+              label="Salesperson 1"
+              name="SALESPERSON_1"
+              value={formData.SALESPERSON_1 || 0}
+              onChange={handleInputChange}
+              sx={DropInputSx}
               inputProps={{
                 style: {
                   padding: '6px 8px',
-                  fontSize: '12px'
+                  fontSize: '12px',
                 },
               }}
             />
           </Box>
-          <Box sx={{ width: { xs: "100%", sm: "20%", md: "20.5%" } }}>
-            <TextField
-              label="... Email"
-              variant="filled"
-              fullWidth
-              onChange={handleInputChange}
-              value={formData.EMAIL || ""}
-              disabled={isFormDisabled}
-              name="EMAIL"
-              sx={textInputSx}
-              inputProps={{
-                style: {
-                  padding: '6px 8px',
-                  fontSize: '12px'
-                },
-              }}
-            />
-          </Box>
-          <Box sx={{ width: { xs: '100%', sm: '20%', md: '20.6%' } }}>
-            <TextField
-              label="Currency"
-              variant="filled"
-              fullWidth
-              onChange={handleInputChange}
-              value={formData.Currency || ""}
-              disabled={isFormDisabled}
-              name="Currency"
-              sx={textInputSx}
-              inputProps={{
-                style: {
-                  padding: '6px 8px',
-                  fontSize: '12px'
-                },
-              }}
-            />
-          </Box>
-          <Box sx={{ width: { xs: '100%', sm: '20%', md: '20.6%' } }}>
-            <TextField
-              label="Ex Rate"
-              variant="filled"
-              fullWidth
-              onChange={handleInputChange}
-              value={formData.EX_RATE || ""}
-              disabled={isFormDisabled}
-              name="EX_RATE"
-              sx={textInputSx}
-              inputProps={{
-                style: {
-                  padding: '6px 8px',
-                  fontSize: '12px'
-                },
-              }}
-            />
-          </Box>
-        </Box>
-
-        {/* Remark Status, Short Close, 1.00 Row */}
-        <Box sx={{
-          display: 'flex',
-          flexDirection: { xs: 'column', sm: 'row', md: 'row' },
-          gap: { xs: 1, sm: 1.5, md: 2 }
-        }}>
+          
           <Box sx={{ width: { xs: '100%', sm: '20%', md: '17%' } }}>
             <TextField
               label="Remark Status"
@@ -980,6 +922,16 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
               }}
             />
           </Box>
+          
+        </Box>
+
+        {/* Remark Status, Short Close, 1.00 Row */}
+        <Box sx={{
+          display: 'flex',
+          flexDirection: { xs: 'column', sm: 'row', md: 'row' },
+          gap: { xs: 1, sm: 1.5, md: 2 }
+        }}>
+         
           <Box sx={{ width: { xs: '100%', sm: '20%', md: '15.1%' } }}>
             <FormControlLabel
               control={<Checkbox name="SHORT_CLOSE" size="small" checked={formData.SHORT_CLOSE === "1"}
@@ -1002,24 +954,7 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
               }}
             />
           </Box>
-          <Box sx={{ width: { xs: '100%', sm: '20%', md: '20.6%' } }}>
-            <TextField
-              label="Ex Rate"
-              variant="filled"
-              fullWidth
-              onChange={handleInputChange}
-              value={formData.EX_RATE_VALUE || ""}
-              disabled={isFormDisabled}
-              name="EX_RATE_VALUE"
-              sx={textInputSx}
-              inputProps={{
-                style: {
-                  padding: '6px 8px',
-                  fontSize: '12px'
-                },
-              }}
-            />
-          </Box>
+         
         </Box>
       </Box>
     </Box>
