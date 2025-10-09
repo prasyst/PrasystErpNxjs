@@ -52,7 +52,7 @@ const columnDefs = [
   }
 ];
 
-export default function TicketCatTable() {
+export default function ServiceComplaintTable() {
 
   const [isLoading, setIsLoading] = useState(true);
   const [rows, setRows] = useState([]);
@@ -66,7 +66,7 @@ export default function TicketCatTable() {
   const fetchTableData = async () => {
     setIsLoading(true);
     try {
-      const response = await axiosInstance.post(`TktCat/GetTktCatDashBoard?currentPage=1&limit=15`, {
+      const response = await axiosInstance.post(`TktService/GetTktServiceDashBoard?currentPage=1&limit=15`, {
         "SearchText": ""
       });
       const { data: { STATUS, DATA } } = response;
