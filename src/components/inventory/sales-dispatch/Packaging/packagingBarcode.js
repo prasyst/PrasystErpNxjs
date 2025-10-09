@@ -22,7 +22,8 @@ import { useRouter } from 'next/navigation';
 import CrudButton from "@/GlobalFunction/CrudButton";
 import Stepper1 from "./stepper1";
 import Stepper2 from "./stepper2";
-import Stepper3 from "./stepper3";
+import Stepper3 from "./Stepper3";
+import Stepper4 from "./stepper4";
 
 const PackagingBarcode = () => {
 
@@ -303,38 +304,46 @@ const PackagingBarcode = () => {
         </Box>
       </Grid>
 
-      <Grid xs={12}>
-        {tabIndex === 0 ? (
-          <Stepper1
-            formData={formData}
-            setFormData={setFormData}
-            isFormDisabled={isFormDisabled}
-            mode={mode}
-            onSubmit={handleSubmit}
-            onCancel={handleCancel}
-          />
-        ) : tabIndex === 1 ? (
-          <Stepper2
-            formData={formData}
-            setFormData={setFormData}
-            isFormDisabled={isFormDisabled}
-            mode={mode}
-            onSubmit={handleSubmit}
-            onCancel={handleCancel}
-          />
-        ) : (
-          <Stepper3
-            formData={formData}
-            setFormData={setFormData}
-            isFormDisabled={isFormDisabled}
-            mode={mode}
-            onSubmit={handleSubmit}
-            onCancel={handleCancel}
-          />
-        )}
+     <Grid xs={12}>
+  {tabIndex === 0 ? (
+    <Stepper1
+      formData={formData}
+      setFormData={setFormData}
+      isFormDisabled={isFormDisabled}
+      mode={mode}
+      onSubmit={handleSubmit}
+      onCancel={handleCancel}
+    />
+  ) : tabIndex === 1 ? (
+    <Stepper2
+      formData={formData}
+      setFormData={setFormData}
+      isFormDisabled={isFormDisabled}
+      mode={mode}
+      onSubmit={handleSubmit}
+      onCancel={handleCancel}
+    />
+  ) : tabIndex === 2 ? (
+    <Stepper3
+      formData={formData}
+      setFormData={setFormData}
+      isFormDisabled={isFormDisabled}
+      mode={mode}
+      onSubmit={handleSubmit}
+      onCancel={handleCancel}
+    />
+  ) : (
+    <Stepper4
+      formData={formData}
+      setFormData={setFormData}
+      isFormDisabled={isFormDisabled}
+      mode={mode}
+      onSubmit={handleSubmit}
+      onCancel={handleCancel}
+    />
+  )}
+</Grid>
 
-
-      </Grid>
 
       {tabIndex === 0 && (
         <Grid xs={12} sx={{ display: "flex", justifyContent: "end", mr: '4.5%' }}>
