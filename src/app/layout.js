@@ -3,6 +3,8 @@
 import "./globals.css";
 import { ThemeProvider } from './context/ThemeContext';
 import StoreProvider from './redux/providers';
+import { TicketProvider } from "./context/TicketContext";
+
 
 export const metadata = {
   title: "PrasystERP",
@@ -18,7 +20,9 @@ export default function RootLayout({ children }) {
       <body >
         <StoreProvider>
           <ThemeProvider>
+              <TicketProvider>
             {children}
+         </TicketProvider>
           </ThemeProvider>
         </StoreProvider>
       </body>

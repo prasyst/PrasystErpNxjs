@@ -333,6 +333,11 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
       ],
     },
     {
+      name: 'Ticket',
+      icon: MdDashboard,
+      path: 'tickets/ticket-dashboard', 
+    },
+    {
       name: 'Inventory',
       icon: MdInventory,
       children: [
