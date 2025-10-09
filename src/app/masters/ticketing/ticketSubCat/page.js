@@ -1,5 +1,10 @@
 import TicketSubCatMst from "@/components/masters/ticketing/ticketSubCat/TicketSubCatMst";
+import { Suspense } from 'react';
 
 export default function TicketSubCatPage() {
-    return <TicketSubCatMst />;
+  return (
+    <Suspense>
+      <TicketSubCatMst />
+    </Suspense>
+  );
 }
