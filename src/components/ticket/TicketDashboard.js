@@ -8,6 +8,8 @@ import {
   MdSchedule, MdWarning, MdCheckCircleOutline, MdClose
 } from 'react-icons/md';
 import { FaExclamationTriangle, FaUsers, FaChartPie } from 'react-icons/fa';
+import { TiTicket } from "react-icons/ti";
+
 
 import CreateTicket from './CreateTicket';
 import TicketList from './TicketList';
@@ -31,12 +33,12 @@ const TicketDashboard = () => {
     overdue: 0
   });
   
-  // Modal states
+
   const [showCreateTicket, setShowCreateTicket] = useState(false);
   const [selectedTicket, setSelectedTicket] = useState(null);
   const [editingTicket, setEditingTicket] = useState(null);
 
-  // Sample data - In real app, this would come from API
+
   useEffect(() => {
     const mockTickets = [
       {
@@ -107,7 +109,7 @@ const TicketDashboard = () => {
     router.push(modulePath);
   };
 
-  // Ticket management functions
+
   const handleCreateTicket = (newTicket) => {
     const ticket = {
       ...newTicket,
@@ -187,14 +189,14 @@ const TicketDashboard = () => {
       title: 'Unassigned Tickets',
       description: 'Tickets waiting for assignment',
       icon: MdAssignment,
-      path: '/ticket/unassigned',
+      // path: '/ticket/unassigned',
       color: '#f59e0b'
     },
     {
       title: 'Overdue Tickets',
       description: 'Tickets past due date',
       icon: MdWarning,
-      path: '/ticket/overdue',
+      // path: '/ticket/overdue',
       color: '#ef4444'
     },
     {
@@ -208,21 +210,21 @@ const TicketDashboard = () => {
       title: 'Priority Management',
       description: 'Configure priority levels',
       icon: FaExclamationTriangle,
-      path: '/ticket/priorities',
+      // path: '/ticket/priorities',
       color: '#dc2626'
     },
     {
       title: 'Status Workflow',
       description: 'Manage ticket status flow',
       icon: MdWork,
-      path: '/ticket/status',
+      // path: '/ticket/status',
       color: '#7c3aed'
     },
     {
       title: 'Assignment Rules',
       description: 'Auto assignment rules',
       icon: MdSettings,
-      path: '/ticket/assignment-rules',
+      // path: '/ticket/assignment-rules',
       color: '#06b6d4'
     },
     {
@@ -243,7 +245,7 @@ const TicketDashboard = () => {
       title: 'Team Management',
       description: 'Manage support team',
       icon: FaUsers,
-      path: '/ticket/team',
+      // path: '/ticket/team',
       color: '#6b7280'
     }
   ];
@@ -320,7 +322,7 @@ const TicketDashboard = () => {
     }
   };
 
-  // Render active module content
+
   const renderActiveModule = () => {
     switch (activeModule) {
       case 'ticket-list':
@@ -360,7 +362,7 @@ const TicketDashboard = () => {
 
   const renderOverview = () => (
     <>
-      {/* Quick Stats */}
+
       <div style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
@@ -441,14 +443,13 @@ const TicketDashboard = () => {
         })}
       </div>
 
-      {/* Main Content Grid */}
+     
       <div style={{ 
         display: 'grid', 
         gridTemplateColumns: '2fr 1fr', 
         gap: '1.5rem'
       }}>
-        
-        {/* Left Column - Modules & Recent Tickets */}
+ 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           
           {/* Ticket Modules */}
@@ -568,7 +569,6 @@ const TicketDashboard = () => {
             </div>
           </div>
 
-          {/* Recent Tickets Table */}
           <div style={{
             backgroundColor: 'white',
             borderRadius: '0.75rem',
@@ -740,10 +740,9 @@ const TicketDashboard = () => {
           </div>
         </div>
 
-        {/* Right Column - Quick Actions & Activity */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           
-          {/* Quick Actions */}
+       
           <div style={{
             backgroundColor: 'white',
             borderRadius: '0.75rem',
@@ -829,7 +828,7 @@ const TicketDashboard = () => {
             </div>
           </div>
 
-          {/* Recent Activity */}
+
           <div style={{
             backgroundColor: 'white',
             borderRadius: '0.75rem',
@@ -878,7 +877,7 @@ const TicketDashboard = () => {
             </div>
           </div>
 
-          {/* Status Distribution */}
+     
           <div style={{
             backgroundColor: 'white',
             borderRadius: '0.75rem',
@@ -930,7 +929,7 @@ const TicketDashboard = () => {
       backgroundColor: '#f9fafb',
       fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
     }}>
-      {/* Header */}
+     
       <div style={{
         backgroundColor: 'white',
         boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
@@ -1053,7 +1052,6 @@ const TicketDashboard = () => {
         {renderActiveModule()}
       </div>
 
-      {/* Modals */}
       {showCreateTicket && (
         <CreateTicket
           onClose={() => setShowCreateTicket(false)}
