@@ -462,7 +462,7 @@ const ServiceComplaint = () => {
                         />
                     </Grid>
 
-                    <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                    <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                         <AutoVibe
                             id="TKTSUBCATID"
                             disabled={isFormDisabled}
