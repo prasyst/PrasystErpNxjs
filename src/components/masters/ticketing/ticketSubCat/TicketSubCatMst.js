@@ -27,78 +27,84 @@ const TicketSubCatMst = () => {
 
     const [formData, setFormData] = useState({
         TKTCATNAME: '',
+        TKTSUBCATNAME: '',
+        TKTCATID: '',
         ABRV: '',
-        EMP_NAME: '',
+        EMP_KEY: '',
         STATUS: '',
         REMARK: ''
     });
     const [isFormDisabled, setIsFormDisabled] = useState(true);
     const [mode, setMode] = useState('view');
     const [cats, setCats] = useState([]);
-    const [currentTicCatId, setCurrentTicCatId] = useState(null);
+    const [scats, setSCats] = useState([]);
+    const [currentTicSCatId, setCurrentTicSCatId] = useState(null);
     const searchParams = useSearchParams();
-    const TicketCat = searchParams.get('TKTCATID');
+    const TicketSubCat = searchParams.get('TKTSUBCATID');
     const CO_ID = localStorage.getItem('CO_ID');
 
-    const fetchTicketCatData = useCallback(async (currentTicCatId, flag = "R") => {
+    const fetchTicketSubCatData = useCallback(async (currentTicSCatId, flag = "R") => {
 
         try {
-            const response = await axiosInstance.post(`TktCat/RetriveTktCat`, {
+            const response = await axiosInstance.post(`TktsubCat/RetriveTktsubCat`, {
                 "FLAG": flag,
-                "TBLNAME": "TktCat",
-                "FLDNAME": "TKTCATID",
-                "ID": currentTicCatId,
+                "TBLNAME": "TktsubCat",
+                "FLDNAME": "TKTSUBCATID",
+                "ID": currentTicSCatId,
                 "ORDERBYFLD": "",
                 "CWHAER": "",
                 "CO_ID": CO_ID
             });
 
             if (response.data.STATUS === 0 && response.data.RESPONSESTATUSCODE === 1) {
-                const catData = response?.data?.DATA[0];
+                const catSData = response?.data?.DATA[0];
 
                 setFormData({
 
-                    TKTCATNAME: catData?.TKTCATNAME || "",
-                    ABRV: catData?.ABRV || "",
-                    EMP_NAME: catData?.EMP_NAME || "",
-                    STATUS: catData?.STATUS || "",
-                    REMARK: catData?.REMARK || ""
+                    TKTCATNAME: catSData?.TKTCATNAME || "",
+                    TKTSUBCATNAME: catSData.TKTSUBCATNAME || '',
+                    ABRV: catSData?.ABRV || "",
+                    EMP_KEY: catSData?.EMP_KEY || "",
+                    STATUS: catSData?.STATUS || "",
+                    REMARK: catSData?.REMARK || ""
 
                 });
 
                 setIsFormDisabled(true);
-                setCurrentTicCatId(catData?.TKTCATID);
+                setCurrentTicSCatId(catSData?.TKTSUBCATID);
                 const newParams = new URLSearchParams();
-                newParams.set("TKTCATID", catData.TKTCATID);
-                router.replace(`/masters/ticketing/ticketCategory?${newParams.toString()}`);
+                newParams.set("TKTSUBCATID", catSData.TKTSUBCATID);
+                router.replace(`/masters/ticketing/ticketSubCat?${newParams.toString()}`);
 
             } else if (response.data.STATUS === 1 && response.data.RESPONSESTATUSCODE === 2) {
                 toast.info(response.data.MESSAGE);
             }
         } catch (error) {
-            console.error('Error fetching ticket category data:', error);
-            toast.error('Error fetching ticket category data. Please try again.');
+            console.error('Error fetching ticket sub category data:', error);
+            toast.error('Error fetching ticket sub category data. Please try again.');
         }
     }, [CO_ID, router]);
 
     useEffect(() => {
-        if (TicketCat) {
-            setCurrentTicCatId(TicketCat);
-            fetchTicketCatData(TicketCat);
+        if (TicketSubCat) {
+            setCurrentTicSCatId(TicketSubCat);
+            fetchTicketSubCatData(TicketSubCat);
             setMode('view');
         } else {
             setMode('view');
             setFormData({
                 TKTCATNAME: '',
+                TKTSUBCATNAME: '',
+                TKTCATID: '',
                 ABRV: '',
-                EMP_NAME: '',
+                EMP_KEY: '',
                 STATUS: '',
                 REMARK: ''
             });
             setIsFormDisabled(true);
         }
         setMode('view');
-    }, [TicketCat, fetchTicketCatData]);
+    }, [TicketSubCat, fetchTicketSubCatData]);
 
     useEffect(() => {
         const fetchCat = async () => {
@@ -122,15 +128,37 @@ const TicketSubCatMst = () => {
         fetchCat();
     }, []);
 
+    useEffect(() => {
+        const fetchSubCat = async () => {
+            try {
+                const response = await axiosInstance.post(`TktsubCat/GetTktsubCatDrp`);
+                console.log("API response:", response.data.DATA);
+                if (
+                    response.data.STATUS === 0 &&
+                    response.data.RESPONSESTATUSCODE === 1
+                ) {
+                    setSCats(response.data.DATA);
+                } else {
+                    toast.error("Failed to fetch Ticket Sub Category Name");
+                }
+            } catch (error) {
+                console.error("Error fetching Ticket Sub Category Name", error);
+                toast.error("Error fetching Ticket Sub Category Name. Please try again.");
+            }
+        };
+
+        fetchSubCat();
+    }, []);
+
     const handlePrevious = async () => {
-        await fetchTicketCatData(currentTicCatId, "P");
+        await fetchTicketSubCatData(currentTicSCatId, "P");
         setFormData((prev) => ({
             ...prev
         }));
     };
 
     const handleNext = async () => {
-        await fetchTicketCatData(currentTicCatId, "N");
+        await fetchTicketSubCatData(currentTicSCatId, "N");
         setFormData((prev) => ({
             ...prev
         }));
@@ -139,13 +167,13 @@ const TicketSubCatMst = () => {
 
     const handleDelete = async () => {
         try {
-            const response = await axiosInstance.post('TktCat/DeleteTktCat', {
-                TKTCATID: formData.TKTCATID
+            const response = await axiosInstance.post('TktsubCat/DeleteTktsubCat', {
+                TKTSUBCATID: formData.TKTSUBCATID
             });
             const { data: { STATUS, MESSAGE } } = response;
             if (STATUS === 0) {
                 toast.success(MESSAGE, { autoClose: 500 });
-                await fetchTicketCatData(currentTicCatId, 'P');
+                await fetchTicketSubCatData(currentTicSCatId, 'P');
             } else {
                 toast.error(MESSAGE);
             }
@@ -167,12 +195,14 @@ const TicketSubCatMst = () => {
         setIsFormDisabled(false);
         setFormData({
             TKTCATNAME: '',
+            TKTSUBCATNAME: '',
+            TKTCATID: '',
             ABRV: '',
-            EMP_NAME: '',
+            EMP_KEY: '',
             STATUS: '',
             REMARK: ''
         });
-        setCurrentTicCatId(null);
+        setCurrentTicSCatId(null);
 
     };
 
@@ -183,7 +213,7 @@ const TicketSubCatMst = () => {
 
     const handleCancel = async () => {
         try {
-            await fetchTicketCatData(1, "L");
+            await fetchTicketSubCatData(1, "L");
             setMode('view');
             setIsFormDisabled(true);
             setFormData((prev) => ({
@@ -206,11 +236,12 @@ const TicketSubCatMst = () => {
 
         const payload = {
             TKTCATNAME: formData?.TKTCATNAME || "",
+            TKTSUBCATNAME: formData?.TKTSUBCATNAME || "",
             ABRV: formData?.ABRV || "",
             EMP_KEY: formData?.EMP_KEY || "EP004",
-            EMP_NAME: formData?.EMP_NAME || "",
             STATUS: formData?.STATUS || "",
             REMARK: formData?.REMARK || ""
+
         };
 
         const UserName = localStorage.getItem('USER_NAME');
@@ -218,21 +249,21 @@ const TicketSubCatMst = () => {
 
         let response;
         if (mode === 'edit') {
-            payload.TKTCATID = currentTicCatId;
+            payload.TKTSUBCATID = currentTicSCatId;
             payload.UpdatedBy = 2;
-            response = await axiosInstance.patch(`TktCat/UpdateTktCat?UserName=${(UserName)}&strCobrid=${COBR_ID}`, payload);
+            response = await axiosInstance.patch(`TktsubCat/UpdateTktsubCat?UserName=${(UserName)}&strCobrid=${COBR_ID}`, payload);
 
             console.log("payload", payload);
         } else {
             payload.CreatedBy = 2;
-            response = await axiosInstance.post(`TktCat/InsertTktCat?UserName=${(UserName)}&strCobrid=${COBR_ID}`, payload);
+            response = await axiosInstance.post(`TktsubCat/InsertTktsubCat?UserName=${(UserName)}&strCobrid=${COBR_ID}`, payload);
         }
 
         if (response.data.STATUS === 0 && response.data.RESPONSESTATUSCODE === 1) {
             toast.success(response.data.MESSAGE);
             setIsFormDisabled(true);
             setMode('view');
-            
+
         } else {
             toast.error(response.data.MESSAGE || 'Operation failed');
         }
@@ -392,9 +423,9 @@ const TicketSubCatMst = () => {
                             disabled={isFormDisabled}
                             getOptionLabel={(option) => option.TKTCATNAME || ''}
                             options={cats}
-                            label="Technician"
+                            label="Ticket Category Name"
                             name="TKTCATID"
-                            value={cats.find(option => option.TKTCATID === formData?.TKTCATNAME) || null}
+                            value={cats.find(option => option.TKTCATID.toString() === formData?.TKTCATNAME.toString()) || null}
                             onChange={(e, newValue) => {
                                 setFormData((prevForm) => ({
                                     ...prevForm,
@@ -413,13 +444,38 @@ const TicketSubCatMst = () => {
                     {/* <Grid size={{ xs: 12, sm: 6, md: 4 }}></Grid> */}
 
                     <Grid size={{ xs: 12, sm: 6, md: 6 }}>
+                        <AutoVibe
+                            id="TKTSUBCATID"
+                            disabled={isFormDisabled}
+                            getOptionLabel={(option) => option.TKTSUBCATID || ''}
+                            options={scats}
+                            label="Ticket Sub Category Name"
+                            name="TKTSUBCATID"
+                            value={scats.find(option => option.TKTSUBCATID.toString() === formData?.TKTSUBCATNAME.toString()) || null}
+                            onChange={(e, newValue) => {
+                                setFormData((prevForm) => ({
+                                    ...prevForm,
+                                    TKTSUBCATNAME: newValue ? newValue.TKTSUBCATID : '',
+                                }));
+                            }}
+                            sx={DropInputSx}
+                            inputProps={{
+                                style: {
+                                    padding: '6px 8px',
+                                    fontSize: '12px',
+                                },
+                            }}
+                        />
+                    </Grid>
+
+                    <Grid size={{ xs: 12, sm: 6, md: 6 }}>
                         <TextField
                             label="Name"
                             variant="filled"
                             fullWidth
                             onChange={handleInputChange}
-                            value={formData.EMP_NAME || ""}
-                            name="EMP_NAME"
+                            value={formData.EMP_KEY || ""}
+                            name="EMP_KEY"
                             disabled={isFormDisabled}
                             sx={textInputSx}
                             inputProps={{

@@ -33,8 +33,8 @@ const columnDefs = [
     sortable: true
   },
   {
-    field: "ABRV",
-    headerName: "Abrv",
+    field: "TKTSUBCATNAME",
+    headerName: "Ticket Sub Category Name",
     filter: 'agSetColumnFilter',
     filterParams: {
       defaultToNothingSelected: true,
@@ -42,14 +42,41 @@ const columnDefs = [
     sortable: true
   },
   {
-    field: "REMARK",
-    headerName: "Remark",
+    field: "TKTSERVICENAME",
+    headerName: "Ticket Service Name",
     filter: 'agSetColumnFilter',
     filterParams: {
       defaultToNothingSelected: true,
     },
     sortable: true
-  }
+  },
+  {
+    field: "TKTSVRTYNAME",
+    headerName: "TKTSVRTYNAME",
+    filter: 'agSetColumnFilter',
+    filterParams: {
+      defaultToNothingSelected: true,
+    },
+    sortable: true
+  },
+  {
+    field: "TKTTAGNAME",
+    headerName: "Ticket Tag Name",
+    filter: 'agSetColumnFilter',
+    filterParams: {
+      defaultToNothingSelected: true,
+    },
+    sortable: true
+  },
+  {
+    field: "TKTTYPENAME",
+    headerName: "Ticket Type Name",
+    filter: 'agSetColumnFilter',
+    filterParams: {
+      defaultToNothingSelected: true,
+    },
+    sortable: true
+  },
 ];
 
 export default function ServiceComplaintTable() {
@@ -85,10 +112,10 @@ export default function ServiceComplaintTable() {
 
   const handleRowDoubleClick = (row) => {
     const params = new URLSearchParams({
-      TKTCATID: row.TKTCATID,
+      TKTSERVICEID: row.TKTSERVICEID,
       mode: "view"
     }).toString();
-    router.push(`/masters/ticketing/ticketCategory?${params}`);
+    router.push(`/masters/ticketing/serviceComplaint?${params}`);
   };
 
   const handleSelectionChanged = useCallback((event) => {

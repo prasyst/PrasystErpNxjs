@@ -25,7 +25,7 @@ const columnDefs = [
   },
   {
     field: "TKTCATNAME",
-    headerName: "Ticket Category Name",
+    headerName: "Ticket Sub Category Name",
     filter: 'agSetColumnFilter',
     filterParams: {
       defaultToNothingSelected: true,
@@ -85,10 +85,10 @@ export default function TicketSubCatTable() {
 
   const handleRowDoubleClick = (row) => {
     const params = new URLSearchParams({
-      TKTCATID: row.TKTCATID,
+      TKTSUBCATID: row.TKTSUBCATID,
       mode: "view"
     }).toString();
-    router.push(`/masters/ticketing/ticketCategory?${params}`);
+    router.push(`/masters/ticketing/ticketSubCat?${params}`);
   };
 
   const handleSelectionChanged = useCallback((event) => {
