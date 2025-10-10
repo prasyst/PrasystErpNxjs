@@ -28,7 +28,7 @@ const TicketCatMst = () => {
     const [formData, setFormData] = useState({
         TKTCATNAME: '',
         ABRV: '',
-        EMP_NAME: '',
+        EMP_KEY: '',
         STATUS: '',
         REMARK: ''
     });
@@ -58,9 +58,9 @@ const TicketCatMst = () => {
 
                 setFormData({
 
-                    TKTCATNAME: catData?.TKTCATNAME || "",
+                    TKTCATNAME: catData?.TKTCATID?.toString() || "",
                     ABRV: catData?.ABRV || "",
-                    EMP_NAME: catData?.EMP_NAME || "",
+                    EMP_KEY: catData?.EMP_KEY || "",
                     STATUS: catData?.STATUS || "",
                     REMARK: catData?.REMARK || ""
 
@@ -91,7 +91,7 @@ const TicketCatMst = () => {
             setFormData({
                 TKTCATNAME: '',
                 ABRV: '',
-                EMP_NAME: '',
+                EMP_KEY: '',
                 STATUS: '',
                 REMARK: ''
             });
@@ -168,7 +168,7 @@ const TicketCatMst = () => {
         setFormData({
             TKTCATNAME: '',
             ABRV: '',
-            EMP_NAME: '',
+            EMP_KEY: '',
             STATUS: '',
             REMARK: ''
         });
@@ -205,10 +205,9 @@ const TicketCatMst = () => {
     const handleSubmit = async () => {
 
         const payload = {
-            TKTCATNAME: formData?.TKTCATNAME || "",
+            TKTCATNAME: parseInt(formData?.TKTCATID) || "",
             ABRV: formData?.ABRV || "",
             EMP_KEY: formData?.EMP_KEY || "EP004",
-            EMP_NAME: formData?.EMP_NAME || "",
             STATUS: formData?.STATUS || "",
             REMARK: formData?.REMARK || ""
         };
@@ -219,12 +218,12 @@ const TicketCatMst = () => {
         let response;
         if (mode === 'edit') {
             payload.TKTCATID = currentTicCatId;
-            payload.UpdatedBy = 2;
+            payload.UPDATEDBY = 2;
             response = await axiosInstance.patch(`TktCat/UpdateTktCat?UserName=${(UserName)}&strCobrid=${COBR_ID}`, payload);
 
             console.log("payload", payload);
         } else {
-            payload.CreatedBy = 2;
+            payload.CREATEDBY = 2;
             response = await axiosInstance.post(`TktCat/InsertTktCat?UserName=${(UserName)}&strCobrid=${COBR_ID}`, payload);
         }
 
@@ -394,7 +393,7 @@ const TicketCatMst = () => {
                             options={cats}
                             label="Technician"
                             name="TKTCATID"
-                            value={cats.find(option => option.TKTCATID === formData?.TKTCATNAME) || null}
+                            value={cats.find(option => option.TKTCATID.toString() === formData?.TKTCATNAME?.toString()) || null}
                             onChange={(e, newValue) => {
                                 setFormData((prevForm) => ({
                                     ...prevForm,
@@ -418,8 +417,8 @@ const TicketCatMst = () => {
                             variant="filled"
                             fullWidth
                             onChange={handleInputChange}
-                            value={formData.EMP_NAME || ""}
-                            name="EMP_NAME"
+                            value={formData.EMP_KEY || ""}
+                            name="EMP_KEY"
                             disabled={isFormDisabled}
                             sx={textInputSx}
                             inputProps={{
