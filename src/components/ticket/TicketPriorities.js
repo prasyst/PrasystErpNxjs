@@ -1,7 +1,13 @@
 import React from 'react';
 import { FaExclamationTriangle } from 'react-icons/fa';
+import {
+  ArrowBack as ArrowBackIcon,
+} from '@mui/icons-material';
+import { Button } from '@mui/material';
+import { useRouter } from 'next/navigation';
 
 const TicketPriorities = () => {
+    const router = useRouter();
   const priorities = [
     { name: 'Low', color: '#10b981', responseTime: '72 hours', resolutionTime: '7 days' },
     { name: 'Medium', color: '#f59e0b', responseTime: '24 hours', resolutionTime: '3 days' },
@@ -17,6 +23,7 @@ const TicketPriorities = () => {
       border: '1px solid #e5e7eb',
       padding: '1.5rem'
     }}>
+    
       <h2 style={{ 
         fontSize: '1.25rem', 
         fontWeight: '600', 
@@ -26,6 +33,21 @@ const TicketPriorities = () => {
         alignItems: 'center',
         gap: '0.5rem'
       }}>
+         <Button
+    startIcon={<ArrowBackIcon />}
+    onClick={() => router.push('/tickets/ticket-dashboard')}
+    sx={{
+      borderRadius: 2,
+      fontWeight: '600',
+      textTransform: 'none',
+      minWidth: 'auto',
+      padding: '4px 8px'
+    }}
+    variant="outlined"
+    size="small"
+  >
+    Back
+  </Button>
         <FaExclamationTriangle color="#dc2626" />
         Priority Management
       </h2>

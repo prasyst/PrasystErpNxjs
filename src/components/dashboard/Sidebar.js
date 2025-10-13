@@ -85,9 +85,9 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
 
   const menuItems = [
     { name: 'Dashboard', icon: MdDashboard, path: '/dashboard', },
-    { name: 'SalesDash', icon: FaRupeeSign, path: '/dashboard/sales-dashboard', },
+    // { name: 'SalesDash', icon: FaRupeeSign, path: '/dashboard/sales-dashboard', },
     { name: 'Stock Enquiry', icon: MdSearch, path: '/dashboard/stock-enquiry-table' },
-     { name: 'Ticket', icon: TiTicket, path: '/tickets/ticket-dashboard' },
+   
     {
       name: 'Masters',
       icon: MdOutlineApartment,
@@ -369,6 +369,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
         { name: 'Financial Reports', icon: MdAnalytics, path: '#' },
       ],
     },
+      { name: 'Ticket', icon: TiTicket, path: '/tickets/ticket-dashboard' },
     {
       name: 'Inventory Report',
       icon: MdOutlineInventory,
