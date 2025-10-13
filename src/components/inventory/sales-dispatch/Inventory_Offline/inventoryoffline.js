@@ -209,7 +209,7 @@ useEffect(() => {
   const handlePrint = () => { }
   
   const handleExit = () => {
-    router.push('/dashboard');
+    router.push('/inverntory/stock-enquiry-table');
   };
 
   const handleAdd = () => {
