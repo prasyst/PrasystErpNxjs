@@ -7,6 +7,11 @@ import {
   MdNotifications, MdSupport, MdWork, MdAssignment,
   MdSchedule, MdWarning, MdCheckCircleOutline, MdClose
 } from 'react-icons/md';
+import {
+  ArrowBack as ArrowBackIcon,
+
+} from '@mui/icons-material';
+import { Button } from '@mui/material';
 import { FaExclamationTriangle, FaUsers, FaChartPie } from 'react-icons/fa';
 import { TiTicket } from "react-icons/ti";
 
@@ -182,21 +187,21 @@ const TicketDashboard = () => {
       title: 'All Tickets',
       description: 'View all tickets in system',
       icon: MdViewList,
-      path: '/ticket/all-tickets',
+      path: '/tickets/all-tickets',
       color: '#8b5cf6'
     },
     {
       title: 'Unassigned Tickets',
       description: 'Tickets waiting for assignment',
       icon: MdAssignment,
-      // path: '/ticket/unassigned',
+      // path: '/tickets/unassign-tickets',
       color: '#f59e0b'
     },
     {
       title: 'Overdue Tickets',
       description: 'Tickets past due date',
       icon: MdWarning,
-      // path: '/ticket/overdue',
+      // path: '/tickets/overdue-tickets',
       color: '#ef4444'
     },
     {
@@ -210,42 +215,42 @@ const TicketDashboard = () => {
       title: 'Priority Management',
       description: 'Configure priority levels',
       icon: FaExclamationTriangle,
-      // path: '/ticket/priorities',
+      // path: '/tickets/priority-ticket',
       color: '#dc2626'
     },
     {
       title: 'Status Workflow',
       description: 'Manage ticket status flow',
       icon: MdWork,
-      // path: '/ticket/status',
+      path: '/tickets/ticket-status',
       color: '#7c3aed'
     },
     {
       title: 'Assignment Rules',
       description: 'Auto assignment rules',
       icon: MdSettings,
-      // path: '/ticket/assignment-rules',
+      // path: '/tickets/assignment-rule',
       color: '#06b6d4'
     },
     {
       title: 'SLA Management',
       description: 'Service level agreements',
       icon: MdTimer,
-      path: '/ticket/sla',
+      // path: '/tickets/sla',
       color: '#0891b2'
     },
     {
       title: 'Reports & Analytics',
       description: 'Ticket reports and insights',
       icon: MdAnalytics,
-      path: '/ticket/reports',
+      path: '/tickets/ticket-dashboard/',
       color: '#ec4899'
     },
     {
       title: 'Team Management',
       description: 'Manage support team',
       icon: FaUsers,
-      // path: '/ticket/team',
+      // path: '/tickets/team',
       color: '#6b7280'
     }
   ];
@@ -997,6 +1002,19 @@ const TicketDashboard = () => {
               </div>
             </div>
             <div style={{ display: 'flex', gap: '0.75rem' }}>
+              <Button 
+            startIcon={<ArrowBackIcon />}
+            onClick={() => router.push('/dashboard')}
+            sx={{ 
+            
+              borderRadius: 2,
+              fontWeight: '600',
+              textTransform: 'none'
+            }}
+            variant="outlined"
+          >
+         
+          </Button>
               {activeModule === 'overview' && (
                 <>
                   <button 
