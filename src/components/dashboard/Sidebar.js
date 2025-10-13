@@ -11,6 +11,7 @@ import {
   MdSettings, MdInventory, MdAccountBalance, MdPayments, MdSummarize,
   MdPushPin, MdOutlinePushPin, MdOutlineInventory,
 } from 'react-icons/md';
+import { TiTicket } from "react-icons/ti";
 
 import { FaBuilding, FaTruck, FaUserTag, FaHandshake, FaBalanceScale, FaBoxOpen, FaBoxes, FaUserTie, FaRupeeSign } from 'react-icons/fa';
 import { FiUser } from 'react-icons/fi';
@@ -65,7 +66,8 @@ const iconMap = {
   FaUserTie,
   FiUser,
   AiOutlineUsergroupAdd,
-  AiOutlineNodeIndex
+  AiOutlineNodeIndex,
+  TiTicket
 };
 
 const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
@@ -80,11 +82,12 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
   const [showPinConfirm, setShowPinConfirm] = useState(null);
   const [showUnpinConfirm, setShowUnpinConfirm] = useState(null);
 
-  // Sample menu structure with multiple nested levels
+
   const menuItems = [
     { name: 'Dashboard', icon: MdDashboard, path: '/dashboard', },
     { name: 'SalesDash', icon: FaRupeeSign, path: '/dashboard/sales-dashboard', },
     { name: 'Stock Enquiry', icon: MdSearch, path: '/dashboard/stock-enquiry-table' },
+     { name: 'Ticket', icon: TiTicket, path: '/tickets/ticket-dashboard' },
     {
       name: 'Masters',
       icon: MdOutlineApartment,
@@ -332,11 +335,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
         },
       ],
     },
-    {
-      name: 'Ticket',
-      icon: MdDashboard,
-      path: 'tickets/ticket-dashboard', 
-    },
+   
     {
       name: 'Inventory',
       icon: MdInventory,

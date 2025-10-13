@@ -111,7 +111,7 @@ const CreateTicketPage = () => {
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
               <button
-                onClick={() => router.push('/ticket-dashboard')}
+                onClick={() => router.push('/tickets/ticket-dashboard/')}
                 style={{
                   padding: '0.5rem',
                   borderRadius: '0.375rem',
