@@ -623,95 +623,103 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
         )}
 
         {items.map((item, index) => {
-          const IconComponent = iconMap[item.icon];
-          const hasChildren = item.children && item.children.length > 0;
-          const isActive = activeItem === item.path;
-          const isHovered = hoveredItems[levelIndex + 1]?.name === item.name;
-          const hasValidPath = item.path && item.path !== '#';
+  const IconComponent = iconMap[item.icon];
+  const hasChildren = item.children && item.children.length > 0;
+  const isActive = activeItem === item.path;
+  const isHovered = hoveredItems[levelIndex + 1]?.name === item.name;
+  const hasValidPath = item.path && item.path !== '#';
 
-          return (
-            <div key={`${item.name}-${levelIndex}-${index}`}>
-              <div
-                onMouseEnter={(e) => hasChildren && handleSubMenuHover(item, levelIndex, e)}
-                onClick={(e) => {
-                  e.preventDefault();
-                  if (hasValidPath) {
-                    handleNavigation(item.path);
-                  } else if (hasChildren) {
-                    handleSubMenuHover(item, levelIndex, e);
-                  }
-                }}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  padding: '0.18rem 0.8rem',
-                  cursor: hasValidPath || hasChildren ? 'pointer' : 'default',
-                  backgroundColor: isActive ? '#e8f0fe' : isHovered ? '#f0f8ff' : 'transparent',
-                  borderLeft: isActive ? '4px solid #1b69e7' : isHovered ? '4px solid #a0c4ff' : '4px solid transparent',
-                  transition: 'all 0.2s ease',
-                  margin: '0.1rem 0',
-                  borderRadius: '0 4px 4px 0',
-                  position: 'relative',
-                }}
-              >
-                {IconComponent && (
-                  <IconComponent
-                    size={18}
-                    style={{
-                      marginRight: '0.75rem',
-                      color: isActive ? '#1b69e7' : isHovered ? '#1b69e7' : '#555',
-                      transition: 'color 0.2s ease'
-                    }}
-                  />
-                )}
-                <span style={{
-                  flex: 1,
-                  fontSize: '0.85rem',
-                  color: isActive ? '#1b69e7' : isHovered ? '#1b69e7' : '#333',
-                  fontWeight: isActive ? '600' : isHovered ? '500' : '400',
-                  transition: 'all 0.2s ease'
-                }}>
-                  {item.name}
-                </span>
+  return (
+    <div key={`${item.name}-${levelIndex}-${index}`}>
+      <div
+        onMouseEnter={(e) => hasChildren && handleSubMenuHover(item, levelIndex, e)}
+        onClick={(e) => {
+          e.preventDefault();
+          if (hasValidPath) {
+            handleNavigation(item.path);
+          } else if (hasChildren) {
+            handleSubMenuHover(item, levelIndex, e);
+          }
+        }}
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          padding: '0.18rem 0.8rem',
+          cursor: hasValidPath || hasChildren ? 'pointer' : 'default',
+          backgroundColor: isActive ? '#e8f0fe' : isHovered ? '#f0f8ff' : 'transparent',
+          borderLeft: isActive ? '4px solid #1b69e7' : isHovered ? '4px solid #a0c4ff' : '4px solid transparent',
+          transition: 'all 0.2s ease',
+          margin: '0.1rem 0',
+          borderRadius: '0 4px 4px 0',
+          position: 'relative',
+        }}
+      >
+        {/* 🔹 Pin Icon on the LEFT side */}
+        {hasValidPath && (
+          <div
+            style={{
+              marginRight: '0.5rem',
+              cursor: 'pointer',
+              color: isPinned(item.path) ? '#1b69e7' : '#999',
+              transition: 'color 0.2s ease',
+              display: 'flex',
+              alignItems: 'center',
+            }}
+            onClick={(e) => handlePinClick(item, e)}
+            onMouseEnter={(e) => e.stopPropagation()}
+          >
+            {isPinned(item.path) ? <MdPushPin size={18} /> : <MdOutlinePushPin size={18} />}
+          </div>
+        )}
 
-                {hasValidPath && (
-                  <div
-                    style={{
-                      marginLeft: '0.5rem',
-                      cursor: 'pointer',
-                      color: isPinned(item.path) ? '#1b69e7' : '#999',
-                      transition: 'color 0.2s ease'
-                    }}
-                    onClick={(e) => handlePinClick(item, e)}
-                    onMouseEnter={(e) => e.stopPropagation()}
-                  >
-                    {isPinned(item.path) ? <MdPushPin size={20} /> : <MdOutlinePushPin size={20} />}
-                  </div>
-                )}
+        {/* Menu Icon */}
+        {IconComponent && (
+          <IconComponent
+            size={18}
+            style={{
+              marginRight: '0.75rem',
+              color: isActive ? '#1b69e7' : isHovered ? '#1b69e7' : '#555',
+              transition: 'color 0.2s ease'
+            }}
+          />
+        )}
 
-                {hasChildren && (
-                  <MdChevronRight
-                    size={16}
-                    style={{
-                      color: isHovered ? '#1b69e7' : '#777',
-                      transition: 'color 0.2s ease',
-                      marginLeft: '0.5rem'
-                    }}
-                  />
-                )}
-              </div>
+        {/* Menu Label */}
+        <span style={{
+          flex: 1,
+          fontSize: '0.85rem',
+          color: isActive ? '#1b69e7' : isHovered ? '#1b69e7' : '#333',
+          fontWeight: isActive ? '600' : isHovered ? '500' : '400',
+          transition: 'all 0.2s ease'
+        }}>
+          {item.name}
+        </span>
 
-              {/* Add divider after each menu item except the last one */}
-              {index < items.length - 1 && (
-                <div style={{
-                  height: '1px',
-                  backgroundColor: '#e8f0fe',
-                  margin: '0.1rem 0.8rem',
-                }} />
-              )}
-            </div>
-          );
-        })}
+        {/* Submenu Arrow */}
+        {hasChildren && (
+          <MdChevronRight
+            size={16}
+            style={{
+              color: isHovered ? '#1b69e7' : '#777',
+              transition: 'color 0.2s ease',
+              marginLeft: '0.5rem'
+            }}
+          />
+        )}
+      </div>
+
+      {/* Divider */}
+      {index < items.length - 1 && (
+        <div style={{
+          height: '1px',
+          backgroundColor: '#e8f0fe',
+          margin: '0.1rem 0.8rem',
+        }} />
+      )}
+    </div>
+  );
+})}
+
       </div>
     );
   };
