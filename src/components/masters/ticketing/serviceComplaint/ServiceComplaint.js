@@ -42,6 +42,9 @@ const ServiceComplaint = () => {
     const [mode, setMode] = useState('view');
     const [cats, setCats] = useState([]);
     const [scats, setSCats] = useState([]);
+    const [sev, setSev] = useState([]);
+    const [Type, setType] = useState([]);
+    const [Tag, setTag] = useState([]);
     const [currentComplaintId, setCurrentComplaintId] = useState(null);
     const searchParams = useSearchParams();
     const Complaint = searchParams.get('TKTSERVICEID');
@@ -65,12 +68,12 @@ const ServiceComplaint = () => {
 
                 setFormData({
 
-                    TKTCATID: complaintData?.TKTCATID || "",
-                    TKTSUBCATID: complaintData?.TKTSUBCATID || "",
+                    TKTCATID: complaintData?.TKTCATID.toString() || "",
+                    TKTSUBCATID: complaintData?.TKTSUBCATID.toString() || "",
                     TKTSERVICENAME: complaintData?.TKTSERVICENAME || "",
-                    TKTSVRTYID: complaintData?.TKTSVRTYID || "",
-                    TKTTYPEID: complaintData?.TKTTYPEID || "",
-                    TKTTAGID: complaintData?.TKTTAGID || "",
+                    TKTSVRTYID: complaintData?.TKTSVRTYID.toString() || "",
+                    TKTTYPEID: complaintData?.TKTTYPEID.toString() || "",
+                    TKTTAGID: complaintData?.TKTTAGID.toString() || "",
                     EMP_KEY: complaintData?.EMP_KEY || "",
                     LEADTIME: complaintData?.LEADTIME || "",
                     DESCRIPTION: complaintData?.DESCRIPTION || "",
@@ -162,6 +165,72 @@ const ServiceComplaint = () => {
         fetchSubCat();
     }, []);
 
+    useEffect(() => {
+        const fetchSeverity = async () => {
+            try {
+                const response = await axiosInstance.post(`TktService/GetTktSvrtyDrp`);
+                console.log("API response:", response.data.DATA);
+                if (
+                    response.data.STATUS === 0 &&
+                    response.data.RESPONSESTATUSCODE === 1
+                ) {
+                    setSev(response.data.DATA);
+                } else {
+                    toast.error("Failed to fetch Ticket Severity");
+                }
+            } catch (error) {
+                console.error("Error fetching Ticket Severity", error);
+                toast.error("Error fetching Ticket Severity. Please try again.");
+            }
+        };
+
+        fetchSeverity();
+    }, []);
+
+    useEffect(() => {
+        const fetchType = async () => {
+            try {
+                const response = await axiosInstance.post(`TktService/GetTktTypeDrp`);
+                console.log("API response:", response.data.DATA);
+                if (
+                    response.data.STATUS === 0 &&
+                    response.data.RESPONSESTATUSCODE === 1
+                ) {
+                    setType(response.data.DATA);
+                } else {
+                    toast.error("Failed to fetch Ticket Type");
+                }
+            } catch (error) {
+                console.error("Error fetching Ticket Type", error);
+                toast.error("Error fetching Ticket Type. Please try again.");
+            }
+        };
+
+        fetchType();
+    }, []);
+
+    useEffect(() => {
+        const fetchTag = async () => {
+            try {
+                const response = await axiosInstance.post(`TktService/GetTktTagDrp`);
+                console.log("API response:", response.data.DATA);
+                if (
+                    response.data.STATUS === 0 &&
+                    response.data.RESPONSESTATUSCODE === 1
+                ) {
+                    setTag(response.data.DATA);
+                } else {
+                    toast.error("Failed to fetch Ticket Tag");
+                }
+            } catch (error) {
+                console.error("Error fetching Ticket Tag", error);
+                toast.error("Error fetching Ticket Tag. Please try again.");
+            }
+        };
+
+        fetchTag();
+    }, []);
+
     const handlePrevious = async () => {
         await fetchComplaintData(currentComplaintId, "P");
         setFormData((prev) => ({
@@ -176,11 +245,10 @@ const ServiceComplaint = () => {
         }));
     };
 
-
     const handleDelete = async () => {
         try {
             const response = await axiosInstance.post('TktService/DeleteTktService', {
-                TKTSERVICEID: formData.TKTSERVICEID
+                TKTSERVICEID: Complaint
             });
             const { data: { STATUS, MESSAGE } } = response;
             if (STATUS === 0) {
@@ -252,31 +320,31 @@ const ServiceComplaint = () => {
 
         const payload = {
             TKTCATID: formData?.TKTCATID || '',
-            TKTSUBCATID: formData?.TKTSUBCATID || '',
+            TKTSUBCATID: formData?.TKTSUBCATID || 0,
             TKTSERVICENAME: formData?.TKTSERVICENAME || '',
             TKTSVRTYID: formData?.TKTSVRTYID || '',
             TKTTYPEID: formData?.TKTTYPEID || '',
             TKTTAGID: formData?.TKTTAGID || '',
-            EMP_KEY: formData?.EMP_KEY || '',
+            EMP_KEY: formData?.EMP_KEY || 'EP005',
             LEADTIME: formData?.LEADTIME || '',
             DESCRIPTION: formData?.DESCRIPTION || '',
-            STATUS: formData?.STATUS || '',
+            STATUS: formData?.STATUS || 1,
             REMARK: formData?.REMARK || ''
         };
 
-        const UserName = localStorage.getItem('USER_NAME');
-        const COBR_ID = localStorage.getItem('COBR_ID');
+        const userName = localStorage.getItem('Ankita');
+        const COBR_ID = "02";
 
         let response;
         if (mode === 'edit') {
             payload.TKTSERVICEID = currentComplaintId;
-            payload.UpdatedBy = 2;
-            response = await axiosInstance.patch(`TktService/UpdateTktService?UserName=${(UserName)}&strCobrid=${COBR_ID}`, payload);
+            payload.UPDATEDBY = 2;
+            response = await axiosInstance.patch(`TktService/UpdateTktService?UserName=${(userName)}&strCobrid=${COBR_ID}`, payload);
 
             console.log("payload", payload);
         } else {
-            payload.CreatedBy = 2;
-            response = await axiosInstance.post(`TktService/InsertTktService?UserName=${(UserName)}&strCobrid=${COBR_ID}`, payload);
+            payload.CREATEDBY = 2;
+            response = await axiosInstance.post(`TktService/InsertTktService?UserName=${(userName)}&strCobrid=${COBR_ID}`, payload);
         }
 
         if (response.data.STATUS === 0 && response.data.RESPONSESTATUSCODE === 1) {
@@ -381,7 +449,7 @@ const ServiceComplaint = () => {
                 sx={{
                     display: 'flex',
                     flexDirection: 'column',
-                    marginInline: { xs: '5%', sm: '5%', md: '5%', lg: '5%', xl: '5%' },
+                    marginInline: { xs: '5%', sm: '5%', md: '5%', lg: '20%', xl: '5%' },
                 }}
                 spacing={2}
             >
@@ -412,7 +480,7 @@ const ServiceComplaint = () => {
                     </Grid>
                     <Grid>
                         <Typography align="center" variant="h6">
-                            Service/Complaint
+                            Service/Complaint Request
                         </Typography>
 
                     </Grid>
@@ -437,7 +505,7 @@ const ServiceComplaint = () => {
                 </Grid>
 
                 <Grid container spacing={0.5}>
-                    <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+                    <Grid size={{ xs: 12, sm: 6, md: 6 }}>
                         <AutoVibe
                             id="TKTCATID"
                             disabled={isFormDisabled}
@@ -445,11 +513,11 @@ const ServiceComplaint = () => {
                             options={cats}
                             label="Ticket Category Name"
                             name="TKTCATID"
-                            value={cats.find(option => option.TKTCATID === formData?.TKTCATNAME) || null}
+                            value={cats.find(option => option.TKTCATID.toString() === formData?.TKTCATID) || ""}
                             onChange={(e, newValue) => {
                                 setFormData((prevForm) => ({
                                     ...prevForm,
-                                    TKTCATNAME: newValue ? newValue.TKTCATID : '',
+                                    TKTCATID: newValue ? newValue.TKTCATID.toString()  : '',
                                 }));
                             }}
                             sx={DropInputSx}
@@ -462,19 +530,19 @@ const ServiceComplaint = () => {
                         />
                     </Grid>
 
-                    <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+                    <Grid size={{ xs: 12, sm: 6, md: 6 }}>
                         <AutoVibe
                             id="TKTSUBCATID"
                             disabled={isFormDisabled}
-                            getOptionLabel={(option) => option.TKTSUBCATID || ''}
+                            getOptionLabel={(option) => option.TKTSUBCATNAME || ''}
                             options={scats}
                             label="Ticket Sub Category Name"
                             name="TKTSUBCATID"
-                            value={scats?.find(option => option.TKTSUBCATID?.toString() === formData?.TKTSUBCATNAME?.toString()) || null}
+                            value={scats?.find(option => option.TKTSUBCATID?.toString() === formData?.TKTSUBCATID) || ""}
                             onChange={(e, newValue) => {
                                 setFormData((prevForm) => ({
                                     ...prevForm,
-                                    TKTSUBCATNAME: newValue ? newValue.TKTSUBCATID : '',
+                                    TKTSUBCATID: newValue ? newValue.TKTSUBCATID.toString() : '',
                                 }));
                             }}
                             sx={DropInputSx}
@@ -487,7 +555,7 @@ const ServiceComplaint = () => {
                         />
                     </Grid>
 
-                    <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+                    <Grid size={{ xs: 12, sm: 6, md: 12 }}>
                         <TextField
                             label="Ticket Service Name"
                             variant="filled"
@@ -506,19 +574,19 @@ const ServiceComplaint = () => {
                         />
                     </Grid>
 
-                    <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+                    <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                         <AutoVibe
                             id="TKTSVRTYID"
                             disabled={isFormDisabled}
                             getOptionLabel={(option) => option.TKTSVRTYNAME || ''}
-                            options={cats}
+                            options={sev}
                             label="Ticket Severity"
                             name="TKTSVRTYID"
-                            value={cats.find(option => option.TKTSVRTYID === formData?.TKTSVRTYNAME) || null}
+                            value={sev.find(option => option.TKTSVRTYID.toString() === formData?.TKTSVRTYID) || ""}
                             onChange={(e, newValue) => {
                                 setFormData((prevForm) => ({
                                     ...prevForm,
-                                    TKTSVRTYNAME: newValue ? newValue.TKTSVRTYID : '',
+                                    TKTSVRTYID: newValue ? newValue.TKTSVRTYID.toString() : '',
                                 }));
                             }}
                             sx={DropInputSx}
@@ -531,19 +599,19 @@ const ServiceComplaint = () => {
                         />
                     </Grid>
 
-                    <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+                    <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                         <AutoVibe
                             id="TKTTYPEID"
                             disabled={isFormDisabled}
                             getOptionLabel={(option) => option.TKTTYPENAME || ''}
-                            options={cats}
+                            options={Type}
                             label="Ticket Type"
                             name="TKTTYPEID"
-                            value={cats.find(option => option.TKTTYPEID === formData?.TKTTYPENAME) || null}
+                            value={Type.find(option => option.TKTTYPEID.toString() === formData?.TKTTYPEID) || ""}
                             onChange={(e, newValue) => {
                                 setFormData((prevForm) => ({
                                     ...prevForm,
-                                    TKTTYPENAME: newValue ? newValue.TKTTYPEID : '',
+                                    TKTTYPEID: newValue ? newValue.TKTTYPEID.toString() : '',
                                 }));
                             }}
                             sx={DropInputSx}
@@ -556,19 +624,19 @@ const ServiceComplaint = () => {
                         />
                     </Grid>
 
-                    <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+                    <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                         <AutoVibe
                             id="TKTTAGID"
                             disabled={isFormDisabled}
                             getOptionLabel={(option) => option.TKTTAGNAME || ''}
-                            options={cats}
+                            options={Tag}
                             label="Ticket Tag"
                             name="TKTTAGID"
-                            value={cats.find(option => option.TKTTAGID === formData?.TKTTAGNAME) || null}
+                            value={Tag.find(option => option.TKTTAGID.toString() === formData?.TKTTAGID ) || ""}
                             onChange={(e, newValue) => {
                                 setFormData((prevForm) => ({
                                     ...prevForm,
-                                    TKTTAGNAME: newValue ? newValue.TKTTAGID : '',
+                                    TKTTAGID: newValue ? newValue.TKTTAGID.toString() : '',
                                 }));
                             }}
                             sx={DropInputSx}
@@ -581,7 +649,7 @@ const ServiceComplaint = () => {
                         />
                     </Grid>
 
-                    <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+                    <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                         <TextField
                             label="LeadTime"
                             variant="filled"
@@ -600,7 +668,7 @@ const ServiceComplaint = () => {
                         />
                     </Grid>
 
-                    <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+                    <Grid size={{ xs: 12, sm: 6, md: 12 }}>
                         <TextField
                             label="Description"
                             variant="filled"
@@ -619,7 +687,7 @@ const ServiceComplaint = () => {
                         />
                     </Grid>
 
-                    <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+                    <Grid size={{ xs: 12, sm: 6, md: 12 }}>
                         <TextField
                             label="Remark"
                             variant="filled"

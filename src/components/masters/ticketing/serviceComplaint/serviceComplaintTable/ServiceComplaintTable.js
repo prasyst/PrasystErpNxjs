@@ -9,23 +9,23 @@ import { useRouter } from 'next/navigation';
 
 // Column definitions for AG Grid with Serial No and Checkbox
 const columnDefs = [
-  {
-    headerName: "Select",
-    width: 50,
-    maxWidth: 40,
-    checkboxSelection: true,
-    headerCheckboxSelection: true,
-    lockPosition: true,
-    suppressMenu: true,
-    sortable: false,
-    filter: false,
-    resizable: false,
+  // {
+  //   headerName: "Select",
+  //   width: 50,
+  //   maxWidth: 40,
+  //   checkboxSelection: true,
+  //   headerCheckboxSelection: true,
+  //   lockPosition: true,
+  //   suppressMenu: true,
+  //   sortable: false,
+  //   filter: false,
+  //   resizable: false,
 
-    headerClass: 'checkbox-header'
-  },
+  //   headerClass: 'checkbox-header'
+  // },
   {
     field: "TKTCATNAME",
-    headerName: "Ticket Category Name",
+    headerName: "Category",
     filter: 'agSetColumnFilter',
     filterParams: {
       defaultToNothingSelected: true,
@@ -34,7 +34,7 @@ const columnDefs = [
   },
   {
     field: "TKTSUBCATNAME",
-    headerName: "Ticket Sub Category Name",
+    headerName: "Sub Category",
     filter: 'agSetColumnFilter',
     filterParams: {
       defaultToNothingSelected: true,
@@ -43,7 +43,7 @@ const columnDefs = [
   },
   {
     field: "TKTSERVICENAME",
-    headerName: "Ticket Service Name",
+    headerName: "Service",
     filter: 'agSetColumnFilter',
     filterParams: {
       defaultToNothingSelected: true,
@@ -52,7 +52,7 @@ const columnDefs = [
   },
   {
     field: "TKTSVRTYNAME",
-    headerName: "TKTSVRTYNAME",
+    headerName: "Severity",
     filter: 'agSetColumnFilter',
     filterParams: {
       defaultToNothingSelected: true,
@@ -61,7 +61,7 @@ const columnDefs = [
   },
   {
     field: "TKTTAGNAME",
-    headerName: "Ticket Tag Name",
+    headerName: "Tag",
     filter: 'agSetColumnFilter',
     filterParams: {
       defaultToNothingSelected: true,
@@ -70,7 +70,7 @@ const columnDefs = [
   },
   {
     field: "TKTTYPENAME",
-    headerName: "Ticket Type Name",
+    headerName: "Type",
     filter: 'agSetColumnFilter',
     filterParams: {
       defaultToNothingSelected: true,

@@ -26,7 +26,6 @@ const TicketSubCatMst = () => {
     const router = useRouter();
 
     const [formData, setFormData] = useState({
-        TKTCATNAME: '',
         TKTSUBCATNAME: '',
         TKTCATID: '',
         ABRV: '',
@@ -61,8 +60,8 @@ const TicketSubCatMst = () => {
 
                 setFormData({
 
-                    TKTCATNAME: catSData?.TKTCATNAME || "",
-                    TKTSUBCATNAME: catSData.TKTSUBCATNAME || '',
+                    TKTCATID: catSData?.TKTCATID.toString() || "",
+                    TKTSUBCATNAME: catSData.TKTSUBCATID.toString() || "",
                     ABRV: catSData?.ABRV || "",
                     EMP_KEY: catSData?.EMP_KEY || "",
                     STATUS: catSData?.STATUS || "",
@@ -93,7 +92,6 @@ const TicketSubCatMst = () => {
         } else {
             setMode('view');
             setFormData({
-                TKTCATNAME: '',
                 TKTSUBCATNAME: '',
                 TKTCATID: '',
                 ABRV: '',
@@ -168,7 +166,7 @@ const TicketSubCatMst = () => {
     const handleDelete = async () => {
         try {
             const response = await axiosInstance.post('TktsubCat/DeleteTktsubCat', {
-                TKTSUBCATID: formData.TKTSUBCATID
+                TKTSUBCATID: TicketSubCat
             });
             const { data: { STATUS, MESSAGE } } = response;
             if (STATUS === 0) {
@@ -194,7 +192,6 @@ const TicketSubCatMst = () => {
         setMode('add');
         setIsFormDisabled(false);
         setFormData({
-            TKTCATNAME: '',
             TKTSUBCATNAME: '',
             TKTCATID: '',
             ABRV: '',
@@ -235,27 +232,28 @@ const TicketSubCatMst = () => {
     const handleSubmit = async () => {
 
         const payload = {
-            TKTCATNAME: formData?.TKTCATNAME || "",
+            TKTCATID: formData?.TKTCATID || "",
+            // TKTSUBCATID: formData?.TKTSUBCATID || 0,
             TKTSUBCATNAME: formData?.TKTSUBCATNAME || "",
             ABRV: formData?.ABRV || "",
-            EMP_KEY: formData?.EMP_KEY || "EP004",
-            STATUS: formData?.STATUS || "",
+            EMP_KEY: formData?.EMP_KEY || "",
+            STATUS: formData?.STATUS || 1,
             REMARK: formData?.REMARK || ""
 
         };
 
-        const UserName = localStorage.getItem('USER_NAME');
-        const COBR_ID = localStorage.getItem('COBR_ID');
+        const UserName = localStorage.getItem('Ankita');
+        const COBR_ID = "02";
 
         let response;
         if (mode === 'edit') {
             payload.TKTSUBCATID = currentTicSCatId;
-            payload.UpdatedBy = 2;
+            payload.UPDATEDBY = 2;
             response = await axiosInstance.patch(`TktsubCat/UpdateTktsubCat?UserName=${(UserName)}&strCobrid=${COBR_ID}`, payload);
 
             console.log("payload", payload);
         } else {
-            payload.CreatedBy = 2;
+            payload.CREATEDBY = 2;
             response = await axiosInstance.post(`TktsubCat/InsertTktsubCat?UserName=${(UserName)}&strCobrid=${COBR_ID}`, payload);
         }
 
@@ -425,11 +423,11 @@ const TicketSubCatMst = () => {
                             options={cats}
                             label="Ticket Category Name"
                             name="TKTCATID"
-                            value={cats.find(option => option.TKTCATID.toString() === formData?.TKTCATNAME.toString()) || null}
+                            value={cats.find(option => option.TKTCATID.toString() === formData?.TKTCATID) || ""}
                             onChange={(e, newValue) => {
                                 setFormData((prevForm) => ({
                                     ...prevForm,
-                                    TKTCATNAME: newValue ? newValue.TKTCATID : '',
+                                    TKTCATID: newValue ? newValue.TKTCATID.toString() : '',
                                 }));
                             }}
                             sx={DropInputSx}
@@ -451,7 +449,7 @@ const TicketSubCatMst = () => {
                             options={scats}
                             label="Ticket Sub Category Name"
                             name="TKTSUBCATID"
-                            value={scats.find(option => option.TKTSUBCATID.toString() === formData?.TKTSUBCATNAME.toString()) || null}
+                            value={scats.find(option => option.TKTSUBCATID.toString() === formData?.TKTSUBCATNAME.toString()) || ""}
                             onChange={(e, newValue) => {
                                 setFormData((prevForm) => ({
                                     ...prevForm,

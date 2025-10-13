@@ -9,23 +9,23 @@ import { useRouter } from 'next/navigation';
 
 // Column definitions for AG Grid with Serial No and Checkbox
 const columnDefs = [
-  {
-    headerName: "Select",
-    width: 50,
-    maxWidth: 40,
-    checkboxSelection: true,
-    headerCheckboxSelection: true,
-    lockPosition: true,
-    suppressMenu: true,
-    sortable: false,
-    filter: false,
-    resizable: false,
+  // {
+  //   headerName: "Select",
+  //   width: 50,
+  //   maxWidth: 40,
+  //   checkboxSelection: true,
+  //   headerCheckboxSelection: true,
+  //   lockPosition: true,
+  //   suppressMenu: true,
+  //   sortable: false,
+  //   filter: false,
+  //   resizable: false,
 
-    headerClass: 'checkbox-header'
-  },
+  //   headerClass: 'checkbox-header'
+  // },
   {
     field: "TKTCATNAME",
-    headerName: "Ticket Category Name",
+    headerName: "Category",
     filter: 'agSetColumnFilter',
     filterParams: {
       defaultToNothingSelected: true,
@@ -49,7 +49,39 @@ const columnDefs = [
       defaultToNothingSelected: true,
     },
     sortable: true
-  }
+  },
+  {
+    field: "CREATED_BY",
+    headerName: "Created By",
+    filter: 'agSetColumnFilter',
+    filterParams: {
+      defaultToNothingSelected: true,
+    },
+    sortable: true
+  },
+  { 
+      field: "CREATED_DT", 
+      headerName: "Created Date", 
+      width: 130,
+      filter: 'agDateColumnFilter',
+      filterParams: {
+        // Use our custom date filter
+        browserDatePicker: true,
+        filterOptions: [
+          'equals',
+          'notEqual',
+          'lessThan',
+          'greaterThan',
+          'inRange',
+          'empty',
+          'notEmpty'
+        ],
+        // Add custom options to the filter
+        customOptionLabel: 'Custom Dates',
+        customFilter: getCustomDateFilter()
+      },
+      sortable: true
+    },
 ];
 
 export default function TicketCatTable() {
@@ -73,6 +105,7 @@ export default function TicketCatTable() {
       if (STATUS === 0 && Array.isArray(DATA)) {
         const formattedData = DATA.map((row) => ({
           ...row,
+          CREATED_DT: row.CREATED_DT ? new Date(row.CREATED_DT) : null,
         }));
         setRows(formattedData);
       }
