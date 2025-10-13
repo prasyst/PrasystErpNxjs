@@ -140,7 +140,7 @@ const TicketCatMst = () => {
     const handleDelete = async () => {
         try {
             const response = await axiosInstance.post('TktCat/DeleteTktCat', {
-                TKTCATID: formData.TKTCATID
+                TKTCATID:  TicketCat
             });
             const { data: { STATUS, MESSAGE } } = response;
             if (STATUS === 0) {
@@ -205,15 +205,15 @@ const TicketCatMst = () => {
     const handleSubmit = async () => {
 
         const payload = {
-            TKTCATNAME: parseInt(formData?.TKTCATID) || "",
+            TKTCATNAME: formData?.TKTCATNAME || "",
             ABRV: formData?.ABRV || "",
             EMP_KEY: formData?.EMP_KEY || "EP004",
-            STATUS: formData?.STATUS || "",
+            STATUS: formData?.STATUS || 1,
             REMARK: formData?.REMARK || ""
         };
 
-        const UserName = localStorage.getItem('USER_NAME');
-        const COBR_ID = localStorage.getItem('COBR_ID');
+        const UserName = localStorage.getItem('Ankita');
+        const COBR_ID = "02";
 
         let response;
         if (mode === 'edit') {
@@ -393,7 +393,7 @@ const TicketCatMst = () => {
                             options={cats}
                             label="Technician"
                             name="TKTCATID"
-                            value={cats.find(option => option.TKTCATID.toString() === formData?.TKTCATNAME?.toString()) || null}
+                            value={cats.find(option => option.TKTCATID.toString() === formData?.TKTCATNAME?.toString()) || ""}
                             onChange={(e, newValue) => {
                                 setFormData((prevForm) => ({
                                     ...prevForm,
