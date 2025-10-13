@@ -45,6 +45,12 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
   const [isEditingSize, setIsEditingSize] = useState(false);
   const [editingRowData, setEditingRowData] = useState(null);
   
+  // State for dropdown options
+  const [styleOptions, setStyleOptions] = useState([]);
+  const [typeOptions, setTypeOptions] = useState([]);
+  const [shadeOptions, setShadeOptions] = useState([]);
+  const [lotNoOptions, setLotNoOptions] = useState([]);
+  
   const [newItemData, setNewItemData] = useState({
     product: '',
     barcode: '',
@@ -168,7 +174,8 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
     netAmt: parseFloat(item.NET_AMT) || 0,
     distributer: item.DISTBTR || "-",
     set: parseFloat(item.SETQTY) || 0,
-    originalData: item
+    originalData: item,
+    FGSTYLE_ID: item.FGSTYLE_ID // Store FGSTYLE_ID for API calls
   })) : [];
 
   // Use updatedTableData if available, otherwise use initial data
@@ -195,6 +202,52 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
     calculateTotals();
   }, [tableData]);
 
+  // Fetch dropdown data based on FGSTYLE_ID
+  const fetchDropdownData = async (fgstyleId) => {
+    if (!fgstyleId) return;
+
+    try {
+      // Fetch Style dropdown data
+      const styleResponse = await axiosInstance.post('/FGSTYLE/GetFgstyleDrp', {
+        FGSTYLE_ID: fgstyleId,
+        FGPRD_KEY: "",
+        FLAG: ""
+      });
+      if (styleResponse.data.DATA) {
+        setStyleOptions(styleResponse.data.DATA.map(item => item.FGSTYLE_CODE || ''));
+      }
+
+      // Fetch Type dropdown data
+      const typeResponse = await axiosInstance.post('/FgType/GetFgTypeDrp', {
+        FGSTYLE_ID: fgstyleId,
+        FLAG: ""
+      });
+      if (typeResponse.data.DATA) {
+        setTypeOptions(typeResponse.data.DATA.map(item => item.FGTYPE_NAME || ''));
+      }
+
+      // Fetch Shade dropdown data
+      const shadeResponse = await axiosInstance.post('/Fgshade/GetFgshadedrp', {
+        FGSTYLE_ID: fgstyleId,
+        FLAG: ""
+      });
+      if (shadeResponse.data.DATA) {
+        setShadeOptions(shadeResponse.data.DATA.map(item => item.FGSHADE_NAME || ''));
+      }
+
+      // Fetch Lot No dropdown data
+      const lotNoResponse = await axiosInstance.post('/Fgptn/GetFgptnDrp', {
+        FGSTYLE_ID: fgstyleId,
+        FLAG: ""
+      });
+      if (lotNoResponse.data.DATA) {
+        setLotNoOptions(lotNoResponse.data.DATA.map(item => item.FGPTN_NAME || ''));
+      }
+    } catch (error) {
+      console.error('Error fetching dropdown data:', error);
+    }
+  };
+
   // Handle row click
   const handleRowClick = (row) => {
     setSelectedRow(row.id);
@@ -202,6 +255,11 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
     // Extract ORDBKSTYSZLIST from the clicked row
     const sizeDetails = row.originalData?.ORDBKSTYSZLIST || [];
     setSizeDetailsData(sizeDetails);
+
+    // Fetch dropdown data based on FGSTYLE_ID
+    if (row.FGSTYLE_ID) {
+      fetchDropdownData(row.FGSTYLE_ID);
+    }
 
     // If in edit mode, populate form fields with row data (read-only)
     if (isEditingSize) {
@@ -249,14 +307,16 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
       setSelectedRow(firstRow.id);
       const sizeDetails = firstRow.originalData?.ORDBKSTYSZLIST || [];
       setSizeDetailsData(sizeDetails);
+      
+      // Fetch dropdown data for first row
+      if (firstRow.FGSTYLE_ID) {
+        fetchDropdownData(firstRow.FGSTYLE_ID);
+      }
     }
   }, [tableData, selectedRow]);
 
   const productOptions = formData.apiResponseData?.ORDBKSTYLIST ? 
     [...new Set(formData.apiResponseData.ORDBKSTYLIST.map(item => item.PRODUCT))].filter(Boolean) : [];
-
-  const styleOptions = formData.apiResponseData?.ORDBKSTYLIST ? 
-    [...new Set(formData.apiResponseData.ORDBKSTYLIST.map(item => item.STYLE))].filter(Boolean) : [];
 
   const handleDateChange = (date, fieldName) => {
     if (date) {
@@ -391,7 +451,8 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
       set: parseFloat(newItemData.sets) || 0,
       originalData: {
         ORDBKSTYSZLIST: sizeDetailsData
-      }
+      },
+      FGSTYLE_ID: null // You might need to get this from API when adding new items
     };
 
     // Update the table data with new item
@@ -419,7 +480,8 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
           NET_AMT: newItem.netAmt,
           DISTBTR: newItem.distributer,
           SETQTY: newItem.set,
-          ORDBKSTYSZLIST: sizeDetailsData
+          ORDBKSTYSZLIST: sizeDetailsData,
+          FGSTYLE_ID: null
         }]
       }
     }));
@@ -570,13 +632,22 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
       }
     }));
 
-    // Reset selection
+    // Reset selection and dropdowns
     if (newTableData.length > 0) {
-      setSelectedRow(newTableData[0].id);
-      setSizeDetailsData(newTableData[0].originalData?.ORDBKSTYSZLIST || []);
+      const firstRow = newTableData[0];
+      setSelectedRow(firstRow.id);
+      setSizeDetailsData(firstRow.originalData?.ORDBKSTYSZLIST || []);
+      if (firstRow.FGSTYLE_ID) {
+        fetchDropdownData(firstRow.FGSTYLE_ID);
+      }
     } else {
       setSelectedRow(null);
       setSizeDetailsData([]);
+      // Clear dropdowns when no rows left
+      setStyleOptions([]);
+      setTypeOptions([]);
+      setShadeOptions([]);
+      setLotNoOptions([]);
     }
 
     alert("Item deleted successfully!");
@@ -864,7 +935,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
             <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 1 }}>
               <AutoVibe
                 id="Product"
-                disabled={shouldDisableFields()} // Enable only in add/edit mode
+                disabled={shouldDisableFields()}
                 getOptionLabel={(option) => option || ''}
                 options={productOptions}
                 label="Product"
@@ -880,7 +951,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
               <TextField 
                 label="BarCode" 
                 variant="filled" 
-                disabled={shouldDisableFields()} // Enable only in add/edit mode
+                disabled={shouldDisableFields()}
                 name="barcode"
                 value={isAddingNew || isEditingSize ? newItemData.barcode : ''}
                 onChange={handleNewItemChange}
@@ -889,7 +960,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
               />
               <AutoVibe
                 id="Style_Cd"
-                disabled={shouldDisableFields()} // Enable only in add/edit mode
+                disabled={shouldDisableFields()}
                 getOptionLabel={(option) => option || ''}
                 options={styleOptions}
                 label="Style Cd"
@@ -902,21 +973,21 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
                 }}
                 sx={DropInputSx}
               />
-              <TextField 
+              {/* <TextField 
                 label="Type" 
                 variant="filled" 
-                disabled={shouldDisableFields()} // Enable only in add/edit mode
+                disabled={shouldDisableFields()}
                 name="type"
                 value={isAddingNew || isEditingSize ? newItemData.type : ''}
                 onChange={handleNewItemChange}
                 sx={textInputSx} 
                 inputProps={{ style: { padding: '6px 8px', fontSize: '12px' } }} 
-              />
+              /> */}
               <AutoVibe
                 id="Type"
-                disabled={shouldDisableFields()} // Enable only in add/edit mode
+                disabled={shouldDisableFields()}
                 getOptionLabel={(option) => option || ''}
-                options={productOptions}
+                options={typeOptions}
                 label="Type"
                 name="type"
                 value={isAddingNew || isEditingSize ? newItemData.type : ''}
@@ -927,21 +998,21 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
                 }}
                 sx={DropInputSx}
               />
-              <TextField 
+              {/* <TextField 
                 label="Shade" 
                 variant="filled" 
-                disabled={shouldDisableFields()} // Enable only in add/edit mode
+                disabled={shouldDisableFields()}
                 name="shade"
                 value={isAddingNew || isEditingSize ? newItemData.shade : ''}
                 onChange={handleNewItemChange}
                 sx={textInputSx} 
                 inputProps={{ style: { padding: '6px 8px', fontSize: '12px' } }} 
-              />
+              /> */}
               <AutoVibe
                 id="Shade"
-                disabled={shouldDisableFields()} // Enable only in add/edit mode
+                disabled={shouldDisableFields()}
                 getOptionLabel={(option) => option || ''}
-                options={productOptions}
+                options={shadeOptions}
                 label="Shade"
                 name="shade"
                 value={isAddingNew || isEditingSize ? newItemData.shade : ''}
@@ -955,7 +1026,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
               <TextField 
                 label="Qty" 
                 variant="filled" 
-                disabled={shouldDisableFields()} // Enable only in add/edit mode
+                disabled={shouldDisableFields()}
                 name="qty"
                 value={isAddingNew || isEditingSize ? newItemData.qty : ''}
                 onChange={handleNewItemChange}
@@ -966,7 +1037,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
               <TextField 
                 label="MRP" 
                 variant="filled" 
-                disabled={shouldDisableFields()} // Enable only in add/edit mode
+                disabled={shouldDisableFields()}
                 name="mrp"
                 value={isAddingNew || isEditingSize ? newItemData.mrp : ''}
                 onChange={handleNewItemChange}
@@ -976,7 +1047,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
               <TextField 
                 label="Set No" 
                 variant="filled" 
-                disabled={shouldDisableFields()} // Enable only in add/edit mode
+                disabled={shouldDisableFields()}
                 name="setNo"
                 value={isAddingNew || isEditingSize ? newItemData.setNo : ''}
                 onChange={handleNewItemChange}
@@ -986,7 +1057,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
               <TextField 
                 label="Qty(+/-)%" 
                 variant="filled" 
-                disabled={shouldDisableFields()} // Enable only in add/edit mode
+                disabled={shouldDisableFields()}
                 name="varPer"
                 value={isAddingNew || isEditingSize ? newItemData.varPer : ''}
                 onChange={handleNewItemChange}
@@ -997,7 +1068,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
               <TextField 
                 label="Std Qty" 
                 variant="filled" 
-                disabled={shouldDisableFields()} // Enable only in add/edit mode
+                disabled={shouldDisableFields()}
                 name="stdQty"
                 value={isAddingNew || isEditingSize ? newItemData.stdQty : ''}
                 onChange={handleNewItemChange}
@@ -1007,28 +1078,33 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
               <TextField 
                 label="Conv Fact" 
                 variant="filled" 
-                disabled={shouldDisableFields()} // Enable only in add/edit mode
+                disabled={shouldDisableFields()}
                 name="convFact"
                 value={isAddingNew || isEditingSize ? newItemData.convFact : ''}
                 onChange={handleNewItemChange}
                 sx={textInputSx} 
                 inputProps={{ style: { padding: '6px 8px', fontSize: '12px' } }} 
               />
-              <TextField 
-                label="Lot No" 
-                variant="filled" 
-                disabled={shouldDisableFields()} // Enable only in add/edit mode
+              <AutoVibe
+                id="LotNo"
+                disabled={shouldDisableFields()}
+                getOptionLabel={(option) => option || ''}
+                options={lotNoOptions}
+                label="Lot No"
                 name="lotNo"
                 value={isAddingNew || isEditingSize ? newItemData.lotNo : ''}
-                onChange={handleNewItemChange}
-                sx={textInputSx} 
-                inputProps={{ style: { padding: '6px 8px', fontSize: '12px' } }} 
+                onChange={(event, value) => {
+                  if (isAddingNew || isEditingSize) {
+                    setNewItemData(prev => ({ ...prev, lotNo: value }));
+                  }
+                }}
+                sx={DropInputSx}
               />
               <AutoVibe
                 id="Discount"
-                disabled={shouldDisableFields()} // Enable only in add/edit mode
+                disabled={shouldDisableFields()}
                 getOptionLabel={(option) => option || ''}
-                options={productOptions}
+                options={[]} // You can add discount options if needed
                 label="Discount"
                 name="discount"
                 value={isAddingNew || isEditingSize ? newItemData.discount : ''}
@@ -1042,7 +1118,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
               <TextField 
                 label="Percent" 
                 variant="filled" 
-                disabled={shouldDisableFields()} // Enable only in add/edit mode
+                disabled={shouldDisableFields()}
                 name="percent"
                 value={isAddingNew || isEditingSize ? newItemData.percent : ''}
                 onChange={handleNewItemChange}
@@ -1052,7 +1128,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
               <TextField 
                 label="Remark" 
                 variant="filled" 
-                disabled={shouldDisableFields()} // Enable only in add/edit mode
+                disabled={shouldDisableFields()}
                 name="remark"
                 value={isAddingNew || isEditingSize ? newItemData.remark : ''}
                 onChange={handleNewItemChange}
@@ -1065,7 +1141,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
                   label="Div Dt"
                   value={isAddingNew || isEditingSize ? (newItemData.divDt ? parse(newItemData.divDt, "dd/MM/yyyy", new Date()) : null) : (formData.DIV_DT ? parse(formData.DIV_DT, "dd/MM/yyyy", new Date()) : null)}
                   format="dd/MM/yyyy"
-                  disabled={shouldDisableFields()} // Enable only in add/edit mode
+                  disabled={shouldDisableFields()}
                   onChange={(date) => {
                     if (isAddingNew || isEditingSize) {
                       const formattedDate = date ? format(date, "dd/MM/yyyy") : '';
@@ -1091,7 +1167,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
               <TextField 
                 label="RQty" 
                 variant="filled" 
-                disabled={shouldDisableFields()} // Enable only in add/edit mode
+                disabled={shouldDisableFields()}
                 name="rQty"
                 value={isAddingNew || isEditingSize ? newItemData.rQty : ''}
                 onChange={handleNewItemChange}
@@ -1102,7 +1178,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
                 <TextField 
                   label="Sets" 
                   variant="filled" 
-                  disabled={shouldDisableFields()} // Enable only in add/edit mode
+                  disabled={shouldDisableFields()}
                   name="sets"
                   value={isAddingNew || isEditingSize ? newItemData.sets : ''}
                   onChange={handleNewItemChange}
@@ -1225,7 +1301,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
         </Box>
 
         {/* Final Action Buttons */}
-        <Stack direction="row" spacing={2} sx={{ mt: 2, justifyContent: 'flex-end' }}>
+        <Stack direction="row" spacing={2} sx={{ m: 3, justifyContent: 'flex-end' }}>
           <Button variant="contained" color="primary" onClick={onSubmit}>
             Confirm
           </Button>
