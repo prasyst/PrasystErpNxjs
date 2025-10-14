@@ -332,6 +332,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
             { name: 'Ticket Category', icon: FaHandshake, path: '/masters/ticketing/ticketCategory' },
             { name: 'Ticket SubCategory', icon: FaHandshake, path: '/masters/ticketing/ticketSubCat' },
             { name: 'Service/Complaint', icon: FaHandshake, path: '/masters/ticketing/serviceComplaint' },
+            { name: 'Raise Service Ticket', icon: FaHandshake, path: '/masters/ticketing/raiseTicket' },
           ],
         },
       ],
