@@ -58,9 +58,9 @@ const TicketCatMst = () => {
 
                 setFormData({
 
-                    TKTCATNAME: catData?.TKTCATID?.toString() || "",
+                    TKTCATNAME: catData?.TKTCATNAME || "",
                     ABRV: catData?.ABRV || "",
-                    EMP_KEY: catData?.EMP_KEY || "",
+                    EMP_KEY: catData?.EMP_KEY?.toString() || "",
                     STATUS: catData?.STATUS || "",
                     REMARK: catData?.REMARK || ""
 
@@ -103,7 +103,11 @@ const TicketCatMst = () => {
     useEffect(() => {
         const fetchCat = async () => {
             try {
-                const response = await axiosInstance.post(`TktCat/GetTktCatDrp`);
+                const response = await axiosInstance.post(`Employee/GetEmployeeDrp`,
+                    {
+                        "FLAG": ""
+                    }
+                );
                 console.log("API response:", response.data.DATA);
                 if (
                     response.data.STATUS === 0 &&
@@ -111,11 +115,11 @@ const TicketCatMst = () => {
                 ) {
                     setCats(response.data.DATA);
                 } else {
-                    toast.error("Failed to fetch Ticket Category Name");
+                    toast.error("Failed to fetch Employee Name");
                 }
             } catch (error) {
-                console.error("Error fetching Ticket Category Name", error);
-                toast.error("Error fetching Ticket Category Name. Please try again.");
+                console.error("Error fetching Employee Name", error);
+                toast.error("Error fetching Employee Name. Please try again.");
             }
         };
 
@@ -140,7 +144,7 @@ const TicketCatMst = () => {
     const handleDelete = async () => {
         try {
             const response = await axiosInstance.post('TktCat/DeleteTktCat', {
-                TKTCATID:  TicketCat
+                TKTCATID: TicketCat
             });
             const { data: { STATUS, MESSAGE } } = response;
             if (STATUS === 0) {
@@ -207,7 +211,7 @@ const TicketCatMst = () => {
         const payload = {
             TKTCATNAME: formData?.TKTCATNAME || "",
             ABRV: formData?.ABRV || "",
-            EMP_KEY: formData?.EMP_KEY || "EP004",
+            EMP_KEY: formData?.EMP_KEY || "",
             STATUS: formData?.STATUS || 1,
             REMARK: formData?.REMARK || ""
         };
@@ -231,7 +235,7 @@ const TicketCatMst = () => {
             toast.success(response.data.MESSAGE);
             setIsFormDisabled(true);
             setMode('view');
-            
+
         } else {
             toast.error(response.data.MESSAGE || 'Operation failed');
         }
@@ -385,40 +389,15 @@ const TicketCatMst = () => {
                 </Grid>
 
                 <Grid container spacing={0.5}>
-                    <Grid size={{ xs: 12, sm: 6, md: 6 }}>
-                        <AutoVibe
-                            id="TKTCATID"
-                            disabled={isFormDisabled}
-                            getOptionLabel={(option) => option.TKTCATNAME || ''}
-                            options={cats}
-                            label="Technician"
-                            name="TKTCATID"
-                            value={cats.find(option => option.TKTCATID.toString() === formData?.TKTCATNAME?.toString()) || ""}
-                            onChange={(e, newValue) => {
-                                setFormData((prevForm) => ({
-                                    ...prevForm,
-                                    TKTCATNAME: newValue ? newValue.TKTCATID : '',
-                                }));
-                            }}
-                            sx={DropInputSx}
-                            inputProps={{
-                                style: {
-                                    padding: '6px 8px',
-                                    fontSize: '12px',
-                                },
-                            }}
-                        />
-                    </Grid>
-                    {/* <Grid size={{ xs: 12, sm: 6, md: 4 }}></Grid> */}
 
                     <Grid size={{ xs: 12, sm: 6, md: 6 }}>
                         <TextField
-                            label="Name"
+                            label="Category Name"
                             variant="filled"
                             fullWidth
                             onChange={handleInputChange}
-                            value={formData.EMP_KEY || ""}
-                            name="EMP_KEY"
+                            value={formData.TKTCATNAME || ""}
+                            name="TKTCATNAME"
                             disabled={isFormDisabled}
                             sx={textInputSx}
                             inputProps={{
@@ -459,6 +438,31 @@ const TicketCatMst = () => {
                             name="REMARK"
                             disabled={isFormDisabled}
                             sx={textInputSx}
+                            inputProps={{
+                                style: {
+                                    padding: '6px 8px',
+                                    fontSize: '12px',
+                                },
+                            }}
+                        />
+                    </Grid>
+
+                    <Grid size={{ xs: 12, sm: 6, md: 6 }}>
+                        <AutoVibe
+                            id="EMP_KEY"
+                            disabled={isFormDisabled}
+                            getOptionLabel={(option) => option.EMP_NAME || ''}
+                            options={cats}
+                            label="Technician"
+                            name="EMP_KEY"
+                            value={cats.find(option => option.EMP_KEY?.toString() === formData?.EMP_KEY) || ""}
+                            onChange={(e, newValue) => {
+                                setFormData((prevForm) => ({
+                                    ...prevForm,
+                                    EMP_KEY: newValue ? newValue.EMP_KEY.toString() : '',
+                                }));
+                            }}
+                            sx={DropInputSx}
                             inputProps={{
                                 style: {
                                     padding: '6px 8px',

@@ -61,9 +61,9 @@ const TicketSubCatMst = () => {
                 setFormData({
 
                     TKTCATID: catSData?.TKTCATID.toString() || "",
-                    TKTSUBCATNAME: catSData.TKTSUBCATID.toString() || "",
+                    TKTSUBCATNAME: catSData?.TKTSUBCATNAME || "",
                     ABRV: catSData?.ABRV || "",
-                    EMP_KEY: catSData?.EMP_KEY || "",
+                    EMP_KEY: catSData?.EMP_KEY.toString() || "",
                     STATUS: catSData?.STATUS || "",
                     REMARK: catSData?.REMARK || ""
 
@@ -129,7 +129,11 @@ const TicketSubCatMst = () => {
     useEffect(() => {
         const fetchSubCat = async () => {
             try {
-                const response = await axiosInstance.post(`TktsubCat/GetTktsubCatDrp`);
+                const response = await axiosInstance.post(`Employee/GetEmployeeDrp`,
+                    {
+                       "FLAG":"" 
+                    }
+                );
                 console.log("API response:", response.data.DATA);
                 if (
                     response.data.STATUS === 0 &&
@@ -137,11 +141,11 @@ const TicketSubCatMst = () => {
                 ) {
                     setSCats(response.data.DATA);
                 } else {
-                    toast.error("Failed to fetch Ticket Sub Category Name");
+                    toast.error("Failed to fetch Employee Name");
                 }
             } catch (error) {
-                console.error("Error fetching Ticket Sub Category Name", error);
-                toast.error("Error fetching Ticket Sub Category Name. Please try again.");
+                console.error("Error fetching Employee Name", error);
+                toast.error("Error fetching Employee Name. Please try again.");
             }
         };
 
@@ -421,7 +425,7 @@ const TicketSubCatMst = () => {
                             disabled={isFormDisabled}
                             getOptionLabel={(option) => option.TKTCATNAME || ''}
                             options={cats}
-                            label="Ticket Category Name"
+                            label="Category Name"
                             name="TKTCATID"
                             value={cats.find(option => option.TKTCATID.toString() === formData?.TKTCATID) || ""}
                             onChange={(e, newValue) => {
@@ -443,17 +447,17 @@ const TicketSubCatMst = () => {
 
                     <Grid size={{ xs: 12, sm: 6, md: 6 }}>
                         <AutoVibe
-                            id="TKTSUBCATID"
+                            id="EMP_KEY"
                             disabled={isFormDisabled}
-                            getOptionLabel={(option) => option.TKTSUBCATID || ''}
+                            getOptionLabel={(option) => option.EMP_NAME || ''}
                             options={scats}
-                            label="Ticket Sub Category Name"
-                            name="TKTSUBCATID"
-                            value={scats.find(option => option.TKTSUBCATID.toString() === formData?.TKTSUBCATNAME.toString()) || ""}
+                            label="Technician"
+                            name="EMP_KEY"
+                            value={scats.find(option => option.EMP_KEY.toString() === formData?.EMP_KEY) || ""}
                             onChange={(e, newValue) => {
                                 setFormData((prevForm) => ({
                                     ...prevForm,
-                                    TKTSUBCATNAME: newValue ? newValue.TKTSUBCATID : '',
+                                    EMP_KEY: newValue ? newValue.EMP_KEY.toString() : '',
                                 }));
                             }}
                             sx={DropInputSx}
@@ -468,12 +472,12 @@ const TicketSubCatMst = () => {
 
                     <Grid size={{ xs: 12, sm: 6, md: 6 }}>
                         <TextField
-                            label="Name"
+                            label="Sub Category Name"
                             variant="filled"
                             fullWidth
                             onChange={handleInputChange}
-                            value={formData.EMP_KEY || ""}
-                            name="EMP_KEY"
+                            value={formData.TKTSUBCATNAME || ""}
+                            name="TKTSUBCATNAME"
                             disabled={isFormDisabled}
                             sx={textInputSx}
                             inputProps={{
