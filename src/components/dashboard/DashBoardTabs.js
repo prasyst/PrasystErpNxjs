@@ -99,9 +99,9 @@ const DashboardTabs = () => {
   const StyledTab = styled(Tab)(({ theme }) => ({
     textTransform: 'none',
     fontWeight: 600,
-    fontSize: '14px',
-    minHeight: '36px',
-    padding: '8px 16px',
+    fontSize: '13px',
+    minHeight: '32px',
+    padding: '7px 12px',
     borderRadius: '5px',
     color: theme.palette.text.secondary,
     '&.Mui-selected': {

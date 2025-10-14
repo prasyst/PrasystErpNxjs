@@ -276,3 +276,6 @@ div[class*="Watermark"],
 .css-1utmszj-MuiGrid-root{
   min-height: 0 !important;
 }
+.css-c7axfe-MuiButtonBase-root-MuiTab-root{
+  min-width: 75px !important;
+}

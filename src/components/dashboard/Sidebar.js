@@ -86,11 +86,12 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
   const menuItems = [
     { name: 'Dashboard', icon: MdDashboard, path: '/dashboard', },
     // { name: 'SalesDash', icon: FaRupeeSign, path: '/dashboard/sales-dashboard', },
-    { name: 'Stock Enquiry', icon: MdSearch, path: '/dashboard/stock-enquiry-table' },
+    // { name: 'Stock Enquiry', icon: MdSearch, path: '/dashboard/stock-enquiry-table' },
    
     {
       name: 'Masters',
       icon: MdOutlineApartment,
+      path: '/masterpage',
       children: [
         {
           name: 'Company',
@@ -340,6 +341,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
       name: 'Inventory',
       icon: MdInventory,
       children: [
+         { name: 'Stock Enquiry', icon: MdSearch, path: '/dashboard/stock-enquiry-table' },
         { name: 'Stock Management', icon: FaBoxes, path: '#' },
         {
           name: 'Sales', icon: FaBoxes, path: '#',
@@ -431,16 +433,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
         { name: 'Financial Reports', icon: MdAccountBalance, path: '#' },
       ],
     },
-    {
-      name: 'Settings',
-      icon: MdSettings,
-      children: [
-        { name: 'User Management', icon: MdPeople, path: '#' },
-        { name: 'System Configuration', icon: MdBuild, path: '#' },
-        { name: 'Preferences', icon: MdSettings, path: '#' },
-        { name: 'Backup & Restore', icon: MdAssignment, path: '#' },
-      ],
-    },
+  
   ];
 
 
@@ -724,7 +717,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
       </div>
     );
   };
-  // Render mega menu with all levels
+
   const renderMegaMenu = () => {
     if (!openMegaMenu || megaMenuLevels.length === 0) return null;
 
@@ -868,7 +861,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
           borderRight: '1px solid #e0e0e0',
           left: 0,
           top: 0,
-          width: isCollapsed ? '70px' : '260px',
+          width: isCollapsed ? '70px' : '250px',
           transition: 'width 0.3s ease',
           padding: '0.8rem 0.6rem',
           overflow: 'hidden',
@@ -878,7 +871,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
           boxShadow: '2px 0 15px rgba(0,0,0,0.05)',
         }}
       >
-        {/* Header */}
+    
         <div style={{
           display: 'flex',
           alignItems: 'center',
