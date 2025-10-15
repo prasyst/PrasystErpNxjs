@@ -64,7 +64,9 @@ const SalesOrderOffline = () => {
     REGISTERED_DEALER: "0",
     SHORT_CLOSE: "0",
     READY_SI: "0",
-    SearchByCd: ""
+    SearchByCd: "",
+    LAST_ORD_NO: "", // Added for last order number
+    SERIES: "" // Added for series
   });
 
   const Buttonsx = {
@@ -105,15 +107,14 @@ const SalesOrderOffline = () => {
   };
 
   const searchParams = useSearchParams();
- const ordbkKey = searchParams.get("ordbkKey");
+  const ordbkKey = searchParams.get("ordbkKey");
 
-useEffect(() => {
-  if (ordbkKey) {
-    console.log("Got ORDBK_KEY from URL:", ordbkKey);
-    fetchOrderDetails(ordbkKey);
-  }
-}, [ordbkKey]);
-
+  useEffect(() => {
+    if (ordbkKey) {
+      console.log("Got ORDBK_KEY from URL:", ordbkKey);
+      fetchOrderDetails(ordbkKey);
+    }
+  }, [ordbkKey]);
 
   // Function to fetch order details from API
   const fetchOrderDetails = async (ordbkKey) => {
@@ -145,7 +146,7 @@ useEffect(() => {
   // Function to populate form data from API response
   const populateFormData = (orderData) => {
     const formattedData = {
-      apiResponseData: orderData ,
+      apiResponseData: orderData,
       ORDER_NO: orderData.ORDBK_NO || "",
       ORDER_DATE: orderData.ORDBK_DT ? formatDateForDisplay(orderData.ORDBK_DT) : "",
       PARTY_ORD_NO: orderData.PORD_REF || "",
@@ -176,6 +177,8 @@ useEffect(() => {
       REGISTERED_DEALER: "0",
       SHORT_CLOSE: "0",
       READY_SI: orderData.READY_SI || "0",
+      LAST_ORD_NO: orderData.LAST_ORD_NO || "",
+      SERIES: orderData.SERIES || "",
       // Additional fields that might be useful
       ORDBK_KEY: orderData.ORDBK_KEY || "",
       PARTY_KEY: orderData.PARTY_KEY || "",
@@ -186,7 +189,6 @@ useEffect(() => {
       CURRN_KEY: orderData.CURRN_KEY || "",
       EX_RATE: orderData.EX_RATE || "",
       DLV_DT: orderData.DLV_DT ? formatDateForDisplay(orderData.DLV_DT) : "",
-      
     };
 
     console.log('Populating form with data:', formattedData);
@@ -206,15 +208,102 @@ useEffect(() => {
     }
   };
 
+  // Function to get series prefix
+  const getSeriesPrefix = async () => {
+    try {
+      const payload = {
+        "MODULENAME": "Ordbk",
+        "TBLNAME": "Ordbk",
+        "FLDNAME": "Ordbk_KEY",
+        "NCOLLEN": 0,
+        "CPREFIX": "",
+        "COBR_ID": "02",
+        "FCYR_KEY": "25",
+        "TRNSTYPE": "M",
+        "SERIESID": 66,
+        "FLAG": "Series"
+      };
+
+      const response = await axiosInstance.post('/GetSeriesSettings/GetSeriesLastNewKey', payload);
+      console.log('Series Prefix Response:', response.data);
+
+      if (response.data.DATA && response.data.DATA.length > 0) {
+        return response.data.DATA[0].CPREFIX;
+      }
+      return null;
+    } catch (error) {
+      console.error('Error fetching series prefix:', error);
+      return null;
+    }
+  };
+
+  // Function to get order number
+  const getOrderNumber = async (prefix) => {
+    try {
+      const payload = {
+        "MODULENAME": "Ordbk",
+        "TBLNAME": "Ordbk",
+        "FLDNAME": "Ordbk_No",
+        "NCOLLEN": 6,
+        "CPREFIX": prefix,
+        "COBR_ID": "02",
+        "FCYR_KEY": "25",
+        "TRNSTYPE": "T",
+        "SERIESID": 0,
+        "FLAG": ""
+      };
+
+      const response = await axiosInstance.post('/GetSeriesSettings/GetSeriesLastNewKey', payload);
+      console.log('Order Number Response:', response.data);
+
+      if (response.data.DATA && response.data.DATA.length > 0) {
+        return {
+          orderNo: response.data.DATA[0].ID,
+          lastOrderNo: response.data.DATA[0].LASTID
+        };
+      }
+      return null;
+    } catch (error) {
+      console.error('Error fetching order number:', error);
+      return null;
+    }
+  };
+
   const handlePrint = () => { }
   
   const handleExit = () => {
     router.push('/inverntory/stock-enquiry-table');
   };
 
-  const handleAdd = () => {
-    setMode('add');
-    setIsFormDisabled(false);
+  const handleAdd = async () => {
+    try {
+      setLoading(true);
+      
+      // Get series prefix first
+      const prefix = await getSeriesPrefix();
+      
+      if (prefix) {
+        // Get order number using the prefix
+        const orderData = await getOrderNumber(prefix);
+        
+        if (orderData) {
+          // Update form data with new order numbers
+          setFormData(prev => ({
+            ...prev,
+            ORDER_NO: orderData.orderNo,
+            LAST_ORD_NO: orderData.lastOrderNo,
+            SERIES: prefix
+          }));
+        }
+      }
+      
+      setMode('add');
+      setIsFormDisabled(false);
+    } catch (error) {
+      console.error('Error in handleAdd:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleSubmit = () => {

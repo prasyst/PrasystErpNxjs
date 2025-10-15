@@ -332,6 +332,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
             { name: 'Ticket Category', icon: FaHandshake, path: '/masters/ticketing/ticketCategory' },
             { name: 'Ticket SubCategory', icon: FaHandshake, path: '/masters/ticketing/ticketSubCat' },
             { name: 'Service/Complaint', icon: FaHandshake, path: '/masters/ticketing/serviceComplaint' },
+            { name: 'Raise Service Ticket', icon: FaHandshake, path: '/masters/ticketing/raiseTicket' },
           ],
         },
       ],
@@ -366,6 +367,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
         { name: 'Stock Enquiry', icon: MdSearch, path: '/dashboard/stock-enquiry-table' },
             // { name: 'Sales Offline', icon: FaBoxes, path: '/inverntory/inventory-offline/' },
             { name: 'Sales Offline', icon: FaBoxes, path: '/inverntory/stock-enquiry-table' },
+
 
             { name: 'Packaging/Barcode', icon: FaBoxes, path: '/inverntory/packeging-barcode/' },
 
