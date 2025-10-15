@@ -186,42 +186,53 @@ const UnassignedTickets = () => {
     waitingOver2Hours: tickets.filter(t => t.waitTime.includes('2')).length
   };
 
-
   const MobileTicketCard = ({ ticket }) => (
     <Card 
       sx={{ 
         mb: 2,
         border: '2px solid',
         borderColor: 'warning.light',
-        borderRadius: 2,
+        backgroundColor: alpha(theme.palette.warning.light, 0.05),
+        borderRadius: 3,
         transition: 'all 0.3s ease',
         '&:hover': {
           transform: 'translateY(-2px)',
-          boxShadow: 4
+          boxShadow: 4,
+          borderColor: 'warning.main'
         }
       }}
     >
       <CardContent>
         <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={2}>
           <Box>
-            <Typography variant="h6" fontWeight="600" color="primary">
+            <Typography variant="h6" fontWeight="700" color="primary.main">
               {ticket.id}
             </Typography>
-            <Chip label="Unassigned" size="small" color="warning" sx={{ mt: 0.5 }} />
+            <Chip 
+              label="Unassigned" 
+              size="small" 
+              color="warning" 
+              sx={{ 
+                mt: 0.5,
+                fontWeight: '600',
+                fontSize: '0.7rem'
+              }} 
+            />
           </Box>
           <Chip
             label={ticket.waitTime}
             size="small"
             color="info"
             variant="outlined"
+            sx={{ fontWeight: '600' }}
           />
         </Box>
         
-        <Typography variant="h6" fontWeight="600" gutterBottom>
+        <Typography variant="h6" fontWeight="700" gutterBottom color="text.primary">
           {ticket.title}
         </Typography>
         
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 2, lineHeight: 1.4 }}>
           {ticket.description}
         </Typography>
 
@@ -230,24 +241,34 @@ const UnassignedTickets = () => {
             label={ticket.priority}
             size="small"
             color={getPriorityColor(ticket.priority)}
+            sx={{ fontWeight: '600' }}
           />
           <Chip
             label={ticket.category}
             size="small"
             variant="outlined"
+            color="primary"
           />
         </Box>
 
         <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
           <Box display="flex" alignItems="center" gap={1}>
-            <Avatar sx={{ width: 28, height: 28, fontSize: '0.7rem' }}>
+            <Avatar 
+              sx={{ 
+                width: 28, 
+                height: 28, 
+                fontSize: '0.7rem',
+                bgcolor: 'primary.main',
+                fontWeight: '600'
+              }}
+            >
               {getInitials(ticket.reporter)}
             </Avatar>
-            <Typography variant="body2" fontWeight="500">
+            <Typography variant="body2" fontWeight="600" color="text.primary">
               {ticket.reporter}
             </Typography>
           </Box>
-          <Typography variant="caption" color="text.secondary">
+          <Typography variant="caption" fontWeight="600" color="text.secondary">
             Due: {ticket.dueDate}
           </Typography>
         </Box>
@@ -258,7 +279,10 @@ const UnassignedTickets = () => {
           <Button 
             size="small" 
             startIcon={<VisibilityIcon />}
-            // onClick={() => handleViewTicket(ticket)}
+            sx={{ 
+              fontWeight: '600',
+              color: 'primary.main'
+            }}
           >
             View
           </Button>
@@ -266,18 +290,29 @@ const UnassignedTickets = () => {
             <Tooltip title="Assign Ticket">
               <IconButton 
                 size="small" 
-                color="primary"
-                // onClick={() => handleAssignClick(ticket)}
+                sx={{ 
+                  bgcolor: 'warning.main',
+                  color: 'white',
+                  '&:hover': {
+                    bgcolor: 'warning.dark'
+                  }
+                }}
               >
-                <AssignmentIcon />
+                <AssignmentIcon fontSize="small" />
               </IconButton>
             </Tooltip>
             <Tooltip title="Auto Assign">
               <IconButton 
                 size="small" 
-                color="success"
+                sx={{ 
+                  bgcolor: 'success.main',
+                  color: 'white',
+                  '&:hover': {
+                    bgcolor: 'success.dark'
+                  }
+                }}
               >
-                <AutoAwesomeIcon />
+                <AutoAwesomeIcon fontSize="small" />
               </IconButton>
             </Tooltip>
           </Box>
@@ -287,12 +322,28 @@ const UnassignedTickets = () => {
   );
 
   const DesktopTableView = () => (
-    <TableContainer component={Paper} sx={{ borderRadius: 2 }}>
+    <TableContainer 
+      component={Paper} 
+      sx={{ 
+        borderRadius: 3,
+        border: `1px solid ${theme.palette.divider}`,
+        overflow: 'hidden'
+      }}
+    >
       <Table>
         <TableHead>
-          <TableRow sx={{ backgroundColor: 'warning.light' }}>
+          <TableRow sx={{ 
+            backgroundColor: 'primary.main',
+            '& th': {
+              color: 'white',
+              fontWeight: '700',
+              fontSize: '0.95rem',
+              padding: '16px 12px'
+            }
+          }}>
             <TableCell padding="checkbox">
               <Checkbox
+                sx={{ color: 'white' }}
                 indeterminate={selectedTickets.length > 0 && selectedTickets.length < filteredTickets.length}
                 checked={selectedTickets.length === filteredTickets.length}
                 onChange={(e) => {
@@ -304,13 +355,13 @@ const UnassignedTickets = () => {
                 }}
               />
             </TableCell>
-            <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>Ticket ID</TableCell>
-            <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>Title</TableCell>
-            <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>Priority</TableCell>
-            <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>Category</TableCell>
-            <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>Reporter</TableCell>
-            <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>Wait Time</TableCell>
-            <TableCell sx={{ fontWeight: 'bold', color: 'white' }} align="center">Actions</TableCell>
+            <TableCell>Ticket ID</TableCell>
+            <TableCell>Title</TableCell>
+            <TableCell>Priority</TableCell>
+            <TableCell>Category</TableCell>
+            <TableCell>Reporter</TableCell>
+            <TableCell>Wait Time</TableCell>
+            <TableCell align="center">Actions</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
@@ -318,7 +369,14 @@ const UnassignedTickets = () => {
             <TableRow 
               key={ticket.id}
               hover
-              sx={{ cursor: 'pointer' }}
+              sx={{ 
+                cursor: 'pointer',
+                backgroundColor: selectedTickets.includes(ticket.id) ? 
+                  alpha(theme.palette.primary.light, 0.1) : 'inherit',
+                '&:hover': {
+                  backgroundColor: alpha(theme.palette.primary.light, 0.05)
+                }
+              }}
             >
               <TableCell padding="checkbox">
                 <Checkbox
@@ -327,19 +385,20 @@ const UnassignedTickets = () => {
                     e.stopPropagation();
                     handleTicketSelect(ticket.id);
                   }}
+                  color="primary"
                 />
               </TableCell>
               <TableCell>
-                <Typography variant="body2" fontWeight="600" color="primary">
+                <Typography variant="body2" fontWeight="700" color="primary.main">
                   {ticket.id}
                 </Typography>
               </TableCell>
               <TableCell>
                 <Box>
-                  <Typography variant="subtitle2" fontWeight="600">
+                  <Typography variant="subtitle2" fontWeight="700" color="text.primary">
                     {ticket.title}
                   </Typography>
-                  <Typography variant="caption" color="text.secondary">
+                  <Typography variant="caption" color="text.secondary" sx={{ lineHeight: 1.2 }}>
                     {ticket.description}
                   </Typography>
                 </Box>
@@ -349,6 +408,7 @@ const UnassignedTickets = () => {
                   label={ticket.priority}
                   size="small"
                   color={getPriorityColor(ticket.priority)}
+                  sx={{ fontWeight: '600', minWidth: 70 }}
                 />
               </TableCell>
               <TableCell>
@@ -356,14 +416,24 @@ const UnassignedTickets = () => {
                   label={ticket.category}
                   size="small"
                   variant="outlined"
+                  color="primary"
+                  sx={{ fontWeight: '600' }}
                 />
               </TableCell>
               <TableCell>
                 <Box display="flex" alignItems="center" gap={1}>
-                  <Avatar sx={{ width: 32, height: 32, fontSize: '0.8rem' }}>
+                  <Avatar 
+                    sx={{ 
+                      width: 32, 
+                      height: 32, 
+                      fontSize: '0.8rem',
+                      bgcolor: 'primary.main',
+                      fontWeight: '600'
+                    }}
+                  >
                     {getInitials(ticket.reporter)}
                   </Avatar>
-                  <Typography variant="body2">
+                  <Typography variant="body2" fontWeight="600">
                     {ticket.reporter}
                   </Typography>
                 </Box>
@@ -373,26 +443,35 @@ const UnassignedTickets = () => {
                   label={ticket.waitTime}
                   size="small"
                   color="info"
+                  sx={{ fontWeight: '600' }}
                 />
               </TableCell>
               <TableCell align="center">
                 <Box display="flex" justifyContent="center" gap={1}>
-                  <Tooltip title="View">
+                  <Tooltip title="View Details">
                     <IconButton 
                       size="small" 
-                      color="primary"
-                    //   onClick={() => handleViewTicket(ticket)}
+                      sx={{ 
+                        color: 'primary.main',
+                        '&:hover': {
+                          bgcolor: alpha(theme.palette.primary.main, 0.1)
+                        }
+                      }}
                     >
-                      <VisibilityIcon />
+                      <VisibilityIcon fontSize="small" />
                     </IconButton>
                   </Tooltip>
-                  <Tooltip title="Assign">
+                  <Tooltip title="Assign Ticket">
                     <IconButton 
                       size="small" 
-                      color="warning"
-                    //   onClick={() => handleAssignClick(ticket)}
+                      sx={{ 
+                        color: 'warning.main',
+                        '&:hover': {
+                          bgcolor: alpha(theme.palette.warning.main, 0.1)
+                        }
+                      }}
                     >
-                      <AssignmentIcon />
+                      <AssignmentIcon fontSize="small" />
                     </IconButton>
                   </Tooltip>
                 </Box>
@@ -408,82 +487,123 @@ const UnassignedTickets = () => {
     <Box sx={{ minHeight: '100vh', backgroundColor: 'grey.50', py: 2 }}>
       <Container maxWidth="xl">
 
-        <Box sx={{ mb: 1 }}>
+        {/* Header Section */}
+        <Box sx={{ mb: 3 }}>
           <Button 
             startIcon={<ArrowBackIcon />}
             onClick={() => router.push('/tickets/ticket-dashboard')}
-            sx={{ mb: 2 }}
+            sx={{ 
+              mb: 2,
+              fontWeight: '600',
+              color: 'primary.main'
+            }}
             variant="outlined"
           >
             Back to Dashboard
           </Button>
           
-          <Box 
+          <Card 
             sx={{ 
-              backgroundColor: 'warning.main',
-              borderRadius: 2,
-              p: 1,
-              color: 'white',
-              textAlign: 'center'
+              borderRadius: 3,
+              color: 'black',
+              boxShadow: 3
             }}
           >
-            <Typography variant="h5" component="h5" fontWeight="bold" gutterBottom>
-              ⚠️ Unassigned Tickets
-            </Typography>
-            <Typography variant="p">
-              {tickets.length} tickets waiting for assignment
-            </Typography>
-          </Box>
+            <CardContent sx={{ textAlign: 'center', py: 1 }}>
+              <WarningIcon sx={{ fontSize: 32, mb: 1 }} />
+              <Typography variant="h5" component="h1" fontWeight="bold" gutterBottom>
+                Unassigned Tickets
+              </Typography>
+              <Typography variant="h6" fontWeight="600">
+                {tickets.length} tickets waiting for assignment
+              </Typography>
+            </CardContent>
+          </Card>
         </Box>
 
-        {/* Statistics */}
-        <Grid container spacing={2} sx={{ mb: 4 }}>
+        {/* Statistics Cards */}
+        <Grid container spacing={3} sx={{ mb: 4 }}>
           <Grid item xs={12} sm={4}>
-            <Card sx={{ textAlign: 'center', backgroundColor: 'warning.main', color: 'white' }}>
-              <CardContent>
-                <Typography variant="h3" fontWeight="bold">
+            <Card sx={{ 
+              textAlign: 'center', 
+              backgroundColor: 'primary.main', 
+              color: 'white',
+              borderRadius: 3,
+              boxShadow: 3
+            }}>
+              <CardContent sx={{ py: 3 }}>
+                <Typography variant="h2" fontWeight="bold">
                   {stats.total}
                 </Typography>
-                <Typography>Total Unassigned</Typography>
+                <Typography variant="h6" fontWeight="600">
+                  Total Unassigned
+                </Typography>
               </CardContent>
             </Card>
           </Grid>
           <Grid item xs={12} sm={4}>
-            <Card sx={{ textAlign: 'center', backgroundColor: 'error.main', color: 'white' }}>
-              <CardContent>
-                <Typography variant="h3" fontWeight="bold">
+            <Card sx={{ 
+              textAlign: 'center', 
+              backgroundColor: 'error.main', 
+              color: 'white',
+              borderRadius: 3,
+              boxShadow: 3
+            }}>
+              <CardContent sx={{ py: 3 }}>
+                <Typography variant="h2" fontWeight="bold">
                   {stats.highPriority}
                 </Typography>
-                <Typography>High Priority</Typography>
+                <Typography variant="h6" fontWeight="600">
+                  High Priority
+                </Typography>
               </CardContent>
             </Card>
           </Grid>
           <Grid item xs={12} sm={4}>
-            <Card sx={{ textAlign: 'center', backgroundColor: 'info.main', color: 'white' }}>
-              <CardContent>
-                <Typography variant="h3" fontWeight="bold">
+            <Card sx={{ 
+              textAlign: 'center', 
+              backgroundColor: 'info.main', 
+              color: 'white',
+              borderRadius: 3,
+              boxShadow: 3
+            }}>
+              <CardContent sx={{ py: 3 }}>
+                <Typography variant="h2" fontWeight="bold">
                   {stats.waitingOver2Hours}
                 </Typography>
-                <Typography>Waiting  2 Hours</Typography>
+                <Typography variant="h6" fontWeight="600">
+                  Waiting 2+ Hours
+                </Typography>
               </CardContent>
             </Card>
           </Grid>
         </Grid>
 
-        <Card sx={{ mb: 4, p: 2 }}>
+        {/* Filters and Actions */}
+        <Card sx={{ 
+          mb: 4, 
+          p: 3, 
+          borderRadius: 3,
+          boxShadow: 2
+        }}>
           <Grid container spacing={2} alignItems="center">
             <Grid item xs={12} md={4}>
               <TextField
                 fullWidth
-                placeholder="Search tickets..."
+                placeholder="Search tickets by ID or title..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
-                      <SearchIcon />
+                      <SearchIcon color="primary" />
                     </InputAdornment>
                   ),
+                }}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 2
+                  }
                 }}
               />
             </Grid>
@@ -495,8 +615,13 @@ const UnassignedTickets = () => {
                 label="Priority"
                 value={priorityFilter}
                 onChange={(e) => setPriorityFilter(e.target.value)}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 2
+                  }
+                }}
               >
-                <MenuItem value="all">All</MenuItem>
+                <MenuItem value="all">All Priorities</MenuItem>
                 <MenuItem value="High">High</MenuItem>
                 <MenuItem value="Medium">Medium</MenuItem>
                 <MenuItem value="Low">Low</MenuItem>
@@ -510,27 +635,44 @@ const UnassignedTickets = () => {
                 label="Category"
                 value={categoryFilter}
                 onChange={(e) => setCategoryFilter(e.target.value)}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 2
+                  }
+                }}
               >
-                <MenuItem value="all">All</MenuItem>
+                <MenuItem value="all">All Categories</MenuItem>
                 <MenuItem value="Technical">Technical</MenuItem>
                 <MenuItem value="Billing">Billing</MenuItem>
-                <MenuItem value="Account">Account</MenuItem>
+                <MenuItem value="Feature Request">Feature Request</MenuItem>
               </TextField>
             </Grid>
 
             <Grid item xs={12} md={4}>
-              <Box display="flex" gap={1} justifyContent="flex-end">
+              <Box display="flex" gap={1} justifyContent="flex-end" flexWrap="wrap">
                 {selectedTickets.length > 0 && (
                   <Button
                     variant="contained"
                     startIcon={<AssignmentIcon />}
+                    sx={{
+                      borderRadius: 2,
+                      fontWeight: '600',
+                      bgcolor: 'warning.main',
+                      '&:hover': {
+                        bgcolor: 'warning.dark'
+                      }
+                    }}
                   >
                     Assign Selected ({selectedTickets.length})
                   </Button>
                 )}
                 <Button
-                  variant="outlined"
+                  variant="contained"
                   startIcon={<AutoAwesomeIcon />}
+                  sx={{
+                    borderRadius: 2,
+                    fontWeight: '600'
+                  }}
                 >
                   Auto Assign
                 </Button>
@@ -539,6 +681,7 @@ const UnassignedTickets = () => {
           </Grid>
         </Card>
 
+        {/* Tickets List */}
         {isMobile ? (
           <Box>
             {filteredTickets.map((ticket) => (
@@ -549,20 +692,36 @@ const UnassignedTickets = () => {
           <DesktopTableView />
         )}
 
-
+        {/* Empty State */}
         {filteredTickets.length === 0 && (
-          <Card sx={{ textAlign: 'center', py: 8 }}>
+          <Card sx={{ 
+            textAlign: 'center', 
+            py: 8, 
+            borderRadius: 3,
+            boxShadow: 3,
+            backgroundColor: alpha(theme.palette.success.light, 0.1)
+          }}>
             <CardContent>
-              <AssignmentIcon sx={{ fontSize: 64, color: 'success.main', mb: 2 }} />
-              <Typography variant="h5" gutterBottom color="success.main">
+              <AssignmentIcon sx={{ 
+                fontSize: 64, 
+                color: 'success.main', 
+                mb: 2 
+              }} />
+              <Typography variant="h4" gutterBottom color="success.main" fontWeight="bold">
                 No Unassigned Tickets!
               </Typography>
-              <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
+              <Typography variant="h6" color="text.secondary" sx={{ mb: 3 }}>
                 All tickets have been assigned to agents.
               </Typography>
               <Button 
                 variant="contained"
+                size="large"
                 onClick={() => router.push('/tickets')}
+                sx={{
+                  borderRadius: 2,
+                  fontWeight: '600',
+                  px: 4
+                }}
               >
                 View All Tickets
               </Button>
@@ -570,26 +729,34 @@ const UnassignedTickets = () => {
           </Card>
         )}
 
+        {/* Assign Dialog */}
         <Dialog
           open={assignDialogOpen}
           onClose={() => setAssignDialogOpen(false)}
           maxWidth="sm"
           fullWidth
+          PaperProps={{
+            sx: { borderRadius: 3 }
+          }}
         >
-          <DialogTitle>
+          <DialogTitle sx={{ 
+            backgroundColor: 'primary.main',
+            color: 'white',
+            fontWeight: 'bold'
+          }}>
             Assign Ticket
           </DialogTitle>
-          <DialogContent>
+          <DialogContent sx={{ py: 3 }}>
             {selectedTicket && (
               <Stack spacing={3}>
                 <Box>
-                  <Typography variant="h6" color="primary">
+                  <Typography variant="h6" color="primary.main" fontWeight="bold">
                     {selectedTicket.id} - {selectedTicket.title}
                   </Typography>
                   <Chip
                     label={selectedTicket.priority}
                     color={getPriorityColor(selectedTicket.priority)}
-                    sx={{ mt: 1 }}
+                    sx={{ mt: 1, fontWeight: '600' }}
                   />
                 </Box>
 
@@ -597,11 +764,19 @@ const UnassignedTickets = () => {
                   <InputLabel>Assign to Agent</InputLabel>
                   <Select
                     label="Assign to Agent"
+                    sx={{ borderRadius: 2 }}
                   >
                     {availableAgents.map((agent) => (
                       <MenuItem key={agent.id} value={agent.id}>
                         <Box display="flex" alignItems="center" gap={2}>
-                          <Avatar sx={{ width: 32, height: 32 }}>
+                          <Avatar 
+                            sx={{ 
+                              width: 32, 
+                              height: 32,
+                              bgcolor: 'primary.main',
+                              fontWeight: '600'
+                            }}
+                          >
                             {getInitials(agent.name)}
                           </Avatar>
                           <Box>
@@ -609,7 +784,7 @@ const UnassignedTickets = () => {
                               {agent.name}
                             </Typography>
                             <Typography variant="caption" color="text.secondary">
-                              {agent.role} • Load: {agent.currentLoad}
+                              {agent.role} • Load: {agent.currentLoad} tickets
                             </Typography>
                           </Box>
                         </Box>
@@ -620,11 +795,24 @@ const UnassignedTickets = () => {
               </Stack>
             )}
           </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setAssignDialogOpen(false)}>
+          <DialogActions sx={{ p: 3 }}>
+            <Button 
+              onClick={() => setAssignDialogOpen(false)}
+              sx={{ 
+                fontWeight: '600',
+                borderRadius: 2
+              }}
+            >
               Cancel
             </Button>
-            <Button variant="contained" onClick={handleAssignConfirm}>
+            <Button 
+              variant="contained" 
+              onClick={handleAssignConfirm}
+              sx={{ 
+                fontWeight: '600',
+                borderRadius: 2
+              }}
+            >
               Assign Ticket
             </Button>
           </DialogActions>

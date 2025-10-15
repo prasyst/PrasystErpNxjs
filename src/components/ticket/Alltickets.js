@@ -170,15 +170,7 @@ const AllTicketsPage = () => {
     }
   };
 
-  const getStatusIcon = (status) => {
-    switch (status) {
-      case 'open': return '🔴';
-      case 'in-progress': return '🟡';
-      case 'resolved': return '🟢';
-      case 'closed': return '⚫';
-      default: return '⚪';
-    }
-  };
+ 
 
   const handleViewTicket = (ticket) => {
     setSelectedTicket(ticket);
@@ -462,16 +454,21 @@ const AllTicketsPage = () => {
       <Container maxWidth="xl" sx={{ px: { xs: 1, sm: 2 } }}>
    
         <Box sx={{ mb: 3 }}>
-          <Button 
+          
+          <Box display="flex" justifyContent="space-between" alignItems={{ xs: 'flex-start', sm: 'center' }} flexDirection={{ xs: 'column', sm: 'row' }} gap={2}>
+            <Box>
+              <Button 
             startIcon={<ArrowBackIcon />}
             onClick={() => router.push('/tickets/ticket-dashboard')}
-            // sx={{ mb: 2 }}
-            size={isSmallMobile ? "small" : "medium"}
+            sx={{ 
+              mb: 2,
+              fontWeight: '600',
+              color: 'primary.main'
+            }}
+            variant="outlined"
           >
             Back to Dashboard
           </Button>
-          <Box display="flex" justifyContent="space-between" alignItems={{ xs: 'flex-start', sm: 'center' }} flexDirection={{ xs: 'column', sm: 'row' }} gap={2}>
-            <Box>
               <Typography 
                 variant={isSmallMobile ? "h5" : "h4"} 
                 component="h1" 
