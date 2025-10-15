@@ -341,13 +341,29 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
       name: 'Inventory',
       icon: MdInventory,
       children: [
-         { name: 'Stock Enquiry', icon: MdSearch, path: '/dashboard/stock-enquiry-table' },
-        { name: 'Stock Management', icon: FaBoxes, path: '#' },
+        { name: 'Artical/Style Master', icon: MdSummarize, path: '/inverntory/style/' },
+        { name: 'Style/Parts Master', icon: MdSummarize, path: '#' },
+        { name: 'BarCode Printing', icon: MdSummarize, path: '#' },
+        { name: 'Style Shade Image upload', icon: MdSummarize, path: '#' },
+        { name: 'Price List Detailes', icon: MdSummarize, path: '#' },
+        { name: 'Sampling & Developement', icon: MdSummarize, path: '#' },
+        { name: 'Opening Stock', icon: MdSummarize, path: '#' },
+        { name: 'Purchase Order', icon: MdSummarize, path: '#' },
+        { name: 'Inward/Approval', icon: MdSummarize, path: '#' },
+        { name: 'Provisonal GRN', icon: MdSummarize, path: '#' },
+        { name: 'Purchase Inward', icon: MdSummarize, path: '#' },
+        { name: 'RM/Acc Issue', icon: MdSummarize, path: '#' },
+        { name: 'Manufacturing', icon: MdSummarize, path: '#' },
+        { name: 'Other Transaction', icon: MdSummarize, path: '#' },
+
+        { name: 'Sample Packing', icon: FaBoxes, path: '#' },
+        { name: 'Make to order', icon: FaBoxes, path: '#' },
+        { name: 'Sampling & Production', icon: FaBoxes, path: '#' },
         {
-          name: 'Sales', icon: FaBoxes, path: '#',
+          name: 'Sales/Dispatch', icon: FaBoxes, path: '#',
           children: [
 
-
+        { name: 'Stock Enquiry', icon: MdSearch, path: '/dashboard/stock-enquiry-table' },
             // { name: 'Sales Offline', icon: FaBoxes, path: '/inverntory/inventory-offline/' },
             { name: 'Sales Offline', icon: FaBoxes, path: '/inverntory/stock-enquiry-table' },
 
@@ -355,8 +371,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
 
           ],
         },
-        { name: 'Style Master', icon: MdSummarize, path: '/inverntory/style/' },
-        { name: 'Inventory Reports', icon: MdSummarize, path: '#' },
+
         { name: 'Stock Adjustment', icon: MdBuild, path: '#' },
         { name: 'Inventory Valuation', icon: MdAttachMoney, path: '#' },
       ],
@@ -467,7 +482,6 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
     return null;
   };
 
-  // Handle main menu hover
   const handleMainMenuHover = (item, event) => {
     if (item.children && item.children.length > 0) {
       const rect = event.currentTarget.getBoundingClientRect();
@@ -503,7 +517,6 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
     setMegaMenuLevels(newLevels);
   };
 
-  // Close mega menu
   const closeMegaMenu = () => {
     setOpenMegaMenu(null);
     setHoveredItems([]);
