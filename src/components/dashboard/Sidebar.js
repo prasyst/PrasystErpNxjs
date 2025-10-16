@@ -70,7 +70,7 @@ const iconMap = {
   TiTicket
 };
 
-const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
+const Sidebar = ({  isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => {
   const sidebarRef = useRef(null);
   const megaMenuRef = useRef(null);
   const [activeItem, setActiveItem] = useState('');
@@ -82,6 +82,33 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
   const [showPinConfirm, setShowPinConfirm] = useState(null);
   const [showUnpinConfirm, setShowUnpinConfirm] = useState(null);
 
+    useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (isMobile && sidebarRef.current && !sidebarRef.current.contains(event.target)) {
+        onClose();
+      }
+    
+      if (
+        megaMenuRef.current &&
+        !megaMenuRef.current.contains(event.target) &&
+        sidebarRef.current &&
+        !sidebarRef.current.contains(event.target)
+      ) {
+        closeMegaMenu();
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isMobile, onClose]);
+
+   useEffect(() => {
+    if (isMobile && !isOpen) {
+      closeMegaMenu();
+    }
+  }, [isMobile, isOpen]);
 
   const menuItems = [
     { name: 'Dashboard', icon: MdDashboard, path: '/dashboard', },
@@ -341,6 +368,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
     {
       name: 'Inventory',
       icon: MdInventory,
+      //  path: '/inventorypage',
       children: [
         { name: 'Artical/Style Master', icon: MdSummarize, path: '/inverntory/style/' },
         { name: 'Style/Parts Master', icon: MdSummarize, path: '#' },
@@ -491,6 +519,14 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
       // Fixed top position for all mega menus (100px from top)
       const fixedTop = 100;
 
+      let leftPosition;
+      if (isMobile) {
+        leftPosition = 280; 
+      } else {
+        leftPosition = isCollapsed ? 80 : 260;
+      }
+
+
       setMegaMenuPosition({
         top: fixedTop,
         left: isCollapsed ? 80 : 260
@@ -499,12 +535,10 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
       setHoveredItems([item]);
       setMegaMenuLevels([item.children]);
     } else {
-      // Close mega menu if the item has no children
       closeMegaMenu();
     }
   };
 
-  // Handle submenu hover
   const handleSubMenuHover = (subItem, levelIndex, event) => {
     // Clear all levels beyond the current one
     const newHoveredItems = hoveredItems.slice(0, levelIndex + 1);
@@ -530,6 +564,9 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
     if (path && path !== '#') {
       setActiveItem(path);
       closeMegaMenu();
+      if (isMobile) {
+        onClose(); 
+      }
       if (typeof window !== 'undefined') {
         window.location.href = path;
       }
@@ -786,11 +823,9 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
           <div
             onClick={(e) => {
               e.preventDefault();
-              // Always navigate if there's a valid path, even if the item has children
               if (item.path && item.path !== '#') {
                 handleNavigation(item.path);
               } else if (hasChildren) {
-                // If no path but has children, just open the mega menu (handled by onMouseEnter)
                 handleMainMenuHover(item, e);
               }
             }}
@@ -798,7 +833,6 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
               if (hasChildren) {
                 handleMainMenuHover(item, e);
               } else {
-                // Close mega menu if the item has no children
                 closeMegaMenu();
               }
             }}
@@ -862,39 +896,44 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
       <div
         ref={sidebarRef}
         onMouseLeave={() => {
-          setTimeout(() => {
-            if (megaMenuRef.current && !megaMenuRef.current.matches(':hover')) {
-              closeMegaMenu();
-            }
-          }, 150);
+           if (!isMobile) {
+            setTimeout(() => {
+              if (megaMenuRef.current && !megaMenuRef.current.matches(':hover')) {
+                closeMegaMenu();
+              }
+            }, 150);
+          }
         }}
         style={{
           backgroundColor: '#fff',
           color: '#333',
           height: '100vh',
-          position: 'fixed',
+          position: isMobile ? 'fixed' : 'fixed',
           borderRight: '1px solid #e0e0e0',
           left: 0,
           top: 0,
-          width: isCollapsed ? '70px' : '250px',
-          transition: 'width 0.3s ease',
-          padding: '0.8rem 0.6rem',
+          width: isMobile ? (isOpen ? '230px' : '0') : (isCollapsed ? '70px' : '250px'),
+          transition: isMobile ? 'width 0.3s ease' : 'width 0.3s ease',
+          padding: isMobile ? (isOpen ? '0.8rem 0.6rem' : '0') : '0.8rem 0.6rem',
           overflow: 'hidden',
-          zIndex: 1000,
+          zIndex: isMobile ? 1000 : 1000,
           display: 'flex',
           flexDirection: 'column',
-          boxShadow: '2px 0 15px rgba(0,0,0,0.05)',
+          boxShadow: isMobile ? '2px 0 15px rgba(0,0,0,0.1)' : '2px 0 15px rgba(0,0,0,0.05)',
+          opacity: isMobile ? (isOpen ? 1 : 0) : 1,
+          visibility: isMobile ? (isOpen ? 'visible' : 'hidden') : 'visible',
         }}
       >
     
-        <div style={{
+         <div style={{
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
           marginBottom: '1rem',
           padding: '0 0.5rem',
+          minHeight: '40px',
         }}>
-          {!isCollapsed && (
+          {(!isCollapsed || isMobile) && (
             <h2 style={{
               fontSize: '1.3rem',
               fontWeight: '700',
@@ -906,8 +945,8 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
               Prasyst
             </h2>
           )}
-          <button
-            onClick={() => setIsCollapsed(!isCollapsed)}
+           <button
+            onClick={() => isMobile ? onClose() : setIsCollapsed(!isCollapsed)}
             style={{
               background: 'none',
               border: 'none',
@@ -920,7 +959,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
               width: '36px',
               height: '36px',
               borderRadius: '50%',
-              marginLeft: !isCollapsed ? 'auto' : 0,
+              marginLeft: (!isCollapsed || isMobile) ? 'auto' : 0,
               transition: 'all 0.2s ease',
             }}
             onMouseEnter={(e) => {
@@ -930,17 +969,21 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
               e.currentTarget.style.backgroundColor = 'transparent';
             }}
           >
-            {isCollapsed ? <MdMenu color={'#635bff'} size={22} /> : <MdClose size={22} />}
+            {isMobile ? (
+              <MdClose size={22} color={'#635bff'} />
+            ) : (
+              isCollapsed ? <MdMenu color={'#635bff'} size={22} /> : <MdClose size={22} />
+            )}
           </button>
         </div>
 
-        {/* Menu Items */}
-        <div style={{
+          <div style={{
           flex: 1,
-          // overflowY: 'auto',
-          // overflowX: 'hidden',
+          overflowY: 'auto',
+          overflowX: 'hidden',
           maxHeight: 'calc(100vh - 100px)',
           paddingRight: '4px',
+          visibility: isMobile ? (isOpen ? 'visible' : 'hidden') : 'visible',
         }}>
           <ul style={{
             listStyle: 'none',
@@ -952,7 +995,6 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }) => {
         </div>
       </div>
 
-      {/* Mega Menu */}
       {renderMegaMenu()}
 
       {/* Pin Confirmation Modal */}
