@@ -1533,7 +1533,7 @@ const PartyMst = () => {
         flexDirection: 'column',
         justifyContent: 'center',
         boxSizing: 'border-box',
-        minHeight: '91vh',
+        // minHeight: '91vh',
         overflowX: 'hidden',
         overflowY: 'auto'
       }}

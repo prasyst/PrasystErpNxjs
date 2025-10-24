@@ -201,7 +201,7 @@ const TicketDashboard = () => {
       title: 'Overdue Tickets',
       description: 'Tickets past due date',
       icon: MdWarning,
-      // path: '/tickets/overdue-tickets',
+      path: '/tickets/overdue-tickets',
       color: '#ef4444'
     },
     {
@@ -215,7 +215,7 @@ const TicketDashboard = () => {
       title: 'Priority Management',
       description: 'Configure priority levels',
       icon: FaExclamationTriangle,
-      // path: '/tickets/priority-ticket',
+      path: '/tickets/priority-ticket',
       color: '#dc2626'
     },
     {
@@ -229,7 +229,7 @@ const TicketDashboard = () => {
       title: 'Assignment Rules',
       description: 'Auto assignment rules',
       icon: MdSettings,
-      // path: '/tickets/assignment-rule',
+      path: '/tickets/assignment-rule',
       color: '#06b6d4'
     },
     {
