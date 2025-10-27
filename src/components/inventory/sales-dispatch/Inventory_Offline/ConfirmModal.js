@@ -7,7 +7,7 @@ import {
   Button,
   Paper,
 } from "@mui/material";
-import axiosInstance from "../../lib/axios";
+import axiosInstance from "@/lib/axios";
 import { toast } from "react-toastify";
 import { useRouter } from 'next/navigation';
 import { AgGridReact } from 'ag-grid-react';

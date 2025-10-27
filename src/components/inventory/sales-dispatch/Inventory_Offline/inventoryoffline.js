@@ -33,6 +33,17 @@ const SalesOrderOffline = () => {
   const [mode, setMode] = useState("view");
   const [loading, setLoading] = useState(false);
   const [currentPARTY_KEY, setCurrentPARTY_KEY] = useState("");
+  const [submitLoading, setSubmitLoading] = useState(false);
+  
+  // State for dropdown mappings
+  const [partyMapping, setPartyMapping] = useState({});
+  const [branchMapping, setBranchMapping] = useState({});
+  const [brokerMapping, setBrokerMapping] = useState({});
+  const [broker1Mapping, setBroker1Mapping] = useState({});
+  const [salesperson1Mapping, setSalesperson1Mapping] = useState({});
+  const [salesperson2Mapping, setSalesperson2Mapping] = useState({});
+  const [consigneeMapping, setConsigneeMapping] = useState({});
+  const [seasonMapping, setSeasonMapping] = useState({});
   
   const [formData, setFormData] = useState({
     ORDER_NO: "",
@@ -65,8 +76,29 @@ const SalesOrderOffline = () => {
     SHORT_CLOSE: "0",
     READY_SI: "0",
     SearchByCd: "",
-    LAST_ORD_NO: "", // Added for last order number
-    SERIES: "" // Added for series
+    LAST_ORD_NO: "",
+    SERIES: "",
+    // Additional fields for API
+    ORDBK_KEY: "",
+    PARTY_KEY: "",
+    ORDBK_AMT: "",
+    ORDBK_ITM_AMT: "",
+    ORDBK_GST_AMT: "",
+    ORDBK_DISC_AMT: "",
+    CURRN_KEY: "",
+    EX_RATE: "",
+    DLV_DT: "",
+    TOTAL_QTY: 0,
+    TOTAL_AMOUNT: 0,
+    NET_AMOUNT: 0,
+    DISCOUNT: 0,
+    // Dropdown display values
+    Party: "",
+    Branch: "",
+    Broker: "",
+    Transporter: "",
+    SALESPERSON_1: "",
+    ord_event: ""
   });
 
   const Buttonsx = {
@@ -119,6 +151,7 @@ const SalesOrderOffline = () => {
   // Function to fetch order details from API
   const fetchOrderDetails = async (ordbkKey) => {
     try {
+      setLoading(true);
       const payload = {
         ORDBK_KEY: ordbkKey,
         FLAG: ""
@@ -131,7 +164,7 @@ const SalesOrderOffline = () => {
 
       if (response.data.RESPONSESTATUSCODE === 1 && response.data.DATA.ORDBKList.length > 0) {
         const orderData = response.data.DATA.ORDBKList[0];
-        populateFormData(orderData);
+        await populateFormData(orderData);
         setCurrentPARTY_KEY(orderData.PARTY_KEY);
       } else {
         console.error('No data found in response');
@@ -144,55 +177,309 @@ const SalesOrderOffline = () => {
   };
 
   // Function to populate form data from API response
-  const populateFormData = (orderData) => {
-    const formattedData = {
-      apiResponseData: orderData,
-      ORDER_NO: orderData.ORDBK_NO || "",
-      ORDER_DATE: orderData.ORDBK_DT ? formatDateForDisplay(orderData.ORDBK_DT) : "",
-      PARTY_ORD_NO: orderData.PORD_REF || "",
-      SEASON: orderData.CURR_SEASON_KEY || "",
-      ORD_REF_DT: orderData.PORD_DT ? formatDateForDisplay(orderData.PORD_DT) : "",
-      ENQ_NO: orderData.Enq_Key || "",
-      PARTY_BRANCH: orderData.OrdBk_CoBr_Id || "",
-      QUOTE_NO: orderData.QUOTE_NO || "",
-      SHIPPING_PARTY: orderData.SHP_PARTY_KEY || "",
-      DIV_PLACE: orderData.DESP_PORT || "",
-      AR_SALES: orderData.SALEPERSON1_KEY || "",
-      SHIPPING_PLACE: orderData.DESP_PORT || "",
-      PRICE_LIST: orderData.PRICELIST_KEY || "",
-      BROKER_TRANSPORTER: orderData.BROKER_KEY || "",
-      B_EAST_II: "",
-      NEW_ADDR: "",
-      CONSIGNEE: orderData.SHP_PARTY_KEY || "",
-      E_ASM1: "",
-      BROKER1: orderData.BROKER1_KEY || "",
-      SALESPERSON_2: orderData.SALEPERSON2_KEY || "",
-      SALESPERSON_1: orderData.SALEPERSON1_KEY || "",
-      NEW: "",
-      EMAIL: "",
-      REMARK_STATUS: orderData.REMK || "",
-      MAIN_DETAILS: "G",
-      GST_APPL: orderData.GST_APP || "Y",
-      RACK_MIN: orderData.STK_FLG || "0",
-      REGISTERED_DEALER: "0",
-      SHORT_CLOSE: "0",
-      READY_SI: orderData.READY_SI || "0",
-      LAST_ORD_NO: orderData.LAST_ORD_NO || "",
-      SERIES: orderData.SERIES || "",
-      // Additional fields that might be useful
-      ORDBK_KEY: orderData.ORDBK_KEY || "",
-      PARTY_KEY: orderData.PARTY_KEY || "",
-      ORDBK_AMT: orderData.ORDBK_AMT || "",
-      ORDBK_ITM_AMT: orderData.ORDBK_ITM_AMT || "",
-      ORDBK_GST_AMT: orderData.ORDBK_GST_AMT || "",
-      ORDBK_DISC_AMT: orderData.ORDBK_DISC_AMT || "",
-      CURRN_KEY: orderData.CURRN_KEY || "",
-      EX_RATE: orderData.EX_RATE || "",
-      DLV_DT: orderData.DLV_DT ? formatDateForDisplay(orderData.DLV_DT) : "",
-    };
+  const populateFormData = async (orderData) => {
+    try {
+      // First fetch all dropdown data to get proper mappings
+      await fetchAllDropdownData();
+      
+      // Get display names from mappings
+      const partyName = await getPartyNameByKey(orderData.PARTY_KEY);
+      const branchName = await getBranchNameById(orderData.PARTYDTL_ID);
+      const brokerName = await getBrokerNameByKey(orderData.BROKER_KEY);
+      const broker1Name = await getBrokerNameByKey(orderData.BROKER1_KEY);
+      const salesperson1Name = await getSalespersonNameByKey(orderData.SALEPERSON1_KEY);
+      const salesperson2Name = await getSalespersonNameByKey(orderData.SALEPERSON2_KEY);
+      const consigneeName = await getConsigneeNameByKey(orderData.DISTBTR_KEY);
+      const seasonName = await getSeasonNameByKey(orderData.CURR_SEASON_KEY);
 
-    console.log('Populating form with data:', formattedData);
-    setFormData(formattedData);
+      const formattedData = {
+        apiResponseData: orderData,
+        ORDER_NO: orderData.ORDBK_NO || "",
+        ORDER_DATE: orderData.ORDBK_DT ? formatDateForDisplay(orderData.ORDBK_DT) : "",
+        PARTY_ORD_NO: orderData.PORD_REF || "",
+        SEASON: seasonName || "",
+        ORD_REF_DT: orderData.PORD_DT ? formatDateForDisplay(orderData.PORD_DT) : "",
+        ENQ_NO: orderData.Enq_Key || "",
+        PARTY_BRANCH: orderData.OrdBk_CoBr_Id || "",
+        QUOTE_NO: orderData.QUOTE_NO || "",
+        SHIPPING_PARTY: orderData.SHP_PARTY_KEY || "",
+        DIV_PLACE: orderData.DESP_PORT || "",
+        AR_SALES: orderData.SALEPERSON1_KEY || "",
+        SHIPPING_PLACE: orderData.DESP_PORT || "",
+        PRICE_LIST: orderData.PRICELIST_KEY || "",
+        BROKER_TRANSPORTER: brokerName || "",
+        B_EAST_II: "",
+        NEW_ADDR: "",
+        CONSIGNEE: consigneeName || "",
+        E_ASM1: "",
+        BROKER1: broker1Name || "",
+        SALESPERSON_2: salesperson2Name || "",
+        SALESPERSON_1: salesperson1Name || "",
+        NEW: "",
+        EMAIL: "",
+        REMARK_STATUS: orderData.REMK || "",
+        MAIN_DETAILS: orderData.LotWise === "Y" ? "L" : "G",
+        GST_APPL: orderData.GST_APP || "Y",
+        RACK_MIN: orderData.STK_FLG || "0",
+        REGISTERED_DEALER: "0",
+        SHORT_CLOSE: "0",
+        READY_SI: orderData.READY_SI || "0",
+        LAST_ORD_NO: orderData.LAST_ORD_NO || "",
+        SERIES: orderData.SERIES || "",
+        // Additional fields that might be useful
+        ORDBK_KEY: orderData.ORDBK_KEY || "",
+        PARTY_KEY: orderData.PARTY_KEY || "",
+        ORDBK_AMT: orderData.ORDBK_AMT || "",
+        ORDBK_ITM_AMT: orderData.ORDBK_ITM_AMT || "",
+        ORDBK_GST_AMT: orderData.ORDBK_GST_AMT || "",
+        ORDBK_DISC_AMT: orderData.ORDBK_DISC_AMT || "",
+        CURRN_KEY: orderData.CURRN_KEY || "",
+        EX_RATE: orderData.EX_RATE || "",
+        DLV_DT: orderData.DLV_DT ? formatDateForDisplay(orderData.DLV_DT) : "",
+        // Dropdown display values
+        Party: partyName || "",
+        Branch: branchName || "",
+        Broker: brokerName || "",
+        SALESPERSON_1: salesperson1Name || "",
+        SALESPERSON_2: salesperson2Name || "",
+        CONSIGNEE: consigneeName || "",
+      };
+
+      console.log('Populating form with data:', formattedData);
+      setFormData(formattedData);
+    } catch (error) {
+      console.error('Error populating form data:', error);
+    }
+  };
+
+  // Helper functions to get names from keys
+  const getPartyNameByKey = async (partyKey) => {
+    if (!partyKey) return "";
+    try {
+      const response = await axiosInstance.post("Party/GetParty_By_Name", {
+        PARTY_KEY: partyKey
+      });
+      if (response.data.STATUS === 0 && Array.isArray(response.data.DATA)) {
+        const party = response.data.DATA.find(item => item.PARTY_KEY === partyKey);
+        return party ? party.PARTY_NAME : "";
+      }
+      return "";
+    } catch (error) {
+      console.error("Error fetching party name:", error);
+      return "";
+    }
+  };
+
+  const getBranchNameById = async (branchId) => {
+    if (!branchId) return "";
+    try {
+      const response = await axiosInstance.post("Party/GetPartyDtlDrp", {
+        PARTYDTL_ID: branchId
+      });
+      if (response.data.STATUS === 0 && Array.isArray(response.data.DATA)) {
+        const branch = response.data.DATA.find(item => item.PARTYDTL_ID === branchId);
+        return branch ? branch.PLACE : "";
+      }
+      return "";
+    } catch (error) {
+      console.error("Error fetching branch name:", error);
+      return "";
+    }
+  };
+
+  const getBrokerNameByKey = async (brokerKey) => {
+    if (!brokerKey) return "";
+    try {
+      const payload = {
+        "PARTY_KEY": "",
+        "FLAG": "Drp",
+        "BROKER_KEY": brokerKey,
+        "PageNumber": 1,
+        "PageSize": 10,
+        "SearchText": ""
+      };
+      const response = await axiosInstance.post('/BROKER/GetBrokerDrp', payload);
+      if (response.data.DATA && Array.isArray(response.data.DATA)) {
+        const broker = response.data.DATA.find(item => item.BROKER_KEY === brokerKey);
+        return broker ? broker.BROKER_NAME : "";
+      }
+      return "";
+    } catch (error) {
+      console.error('Error fetching broker name:', error);
+      return "";
+    }
+  };
+
+  const getSalespersonNameByKey = async (salespersonKey) => {
+    if (!salespersonKey) return "";
+    try {
+      const payload = {
+        "PARTY_KEY": "",
+        "FLAG": "Drp",
+        "SALEPERSON_KEY": salespersonKey,
+        "PageNumber": 1,
+        "PageSize": 10,
+        "SearchText": ""
+      };
+      const response = await axiosInstance.post('/SALEPERSON/GetSALEPERSONDrp', payload);
+      if (response.data.DATA && Array.isArray(response.data.DATA)) {
+        const salesperson = response.data.DATA.find(item => item.SALEPERSON_KEY === salespersonKey);
+        return salesperson ? salesperson.SALEPERSON_NAME : "";
+      }
+      return "";
+    } catch (error) {
+      console.error('Error fetching salesperson name:', error);
+      return "";
+    }
+  };
+
+  const getConsigneeNameByKey = async (consigneeKey) => {
+    if (!consigneeKey) return "";
+    try {
+      const payload = {
+        "PARTY_KEY": "",
+        "FLAG": "Drp",
+        "DISTBTR_KEY": consigneeKey,
+        "PageNumber": 1,
+        "PageSize": 10,
+        "SearchText": ""
+      };
+      const response = await axiosInstance.post('/DISTBTR/GetDISTBTRDrp', payload);
+      if (response.data.DATA && Array.isArray(response.data.DATA)) {
+        const consignee = response.data.DATA.find(item => item.DISTBTR_KEY === consigneeKey);
+        return consignee ? consignee.DISTBTR_NAME : "";
+      }
+      return "";
+    } catch (error) {
+      console.error('Error fetching consignee name:', error);
+      return "";
+    }
+  };
+
+  const getSeasonNameByKey = async (seasonKey) => {
+    if (!seasonKey) return "";
+    try {
+      const payload = {
+        "FLAG": "P",
+        "TBLNAME": "SEASON",
+        "FLDNAME": "SEASON_KEY",
+        "ID": seasonKey,
+        "ORDERBYFLD": "",
+        "CWHAER": "",
+        "CO_ID": ""
+      };
+      const response = await axiosInstance.post('/SEASON/GetSEASONDrp', payload);
+      if (response.data.DATA && Array.isArray(response.data.DATA)) {
+        const season = response.data.DATA.find(item => item.SEASON_KEY === seasonKey);
+        return season ? season.SEASON_NAME : "";
+      }
+      return "";
+    } catch (error) {
+      console.error('Error fetching season name:', error);
+      return "";
+    }
+  };
+
+  // Fetch all dropdown data for proper mappings
+  const fetchAllDropdownData = async () => {
+    try {
+      // Fetch parties
+      const partyResponse = await axiosInstance.post("Party/GetParty_By_Name", { PARTY_NAME: "" });
+      if (partyResponse.data.STATUS === 0 && Array.isArray(partyResponse.data.DATA)) {
+        const partyMap = {};
+        partyResponse.data.DATA.forEach(item => {
+          if (item.PARTY_NAME && item.PARTY_KEY) {
+            partyMap[item.PARTY_NAME] = item.PARTY_KEY;
+          }
+        });
+        setPartyMapping(partyMap);
+      }
+
+      // Fetch brokers
+      const brokerPayload = {
+        "PARTY_KEY": "",
+        "FLAG": "Drp",
+        "BROKER_KEY": "",
+        "PageNumber": 1,
+        "PageSize": 100,
+        "SearchText": ""
+      };
+      const brokerResponse = await axiosInstance.post('/BROKER/GetBrokerDrp', brokerPayload);
+      if (brokerResponse.data.DATA && Array.isArray(brokerResponse.data.DATA)) {
+        const brokerMap = {};
+        brokerResponse.data.DATA.forEach(item => {
+          if (item.BROKER_NAME && item.BROKER_KEY) {
+            brokerMap[item.BROKER_NAME] = item.BROKER_KEY;
+          }
+        });
+        setBrokerMapping(brokerMap);
+        setBroker1Mapping(brokerMap);
+      }
+
+      // Fetch salespersons
+      const salespersonPayload = {
+        "PARTY_KEY": "",
+        "FLAG": "Drp",
+        "SALEPERSON_KEY": "",
+        "PageNumber": 1,
+        "PageSize": 100,
+        "SearchText": ""
+      };
+      const salespersonResponse = await axiosInstance.post('/SALEPERSON/GetSALEPERSONDrp', salespersonPayload);
+      if (salespersonResponse.data.DATA && Array.isArray(salespersonResponse.data.DATA)) {
+        const salespersonMap = {};
+        salespersonResponse.data.DATA.forEach(item => {
+          if (item.SALEPERSON_NAME && item.SALEPERSON_KEY) {
+            salespersonMap[item.SALEPERSON_NAME] = item.SALEPERSON_KEY;
+          }
+        });
+        setSalesperson1Mapping(salespersonMap);
+        setSalesperson2Mapping(salespersonMap);
+      }
+
+      // Fetch consignees
+      const consigneePayload = {
+        "PARTY_KEY": "",
+        "FLAG": "Drp",
+        "DISTBTR_KEY": "",
+        "PageNumber": 1,
+        "PageSize": 100,
+        "SearchText": ""
+      };
+      const consigneeResponse = await axiosInstance.post('/DISTBTR/GetDISTBTRDrp', consigneePayload);
+      if (consigneeResponse.data.DATA && Array.isArray(consigneeResponse.data.DATA)) {
+        const consigneeMap = {};
+        consigneeResponse.data.DATA.forEach(item => {
+          if (item.DISTBTR_NAME && item.DISTBTR_KEY) {
+            consigneeMap[item.DISTBTR_NAME] = item.DISTBTR_KEY;
+          }
+        });
+        setConsigneeMapping(consigneeMap);
+      }
+
+      // Fetch seasons
+      const seasonPayload = {
+        "FLAG": "P",
+        "TBLNAME": "SEASON",
+        "FLDNAME": "SEASON_KEY",
+        "ID": "ET002",
+        "ORDERBYFLD": "",
+        "CWHAER": "",
+        "CO_ID": ""
+      };
+      const seasonResponse = await axiosInstance.post('/SEASON/GetSEASONDrp', seasonPayload);
+      if (seasonResponse.data.DATA && Array.isArray(seasonResponse.data.DATA)) {
+        const seasonMap = {};
+        seasonResponse.data.DATA.forEach(item => {
+          if (item.SEASON_NAME && item.SEASON_KEY) {
+            seasonMap[item.SEASON_NAME] = item.SEASON_KEY;
+          }
+        });
+        setSeasonMapping(seasonMap);
+      }
+    } catch (error) {
+      console.error('Error fetching dropdown data:', error);
+    }
   };
 
   // Helper function to format date for display
@@ -204,6 +491,26 @@ const SalesOrderOffline = () => {
       return date.toLocaleDateString('en-GB'); // DD/MM/YYYY format
     } catch (error) {
       console.error('Error formatting date:', error);
+      return "";
+    }
+  };
+
+  // Helper function to format date for API (YYYY-MM-DD)
+  const formatDateForAPI = (dateString) => {
+    if (!dateString) return "";
+    
+    try {
+      // If date is in DD/MM/YYYY format
+      if (dateString.includes('/')) {
+        const [day, month, year] = dateString.split('/');
+        return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}T00:00:00`;
+      }
+      
+      // If date is already in proper format
+      const date = new Date(dateString);
+      return date.toISOString().split('T')[0] + 'T00:00:00';
+    } catch (error) {
+      console.error('Error formatting date for API:', error);
       return "";
     }
   };
@@ -269,6 +576,235 @@ const SalesOrderOffline = () => {
     }
   };
 
+  // Function to submit form data
+  const handleSubmit = async () => {
+    try {
+      setSubmitLoading(true);
+      
+      // Get username from localStorage
+      const userName = localStorage.getItem('USER_NAME') || 'ankita';
+      const strCobrid = "02"; // Fixed as per requirement
+      
+      // Prepare payload for API
+      const payload = prepareSubmitPayload();
+      
+      console.log('Submitting order with payload:', payload);
+      
+      // Make API call
+      const response = await axiosInstance.post(`/ORDBK/ApiMangeOrdbk?UserName=${userName}&strCobrid=${strCobrid}`, payload);
+      console.log('Submit API Response:', response.data);
+      
+      if (response.data.RESPONSESTATUSCODE === 1) {
+        alert("Order submitted successfully!");
+        setMode('view');
+        setIsFormDisabled(true);
+        
+        // Refresh the page or fetch updated data
+        if (formData.ORDBK_KEY) {
+          fetchOrderDetails(formData.ORDBK_KEY);
+        }
+      } else {
+        alert("Error submitting order: " + (response.data.RESPONSEMESSAGE || "Unknown error"));
+      }
+    } catch (error) {
+      console.error('Error submitting order:', error);
+      alert("Error submitting order. Please try again.");
+    } finally {
+      setSubmitLoading(false);
+    }
+  };
+
+  // Function to prepare payload for submission
+  // Function to prepare payload for submission
+const prepareSubmitPayload = () => {
+  const dbFlag = mode === 'add' ? 'I' : 'U';
+  const currentDate = new Date().toISOString().replace('T', ' ').split('.')[0];
+  
+  // Get user ID from localStorage (numeric value)
+  const userId = localStorage.getItem('USER_ID') || '1'; // Default to 1 if not found
+  const userName = localStorage.getItem('USER_NAME') || 'Admin';
+  
+  console.log('User Info:', { userId, userName });
+
+  // Get keys from mappings
+  const partyKey = formData.PARTY_KEY || partyMapping[formData.Party] || "";
+  const branchId = formData.Branch ? (branchMapping[formData.Branch] || 0) : 0;
+  const brokerKey = formData.Broker ? (brokerMapping[formData.Broker] || "") : "";
+  const broker1Key = formData.Broker1 ? (broker1Mapping[formData.Broker1] || "") : "";
+  const salesperson1Key = formData.SALESPERSON_1 ? (salesperson1Mapping[formData.SALESPERSON_1] || "") : "";
+  const salesperson2Key = formData.SALESPERSON_2 ? (salesperson2Mapping[formData.SALESPERSON_2] || "") : "";
+  const consigneeKey = formData.CONSIGNEE ? (consigneeMapping[formData.CONSIGNEE] || "") : "";
+  const seasonKey = formData.SEASON ? (seasonMapping[formData.SEASON] || "") : "";
+
+  console.log('Mappings for payload:', {
+    partyKey,
+    branchId,
+    brokerKey,
+    broker1Key,
+    salesperson1Key,
+    salesperson2Key,
+    consigneeKey,
+    seasonKey
+  });
+
+  // Get ORDBKSTYLIST from formData
+  const ordbkStyleList = formData.apiResponseData?.ORDBKSTYLIST || [];
+  
+  // Transform ORDBKSTYLIST for API
+  const transformedOrdbkStyleList = ordbkStyleList.map(item => ({
+    DBFLAG: dbFlag,
+    ORDBKSTY_ID: item.ORDBKSTY_ID || 0,
+    ORDBK_KEY: formData.ORDBK_KEY || `${formData.SERIES}${formData.ORDER_NO}`,
+    FGPRD_KEY: item.FGPRD_KEY || "",
+    FGSTYLE_ID: item.FGSTYLE_ID || 0,
+    FGSTYLE_CODE: item.STYLE || "",
+    FGTYPE_KEY: item.FGTYPE_KEY || "",
+    FGSHADE_KEY: item.FGSHADE_KEY || "",
+    FGPTN_KEY: item.FGPTN_KEY || "",
+    FGITM_KEY: item.FGITEM_KEY || "",
+    QTY: parseFloat(item.ITMQTY) || 0,
+    STYCATRT_ID: item.STYCATRT_ID || 0,
+    RATE: parseFloat(item.ITMRATE) || 0,
+    AMT: parseFloat(item.ITMAMT) || 0,
+    DLV_VAR_PERCENT: parseFloat(item.DLV_VAR_PERC) || 0,
+    DLV_VAR_QTY: parseFloat(item.DLV_VAR_QTY) || 0,
+    OPEN_RATE: "",
+    TERM_KEY: "",
+    TERM_NAME: "",
+    TERM_PERCENT: 0,
+    TERM_FIX_AMT: 0,
+    TERM_RATE: 0,
+    TERM_PERQTY: 0,
+    DISC_AMT: parseFloat(item.DISC_AMT) || 0,
+    NET_AMT: parseFloat(item.NET_AMT) || 0,
+    INIT_DT: "1900-01-01 00:00:00.000",
+    INIT_REMK: "",
+    INIT_QTY: 0,
+    DLV_DT: "1900-01-01 00:00:00.000",
+    BAL_QTY: parseFloat(item.ITMQTY) || 0,
+    STATUS: "1",
+    STYLE_PRN: "",
+    TYPE_PRN: "",
+    MRP_PRN: parseFloat(item.ITMRATE) || 0,
+    REMK: item.REMARK || "",
+    QUOTEDTL_ID: 0,
+    SETQTY: parseFloat(item.SETQTY) || 0,
+    RQTY: 0,
+    DISTBTR_KEY: consigneeKey,
+    LOTNO: seasonKey,
+    WOBALQTY: parseFloat(item.ITMQTY) || 0,
+    REFORDBKSTY_ID: 0,
+    BOMSTY_ID: 0,
+    ISRMREQ: "N",
+    OP_QTY: 0,
+    ORDBKSTYSZLIST: (item.ORDBKSTYSZLIST || []).map(sizeItem => ({
+      DBFLAG: dbFlag,
+      ORDBKSTYSZ_ID: sizeItem.ORDBKSTYSZ_ID || 0,
+      ORDBK_KEY: formData.ORDBK_KEY || `${formData.SERIES}${formData.ORDER_NO}`,
+      ORDBKSTY_ID: item.ORDBKSTY_ID || 0,
+      STYSIZE_ID: sizeItem.STYSIZE_ID || 0,
+      STYSIZE_NAME: sizeItem.STYSIZE_NAME || "",
+      QTY: parseFloat(sizeItem.QTY) || 0,
+      INIT_DT: "1900-01-01 00:00:00.000",
+      INIT_REMK: "",
+      INIT_QTY: 0,
+      BAL_QTY: parseFloat(sizeItem.QTY) || 0,
+      MRP: parseFloat(item.ITMRATE) || 0,
+      WSP: parseFloat(item.ITMRATE) || 0,
+      RQTY: 0,
+      WOBALQTY: parseFloat(sizeItem.QTY) || 0,
+      REFORDBKSTYSZ_ID: 0,
+      OP_QTY: 0,
+      HSNCODE_KEY: "IG001",
+      GST_RATE_SLAB_ID: 39,
+      ITM_AMT: parseFloat(sizeItem.ITM_AMT) || 0,
+      DISC_AMT: parseFloat(sizeItem.DISC_AMT) || 0,
+      NET_AMT: parseFloat(sizeItem.NET_AMT) || 0,
+      SGST_AMT: 0,
+      CGST_AMT: 0,
+      IGST_AMT: 0,
+      NET_SALE_RATE: 0,
+      OTHER_AMT: 0,
+      ADD_CESS_RATE: 0,
+      ADD_CESS_AMT: 0
+    }))
+  }));
+
+  // Base payload for both insert and update
+  const basePayload = {
+    DBFLAG: dbFlag,
+    FCYR_KEY: "25",
+    CO_ID: "02",
+    COBR_ID: "02",
+    ORDBK_NO: formData.ORDER_NO || "",
+    ORDBK_X: "",
+    ORDBK_KEY: formData.ORDBK_KEY || `${formData.SERIES}${formData.ORDER_NO}`,
+    ORDBK_DT: formatDateForAPI(formData.ORDER_DATE),
+    PORD_REF: formData.PARTY_ORD_NO || "",
+    PORD_DT: formatDateForAPI(formData.ORD_REF_DT),
+    QUOTE_NO: formData.QUOTE_NO || "",
+    QUOTE_DT: formatDateForAPI(formData.ORDER_DATE),
+    PARTY_KEY: partyKey,
+    PARTYDTL_ID: parseInt(branchId) || 0, // Ensure numeric
+    BROKER_KEY: brokerKey,
+    BROKER1_KEY: broker1Key,
+    BROKER_COMM: 0.00,
+    COMMON_DLV_DT_FLG: "0",
+    STK_FLG: formData.RACK_MIN || "0",
+    DLV_DT: formatDateForAPI(formData.DLV_DT),
+    DLV_PLACE: formData.SHIPPING_PLACE || "",
+    TRSP_KEY: "",
+    ORDBK_AMT: parseFloat(formData.TOTAL_AMOUNT) || 0,
+    REMK: formData.REMARK_STATUS || "",
+    STATUS: "1",
+    CURRN_KEY: formData.CURRN_KEY || "",
+    EX_RATE: parseFloat(formData.EX_RATE) || 0,
+    IMP_ORDBK_KEY: "",
+    ORDBK_TYPE: "2",
+    ROUND_OFF_DESC: "",
+    ROUND_OFF: 0.00,
+    BOMSTY_ID: 0,
+    LOTWISE: formData.MAIN_DETAILS === "L" ? "Y" : "N",
+    IsWO: "0",
+    SuplKey: "",
+    KNIT_DT: "1900-01-01 00:00:00.000",
+    OrdBk_CoBr_Id: formData.PARTY_BRANCH || "02",
+    GR_AMT: parseFloat(formData.TOTAL_AMOUNT) || 0,
+    GST_APP: formData.GST_APPL || "Y",
+    GST_TYPE: "C",
+    SHP_PARTY_KEY: formData.SHIPPING_PARTY || "",
+    SHP_PARTYDTL_ID: 0,
+    STATE_CODE: "",
+    ORDBK_ITM_AMT: parseFloat(formData.ORDBK_ITM_AMT) || 0,
+    ORDBK_SGST_AMT: 0,
+    ORDBK_CGST_AMT: 0,
+    ORDBK_IGST_AMT: 0,
+    ORDBK_ADD_CESS_AMT: 0,
+    ORDBK_GST_AMT: parseFloat(formData.ORDBK_GST_AMT) || 0,
+    ORDBK_EXTRA_AMT: 0,
+    ORDBKSTYLIST: transformedOrdbkStyleList,
+    ORDBKTERMLIST: [],
+    ORDBKGSTLIST: [],
+    DISTBTR_KEY: consigneeKey,
+    SALEPERSON1_KEY: salesperson1Key,
+    SALEPERSON2_KEY: salesperson2Key
+  };
+
+  // Add user fields based on operation type - using numeric user ID
+  if (dbFlag === 'I') {
+    // Insert operation - use CREATED_BY and CREATED_DT
+    basePayload.CREATED_BY = parseInt(userId) || 1;
+    basePayload.CREATED_DT = currentDate;
+  } else {
+    // Update operation - use UPDATED_BY and UPDATED_DT
+    basePayload.UPDATED_BY = parseInt(userId) || 1;
+    basePayload.UPDATED_DT = currentDate;
+  }
+
+  console.log('Final Payload:', JSON.stringify(basePayload, null, 2));
+  return basePayload;
+};
+
   const handlePrint = () => { }
   
   const handleExit = () => {
@@ -292,7 +828,8 @@ const SalesOrderOffline = () => {
             ...prev,
             ORDER_NO: orderData.orderNo,
             LAST_ORD_NO: orderData.lastOrderNo,
-            SERIES: prefix
+            SERIES: prefix,
+            ORDBK_KEY: `25${prefix}${orderData.orderNo}`
           }));
         }
       }
@@ -306,19 +843,12 @@ const SalesOrderOffline = () => {
     }
   };
 
-  const handleSubmit = () => {
-    // Submit logic here
-    setMode('view');
-    setIsFormDisabled(true);
-  };
-
   const handleCancel = () => {
     setMode('view');
     setIsFormDisabled(true);
   };
 
   const handlePrevClick = async () => {
-    // await fetchPartyData(currentPARTY_KEY, "P");
     setFormData((prev) => ({
       ...prev,
       SearchByCd: ''
@@ -327,7 +857,6 @@ const SalesOrderOffline = () => {
 
   const handleNextClick = async () => {
     if (currentPARTY_KEY) {
-      // await fetchPartyData(currentPARTY_KEY, "N");
       setFormData((prev) => ({
         ...prev,
         SearchByCd: ''
@@ -341,18 +870,11 @@ const SalesOrderOffline = () => {
   };
 
   const handleDelete = () => {
-    // Delete logic here
     setMode('view');
   };
 
   const handleTabChange = (event, newValue) => {
     setTabIndex(newValue);
-  };
-
-  // Function to fetch party data (you'll need to implement this based on your API)
-  const fetchPartyData = async (searchValue, flag, isEnter = false) => {
-    // Implement your party search logic here
-    console.log('Fetching party data:', searchValue, flag, isEnter);
   };
 
   if (loading) {
@@ -403,7 +925,7 @@ const SalesOrderOffline = () => {
             onChange={(e) => setFormData({ ...formData, SearchByCd: e.target.value })}
             onKeyPress={(e) => {
               if (e.key === 'Enter') {
-                fetchPartyData(e.target.value, 'R', true);
+                // fetchPartyData(e.target.value, 'R', true);
               }
             }}
             sx={textInputSx}
@@ -502,6 +1024,23 @@ const SalesOrderOffline = () => {
             mode={mode}
             onSubmit={handleSubmit}
             onCancel={handleCancel}
+            // Pass mappings and setter functions
+            partyMapping={partyMapping}
+            branchMapping={branchMapping}
+            brokerMapping={brokerMapping}
+            broker1Mapping={broker1Mapping}
+            salesperson1Mapping={salesperson1Mapping}
+            salesperson2Mapping={salesperson2Mapping}
+            consigneeMapping={consigneeMapping}
+            seasonMapping={seasonMapping}
+            setPartyMapping={setPartyMapping}
+            setBranchMapping={setBranchMapping}
+            setBrokerMapping={setBrokerMapping}
+            setBroker1Mapping={setBroker1Mapping}
+            setSalesperson1Mapping={setSalesperson1Mapping}
+            setSalesperson2Mapping={setSalesperson2Mapping}
+            setConsigneeMapping={setConsigneeMapping}
+            setSeasonMapping={setSeasonMapping}
           />
         ) : tabIndex === 1 ? (
           <Stepper2 
@@ -570,8 +1109,9 @@ const SalesOrderOffline = () => {
                   height: { xs: 40, sm: 46, md: 30 },
                 }}
                 onClick={handleSubmit}
+                disabled={submitLoading}
               >
-                Confirm
+                {submitLoading ? 'Submitting...' : 'Submit'}
               </Button>
               <Button
                 variant="contained"
@@ -583,6 +1123,7 @@ const SalesOrderOffline = () => {
                   height: { xs: 40, sm: 46, md: 30 },
                 }}
                 onClick={handleCancel}
+                disabled={submitLoading}
               >
                 Cancel
               </Button>
