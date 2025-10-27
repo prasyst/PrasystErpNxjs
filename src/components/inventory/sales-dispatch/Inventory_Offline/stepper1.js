@@ -23,8 +23,42 @@ import { getFormMode } from '../../../../lib/helpers';
 
 const FORM_MODE = getFormMode();
 
-const Stepper1 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCancel }) => {
+const Stepper1 = ({ 
+  formData, 
+  setFormData, 
+  isFormDisabled, 
+  mode, 
+  onSubmit, 
+  onCancel,
+  // Receive mappings as props
+  partyMapping,
+  branchMapping,
+  brokerMapping,
+  broker1Mapping,
+  salesperson1Mapping,
+  salesperson2Mapping,
+  consigneeMapping,
+  seasonMapping,
+  setPartyMapping,
+  setBranchMapping,
+  setBrokerMapping,
+  setBroker1Mapping,
+  setSalesperson1Mapping,
+  setSalesperson2Mapping,
+  setConsigneeMapping,
+  setSeasonMapping
+}) => {
   const [selectedDate, setSelectedDate] = useState(null);
+  
+  // State for dropdown options
+  const [partyOptions, setPartyOptions] = useState([]);
+  const [branchOptions, setBranchOptions] = useState([]);
+  const [brokerOptions, setBrokerOptions] = useState([]);
+  const [broker1Options, setBroker1Options] = useState([]);
+  const [salesperson1Options, setSalesperson1Options] = useState([]);
+  const [salesperson2Options, setSalesperson2Options] = useState([]);
+  const [consigneeOptions, setConsigneeOptions] = useState([]);
+  const [seasonOptions, setSeasonOptions] = useState([]);
 
   const textInputSx = {
     '& .MuiInputBase-root': {
@@ -106,15 +140,207 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
     },
   };
 
+  // Fetch Party Data
+  const fetchPartiesByName = async (name = "") => {
+    try {
+      const response = await axiosInstance.post("Party/GetParty_By_Name", {
+        PARTY_NAME: name
+      });
+      if (response.data.STATUS === 0 && Array.isArray(response.data.DATA)) {
+        const parties = response.data.DATA.map(item => item.PARTY_NAME || '');
+        setPartyOptions(parties);
+        
+        // Create mapping for PARTY_NAME to PARTY_KEY
+        const mapping = {};
+        response.data.DATA.forEach(item => {
+          if (item.PARTY_NAME && item.PARTY_KEY) {
+            mapping[item.PARTY_NAME] = item.PARTY_KEY;
+          }
+        });
+        setPartyMapping(mapping);
+      } else {
+        setPartyOptions([]);
+      }
+    } catch (error) {
+      console.error("API error", error);
+      setPartyOptions([]);
+    }
+  };
+
+  // Fetch Party Branches
+  const fetchPartyDetails = async (partyKey) => {
+    if (!partyKey) return;
+    
+    try {
+      const response = await axiosInstance.post("Party/GetPartyDtlDrp", {
+        PARTY_KEY: partyKey
+      });
+      if (response.data.STATUS === 0 && Array.isArray(response.data.DATA)) {
+        const branches = response.data.DATA.map(item => item.PLACE || '');
+        setBranchOptions(branches);
+        
+        // Create mapping for PLACE to PARTYDTL_ID
+        const mapping = {};
+        response.data.DATA.forEach(item => {
+          if (item.PLACE && item.PARTYDTL_ID) {
+            mapping[item.PLACE] = item.PARTYDTL_ID;
+          }
+        });
+        setBranchMapping(mapping);
+      } else {
+        setBranchOptions([]);
+      }
+    } catch (error) {
+      console.error("Error fetching party details:", error);
+      setBranchOptions([]);
+    }
+  };
+
+  // Fetch Broker Data
+  const fetchBrokerData = async () => {
+    try {
+      const payload = {
+        "PARTY_KEY": "",
+        "FLAG": "Drp",
+        "BROKER_KEY": "",
+        "PageNumber": 1,
+        "PageSize": 100,
+        "SearchText": ""
+      };
+
+      const response = await axiosInstance.post('/BROKER/GetBrokerDrp', payload);
+      if (response.data.DATA && Array.isArray(response.data.DATA)) {
+        const brokers = response.data.DATA.map(item => item.BROKER_NAME || '');
+        setBrokerOptions(brokers);
+        setBroker1Options(brokers); // Using same data for both broker fields
+        
+        // Create mapping for BROKER_NAME to BROKER_KEY
+        const mapping = {};
+        response.data.DATA.forEach(item => {
+          if (item.BROKER_NAME && item.BROKER_KEY) {
+            mapping[item.BROKER_NAME] = item.BROKER_KEY;
+          }
+        });
+        setBrokerMapping(mapping);
+        setBroker1Mapping(mapping);
+      }
+    } catch (error) {
+      console.error('Error fetching broker data:', error);
+    }
+  };
+
+  // Fetch Salesperson Data
+  const fetchSalespersonData = async () => {
+    try {
+      const payload = {
+        "PARTY_KEY": "",
+        "FLAG": "Drp",
+        "SALEPERSON_KEY": "",
+        "PageNumber": 1,
+        "PageSize": 100,
+        "SearchText": ""
+      };
+
+      const response = await axiosInstance.post('/SALEPERSON/GetSALEPERSONDrp', payload);
+      if (response.data.DATA && Array.isArray(response.data.DATA)) {
+        const salespersons = response.data.DATA.map(item => item.SALEPERSON_NAME || '');
+        setSalesperson1Options(salespersons);
+        setSalesperson2Options(salespersons);
+        
+        // Create mapping for SALEPERSON_NAME to SALEPERSON_KEY
+        const mapping = {};
+        response.data.DATA.forEach(item => {
+          if (item.SALEPERSON_NAME && item.SALEPERSON_KEY) {
+            mapping[item.SALEPERSON_NAME] = item.SALEPERSON_KEY;
+          }
+        });
+        setSalesperson1Mapping(mapping);
+        setSalesperson2Mapping(mapping);
+      }
+    } catch (error) {
+      console.error('Error fetching salesperson data:', error);
+    }
+  };
+
+  // Fetch Consignee Data
+  const fetchConsigneeData = async () => {
+    try {
+      const payload = {
+        "PARTY_KEY": "",
+        "FLAG": "Drp",
+        "DISTBTR_KEY": "",
+        "PageNumber": 1,
+        "PageSize": 100,
+        "SearchText": ""
+      };
+
+      const response = await axiosInstance.post('/DISTBTR/GetDISTBTRDrp', payload);
+      if (response.data.DATA && Array.isArray(response.data.DATA)) {
+        const consignees = response.data.DATA.map(item => item.DISTBTR_NAME || '');
+        setConsigneeOptions(consignees);
+        
+        // Create mapping for DISTBTR_NAME to DISTBTR_KEY
+        const mapping = {};
+        response.data.DATA.forEach(item => {
+          if (item.DISTBTR_NAME && item.DISTBTR_KEY) {
+            mapping[item.DISTBTR_NAME] = item.DISTBTR_KEY;
+          }
+        });
+        setConsigneeMapping(mapping);
+      }
+    } catch (error) {
+      console.error('Error fetching consignee data:', error);
+    }
+  };
+
+  // Fetch Season Data
+  const fetchSeasonData = async () => {
+    try {
+      const payload = {
+        "FLAG": "P",
+        "TBLNAME": "SEASON",
+        "FLDNAME": "SEASON_KEY",
+        "ID": "ET002",
+        "ORDERBYFLD": "",
+        "CWHAER": "",
+        "CO_ID": ""
+      };
+
+      const response = await axiosInstance.post('/SEASON/GetSEASONDrp', payload);
+      if (response.data.DATA && Array.isArray(response.data.DATA)) {
+        const seasons = response.data.DATA.map(item => item.SEASON_NAME || '');
+        setSeasonOptions(seasons);
+        
+        // Create mapping for SEASON_NAME to SEASON_KEY
+        const mapping = {};
+        response.data.DATA.forEach(item => {
+          if (item.SEASON_NAME && item.SEASON_KEY) {
+            mapping[item.SEASON_NAME] = item.SEASON_KEY;
+          }
+        });
+        setSeasonMapping(mapping);
+      }
+    } catch (error) {
+      console.error('Error fetching season data:', error);
+    }
+  };
+
+  // Initialize all dropdown data
+  useEffect(() => {
+    fetchPartiesByName();
+    fetchBrokerData();
+    fetchSalespersonData();
+    fetchConsigneeData();
+    fetchSeasonData();
+  }, []);
+
   // Helper function to parse date from string
   const parseDateFromString = (dateString) => {
     if (!dateString) return null;
     try {
-      // Try to parse DD/MM/YYYY format
       if (dateString.includes('/')) {
         return parse(dateString, 'dd/MM/yyyy', new Date());
       }
-      // Try to parse ISO format
       return new Date(dateString);
     } catch (error) {
       console.error('Error parsing date:', error);
@@ -135,6 +361,17 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
       ...prev,
       [name]: value
     }));
+
+    // If party is selected, fetch branches
+    if (name === "Party" && value && partyMapping[value]) {
+      const partyKey = partyMapping[value];
+      fetchPartyDetails(partyKey);
+      setFormData(prev => ({
+        ...prev,
+        PARTY_KEY: partyKey,
+        Party: value
+      }));
+    }
   };
 
   const handleChangeStatus = (event) => {
@@ -346,7 +583,7 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
               id="SEASON"
               disabled={isFormDisabled}
               getOptionLabel={(option) => option || ''}
-              options={[]}
+              options={seasonOptions}
               label="Season"
               name="SEASON"
               value={formData.SEASON || ""}
@@ -432,36 +669,48 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
           flexDirection: { xs: 'column', sm: 'row', md: 'row' },
           gap: { xs: 1, sm: 1.5, md: 2 }
         }}>
-          <Box sx={{ width: { xs: '100%', sm: '20%', md: '17%' } }}>
-            <TextField
-              label="Party Branch"
-              variant="filled"
-              fullWidth
-              onChange={handleInputChange}
-              value={formData.PARTY_BRANCH || ""}
+          <Box sx={{ width: { xs: '100%', sm: '20%', md: '21.5%' }}}>
+            <AutoVibe
+              id="Party"
               disabled={isFormDisabled}
-              name="PARTY_BRANCH"
-              sx={textInputSx}
+              getOptionLabel={(option) => option || ''}
+              options={partyOptions}
+              label="Party"
+              name="Party"
+              value={formData.Party || ""}
+              onChange={(event, value) => handleAutoCompleteChange("Party", value)}
+              sx={DropInputSx}
               inputProps={{
                 style: {
                   padding: '6px 8px',
-                  fontSize: '12px'
+                  fontSize: '12px',
                 },
               }}
             />
           </Box>
-          <Box sx={{ width: { xs: '100%', sm: '20%', md: '15.1%' } }}>
-            <FormControlLabel
-              control={<Checkbox name="RACK_MIN" size="small" checked={formData.RACK_MIN === "1"}
-              onChange={handleChangeStatus} />}
+
+          <Box sx={{ width: { xs: '100%', sm: '20%', md: '20%' }}}>
+            <AutoVibe
+              id="Branch"
               disabled={isFormDisabled}
-              label="Rack_Min"
-              sx={{
-                '& .MuiFormControlLabel-label': { fontSize: '12px' }
+              getOptionLabel={(option) => option || ''}
+              options={branchOptions}
+              label="Branch"
+              name="Branch"
+              value={formData.Branch || ""}
+              onChange={(event, value) => handleAutoCompleteChange("Branch", value)}
+              sx={DropInputSx}
+              inputProps={{
+                style: {
+                  padding: '6px 8px',
+                  fontSize: '12px',
+                },
               }}
             />
           </Box>
-          <Box sx={{ width: { xs: "100%", sm: "20%", md: "20.5%" } }}>
+
+          
+          <Box sx={{ width: { xs: "100%", sm: "20%", md: "22.5%" } }}>
             <TextField
               label="Quote No"
               variant="filled"
@@ -494,6 +743,17 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
                   padding: '6px 8px',
                   fontSize: '12px'
                 },
+              }}
+            />
+          </Box>
+          <Box sx={{ width: { xs: '100%', sm: '20%', md: '15.1%' } }}>
+            <FormControlLabel
+              control={<Checkbox name="RACK_MIN" size="small" checked={formData.RACK_MIN === "1"}
+              onChange={handleChangeStatus} />}
+              disabled={isFormDisabled}
+              label="Rack_Min"
+              sx={{
+                '& .MuiFormControlLabel-label': { fontSize: '12px' }
               }}
             />
           </Box>
@@ -615,23 +875,45 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
           gap: { xs: 1, sm: 1.5, md: 2 }
         }}>
           <Box sx={{ width: { xs: '100%', sm: '20%', md: '17%' } }}>
-            <TextField
-              label="Broker Transporter"
-              variant="filled"
-              fullWidth
-              onChange={handleInputChange}
-              value={formData.BROKER_TRANSPORTER || ""}
+            <AutoVibe
+              id="Broker"
               disabled={isFormDisabled}
-              name="BROKER_TRANSPORTER"
-              sx={textInputSx}
+              getOptionLabel={(option) => option || ''}
+              options={brokerOptions}
+              label="Broker"
+              name="Broker"
+              value={formData.Broker || ""}
+              onChange={(event, value) => handleAutoCompleteChange("Broker", value)}
+              sx={DropInputSx}
               inputProps={{
                 style: {
                   padding: '6px 8px',
-                  fontSize: '12px'
+                  fontSize: '12px',
                 },
               }}
             />
           </Box>
+
+          <Box sx={{ width: { xs: '100%', sm: '20%', md: '17%' } }}>
+            <AutoVibe
+              id="Transporter"
+              disabled={isFormDisabled}
+              getOptionLabel={(option) => option || ''}
+              options={[]}
+              label="Transporter"
+              name="Transporter"
+              value={formData.Transporter || ""}
+              onChange={(event, value) => handleAutoCompleteChange("Transporter", value)}
+              sx={DropInputSx}
+              inputProps={{
+                style: {
+                  padding: '6px 8px',
+                  fontSize: '12px',
+                },
+              }}
+            />
+          </Box>
+
           <Box sx={{ width: { xs: '100%', sm: '20%', md: '15.1%' } }}>
             <TextField
               label="B-East-II"
@@ -811,19 +1093,20 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
           gap: { xs: 1, sm: 1.5, md: 2 }
         }}>
           <Box sx={{ width: { xs: '100%', sm: '20%', md: '17%' } }}>
-            <TextField
-              label="Consignee"
-              variant="filled"
-              fullWidth
-              onChange={handleInputChange}
-              value={formData.CONSIGNEE || ""}
+            <AutoVibe
+              id="Consignee"
               disabled={isFormDisabled}
+              getOptionLabel={(option) => option || ''}
+              options={consigneeOptions}
+              label="Consignee"
               name="CONSIGNEE"
-              sx={textInputSx}
+              value={formData.CONSIGNEE || ""}
+              onChange={(event, value) => handleAutoCompleteChange("CONSIGNEE", value)}
+              sx={DropInputSx}
               inputProps={{
                 style: {
                   padding: '6px 8px',
-                  fontSize: '12px'
+                  fontSize: '12px',
                 },
               }}
             />
@@ -847,19 +1130,20 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
             />
           </Box>
           <Box sx={{ width: { xs: "100%", sm: "20%", md: "20.5%" } }}>
-            <TextField
-              label="Broker1"
-              variant="filled"
-              fullWidth
-              onChange={handleInputChange}
-              value={formData.BROKER1 || ""}
+            <AutoVibe
+              id="Broker1"
               disabled={isFormDisabled}
-              name="BROKER1"
-              sx={textInputSx}
+              getOptionLabel={(option) => option || ''}
+              options={broker1Options}
+              label="Broker1"
+              name="Broker1"
+              value={formData.Broker1 || ""}
+              onChange={(event, value) => handleAutoCompleteChange("Broker1", value)}
+              sx={DropInputSx}
               inputProps={{
                 style: {
                   padding: '6px 8px',
-                  fontSize: '12px'
+                  fontSize: '12px',
                 },
               }}
             />
@@ -909,37 +1193,39 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
           gap: { xs: 1, sm: 1.5, md: 2 }
         }}>
           <Box sx={{ width: { xs: '100%', sm: '20%', md: '17%' } }}>
-            <TextField
-              label="Salesperson 1"
-              variant="filled"
-              fullWidth
-              onChange={handleInputChange}
-              value={formData.SALESPERSON_1 || ""}
+            <AutoVibe
+              id="SALESPERSON_1"
               disabled={isFormDisabled}
+              getOptionLabel={(option) => option || ''}
+              options={salesperson1Options}
+              label="Salesperson 1"
               name="SALESPERSON_1"
-              sx={textInputSx}
+              value={formData.SALESPERSON_1 || ""}
+              onChange={(event, value) => handleAutoCompleteChange("SALESPERSON_1", value)}
+              sx={DropInputSx}
               inputProps={{
                 style: {
                   padding: '6px 8px',
-                  fontSize: '12px'
+                  fontSize: '12px',
                 },
               }}
             />
           </Box>
           <Box sx={{ width: { xs: '100%', sm: '20%', md: '15.1%' } }}>
-            <TextField
-              label="Salesperson 2"
-              variant="filled"
-              fullWidth
-              onChange={handleInputChange}
-              value={formData.SALESPERSON_2 || ""}
+            <AutoVibe
+              id="SALESPERSON_2"
               disabled={isFormDisabled}
+              getOptionLabel={(option) => option || ''}
+              options={salesperson2Options}
+              label="Salesperson 2"
               name="SALESPERSON_2"
-              sx={textInputSx}
+              value={formData.SALESPERSON_2 || ""}
+              onChange={(event, value) => handleAutoCompleteChange("SALESPERSON_2", value)}
+              sx={DropInputSx}
               inputProps={{
                 style: {
                   padding: '6px 8px',
-                  fontSize: '12px'
+                  fontSize: '12px',
                 },
               }}
             />
@@ -1024,7 +1310,45 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
               }}
             />
           </Box>
+         
+          <Box sx={{ width: { xs: '100%', sm: '20%', md: '17%' } }}>
+            <TextField
+              label="Ex Rate"
+              variant="filled"
+              fullWidth
+              onChange={handleInputChange}
+              value={formData.EX_RATE_VALUE || ""}
+              disabled={isFormDisabled}
+              name="EX_RATE_VALUE"
+              sx={textInputSx}
+              inputProps={{
+                style: {
+                  padding: '6px 8px',
+                  fontSize: '12px'
+                },
+              }}
+            />
+          </Box>
           <Box sx={{ width: { xs: '100%', sm: '20%', md: '15.1%' } }}>
+            <AutoVibe
+              id="ord_event"
+              disabled={isFormDisabled}
+              getOptionLabel={(option) => option || ''}
+              options={[]}
+              label="Order Event"
+              name="ord_event"
+              value={formData.ord_event || ""}
+              onChange={(event, value) => handleAutoCompleteChange("ord_event", value)}
+              sx={DropInputSx}
+              inputProps={{
+                style: {
+                  padding: '6px 8px',
+                  fontSize: '12px',
+                },
+              }}
+            />
+          </Box>
+           <Box sx={{ width: { xs: '100%', sm: '20%', md: '15.1%' } }}>
             <FormControlLabel
               control={<Checkbox name="SHORT_CLOSE" size="small" checked={formData.SHORT_CLOSE === "1"}
               onChange={handleChangeStatus} />}
@@ -1043,24 +1367,6 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
               label="Ready_Si"
               sx={{
                 '& .MuiFormControlLabel-label': { fontSize: '12px' }
-              }}
-            />
-          </Box>
-          <Box sx={{ width: { xs: '100%', sm: '20%', md: '20.6%' } }}>
-            <TextField
-              label="Ex Rate"
-              variant="filled"
-              fullWidth
-              onChange={handleInputChange}
-              value={formData.EX_RATE_VALUE || ""}
-              disabled={isFormDisabled}
-              name="EX_RATE_VALUE"
-              sx={textInputSx}
-              inputProps={{
-                style: {
-                  padding: '6px 8px',
-                  fontSize: '12px'
-                },
               }}
             />
           </Box>
