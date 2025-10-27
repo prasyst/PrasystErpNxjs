@@ -1529,7 +1529,7 @@ const CreditorsSuppliersMst = () => {
         flexDirection: 'column',
         justifyContent: 'center',
         boxSizing: 'border-box',
-        minHeight: '90vh',
+        // minHeight: '90vh',
         overflowX: 'hidden',
         overflowY: 'auto'
       }}

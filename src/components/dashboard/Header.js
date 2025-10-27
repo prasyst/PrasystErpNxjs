@@ -434,6 +434,7 @@ import { MdPushPin, MdMenu, MdClose, MdNotifications, MdSettings, MdHelp } from 
 import { usePin } from '../../app/hooks/usePin';
 import { getAllMenuItemsWithPaths, getIconComponent } from './menuData';
 import Link from 'next/link';
+import ReportIcon from '@mui/icons-material/Report';
 
 const Header = ({ isSidebarCollapsed, onMenuToggle, isMobile }) => {
   const [isSearchExpanded, setIsSearchExpanded] = useState(false);
@@ -817,6 +818,30 @@ const Header = ({ isSidebarCollapsed, onMenuToggle, isMobile }) => {
               title="Pinned Modules"
             >
               <MdPushPin size={20} />
+            </button>
+          </Link>
+        )}
+        {!isMobile && (
+          <Link href="/analytics" passHref>
+            <button 
+              style={{
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                color: 'white',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: '40px',
+                height: '40px',
+                borderRadius: '50%',
+                transition: 'all 0.2s ease',
+                position: 'relative',
+              }}
+              className="hover:bg-white hover:bg-opacity-10 active:bg-opacity-20"
+              title="Analytics"
+            >
+              <ReportIcon size={20} />
             </button>
           </Link>
         )}

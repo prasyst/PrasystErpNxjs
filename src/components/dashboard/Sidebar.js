@@ -368,26 +368,127 @@ const Sidebar = ({  isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) =>
     {
       name: 'Inventory',
       icon: MdInventory,
-      //  path: '/inventorypage',
+       path: '/inventorypage',
       children: [
         { name: 'Artical/Style Master', icon: MdSummarize, path: '/inverntory/style/' },
         { name: 'Style/Parts Master', icon: MdSummarize, path: '#' },
         { name: 'BarCode Printing', icon: MdSummarize, path: '#' },
         { name: 'Style Shade Image upload', icon: MdSummarize, path: '#' },
         { name: 'Price List Detailes', icon: MdSummarize, path: '#' },
-        { name: 'Sampling & Developement', icon: MdSummarize, path: '#' },
-        { name: 'Opening Stock', icon: MdSummarize, path: '#' },
-        { name: 'Purchase Order', icon: MdSummarize, path: '#' },
-        { name: 'Inward/Approval', icon: MdSummarize, path: '#' },
-        { name: 'Provisonal GRN', icon: MdSummarize, path: '#' },
-        { name: 'Purchase Inward', icon: MdSummarize, path: '#' },
-        { name: 'RM/Acc Issue', icon: MdSummarize, path: '#' },
-        { name: 'Manufacturing', icon: MdSummarize, path: '#' },
-        { name: 'Other Transaction', icon: MdSummarize, path: '#' },
+        {
+          name: 'Sampling & Developement', icon: FaBoxes, path: '#',
+          children: [
 
-        { name: 'Sample Packing', icon: FaBoxes, path: '#' },
-        { name: 'Make to order', icon: FaBoxes, path: '#' },
-        { name: 'Sampling & Production', icon: FaBoxes, path: '#' },
+        { name: 'Stock Enquiry', icon: MdSearch, path: '#' },
+            { name: 'Buyer Enquiry', icon: FaBoxes, path: '#' },
+            { name: 'Enquiry Followups', icon: FaBoxes, path: '/inverntory/packeging-barcode/' },
+             { name: 'Pending for Acceptance', icon: FaBoxes, path: '/inverntory/packeging-barcode/' },
+             { name: 'Sampling Form', icon: FaBoxes, path: '/inverntory/packeging-barcode/' },
+             { name: 'Enquiry Status', icon: FaBoxes, path: '/inverntory/packeging-barcode/' },
+          ],
+        },
+        {
+          name: 'Opening Stock', icon: FaBoxes, path: '#',
+          children: [
+
+        { name: 'RM Stock', icon: MdSearch, path: '/inverntory/packeging-barcode/' },
+            { name: 'Trims & Stores with Party', icon: FaBoxes, path: '#' },
+            { name: 'Finished good stock', icon: FaBoxes, path: '/inverntory/packeging-barcode/' },
+             { name: 'Process stock with party', icon: FaBoxes, path: '/inverntory/packeging-barcode/' },
+             { name: 'RM stock with party', icon: FaBoxes, path: '/inverntory/packeging-barcode/' },
+          ],
+        },
+        {
+          name: 'Purchase Order', icon: FaBoxes, path: '#',
+          children: [
+
+        { name: 'RM Purchase Order', icon: MdSearch, path: '/inverntory/packeging-barcode/' },
+            { name: 'Finished goods product order', icon: FaBoxes, path: '#' },
+            { name: 'Trims & Stores purchase order', icon: FaBoxes, path: '/inverntory/packeging-barcode/' },
+
+          ],
+        },
+         {
+          name: 'Inward Approvel', icon: FaBoxes, path: '#',
+          children: [
+
+        { name: 'Finished Goods', icon: MdSearch, path: '#' },
+            { name: 'Finished goods product order', icon: FaBoxes, path: '#' },
+            { name: 'Trims & Stores purchase order', icon: FaBoxes, path: '/inverntory/packeging-barcode/' },
+
+          ],
+        },
+           {
+          name: 'Provisonal GRN', icon: FaBoxes, path: '#',
+          children: [
+
+        { name: 'Finished Goods', icon: MdSearch, path: '#' },
+            { name: 'Finished goods product order', icon: FaBoxes, path: '#' },
+            { name: 'Trims & Stores purchase order', icon: FaBoxes, path: '/inverntory/packeging-barcode/' },
+
+          ],
+        },
+          {
+          name: 'Purchase Inward', icon: FaBoxes, path: '#',
+          children: [
+
+        { name: 'Finished Goods', icon: MdSearch, path: '#' },
+            { name: 'Finished goods product order', icon: FaBoxes, path: '#' },
+            { name: 'Trims & Stores purchase order', icon: FaBoxes, path: '/inverntory/packeging-barcode/' },
+
+          ],
+        },
+          {
+          name: 'RM/Acc Issue', icon: FaBoxes, path: '#',
+          children: [
+
+        { name: 'Finished Goods', icon: MdSearch, path: '#' },
+            { name: 'Finished goods product order', icon: FaBoxes, path: '#' },
+            { name: 'Trims & Stores purchase order', icon: FaBoxes, path: '/inverntory/packeging-barcode/' },
+
+          ],
+        },
+           {
+          name: 'Manufactring', icon: FaBoxes, path: '#',
+          children: [
+
+        { name: 'Finished Goods', icon: MdSearch, path: '#' },
+            { name: 'Finished goods product order', icon: FaBoxes, path: '#' },
+            { name: 'Trims & Stores purchase order', icon: FaBoxes, path: '/inverntory/packeging-barcode/' },
+
+          ],
+        },
+            {
+          name: 'Other Transaction', icon: FaBoxes, path: '#',
+          children: [
+
+        { name: 'Finished Goods', icon: MdSearch, path: '#' },
+            { name: 'Finished goods product order', icon: FaBoxes, path: '#' },
+            { name: 'Trims & Stores purchase order', icon: FaBoxes, path: '/inverntory/packeging-barcode/' },
+
+          ],
+        },
+
+            {
+          name: 'Sample Packing', icon: FaBoxes, path: '#',
+          children: [
+
+        { name: 'Finished Goods', icon: MdSearch, path: '#' },
+            { name: 'Finished goods product order', icon: FaBoxes, path: '#' },
+            { name: 'Trims & Stores purchase order', icon: FaBoxes, path: '/inverntory/packeging-barcode/' },
+
+          ],
+        },
+            {
+          name: 'Make to order', icon: FaBoxes, path: '#',
+          children: [
+
+        { name: 'Finished Goods', icon: MdSearch, path: '#' },
+            { name: 'Finished goods product order', icon: FaBoxes, path: '#' },
+            { name: 'Trims & Stores purchase order', icon: FaBoxes, path: '/inverntory/packeging-barcode/' },
+
+          ],
+        },
         {
           name: 'Sales/Dispatch', icon: FaBoxes, path: '#',
           children: [
@@ -401,7 +502,19 @@ const Sidebar = ({  isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) =>
 
           ],
         },
+ {
+          name: 'Sampling & Production', icon: FaBoxes, path: '#',
+          children: [
 
+        { name: 'Buyer Enq', icon: MdSearch, path: '#' },
+            // { name: 'Sales Offline', icon: FaBoxes, path: '/inverntory/inventory-offline/' },
+            { name: 'Sales Offline', icon: FaBoxes, path: '/inverntory/stock-enquiry-table' },
+
+
+            { name: 'Packaging/Barcode', icon: FaBoxes, path: '/inverntory/packeging-barcode/' },
+
+          ],
+        },
         { name: 'Stock Adjustment', icon: MdBuild, path: '#' },
         { name: 'Inventory Valuation', icon: MdAttachMoney, path: '#' },
       ],
