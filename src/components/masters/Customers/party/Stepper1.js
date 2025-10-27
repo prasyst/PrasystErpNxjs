@@ -1131,7 +1131,7 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
               sx={{
                 minHeight: '10px',
                 padding: '1px 4px',
-                fontSize: '0.675rem',
+                fontSize: '0.675rem'
               }}
             >
               Cust Card
