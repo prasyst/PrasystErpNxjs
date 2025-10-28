@@ -493,7 +493,7 @@ const Sidebar = ({  isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) =>
           name: 'Sales/Dispatch', icon: FaBoxes, path: '#',
           children: [
 
-        { name: 'Stock Enquiry', icon: MdSearch, path: '/dashboard/stock-enquiry-table' },
+        // { name: 'Stock Enquiry', icon: MdSearch, path: '/dashboard/stock-enquiry-table' },
             { name: 'Sales Offline', icon: FaBoxes, path: '/inverntory/inventory-offline/' },
             // { name: 'Sales Offline', icon: FaBoxes, path: '/inverntory/stock-enquiry-table' },
 
