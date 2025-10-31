@@ -214,7 +214,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
     calculateTotals();
   }, [tableData]);
 
-  // Fetch Product dropdown data from API
+  // Fetch Product dropdown data from API - IMPROVED VERSION
   const fetchProductData = async () => {
     try {
       const payload = {
@@ -248,46 +248,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
     }
   };
 
-  // Fetch Style dropdown data based on FGPRD_KEY
-  const fetchStyleData = async (fgprdKey) => {
-    if (!fgprdKey) return;
-
-    try {
-      const payload = {
-        "FGSTYLE_ID": 0,
-        "FGPRD_KEY": fgprdKey,
-        "FGSTYLE_CODE": "",
-        "FLAG": ""
-      };
-
-      console.log('Fetching style data with payload:', payload);
-
-      const response = await axiosInstance.post('/FGSTYLE/GetFgstyleDrp', payload);
-      console.log('Style API Response:', response.data);
-
-      if (response.data.DATA) {
-        const styles = response.data.DATA.map(item => item.FGSTYLE_CODE || '');
-        setStyleOptions(styles);
-        
-        // Store FGSTYLE_ID mapping
-        const mapping = {};
-        response.data.DATA.forEach(item => {
-          if (item.FGSTYLE_CODE && item.FGSTYLE_ID) {
-            mapping[item.FGSTYLE_CODE] = item.FGSTYLE_ID;
-          }
-        });
-        setStyleMapping(mapping);
-        console.log('Style mapping:', mapping);
-      } else {
-        setStyleOptions([]);
-        setStyleMapping({});
-      }
-    } catch (error) {
-      console.error('Error fetching style data:', error);
-      setStyleOptions([]);
-      setStyleMapping({});
-    }
-  };
+  
 
   // Fetch Type dropdown data based on FGSTYLE_ID
   const fetchTypeData = async (fgstyleId) => {
@@ -367,44 +328,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
     }
   };
 
-  // Fetch Lot No dropdown data based on FGSTYLE_ID
-  const fetchLotNoData = async (fgstyleId) => {
-    if (!fgstyleId) return;
-
-    try {
-      const payload = {
-        "FGSTYLE_ID": fgstyleId,
-        "FLAG": ""
-      };
-
-      console.log('Fetching lot no data with payload:', payload);
-
-      const response = await axiosInstance.post('/Fgptn/GetFgptnDrp', payload);
-      console.log('Lot No API Response:', response.data);
-
-      if (response.data.DATA) {
-        const lotNos = response.data.DATA.map(item => item.FGPTN_NAME || '');
-        setLotNoOptions(lotNos);
-        
-        // Store FGPTN_KEY mapping
-        const mapping = {};
-        response.data.DATA.forEach(item => {
-          if (item.FGPTN_NAME && item.FGPTN_KEY) {
-            mapping[item.FGPTN_NAME] = item.FGPTN_KEY;
-          }
-        });
-        setLotNoMapping(mapping);
-        console.log('Lot No mapping:', mapping);
-      } else {
-        setLotNoOptions([]);
-        setLotNoMapping({});
-      }
-    } catch (error) {
-      console.error('Error fetching lot no data:', error);
-      setLotNoOptions([]);
-      setLotNoMapping({});
-    }
-  };
+  
 
   // Fetch Size Details from API when Add Qty button is clicked
   const fetchSizeDetails = async () => {
@@ -615,6 +539,26 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
     }
   }, [tableData, selectedRow]);
 
+  // Load product and other dropdown data when component mounts or formData changes
+  useEffect(() => {
+    fetchProductData();
+  }, []);
+
+  // Populate product and other fields when formData has data
+  useEffect(() => {
+    if (formData.apiResponseData?.ORDBKSTYLIST && formData.apiResponseData.ORDBKSTYLIST.length > 0) {
+      const firstItem = formData.apiResponseData.ORDBKSTYLIST[0];
+      
+      // Set selected product and style if available
+      if (firstItem.PRODUCT) {
+        setSelectedProduct(firstItem.PRODUCT);
+      }
+      if (firstItem.STYLE) {
+        setSelectedStyle(firstItem.STYLE);
+      }
+    }
+  }, [formData.apiResponseData]);
+
   const handleDateChange = (date, fieldName) => {
     if (date) {
       const formattedDate = format(date, "dd/MM/yyyy");
@@ -682,113 +626,223 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
     setLotNoOptions([]);
   };
 
-  // Updated handleConfirmAdd to use size details data
-  const handleConfirmAdd = () => {
-    if (!newItemData.product || !newItemData.style) {
-      alert("Please fill required fields: Product and Style");
-      return;
-    }
+ // Enhanced fetchStyleData function to get FGPRD_KEY
+const fetchStyleData = async (fgprdKey) => {
+  if (!fgprdKey) return;
 
-    if (sizeDetailsData.length === 0) {
-      alert("Please load size details first by clicking 'Add Qty' button");
-      return;
-    }
-
-    // Check if all sizes have quantity entered
-    const sizesWithZeroQty = sizeDetailsData.filter(size => !size.QTY || size.QTY === 0);
-    if (sizesWithZeroQty.length > 0) {
-      alert("Please enter quantity for all sizes before confirming");
-      return;
-    }
-
-    // Calculate totals from size details
-    const totalQty = sizeDetailsData.reduce((sum, size) => sum + (parseFloat(size.QTY) || 0), 0);
-    const mrp = parseFloat(newItemData.mrp) || 0;
-    const totalAmount = sizeDetailsData.reduce((sum, size) => sum + (parseFloat(size.ITM_AMT) || 0), 0);
-    const discount = parseFloat(newItemData.discount) || 0;
-    const netAmount = totalAmount - discount;
-
-    const newItem = {
-      id: Date.now(), // Temporary ID
-      BarCode: newItemData.barcode || "-",
-      product: newItemData.product,
-      style: newItemData.style || "-",
-      type: newItemData.type || "-",
-      shade: newItemData.shade || "-",
-      lotNo: newItemData.lotNo || "-",
-      qty: totalQty,
-      rate: mrp,
-      amount: totalAmount,
-      varPer: parseFloat(newItemData.varPer) || 0,
-      varQty: 0,
-      varAmt: 0,
-      discAmt: discount,
-      netAmt: netAmount,
-      distributer: "-",
-      set: parseFloat(newItemData.sets) || 0,
-      originalData: {
-        ORDBKSTYSZLIST: sizeDetailsData
-      },
-      FGSTYLE_ID: styleMapping[newItemData.style] || null
+  try {
+    const payload = {
+      "FGSTYLE_ID": 0,
+      "FGPRD_KEY": fgprdKey,
+      "FGSTYLE_CODE": "",
+      "FLAG": ""
     };
 
-    // Update the table data with new item
-    const newTableData = [...tableData, newItem];
-    setUpdatedTableData(newTableData);
+    console.log('Fetching style data with payload:', payload);
 
-    // Also update formData for persistence
-    setFormData(prev => ({
-      ...prev,
-      apiResponseData: {
-        ...prev.apiResponseData,
-        ORDBKSTYLIST: [...(prev.apiResponseData?.ORDBKSTYLIST || []), {
-          ORDBKSTY_ID: newItem.id,
-          FGITEM_KEY: newItem.BarCode,
-          PRODUCT: newItem.product,
-          STYLE: newItem.style,
-          TYPE: newItem.type,
-          SHADE: newItem.shade,
-          ITMQTY: newItem.qty,
-          ITMRATE: newItem.rate,
-          ITMAMT: newItem.amount,
-          DLV_VAR_PERC: newItem.varPer,
-          DLV_VAR_QTY: newItem.varQty,
-          DISC_AMT: newItem.discAmt,
-          NET_AMT: newItem.netAmt,
-          DISTBTR: newItem.distributer,
-          SETQTY: newItem.set,
-          ORDBKSTYSZLIST: sizeDetailsData,
-          FGSTYLE_ID: newItem.FGSTYLE_ID
-        }]
-      }
-    }));
+    const response = await axiosInstance.post('/FGSTYLE/GetFgstyleDrp', payload);
+    console.log('Style API Response:', response.data);
 
-    // Reset form
-    setIsAddingNew(false);
-    setNewItemData({
-      product: '',
-      barcode: '',
-      style: '',
-      type: '',
-      shade: '',
-      qty: '',
-      mrp: '',
-      setNo: '',
-      varPer: '',
-      stdQty: '',
-      convFact: '',
-      lotNo: '',
-      discount: '',
-      percent: '',
-      remark: '',
-      divDt: '',
-      rQty: '',
-      sets: ''
-    });
-    setSizeDetailsData([]);
+    if (response.data.DATA) {
+      const styles = response.data.DATA.map(item => item.FGSTYLE_CODE || '');
+      setStyleOptions(styles);
+      
+      // Store FGSTYLE_ID and FGPRD_KEY mapping
+      const styleIdMapping = {};
+      const productKeyMapping = {};
+      
+      response.data.DATA.forEach(item => {
+        if (item.FGSTYLE_CODE && item.FGSTYLE_ID) {
+          styleIdMapping[item.FGSTYLE_CODE] = item.FGSTYLE_ID;
+        }
+        if (item.FGSTYLE_CODE && item.FGPRD_KEY) {
+          productKeyMapping[item.FGSTYLE_CODE] = item.FGPRD_KEY;
+        }
+      });
+      
+      setStyleMapping(styleIdMapping);
+      // Store product key mapping for later use
+      setProductMapping(prev => ({
+        ...prev,
+        ...productKeyMapping
+      }));
+      
+      console.log('Style mapping:', styleIdMapping);
+      console.log('Product key mapping:', productKeyMapping);
+    } else {
+      setStyleOptions([]);
+      setStyleMapping({});
+    }
+  } catch (error) {
+    console.error('Error fetching style data:', error);
+    setStyleOptions([]);
+    setStyleMapping({});
+  }
+};
 
-    alert("Item added successfully!");
+// Enhanced fetchLotNoData function
+const fetchLotNoData = async (fgstyleId) => {
+  if (!fgstyleId) return;
+
+  try {
+    const payload = {
+      "FGSTYLE_ID": fgstyleId,
+      "FLAG": ""
+    };
+
+    console.log('Fetching lot no data with payload:', payload);
+
+    const response = await axiosInstance.post('/Fgptn/GetFgptnDrp', payload);
+    console.log('Lot No API Response:', response.data);
+
+    if (response.data.DATA) {
+      const lotNos = response.data.DATA.map(item => item.FGPTN_NAME || '');
+      setLotNoOptions(lotNos);
+      
+      // Store FGPTN_KEY mapping
+      const mapping = {};
+      response.data.DATA.forEach(item => {
+        if (item.FGPTN_NAME && item.FGPTN_KEY) {
+          mapping[item.FGPTN_NAME] = item.FGPTN_KEY;
+        }
+      });
+      setLotNoMapping(mapping);
+      console.log('Lot No mapping:', mapping);
+    } else {
+      setLotNoOptions([]);
+      setLotNoMapping({});
+    }
+  } catch (error) {
+    console.error('Error fetching lot no data:', error);
+    setLotNoOptions([]);
+    setLotNoMapping({});
+  }
+};
+
+// Enhanced handleConfirmAdd function
+const handleConfirmAdd = () => {
+  if (!newItemData.product || !newItemData.style) {
+    alert("Please fill required fields: Product and Style");
+    return;
+  }
+
+  if (sizeDetailsData.length === 0) {
+    alert("Please load size details first by clicking 'Add Qty' button");
+    return;
+  }
+
+  // Check if all sizes have quantity entered
+  const sizesWithZeroQty = sizeDetailsData.filter(size => !size.QTY || size.QTY === 0);
+  if (sizesWithZeroQty.length > 0) {
+    alert("Please enter quantity for all sizes before confirming");
+    return;
+  }
+
+  // Get FGPRD_KEY and FGPTN_KEY from mappings
+  const fgprdKey = productMapping[newItemData.product] || productMapping[newItemData.style] || "";
+  const fgptnKey = lotNoMapping[newItemData.lotNo] || "";
+
+  console.log('Product and Lot No Keys:', {
+    product: newItemData.product,
+    fgprdKey,
+    lotNo: newItemData.lotNo,
+    fgptnKey
+  });
+
+  // Calculate totals from size details
+  const totalQty = sizeDetailsData.reduce((sum, size) => sum + (parseFloat(size.QTY) || 0), 0);
+  const mrp = parseFloat(newItemData.mrp) || 0;
+  const totalAmount = sizeDetailsData.reduce((sum, size) => sum + (parseFloat(size.ITM_AMT) || 0), 0);
+  const discount = parseFloat(newItemData.discount) || 0;
+  const netAmount = totalAmount - discount;
+
+  const newItem = {
+    id: Date.now(), // Temporary ID
+    BarCode: newItemData.barcode || "-",
+    product: newItemData.product,
+    style: newItemData.style || "-",
+    type: newItemData.type || "-",
+    shade: newItemData.shade || "-",
+    lotNo: newItemData.lotNo || "-",
+    qty: totalQty,
+    rate: mrp,
+    amount: totalAmount,
+    varPer: parseFloat(newItemData.varPer) || 0,
+    varQty: 0,
+    varAmt: 0,
+    discAmt: discount,
+    netAmt: netAmount,
+    distributer: "-",
+    set: parseFloat(newItemData.sets) || 0,
+    originalData: {
+      ORDBKSTYSZLIST: sizeDetailsData,
+      FGPRD_KEY: fgprdKey, // Store FGPRD_KEY
+      FGPTN_KEY: fgptnKey  // Store FGPTN_KEY
+    },
+    FGSTYLE_ID: styleMapping[newItemData.style] || null,
+    FGPRD_KEY: fgprdKey, // Add FGPRD_KEY
+    FGPTN_KEY: fgptnKey  // Add FGPTN_KEY
   };
+
+  // Update the table data with new item
+  const newTableData = [...tableData, newItem];
+  setUpdatedTableData(newTableData);
+
+  // Also update formData for persistence
+  setFormData(prev => ({
+    ...prev,
+    apiResponseData: {
+      ...prev.apiResponseData,
+      ORDBKSTYLIST: [...(prev.apiResponseData?.ORDBKSTYLIST || []), {
+        ORDBKSTY_ID: newItem.id,
+        FGITEM_KEY: newItem.BarCode,
+        PRODUCT: newItem.product,
+        STYLE: newItem.style,
+        TYPE: newItem.type,
+        SHADE: newItem.shade,
+        ITMQTY: newItem.qty,
+        ITMRATE: newItem.rate,
+        ITMAMT: newItem.amount,
+        DLV_VAR_PERC: newItem.varPer,
+        DLV_VAR_QTY: newItem.varQty,
+        DISC_AMT: newItem.discAmt,
+        NET_AMT: newItem.netAmt,
+        DISTBTR: newItem.distributer,
+        SETQTY: newItem.set,
+        ORDBKSTYSZLIST: sizeDetailsData,
+        FGSTYLE_ID: newItem.FGSTYLE_ID,
+        FGPRD_KEY: fgprdKey, // Include FGPRD_KEY
+        FGPTN_KEY: fgptnKey  // Include FGPTN_KEY
+      }]
+    }
+  }));
+
+  // Reset form
+  setIsAddingNew(false);
+  setNewItemData({
+    product: '',
+    barcode: '',
+    style: '',
+    type: '',
+    shade: '',
+    qty: '',
+    mrp: '',
+    setNo: '',
+    varPer: '',
+    stdQty: '',
+    convFact: '',
+    lotNo: '',
+    discount: '',
+    percent: '',
+    remark: '',
+    divDt: '',
+    rQty: '',
+    sets: ''
+  });
+  setSizeDetailsData([]);
+
+  alert("Item added successfully!");
+};
 
   const handleCancelAdd = () => {
     setIsAddingNew(false);
@@ -1431,14 +1485,6 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
                     >
                       Add Qty
                     </Button>
-                    {/* <Button
-                      variant="contained"
-                      color="success"
-                      onClick={isAddingNew ? handleConfirmAdd : handleEditItem}
-                      sx={{ minWidth: '60px', height: '36px' }}
-                    >
-                      {isAddingNew ? 'Confirm' : 'Save'}
-                    </Button> */}
                     <Button
                       variant="outlined"
                       color="secondary"
