@@ -201,7 +201,7 @@ export default function InventoryPage() {
       name: 'Sales/Dispatch',
       children: [
         { name: 'Stock Enquiry', icon: SearchIcon, path: '/dashboard/stock-enquiry-table' },
-        { name: 'Sales Offline', icon: ShoppingIcon, path: '/inverntory/stock-enquiry-table' },
+        { name: 'Sales Order Offline', icon: ShoppingIcon, path: '/inverntory/inventory-offline' },
         { name: 'Packaging/Barcode', icon: InventoryIcon, path: '/inverntory/packeging-barcode/' },
       ],
     },

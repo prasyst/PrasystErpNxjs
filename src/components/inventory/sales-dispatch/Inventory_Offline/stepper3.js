@@ -333,11 +333,12 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled }) => {
         {/* CRUD Buttons (same as Stepper2 but with additional buttons) */}
         <Stack direction="row" spacing={2} sx={{ mt: 2 }}>
           <Button
-            variant="contained"
+           variant="contained"
+
             startIcon={<AddIcon />}
             onClick={handleAdd}
             sx={{
-              background: 'linear-gradient(45deg, #2196f3, #64b5f6)',
+              
               color: 'white',
               margin: { xs: '0 4px', sm: '0 6px' },
               minWidth: { xs: 40, sm: 46, md: 60 },
@@ -349,11 +350,12 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled }) => {
 
           <Button
             variant="contained"
+            color="primary"
             startIcon={<EditIcon />}
             onClick={handleEdit}
-            disabled={!selectedRow}
+            // disabled={!selectedRow}
             sx={{
-              background: 'linear-gradient(45deg, #ffa726, #ffcc80)',
+              
               color: 'white',
               margin: { xs: '0 4px', sm: '0 6px' },
               minWidth: { xs: 40, sm: 46, md: 60 },
@@ -365,11 +367,12 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled }) => {
 
           <Button
             variant="contained"
+            color="primary"
             startIcon={<DeleteIcon />}
             onClick={handleDelete}
-            disabled={!selectedRow}
+            // disabled={!selectedRow}
             sx={{
-              background: 'linear-gradient(45deg, #e53935, #ef5350)',
+             
               color: 'white',
               margin: { xs: '0 4px', sm: '0 6px' },
               minWidth: { xs: 40, sm: 46, md: 60 },
@@ -381,8 +384,9 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled }) => {
           
           <Button
             variant="contained"
+            color="primary"
             sx={{
-              background: 'linear-gradient(45deg, #4caf50, #81c784)',
+             
               color: 'white',
               margin: { xs: '0 4px', sm: '0 6px' },
               minWidth: { xs: 40, sm: 46, md: 60 },
@@ -394,8 +398,9 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled }) => {
           
           <Button
             variant="contained"
+            color="primary"
             sx={{
-              background: 'linear-gradient(45deg, #9c27b0, #ba68c8)',
+              
               color: 'white',
               margin: { xs: '0 4px', sm: '0 6px' },
               minWidth: { xs: 40, sm: 46, md: 60 },
