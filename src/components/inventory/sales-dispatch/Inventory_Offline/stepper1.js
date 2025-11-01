@@ -39,6 +39,7 @@ const Stepper1 = ({
   salesperson2Mapping,
   consigneeMapping,
   seasonMapping,
+  transporterMapping,
   setPartyMapping,
   setBranchMapping,
   setBrokerMapping,
@@ -46,7 +47,8 @@ const Stepper1 = ({
   setSalesperson1Mapping,
   setSalesperson2Mapping,
   setConsigneeMapping,
-  setSeasonMapping
+  setSeasonMapping,
+  setTransporterMapping
 }) => {
   const [selectedDate, setSelectedDate] = useState(null);
   
@@ -59,6 +61,9 @@ const Stepper1 = ({
   const [salesperson2Options, setSalesperson2Options] = useState([]);
   const [consigneeOptions, setConsigneeOptions] = useState([]);
   const [seasonOptions, setSeasonOptions] = useState([]);
+  const [transporterOptions, setTransporterOptions] = useState([]);
+  const [shippingPartyOptions, setShippingPartyOptions] = useState([]);
+  const [shippingPlaceOptions, setShippingPlaceOptions] = useState([]);
 
   const textInputSx = {
     '& .MuiInputBase-root': {
@@ -140,7 +145,38 @@ const Stepper1 = ({
     },
   };
 
-  // Fetch Party Data
+  // Fetch Transporter Data
+  const fetchTransporterData = async () => {
+    try {
+      const payload = {
+        "PARTY_KEY": "",
+        "FLAG": "Drp",
+        "TRSP_KEY": "",
+        "PageNumber": 1,
+        "PageSize": 100,
+        "SearchText": ""
+      };
+
+      const response = await axiosInstance.post('/TRSP/GetTRSPDrp', payload);
+      if (response.data.DATA && Array.isArray(response.data.DATA)) {
+        const transporters = response.data.DATA.map(item => item.TRSP_NAME || '');
+        setTransporterOptions(transporters);
+        
+        // Create mapping for TRSP_NAME to TRSP_KEY
+        const mapping = {};
+        response.data.DATA.forEach(item => {
+          if (item.TRSP_NAME && item.TRSP_KEY) {
+            mapping[item.TRSP_NAME] = item.TRSP_KEY;
+          }
+        });
+        setTransporterMapping(mapping);
+      }
+    } catch (error) {
+      console.error('Error fetching transporter data:', error);
+    }
+  };
+
+  // Fetch Party Data (Updated to also set shipping party options)
   const fetchPartiesByName = async (name = "") => {
     try {
       const response = await axiosInstance.post("Party/GetParty_By_Name", {
@@ -149,6 +185,7 @@ const Stepper1 = ({
       if (response.data.STATUS === 0 && Array.isArray(response.data.DATA)) {
         const parties = response.data.DATA.map(item => item.PARTY_NAME || '');
         setPartyOptions(parties);
+        setShippingPartyOptions(parties); // Set shipping party options same as parties
         
         // Create mapping for PARTY_NAME to PARTY_KEY
         const mapping = {};
@@ -160,14 +197,16 @@ const Stepper1 = ({
         setPartyMapping(mapping);
       } else {
         setPartyOptions([]);
+        setShippingPartyOptions([]);
       }
     } catch (error) {
       console.error("API error", error);
       setPartyOptions([]);
+      setShippingPartyOptions([]);
     }
   };
 
-  // Fetch Party Branches
+  // Fetch Party Branches (Updated to also set shipping place options)
   const fetchPartyDetails = async (partyKey) => {
     if (!partyKey) return;
     
@@ -178,6 +217,7 @@ const Stepper1 = ({
       if (response.data.STATUS === 0 && Array.isArray(response.data.DATA)) {
         const branches = response.data.DATA.map(item => item.PLACE || '');
         setBranchOptions(branches);
+        setShippingPlaceOptions(branches); // Set shipping place options same as branches
         
         // Create mapping for PLACE to PARTYDTL_ID
         const mapping = {};
@@ -189,10 +229,12 @@ const Stepper1 = ({
         setBranchMapping(mapping);
       } else {
         setBranchOptions([]);
+        setShippingPlaceOptions([]);
       }
     } catch (error) {
       console.error("Error fetching party details:", error);
       setBranchOptions([]);
+      setShippingPlaceOptions([]);
     }
   };
 
@@ -212,9 +254,8 @@ const Stepper1 = ({
       if (response.data.DATA && Array.isArray(response.data.DATA)) {
         const brokers = response.data.DATA.map(item => item.BROKER_NAME || '');
         setBrokerOptions(brokers);
-        setBroker1Options(brokers); // Using same data for both broker fields
+        setBroker1Options(brokers);
         
-        // Create mapping for BROKER_NAME to BROKER_KEY
         const mapping = {};
         response.data.DATA.forEach(item => {
           if (item.BROKER_NAME && item.BROKER_KEY) {
@@ -247,7 +288,6 @@ const Stepper1 = ({
         setSalesperson1Options(salespersons);
         setSalesperson2Options(salespersons);
         
-        // Create mapping for SALEPERSON_NAME to SALEPERSON_KEY
         const mapping = {};
         response.data.DATA.forEach(item => {
           if (item.SALEPERSON_NAME && item.SALEPERSON_KEY) {
@@ -279,7 +319,6 @@ const Stepper1 = ({
         const consignees = response.data.DATA.map(item => item.DISTBTR_NAME || '');
         setConsigneeOptions(consignees);
         
-        // Create mapping for DISTBTR_NAME to DISTBTR_KEY
         const mapping = {};
         response.data.DATA.forEach(item => {
           if (item.DISTBTR_NAME && item.DISTBTR_KEY) {
@@ -293,14 +332,14 @@ const Stepper1 = ({
     }
   };
 
-  // Fetch Season Data
+  // Fetch Season Data - IMPROVED VERSION
   const fetchSeasonData = async () => {
     try {
       const payload = {
         "FLAG": "P",
         "TBLNAME": "SEASON",
         "FLDNAME": "SEASON_KEY",
-        "ID": "ET002",
+        "ID": "",
         "ORDERBYFLD": "",
         "CWHAER": "",
         "CO_ID": ""
@@ -311,7 +350,6 @@ const Stepper1 = ({
         const seasons = response.data.DATA.map(item => item.SEASON_NAME || '');
         setSeasonOptions(seasons);
         
-        // Create mapping for SEASON_NAME to SEASON_KEY
         const mapping = {};
         response.data.DATA.forEach(item => {
           if (item.SEASON_NAME && item.SEASON_KEY) {
@@ -332,7 +370,64 @@ const Stepper1 = ({
     fetchSalespersonData();
     fetchConsigneeData();
     fetchSeasonData();
+    fetchTransporterData();
   }, []);
+
+  // Load data when formData changes (for edit mode) - IMPROVED VERSION
+  useEffect(() => {
+    if (formData.PARTY_KEY && partyMapping[formData.PARTY_KEY]) {
+      const partyName = partyMapping[formData.PARTY_KEY];
+      setFormData(prev => ({ ...prev, Party: partyName }));
+      fetchPartyDetails(formData.PARTY_KEY);
+    }
+
+    if (formData.BROKER_KEY && brokerMapping[formData.BROKER_KEY]) {
+      const brokerName = brokerMapping[formData.BROKER_KEY];
+      setFormData(prev => ({ ...prev, Broker: brokerName }));
+    }
+
+    if (formData.BROKER1_KEY && broker1Mapping[formData.BROKER1_KEY]) {
+      const broker1Name = broker1Mapping[formData.BROKER1_KEY];
+      setFormData(prev => ({ ...prev, Broker1: broker1Name }));
+    }
+
+    if (formData.SALEPERSON1_KEY && salesperson1Mapping[formData.SALEPERSON1_KEY]) {
+      const salesperson1Name = salesperson1Mapping[formData.SALEPERSON1_KEY];
+      setFormData(prev => ({ ...prev, SALESPERSON_1: salesperson1Name }));
+    }
+
+    if (formData.SALEPERSON2_KEY && salesperson2Mapping[formData.SALEPERSON2_KEY]) {
+      const salesperson2Name = salesperson2Mapping[formData.SALEPERSON2_KEY];
+      setFormData(prev => ({ ...prev, SALESPERSON_2: salesperson2Name }));
+    }
+
+    if (formData.DISTBTR_KEY && consigneeMapping[formData.DISTBTR_KEY]) {
+      const consigneeName = consigneeMapping[formData.DISTBTR_KEY];
+      setFormData(prev => ({ ...prev, CONSIGNEE: consigneeName }));
+    }
+
+    if (formData.CURR_SEASON_KEY && seasonMapping[formData.CURR_SEASON_KEY]) {
+      const seasonName = seasonMapping[formData.CURR_SEASON_KEY];
+      setFormData(prev => ({ ...prev, SEASON: seasonName }));
+    }
+
+    if (formData.TRSP_KEY && transporterMapping[formData.TRSP_KEY]) {
+      const transporterName = transporterMapping[formData.TRSP_KEY];
+      setFormData(prev => ({ ...prev, Transporter: transporterName }));
+    }
+
+    if (formData.SHP_PARTY_KEY && partyMapping[formData.SHP_PARTY_KEY]) {
+      const shippingPartyName = partyMapping[formData.SHP_PARTY_KEY];
+      setFormData(prev => ({ ...prev, SHIPPING_PARTY: shippingPartyName }));
+    }
+
+  }, [
+    formData.PARTY_KEY, formData.BROKER_KEY, formData.BROKER1_KEY, 
+    formData.SALEPERSON1_KEY, formData.SALEPERSON2_KEY, formData.DISTBTR_KEY,
+    formData.CURR_SEASON_KEY, formData.TRSP_KEY, formData.SHP_PARTY_KEY,
+    partyMapping, brokerMapping, broker1Mapping, salesperson1Mapping, 
+    salesperson2Mapping, consigneeMapping, seasonMapping, transporterMapping
+  ]);
 
   // Helper function to parse date from string
   const parseDateFromString = (dateString) => {
@@ -356,21 +451,120 @@ const Stepper1 = ({
     }));
   };
 
-  const handleAutoCompleteChange = (name, value) => {
+
+
+// Add these auto-population effects in Stepper1.js
+useEffect(() => {
+  // Auto-populate shipping party when party is selected
+  if (formData.Party && !formData.SHIPPING_PARTY) {
+    setFormData(prev => ({
+      ...prev,
+      SHIPPING_PARTY: formData.Party,
+      SHP_PARTY_KEY: formData.PARTY_KEY // Also set the key
+    }));
+  }
+}, [formData.Party]);
+
+useEffect(() => {
+  // Auto-populate shipping place when branch is selected  
+  if (formData.Branch && !formData.SHIPPING_PLACE) {
+    setFormData(prev => ({
+      ...prev,
+      SHIPPING_PLACE: formData.Branch
+    }));
+  }
+}, [formData.Branch]);
+
+// Enhanced handleAutoCompleteChange function
+const handleAutoCompleteChange = (name, value) => {
+  setFormData(prev => ({
+    ...prev,
+    [name]: value
+  }));
+
+  // If party is selected, fetch branches and auto-select shipping party
+  if (name === "Party" && value && partyMapping[value]) {
+    const partyKey = partyMapping[value];
+    fetchPartyDetails(partyKey);
+    setFormData(prev => ({
+      ...prev,
+      PARTY_KEY: partyKey,
+      Party: value,
+      SHIPPING_PARTY: value, // Auto-populate shipping party
+      SHP_PARTY_KEY: partyKey, // Set shipping party key same as party key
+      SHP_PARTYDTL_ID: prev.PARTYDTL_ID // Set shipping party detail ID same as branch ID
+    }));
+  }
+
+  // If branch is selected, auto-select shipping place
+  if (name === "Branch" && value) {
+    const branchId = branchMapping[value];
+    setFormData(prev => ({
+      ...prev,
+      PARTYDTL_ID: branchId,
+      Branch: value,
+      SHIPPING_PLACE: value,
+      SHP_PARTYDTL_ID: branchId 
+    }));
+  }
+
+  // Update corresponding key fields for other dropdowns
+  const keyMappings = {
+    "Broker": ["BROKER_KEY", brokerMapping],
+    "Broker1": ["BROKER1_KEY", broker1Mapping], 
+    "SALESPERSON_1": ["SALEPERSON1_KEY", salesperson1Mapping],
+    "SALESPERSON_2": ["SALEPERSON2_KEY", salesperson2Mapping],
+    "CONSIGNEE": ["DISTBTR_KEY", consigneeMapping],
+    "SEASON": ["CURR_SEASON_KEY", seasonMapping],
+    "Transporter": ["TRSP_KEY", transporterMapping]
+  };
+
+  if (keyMappings[name] && value) {
+    const [keyField, mapping] = keyMappings[name];
+    if (mapping[value]) {
+      setFormData(prev => ({
+        ...prev,
+        [keyField]: mapping[value]
+      }));
+    }
+  }
+};
+
+  const handleShippingPartyChange = (name, value) => {
     setFormData(prev => ({
       ...prev,
       [name]: value
     }));
 
-    // If party is selected, fetch branches
-    if (name === "Party" && value && partyMapping[value]) {
+    // If shipping party is selected, fetch its branches for shipping place
+    if (name === "SHIPPING_PARTY" && value && partyMapping[value]) {
       const partyKey = partyMapping[value];
-      fetchPartyDetails(partyKey);
       setFormData(prev => ({
         ...prev,
-        PARTY_KEY: partyKey,
-        Party: value
+        SHP_PARTY_KEY: partyKey
       }));
+      // Fetch branches for the selected shipping party
+      fetchShippingPartyDetails(partyKey);
+    }
+  };
+
+  // Fetch branches for shipping party
+  const fetchShippingPartyDetails = async (partyKey) => {
+    if (!partyKey) return;
+    
+    try {
+      const response = await axiosInstance.post("Party/GetPartyDtlDrp", {
+        PARTY_KEY: partyKey
+      });
+      if (response.data.STATUS === 0 && Array.isArray(response.data.DATA)) {
+        const branches = response.data.DATA.map(item => item.PLACE || '');
+        setShippingPlaceOptions(branches);
+      } else {
+        setShippingPlaceOptions([]);
+      }
+    } catch (error) {
+      console.error("Error fetching shipping party details:", error);
+      setShippingPlaceOptions([]);
     }
   };
 
@@ -418,7 +612,7 @@ const Stepper1 = ({
           }}
         >
           <Box sx={{ display: 'flex', alignItems: 'center', width: { xs: '100%', sm: '48%', md: '25%' } }}>
-            
+            <FormLabel sx={{ margin: '7px 14px 0px 10px', fontSize: '12px', fontWeight: 'bold', color: 'black' }} component="legend">Main Details</FormLabel>
             <RadioGroup
               row
               name="MAIN_DETAILS"
@@ -728,20 +922,21 @@ const Stepper1 = ({
               }}
             />
           </Box>
-          <Box sx={{ width: { xs: '100%', sm: '20%', md: '20.6%' } }}>
-            <TextField
-              label="Shipping Party"
-              variant="filled"
-              fullWidth
-              onChange={handleInputChange}
-              value={formData.SHIPPING_PARTY || ""}
+         <Box sx={{ width: { xs: '100%', sm: '20%', md: '20.6%' } }}>
+            <AutoVibe
+              id="SHIPPING_PARTY"
               disabled={isFormDisabled}
+              getOptionLabel={(option) => option || ''}
+              options={shippingPartyOptions}
+              label="Shipping Party"
               name="SHIPPING_PARTY"
-              sx={textInputSx}
+              value={formData.SHIPPING_PARTY || ""}
+              onChange={(event, value) => handleShippingPartyChange("SHIPPING_PARTY", value)}
+              sx={DropInputSx}
               inputProps={{
                 style: {
                   padding: '6px 8px',
-                  fontSize: '12px'
+                  fontSize: '12px',
                 },
               }}
             />
@@ -812,20 +1007,21 @@ const Stepper1 = ({
               }}
             />
           </Box>
-          <Box sx={{ width: { xs: "100%", sm: "20%", md: "20.5%" } }}>
-            <TextField
-              label="Shipping Place"
-              variant="filled"
-              fullWidth
-              onChange={handleInputChange}
-              value={formData.SHIPPING_PLACE || ""}
+         <Box sx={{ width: { xs: "100%", sm: "20%", md: "20.5%" } }}>
+            <AutoVibe
+              id="SHIPPING_PLACE"
               disabled={isFormDisabled}
+              getOptionLabel={(option) => option || ''}
+              options={shippingPlaceOptions}
+              label="Shipping Place"
               name="SHIPPING_PLACE"
-              sx={textInputSx}
+              value={formData.SHIPPING_PLACE || ""}
+              onChange={(event, value) => handleAutoCompleteChange("SHIPPING_PLACE", value)}
+              sx={DropInputSx}
               inputProps={{
                 style: {
                   padding: '6px 8px',
-                  fontSize: '12px'
+                  fontSize: '12px',
                 },
               }}
             />
@@ -899,7 +1095,7 @@ const Stepper1 = ({
               id="Transporter"
               disabled={isFormDisabled}
               getOptionLabel={(option) => option || ''}
-              options={[]}
+              options={transporterOptions}
               label="Transporter"
               name="Transporter"
               value={formData.Transporter || ""}
@@ -1113,7 +1309,7 @@ const Stepper1 = ({
           </Box>
           <Box sx={{ width: { xs: '100%', sm: '20%', md: '15.1%' } }}>
             <TextField
-              label="E-ASM1[Brijnandan Kumar]"
+              label="E-ASM1"
               variant="filled"
               fullWidth
               onChange={handleInputChange}
