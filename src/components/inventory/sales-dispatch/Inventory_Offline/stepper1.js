@@ -30,6 +30,7 @@ const Stepper1 = ({
   mode, 
   onSubmit, 
   onCancel,
+  showValidationErrors, 
   // Receive mappings as props
   partyMapping,
   branchMapping,
@@ -48,7 +49,8 @@ const Stepper1 = ({
   setSalesperson2Mapping,
   setConsigneeMapping,
   setSeasonMapping,
-  setTransporterMapping
+  setTransporterMapping,
+  showSnackbar
 }) => {
   const [selectedDate, setSelectedDate] = useState(null);
   
@@ -64,6 +66,7 @@ const Stepper1 = ({
   const [transporterOptions, setTransporterOptions] = useState([]);
   const [shippingPartyOptions, setShippingPartyOptions] = useState([]);
   const [shippingPlaceOptions, setShippingPlaceOptions] = useState([]);
+  
 
   const textInputSx = {
     '& .MuiInputBase-root': {
@@ -162,7 +165,6 @@ const Stepper1 = ({
         const transporters = response.data.DATA.map(item => item.TRSP_NAME || '');
         setTransporterOptions(transporters);
         
-        // Create mapping for TRSP_NAME to TRSP_KEY
         const mapping = {};
         response.data.DATA.forEach(item => {
           if (item.TRSP_NAME && item.TRSP_KEY) {
@@ -176,7 +178,7 @@ const Stepper1 = ({
     }
   };
 
-  // Fetch Party Data (Updated to also set shipping party options)
+  // Fetch Party Data
   const fetchPartiesByName = async (name = "") => {
     try {
       const response = await axiosInstance.post("Party/GetParty_By_Name", {
@@ -185,9 +187,8 @@ const Stepper1 = ({
       if (response.data.STATUS === 0 && Array.isArray(response.data.DATA)) {
         const parties = response.data.DATA.map(item => item.PARTY_NAME || '');
         setPartyOptions(parties);
-        setShippingPartyOptions(parties); // Set shipping party options same as parties
+        setShippingPartyOptions(parties);
         
-        // Create mapping for PARTY_NAME to PARTY_KEY
         const mapping = {};
         response.data.DATA.forEach(item => {
           if (item.PARTY_NAME && item.PARTY_KEY) {
@@ -206,7 +207,7 @@ const Stepper1 = ({
     }
   };
 
-  // Fetch Party Branches (Updated to also set shipping place options)
+  // Fetch Party Branches
   const fetchPartyDetails = async (partyKey) => {
     if (!partyKey) return;
     
@@ -217,9 +218,8 @@ const Stepper1 = ({
       if (response.data.STATUS === 0 && Array.isArray(response.data.DATA)) {
         const branches = response.data.DATA.map(item => item.PLACE || '');
         setBranchOptions(branches);
-        setShippingPlaceOptions(branches); // Set shipping place options same as branches
+        setShippingPlaceOptions(branches);
         
-        // Create mapping for PLACE to PARTYDTL_ID
         const mapping = {};
         response.data.DATA.forEach(item => {
           if (item.PLACE && item.PARTYDTL_ID) {
@@ -332,7 +332,7 @@ const Stepper1 = ({
     }
   };
 
-  // Fetch Season Data - IMPROVED VERSION
+  // Fetch Season Data
   const fetchSeasonData = async () => {
     try {
       const payload = {
@@ -373,7 +373,30 @@ const Stepper1 = ({
     fetchTransporterData();
   }, []);
 
-  // Load data when formData changes (for edit mode) - IMPROVED VERSION
+  // Auto-population effects
+  useEffect(() => {
+    // Auto-populate shipping party when party is selected
+    if (formData.Party && !formData.SHIPPING_PARTY) {
+      setFormData(prev => ({
+        ...prev,
+        SHIPPING_PARTY: formData.Party,
+        SHP_PARTY_KEY: formData.PARTY_KEY
+      }));
+    }
+  }, [formData.Party]);
+
+  useEffect(() => {
+    // Auto-populate shipping place when branch is selected  
+    if (formData.Branch && !formData.SHIPPING_PLACE) {
+      setFormData(prev => ({
+        ...prev,
+        SHIPPING_PLACE: formData.Branch,
+        SHP_PARTYDTL_ID: formData.PARTYDTL_ID
+      }));
+    }
+  }, [formData.Branch]);
+
+  // Load data when formData changes (for edit mode)
   useEffect(() => {
     if (formData.PARTY_KEY && partyMapping[formData.PARTY_KEY]) {
       const partyName = partyMapping[formData.PARTY_KEY];
@@ -388,7 +411,7 @@ const Stepper1 = ({
 
     if (formData.BROKER1_KEY && broker1Mapping[formData.BROKER1_KEY]) {
       const broker1Name = broker1Mapping[formData.BROKER1_KEY];
-      setFormData(prev => ({ ...prev, Broker1: broker1Name }));
+      setFormData(prev => ({ ...prev, BROKER1: broker1Name }));
     }
 
     if (formData.SALEPERSON1_KEY && salesperson1Mapping[formData.SALEPERSON1_KEY]) {
@@ -421,12 +444,17 @@ const Stepper1 = ({
       setFormData(prev => ({ ...prev, SHIPPING_PARTY: shippingPartyName }));
     }
 
+    if (formData.SHP_PARTYDTL_ID && branchMapping[formData.SHP_PARTYDTL_ID]) {
+      const shippingPlaceName = branchMapping[formData.SHP_PARTYDTL_ID];
+      setFormData(prev => ({ ...prev, SHIPPING_PLACE: shippingPlaceName }));
+    }
+
   }, [
     formData.PARTY_KEY, formData.BROKER_KEY, formData.BROKER1_KEY, 
     formData.SALEPERSON1_KEY, formData.SALEPERSON2_KEY, formData.DISTBTR_KEY,
-    formData.CURR_SEASON_KEY, formData.TRSP_KEY, formData.SHP_PARTY_KEY,
+    formData.CURR_SEASON_KEY, formData.TRSP_KEY, formData.SHP_PARTY_KEY, formData.SHP_PARTYDTL_ID,
     partyMapping, brokerMapping, broker1Mapping, salesperson1Mapping, 
-    salesperson2Mapping, consigneeMapping, seasonMapping, transporterMapping
+    salesperson2Mapping, consigneeMapping, seasonMapping, transporterMapping, branchMapping
   ]);
 
   // Helper function to parse date from string
@@ -451,84 +479,60 @@ const Stepper1 = ({
     }));
   };
 
-
-
-// Add these auto-population effects in Stepper1.js
-useEffect(() => {
-  // Auto-populate shipping party when party is selected
-  if (formData.Party && !formData.SHIPPING_PARTY) {
+  // Enhanced handleAutoCompleteChange function
+  const handleAutoCompleteChange = (name, value) => {
     setFormData(prev => ({
       ...prev,
-      SHIPPING_PARTY: formData.Party,
-      SHP_PARTY_KEY: formData.PARTY_KEY // Also set the key
+      [name]: value
     }));
-  }
-}, [formData.Party]);
 
-useEffect(() => {
-  // Auto-populate shipping place when branch is selected  
-  if (formData.Branch && !formData.SHIPPING_PLACE) {
-    setFormData(prev => ({
-      ...prev,
-      SHIPPING_PLACE: formData.Branch
-    }));
-  }
-}, [formData.Branch]);
-
-// Enhanced handleAutoCompleteChange function
-const handleAutoCompleteChange = (name, value) => {
-  setFormData(prev => ({
-    ...prev,
-    [name]: value
-  }));
-
-  // If party is selected, fetch branches and auto-select shipping party
-  if (name === "Party" && value && partyMapping[value]) {
-    const partyKey = partyMapping[value];
-    fetchPartyDetails(partyKey);
-    setFormData(prev => ({
-      ...prev,
-      PARTY_KEY: partyKey,
-      Party: value,
-      SHIPPING_PARTY: value, // Auto-populate shipping party
-      SHP_PARTY_KEY: partyKey, // Set shipping party key same as party key
-      SHP_PARTYDTL_ID: prev.PARTYDTL_ID // Set shipping party detail ID same as branch ID
-    }));
-  }
-
-  // If branch is selected, auto-select shipping place
-  if (name === "Branch" && value) {
-    const branchId = branchMapping[value];
-    setFormData(prev => ({
-      ...prev,
-      PARTYDTL_ID: branchId,
-      Branch: value,
-      SHIPPING_PLACE: value,
-      SHP_PARTYDTL_ID: branchId 
-    }));
-  }
-
-  // Update corresponding key fields for other dropdowns
-  const keyMappings = {
-    "Broker": ["BROKER_KEY", brokerMapping],
-    "Broker1": ["BROKER1_KEY", broker1Mapping], 
-    "SALESPERSON_1": ["SALEPERSON1_KEY", salesperson1Mapping],
-    "SALESPERSON_2": ["SALEPERSON2_KEY", salesperson2Mapping],
-    "CONSIGNEE": ["DISTBTR_KEY", consigneeMapping],
-    "SEASON": ["CURR_SEASON_KEY", seasonMapping],
-    "Transporter": ["TRSP_KEY", transporterMapping]
-  };
-
-  if (keyMappings[name] && value) {
-    const [keyField, mapping] = keyMappings[name];
-    if (mapping[value]) {
+    // If party is selected, fetch branches and auto-select shipping party
+    if (name === "Party" && value && partyMapping[value]) {
+      const partyKey = partyMapping[value];
+      fetchPartyDetails(partyKey);
       setFormData(prev => ({
         ...prev,
-        [keyField]: mapping[value]
+        PARTY_KEY: partyKey,
+        Party: value,
+        SHIPPING_PARTY: value, // Auto-populate shipping party
+        SHP_PARTY_KEY: partyKey, // Set shipping party key same as party key
+        // Don't auto-set SHP_PARTYDTL_ID here, wait for branch selection
       }));
     }
-  }
-};
+
+    // If branch is selected, auto-select shipping place
+    if (name === "Branch" && value) {
+      const branchId = branchMapping[value];
+      setFormData(prev => ({
+        ...prev,
+        PARTYDTL_ID: branchId,
+        Branch: value,
+        SHIPPING_PLACE: value,
+        SHP_PARTYDTL_ID: branchId 
+      }));
+    }
+
+    // Update corresponding key fields for other dropdowns
+    const keyMappings = {
+      "Broker": ["BROKER_KEY", brokerMapping],
+      "BROKER1": ["BROKER1_KEY", broker1Mapping], 
+      "SALESPERSON_1": ["SALEPERSON1_KEY", salesperson1Mapping],
+      "SALESPERSON_2": ["SALEPERSON2_KEY", salesperson2Mapping],
+      "CONSIGNEE": ["DISTBTR_KEY", consigneeMapping],
+      "SEASON": ["CURR_SEASON_KEY", seasonMapping],
+      "Transporter": ["TRSP_KEY", transporterMapping]
+    };
+
+    if (keyMappings[name] && value) {
+      const [keyField, mapping] = keyMappings[name];
+      if (mapping[value]) {
+        setFormData(prev => ({
+          ...prev,
+          [keyField]: mapping[value]
+        }));
+      }
+    }
+  };
 
   const handleShippingPartyChange = (name, value) => {
     setFormData(prev => ({
@@ -559,6 +563,15 @@ const handleAutoCompleteChange = (name, value) => {
       if (response.data.STATUS === 0 && Array.isArray(response.data.DATA)) {
         const branches = response.data.DATA.map(item => item.PLACE || '');
         setShippingPlaceOptions(branches);
+        
+        // Update branch mapping for shipping party
+        const mapping = {};
+        response.data.DATA.forEach(item => {
+          if (item.PLACE && item.PARTYDTL_ID) {
+            mapping[item.PLACE] = item.PARTYDTL_ID;
+          }
+        });
+        setBranchMapping(prev => ({ ...prev, ...mapping }));
       } else {
         setShippingPlaceOptions([]);
       }
@@ -593,6 +606,27 @@ const handleAutoCompleteChange = (name, value) => {
     }
   };
 
+ const getFieldError = (fieldName) => {
+    if (!showValidationErrors) return '';
+    
+    const requiredFields = {
+      'Party': 'Party',
+      // 'ORDER_DATE': 'Order Date', 
+      'SEASON': 'Season',
+      'CONSIGNEE': 'Consignee',
+      'Broker': 'Broker',
+      'BROKER1': 'Broker1',
+      'SALESPERSON_1': 'Salesperson 1',
+      'SALESPERSON_2': 'Salesperson 2',
+      // 'DLV_DT': 'Delivery Date'
+    };
+
+    if (requiredFields[fieldName] && !formData[fieldName]) {
+      return `${requiredFields[fieldName]} is required`;
+    }
+    return '';
+  };
+
   return (
     <Box>
       <Box
@@ -612,7 +646,7 @@ const handleAutoCompleteChange = (name, value) => {
           }}
         >
           <Box sx={{ display: 'flex', alignItems: 'center', width: { xs: '100%', sm: '48%', md: '25%' } }}>
-            <FormLabel sx={{ margin: '7px 14px 0px 10px', fontSize: '12px', fontWeight: 'bold', color: 'black' }} component="legend">Main Details</FormLabel>
+            
             <RadioGroup
               row
               name="MAIN_DETAILS"
@@ -636,7 +670,7 @@ const handleAutoCompleteChange = (name, value) => {
             </RadioGroup>
           </Box>
 
-          <Box sx={{ display: 'flex', alignItems: 'center', width: { xs: '100%', sm: '48%', md: '25%' } }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', width: { xs: '100%', sm: '48%', md: '50%' } }}>
             <FormLabel sx={{ margin: '7px 14px 0px 10px', fontSize: '12px', fontWeight: 'bold', color: 'black' }} component="legend">GST Appl.</FormLabel>
             <RadioGroup
               row
@@ -658,8 +692,21 @@ const handleAutoCompleteChange = (name, value) => {
                 control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
                 label={<Typography sx={{ fontSize: '12px' }}>No</Typography>} 
               />
+              <FormControlLabel 
+                disabled={isFormDisabled}
+                value="Y" 
+                control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
+                label={<Typography sx={{ fontSize: '12px' }}>State(CGST & SGST)</Typography>} 
+              />
+              <FormControlLabel 
+                disabled={isFormDisabled}
+                value="N" 
+                control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
+                label={<Typography sx={{ fontSize: '12px' }}>IGST</Typography>} 
+              />
             </RadioGroup>
           </Box>
+          
         </Box>
 
         {/* Series, Last Ord No, Order No, Date Row */}
@@ -668,7 +715,7 @@ const handleAutoCompleteChange = (name, value) => {
           flexDirection: { xs: 'column', sm: 'row', md: 'row' },
           gap: { xs: 1, sm: 1, md: 2 }
         }}>
-          <Box sx={{ width: { xs: '100%', sm: '20%', md: '33.5%' } }}>
+          <Box sx={{ width: { xs: '100%', sm: '20%', md: '5%' } }}>
             <TextField
               label="Series"
               variant="filled"
@@ -686,7 +733,26 @@ const handleAutoCompleteChange = (name, value) => {
               }}
             />
           </Box>
-          <Box sx={{ width: { xs: '100%', sm: '20%', md: '20.5%' } }}>
+           <Box sx={{ width: { xs: '100%', sm: '20%', md: '14%' } }}>
+            <AutoVibe
+              id="Order Type"
+              disabled={isFormDisabled}
+              getOptionLabel={(option) => option || ''}
+              options={seasonOptions}
+              label="Order_Type"
+              name="Order_Type"
+              value={formData.Order_Type || ""}
+              onChange={(event, value) => handleAutoCompleteChange("Order_Type", value)}
+              sx={DropInputSx}
+              inputProps={{
+                style: {
+                  padding: '6px 8px',
+                  fontSize: '12px',
+                },
+              }}
+            />
+          </Box>
+          <Box sx={{ width: { xs: '100%', sm: '20%', md: '20%' } }}>
             <TextField
               label="Last Ord No"
               variant="filled"
@@ -704,7 +770,7 @@ const handleAutoCompleteChange = (name, value) => {
               }}
             />
           </Box>
-          <Box sx={{ width: { xs: '100%', sm: '20%', md: '20.5%' } }}>
+          <Box sx={{ width: { xs: '100%', sm: '20%', md: '20%' } }}>
             <TextField
               label="Order No"
               variant="filled"
@@ -722,39 +788,7 @@ const handleAutoCompleteChange = (name, value) => {
               }}
             />
           </Box>
-
-          <Box sx={{ width: { xs: "100%", sm: "20%", md: "20.5%" } }}>
-            <LocalizationProvider dateAdapter={AdapterDateFns}>
-              <DatePicker
-                label="Order Date"
-                value={parseDateFromString(formData.ORDER_DATE)}
-                onChange={(date) => handleDateChange(date, "ORDER_DATE")}
-                format="dd/MM/yyyy"
-                disabled={isFormDisabled}
-                slotProps={{
-                  textField: {
-                    fullWidth: true,
-                    variant: "filled",
-                    sx: datePickerSx,
-                    InputProps: {
-                      sx: {
-                        height: "32px",
-                      },
-                    },
-                  },
-                }}
-              />
-            </LocalizationProvider>
-          </Box>
-        </Box>
-
-        {/* Party Ord No, Season, Order Ref Date, Enq No, Manual WSP Row */}
-        <Box sx={{
-          display: 'flex',
-          flexDirection: { xs: 'column', sm: 'row', md: 'row' },
-          gap: { xs: 1, sm: 1.5, md: 2 }
-        }}>
-          <Box sx={{ width: { xs: '100%', sm: '20%', md: '17%' } }}>
+          <Box sx={{ width: { xs: '100%', sm: '20%', md: '20%' } }}>
             <TextField
               label="Party Ord No"
               variant="filled"
@@ -772,7 +806,46 @@ const handleAutoCompleteChange = (name, value) => {
               }}
             />
           </Box>
-          <Box sx={{ width: { xs: '100%', sm: '20%', md: '15.1%' } }}>
+
+          <Box sx={{ width: { xs: "100%", sm: "20%", md: "15%" } }}>
+            <LocalizationProvider dateAdapter={AdapterDateFns}>
+              <DatePicker
+                label="Order Date"
+                value={parseDateFromString(formData.ORDER_DATE)}
+                onChange={(date) => handleDateChange(date, "ORDER_DATE")}
+                format="dd/MM/yyyy"
+                disabled={isFormDisabled}
+                slotProps={{
+                  textField: {
+                    fullWidth: true,
+                    variant: "filled",
+                    sx: datePickerSx,
+                    InputProps: {
+                      sx: {
+                        ...datePickerSx,
+          '& .MuiFilledInput-root': {
+            border: getFieldError('ORDER_DATE') ? '1px solid #f44336' : '1px solid #e0e0e0',
+          },
+                        height: "32px",
+                      },
+                    },
+                    error: !!getFieldError('ORDER_DATE'),
+                    helperText: getFieldError('ORDER_DATE')
+                  },
+                }}
+              />
+            </LocalizationProvider>
+          </Box>
+        </Box>
+
+        {/* Party Ord No, Season, Order Ref Date, Enq No, Manual WSP Row */}
+        <Box sx={{
+          display: 'flex',
+          flexDirection: { xs: 'column', sm: 'row', md: 'row' },
+          gap: { xs: 1, sm: 1.5, md: 2 }
+        }}>
+          
+          <Box sx={{ width: { xs: '100%', sm: '20%', md: '20%' } }}>
             <AutoVibe
               id="SEASON"
               disabled={isFormDisabled}
@@ -789,9 +862,11 @@ const handleAutoCompleteChange = (name, value) => {
                   fontSize: '12px',
                 },
               }}
+              error={!!getFieldError('SEASON')}
+              helperText={getFieldError('SEASON')}
             />
           </Box>
-          <Box sx={{ width: { xs: "100%", sm: "20%", md: "20.5%" } }}>
+          <Box sx={{ width: { xs: "100%", sm: "20%", md: "20%" } }}>
             <LocalizationProvider dateAdapter={AdapterDateFns}>
               <DatePicker
                 label="Ord Ref Dt"
@@ -814,7 +889,7 @@ const handleAutoCompleteChange = (name, value) => {
               />
             </LocalizationProvider>
           </Box>
-          <Box sx={{ width: { xs: '100%', sm: '20%', md: '20.6%' } }}>
+          <Box sx={{ width: { xs: '100%', sm: '20%', md: '20%' } }}>
             <TextField
               label="Enq No"
               variant="filled"
@@ -832,7 +907,7 @@ const handleAutoCompleteChange = (name, value) => {
               }}
             />
           </Box>
-          <Box sx={{ width: { xs: "100%", sm: "20%", md: "20.5%" } }}>
+          <Box sx={{ width: { xs: "100%", sm: "20%", md: "20%" } }}>
             <LocalizationProvider dateAdapter={AdapterDateFns}>
               <DatePicker
                 label="Delivery Date"
@@ -847,13 +922,38 @@ const handleAutoCompleteChange = (name, value) => {
                     sx: datePickerSx,
                     InputProps: {
                       sx: {
+                                     ...datePickerSx,
+          '& .MuiFilledInput-root': {
+            border: getFieldError('DLV_DT') ? '1px solid #f44336' : '1px solid #e0e0e0',
+          },
                         height: "32px",
                       },
                     },
+                    error: !!getFieldError('DLV_DT'),
+                    helperText: getFieldError('DLV_DT')
                   },
                 }}
               />
             </LocalizationProvider>
+          </Box>
+          
+          <Box sx={{ width: { xs: "100%", sm: "20%", md: "15%" } }}>
+            <TextField
+              label="Quote No"
+              variant="filled"
+              fullWidth
+              onChange={handleInputChange}
+              value={formData.QUOTE_NO || ""}
+              disabled={isFormDisabled}
+              name="QUOTE_NO"
+              sx={textInputSx}
+              inputProps={{
+                style: {
+                  padding: '6px 8px',
+                  fontSize: '12px'
+                },
+              }}
+            />
           </Box>
         </Box>
 
@@ -863,7 +963,7 @@ const handleAutoCompleteChange = (name, value) => {
           flexDirection: { xs: 'column', sm: 'row', md: 'row' },
           gap: { xs: 1, sm: 1.5, md: 2 }
         }}>
-          <Box sx={{ width: { xs: '100%', sm: '20%', md: '21.5%' }}}>
+          <Box sx={{ width: { xs: '100%', sm: '20%', md: '20%' }}}>
             <AutoVibe
               id="Party"
               disabled={isFormDisabled}
@@ -873,6 +973,34 @@ const handleAutoCompleteChange = (name, value) => {
               name="Party"
               value={formData.Party || ""}
               onChange={(event, value) => handleAutoCompleteChange("Party", value)}
+              sx={{
+    ...DropInputSx,
+    '& .MuiFilledInput-root': {
+      ...DropInputSx['& .MuiFilledInput-root'],
+      border: getFieldError('Party') ? '1px solid #f44336' : '1px solid #e0e0e0',
+    }
+  }}
+              inputProps={{
+                style: {
+                  padding: '6px 8px',
+                  fontSize: '12px',
+                },
+              }}
+              error={!!getFieldError('Party')}
+              helperText={getFieldError('Party')}
+            />
+          </Box>
+
+         <Box sx={{ width: { xs: '100%', sm: '20%', md: '20%' } }}>
+            <AutoVibe
+              id="SHIPPING_PARTY"
+              disabled={isFormDisabled}
+              getOptionLabel={(option) => option || ''}
+              options={shippingPartyOptions}
+              label="Shipping Party"
+              name="SHIPPING_PARTY"
+              value={formData.SHIPPING_PARTY || ""}
+              onChange={(event, value) => handleShippingPartyChange("SHIPPING_PARTY", value)}
               sx={DropInputSx}
               inputProps={{
                 style: {
@@ -882,6 +1010,50 @@ const handleAutoCompleteChange = (name, value) => {
               }}
             />
           </Box>
+        <Box sx={{ width: { xs: '100%', sm: '20%', md: '20%' } }}>
+            <TextField
+              label="Div Place"
+              variant="filled"
+              fullWidth
+              onChange={handleInputChange}
+              value={formData.DIV_PLACE || ""}
+              disabled={isFormDisabled}
+              name="DIV_PLACE"
+              sx={textInputSx}
+              inputProps={{
+                style: {
+                  padding: '6px 8px',
+                  fontSize: '12px'
+                },
+              }}
+            />
+          </Box>
+          <Box sx={{ width: { xs: '100%', sm: '20%', md: '36%' } }}>
+            <TextField
+              label="Address"
+              variant="filled"
+              fullWidth
+              onChange={handleInputChange}
+              value={formData.Address || ""}
+              disabled={isFormDisabled}
+              name="Address"
+              sx={textInputSx}
+              inputProps={{
+                style: {
+                  padding: '6px 8px',
+                  fontSize: '12px'
+                },
+              }}
+            />
+          </Box>
+        </Box>
+
+        {/* Div Place, A.R.Sales, Shipping Place, PriceList Row */}
+        <Box sx={{
+          display: 'flex',
+          flexDirection: { xs: 'column', sm: 'row', md: 'row' },
+          gap: { xs: 1, sm: 1.5, md: 2 }
+        }}>
 
           <Box sx={{ width: { xs: '100%', sm: '20%', md: '20%' }}}>
             <AutoVibe
@@ -902,112 +1074,9 @@ const handleAutoCompleteChange = (name, value) => {
               }}
             />
           </Box>
-
           
-          <Box sx={{ width: { xs: "100%", sm: "20%", md: "22.5%" } }}>
-            <TextField
-              label="Quote No"
-              variant="filled"
-              fullWidth
-              onChange={handleInputChange}
-              value={formData.QUOTE_NO || ""}
-              disabled={isFormDisabled}
-              name="QUOTE_NO"
-              sx={textInputSx}
-              inputProps={{
-                style: {
-                  padding: '6px 8px',
-                  fontSize: '12px'
-                },
-              }}
-            />
-          </Box>
-         <Box sx={{ width: { xs: '100%', sm: '20%', md: '20.6%' } }}>
-            <AutoVibe
-              id="SHIPPING_PARTY"
-              disabled={isFormDisabled}
-              getOptionLabel={(option) => option || ''}
-              options={shippingPartyOptions}
-              label="Shipping Party"
-              name="SHIPPING_PARTY"
-              value={formData.SHIPPING_PARTY || ""}
-              onChange={(event, value) => handleShippingPartyChange("SHIPPING_PARTY", value)}
-              sx={DropInputSx}
-              inputProps={{
-                style: {
-                  padding: '6px 8px',
-                  fontSize: '12px',
-                },
-              }}
-            />
-          </Box>
-          <Box sx={{ width: { xs: '100%', sm: '20%', md: '15.1%' } }}>
-            <FormControlLabel
-              control={<Checkbox name="RACK_MIN" size="small" checked={formData.RACK_MIN === "1"}
-              onChange={handleChangeStatus} />}
-              disabled={isFormDisabled}
-              label="Rack_Min"
-              sx={{
-                '& .MuiFormControlLabel-label': { fontSize: '12px' }
-              }}
-            />
-          </Box>
-          <Box sx={{ width: { xs: '100%', sm: '20%', md: '20.6%' } }}>
-            <FormControlLabel
-              control={<Checkbox name="REGISTERED_DEALER" size="small" checked={formData.REGISTERED_DEALER === "1"}
-              onChange={handleChangeStatus} />}
-              disabled={isFormDisabled}
-              label="Registered Dealer"
-              sx={{
-                '& .MuiFormControlLabel-label': { fontSize: '12px' }
-              }}
-            />
-          </Box>
-        </Box>
-
-        {/* Div Place, A.R.Sales, Shipping Place, PriceList Row */}
-        <Box sx={{
-          display: 'flex',
-          flexDirection: { xs: 'column', sm: 'row', md: 'row' },
-          gap: { xs: 1, sm: 1.5, md: 2 }
-        }}>
-          <Box sx={{ width: { xs: '100%', sm: '20%', md: '17%' } }}>
-            <TextField
-              label="Div Place"
-              variant="filled"
-              fullWidth
-              onChange={handleInputChange}
-              value={formData.DIV_PLACE || ""}
-              disabled={isFormDisabled}
-              name="DIV_PLACE"
-              sx={textInputSx}
-              inputProps={{
-                style: {
-                  padding: '6px 8px',
-                  fontSize: '12px'
-                },
-              }}
-            />
-          </Box>
-          <Box sx={{ width: { xs: '100%', sm: '20%', md: '15.1%' } }}>
-            <TextField
-              label="A.R.Sales"
-              variant="filled"
-              fullWidth
-              onChange={handleInputChange}
-              value={formData.AR_SALES || ""}
-              disabled={isFormDisabled}
-              name="AR_SALES"
-              sx={textInputSx}
-              inputProps={{
-                style: {
-                  padding: '6px 8px',
-                  fontSize: '12px'
-                },
-              }}
-            />
-          </Box>
-         <Box sx={{ width: { xs: "100%", sm: "20%", md: "20.5%" } }}>
+          
+         <Box sx={{ width: { xs: "100%", sm: "20%", md: "20%" } }}>
             <AutoVibe
               id="SHIPPING_PLACE"
               disabled={isFormDisabled}
@@ -1026,7 +1095,7 @@ const handleAutoCompleteChange = (name, value) => {
               }}
             />
           </Box>
-          <Box sx={{ width: { xs: '100%', sm: '20%', md: '20.6%' } }}>
+          <Box sx={{ width: { xs: '100%', sm: '20%', md: '20%' } }}>
             <TextField
               label="PriceList"
               variant="filled"
@@ -1044,15 +1113,16 @@ const handleAutoCompleteChange = (name, value) => {
               }}
             />
           </Box>
-          <Box sx={{ width: { xs: '100%', sm: '20%', md: '20.6%' } }}>
+
+          <Box sx={{ width: { xs: '100%', sm: '20%', md: '20%' } }}>
             <TextField
-              label="May-2025"
+              label="Comm %"
               variant="filled"
               fullWidth
               onChange={handleInputChange}
-              value={formData.MAY_2025 || ""}
+              value={formData.Comm || ""}
               disabled={isFormDisabled}
-              name="MAY_2025"
+              name="Comm"
               sx={textInputSx}
               inputProps={{
                 style: {
@@ -1062,6 +1132,26 @@ const handleAutoCompleteChange = (name, value) => {
               }}
             />
           </Box>
+
+          <Box sx={{ width: { xs: '100%', sm: '20%', md: '15%' } }}>
+            <TextField
+              label="BOMNO"
+              variant="filled"
+              fullWidth
+              onChange={handleInputChange}
+              value={formData.BOMNO || ""}
+              disabled={isFormDisabled}
+              name="BOMNO"
+              sx={textInputSx}
+              inputProps={{
+                style: {
+                  padding: '6px 8px',
+                  fontSize: '12px'
+                },
+              }}
+            />
+          </Box>
+          
         </Box>
 
         {/* Broker Transporter, B-East-II, New Addr, Amount Row */}
@@ -1070,7 +1160,7 @@ const handleAutoCompleteChange = (name, value) => {
           flexDirection: { xs: 'column', sm: 'row', md: 'row' },
           gap: { xs: 1, sm: 1.5, md: 2 }
         }}>
-          <Box sx={{ width: { xs: '100%', sm: '20%', md: '17%' } }}>
+          <Box sx={{ width: { xs: '100%', sm: '20%', md: '20%' } }}>
             <AutoVibe
               id="Broker"
               disabled={isFormDisabled}
@@ -1080,17 +1170,25 @@ const handleAutoCompleteChange = (name, value) => {
               name="Broker"
               value={formData.Broker || ""}
               onChange={(event, value) => handleAutoCompleteChange("Broker", value)}
-              sx={DropInputSx}
+              sx={{
+    ...DropInputSx,
+    '& .MuiFilledInput-root': {
+      ...DropInputSx['& .MuiFilledInput-root'],
+      border: getFieldError('Broker') ? '1px solid #f44336' : '1px solid #e0e0e0',
+    }
+  }}
               inputProps={{
                 style: {
                   padding: '6px 8px',
                   fontSize: '12px',
                 },
               }}
+              error={!!getFieldError('Broker')}
+              helperText={getFieldError('Broker')}
             />
           </Box>
 
-          <Box sx={{ width: { xs: '100%', sm: '20%', md: '17%' } }}>
+          <Box sx={{ width: { xs: '100%', sm: '20%', md: '20%' } }}>
             <AutoVibe
               id="Transporter"
               disabled={isFormDisabled}
@@ -1110,43 +1208,7 @@ const handleAutoCompleteChange = (name, value) => {
             />
           </Box>
 
-          <Box sx={{ width: { xs: '100%', sm: '20%', md: '15.1%' } }}>
-            <TextField
-              label="B-East-II"
-              variant="filled"
-              fullWidth
-              onChange={handleInputChange}
-              value={formData.B_EAST_II || ""}
-              disabled={isFormDisabled}
-              name="B_EAST_II"
-              sx={textInputSx}
-              inputProps={{
-                style: {
-                  padding: '6px 8px',
-                  fontSize: '12px'
-                },
-              }}
-            />
-          </Box>
-          <Box sx={{ width: { xs: "100%", sm: "20%", md: "20.5%" } }}>
-            <TextField
-              label="New Addr"
-              variant="filled"
-              fullWidth
-              onChange={handleInputChange}
-              value={formData.NEW_ADDR || ""}
-              disabled={isFormDisabled}
-              name="NEW_ADDR"
-              sx={textInputSx}
-              inputProps={{
-                style: {
-                  padding: '6px 8px',
-                  fontSize: '12px'
-                },
-              }}
-            />
-          </Box>
-          <Box sx={{ width: { xs: '100%', sm: '20%', md: '20.6%' } }}>
+          <Box sx={{ width: { xs: '100%', sm: '20%', md: '20%' } }}>
             <TextField
               label="Amount"
               variant="filled"
@@ -1164,7 +1226,7 @@ const handleAutoCompleteChange = (name, value) => {
               }}
             />
           </Box>
-          <Box sx={{ width: { xs: '100%', sm: '20%', md: '20.6%' } }}>
+          <Box sx={{ width: { xs: '100%', sm: '20%', md: '20%' } }}>
             <TextField
               label="Gross Amount"
               variant="filled"
@@ -1182,6 +1244,24 @@ const handleAutoCompleteChange = (name, value) => {
               }}
             />
           </Box>
+           <Box sx={{ width: { xs: "100%", sm: "20%", md: "15%" } }}>
+            <TextField
+              label="Round Off(Net Amt)"
+              variant="filled"
+              fullWidth
+              onChange={handleInputChange}
+              value={formData.Net_Amt || ""}
+              disabled={isFormDisabled}
+              name="Net_Amt"
+              sx={textInputSx}
+              inputProps={{
+                style: {
+                  padding: '6px 8px',
+                  fontSize: '12px'
+                },
+              }}
+            />
+          </Box>
         </Box>
 
         {/* Gross Amt, All New, New Comm, 0.00 Row */}
@@ -1190,105 +1270,59 @@ const handleAutoCompleteChange = (name, value) => {
           flexDirection: { xs: 'column', sm: 'row', md: 'row' },
           gap: { xs: 1, sm: 1.5, md: 2 }
         }}>
-          <Box sx={{ width: { xs: '100%', sm: '20%', md: '17%' } }}>
-            <TextField
-              label="Gross Amt"
-              variant="filled"
-              fullWidth
-              onChange={handleInputChange}
-              value={formData.GROSS_AMT || ""}
-              disabled={isFormDisabled}
-              name="GROSS_AMT"
-              sx={textInputSx}
-              inputProps={{
-                style: {
-                  padding: '6px 8px',
-                  fontSize: '12px'
-                },
-              }}
-            />
-          </Box>
-          <Box sx={{ width: { xs: '100%', sm: '20%', md: '15.1%' } }}>
-            <TextField
-              label="All New"
-              variant="filled"
-              fullWidth
-              onChange={handleInputChange}
-              value={formData.ALL_NEW || ""}
-              disabled={isFormDisabled}
-              name="ALL_NEW"
-              sx={textInputSx}
-              inputProps={{
-                style: {
-                  padding: '6px 8px',
-                  fontSize: '12px'
-                },
-              }}
-            />
-          </Box>
-          <Box sx={{ width: { xs: "100%", sm: "20%", md: "20.5%" } }}>
-            <TextField
-              label="New Comm"
-              variant="filled"
-              fullWidth
-              onChange={handleInputChange}
-              value={formData.NEW_COMM || ""}
-              disabled={isFormDisabled}
-              name="NEW_COMM"
-              sx={textInputSx}
-              inputProps={{
-                style: {
-                  padding: '6px 8px',
-                  fontSize: '12px'
-                },
-              }}
-            />
-          </Box>
-          <Box sx={{ width: { xs: '100%', sm: '20%', md: '20.6%' } }}>
-            <TextField
-              label="0.00"
-              variant="filled"
-              fullWidth
-              onChange={handleInputChange}
-              value={formData.AMOUNT_2 || ""}
-              disabled={isFormDisabled}
-              name="AMOUNT_2"
-              sx={textInputSx}
-              inputProps={{
-                style: {
-                  padding: '6px 8px',
-                  fontSize: '12px'
-                },
-              }}
-            />
-          </Box>
-          <Box sx={{ width: { xs: '100%', sm: '20%', md: '20.6%' } }}>
-            <TextField
-              label="Net Amt"
-              variant="filled"
-              fullWidth
-              onChange={handleInputChange}
-              value={formData.NET_AMT || ""}
-              disabled={isFormDisabled}
-              name="NET_AMT"
-              sx={textInputSx}
-              inputProps={{
-                style: {
-                  padding: '6px 8px',
-                  fontSize: '12px'
-                },
-              }}
-            />
-          </Box>
-        </Box>
 
-        {/* Consignee, E-ASM1[Brijnandan Kumar], Broker1, 35486.00 Row */}
-        <Box sx={{
-          display: 'flex',
-          flexDirection: { xs: 'column', sm: 'row', md: 'row' },
-          gap: { xs: 1, sm: 1.5, md: 2 }
-        }}>
-          <Box sx={{ width: { xs: '100%', sm: '20%', md: '17%' } }}>
+          <Box sx={{ width: { xs: "100%", sm: "20%", md: "20%" } }}>
+            <AutoVibe
+              id="Broker1"
+              disabled={isFormDisabled}
+              getOptionLabel={(option) => option || ''}
+              options={broker1Options}
+              label="Broker1"
+              name="BROKER1"
+              value={formData.BROKER1 || ""}
+              onChange={(event, value) => handleAutoCompleteChange("BROKER1", value)}
+                       sx={{
+    ...DropInputSx,
+    '& .MuiFilledInput-root': {
+      ...DropInputSx['& .MuiFilledInput-root'],
+      border: getFieldError('Broker1') ? '1px solid #f44336' : '1px solid #e0e0e0',
+    }
+  }}
+              inputProps={{
+                style: {
+                  padding: '6px 8px',
+                  fontSize: '12px',
+                },
+              }}
+              error={!!getFieldError('BROKER1')}
+              helperText={getFieldError('BROKER1')}
+            />
+          </Box>
+        
+        <Box sx={{ width: { xs: "100%", sm: "20%", md: "20%" } }}>
+            <LocalizationProvider dateAdapter={AdapterDateFns}>
+              <DatePicker
+                label="Production Dt"
+                value={parseDateFromString(formData.ORD_REF_DT)}
+                onChange={(date) => handleDateChange(date, "ORD_REF_DT")}
+                format="dd/MM/yyyy"
+                disabled={isFormDisabled}
+                slotProps={{
+                  textField: {
+                    fullWidth: true,
+                    variant: "filled",
+                    sx: datePickerSx,
+                    InputProps: {
+                      sx: {
+                        height: "32px",
+                      },
+                    },
+                  },
+                }}
+              />
+            </LocalizationProvider>
+          </Box>
+         <Box sx={{ width: { xs: '100%', sm: '20%', md: '20%' } }}>
             <AutoVibe
               id="Consignee"
               disabled={isFormDisabled}
@@ -1305,36 +1339,44 @@ const handleAutoCompleteChange = (name, value) => {
                   fontSize: '12px',
                 },
               }}
+              error={!!getFieldError('CONSIGNEE')}
+              helperText={getFieldError('CONSIGNEE')}
             />
           </Box>
-          <Box sx={{ width: { xs: '100%', sm: '20%', md: '15.1%' } }}>
-            <TextField
-              label="E-ASM1"
-              variant="filled"
-              fullWidth
-              onChange={handleInputChange}
-              value={formData.E_ASM1 || ""}
-              disabled={isFormDisabled}
-              name="E_ASM1"
-              sx={textInputSx}
-              inputProps={{
-                style: {
-                  padding: '6px 8px',
-                  fontSize: '12px'
-                },
-              }}
-            />
+          <Box sx={{ width: { xs: "100%", sm: "20%", md: "20%" } }}>
+            <LocalizationProvider dateAdapter={AdapterDateFns}>
+              <DatePicker
+                label="Org Delivery Date"
+                value={parseDateFromString(formData.ORG_DIL_DT)}
+                onChange={(date) => handleDateChange(date, "ORG_DIL_DT")}
+                format="dd/MM/yyyy"
+                disabled={isFormDisabled}
+                slotProps={{
+                  textField: {
+                    fullWidth: true,
+                    variant: "filled",
+                    sx: datePickerSx,
+                    InputProps: {
+                      sx: {
+                        height: "32px",
+                      },
+                    },
+                  },
+                }}
+              />
+            </LocalizationProvider>
           </Box>
-          <Box sx={{ width: { xs: "100%", sm: "20%", md: "20.5%" } }}>
+
+           <Box sx={{ width: { xs: '100%', sm: '20%', md: '15%' } }}>
             <AutoVibe
-              id="Broker1"
+              id="ord_event"
               disabled={isFormDisabled}
               getOptionLabel={(option) => option || ''}
-              options={broker1Options}
-              label="Broker1"
-              name="Broker1"
-              value={formData.Broker1 || ""}
-              onChange={(event, value) => handleAutoCompleteChange("Broker1", value)}
+              options={[]}
+              label="Order Event"
+              name="ord_event"
+              value={formData.ord_event || ""}
+              onChange={(event, value) => handleAutoCompleteChange("ord_event", value)}
               sx={DropInputSx}
               inputProps={{
                 style: {
@@ -1344,42 +1386,7 @@ const handleAutoCompleteChange = (name, value) => {
               }}
             />
           </Box>
-          <Box sx={{ width: { xs: '100%', sm: '20%', md: '20.6%' } }}>
-            <TextField
-              label="Net Amount"
-              variant="filled"
-              fullWidth
-              onChange={handleInputChange}
-              value={formData.AMOUNT_3 || ""}
-              disabled={isFormDisabled}
-              name="AMOUNT_3"
-              sx={textInputSx}
-              inputProps={{
-                style: {
-                  padding: '6px 8px',
-                  fontSize: '12px'
-                },
-              }}
-            />
-          </Box>
-          <Box sx={{ width: { xs: '100%', sm: '20%', md: '20.6%' } }}>
-            <TextField
-              label="Currency"
-              variant="filled"
-              fullWidth
-              onChange={handleInputChange}
-              value={formData.CURRENCY || ""}
-              disabled={isFormDisabled}
-              name="CURRENCY"
-              sx={textInputSx}
-              inputProps={{
-                style: {
-                  padding: '6px 8px',
-                  fontSize: '12px'
-                },
-              }}
-            />
-          </Box>
+          
         </Box>
 
         {/* Salesperson 2, New, ... Email, Rupees Row */}
@@ -1388,7 +1395,7 @@ const handleAutoCompleteChange = (name, value) => {
           flexDirection: { xs: 'column', sm: 'row', md: 'row' },
           gap: { xs: 1, sm: 1.5, md: 2 }
         }}>
-          <Box sx={{ width: { xs: '100%', sm: '20%', md: '17%' } }}>
+          <Box sx={{ width: { xs: '100%', sm: '20%', md: '20%' } }}>
             <AutoVibe
               id="SALESPERSON_1"
               disabled={isFormDisabled}
@@ -1398,16 +1405,24 @@ const handleAutoCompleteChange = (name, value) => {
               name="SALESPERSON_1"
               value={formData.SALESPERSON_1 || ""}
               onChange={(event, value) => handleAutoCompleteChange("SALESPERSON_1", value)}
-              sx={DropInputSx}
+                                 sx={{
+    ...DropInputSx,
+    '& .MuiFilledInput-root': {
+      ...DropInputSx['& .MuiFilledInput-root'],
+      border: getFieldError('SALESPERSON_1') ? '1px solid #f44336' : '1px solid #e0e0e0',
+    }
+  }}
               inputProps={{
                 style: {
                   padding: '6px 8px',
                   fontSize: '12px',
                 },
               }}
+              error={!!getFieldError('SALESPERSON_1')}
+              helperText={getFieldError('SALESPERSON_1')}
             />
           </Box>
-          <Box sx={{ width: { xs: '100%', sm: '20%', md: '15.1%' } }}>
+          <Box sx={{ width: { xs: '100%', sm: '20%', md: '20%' } }}>
             <AutoVibe
               id="SALESPERSON_2"
               disabled={isFormDisabled}
@@ -1417,18 +1432,26 @@ const handleAutoCompleteChange = (name, value) => {
               name="SALESPERSON_2"
               value={formData.SALESPERSON_2 || ""}
               onChange={(event, value) => handleAutoCompleteChange("SALESPERSON_2", value)}
-              sx={DropInputSx}
+                                            sx={{
+    ...DropInputSx,
+    '& .MuiFilledInput-root': {
+      ...DropInputSx['& .MuiFilledInput-root'],
+      border: getFieldError('SALESPERSON_2') ? '1px solid #f44336' : '1px solid #e0e0e0',
+    }
+  }}
               inputProps={{
                 style: {
                   padding: '6px 8px',
                   fontSize: '12px',
                 },
               }}
+              error={!!getFieldError('SALESPERSON_2')}
+              helperText={getFieldError('SALESPERSON_2')}
             />
           </Box>
-          <Box sx={{ width: { xs: "100%", sm: "20%", md: "20.5%" } }}>
+          <Box sx={{ width: { xs: "100%", sm: "20%", md: "20%" } }}>
             <TextField
-              label="... Email"
+              label="Email"
               variant="filled"
               fullWidth
               onChange={handleInputChange}
@@ -1444,7 +1467,7 @@ const handleAutoCompleteChange = (name, value) => {
               }}
             />
           </Box>
-          <Box sx={{ width: { xs: '100%', sm: '20%', md: '20.6%' } }}>
+          <Box sx={{ width: { xs: '100%', sm: '20%', md: '20%' } }}>
             <TextField
               label="Currency"
               variant="filled"
@@ -1462,7 +1485,7 @@ const handleAutoCompleteChange = (name, value) => {
               }}
             />
           </Box>
-          <Box sx={{ width: { xs: '100%', sm: '20%', md: '20.6%' } }}>
+          <Box sx={{ width: { xs: '100%', sm: '20%', md: '15%' } }}>
             <TextField
               label="Ex Rate"
               variant="filled"
@@ -1488,9 +1511,28 @@ const handleAutoCompleteChange = (name, value) => {
           flexDirection: { xs: 'column', sm: 'row', md: 'row' },
           gap: { xs: 1, sm: 1.5, md: 2 }
         }}>
-          <Box sx={{ width: { xs: '100%', sm: '20%', md: '17%' } }}>
+          <Box sx={{ width: { xs: '100%', sm: '20%', md: '20%' } }}>
+            <AutoVibe
+              id="MERCHANDISER_ID"
+              disabled={isFormDisabled}
+              getOptionLabel={(option) => option || ''}
+              options={salesperson2Options}
+              label="MERCHANDISER"
+              name="MERCHANDISER"
+              value={formData.MERCHANDISER_ID || ""}
+              onChange={(event, value) => handleAutoCompleteChange("MERCHANDISER_ID", value)}
+              sx={DropInputSx}
+              inputProps={{
+                style: {
+                  padding: '6px 8px',
+                  fontSize: '12px',
+                },
+              }}
+            />
+          </Box>
+          <Box sx={{ width: { xs: '100%', sm: '20%', md: '20%' } }}>
             <TextField
-              label="Remark Status"
+              label="Remark"
               variant="filled"
               fullWidth
               onChange={handleInputChange}
@@ -1506,65 +1548,93 @@ const handleAutoCompleteChange = (name, value) => {
               }}
             />
           </Box>
-         
-          <Box sx={{ width: { xs: '100%', sm: '20%', md: '17%' } }}>
-            <TextField
-              label="Ex Rate"
-              variant="filled"
-              fullWidth
+
+      <Box sx={{ display: 'flex', alignItems: 'center', width: { xs: '100%', sm: '48%', md: '21%' } }}>
+            <FormLabel sx={{ margin: '7px 7px 0px 0px', fontSize: '14px', fontWeight: 'bold', color: 'black' }} component="legend">Delivery Shedule</FormLabel>
+            <RadioGroup
+              row
+              name="Delivery_Shedule"
               onChange={handleInputChange}
-              value={formData.EX_RATE_VALUE || ""}
               disabled={isFormDisabled}
-              name="EX_RATE_VALUE"
-              sx={textInputSx}
-              inputProps={{
-                style: {
-                  padding: '6px 8px',
-                  fontSize: '12px'
-                },
-              }}
-            />
+              value={formData.Delivery_Shedule || "Y"}
+              sx={{ margin: '5px 0px 0px 0px' }}
+            >
+              <FormControlLabel 
+                disabled={isFormDisabled}
+                value="comman" 
+                control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
+                label={<Typography sx={{ fontSize: '12px' }}>Comman</Typography>} 
+              />
+              <FormControlLabel 
+                disabled={isFormDisabled}
+                value="style" 
+                control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
+                label={<Typography sx={{ fontSize: '12px' }}>Style Wise</Typography>} 
+              />
+            </RadioGroup>
           </Box>
-          <Box sx={{ width: { xs: '100%', sm: '20%', md: '15.1%' } }}>
-            <AutoVibe
-              id="ord_event"
+
+      <Box sx={{ display: 'flex', alignItems: 'center', width: { xs: '100%', sm: '48%', md: '21%' } }}>
+            <FormLabel sx={{ margin: '7px 7px 0px 0px', fontSize: '14px', fontWeight: 'bold', color: 'black' }} component="legend">Order TNA</FormLabel>
+            <RadioGroup
+              row
+              name="Order_TNA"
+              onChange={handleInputChange}
               disabled={isFormDisabled}
-              getOptionLabel={(option) => option || ''}
-              options={[]}
-              label="Order Event"
-              name="ord_event"
-              value={formData.ord_event || ""}
-              onChange={(event, value) => handleAutoCompleteChange("ord_event", value)}
-              sx={DropInputSx}
-              inputProps={{
-                style: {
-                  padding: '6px 8px',
-                  fontSize: '12px',
-                },
-              }}
-            />
+              value={formData.Delivery_Shedule || "Y"}
+              sx={{ margin: '5px 0px 0px 0px' }}
+            >
+              <FormControlLabel 
+                disabled={isFormDisabled}
+                value="ItemWise" 
+                control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
+                label={<Typography sx={{ fontSize: '12px' }}>ItemWise</Typography>} 
+              />
+              <FormControlLabel 
+                disabled={isFormDisabled}
+                value="SizeWise" 
+                control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
+                label={<Typography sx={{ fontSize: '12px' }}>SizeWise</Typography>} 
+              />
+            </RadioGroup>
           </Box>
-           <Box sx={{ width: { xs: '100%', sm: '20%', md: '15.1%' } }}>
-            <FormControlLabel
-              control={<Checkbox name="SHORT_CLOSE" size="small" checked={formData.SHORT_CLOSE === "1"}
-              onChange={handleChangeStatus} />}
+        </Box>
+
+         <Box sx={{
+          display: 'flex',
+          flexDirection: { xs: 'column', sm: 'row', md: 'row' },
+          gap: { xs: 1, sm: 1.5, md: 2 }
+        }}>
+         
+         <Box sx={{ display: 'flex', alignItems: 'center', width: { xs: '100%', sm: '48%', md: '25%' } }}>
+            <FormLabel sx={{ margin: '7px 14px 0px 0px', fontSize: '14px', fontWeight: 'bold', color: 'black' }} component="legend">Status</FormLabel>
+            <RadioGroup
+              row
+              name="Status"
+              onChange={handleInputChange}
               disabled={isFormDisabled}
-              label="Short Close"
-              sx={{
-                '& .MuiFormControlLabel-label': { fontSize: '12px' }
-              }}
-            />
-          </Box>
-          <Box sx={{ width: { xs: "100%", sm: "20%", md: "20.5%" } }}>
-            <FormControlLabel
-              control={<Checkbox name="READY_SI" size="small" checked={formData.READY_SI === "1"}
-              onChange={handleChangeStatus} />}
-              disabled={isFormDisabled}
-              label="Ready_Si"
-              sx={{
-                '& .MuiFormControlLabel-label': { fontSize: '12px' }
-              }}
-            />
+              value={formData.Status || "Y"}
+              sx={{ margin: '5px 0px 0px 0px' }}
+            >
+              <FormControlLabel 
+                disabled={isFormDisabled}
+                value="O" 
+                control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
+                label={<Typography sx={{ fontSize: '12px' }}>Open</Typography>} 
+              />
+              <FormControlLabel 
+                disabled={isFormDisabled}
+                value="C" 
+                control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
+                label={<Typography sx={{ fontSize: '12px' }}>Cancel</Typography>} 
+              />
+              <FormControlLabel 
+                disabled={isFormDisabled}
+                value="S" 
+                control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
+                label={<Typography sx={{ fontSize: '12px' }}>Short</Typography>} 
+              />
+            </RadioGroup>
           </Box>
         </Box>
       </Box>
