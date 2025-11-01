@@ -72,12 +72,12 @@ import { useState } from 'react';
 import { Box, styled } from '@mui/material';
 import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
-
 import OverviewTab from '@/app/dashboard/Overview';
 import SalesDashboard from '../salesDashboard/SalesDashboard';
-import Report from '@/app/dashboard/Report';
-import Supports from '@/app/dashboard/Supports';
-import Activity from '@/app/dashboard/Activity';
+import Dispatch from '@/app/dashboard/Dispatch';
+import Sales from '@/app/dashboard/Sales';
+import Production from '@/app/dashboard/Production';
+import Stock from '@/app/dashboard/Stock';
 
 const DashboardTabs = () => {
   const [selectedTab, setSelectedTab] = useState(0);
@@ -117,13 +117,13 @@ const DashboardTabs = () => {
       case 1:
         return <SalesDashboard />;
       case 2:
-        return <Report />;
+        return <Dispatch />;
       case 3:
-        return <Supports />;
+        return <Sales />;
       case 4:
-        return <Activity />;
+        return <Production />;
       default:
-        return <OverviewTab />;
+        return <Stock />;
     }
   };
 
@@ -139,10 +139,11 @@ const DashboardTabs = () => {
     >
       <StyledTabs value={selectedTab} onChange={handleChange}>
         <StyledTab label="Overview" />
-        <StyledTab label="SalesDash" />
-        <StyledTab label="Reports" />
-        <StyledTab label="Support" />
-        <StyledTab label="Activity" />
+        <StyledTab label="Order" />
+        <StyledTab label="Dispatch" />
+        <StyledTab label="Sales" />
+        <StyledTab label="Production" />
+        <StyledTab label="Stock" />
       </StyledTabs>
 
       <Box sx={{ mt: 2 }}>

@@ -225,7 +225,7 @@ const SalesDashboard = () => {
                         userSelect: 'none',
                     }}
                 >
-                    Sales Dashboard
+                    Order Dashboard
                 </Typography>
             </Box>
 
