@@ -386,7 +386,7 @@ const Login = () => {
                 </Box>
 
                 {/* Role Selection */}
-                <Box sx={{ p: 2, bgcolor: '#ffffff', borderBottom: '1px solid #e0e0e0'}}>
+                <Box sx={{ p: 2, bgcolor: '#ffffff', borderBottom: '1px solid #e0e0e0' }}>
                   <FormControl component="fieldset" fullWidth>
                     <FormLabel
                       component="legend"
@@ -823,6 +823,11 @@ const Login = () => {
                         onChange={handleChange}
                         fullWidth
                         size="medium"
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            handleLogin();
+                          }
+                        }}
                         InputProps={{
                           endAdornment: (
                             <InputAdornment position="end">
