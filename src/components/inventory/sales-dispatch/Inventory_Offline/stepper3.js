@@ -23,20 +23,12 @@ import {
   FormControl,
   InputLabel,
   Select,
-  MenuItem,
-  Checkbox,
-  FormControlLabel,
-  RadioGroup,
-  Radio,
-  FormLabel,
-  InputAdornment,
-  IconButton
+  MenuItem
 } from '@mui/material';
 import {
   Add as AddIcon,
   Edit as EditIcon,
-  Delete as DeleteIcon,
-  Search as SearchIcon
+  Delete as DeleteIcon
 } from '@mui/icons-material';
 
 // TabPanel component for rendering tab content
@@ -54,40 +46,60 @@ function TabPanel({ children, value, index, ...other }) {
   );
 }
 
-const Stepper3 = ({ formData, setFormData, isFormDisabled }) => {
+const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCancel, showSnackbar }) => {
   const [tabIndex, setTabIndex] = useState(0);
-  const [openDialog, setOpenDialog] = useState(false);
-  const [dialogMode, setDialogMode] = useState('add'); // 'add' or 'edit'
   const [selectedRow, setSelectedRow] = useState(null);
+  const [isAddingNew, setIsAddingNew] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
   
   // Sample data for the grid
   const [tableData, setTableData] = useState([
     {
       id: 1,
-      BarCode: "Br200",
-      product: "BS Boys-T-Shirts",
-      style: "TS-002",
-      type: "Premium",
-      shade: "100/White",
-      lotNo: "May-2025",
-      qty: 200.00,
-      rate: 177.43,
-      amount: 35486
+      type: "GST",
+      taxType: "SGST",
+      tax: "State GST",
+      rate: 9.00,
+      taxable: 35486.00,
+      taxAmount: 3193.74,
+      aot1A: 0.00,
+      aot2A: 0.00,
+      aot1: 0.00,
+      aot1R: 0.00,
+      aot2: 0.00,
+      aot2R: 0.00,
+      termGroup: "Tax",
+      term: "SGST",
+      termPercent: 9.00,
+      termR: 3193.74
     }
   ]);
-  
-  // Form state for dialog
+
+  // Form state
   const [termFormData, setTermFormData] = useState({
-    termGrp: '',
+    type: '',
+    taxType: '',
+    tax: '',
+    rate: '',
+    taxable: '',
+    taxAmount: '',
+    aot1A: '',
+    aot2A: '',
+    aot1: '',
+    aot1R: '',
+    aot2: '',
+    aot2R: '',
+    termGroup: '',
     term: '',
-    percent: '',
-    rateOnQty: '',
-    termDesc: '',
-    fixAmount: '',
-    perQty: ''
+    termPercent: '',
+    termR: ''
   });
 
-  // Style definitions (same as Stepper2)
+  // State for dropdown options
+  const [discPtnOptions, setDiscPtnOptions] = useState(['Pattern 1', 'Pattern 2', 'Pattern 3']);
+  const [selectedDiscPtn, setSelectedDiscPtn] = useState('');
+
+  // Style definitions
   const textInputSx = {
     '& .MuiInputBase-root': {
       height: 36,
@@ -118,46 +130,15 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled }) => {
     },
   };
 
-  const DropInputSx = {
-    '& .MuiInputBase-root': {
-      height: 36,
-      fontSize: '14px',
-    },
-    '& .MuiInputLabel-root': {
-      fontSize: '14px',
-      top: '-4px',
-    },
-    '& .MuiFilledInput-root': {
-      backgroundColor: '#fafafa',
-      border: '1px solid #e0e0e0',
-      borderRadius: '6px',
-      overflow: 'hidden',
-      height: 36,
-      fontSize: '14px',
-      paddingRight: '36px',
-    },
-    '& .MuiFilledInput-root:before': {
-      display: 'none',
-    },
-    '& .MuiFilledInput-root:after': {
-      display: 'none',
-    },
-    '& .MuiInputBase-input': {
-      padding: '10px 12px',
-      fontSize: '14px',
-      lineHeight: '1.4',
-    },
-    '& .MuiAutocomplete-endAdornment': {
-      top: '50%',
-      transform: 'translateY(-50%)',
-      right: '10px',
-    },
-  };
-
   const buttonSx = {
     margin: { xs: '0 4px', sm: '0 6px' },
     minWidth: { xs: 40, sm: 46, md: 60 },
     height: { xs: 40, sm: 46, md: 30 },
+  };
+
+  // Determine if form fields should be disabled
+  const shouldDisableFields = () => {
+    return !(isAddingNew || isEditing);
   };
 
   // Handle tab change
@@ -165,7 +146,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled }) => {
     setTabIndex(newValue);
   };
 
-  // Handle input changes in dialog form
+  // Handle input changes in form
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setTermFormData(prev => ({
@@ -174,63 +155,132 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled }) => {
     }));
   };
 
-  // Open dialog for adding new item
-  const handleAdd = () => {
-    setDialogMode('add');
-    setTermFormData({
-      termGrp: '',
-      term: '',
-      percent: '',
-      rateOnQty: '',
-      termDesc: '',
-      fixAmount: '',
-      perQty: ''
-    });
-    setOpenDialog(true);
+  // Handle Disc Ptn dropdown change
+  const handleDiscPtnChange = (event) => {
+    setSelectedDiscPtn(event.target.value);
   };
 
-  // Open dialog for editing existing item
-  const handleEdit = () => {
-    if (!selectedRow) return;
+  // Open form for adding new item
+  const handleAdd = () => {
+    if (mode !== 'add' && mode !== 'edit') return;
     
-    setDialogMode('edit');
+    setIsAddingNew(true);
+    setTermFormData({
+      type: '',
+      taxType: '',
+      tax: '',
+      rate: '',
+      taxable: '',
+      taxAmount: '',
+      aot1A: '',
+      aot2A: '',
+      aot1: '',
+      aot1R: '',
+      aot2: '',
+      aot2R: '',
+      termGroup: '',
+      term: '',
+      termPercent: '',
+      termR: ''
+    });
+    showSnackbar('Add new term mode enabled');
+  };
+
+  // Open form for editing existing item
+  const handleEdit = () => {
+    if (mode !== 'add' && mode !== 'edit') return;
+    
+    if (!selectedRow) {
+      showSnackbar("Please select an item to edit", 'error');
+      return;
+    }
+    
+    setIsEditing(true);
     setTermFormData({ ...selectedRow });
-    setOpenDialog(true);
+    showSnackbar('Edit mode enabled for selected item');
   };
 
   // Delete selected item
   const handleDelete = () => {
-    if (!selectedRow) return;
+    if (mode !== 'add' && mode !== 'edit') return;
+    
+    if (!selectedRow) {
+      showSnackbar("Please select an item to delete", 'error');
+      return;
+    }
     
     setTableData(prev => prev.filter(item => item.id !== selectedRow.id));
     setSelectedRow(null);
+    showSnackbar("Item deleted successfully!");
   };
 
   // Save form data (add or edit)
   const handleSave = () => {
-    if (dialogMode === 'add') {
+    if (isAddingNew) {
       // Add new item
       const newItem = {
         id: Math.max(...tableData.map(item => item.id), 0) + 1,
         ...termFormData
       };
       setTableData(prev => [...prev, newItem]);
-    } else {
+      showSnackbar("Term added successfully!");
+    } else if (isEditing) {
       // Update existing item
       setTableData(prev => 
         prev.map(item => 
           item.id === selectedRow.id ? { ...termFormData, id: selectedRow.id } : item
         )
       );
+      showSnackbar("Term updated successfully!");
     }
-    setOpenDialog(false);
+    
+    setIsAddingNew(false);
+    setIsEditing(false);
     setSelectedRow(null);
+    setTermFormData({
+      type: '',
+      taxType: '',
+      tax: '',
+      rate: '',
+      taxable: '',
+      taxAmount: '',
+      aot1A: '',
+      aot2A: '',
+      aot1: '',
+      aot1R: '',
+      aot2: '',
+      aot2R: '',
+      termGroup: '',
+      term: '',
+      termPercent: '',
+      termR: ''
+    });
   };
 
-  // Close dialog without saving
+  // Close form without saving
   const handleCancel = () => {
-    setOpenDialog(false);
+    setIsAddingNew(false);
+    setIsEditing(false);
     setSelectedRow(null);
+    setTermFormData({
+      type: '',
+      taxType: '',
+      tax: '',
+      rate: '',
+      taxable: '',
+      taxAmount: '',
+      aot1A: '',
+      aot2A: '',
+      aot1: '',
+      aot1R: '',
+      aot2: '',
+      aot2R: '',
+      termGroup: '',
+      term: '',
+      termPercent: '',
+      termR: ''
+    });
+    showSnackbar('Operation cancelled');
   };
 
   // Select a row in the table
@@ -238,17 +288,35 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled }) => {
     setSelectedRow(row);
   };
 
-  // Table columns for the main grid (same as Stepper2)
+  // Handle Party Tax button click
+  const handlePartyTax = () => {
+    if (mode !== 'add' && mode !== 'edit') return;
+    showSnackbar('Party Tax functionality');
+  };
+
+  // Handle Apply button click
+  const handleApply = () => {
+    showSnackbar('Changes applied successfully!');
+  };
+
+  // Table columns for the main grid
   const columns = [
-    { id: 'BarCode', label: 'BarCode', minWidth: 120 },
-    { id: 'product', label: 'Product', minWidth: 120 },
-    { id: 'style', label: 'Style', minWidth: 80 },
-    { id: 'type', label: 'Type', minWidth: 80 },
-    { id: 'shade', label: 'Shade', minWidth: 100 },
-    { id: 'lotNo', label: 'Lot No', minWidth: 100 },
-    { id: 'qty', label: 'Qty', minWidth: 70, align: 'right' },
-    { id: 'rate', label: 'Rate', minWidth: 70, align: 'right' },
-    { id: 'amount', label: 'Amount', minWidth: 80, align: 'right' },
+    { id: 'type', label: 'Type', minWidth: 120 },
+    { id: 'taxType', label: 'Tax Type', minWidth: 120 },
+    { id: 'tax', label: 'Tax', minWidth: 80 },
+    { id: 'rate', label: 'Rate', minWidth: 80, align: 'right' },
+    { id: 'taxable', label: 'Taxable', minWidth: 100, align: 'right' },
+    { id: 'taxAmount', label: 'Tax Amount', minWidth: 100, align: 'right' },
+    { id: 'aot1A', label: 'AOT1 A', minWidth: 70, align: 'right' },
+    { id: 'aot2A', label: 'AOT2 A', minWidth: 70, align: 'right' },
+    { id: 'aot1', label: 'AOT1', minWidth: 80, align: 'right' },
+    { id: 'aot1R', label: 'AOT1 R', minWidth: 80, align: 'right' },
+    { id: 'aot2', label: 'AOT2', minWidth: 80, align: 'right' },
+    { id: 'aot2R', label: 'AOT2 R', minWidth: 80, align: 'right' },
+    { id: 'termGroup', label: 'Term Group', minWidth: 80, align: 'right' },
+    { id: 'term', label: 'Term', minWidth: 80, align: 'right' },
+    { id: 'termPercent', label: 'Tm(%)', minWidth: 80, align: 'right' },
+    { id: 'termR', label: 'Tm R', minWidth: 80, align: 'right' },
   ];
 
   return (
@@ -261,7 +329,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled }) => {
           marginInline: { xs: '5%', sm: '5%', md: '5%' }
         }}
       >
-        {/* Table Section (same as Stepper2) */}
+        {/* Table Section */}
         <Box sx={{ mt: 2 }}>
           <Paper
             elevation={1}
@@ -302,11 +370,11 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled }) => {
                       key={index}
                       hover
                       onClick={() => handleRowSelect(row)}
-                      selected={selectedRow?.id === row.id}
                       sx={{
-                        backgroundColor: index % 2 === 0 ? "#fafafa" : "#fff",
+                        backgroundColor: selectedRow?.id === row.id ? "#e3f2fd" : (index % 2 === 0 ? "#fafafa" : "#fff"),
                         "&:hover": { backgroundColor: "#e3f2fd" },
-                        cursor: 'pointer'
+                        cursor: 'pointer',
+                        border: selectedRow?.id === row.id ? '2px solid #2196f3' : 'none',
                       }}
                     >
                       {columns.map((column) => (
@@ -319,7 +387,10 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled }) => {
                             whiteSpace: "nowrap",
                           }}
                         >
-                          {row[column.id] || "—"}
+                          {column.format && typeof row[column.id] === 'number' 
+                            ? column.format(row[column.id])
+                            : row[column.id] || "—"
+                          }
                         </TableCell>
                       ))}
                     </TableRow>
@@ -330,19 +401,23 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled }) => {
           </Paper>
         </Box>
 
-        {/* CRUD Buttons (same as Stepper2 but with additional buttons) */}
-        <Stack direction="row" spacing={2} sx={{ mt: 2 }}>
+        {/* CRUD Buttons */}
+        <Stack direction="row" spacing={2} sx={{ mt: 2, alignItems: 'center' }}>
           <Button
-           variant="contained"
-
+            variant="contained"
             startIcon={<AddIcon />}
             onClick={handleAdd}
+            disabled={isFormDisabled}
             sx={{
-              
+              backgroundColor: '#39ace2',
               color: 'white',
               margin: { xs: '0 4px', sm: '0 6px' },
               minWidth: { xs: 40, sm: 46, md: 60 },
               height: { xs: 40, sm: 46, md: 30 },
+              '&:disabled': {
+                backgroundColor: '#cccccc',
+                color: '#666666'
+              }
             }}
           >
             Add
@@ -350,16 +425,19 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled }) => {
 
           <Button
             variant="contained"
-            color="primary"
             startIcon={<EditIcon />}
             onClick={handleEdit}
-            // disabled={!selectedRow}
+            disabled={isFormDisabled}
             sx={{
-              
+              backgroundColor: '#39ace2',
               color: 'white',
               margin: { xs: '0 4px', sm: '0 6px' },
               minWidth: { xs: 40, sm: 46, md: 60 },
               height: { xs: 40, sm: 46, md: 30 },
+              '&:disabled': {
+                backgroundColor: '#cccccc',
+                color: '#666666'
+              }
             }}
           >
             Edit
@@ -367,16 +445,19 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled }) => {
 
           <Button
             variant="contained"
-            color="primary"
             startIcon={<DeleteIcon />}
             onClick={handleDelete}
-            // disabled={!selectedRow}
+            disabled={isFormDisabled}
             sx={{
-             
+              backgroundColor: '#39ace2',
               color: 'white',
               margin: { xs: '0 4px', sm: '0 6px' },
               minWidth: { xs: 40, sm: 46, md: 60 },
               height: { xs: 40, sm: 46, md: 30 },
+              '&:disabled': {
+                backgroundColor: '#cccccc',
+                color: '#666666'
+              }
             }}
           >
             Delete
@@ -384,31 +465,47 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled }) => {
           
           <Button
             variant="contained"
-            color="primary"
+            onClick={handlePartyTax}
+            disabled={isFormDisabled}
             sx={{
-             
+              backgroundColor: '#39ace2',
               color: 'white',
               margin: { xs: '0 4px', sm: '0 6px' },
               minWidth: { xs: 40, sm: 46, md: 60 },
               height: { xs: 40, sm: 46, md: 30 },
+              '&:disabled': {
+                backgroundColor: '#cccccc',
+                color: '#666666'
+              }
             }}
           >
             Party Tax
           </Button>
           
-          <Button
-            variant="contained"
-            color="primary"
-            sx={{
-              
-              color: 'white',
-              margin: { xs: '0 4px', sm: '0 6px' },
-              minWidth: { xs: 40, sm: 46, md: 60 },
-              height: { xs: 40, sm: 46, md: 30 },
+          {/* Disc Ptn Dropdown */}
+          <FormControl 
+            variant="filled" 
+            sx={{ 
+              minWidth: 120,
+              '& .MuiInputBase-root': {
+                height: 36,
+              }
             }}
           >
-            Disc Ptn
-          </Button>
+            <InputLabel>Disc Ptn</InputLabel>
+            <Select
+              value={selectedDiscPtn}
+              onChange={handleDiscPtnChange}
+              disabled={isFormDisabled}
+            >
+              <MenuItem value=""><em>None</em></MenuItem>
+              {discPtnOptions.map((option, index) => (
+                <MenuItem key={index} value={option}>
+                  {option}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
         </Stack>
 
         {/* Tabs Section */}
@@ -428,11 +525,12 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled }) => {
               <TextField
                 fullWidth
                 label="Term Grp"
-                name="termGrp"
-                value={termFormData.termGrp}
+                name="termGroup"
+                value={termFormData.termGroup}
                 onChange={handleInputChange}
                 variant="filled"
                 sx={textInputSx}
+                disabled={!shouldDisableFields()}
               />
             </Grid>
             <Grid item xs={12} sm={6}>
@@ -444,74 +542,89 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled }) => {
                 onChange={handleInputChange}
                 variant="filled"
                 sx={textInputSx}
+                disabled={!shouldDisableFields()}
               />
             </Grid>
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
                 label="Percent"
-                name="percent"
+                name="termPercent"
                 type="number"
-                value={termFormData.percent}
+                value={termFormData.termPercent}
                 onChange={handleInputChange}
                 variant="filled"
                 sx={textInputSx}
+                disabled={!shouldDisableFields()}
               />
             </Grid>
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
                 label="Rate On Qty"
-                name="rateOnQty"
+                name="rate"
                 type="number"
-                value={termFormData.rateOnQty}
+                value={termFormData.rate}
                 onChange={handleInputChange}
                 variant="filled"
                 sx={textInputSx}
+                disabled={!shouldDisableFields()}
               />
             </Grid>
             <Grid item xs={12}>
               <TextField
                 fullWidth
                 label="Term Desc"
-                name="termDesc"
-                value={termFormData.termDesc}
+                name="tax"
+                value={termFormData.tax}
                 onChange={handleInputChange}
                 variant="filled"
                 sx={textInputSx}
                 multiline
                 rows={2}
+                disabled={!shouldDisableFields()}
               />
             </Grid>
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
                 label="Fix Amount"
-                name="fixAmount"
+                name="taxAmount"
                 type="number"
-                value={termFormData.fixAmount}
+                value={termFormData.taxAmount}
                 onChange={handleInputChange}
                 variant="filled"
                 sx={textInputSx}
+                disabled={!shouldDisableFields()}
               />
             </Grid>
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
                 label="Per Qty"
-                name="perQty"
+                name="taxable"
                 type="number"
-                value={termFormData.perQty}
+                value={termFormData.taxable}
                 onChange={handleInputChange}
                 variant="filled"
                 sx={textInputSx}
+                disabled={!shouldDisableFields()}
               />
             </Grid>
             <Grid item xs={12}>
-              <Button variant="contained" sx={{ mr: 1 }}>
-                New
-              </Button>
-              <Button variant="contained">
+              <Button 
+                variant="contained" 
+                onClick={handleApply}
+                disabled={!shouldDisableFields()}
+                sx={{
+                  backgroundColor: '#39ace2',
+                  color: 'white',
+                  '&:disabled': {
+                    backgroundColor: '#cccccc',
+                    color: '#666666'
+                  }
+                }}
+              >
                 Apply
               </Button>
             </Grid>
@@ -520,39 +633,127 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled }) => {
 
         <TabPanel value={tabIndex} index={1}>
           {/* Tax Content */}
-          <Typography>Tax content goes here</Typography>
+          <Grid container spacing={2}>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="Tax Grp"
+                name="termGroup"
+                value={termFormData.termGroup}
+                onChange={handleInputChange}
+                variant="filled"
+                sx={textInputSx}
+                disabled={!shouldDisableFields()}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="Tax Type"
+                name="taxType"
+                value={termFormData.taxType}
+                onChange={handleInputChange}
+                variant="filled"
+                sx={textInputSx}
+                disabled={!shouldDisableFields()}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="Tax"
+                name="tax"
+                value={termFormData.tax}
+                onChange={handleInputChange}
+                variant="filled"
+                sx={textInputSx}
+                disabled={!shouldDisableFields()}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="Tax Rate %"
+                name="rate"
+                type="number"
+                value={termFormData.rate}
+                onChange={handleInputChange}
+                variant="filled"
+                sx={textInputSx}
+                disabled={!shouldDisableFields()}
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label="Taxable Amount"
+                name="taxable"
+                value={termFormData.taxable}
+                onChange={handleInputChange}
+                variant="filled"
+                sx={textInputSx}
+                disabled={!shouldDisableFields()}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="AOT 1"
+                name="aot1"
+                type="number"
+                value={termFormData.aot1}
+                onChange={handleInputChange}
+                variant="filled"
+                sx={textInputSx}
+                disabled={!shouldDisableFields()}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="AOT 2"
+                name="aot2"
+                type="number"
+                value={termFormData.aot2}
+                onChange={handleInputChange}
+                variant="filled"
+                sx={textInputSx}
+                disabled={!shouldDisableFields()}
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <Button 
+                variant="contained" 
+                onClick={handleApply}
+                disabled={!shouldDisableFields()}
+                sx={{
+                  backgroundColor: '#39ace2',
+                  color: 'white',
+                  '&:disabled': {
+                    backgroundColor: '#cccccc',
+                    color: '#666666'
+                  }
+                }}
+              >
+                Apply
+              </Button>
+            </Grid>
+          </Grid>
         </TabPanel>
 
         <TabPanel value={tabIndex} index={2}>
           {/* Non-Calc Terms Content */}
-          <Typography>Non-Calc Terms content goes here</Typography>
-        </TabPanel>
-
-        {/* Final Action Buttons */}
-        <Stack direction="row" spacing={2} sx={{ mt: 2, justifyContent: 'flex-end' }}>
-          <Button variant="contained" color="primary">
-            Confirm
-          </Button>
-          <Button variant="outlined" color="secondary">
-            Cancel
-          </Button>
-        </Stack>
-      </Box>
-
-      {/* Form Dialog */}
-      <Dialog open={openDialog} onClose={handleCancel} maxWidth="md" fullWidth>
-        <DialogTitle>{dialogMode === 'add' ? 'Add New Term' : 'Edit Term'}</DialogTitle>
-        <DialogContent>
-          <Grid container spacing={2} sx={{ mt: 1 }}>
+          <Grid container spacing={2}>
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
                 label="Term Grp"
-                name="termGrp"
-                value={termFormData.termGrp}
+                name="termGroup"
+                value={termFormData.termGroup}
                 onChange={handleInputChange}
                 variant="filled"
                 sx={textInputSx}
+                disabled={!shouldDisableFields()}
               />
             </Grid>
             <Grid item xs={12} sm={6}>
@@ -564,78 +765,129 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled }) => {
                 onChange={handleInputChange}
                 variant="filled"
                 sx={textInputSx}
+                disabled={!shouldDisableFields()}
               />
             </Grid>
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
                 label="Percent"
-                name="percent"
+                name="termPercent"
                 type="number"
-                value={termFormData.percent}
+                value={termFormData.termPercent}
                 onChange={handleInputChange}
                 variant="filled"
                 sx={textInputSx}
+                disabled={!shouldDisableFields()}
               />
             </Grid>
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
                 label="Rate On Qty"
-                name="rateOnQty"
+                name="rate"
                 type="number"
-                value={termFormData.rateOnQty}
+                value={termFormData.rate}
                 onChange={handleInputChange}
                 variant="filled"
                 sx={textInputSx}
+                disabled={!shouldDisableFields()}
               />
             </Grid>
             <Grid item xs={12}>
               <TextField
                 fullWidth
                 label="Term Desc"
-                name="termDesc"
-                value={termFormData.termDesc}
+                name="tax"
+                value={termFormData.tax}
                 onChange={handleInputChange}
                 variant="filled"
                 sx={textInputSx}
                 multiline
                 rows={2}
+                disabled={!shouldDisableFields()}
               />
             </Grid>
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
                 label="Fix Amount"
-                name="fixAmount"
+                name="taxAmount"
                 type="number"
-                value={termFormData.fixAmount}
+                value={termFormData.taxAmount}
                 onChange={handleInputChange}
                 variant="filled"
                 sx={textInputSx}
+                disabled={!shouldDisableFields()}
               />
             </Grid>
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
                 label="Per Qty"
-                name="perQty"
+                name="taxable"
                 type="number"
-                value={termFormData.perQty}
+                value={termFormData.taxable}
                 onChange={handleInputChange}
                 variant="filled"
                 sx={textInputSx}
+                disabled={!shouldDisableFields()}
               />
             </Grid>
+            <Grid item xs={12}>
+              <Button 
+                variant="contained" 
+                onClick={handleApply}
+                disabled={!shouldDisableFields()}
+                sx={{
+                  backgroundColor: '#39ace2',
+                  color: 'white',
+                  '&:disabled': {
+                    backgroundColor: '#cccccc',
+                    color: '#666666'
+                  }
+                }}
+              >
+                Apply
+              </Button>
+            </Grid>
           </Grid>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCancel}>Cancel</Button>
-          <Button onClick={handleSave} variant="contained">
-            {dialogMode === 'add' ? 'Add' : 'Save'}
+        </TabPanel>
+
+        {/* Final Action Buttons - Initially Disabled */}
+        <Stack direction="row" spacing={2} sx={{ mt: 2, justifyContent: 'flex-end' }}>
+          <Button 
+            variant="contained" 
+            color="primary" 
+            onClick={handleSave}
+            disabled={!(isAddingNew || isEditing)}
+            sx={{
+              backgroundColor: '#39ace2',
+              color: 'white',
+              '&:disabled': {
+                backgroundColor: '#cccccc',
+                color: '#666666'
+              }
+            }}
+          >
+            {isAddingNew ? 'Confirm' : (isEditing ? 'Save' : 'Confirm')}
           </Button>
-        </DialogActions>
-      </Dialog>
+          <Button 
+            variant="outlined" 
+            color="secondary" 
+            onClick={handleCancel}
+            disabled={!(isAddingNew || isEditing)}
+            sx={{
+              '&:disabled': {
+                borderColor: '#cccccc',
+                color: '#666666'
+              }
+            }}
+          >
+            Cancel
+          </Button>
+        </Stack>
+      </Box>
     </Box>
   );
 };

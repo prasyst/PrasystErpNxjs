@@ -814,7 +814,7 @@ const StockLookupoffline = () => {
               />
             ) : (
               <>
-                <Box sx={{ width: "100%", maxWidth: 220 }}>
+                {/* <Box sx={{ width: "100%", maxWidth: 220 }}>
                   <Autocomplete
                     id="party-autocomplete"
                     options={partySearchResults}
@@ -858,9 +858,9 @@ const StockLookupoffline = () => {
                     )}
                     sx={{ width: '100%', maxWidth: 220 }}
                   />
-                </Box>
+                </Box> */}
 
-                <Box sx={{ flex: 1, minWidth: '150px', maxWidth: '150px' }}>
+                {/* <Box sx={{ flex: 1, minWidth: '150px', maxWidth: '150px' }}>
                   <Autocomplete
                     id="branch-autocomplete"
                     options={partyDtls}
@@ -893,11 +893,11 @@ const StockLookupoffline = () => {
                     )}
                     sx={{ width: '100%', minWidth: '150px', maxWidth: '150px' }}
                   />
-                </Box>
+                </Box> */}
               </>
             )}
 
-            <Button
+            {/* <Button
               variant="contained"
               size="small"
               onClick={handleClick}
@@ -905,13 +905,13 @@ const StockLookupoffline = () => {
               startIcon={<AddIcon />}
             >
               {t('new')}
-            </Button>
+            </Button> */}
             
           </Box>
         </Box>
 
         {/* AG Grid Table */}
-        <div style={{ height: 'calc(100vh - 150px)', width: '100%' }}>
+        <div style={{ height: 'calc(100vh - 100px)', width: '100%' }}>
           {isLoading ? (
             <div style={{ 
               display: 'flex', 
