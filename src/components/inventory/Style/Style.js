@@ -29,12 +29,37 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import { TbListSearch } from "react-icons/tb";
 
 const columns = [
-    { label: 'Size', field: '', type: 'text' },
-    { label: 'Abrv', field: '', type: 'text' },
-    { label: 'SizePrint', field: '', type: 'text' },
-    { label: 'MRPRD', field: '', type: 'text' },
-    { label: 'SSPRD', field: '', type: 'text' },
-    { label: 'Status', field: '', type: 'checkbox' }
+    { label: 'Style', field: '', type: 'text' },
+    { label: 'Type', field: '', type: 'text' },
+    { label: 'MRP', field: '', type: 'text' },
+    { label: 'WSP', field: '', type: 'text' },
+    { label: 'Pur Rt', field: '', type: 'text' },
+    { label: 'Design', field: '', type: 'text' },
+    { label: 'Catalogue', field: '', type: 'text' },
+    { label: 'Quality', field: '', type: 'text' },
+    { label: 'Brand', field: '', type: 'text' },
+    { label: 'Season', field: '', type: 'text' },
+    { label: 'Default', field: '', type: 'checkbox' },
+    { label: 'ProductSR', field: '', type: 'text' },
+    { label: 'Unit', field: '', type: 'text' },
+    { label: 'W', field: '', type: 'checkbox' },
+    { label: 'WebColl', field: '', type: 'text' },
+    { label: 'W', field: '', type: 'checkbox' },
+    { label: 'Avg', field: '', type: 'text' }
+];
+
+const Properties = [
+    { label: 'Category', field: '', type: 'text' },
+    { label: 'MRP', field: '', type: 'text' },
+    { label: 'WSP', field: '', type: 'text' },
+    { label: 'Pur Rt', field: '', type: 'text' },
+    { label: 'MD', field: '', type: 'text' },
+    { label: 'MD1', field: '', type: 'text' },
+    { label: 'MDU', field: '', type: 'text' }
+];
+
+const Attributes = [
+    { label: 'Size', field: '', type: 'text' }
 ];
 
 const Style = () => {
@@ -44,7 +69,15 @@ const Style = () => {
     const [mode, setMode] = useState('view');
     const [prdGrp, setprdGrp] = useState([]);
     const [selectedRowIndex, setSelectedRowIndex] = useState([]);
-    const [formData, setFormData] = useState({});
+    const [currentStyleId, setCurrentStyleId] = useState(null);
+    const searchParams = useSearchParams();
+    const FGStyle = searchParams.get('FGSTYLE_ID');
+    const [formData, setFormData] = useState({
+
+        DBFLAG: "",
+        MRP: '',
+
+    });
 
     const textInputSx = {
         '& .MuiInputBase-root': {
@@ -117,6 +150,57 @@ const Style = () => {
             backgroundColor: '#fff'
         }
     };
+
+    const fetchStyleData = useCallback(async (currentStyleId, flag = "R") => {
+        
+        try {
+            const response = await axiosInstance.post(`FGSTYLE/RetriveFgstyle`, {
+                "FGSTYLE_ID": currentStyleId,
+                "FLAG": flag,
+            });
+
+            if (response.data.STATUS === 0 && response.data.RESPONSESTATUSCODE === 1) {
+                const styleData = response?.data?.DATA?.FGSTYLEList[0];
+
+                setFormData({
+
+                    DBFLAG: mode === 'retrieve' ? 'R' : mode === 'edit' ? 'U' : '',
+                    MRP: styleData?.MRP || "",
+
+                });
+
+                setIsFormDisabled(true);
+                setCurrentStyleId(styleData?.FGSTYLE_ID);
+                const newParams = new URLSearchParams();
+                newParams.set("FGSTYLE_ID", styleData.FGSTYLE_ID);
+                router.replace(`/inverntory/style?${newParams.toString()}`);
+
+            } else if (response.data.STATUS === 1 && response.data.RESPONSESTATUSCODE === 2) {
+                toast.info(response.data.MESSAGE);
+            }
+        } catch (error) {
+            console.error('Error fetching style data:', error);
+            toast.error('Error fetching style data. Please try again.');
+        }
+    }, [router]);
+
+    useEffect(() => {
+        if (FGStyle) {
+            setCurrentStyleId(FGStyle);
+            fetchStyleData(FGStyle);
+            setMode('view');
+        } else {
+            setMode('view');
+            setFormData({
+
+                MRP: "",
+                DBFLAG: ""
+
+            });
+            setIsFormDisabled(true);
+        }
+        setMode('view');
+    }, [FGStyle, fetchStyleData]);
 
     const handleAdd = async () => { };
 
@@ -372,9 +456,9 @@ const Style = () => {
                             label="MRP"
                             variant="filled"
                             fullWidth
-                            onChange={''}
-                            name=""
-                            value={""}
+                            onChange={handleInputChange}
+                            name="MRP"
+                            value={formData.MRP || ""}
                             disabled={true}
                             sx={textInputSx}
                             inputProps={{
@@ -825,7 +909,7 @@ const Style = () => {
                         />
                         <FormControlLabel
                             control={<Checkbox name="" size="small" checked={""}
-                            onChange={handleChangeStatus} />}
+                                onChange={handleChangeStatus} />}
                             disabled={isFormDisabled}
                             label="Web Sync"
                             sx={{
@@ -1153,7 +1237,7 @@ const Style = () => {
                     <Grid size={{ xs: 12, sm: 6, md: 9 }} sx={{ display: 'flex', gap: 2 }}>
                         <EditableTable
                             data={visibleData}
-                            columns={columns}
+                            columns={Properties}
                             onCellChange={handleCellChange}
                             disabled={isFormDisabled}
                             selectedRowIndex={selectedRowIndex}
@@ -1162,7 +1246,7 @@ const Style = () => {
 
                         <EditableTable
                             data={visibleData}
-                            columns={columns}
+                            columns={Attributes}
                             onCellChange={handleCellChange}
                             disabled={isFormDisabled}
                             selectedRowIndex={selectedRowIndex}

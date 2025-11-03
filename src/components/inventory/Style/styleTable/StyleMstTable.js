@@ -89,7 +89,7 @@ export default function StyleMstTable() {
                 setRows(formattedData);
             }
         } catch (error) {
-            console.error("Error fetching productgrp data:", error);
+            console.error("Error fetching style data:", error);
         } finally {
             setIsLoading(false);
         }
@@ -97,10 +97,10 @@ export default function StyleMstTable() {
 
     const handleRowDoubleClick = (row) => {
         const params = new URLSearchParams({
-            FGPRD_KEY: row.FGPRD_KEY,
+            FGSTYLE_ID: row.FGSTYLE_ID,
             mode: "view"
         }).toString();
-        router.push(`/masters/products/product?${params}`);
+        router.push(`/inverntory/style?${params}`);
     };
 
     const handleSelectionChanged = useCallback((event) => {
