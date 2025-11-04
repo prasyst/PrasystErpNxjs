@@ -30,6 +30,7 @@ const Stepper1 = ({
   mode, 
   onSubmit, 
   onCancel,
+  onNext,
   showValidationErrors, 
   // Receive mappings as props
   partyMapping,
@@ -203,7 +204,7 @@ const Stepper1 = ({
     } catch (error) {
       console.error("API error", error);
       setPartyOptions([]);
-      setShippingPartyOptions([]);
+        setShippingPartyOptions([]);
     }
   };
 

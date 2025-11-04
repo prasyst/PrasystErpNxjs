@@ -38,7 +38,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 
 const FORM_MODE = getFormMode();
 
-const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCancel, showSnackbar,showValidationErrors }) => {
+const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCancel, onNext, showSnackbar,showValidationErrors }) => {
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [selectedStyle, setSelectedStyle] = useState(null);
   const [selectedRow, setSelectedRow] = useState(null);
@@ -46,6 +46,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
   const [isAddingNew, setIsAddingNew] = useState(false);
   const [isEditingSize, setIsEditingSize] = useState(false);
   const [editingRowData, setEditingRowData] = useState(null);
+  const [hasRecords, setHasRecords] = useState(false);
   
   // State for dropdown options
   const [productOptions, setProductOptions] = useState([]);
@@ -195,6 +196,11 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
 
   // Use updatedTableData if available, otherwise use initial data
   const tableData = updatedTableData.length > 0 ? updatedTableData : initialTableData;
+
+  // Update hasRecords when tableData changes
+  useEffect(() => {
+    setHasRecords(tableData.length > 0);
+  }, [tableData]);
 
   // Calculate totals from table data
   const calculateTotals = () => {
@@ -1151,17 +1157,19 @@ const getFieldError = (fieldName) => {
         <Stack direction="row" spacing={2} sx={{ mt: 2, alignItems: 'center' }}>
           <Button
             variant="contained"
-                
-                color="primary"
             startIcon={<AddIcon />}
             onClick={handleAddItem}
-            disabled={isFormDisabled || isEditingSize}
+            disabled={isFormDisabled || isEditingSize || isAddingNew}
             sx={{
-              
+              backgroundColor: '#39ace2',
               color: 'white',
               margin: { xs: '0 4px', sm: '0 6px' },
               minWidth: { xs: 40, sm: 46, md: 60 },
               height: { xs: 40, sm: 46, md: 30 },
+              '&:disabled': {
+                backgroundColor: '#cccccc',
+                color: '#666666'
+              }
             }}
           >
             Add
@@ -1171,13 +1179,17 @@ const getFieldError = (fieldName) => {
             variant="contained"
             startIcon={<EditIcon />}
             onClick={handleEditItem}
-            disabled={isFormDisabled}
+            disabled={isFormDisabled || isAddingNew}
             sx={{
-              
+              backgroundColor: '#39ace2',
               color: 'white',
               margin: { xs: '0 4px', sm: '0 6px' },
               minWidth: { xs: 40, sm: 46, md: 60 },
               height: { xs: 40, sm: 46, md: 30 },
+              '&:disabled': {
+                backgroundColor: '#cccccc',
+                color: '#666666'
+              }
             }}
           >
             {isEditingSize ? 'Save' : 'Edit'}
@@ -1187,13 +1199,17 @@ const getFieldError = (fieldName) => {
             variant="contained"
             startIcon={<DeleteIcon />}
             onClick={handleDeleteItem}
-            disabled={isFormDisabled || isEditingSize}
+            disabled={isFormDisabled || isEditingSize || isAddingNew}
             sx={{
-              
+              backgroundColor: '#39ace2',
               color: 'white',
               margin: { xs: '0 4px', sm: '0 6px' },
               minWidth: { xs: 40, sm: 46, md: 60 },
               height: { xs: 40, sm: 46, md: 30 },
+              '&:disabled': {
+                backgroundColor: '#cccccc',
+                color: '#666666'
+              }
             }}
           >
             Delete
@@ -1578,24 +1594,57 @@ const getFieldError = (fieldName) => {
 
         {/* Final Action Buttons */}
         <Stack direction="row" spacing={2} sx={{ m: 3, justifyContent: 'flex-end' }}>
-  <Button 
-    variant="contained" 
-    color="primary" 
-    onClick={isAddingNew ? handleConfirmAdd : (isEditingSize ? handleEditItem : null)}
-    disabled={!(isAddingNew || isEditingSize)} // BY DEFAULT DISABLED
-    sx={{ minWidth: '60px', height: '36px' }}
-  >
-    {isAddingNew ? 'Confirm' : (isEditingSize ? 'Save' : 'Confirm')}
-  </Button>
-  <Button 
-    variant="outlined" 
-    color="secondary" 
-    onClick={isAddingNew ? handleCancelAdd : (isEditingSize ? handleEditCancel : onCancel)}
-    disabled={!(isAddingNew || isEditingSize)} // BY DEFAULT DISABLED
-  >
-    Cancel
-  </Button>
-</Stack>
+          <Button 
+            variant="contained" 
+            color="primary" 
+            onClick={isAddingNew ? handleConfirmAdd : (isEditingSize ? handleEditItem : null)}
+            disabled={!(isAddingNew || isEditingSize)}
+            sx={{ 
+              minWidth: '60px', 
+              height: '36px',
+              backgroundColor: '#39ace2',
+              '&:disabled': {
+                backgroundColor: '#cccccc',
+                color: '#666666'
+              }
+            }}
+          >
+            {isAddingNew ? 'Confirm' : (isEditingSize ? 'Save' : 'Confirm')}
+          </Button>
+          <Button 
+            variant="outlined" 
+            color="secondary" 
+            onClick={isAddingNew ? handleCancelAdd : (isEditingSize ? handleEditCancel : onCancel)}
+            disabled={!(isAddingNew || isEditingSize)}
+            sx={{ 
+              minWidth: '60px', 
+              height: '36px',
+              '&:disabled': {
+                borderColor: '#cccccc',
+                color: '#666666'
+              }
+            }}
+          >
+            Cancel
+          </Button>
+          <Button 
+            variant="contained" 
+            color="primary" 
+            onClick={onNext}
+            disabled={!hasRecords || isAddingNew || isEditingSize}
+            sx={{ 
+              minWidth: '60px', 
+              height: '36px',
+              backgroundColor: '#39ace2',
+              '&:disabled': {
+                backgroundColor: '#cccccc',
+                color: '#666666'
+              }
+            }}
+          >
+            Next
+          </Button>
+        </Stack>
         
       </Box>
     </Box>
