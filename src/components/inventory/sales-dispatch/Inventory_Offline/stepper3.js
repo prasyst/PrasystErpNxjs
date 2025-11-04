@@ -136,8 +136,9 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
     height: { xs: 40, sm: 46, md: 30 },
   };
 
-  // Determine if form fields should be disabled
+  // Determine if form fields should be disabled - FIXED LOGIC
   const shouldDisableFields = () => {
+    // Form fields should be ENABLED when in Add/Edit mode
     return !(isAddingNew || isEditing);
   };
 
@@ -407,7 +408,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
             variant="contained"
             startIcon={<AddIcon />}
             onClick={handleAdd}
-            disabled={isFormDisabled}
+            disabled={isFormDisabled || isAddingNew || isEditing}
             sx={{
               backgroundColor: '#39ace2',
               color: 'white',
@@ -427,7 +428,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
             variant="contained"
             startIcon={<EditIcon />}
             onClick={handleEdit}
-            disabled={isFormDisabled}
+            disabled={isFormDisabled || isAddingNew || isEditing}
             sx={{
               backgroundColor: '#39ace2',
               color: 'white',
@@ -447,7 +448,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
             variant="contained"
             startIcon={<DeleteIcon />}
             onClick={handleDelete}
-            disabled={isFormDisabled}
+            disabled={isFormDisabled || isAddingNew || isEditing}
             sx={{
               backgroundColor: '#39ace2',
               color: 'white',
@@ -466,7 +467,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
           <Button
             variant="contained"
             onClick={handlePartyTax}
-            disabled={isFormDisabled}
+            disabled={isFormDisabled || isAddingNew || isEditing}
             sx={{
               backgroundColor: '#39ace2',
               color: 'white',
@@ -496,7 +497,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
             <Select
               value={selectedDiscPtn}
               onChange={handleDiscPtnChange}
-              disabled={isFormDisabled}
+              disabled={isFormDisabled || isAddingNew || isEditing}
             >
               <MenuItem value=""><em>None</em></MenuItem>
               {discPtnOptions.map((option, index) => (
@@ -530,7 +531,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
                 onChange={handleInputChange}
                 variant="filled"
                 sx={textInputSx}
-                disabled={!shouldDisableFields()}
+                disabled={shouldDisableFields()} // FIXED: Now fields will be ENABLED when in Add/Edit mode
               />
             </Grid>
             <Grid item xs={12} sm={6}>
@@ -542,7 +543,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
                 onChange={handleInputChange}
                 variant="filled"
                 sx={textInputSx}
-                disabled={!shouldDisableFields()}
+                disabled={shouldDisableFields()} // FIXED: Now fields will be ENABLED when in Add/Edit mode
               />
             </Grid>
             <Grid item xs={12} sm={6}>
@@ -555,7 +556,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
                 onChange={handleInputChange}
                 variant="filled"
                 sx={textInputSx}
-                disabled={!shouldDisableFields()}
+                disabled={shouldDisableFields()} // FIXED: Now fields will be ENABLED when in Add/Edit mode
               />
             </Grid>
             <Grid item xs={12} sm={6}>
@@ -568,7 +569,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
                 onChange={handleInputChange}
                 variant="filled"
                 sx={textInputSx}
-                disabled={!shouldDisableFields()}
+                disabled={shouldDisableFields()} // FIXED: Now fields will be ENABLED when in Add/Edit mode
               />
             </Grid>
             <Grid item xs={12}>
@@ -582,7 +583,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
                 sx={textInputSx}
                 multiline
                 rows={2}
-                disabled={!shouldDisableFields()}
+                disabled={shouldDisableFields()} // FIXED: Now fields will be ENABLED when in Add/Edit mode
               />
             </Grid>
             <Grid item xs={12} sm={6}>
@@ -595,7 +596,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
                 onChange={handleInputChange}
                 variant="filled"
                 sx={textInputSx}
-                disabled={!shouldDisableFields()}
+                disabled={shouldDisableFields()} // FIXED: Now fields will be ENABLED when in Add/Edit mode
               />
             </Grid>
             <Grid item xs={12} sm={6}>
@@ -608,14 +609,14 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
                 onChange={handleInputChange}
                 variant="filled"
                 sx={textInputSx}
-                disabled={!shouldDisableFields()}
+                disabled={shouldDisableFields()} // FIXED: Now fields will be ENABLED when in Add/Edit mode
               />
             </Grid>
             <Grid item xs={12}>
               <Button 
                 variant="contained" 
                 onClick={handleApply}
-                disabled={!shouldDisableFields()}
+                disabled={shouldDisableFields()} // FIXED: Apply button will be ENABLED when in Add/Edit mode
                 sx={{
                   backgroundColor: '#39ace2',
                   color: 'white',
@@ -643,7 +644,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
                 onChange={handleInputChange}
                 variant="filled"
                 sx={textInputSx}
-                disabled={!shouldDisableFields()}
+                disabled={shouldDisableFields()} // FIXED: Now fields will be ENABLED when in Add/Edit mode
               />
             </Grid>
             <Grid item xs={12} sm={6}>
@@ -655,7 +656,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
                 onChange={handleInputChange}
                 variant="filled"
                 sx={textInputSx}
-                disabled={!shouldDisableFields()}
+                disabled={shouldDisableFields()} // FIXED: Now fields will be ENABLED when in Add/Edit mode
               />
             </Grid>
             <Grid item xs={12} sm={6}>
@@ -667,7 +668,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
                 onChange={handleInputChange}
                 variant="filled"
                 sx={textInputSx}
-                disabled={!shouldDisableFields()}
+                disabled={shouldDisableFields()} // FIXED: Now fields will be ENABLED when in Add/Edit mode
               />
             </Grid>
             <Grid item xs={12} sm={6}>
@@ -680,7 +681,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
                 onChange={handleInputChange}
                 variant="filled"
                 sx={textInputSx}
-                disabled={!shouldDisableFields()}
+                disabled={shouldDisableFields()} // FIXED: Now fields will be ENABLED when in Add/Edit mode
               />
             </Grid>
             <Grid item xs={12}>
@@ -692,7 +693,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
                 onChange={handleInputChange}
                 variant="filled"
                 sx={textInputSx}
-                disabled={!shouldDisableFields()}
+                disabled={shouldDisableFields()} // FIXED: Now fields will be ENABLED when in Add/Edit mode
               />
             </Grid>
             <Grid item xs={12} sm={6}>
@@ -705,7 +706,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
                 onChange={handleInputChange}
                 variant="filled"
                 sx={textInputSx}
-                disabled={!shouldDisableFields()}
+                disabled={shouldDisableFields()} // FIXED: Now fields will be ENABLED when in Add/Edit mode
               />
             </Grid>
             <Grid item xs={12} sm={6}>
@@ -718,14 +719,14 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
                 onChange={handleInputChange}
                 variant="filled"
                 sx={textInputSx}
-                disabled={!shouldDisableFields()}
+                disabled={shouldDisableFields()} // FIXED: Now fields will be ENABLED when in Add/Edit mode
               />
             </Grid>
             <Grid item xs={12}>
               <Button 
                 variant="contained" 
                 onClick={handleApply}
-                disabled={!shouldDisableFields()}
+                disabled={shouldDisableFields()} // FIXED: Apply button will be ENABLED when in Add/Edit mode
                 sx={{
                   backgroundColor: '#39ace2',
                   color: 'white',
@@ -753,7 +754,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
                 onChange={handleInputChange}
                 variant="filled"
                 sx={textInputSx}
-                disabled={!shouldDisableFields()}
+                disabled={shouldDisableFields()} // FIXED: Now fields will be ENABLED when in Add/Edit mode
               />
             </Grid>
             <Grid item xs={12} sm={6}>
@@ -765,7 +766,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
                 onChange={handleInputChange}
                 variant="filled"
                 sx={textInputSx}
-                disabled={!shouldDisableFields()}
+                disabled={shouldDisableFields()} // FIXED: Now fields will be ENABLED when in Add/Edit mode
               />
             </Grid>
             <Grid item xs={12} sm={6}>
@@ -778,7 +779,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
                 onChange={handleInputChange}
                 variant="filled"
                 sx={textInputSx}
-                disabled={!shouldDisableFields()}
+                disabled={shouldDisableFields()} // FIXED: Now fields will be ENABLED when in Add/Edit mode
               />
             </Grid>
             <Grid item xs={12} sm={6}>
@@ -791,7 +792,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
                 onChange={handleInputChange}
                 variant="filled"
                 sx={textInputSx}
-                disabled={!shouldDisableFields()}
+                disabled={shouldDisableFields()} // FIXED: Now fields will be ENABLED when in Add/Edit mode
               />
             </Grid>
             <Grid item xs={12}>
@@ -805,7 +806,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
                 sx={textInputSx}
                 multiline
                 rows={2}
-                disabled={!shouldDisableFields()}
+                disabled={shouldDisableFields()} // FIXED: Now fields will be ENABLED when in Add/Edit mode
               />
             </Grid>
             <Grid item xs={12} sm={6}>
@@ -818,7 +819,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
                 onChange={handleInputChange}
                 variant="filled"
                 sx={textInputSx}
-                disabled={!shouldDisableFields()}
+                disabled={shouldDisableFields()} // FIXED: Now fields will be ENABLED when in Add/Edit mode
               />
             </Grid>
             <Grid item xs={12} sm={6}>
@@ -831,14 +832,14 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
                 onChange={handleInputChange}
                 variant="filled"
                 sx={textInputSx}
-                disabled={!shouldDisableFields()}
+                disabled={shouldDisableFields()} // FIXED: Now fields will be ENABLED when in Add/Edit mode
               />
             </Grid>
             <Grid item xs={12}>
               <Button 
                 variant="contained" 
                 onClick={handleApply}
-                disabled={!shouldDisableFields()}
+                disabled={shouldDisableFields()} // FIXED: Apply button will be ENABLED when in Add/Edit mode
                 sx={{
                   backgroundColor: '#39ace2',
                   color: 'white',
@@ -854,7 +855,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
           </Grid>
         </TabPanel>
 
-        {/* Final Action Buttons - Initially Disabled */}
+        {/* Final Action Buttons */}
         <Stack direction="row" spacing={2} sx={{ mt: 2, justifyContent: 'flex-end' }}>
           <Button 
             variant="contained" 
@@ -885,6 +886,22 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
             }}
           >
             Cancel
+          </Button>
+          <Button 
+            variant="contained" 
+            color="primary" 
+            onClick={onSubmit}
+            disabled={isAddingNew || isEditing}
+            sx={{
+              backgroundColor: '#39ace2',
+              color: 'white',
+              '&:disabled': {
+                backgroundColor: '#cccccc',
+                color: '#666666'
+              }
+            }}
+          >
+            Submit
           </Button>
         </Stack>
       </Box>

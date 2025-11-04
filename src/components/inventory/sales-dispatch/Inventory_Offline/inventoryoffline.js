@@ -1168,13 +1168,11 @@ const handleNextClick = async () => {
   };
 
   const handleCancel = () => {
-  setMode('view');
-  setIsFormDisabled(true);
-  showSnackbar('Edit cancelled');
-  setShowValidationErrors(false); // Reset validation errors
-};
-
- 
+    setMode('view');
+    setIsFormDisabled(true);
+    showSnackbar('Edit cancelled');
+    setShowValidationErrors(false);
+  };
 
   const handleEdit = () => {
     setMode('edit');
@@ -1188,6 +1186,13 @@ const handleNextClick = async () => {
 
   const handleTabChange = (event, newValue) => {
     setTabIndex(newValue);
+  };
+
+  // Handle Next button click
+  const handleNext = () => {
+    if (tabIndex < 2) {
+      setTabIndex(tabIndex + 1);
+    }
   };
 
   if (loading) {
@@ -1353,6 +1358,7 @@ const handleNextClick = async () => {
             mode={mode}
             onSubmit={handleSubmit}
             onCancel={handleCancel}
+            onNext={handleNext}
             // Pass mappings and setter functions
             partyMapping={partyMapping}
             branchMapping={branchMapping}
@@ -1383,6 +1389,7 @@ const handleNextClick = async () => {
             mode={mode}
             onSubmit={handleSubmit}
             onCancel={handleCancel}
+            onNext={handleNext}
             showSnackbar={showSnackbar}
             showValidationErrors={showValidationErrors}
           />
@@ -1394,18 +1401,19 @@ const handleNextClick = async () => {
             mode={mode}
             onSubmit={handleSubmit}
             onCancel={handleCancel}
+            showSnackbar={showSnackbar}
           />
         )}
       </Grid>
 
       {tabIndex === 0 && (
-        <Grid xs={12} sx={{ display: "flex", justifyContent: "end", mr: '4.5%' }}>
+        <Grid xs={12} sx={{ display: "flex", justifyContent: "end", mr: '4.5%', gap: 1 }}>
           {mode === 'view' && (
             <>
               <Button
                 variant="contained"
                 sx={{
-                 
+                  backgroundColor: '#39ace2',
                   color: '#fff',
                   margin: { xs: '0 4px', sm: '0 6px' },
                   minWidth: { xs: 40, sm: 46, md: 60 },
@@ -1419,7 +1427,7 @@ const handleNextClick = async () => {
               <Button
                 variant="contained"
                 sx={{
-                  
+                  backgroundColor: '#39ace2',
                   color: '#fff',
                   margin: { xs: '0 4px', sm: '0 6px' },
                   minWidth: { xs: 40, sm: 46, md: 60 },
@@ -1436,32 +1444,27 @@ const handleNextClick = async () => {
             <>
               <Button
                 variant="contained"
-                
                 color="primary"
                 sx={{
                   margin: { xs: '0 4px', sm: '0 6px' },
-                 
+                  backgroundColor: '#39ace2',
                   color: '#fff',
                   minWidth: { xs: 40, sm: 46, md: 60 },
                   height: { xs: 40, sm: 46, md: 30 },
                 }}
-                onClick={handleSubmit}
-                disabled={submitLoading}
+                onClick={handleNext}
               >
-                {submitLoading ? 'Submitting...' : 'Submit'}
+                Next
               </Button>
               <Button
-                 variant="outlined" 
-    color="secondary" 
+                variant="outlined" 
+                color="secondary" 
                 sx={{
                   margin: { xs: '0 4px', sm: '0 6px' },
-                  
-                  
                   minWidth: { xs: 40, sm: 46, md: 60 },
                   height: { xs: 40, sm: 46, md: 30 },
                 }}
                 onClick={handleCancel}
-                disabled={submitLoading}
               >
                 Cancel
               </Button>
