@@ -59,7 +59,10 @@ const Properties = [
 ];
 
 const Attributes = [
-    { label: 'Size', field: '', type: 'text' }
+    { label: 'Size', field: '', type: 'text' },
+    { label: 'MRPRD', field: '', type: 'text' },
+    { label: 'WSP_SZ', field: '', type: 'text' },
+    { label: 'SSLRD', field: '', type: 'text' }
 ];
 
 const Style = () => {
@@ -76,6 +79,7 @@ const Style = () => {
 
         DBFLAG: "",
         MRP: '',
+        HSNCODE_KEY: ''
 
     });
 
@@ -152,7 +156,7 @@ const Style = () => {
     };
 
     const fetchStyleData = useCallback(async (currentStyleId, flag = "R") => {
-        
+
         try {
             const response = await axiosInstance.post(`FGSTYLE/RetriveFgstyle`, {
                 "FGSTYLE_ID": currentStyleId,
@@ -166,6 +170,7 @@ const Style = () => {
 
                     DBFLAG: mode === 'retrieve' ? 'R' : mode === 'edit' ? 'U' : '',
                     MRP: styleData?.MRP || "",
+                    HSNCODE_KEY: styleData?.HSNCODE_KEY || ''
 
                 });
 
@@ -202,8 +207,6 @@ const Style = () => {
         setMode('view');
     }, [FGStyle, fetchStyleData]);
 
-    const handleAdd = async () => { };
-
     const handleSubmit = async () => { };
 
     const handleExit = () => {
@@ -232,13 +235,46 @@ const Style = () => {
         }));
     };
 
-    const handleEdit = () => { };
+    const handleAdd = async () => {
+        setMode('add');
+        setIsFormDisabled(false);
+        setFormData({
 
-    const handlePrevious = async () => { };
+        });
+        setCurrentStyleId(null);
+    };
 
-    const handleNext = async () => { };
+    const handleEdit = () => {
+        setMode("edit");
+        setIsFormDisabled(false);
+    };
 
-    const handleCancel = async () => { };
+    const handlePrevious = async () => {
+        await fetchStyleData(currentStyleId, "P");
+        setFormData((prev) => ({
+            ...prev
+        }));
+    };
+
+    const handleNext = async () => {
+        await fetchStyleData(currentStyleId, "N");
+        setFormData((prev) => ({
+            ...prev
+        }));
+    };
+
+    const handleCancel = async () => {
+        try {
+            await fetchStyleData(1, "R");
+            setMode('view');
+            setIsFormDisabled(true);
+            setFormData((prev) => ({
+                ...prev
+            }));
+        } catch (error) {
+            toast.error('Error occurred while cancelling. Please try again.');
+        }
+    };
 
     const handleDelete = async () => { };
 
@@ -370,7 +406,7 @@ const Style = () => {
                             }}
                         />
                     </Grid>
-                    <Grid size={{ xs: 12, sm: 6, md: 1.5 }}>
+                    <Grid size={{ xs: 12, sm: 6, md: 1 }}>
                         <TextField
                             label="Last Style"
                             variant="filled"
@@ -389,8 +425,8 @@ const Style = () => {
                         />
                     </Grid>
 
-                    <Grid size={{ xs: 12, sm: 6, md: 2.5 }}></Grid>
-                    <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                    <Grid size={{ xs: 12, sm: 6, md: 3.5 }}></Grid>
+                    <Grid size={{ xs: 12, sm: 6, md: 2.5 }}>
                         <AutoVibe
                             id=""
                             disabled={isFormDisabled}
@@ -588,9 +624,9 @@ const Style = () => {
                             label="Hsncode"
                             variant="filled"
                             fullWidth
-                            onChange={''}
-                            name=""
-                            value={""}
+                            onChange={handleInputChange}
+                            name="HSNCODE_KEY"
+                            value={formData.HSNCODE_KEY || ""}
                             disabled={true}
                             sx={textInputSx}
                             inputProps={{
