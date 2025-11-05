@@ -403,12 +403,12 @@ const TicketDashboard = () => {
                       padding: '0.5rem',
                       borderRadius: '0.5rem',
                       backgroundColor:
-                        stat.color === 'green' ? '#dcfce7' :
-                          stat.color === 'red' ? '#fecaca' :
-                            stat.color === 'blue' ? '#dbeafe' :
-                              stat.color === 'orange' ? '#fed7aa' :
-                                stat.color === 'purple' ? '#e9d5ff' :
-                                  '#ccfbf1',
+                        stat.color === 'green' ? '#ffffffff' :
+                          stat.color === 'red' ? '#ffffffff' :
+                            stat.color === 'blue' ? '#ffffffff' :
+                              stat.color === 'orange' ? '#ffffffff' :
+                                stat.color === 'purple' ? '#ffffffff' :
+                                  '#ffffffff',
                       color:
                         stat.color === 'green' ? '#166534' :
                           stat.color === 'red' ? '#991b1b' :
