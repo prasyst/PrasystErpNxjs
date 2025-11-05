@@ -68,6 +68,8 @@ const Stepper1 = ({
   const [shippingPartyOptions, setShippingPartyOptions] = useState([]);
   const [shippingPlaceOptions, setShippingPlaceOptions] = useState([]);
   
+  // State to track loading for branch API
+  const [loadingBranches, setLoadingBranches] = useState(false);
 
   const textInputSx = {
     '& .MuiInputBase-root': {
@@ -149,6 +151,15 @@ const Stepper1 = ({
     },
   };
 
+  // Function to get today's date in DD/MM/YYYY format
+  const getTodayDate = () => {
+    const today = new Date();
+    const day = String(today.getDate()).padStart(2, '0');
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const year = today.getFullYear();
+    return `${day}/${month}/${year}`;
+  };
+
   // Fetch Transporter Data
   const fetchTransporterData = async () => {
     try {
@@ -208,14 +219,21 @@ const Stepper1 = ({
     }
   };
 
-  // Fetch Party Branches
+  // Fetch Party Branches - IMPROVED VERSION
   const fetchPartyDetails = async (partyKey) => {
-    if (!partyKey) return;
+    if (!partyKey) {
+      setBranchOptions([]);
+      return;
+    }
     
     try {
+      setLoadingBranches(true);
       const response = await axiosInstance.post("Party/GetPartyDtlDrp", {
         PARTY_KEY: partyKey
       });
+      
+      console.log('Branch API Response:', response.data);
+      
       if (response.data.STATUS === 0 && Array.isArray(response.data.DATA)) {
         const branches = response.data.DATA.map(item => item.PLACE || '');
         setBranchOptions(branches);
@@ -228,14 +246,40 @@ const Stepper1 = ({
           }
         });
         setBranchMapping(mapping);
+        
+        // Auto-select the first branch if available
+        if (branches.length > 0) {
+          const firstBranch = branches[0];
+          const firstBranchId = mapping[firstBranch];
+          
+          setFormData(prev => ({
+            ...prev,
+            Branch: firstBranch,
+            PARTYDTL_ID: firstBranchId,
+            SHIPPING_PLACE: firstBranch,
+            SHP_PARTYDTL_ID: firstBranchId
+          }));
+          
+          console.log('Auto-selected branch:', firstBranch, 'with ID:', firstBranchId);
+        }
       } else {
         setBranchOptions([]);
         setShippingPlaceOptions([]);
+        // Clear branch related fields if no branches found
+        setFormData(prev => ({
+          ...prev,
+          Branch: "",
+          PARTYDTL_ID: 0,
+          SHIPPING_PLACE: "",
+          SHP_PARTYDTL_ID: 0
+        }));
       }
     } catch (error) {
       console.error("Error fetching party details:", error);
       setBranchOptions([]);
       setShippingPlaceOptions([]);
+    } finally {
+      setLoadingBranches(false);
     }
   };
 
@@ -374,6 +418,20 @@ const Stepper1 = ({
     fetchTransporterData();
   }, []);
 
+  // Set today's date for all date fields when component mounts or mode changes to add
+  useEffect(() => {
+    if (mode === 'add') {
+      const todayDate = getTodayDate();
+      setFormData(prev => ({
+        ...prev,
+        ORDER_DATE: todayDate,
+        ORD_REF_DT: todayDate,
+        DLV_DT: todayDate,
+        ORG_DLV_DT: todayDate
+      }));
+    }
+  }, [mode]);
+
   // Auto-population effects
   useEffect(() => {
     // Auto-populate shipping party when party is selected
@@ -480,8 +538,10 @@ const Stepper1 = ({
     }));
   };
 
-  // Enhanced handleAutoCompleteChange function
+  // Enhanced handleAutoCompleteChange function - FIXED BRANCH ISSUE
   const handleAutoCompleteChange = (name, value) => {
+    console.log(`AutoComplete Change - Field: ${name}, Value: ${value}`);
+    
     setFormData(prev => ({
       ...prev,
       [name]: value
@@ -490,20 +550,26 @@ const Stepper1 = ({
     // If party is selected, fetch branches and auto-select shipping party
     if (name === "Party" && value && partyMapping[value]) {
       const partyKey = partyMapping[value];
+      console.log(`Party selected: ${value}, Party Key: ${partyKey}`);
+      
+      // Fetch branches for the selected party
       fetchPartyDetails(partyKey);
+      
       setFormData(prev => ({
         ...prev,
         PARTY_KEY: partyKey,
         Party: value,
         SHIPPING_PARTY: value, // Auto-populate shipping party
         SHP_PARTY_KEY: partyKey, // Set shipping party key same as party key
-        // Don't auto-set SHP_PARTYDTL_ID here, wait for branch selection
+        // Branch will be auto-selected in fetchPartyDetails
       }));
     }
 
     // If branch is selected, auto-select shipping place
     if (name === "Branch" && value) {
       const branchId = branchMapping[value];
+      console.log(`Branch selected: ${value}, Branch ID: ${branchId}`);
+      
       setFormData(prev => ({
         ...prev,
         PARTYDTL_ID: branchId,
@@ -612,14 +678,12 @@ const Stepper1 = ({
     
     const requiredFields = {
       'Party': 'Party',
-      // 'ORDER_DATE': 'Order Date', 
       'SEASON': 'Season',
       'CONSIGNEE': 'Consignee',
       'Broker': 'Broker',
       'BROKER1': 'Broker1',
       'SALESPERSON_1': 'Salesperson 1',
       'SALESPERSON_2': 'Salesperson 2',
-      // 'DLV_DT': 'Delivery Date'
     };
 
     if (requiredFields[fieldName] && !formData[fieldName]) {
@@ -1059,10 +1123,10 @@ const Stepper1 = ({
           <Box sx={{ width: { xs: '100%', sm: '20%', md: '20%' }}}>
             <AutoVibe
               id="Branch"
-              disabled={isFormDisabled}
+              disabled={isFormDisabled || loadingBranches}
               getOptionLabel={(option) => option || ''}
               options={branchOptions}
-              label="Branch"
+              label={loadingBranches ? "Loading branches..." : "Branch"}
               name="Branch"
               value={formData.Branch || ""}
               onChange={(event, value) => handleAutoCompleteChange("Branch", value)}
@@ -1073,6 +1137,7 @@ const Stepper1 = ({
                   fontSize: '12px',
                 },
               }}
+              loading={loadingBranches}
             />
           </Box>
           
