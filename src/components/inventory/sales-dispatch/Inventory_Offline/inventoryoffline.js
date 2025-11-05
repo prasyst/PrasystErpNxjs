@@ -167,6 +167,15 @@ const SalesOrderOffline = () => {
     setSnackbar({ open: true, message, severity });
   };
 
+  // Function to get today's date in DD/MM/YYYY format
+  const getTodayDate = () => {
+    const today = new Date();
+    const day = String(today.getDate()).padStart(2, '0');
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const year = today.getFullYear();
+    return `${day}/${month}/${year}`;
+  };
+
   useEffect(() => {
     if (ordbkKey) {
       console.log("Got ORDBK_KEY from URL:", ordbkKey);
@@ -203,7 +212,7 @@ const SalesOrderOffline = () => {
     }
   };
 
-  // Function to populate form data from API response - IMPROVED VERSION
+  // Function to populate form data from API response
   const populateFormData = async (orderData) => {
     try {
       // First fetch all dropdown data to get proper mappings
@@ -325,68 +334,67 @@ const SalesOrderOffline = () => {
     router.push('/inverntory/stock-enquiry-table');
   };
 
-  // In SalesOrderOffline component - update these functions
-const handlePrevClick = async () => {
-  if (mode !== 'view') return;
-  
-  try {
-    setLoading(true);
-    const payload = {
-      ORDBK_KEY: formData.ORDBK_KEY,
-      FLAG: "N" 
-    };
+  const handlePrevClick = async () => {
+    if (mode !== 'view') return;
+    
+    try {
+      setLoading(true);
+      const payload = {
+        ORDBK_KEY: formData.ORDBK_KEY,
+        FLAG: "N" 
+      };
 
-    console.log('Fetching previous order with payload:', payload);
+      console.log('Fetching previous order with payload:', payload);
 
-    const response = await axiosInstance.post('/ORDBK/RetriveOrder', payload);
-    console.log('Previous Order API Response:', response.data);
+      const response = await axiosInstance.post('/ORDBK/RetriveOrder', payload);
+      console.log('Previous Order API Response:', response.data);
 
-    if (response.data.RESPONSESTATUSCODE === 1 && response.data.DATA.ORDBKList.length > 0) {
-      const orderData = response.data.DATA.ORDBKList[0];
-      await populateFormData(orderData);
-      setCurrentPARTY_KEY(orderData.PARTY_KEY);
-      showSnackbar('Previous order loaded');
-    } else {
-      showSnackbar('No previous order found', 'info');
+      if (response.data.RESPONSESTATUSCODE === 1 && response.data.DATA.ORDBKList.length > 0) {
+        const orderData = response.data.DATA.ORDBKList[0];
+        await populateFormData(orderData);
+        setCurrentPARTY_KEY(orderData.PARTY_KEY);
+        showSnackbar('Previous order loaded');
+      } else {
+        showSnackbar('No previous order found', 'info');
+      }
+    } catch (error) {
+      console.error('Error fetching previous order:', error);
+      showSnackbar('Error loading previous order', 'error');
+    } finally {
+      setLoading(false);
     }
-  } catch (error) {
-    console.error('Error fetching previous order:', error);
-    showSnackbar('Error loading previous order', 'error');
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
-const handleNextClick = async () => {
-  if (mode !== 'view') return;
-  
-  try {
-    setLoading(true);
-    const payload = {
-      ORDBK_KEY: formData.ORDBK_KEY,
-      FLAG: "P" // Next record
-    };
+  const handleNextClick = async () => {
+    if (mode !== 'view') return;
+    
+    try {
+      setLoading(true);
+      const payload = {
+        ORDBK_KEY: formData.ORDBK_KEY,
+        FLAG: "P" // Next record
+      };
 
-    console.log('Fetching next order with payload:', payload);
+      console.log('Fetching next order with payload:', payload);
 
-    const response = await axiosInstance.post('/ORDBK/RetriveOrder', payload);
-    console.log('Next Order API Response:', response.data);
+      const response = await axiosInstance.post('/ORDBK/RetriveOrder', payload);
+      console.log('Next Order API Response:', response.data);
 
-    if (response.data.RESPONSESTATUSCODE === 1 && response.data.DATA.ORDBKList.length > 0) {
-      const orderData = response.data.DATA.ORDBKList[0];
-      await populateFormData(orderData);
-      setCurrentPARTY_KEY(orderData.PARTY_KEY);
-      showSnackbar('Next order loaded');
-    } else {
-      showSnackbar('No next order found', 'info');
+      if (response.data.RESPONSESTATUSCODE === 1 && response.data.DATA.ORDBKList.length > 0) {
+        const orderData = response.data.DATA.ORDBKList[0];
+        await populateFormData(orderData);
+        setCurrentPARTY_KEY(orderData.PARTY_KEY);
+        showSnackbar('Next order loaded');
+      } else {
+        showSnackbar('No next order found', 'info');
+      }
+    } catch (error) {
+      console.error('Error fetching next order:', error);
+      showSnackbar('Error loading next order', 'error');
+    } finally {
+      setLoading(false);
     }
-  } catch (error) {
-    console.error('Error fetching next order:', error);
-    showSnackbar('Error loading next order', 'error');
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   // Calculate total quantity from ORDBKSTYLIST
   const calculateTotalQty = (ordbkStyleList) => {
@@ -397,7 +405,7 @@ const handleNextClick = async () => {
     }, 0);
   };
 
-  // Helper functions to get names from keys - IMPROVED VERSION
+  // Helper functions to get names from keys
   const getPartyNameByKey = async (partyKey) => {
     if (!partyKey) return "";
     try {
@@ -549,7 +557,7 @@ const handleNextClick = async () => {
     }
   };
 
-  // Fetch all dropdown data for proper mappings - IMPROVED VERSION
+  // Fetch all dropdown data for proper mappings
   const fetchAllDropdownData = async () => {
     try {
       // Fetch parties
@@ -810,7 +818,7 @@ const handleNextClick = async () => {
     }
   };
 
-  // Function to prepare payload for submission - COMPLETE VERSION
+  // Function to prepare payload for submission
   const prepareSubmitPayload = () => {
     const dbFlag = mode === 'add' ? 'I' : 'U';
     const currentDate = new Date().toISOString().replace('T', ' ').split('.')[0];
@@ -1022,7 +1030,7 @@ const handleNextClick = async () => {
     router.push('/inventorypage');
   };
 
-  // Function to get order number - UPDATED
+  // Function to get order number
   const getOrderNumber = async (prefix) => {
     try {
       const payload = {
@@ -1054,18 +1062,21 @@ const handleNextClick = async () => {
     }
   };
 
-  // Updated handleAdd function - CLEARS ALL FIELDS
+  // Updated handleAdd function - sets today's date and clears other fields
   const handleAdd = async () => {
     try {
       setLoading(true);
       
-      // Clear all form data for new entry
+      // Get today's date
+      const todayDate = getTodayDate();
+      
+      // Clear all form data for new entry but set today's date for date fields
       const emptyFormData = {
         ORDER_NO: "",
-        ORDER_DATE: "",
+        ORDER_DATE: todayDate, // Set today's date
         PARTY_ORD_NO: "",
         SEASON: "",
-        ORD_REF_DT: "",
+        ORD_REF_DT: todayDate, // Set today's date
         ENQ_NO: "",
         PARTY_BRANCH: "",
         QUOTE_NO: "",
@@ -1095,7 +1106,7 @@ const handleNextClick = async () => {
         SERIES: "",
         ORDBK_KEY: "",
         ORD_EVENT_KEY: "",
-        ORG_DLV_DT: "",
+        ORG_DLV_DT: todayDate, // Set today's date
         PLANNING: "0",
         PARTY_KEY: "",
         ORDBK_AMT: "",
@@ -1104,7 +1115,7 @@ const handleNextClick = async () => {
         ORDBK_DISC_AMT: "",
         CURRN_KEY: "",
         EX_RATE: "",
-        DLV_DT: "",
+        DLV_DT: todayDate, // Set today's date
         TOTAL_QTY: 0,
         TOTAL_AMOUNT: 0,
         NET_AMOUNT: 0,
