@@ -362,7 +362,8 @@ AI: ${aiResponse}
 
         {conversationContext && (
           <div className="context-info">
-            <small>🔗 Context is active - I'll remember our conversation</small>
+          <small>🔗 Context is active - I&apos;ll remember our conversation</small>
+
           </div>
         )}
       </form>
