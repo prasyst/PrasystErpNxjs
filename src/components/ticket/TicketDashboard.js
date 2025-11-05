@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import {
-  MdDashboard, MdAdd, MdList, MdViewList, MdCategory, 
-  MdSettings, MdTimer, MdAnalytics, MdPerson, MdGroup, 
+  MdDashboard, MdAdd, MdList, MdViewList, MdCategory,
+  MdSettings, MdTimer, MdAnalytics, MdPerson, MdGroup,
   MdEmail, MdTrendingUp, MdCheckCircle, MdBarChart,
-  MdRefresh, MdFilterList, MdSearch, MdDownload, 
+  MdRefresh, MdFilterList, MdSearch, MdDownload,
   MdNotifications, MdSupport, MdWork, MdAssignment,
   MdSchedule, MdWarning, MdCheckCircleOutline, MdClose
 } from 'react-icons/md';
@@ -37,7 +37,7 @@ const TicketDashboard = () => {
     closed: 0,
     overdue: 0
   });
-  
+
 
   const [showCreateTicket, setShowCreateTicket] = useState(false);
   const [selectedTicket, setSelectedTicket] = useState(null);
@@ -109,8 +109,8 @@ const TicketDashboard = () => {
     setStats(stats);
   };
 
- const handleModuleClick = (modulePath) => {
-    console.log('Navigating to:', modulePath); 
+  const handleModuleClick = (modulePath) => {
+    console.log('Navigating to:', modulePath);
     router.push(modulePath);
   };
 
@@ -129,9 +129,9 @@ const TicketDashboard = () => {
   };
 
   const handleUpdateTicket = (ticketId, updates) => {
-    setTickets(prev => 
-      prev.map(ticket => 
-        ticket.id === ticketId 
+    setTickets(prev =>
+      prev.map(ticket =>
+        ticket.id === ticketId
           ? { ...ticket, ...updates, updatedAt: new Date().toISOString() }
           : ticket
       )
@@ -145,13 +145,13 @@ const TicketDashboard = () => {
       prev.map(ticket =>
         ticket.id === ticketId
           ? {
-              ...ticket,
-              comments: [...(ticket.comments || []), {
-                id: `CMT-${Date.now()}`,
-                ...comment,
-                createdAt: new Date().toISOString()
-              }]
-            }
+            ...ticket,
+            comments: [...(ticket.comments || []), {
+              id: `CMT-${Date.now()}`,
+              ...comment,
+              createdAt: new Date().toISOString()
+            }]
+          }
           : ticket
       )
     );
@@ -256,45 +256,45 @@ const TicketDashboard = () => {
   ];
 
   const quickStats = [
-    { 
-      title: 'Total Tickets', 
-      value: stats.total, 
-      change: '+12%', 
+    {
+      title: 'Total Tickets',
+      value: stats.total,
+      change: '+12%',
       color: 'blue',
       icon: MdList
     },
-    { 
-      title: 'Open Tickets', 
-      value: stats.open, 
-      change: '+5%', 
+    {
+      title: 'Open Tickets',
+      value: stats.open,
+      change: '+5%',
       color: 'orange',
       icon: MdNotifications
     },
-    { 
-      title: 'In Progress', 
-      value: stats.inProgress, 
-      change: '-2%', 
+    {
+      title: 'In Progress',
+      value: stats.inProgress,
+      change: '-2%',
       color: 'purple',
       icon: MdSchedule
     },
-    { 
-      title: 'Resolved', 
-      value: stats.resolved, 
-      change: '+8%', 
+    {
+      title: 'Resolved',
+      value: stats.resolved,
+      change: '+8%',
       color: 'green',
       icon: MdCheckCircleOutline
     },
-    { 
-      title: 'Overdue', 
-      value: stats.overdue, 
-      change: '+3%', 
+    {
+      title: 'Overdue',
+      value: stats.overdue,
+      change: '+3%',
       color: 'red',
       icon: MdWarning
     },
-    { 
-      title: 'SLA Compliance', 
-      value: '92%', 
-      change: '+2%', 
+    {
+      title: 'SLA Compliance',
+      value: '92%',
+      change: '+2%',
       color: 'teal',
       icon: MdCheckCircle
     }
@@ -370,15 +370,22 @@ const TicketDashboard = () => {
 
       <div style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))',
         gap: '1rem',
-        marginBottom: '2rem'
+        marginBottom: '1.5rem'
       }}>
         {quickStats.map((stat, index) => {
           const IconComponent = stat.icon;
           return (
             <div key={index} style={{
-              backgroundColor: 'white',
+              background:
+                stat.color === 'green' ? 'linear-gradient(135deg, #dcfce7, #66c7a3)' :
+                  stat.color === 'red' ? 'linear-gradient(135deg, #fecaca, #f79c92)' :
+                    stat.color === 'blue' ? 'linear-gradient(135deg, #dbeafe, #92c9f3)' :
+                      stat.color === 'orange' ? 'linear-gradient(135deg, #fed7aa, #fdbf7f)' :
+                        stat.color === 'purple' ? 'linear-gradient(135deg, #e9d5ff, #d2a8f5)' :
+                          'linear-gradient(135deg, #ccfbf1, #a0e0d3)',
+
               borderRadius: '0.75rem',
               boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
               border: '1px solid #e5e7eb',
@@ -386,8 +393,8 @@ const TicketDashboard = () => {
               transition: 'all 0.3s ease',
               ':hover': {
                 transform: 'translateY(-2px)',
-                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)'
-              }
+                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+              },
             }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <div>
@@ -395,35 +402,35 @@ const TicketDashboard = () => {
                     <div style={{
                       padding: '0.5rem',
                       borderRadius: '0.5rem',
-                      backgroundColor: 
+                      backgroundColor:
                         stat.color === 'green' ? '#dcfce7' :
-                        stat.color === 'red' ? '#fecaca' :
-                        stat.color === 'blue' ? '#dbeafe' :
-                        stat.color === 'orange' ? '#fed7aa' :
-                        stat.color === 'purple' ? '#e9d5ff' :
-                        '#ccfbf1',
+                          stat.color === 'red' ? '#fecaca' :
+                            stat.color === 'blue' ? '#dbeafe' :
+                              stat.color === 'orange' ? '#fed7aa' :
+                                stat.color === 'purple' ? '#e9d5ff' :
+                                  '#ccfbf1',
                       color:
                         stat.color === 'green' ? '#166534' :
-                        stat.color === 'red' ? '#991b1b' :
-                        stat.color === 'blue' ? '#1e40af' :
-                        stat.color === 'orange' ? '#9a3412' :
-                        stat.color === 'purple' ? '#7e22ce' :
-                        '#0f766e'
+                          stat.color === 'red' ? '#991b1b' :
+                            stat.color === 'blue' ? '#1e40af' :
+                              stat.color === 'orange' ? '#9a3412' :
+                                stat.color === 'purple' ? '#7e22ce' :
+                                  '#0f766e'
                     }}>
                       <IconComponent size={20} />
                     </div>
                   </div>
-                  <p style={{ 
-                    fontSize: '0.875rem', 
-                    fontWeight: '500', 
+                  <p style={{
+                    fontSize: '0.875rem',
+                    fontWeight: '500',
                     color: '#6b7280',
-                    margin: 0 
+                    margin: 0
                   }}>
                     {stat.title}
                   </p>
-                  <p style={{ 
-                    fontSize: '1.875rem', 
-                    fontWeight: 'bold', 
+                  <p style={{
+                    fontSize: '1.875rem',
+                    fontWeight: 'bold',
                     color: '#111827',
                     margin: '0.25rem 0 0 0'
                   }}>
@@ -435,9 +442,9 @@ const TicketDashboard = () => {
                   fontWeight: '600',
                   padding: '0.25rem 0.5rem',
                   borderRadius: '9999px',
-                  backgroundColor: 
+                  backgroundColor:
                     stat.change.startsWith('+') ? '#dcfce7' : '#fecaca',
-                  color: 
+                  color:
                     stat.change.startsWith('+') ? '#166534' : '#991b1b'
                 }}>
                   {stat.change}
@@ -446,18 +453,18 @@ const TicketDashboard = () => {
             </div>
           );
         })}
+
       </div>
 
-     
-      <div style={{ 
-        display: 'grid', 
-        gridTemplateColumns: '2fr 1fr', 
+
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: '2fr 1fr',
         gap: '1.5rem'
       }}>
- 
+
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-          
-          {/* Ticket Modules */}
+
           <div style={{
             backgroundColor: 'white',
             borderRadius: '0.75rem',
@@ -465,15 +472,15 @@ const TicketDashboard = () => {
             border: '1px solid #e5e7eb'
           }}>
             <div style={{ padding: '1.5rem' }}>
-              <div style={{ 
-                display: 'flex', 
-                justifyContent: 'space-between', 
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
                 alignItems: 'center',
-                marginBottom: '1.5rem'
+                marginBottom: '1rem'
               }}>
-                <h2 style={{ 
-                  fontSize: '1.25rem', 
-                  fontWeight: '600', 
+                <h2 style={{
+                  fontSize: '1.25rem',
+                  fontWeight: '600',
                   color: '#111827',
                   margin: 0
                 }}>
@@ -514,27 +521,27 @@ const TicketDashboard = () => {
                   const IconComponent = module.icon;
                   return (
                     <div
-    key={index}
-    style={{
-      border: '1px solid #e5e7eb',
-      borderRadius: '0.75rem',
-      padding: '1.25rem',
-      cursor: 'pointer',
-      transition: 'all 0.3s ease',
-      backgroundColor: 'white'
-    }}
-    onMouseOver={(e) => {
-      e.currentTarget.style.transform = 'translateY(-4px)';
-      e.currentTarget.style.boxShadow = '0 8px 25px rgba(0, 0, 0, 0.15)';
-      e.currentTarget.style.borderColor = module.color;
-    }}
-    onMouseOut={(e) => {
-      e.currentTarget.style.transform = 'translateY(0)';
-      e.currentTarget.style.boxShadow = '0 1px 3px 0 rgba(0, 0, 0, 0.1)';
-      e.currentTarget.style.borderColor = '#e5e7eb';
-    }}
-    onClick={() => handleModuleClick(module.path)} // Ye line sahi hai
-  >
+                      key={index}
+                      style={{
+                        border: '1px solid #e5e7eb',
+                        borderRadius: '0.75rem',
+                        padding: '1.25rem',
+                        cursor: 'pointer',
+                        transition: 'all 0.3s ease',
+                        backgroundColor: `${module.color}15`
+                      }}
+                      onMouseOver={(e) => {
+                        e.currentTarget.style.transform = 'translateY(-4px)';
+                        e.currentTarget.style.boxShadow = '0 8px 25px rgba(0, 0, 0, 0.15)';
+                        e.currentTarget.style.borderColor = module.color;
+                      }}
+                      onMouseOut={(e) => {
+                        e.currentTarget.style.transform = 'translateY(0)';
+                        e.currentTarget.style.boxShadow = '0 1px 3px 0 rgba(0, 0, 0, 0.1)';
+                        e.currentTarget.style.borderColor = '#e5e7eb';
+                      }}
+                      onClick={() => handleModuleClick(module.path)} // Ye line sahi hai
+                    >
                       <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem' }}>
                         <div style={{
                           padding: '0.75rem',
@@ -549,16 +556,16 @@ const TicketDashboard = () => {
                           <IconComponent size={24} />
                         </div>
                         <div style={{ flex: 1 }}>
-                          <h3 style={{ 
-                            fontSize: '1rem', 
-                            fontWeight: '600', 
+                          <h3 style={{
+                            fontSize: '1rem',
+                            fontWeight: '600',
                             color: '#111827',
                             margin: '0 0 0.5rem 0'
                           }}>
                             {module.title}
                           </h3>
-                          <p style={{ 
-                            fontSize: '0.875rem', 
+                          <p style={{
+                            fontSize: '0.875rem',
                             color: '#6b7280',
                             margin: 0,
                             lineHeight: '1.4'
@@ -581,21 +588,21 @@ const TicketDashboard = () => {
             border: '1px solid #e5e7eb'
           }}>
             <div style={{ padding: '1.5rem' }}>
-              <div style={{ 
-                display: 'flex', 
-                justifyContent: 'space-between', 
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
                 alignItems: 'center',
                 marginBottom: '1.5rem'
               }}>
-                <h2 style={{ 
-                  fontSize: '1.25rem', 
-                  fontWeight: '600', 
+                <h2 style={{
+                  fontSize: '1.25rem',
+                  fontWeight: '600',
                   color: '#111827',
                   margin: 0
                 }}>
                   Recent Tickets
                 </h2>
-                <button 
+                <button
                   style={{
                     color: '#2563eb',
                     fontSize: '0.875rem',
@@ -614,9 +621,9 @@ const TicketDashboard = () => {
                 <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                   <thead>
                     <tr style={{ borderBottom: '1px solid #e5e7eb' }}>
-                      <th style={{ 
-                        textAlign: 'left', 
-                        padding: '0.75rem 0.5rem', 
+                      <th style={{
+                        textAlign: 'left',
+                        padding: '0.75rem 0.5rem',
                         fontSize: '0.75rem',
                         fontWeight: '600',
                         color: '#6b7280',
@@ -625,9 +632,9 @@ const TicketDashboard = () => {
                       }}>
                         Ticket ID
                       </th>
-                      <th style={{ 
-                        textAlign: 'left', 
-                        padding: '0.75rem 0.5rem', 
+                      <th style={{
+                        textAlign: 'left',
+                        padding: '0.75rem 0.5rem',
                         fontSize: '0.75rem',
                         fontWeight: '600',
                         color: '#6b7280',
@@ -636,9 +643,9 @@ const TicketDashboard = () => {
                       }}>
                         Title
                       </th>
-                      <th style={{ 
-                        textAlign: 'left', 
-                        padding: '0.75rem 0.5rem', 
+                      <th style={{
+                        textAlign: 'left',
+                        padding: '0.75rem 0.5rem',
                         fontSize: '0.75rem',
                         fontWeight: '600',
                         color: '#6b7280',
@@ -647,9 +654,9 @@ const TicketDashboard = () => {
                       }}>
                         Priority
                       </th>
-                      <th style={{ 
-                        textAlign: 'left', 
-                        padding: '0.75rem 0.5rem', 
+                      <th style={{
+                        textAlign: 'left',
+                        padding: '0.75rem 0.5rem',
                         fontSize: '0.75rem',
                         fontWeight: '600',
                         color: '#6b7280',
@@ -658,9 +665,9 @@ const TicketDashboard = () => {
                       }}>
                         Status
                       </th>
-                      <th style={{ 
-                        textAlign: 'left', 
-                        padding: '0.75rem 0.5rem', 
+                      <th style={{
+                        textAlign: 'left',
+                        padding: '0.75rem 0.5rem',
                         fontSize: '0.75rem',
                         fontWeight: '600',
                         color: '#6b7280',
@@ -673,9 +680,9 @@ const TicketDashboard = () => {
                   </thead>
                   <tbody>
                     {tickets.slice(0, 5).map((ticket, index) => (
-                      <tr 
-                        key={index} 
-                        style={{ 
+                      <tr
+                        key={index}
+                        style={{
                           borderBottom: '1px solid #f3f4f6',
                           cursor: 'pointer',
                           transition: 'background-color 0.2s'
@@ -684,7 +691,7 @@ const TicketDashboard = () => {
                         onMouseOver={(e) => { e.currentTarget.style.backgroundColor = '#f9fafb'; }}
                         onMouseOut={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
                       >
-                        <td style={{ 
+                        <td style={{
                           padding: '1rem 0.5rem',
                           fontSize: '0.875rem',
                           fontWeight: '600',
@@ -692,7 +699,7 @@ const TicketDashboard = () => {
                         }}>
                           {ticket.id}
                         </td>
-                        <td style={{ 
+                        <td style={{
                           padding: '1rem 0.5rem',
                           fontSize: '0.875rem',
                           fontWeight: '500',
@@ -729,7 +736,7 @@ const TicketDashboard = () => {
                             {ticket.status.replace('-', ' ')}
                           </span>
                         </td>
-                        <td style={{ 
+                        <td style={{
                           padding: '1rem 0.5rem',
                           fontSize: '0.875rem',
                           color: '#6b7280'
@@ -746,8 +753,8 @@ const TicketDashboard = () => {
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-          
-       
+
+
           <div style={{
             backgroundColor: 'white',
             borderRadius: '0.75rem',
@@ -755,16 +762,16 @@ const TicketDashboard = () => {
             border: '1px solid #e5e7eb',
             padding: '1.5rem'
           }}>
-            <h3 style={{ 
-              fontSize: '1.125rem', 
-              fontWeight: '600', 
+            <h3 style={{
+              fontSize: '1.125rem',
+              fontWeight: '600',
               color: '#111827',
               margin: '0 0 1rem 0'
             }}>
               Quick Actions
             </h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-              <button 
+              <button
                 style={{
                   width: '100%',
                   backgroundColor: '#2563eb',
@@ -786,7 +793,7 @@ const TicketDashboard = () => {
                 <MdAdd size={18} />
                 <span>Create New Ticket</span>
               </button>
-              <button 
+              <button
                 style={{
                   width: '100%',
                   border: '1px solid #d1d5db',
@@ -803,12 +810,12 @@ const TicketDashboard = () => {
                   justifyContent: 'center',
                   transition: 'all 0.2s'
                 }}
-               onClick={() => window.location.href = '/tickets/my-tickets'}
+                onClick={() => window.location.href = '/tickets/my-tickets'}
               >
                 <MdPerson size={18} />
                 <span>View My Tickets</span>
               </button>
-              <button 
+              <button
                 style={{
                   width: '100%',
                   border: '1px solid #d1d5db',
@@ -835,15 +842,15 @@ const TicketDashboard = () => {
 
 
           <div style={{
-            backgroundColor: 'white',
+            backgroundColor: '#f0f9ff',
             borderRadius: '0.75rem',
             boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
             border: '1px solid #e5e7eb',
             padding: '1.5rem'
           }}>
-            <h3 style={{ 
-              fontSize: '1.125rem', 
-              fontWeight: '600', 
+            <h3 style={{
+              fontSize: '1.125rem',
+              fontWeight: '600',
               color: '#111827',
               margin: '0 0 1rem 0'
             }}>
@@ -861,16 +868,16 @@ const TicketDashboard = () => {
                     flexShrink: 0
                   }}></div>
                   <div style={{ flex: 1 }}>
-                    <p style={{ 
-                      fontSize: '0.875rem', 
+                    <p style={{
+                      fontSize: '0.875rem',
                       color: '#111827',
                       margin: '0 0 0.25rem 0',
                       fontWeight: '500'
                     }}>
                       {activity.action}
                     </p>
-                    <p style={{ 
-                      fontSize: '0.75rem', 
+                    <p style={{
+                      fontSize: '0.75rem',
                       color: '#6b7280',
                       margin: 0
                     }}>
@@ -882,17 +889,18 @@ const TicketDashboard = () => {
             </div>
           </div>
 
-     
+
           <div style={{
-            backgroundColor: 'white',
+            background: 'linear-gradient(135deg, rgba(148, 211, 164, 0.95) 0%, rgba(255,255,255,0.85) 100%)',
             borderRadius: '0.75rem',
+            backdropFilter: 'blur(10px)',
             boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
             border: '1px solid #e5e7eb',
             padding: '1.5rem'
           }}>
-            <h3 style={{ 
-              fontSize: '1.125rem', 
-              fontWeight: '600', 
+            <h3 style={{
+              fontSize: '1rem',
+              fontWeight: '600',
               color: '#111827',
               margin: '0 0 1rem 0'
             }}>
@@ -929,30 +937,30 @@ const TicketDashboard = () => {
   );
 
   return (
-    <div style={{ 
-      minHeight: '100vh', 
-      backgroundColor: '#f9fafb',
+    <div style={{
+      minHeight: '100vh',
+      backgroundColor: 'white',
       fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
     }}>
-     
+
       <div style={{
-        backgroundColor: 'white',
+        backgroundColor: '#dbeafe',
         boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
         borderBottom: '1px solid #e5e7eb',
         position: 'sticky',
         top: 0,
         zIndex: 10
       }}>
-        <div style={{ 
-          maxWidth: '1400px', 
-          margin: '0 auto', 
+        <div style={{
+          maxWidth: '1400px',
+          margin: '0 auto',
           padding: '0 1rem'
         }}>
           <div style={{
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            padding: '1rem 0'
+            padding: '0.5rem 0'
           }}>
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
@@ -975,49 +983,49 @@ const TicketDashboard = () => {
                   </button>
                 )}
                 <div>
-                  <h1 style={{ 
-                    fontSize: '1.5rem', 
-                    fontWeight: 'bold', 
+                  <h1 style={{
+                    fontSize: '1.5rem',
+                    fontWeight: 'bold',
                     color: '#111827',
-                    margin: 0
+                    margin: 0,
                   }}>
-                    {activeModule === 'overview' ? '🎫 Ticket Management System' : 
-                     activeModule === 'ticket-list' ? 'All Tickets' :
-                     activeModule === 'categories' ? 'Ticket Categories' :
-                     activeModule === 'priorities' ? 'Priority Management' :
-                     activeModule === 'status' ? 'Status Workflow' :
-                     activeModule === 'reports' ? 'Reports & Analytics' :
-                     activeModule === 'team' ? 'Team Management' : 'Ticket Management System'}
+                    {activeModule === 'overview' ? '🎫 Ticket Management System' :
+                      activeModule === 'ticket-list' ? 'All Tickets' :
+                        activeModule === 'categories' ? 'Ticket Categories' :
+                          activeModule === 'priorities' ? 'Priority Management' :
+                            activeModule === 'status' ? 'Status Workflow' :
+                              activeModule === 'reports' ? 'Reports & Analytics' :
+                                activeModule === 'team' ? 'Team Management' : 'Ticket Management System'}
                   </h1>
-                  <p style={{ 
+                  <p style={{
                     color: '#6b7280',
                     margin: '0.25rem 0 0 0',
                     fontSize: '0.875rem'
                   }}>
-                    {activeModule === 'overview' 
-                      ? 'Manage all support tickets and customer queries' 
+                    {activeModule === 'overview'
+                      ? 'Manage all support tickets and customer queries'
                       : `Manage ${activeModule.replace('-', ' ')}`}
                   </p>
                 </div>
               </div>
             </div>
             <div style={{ display: 'flex', gap: '0.75rem' }}>
-            <Button 
-            startIcon={<ArrowBackIcon />}
-            onClick={() => router.push('/dashboard')}
-            sx={{ 
-            
-              borderRadius: 2,
-              fontWeight: '600',
-              textTransform: 'none'
-            }}
-            variant="outlined"
-          >
-         
-          </Button>
+              <Button
+                startIcon={<ArrowBackIcon />}
+                onClick={() => router.push('/dashboard')}
+                sx={{
+
+                  borderRadius: 2,
+                  fontWeight: '600',
+                  textTransform: 'none'
+                }}
+                variant="outlined"
+              >
+
+              </Button>
               {activeModule === 'overview' && (
                 <>
-                  <button 
+                  <button
                     style={{
                       backgroundColor: '#2563eb',
                       color: 'white',
@@ -1032,7 +1040,7 @@ const TicketDashboard = () => {
                       fontWeight: '500',
                       transition: 'background-color 0.2s'
                     }}
-                     onClick={() => window.location.href = '/tickets/create-tickets'}
+                    onClick={() => window.location.href = '/tickets/create-tickets'}
                   >
                     <MdAdd size={18} />
                     <span>New Ticket</span>
@@ -1061,9 +1069,9 @@ const TicketDashboard = () => {
         </div>
       </div>
 
-      <div style={{ 
-        maxWidth: '1400px', 
-        margin: '0 auto', 
+      <div style={{
+        maxWidth: '1400px',
+        margin: '0 auto',
         padding: '1.5rem 1rem'
       }}>
         {renderActiveModule()}

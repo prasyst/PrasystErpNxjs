@@ -1025,7 +1025,7 @@ const Sidebar = ({  isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) =>
           borderRight: '1px solid #e0e0e0',
           left: 0,
           top: 0,
-          width: isMobile ? (isOpen ? '230px' : '0') : (isCollapsed ? '70px' : '250px'),
+          width: isMobile ? (isOpen ? '230px' : '0') : (isCollapsed ? '' : '250px'),
           transition: isMobile ? 'width 0.3s ease' : 'width 0.3s ease',
           padding: isMobile ? (isOpen ? '0.8rem 0.6rem' : '0') : '0.8rem 0.6rem',
           overflow: 'hidden',
