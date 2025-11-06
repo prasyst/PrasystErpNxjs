@@ -707,127 +707,220 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
   };
 
   // Enhanced handleConfirmAdd function with validation
-  const handleConfirmAdd = () => {
-    
-    // Validation
-    if (!newItemData.product || !newItemData.style) {
-      showSnackbar("Please fill required fields: Product and Style", 'error');
-      return;
-    }
+ // Enhanced handleConfirmAdd function with proper DBFLAG handling
+const handleConfirmAdd = () => {
+  // Validation
+  if (!newItemData.product || !newItemData.style) {
+    showSnackbar("Please fill required fields: Product and Style", 'error');
+    return;
+  }
 
-    
+  if (sizeDetailsData.length === 0) {
+    showSnackbar("Please load size details first by clicking 'Add Qty' button", 'error');
+    return;
+  }
 
-    if (sizeDetailsData.length === 0) {
-      showSnackbar("Please load size details first by clicking 'Add Qty' button", 'error');
-      return;
-    }
+  const sizesWithZeroQty = sizeDetailsData.filter(size => !size.QTY || size.QTY === 0);
+  if (sizesWithZeroQty.length > 0) {
+    showSnackbar("Please enter quantity for all sizes before confirming", 'error');
+    return;
+  }
 
-    const sizesWithZeroQty = sizeDetailsData.filter(size => !size.QTY || size.QTY === 0);
-    if (sizesWithZeroQty.length > 0) {
-      showSnackbar("Please enter quantity for all sizes before confirming", 'error');
-      return;
-    }
+  const fgprdKey = productMapping[newItemData.product] || productMapping[newItemData.style] || "";
+  const fgptnKey = lotNoMapping[newItemData.lotNo] || "";
 
-    const fgprdKey = productMapping[newItemData.product] || productMapping[newItemData.style] || "";
-    const fgptnKey = lotNoMapping[newItemData.lotNo] || "";
+  console.log('Product and Lot No Keys:', {
+    product: newItemData.product,
+    fgprdKey,
+    lotNo: newItemData.lotNo,
+    fgptnKey
+  });
 
-    console.log('Product and Lot No Keys:', {
-      product: newItemData.product,
-      fgprdKey,
-      lotNo: newItemData.lotNo,
-      fgptnKey
-    });
+  const totalQty = sizeDetailsData.reduce((sum, size) => sum + (parseFloat(size.QTY) || 0), 0);
+  const mrp = parseFloat(newItemData.mrp) || 0;
+  const totalAmount = sizeDetailsData.reduce((sum, size) => sum + (parseFloat(size.ITM_AMT) || 0), 0);
+  const discount = parseFloat(newItemData.discount) || 0;
+  const netAmount = totalAmount - discount;
 
-    const totalQty = sizeDetailsData.reduce((sum, size) => sum + (parseFloat(size.QTY) || 0), 0);
-    const mrp = parseFloat(newItemData.mrp) || 0;
-    const totalAmount = sizeDetailsData.reduce((sum, size) => sum + (parseFloat(size.ITM_AMT) || 0), 0);
-    const discount = parseFloat(newItemData.discount) || 0;
-    const netAmount = totalAmount - discount;
+  // Generate a temporary ID for new items (long number to distinguish from real IDs)
+  const tempId = Date.now();
 
-    const newItem = {
-      id: Date.now(),
-      BarCode: newItemData.barcode || "-",
-      product: newItemData.product,
-      style: newItemData.style || "-",
-      type: newItemData.type || "-",
-      shade: newItemData.shade || "-",
-      lotNo: newItemData.lotNo || "-",
-      qty: totalQty,
-      rate: mrp,
-      amount: totalAmount,
-      varPer: parseFloat(newItemData.varPer) || 0,
-      varQty: 0,
-      varAmt: 0,
-      discAmt: discount,
-      netAmt: netAmount,
-      distributer: "-",
-      set: parseFloat(newItemData.sets) || 0,
-      originalData: {
-        ORDBKSTYSZLIST: sizeDetailsData,
-        FGPRD_KEY: fgprdKey,
-        FGPTN_KEY: fgptnKey
-      },
-      FGSTYLE_ID: styleMapping[newItemData.style] || null,
+  const newItem = {
+    id: tempId,
+    BarCode: newItemData.barcode || "-",
+    product: newItemData.product,
+    style: newItemData.style || "-",
+    type: newItemData.type || "-",
+    shade: newItemData.shade || "-",
+    lotNo: newItemData.lotNo || "-",
+    qty: totalQty,
+    rate: mrp,
+    amount: totalAmount,
+    varPer: parseFloat(newItemData.varPer) || 0,
+    varQty: 0,
+    varAmt: 0,
+    discAmt: discount,
+    netAmt: netAmount,
+    distributer: "-",
+    set: parseFloat(newItemData.sets) || 0,
+    originalData: {
+      ORDBKSTY_ID: tempId, // Temporary ID for new items
+      ORDBKSTYSZLIST: sizeDetailsData.map(size => ({
+        ...size,
+        ORDBKSTYSZ_ID: 0 // 0 for new size entries
+      })),
       FGPRD_KEY: fgprdKey,
-      FGPTN_KEY: fgptnKey
-    };
+      FGPTN_KEY: fgptnKey,
+      // Set DBFLAG based on mode
+      DBFLAG: mode === 'add' ? 'I' : 'I' // Always 'I' for new items in both modes
+    },
+    FGSTYLE_ID: styleMapping[newItemData.style] || null,
+    FGPRD_KEY: fgprdKey,
+    FGPTN_KEY: fgptnKey
+  };
 
-    const newTableData = [...tableData, newItem];
-    setUpdatedTableData(newTableData);
+  const newTableData = [...tableData, newItem];
+  setUpdatedTableData(newTableData);
 
+  // Update formData with proper DBFLAG
+  const newOrdbkStyleItem = {
+    ORDBKSTY_ID: tempId,
+    FGITEM_KEY: newItem.BarCode,
+    PRODUCT: newItem.product,
+    STYLE: newItem.style,
+    TYPE: newItem.type,
+    SHADE: newItem.shade,
+    ITMQTY: newItem.qty,
+    ITMRATE: newItem.rate,
+    ITMAMT: newItem.amount,
+    DLV_VAR_PERC: newItem.varPer,
+    DLV_VAR_QTY: newItem.varQty,
+    DISC_AMT: newItem.discAmt,
+    NET_AMT: newItem.netAmt,
+    DISTBTR: newItem.distributer,
+    SETQTY: newItem.set,
+    ORDBKSTYSZLIST: sizeDetailsData.map(size => ({
+      ...size,
+      ORDBKSTYSZ_ID: 0 // 0 for new size entries
+    })),
+    FGSTYLE_ID: newItem.FGSTYLE_ID,
+    FGPRD_KEY: fgprdKey,
+    FGPTN_KEY: fgptnKey,
+    DBFLAG: mode === 'add' ? 'I' : 'I' // Always 'I' for new items
+  };
+
+  setFormData(prev => ({
+    ...prev,
+    apiResponseData: {
+      ...prev.apiResponseData,
+      ORDBKSTYLIST: [...(prev.apiResponseData?.ORDBKSTYLIST || []), newOrdbkStyleItem]
+    }
+  }));
+
+  setIsAddingNew(false);
+  setNewItemData({
+    product: '',
+    barcode: '',
+    style: '',
+    type: '',
+    shade: '',
+    qty: '',
+    mrp: '',
+    setNo: '',
+    varPer: '',
+    stdQty: '',
+    convFact: '',
+    lotNo: '',
+    discount: '',
+    percent: '',
+    remark: '',
+    divDt: '',
+    rQty: '',
+    sets: ''
+  });
+  setSizeDetailsData([]);
+
+  showSnackbar("Item added successfully!");
+};
+
+// Enhanced handleEditItem function
+const handleEditItem = () => {
+  if (!selectedRow) {
+    showSnackbar("Please select an item to edit", 'error');
+    return;
+  }
+  
+  if (isEditingSize) {
+    const updatedTable = tableData.map(row => {
+      if (row.id === selectedRow) {
+        const totalSizeQty = sizeDetailsData.reduce((sum, size) => sum + (parseFloat(size.QTY) || 0), 0);
+        const rate = row.rate || 0;
+        const amount = totalSizeQty * rate;
+        const discount = row.discAmt || 0;
+        const netAmount = amount - discount;
+
+        // Preserve the original DBFLAG for existing items
+        const originalDbFlag = row.originalData?.DBFLAG || 'U';
+
+        return {
+          ...row,
+          qty: totalSizeQty,
+          amount: amount,
+          netAmt: netAmount,
+          originalData: {
+            ...row.originalData,
+            ORDBKSTYSZLIST: sizeDetailsData,
+            DBFLAG: originalDbFlag // Preserve original DBFLAG
+          }
+        };
+      }
+      return row;
+    });
+    
+    setUpdatedTableData(updatedTable);
+    
     setFormData(prev => ({
       ...prev,
       apiResponseData: {
         ...prev.apiResponseData,
-        ORDBKSTYLIST: [...(prev.apiResponseData?.ORDBKSTYLIST || []), {
-          ORDBKSTY_ID: newItem.id,
-          FGITEM_KEY: newItem.BarCode,
-          PRODUCT: newItem.product,
-          STYLE: newItem.style,
-          TYPE: newItem.type,
-          SHADE: newItem.shade,
-          ITMQTY: newItem.qty,
-          ITMRATE: newItem.rate,
-          ITMAMT: newItem.amount,
-          DLV_VAR_PERC: newItem.varPer,
-          DLV_VAR_QTY: newItem.varQty,
-          DISC_AMT: newItem.discAmt,
-          NET_AMT: newItem.netAmt,
-          DISTBTR: newItem.distributer,
-          SETQTY: newItem.set,
-          ORDBKSTYSZLIST: sizeDetailsData,
-          FGSTYLE_ID: newItem.FGSTYLE_ID,
-          FGPRD_KEY: fgprdKey,
-          FGPTN_KEY: fgptnKey
-        }]
+        ORDBKSTYLIST: prev.apiResponseData?.ORDBKSTYLIST?.map(item => {
+          if (item.ORDBKSTY_ID === selectedRow) {
+            const totalSizeQty = sizeDetailsData.reduce((sum, size) => sum + (parseFloat(size.QTY) || 0), 0);
+            const rate = item.ITMRATE || 0;
+            const amount = totalSizeQty * rate;
+            const discount = item.DISC_AMT || 0;
+            const netAmount = amount - discount;
+
+            // Preserve the original DBFLAG
+            const originalDbFlag = item.DBFLAG || 'U';
+
+            return {
+              ...item,
+              ITMQTY: totalSizeQty,
+              ITMAMT: amount,
+              NET_AMT: netAmount,
+              ORDBKSTYSZLIST: sizeDetailsData,
+              DBFLAG: originalDbFlag // Preserve original DBFLAG
+            };
+          }
+          return item;
+        }) || []
       }
     }));
-
-    setIsAddingNew(false);
-    setNewItemData({
-      product: '',
-      barcode: '',
-      style: '',
-      type: '',
-      shade: '',
-      qty: '',
-      mrp: '',
-      setNo: '',
-      varPer: '',
-      stdQty: '',
-      convFact: '',
-      lotNo: '',
-      discount: '',
-      percent: '',
-      remark: '',
-      divDt: '',
-      rQty: '',
-      sets: ''
-    });
-    setSizeDetailsData([]);
-
-    showSnackbar("Item added successfully!");
-  };
+    
+    showSnackbar("Changes saved successfully!");
+  } else {
+    if (selectedRow) {
+      const selectedRowData = tableData.find(row => row.id === selectedRow);
+      if (selectedRowData) {
+        populateFormFields(selectedRowData);
+      }
+    }
+    showSnackbar('Edit mode enabled for selected item');
+  }
+  
+  setIsEditingSize(!isEditingSize);
+};
 
   const handleCancelAdd = () => {
    
@@ -881,75 +974,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
   });
 };
 
-  const handleEditItem = () => {
-    if (!selectedRow) {
-      showSnackbar("Please select an item to edit", 'error');
-      return;
-    }
-    
-    if (isEditingSize) {
-      const updatedTable = tableData.map(row => {
-        if (row.id === selectedRow) {
-          const totalSizeQty = sizeDetailsData.reduce((sum, size) => sum + (parseFloat(size.QTY) || 0), 0);
-          const rate = row.rate || 0;
-          const amount = totalSizeQty * rate;
-          const discount = row.discAmt || 0;
-          const netAmount = amount - discount;
 
-          return {
-            ...row,
-            qty: totalSizeQty,
-            amount: amount,
-            netAmt: netAmount,
-            originalData: {
-              ...row.originalData,
-              ORDBKSTYSZLIST: sizeDetailsData
-            }
-          };
-        }
-        return row;
-      });
-      
-      setUpdatedTableData(updatedTable);
-      
-      setFormData(prev => ({
-        ...prev,
-        apiResponseData: {
-          ...prev.apiResponseData,
-          ORDBKSTYLIST: prev.apiResponseData?.ORDBKSTYLIST?.map(item => {
-            if (item.ORDBKSTY_ID === selectedRow) {
-              const totalSizeQty = sizeDetailsData.reduce((sum, size) => sum + (parseFloat(size.QTY) || 0), 0);
-              const rate = item.ITMRATE || 0;
-              const amount = totalSizeQty * rate;
-              const discount = item.DISC_AMT || 0;
-              const netAmount = amount - discount;
-
-              return {
-                ...item,
-                ITMQTY: totalSizeQty,
-                ITMAMT: amount,
-                NET_AMT: netAmount,
-                ORDBKSTYSZLIST: sizeDetailsData
-              };
-            }
-            return item;
-          }) || []
-        }
-      }));
-      
-      showSnackbar("Changes saved successfully!");
-    } else {
-      if (selectedRow) {
-        const selectedRowData = tableData.find(row => row.id === selectedRow);
-        if (selectedRowData) {
-          populateFormFields(selectedRowData);
-        }
-      }
-      showSnackbar('Edit mode enabled for selected item');
-    }
-    
-    setIsEditingSize(!isEditingSize);
-  };
 
   const handleDeleteItem = () => {
     if (!selectedRow) {

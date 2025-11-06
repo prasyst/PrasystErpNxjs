@@ -42,6 +42,8 @@ const Stepper1 = ({
   consigneeMapping,
   seasonMapping,
   transporterMapping,
+  orderTypeMapping,
+  merchandiserMapping,
   setPartyMapping,
   setBranchMapping,
   setBrokerMapping,
@@ -51,6 +53,8 @@ const Stepper1 = ({
   setConsigneeMapping,
   setSeasonMapping,
   setTransporterMapping,
+  setOrderTypeMapping,
+  setMerchandiserMapping,
   showSnackbar
 }) => {
   const [selectedDate, setSelectedDate] = useState(null);
@@ -67,6 +71,8 @@ const Stepper1 = ({
   const [transporterOptions, setTransporterOptions] = useState([]);
   const [shippingPartyOptions, setShippingPartyOptions] = useState([]);
   const [shippingPlaceOptions, setShippingPlaceOptions] = useState([]);
+  const [orderTypeOptions, setOrderTypeOptions] = useState([]);
+  const [merchandiserOptions, setMerchandiserOptions] = useState([]);
   
   // State to track loading for branch API
   const [loadingBranches, setLoadingBranches] = useState(false);
@@ -408,6 +414,64 @@ const Stepper1 = ({
     }
   };
 
+  // Fetch Order Type Data
+  const fetchOrderTypeData = async () => {
+    try {
+      const payload = {
+        "ORDBK_KEY": "",
+        "FLAG": "ORDTYPE",
+        "FCYR_KEY": "25",
+        "COBR_ID": "02",
+        "PageNumber": 1,
+        "PageSize": 25,
+        "SearchText": "",
+        "PARTY_KEY": formData.PARTY_KEY || "",
+        "PARTYDTL_ID": formData.PARTYDTL_ID || 0
+      };
+
+      const response = await axiosInstance.post('/ORDBK/GetOrdbkDrp', payload);
+      if (response.data.DATA && Array.isArray(response.data.DATA)) {
+        const orderTypes = response.data.DATA.map(item => item.ORDBK_NO || '');
+        setOrderTypeOptions(orderTypes);
+        
+        const mapping = {};
+        response.data.DATA.forEach(item => {
+          if (item.ORDBK_NO && item.ORDBK_KEY) {
+            mapping[item.ORDBK_NO] = item.ORDBK_KEY;
+          }
+        });
+        setOrderTypeMapping(mapping);
+      }
+    } catch (error) {
+      console.error('Error fetching order type data:', error);
+    }
+  };
+
+  // Fetch Merchandiser Data
+  const fetchMerchandiserData = async () => {
+    try {
+      const payload = {
+        "FLAG": "MECH"
+      };
+
+      const response = await axiosInstance.post('/USERS/GetUserLoginDrp', payload);
+      if (response.data.DATA && Array.isArray(response.data.DATA)) {
+        const merchandisers = response.data.DATA.map(item => item.USER_NAME || '');
+        setMerchandiserOptions(merchandisers);
+        
+        const mapping = {};
+        response.data.DATA.forEach(item => {
+          if (item.USER_NAME && item.USER_ID) {
+            mapping[item.USER_NAME] = item.USER_ID;
+          }
+        });
+        setMerchandiserMapping(mapping);
+      }
+    } catch (error) {
+      console.error('Error fetching merchandiser data:', error);
+    }
+  };
+
   // Initialize all dropdown data
   useEffect(() => {
     fetchPartiesByName();
@@ -416,6 +480,8 @@ const Stepper1 = ({
     fetchConsigneeData();
     fetchSeasonData();
     fetchTransporterData();
+    fetchOrderTypeData();
+    fetchMerchandiserData();
   }, []);
 
   // Set today's date for all date fields when component mounts or mode changes to add
@@ -431,6 +497,13 @@ const Stepper1 = ({
       }));
     }
   }, [mode]);
+
+  // Refresh order type data when party or branch changes
+  useEffect(() => {
+    if (formData.PARTY_KEY || formData.PARTYDTL_ID) {
+      fetchOrderTypeData();
+    }
+  }, [formData.PARTY_KEY, formData.PARTYDTL_ID]);
 
   // Auto-population effects
   useEffect(() => {
@@ -508,12 +581,24 @@ const Stepper1 = ({
       setFormData(prev => ({ ...prev, SHIPPING_PLACE: shippingPlaceName }));
     }
 
+    if (formData.ORDBK_KEY && orderTypeMapping[formData.ORDBK_KEY]) {
+      const orderTypeName = orderTypeMapping[formData.ORDBK_KEY];
+      setFormData(prev => ({ ...prev, Order_Type: orderTypeName }));
+    }
+
+    if (formData.MERCHANDISER_ID && merchandiserMapping[formData.MERCHANDISER_ID]) {
+      const merchandiserName = merchandiserMapping[formData.MERCHANDISER_ID];
+      setFormData(prev => ({ ...prev, MERCHANDISER_NAME: merchandiserName }));
+    }
+
   }, [
     formData.PARTY_KEY, formData.BROKER_KEY, formData.BROKER1_KEY, 
     formData.SALEPERSON1_KEY, formData.SALEPERSON2_KEY, formData.DISTBTR_KEY,
     formData.CURR_SEASON_KEY, formData.TRSP_KEY, formData.SHP_PARTY_KEY, formData.SHP_PARTYDTL_ID,
+    formData.ORDBK_KEY, formData.MERCHANDISER_ID,
     partyMapping, brokerMapping, broker1Mapping, salesperson1Mapping, 
-    salesperson2Mapping, consigneeMapping, seasonMapping, transporterMapping, branchMapping
+    salesperson2Mapping, consigneeMapping, seasonMapping, transporterMapping, branchMapping,
+    orderTypeMapping, merchandiserMapping
   ]);
 
   // Helper function to parse date from string
@@ -587,7 +672,9 @@ const Stepper1 = ({
       "SALESPERSON_2": ["SALEPERSON2_KEY", salesperson2Mapping],
       "CONSIGNEE": ["DISTBTR_KEY", consigneeMapping],
       "SEASON": ["CURR_SEASON_KEY", seasonMapping],
-      "Transporter": ["TRSP_KEY", transporterMapping]
+      "Transporter": ["TRSP_KEY", transporterMapping],
+      "Order_Type": ["ORDBK_KEY", orderTypeMapping],
+      "MERCHANDISER_NAME": ["MERCHANDISER_ID", merchandiserMapping]
     };
 
     if (keyMappings[name] && value) {
@@ -803,7 +890,7 @@ const Stepper1 = ({
               id="Order Type"
               disabled={isFormDisabled}
               getOptionLabel={(option) => option || ''}
-              options={seasonOptions}
+              options={orderTypeOptions}
               label="Order_Type"
               name="Order_Type"
               value={formData.Order_Type || ""}
@@ -1579,14 +1666,14 @@ const Stepper1 = ({
         }}>
           <Box sx={{ width: { xs: '100%', sm: '20%', md: '20%' } }}>
             <AutoVibe
-              id="MERCHANDISER_ID"
+              id="MERCHANDISER_NAME"
               disabled={isFormDisabled}
               getOptionLabel={(option) => option || ''}
-              options={salesperson2Options}
+              options={merchandiserOptions}
               label="MERCHANDISER"
-              name="MERCHANDISER"
-              value={formData.MERCHANDISER_ID || ""}
-              onChange={(event, value) => handleAutoCompleteChange("MERCHANDISER_ID", value)}
+              name="MERCHANDISER_NAME"
+              value={formData.MERCHANDISER_NAME || ""}
+              onChange={(event, value) => handleAutoCompleteChange("MERCHANDISER_NAME", value)}
               sx={DropInputSx}
               inputProps={{
                 style: {

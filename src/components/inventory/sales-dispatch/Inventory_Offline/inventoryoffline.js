@@ -48,6 +48,8 @@ const SalesOrderOffline = () => {
   const [consigneeMapping, setConsigneeMapping] = useState({});
   const [seasonMapping, setSeasonMapping] = useState({});
   const [transporterMapping, setTransporterMapping] = useState({});
+  const [orderTypeMapping, setOrderTypeMapping] = useState({});
+  const [merchandiserMapping, setMerchandiserMapping] = useState({});
   const [showValidationErrors, setShowValidationErrors] = useState(false);
 
   const [formData, setFormData] = useState({
@@ -120,7 +122,11 @@ const SalesOrderOffline = () => {
     apiResponseData: null,
     // Branch and shipping details
     PARTYDTL_ID: 0,
-    SHP_PARTYDTL_ID: 0
+    SHP_PARTYDTL_ID: 0,
+    // New fields for Order Type and Merchandiser
+    Order_Type: "",
+    MERCHANDISER_ID: "",
+    MERCHANDISER_NAME: ""
   });
 
   const Buttonsx = {
@@ -232,6 +238,8 @@ const SalesOrderOffline = () => {
       const transporterName = transporterMapping[orderData.TRSP_KEY] || await getTransporterNameByKey(orderData.TRSP_KEY);
       const shippingPartyName = partyMapping[orderData.SHP_PARTY_KEY] || await getPartyNameByKey(orderData.SHP_PARTY_KEY) || partyName;
       const shippingPlaceName = branchMapping[orderData.SHP_PARTYDTL_ID] || await getBranchNameById(orderData.SHP_PARTYDTL_ID) || branchName;
+      const orderTypeName = orderTypeMapping[orderData.ORDBK_KEY] || await getOrderTypeNameByKey(orderData.ORDBK_KEY);
+      const merchandiserName = merchandiserMapping[orderData.MERCHANDISER_ID] || await getMerchandiserNameById(orderData.MERCHANDISER_ID);
 
       console.log('Mapped names:', {
         partyName,
@@ -244,7 +252,9 @@ const SalesOrderOffline = () => {
         seasonName,
         transporterName,
         shippingPartyName,
-        shippingPlaceName
+        shippingPlaceName,
+        orderTypeName,
+        merchandiserName
       });
 
       const formattedData = {
@@ -312,6 +322,10 @@ const SalesOrderOffline = () => {
         // Branch and shipping details
         PARTYDTL_ID: orderData.PARTYDTL_ID || 0,
         SHP_PARTYDTL_ID: orderData.SHP_PARTYDTL_ID || orderData.PARTYDTL_ID || 0,
+        // New fields for Order Type and Merchandiser
+        Order_Type: orderTypeName || "",
+        MERCHANDISER_ID: orderData.MERCHANDISER_ID || "",
+        MERCHANDISER_NAME: merchandiserName || "",
         // Calculate totals from ORDBKSTYLIST
         TOTAL_QTY: calculateTotalQty(orderData.ORDBKSTYLIST),
         TOTAL_AMOUNT: orderData.ORDBK_AMT || 0,
@@ -557,6 +571,52 @@ const SalesOrderOffline = () => {
     }
   };
 
+  // New function to get Order Type name by key
+  const getOrderTypeNameByKey = async (ordbkKey) => {
+    if (!ordbkKey) return "";
+    try {
+      const payload = {
+        "ORDBK_KEY": ordbkKey,
+        "FLAG": "ORDTYPE",
+        "FCYR_KEY": "25",
+        "COBR_ID": "02",
+        "PageNumber": 1,
+        "PageSize": 25,
+        "SearchText": "",
+        "PARTY_KEY": formData.PARTY_KEY || "",
+        "PARTYDTL_ID": formData.PARTYDTL_ID || 0
+      };
+      const response = await axiosInstance.post('/ORDBK/GetOrdbkDrp', payload);
+      if (response.data.DATA && Array.isArray(response.data.DATA)) {
+        const orderType = response.data.DATA.find(item => item.ORDBK_KEY === ordbkKey);
+        return orderType ? orderType.ORDBK_NO : "";
+      }
+      return "";
+    } catch (error) {
+      console.error('Error fetching order type name:', error);
+      return "";
+    }
+  };
+
+  // New function to get Merchandiser name by ID
+  const getMerchandiserNameById = async (merchandiserId) => {
+    if (!merchandiserId) return "";
+    try {
+      const payload = {
+        "FLAG": "MECH"
+      };
+      const response = await axiosInstance.post('/USERS/GetUserLoginDrp', payload);
+      if (response.data.DATA && Array.isArray(response.data.DATA)) {
+        const merchandiser = response.data.DATA.find(item => item.USER_ID === parseInt(merchandiserId));
+        return merchandiser ? merchandiser.USER_NAME : "";
+      }
+      return "";
+    } catch (error) {
+      console.error('Error fetching merchandiser name:', error);
+      return "";
+    }
+  };
+
   // Fetch all dropdown data for proper mappings
   const fetchAllDropdownData = async () => {
     try {
@@ -673,6 +733,44 @@ const SalesOrderOffline = () => {
           }
         });
         setTransporterMapping(transporterMap);
+      }
+
+      // Fetch order types
+      const orderTypePayload = {
+        "ORDBK_KEY": "",
+        "FLAG": "ORDTYPE",
+        "FCYR_KEY": "25",
+        "COBR_ID": "02",
+        "PageNumber": 1,
+        "PageSize": 25,
+        "SearchText": "",
+        "PARTY_KEY": formData.PARTY_KEY || "",
+        "PARTYDTL_ID": formData.PARTYDTL_ID || 0
+      };
+      const orderTypeResponse = await axiosInstance.post('/ORDBK/GetOrdbkDrp', orderTypePayload);
+      if (orderTypeResponse.data.DATA && Array.isArray(orderTypeResponse.data.DATA)) {
+        const orderTypeMap = {};
+        orderTypeResponse.data.DATA.forEach(item => {
+          if (item.ORDBK_NO && item.ORDBK_KEY) {
+            orderTypeMap[item.ORDBK_NO] = item.ORDBK_KEY;
+          }
+        });
+        setOrderTypeMapping(orderTypeMap);
+      }
+
+      // Fetch merchandisers
+      const merchandiserPayload = {
+        "FLAG": "MECH"
+      };
+      const merchandiserResponse = await axiosInstance.post('/USERS/GetUserLoginDrp', merchandiserPayload);
+      if (merchandiserResponse.data.DATA && Array.isArray(merchandiserResponse.data.DATA)) {
+        const merchandiserMap = {};
+        merchandiserResponse.data.DATA.forEach(item => {
+          if (item.USER_NAME && item.USER_ID) {
+            merchandiserMap[item.USER_NAME] = item.USER_ID;
+          }
+        });
+        setMerchandiserMapping(merchandiserMap);
       }
 
     } catch (error) {
@@ -819,52 +917,76 @@ const SalesOrderOffline = () => {
   };
 
   // Function to prepare payload for submission
-  const prepareSubmitPayload = () => {
-    const dbFlag = mode === 'add' ? 'I' : 'U';
-    const currentDate = new Date().toISOString().replace('T', ' ').split('.')[0];
-    
-    const userId = localStorage.getItem('USER_ID') || '1';
-    const userName = localStorage.getItem('USER_NAME') || 'Admin';
-    
-    console.log('User Info:', { userId, userName });
+  // Function to prepare payload for submission
+const prepareSubmitPayload = () => {
+  const dbFlag = mode === 'add' ? 'I' : 'U';
+  const currentDate = new Date().toISOString().replace('T', ' ').split('.')[0];
+  
+  const userId = localStorage.getItem('USER_ID') || '1';
+  const userName = localStorage.getItem('USER_NAME') || 'Admin';
+  
+  console.log('User Info:', { userId, userName });
 
-    // Get keys from mappings
-    const partyKey = formData.PARTY_KEY;
-    const branchId = formData.PARTYDTL_ID || 0;
-    const brokerKey = formData.BROKER_KEY || "";
-    const broker1Key = formData.BROKER1_KEY || "";
-    const salesperson1Key = formData.SALEPERSON1_KEY || "";
-    const salesperson2Key = formData.SALEPERSON2_KEY || "";
-    const consigneeKey = formData.DISTBTR_KEY || "";
-    const seasonKey = formData.CURR_SEASON_KEY || "";
-    const transporterKey = formData.TRSP_KEY || "";
-    const shippingPartyKey = formData.SHP_PARTY_KEY || "";
-    const shippingPartyDtlId = formData.SHP_PARTYDTL_ID || branchId || 0;
+  // Get keys from mappings
+  const partyKey = formData.PARTY_KEY;
+  const branchId = formData.PARTYDTL_ID || 0;
+  const brokerKey = formData.BROKER_KEY || "";
+  const broker1Key = formData.BROKER1_KEY || "";
+  const salesperson1Key = formData.SALEPERSON1_KEY || "";
+  const salesperson2Key = formData.SALEPERSON2_KEY || "";
+  const consigneeKey = formData.DISTBTR_KEY || "";
+  const seasonKey = formData.CURR_SEASON_KEY || "";
+  const transporterKey = formData.TRSP_KEY || "";
+  const shippingPartyKey = formData.SHP_PARTY_KEY || "";
+  const shippingPartyDtlId = formData.SHP_PARTYDTL_ID || branchId || 0;
+  const merchandiserId = formData.MERCHANDISER_ID || 1;
 
-    console.log('Keys for payload:', {
-      partyKey,
-      branchId,
-      brokerKey,
-      broker1Key,
-      salesperson1Key,
-      salesperson2Key,
-      consigneeKey,
-      seasonKey,
-      transporterKey,
-      shippingPartyKey
-    });
+  console.log('Keys for payload:', {
+    partyKey,
+    branchId,
+    brokerKey,
+    broker1Key,
+    salesperson1Key,
+    salesperson2Key,
+    consigneeKey,
+    seasonKey,
+    transporterKey,
+    shippingPartyKey,
+    merchandiserId
+  });
 
-    // Get ORDBKSTYLIST from formData
-    const ordbkStyleList = formData.apiResponseData?.ORDBKSTYLIST || [];
+  // Get ORDBKSTYLIST from formData
+  const ordbkStyleList = formData.apiResponseData?.ORDBKSTYLIST || [];
+  
+  // CORRECT ORDBK_KEY generation: FCYR_KEY + COBR_ID + ORDBK_NO
+  const correctOrdbkKey = formData.ORDBK_KEY || `2502${formData.ORDER_NO}`;
+  
+  console.log('Using ORDBK_KEY:', correctOrdbkKey);
+
+  // Transform ORDBKSTYLIST for API with proper DBFLAG handling
+  const transformedOrdbkStyleList = ordbkStyleList.map(item => {
+    // Determine item DBFLAG: 
+    // - If mode is 'add', all items should be 'I'
+    // - If mode is 'edit', existing items (with ORDBKSTY_ID) should be 'U', new items should be 'I'
+    let itemDbFlag = dbFlag;
     
-    // CORRECT ORDBK_KEY generation: FCYR_KEY + COBR_ID + ORDBK_NO
-    const correctOrdbkKey = formData.ORDBK_KEY || `2502${formData.ORDER_NO}`;
-    
-    console.log('Using ORDBK_KEY:', correctOrdbkKey);
+    if (mode === 'edit') {
+      // Check if this is a new item (temporary ID created during edit mode)
+      const isNewItem = item.ORDBKSTY_ID && item.ORDBKSTY_ID.toString().length > 9; // Temporary IDs are usually long numbers
+      const hasOriginalId = item.ORDBKSTY_ID && item.ORDBKSTY_ID > 0 && !isNewItem;
+      
+      itemDbFlag = hasOriginalId ? 'U' : 'I';
+      
+      console.log('Item DBFLAG determination:', {
+        ORDBKSTY_ID: item.ORDBKSTY_ID,
+        isNewItem,
+        hasOriginalId,
+        itemDbFlag
+      });
+    }
 
-    // Transform ORDBKSTYLIST for API
-    const transformedOrdbkStyleList = ordbkStyleList.map(item => ({
-      DBFLAG: dbFlag,
+    return {
+      DBFLAG: itemDbFlag,
       ORDBKSTY_ID: item.ORDBKSTY_ID || 0,
       ORDBK_KEY: correctOrdbkKey,
       FGPRD_KEY: item.FGPRD_KEY || "",
@@ -910,7 +1032,7 @@ const SalesOrderOffline = () => {
       ISRMREQ: "N",
       OP_QTY: 0,
       ORDBKSTYSZLIST: (item.ORDBKSTYSZLIST || []).map(sizeItem => ({
-        DBFLAG: dbFlag,
+        DBFLAG: itemDbFlag, // Use same DBFLAG as parent item
         ORDBKSTYSZ_ID: sizeItem.ORDBKSTYSZ_ID || 0,
         ORDBK_KEY: correctOrdbkKey,
         ORDBKSTY_ID: item.ORDBKSTY_ID || 0,
@@ -940,89 +1062,92 @@ const SalesOrderOffline = () => {
         ADD_CESS_RATE: 0,
         ADD_CESS_AMT: 0
       }))
-    }));
-
-    // Base payload for both insert and update
-    const basePayload = {
-      DBFLAG: dbFlag,
-      FCYR_KEY: "25",
-      CO_ID: "02",
-      COBR_ID: "02",
-      ORDBK_NO: formData.ORDER_NO || "",
-      CURR_SEASON_KEY: seasonKey,
-      ORDBK_X: "",
-      ORDBK_TNA_TYPE: "I",
-      MERCHANDISER_ID: 1,
-      ORD_EVENT_KEY: "",
-      ORG_DLV_DT: "1900-01-01T00:00:00",
-      PLANNING: "0",
-      ORDBK_KEY: correctOrdbkKey,
-      ORDBK_DT: formatDateForAPI(formData.ORDER_DATE),
-      PORD_REF: formData.PARTY_ORD_NO || "",
-      PORD_DT: formatDateForAPI(formData.ORD_REF_DT),
-      QUOTE_NO: formData.QUOTE_NO || "",
-      QUOTE_DT: formatDateForAPI(formData.ORDER_DATE),
-      PARTY_KEY: partyKey,
-      PARTYDTL_ID: parseInt(branchId) || 100006,
-      BROKER_KEY: brokerKey,
-      BROKER1_KEY: broker1Key,
-      BROKER_COMM: 0.00,
-      COMMON_DLV_DT_FLG: "0",
-      STK_FLG: formData.RACK_MIN || "0",
-      DLV_DT: formatDateForAPI(formData.DLV_DT),
-      DLV_PLACE: formData.SHIPPING_PLACE || "",
-      TRSP_KEY: transporterKey,
-      ORDBK_AMT: parseFloat(formData.TOTAL_AMOUNT) || 0,
-      REMK: formData.REMARK_STATUS || "",
-      STATUS: "1",
-      CURRN_KEY: formData.CURRN_KEY || "",
-      EX_RATE: parseFloat(formData.EX_RATE) || 0,
-      IMP_ORDBK_KEY: "",
-      ORDBK_TYPE: "2",
-      ROUND_OFF_DESC: "",
-      ROUND_OFF: 0.00,
-      BOMSTY_ID: 0,
-      LOTWISE: formData.MAIN_DETAILS === "L" ? "Y" : "N",
-      IsWO: "0",
-      SuplKey: "",
-      KNIT_DT: "1900-01-01 00:00:00.000",
-      OrdBk_CoBr_Id: formData.PARTY_BRANCH || "02",
-      GR_AMT: parseFloat(formData.TOTAL_AMOUNT) || 0,
-      GST_APP: formData.GST_APPL || "Y",
-      GST_TYPE: "C",
-      SHP_PARTY_KEY: shippingPartyKey,
-      SHP_PARTYDTL_ID: parseInt(shippingPartyDtlId) || 100006,
-      STATE_CODE: "",
-      ORDBK_ITM_AMT: parseFloat(formData.ORDBK_ITM_AMT) || 0,
-      ORDBK_SGST_AMT: 0,
-      ORDBK_CGST_AMT: 0,
-      ORDBK_IGST_AMT: 0,
-      ORDBK_ADD_CESS_AMT: 0,
-      ORDBK_GST_AMT: parseFloat(formData.ORDBK_GST_AMT) || 0,
-      ORDBK_EXTRA_AMT: 0,
-      ORDBKSTYLIST: transformedOrdbkStyleList,
-      ORDBKTERMLIST: [],
-      ORDBKGSTLIST: [],
-      DISTBTR_KEY: consigneeKey,
-      SALEPERSON1_KEY: salesperson1Key,
-      SALEPERSON2_KEY: salesperson2Key,
-      TRSP_KEY: transporterKey,
-      PRICELIST_KEY: formData.PRICELIST_KEY || "",
-      DESP_PORT: formData.DESP_PORT || "",
     };
+  });
 
-    // Add user fields based on operation type
-    if (dbFlag === 'I') {
-      basePayload.CREATED_BY = parseInt(userId) || 1;
-      basePayload.CREATED_DT = currentDate;
-    } else {
-      basePayload.UPDATED_BY = parseInt(userId) || 1;
-      basePayload.UPDATED_DT = currentDate;
-    }
+  console.log('Transformed ORDBKSTYLIST with DBFLAGS:', transformedOrdbkStyleList);
 
-    console.log('Final Payload:', JSON.stringify(basePayload, null, 2));
-    return basePayload;
+  // Base payload for both insert and update
+  const basePayload = {
+    DBFLAG: dbFlag,
+    FCYR_KEY: "25",
+    CO_ID: "02",
+    COBR_ID: "02",
+    ORDBK_NO: formData.ORDER_NO || "",
+    CURR_SEASON_KEY: seasonKey,
+    ORDBK_X: "",
+    ORDBK_TNA_TYPE: "I",
+    MERCHANDISER_ID: parseInt(merchandiserId) || 1,
+    ORD_EVENT_KEY: "",
+    ORG_DLV_DT: "1900-01-01T00:00:00",
+    PLANNING: "0",
+    ORDBK_KEY: correctOrdbkKey,
+    ORDBK_DT: formatDateForAPI(formData.ORDER_DATE),
+    PORD_REF: formData.PARTY_ORD_NO || "",
+    PORD_DT: formatDateForAPI(formData.ORD_REF_DT),
+    QUOTE_NO: formData.QUOTE_NO || "",
+    QUOTE_DT: formatDateForAPI(formData.ORDER_DATE),
+    PARTY_KEY: partyKey,
+    PARTYDTL_ID: parseInt(branchId) || 100006,
+    BROKER_KEY: brokerKey,
+    BROKER1_KEY: broker1Key,
+    BROKER_COMM: 0.00,
+    COMMON_DLV_DT_FLG: "0",
+    STK_FLG: formData.RACK_MIN || "0",
+    DLV_DT: formatDateForAPI(formData.DLV_DT),
+    DLV_PLACE: formData.SHIPPING_PLACE || "",
+    TRSP_KEY: transporterKey,
+    ORDBK_AMT: parseFloat(formData.TOTAL_AMOUNT) || 0,
+    REMK: formData.REMARK_STATUS || "",
+    STATUS: "1",
+    CURRN_KEY: formData.CURRN_KEY || "",
+    EX_RATE: parseFloat(formData.EX_RATE) || 0,
+    IMP_ORDBK_KEY: "",
+    ORDBK_TYPE: "2",
+    ROUND_OFF_DESC: "",
+    ROUND_OFF: 0.00,
+    BOMSTY_ID: 0,
+    LOTWISE: formData.MAIN_DETAILS === "L" ? "Y" : "N",
+    IsWO: "0",
+    SuplKey: "",
+    KNIT_DT: "1900-01-01 00:00:00.000",
+    OrdBk_CoBr_Id: formData.PARTY_BRANCH || "02",
+    GR_AMT: parseFloat(formData.TOTAL_AMOUNT) || 0,
+    GST_APP: formData.GST_APPL || "Y",
+    GST_TYPE: "C",
+    SHP_PARTY_KEY: shippingPartyKey,
+    SHP_PARTYDTL_ID: parseInt(shippingPartyDtlId) || 100006,
+    STATE_CODE: "",
+    ORDBK_ITM_AMT: parseFloat(formData.ORDBK_ITM_AMT) || 0,
+    ORDBK_SGST_AMT: 0,
+    ORDBK_CGST_AMT: 0,
+    ORDBK_IGST_AMT: 0,
+    ORDBK_ADD_CESS_AMT: 0,
+    ORDBK_GST_AMT: parseFloat(formData.ORDBK_GST_AMT) || 0,
+    ORDBK_EXTRA_AMT: 0,
+    ORDBKSTYLIST: transformedOrdbkStyleList,
+    ORDBKTERMLIST: [],
+    ORDBKGSTLIST: [],
+    DISTBTR_KEY: consigneeKey,
+    SALEPERSON1_KEY: salesperson1Key,
+    SALEPERSON2_KEY: salesperson2Key,
+    TRSP_KEY: transporterKey,
+    PRICELIST_KEY: formData.PRICELIST_KEY || "",
+    DESP_PORT: formData.DESP_PORT || "",
   };
+
+  // Add user fields based on operation type
+  if (dbFlag === 'I') {
+    basePayload.CREATED_BY = parseInt(userId) || 1;
+    basePayload.CREATED_DT = currentDate;
+  } else {
+    basePayload.UPDATED_BY = parseInt(userId) || 1;
+    basePayload.UPDATED_DT = currentDate;
+  }
+
+  console.log('Final Payload:', JSON.stringify(basePayload, null, 2));
+  return basePayload;
+};
 
   const handlePrint = () => { }
   
@@ -1137,7 +1262,11 @@ const SalesOrderOffline = () => {
         TRSP_KEY: "",
         apiResponseData: null,
         PARTYDTL_ID: 0,
-        SHP_PARTYDTL_ID: 0
+        SHP_PARTYDTL_ID: 0,
+        // New fields for Order Type and Merchandiser
+        Order_Type: "",
+        MERCHANDISER_ID: "",
+        MERCHANDISER_NAME: ""
       };
       
       setFormData(emptyFormData);
@@ -1380,6 +1509,8 @@ const SalesOrderOffline = () => {
             consigneeMapping={consigneeMapping}
             seasonMapping={seasonMapping}
             transporterMapping={transporterMapping}
+            orderTypeMapping={orderTypeMapping}
+            merchandiserMapping={merchandiserMapping}
             setPartyMapping={setPartyMapping}
             setBranchMapping={setBranchMapping}
             setBrokerMapping={setBrokerMapping}
@@ -1389,6 +1520,8 @@ const SalesOrderOffline = () => {
             setConsigneeMapping={setConsigneeMapping}
             setSeasonMapping={setSeasonMapping}
             setTransporterMapping={setTransporterMapping}
+            setOrderTypeMapping={setOrderTypeMapping}
+            setMerchandiserMapping={setMerchandiserMapping}
             showSnackbar={showSnackbar}
             showValidationErrors={showValidationErrors}
           />
