@@ -65,10 +65,9 @@
 
 // export default DashboardTabs;
 
-
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Box, styled } from '@mui/material';
 import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
@@ -80,13 +79,20 @@ import Production from '@/app/dashboard/Production';
 import Stock from '@/app/dashboard/Stock';
 
 const DashboardTabs = () => {
-  const [selectedTab, setSelectedTab] = useState(0);
+  // Initialize selectedTab with the value from localStorage, or default to 0 if not found
+  const savedTabIndex = localStorage.getItem('selectedTab');
+  const [selectedTab, setSelectedTab] = useState(savedTabIndex ? parseInt(savedTabIndex) : 0);
+
+  useEffect(() => {
+    // When the selected tab changes, save it to localStorage
+    localStorage.setItem('selectedTab', selectedTab);
+  }, [selectedTab]);
 
   const handleChange = (event, newValue) => {
     setSelectedTab(newValue);
   };
 
-  const StyledTabs = styled(Tabs)({
+  const StyledTabs = styled(Tabs)(({
     backgroundColor: '#e1e7ef',
     borderRadius: '10px',
     padding: '4px',
@@ -94,7 +100,7 @@ const DashboardTabs = () => {
     '& .MuiTabs-indicator': {
       display: 'none',
     },
-  });
+  }));
 
   const StyledTab = styled(Tab)(({ theme }) => ({
     textTransform: 'none',

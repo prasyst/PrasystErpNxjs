@@ -1,18 +1,32 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
 import {
     Box, Typography, Grid, Paper, IconButton, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Avatar, Button,
-    styled, useTheme,
+    styled, useTheme, TextField
 } from "@mui/material";
-import MonetizationOnIcon from "@mui/icons-material/MonetizationOn";
+import { LinearProgress, Chip } from '@mui/material';
+import CurrencyRupeeIcon from '@mui/icons-material/CurrencyRupee';
 import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
 import PeopleIcon from "@mui/icons-material/People";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
-// const GaugeComponent = dynamic(() => import('react-gauge-component'), { ssr: false });
-// const CountUp = dynamic(() => import('react-countup'), { ssr: false });
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import dayjs from 'dayjs';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
+import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import {
+    ResponsiveContainer, ComposedChart, Area, AreaChart, BarChart, Bar, XAxis, YAxis, Tooltip, LineChart,
+    Line, CartesianGrid, Legend
+} from "recharts";
+import axiosInstance from "@/lib/axios";
+import { toast, ToastContainer } from "react-toastify";
+import { PieChart } from '@mui/x-charts/PieChart';
 
+// Dynamic import for Gauge
 const GaugeComponent = dynamic(
     async () => {
         const mod = await import("react-gauge-component");
@@ -30,21 +44,23 @@ const CountUp = dynamic(
     { ssr: false }
 );
 
-import {
-    ResponsiveContainer,
-    ComposedChart,
-    Area,
-    AreaChart,
-    BarChart,
-    Bar,
-    XAxis,
-    YAxis,
-    Tooltip,
-    LineChart,
-    Line,
-    CartesianGrid,
-    Legend,
-} from "recharts";
+// Dummy data for the PieChart
+const desktopOS = [
+    { id: 'Windows', value: 60, color: '#4caf50' },
+    { id: 'macOS', value: 20, color: '#2196f3' },
+    { id: 'Linux', value: 10, color: '#ff9800' },
+    { id: 'Others', value: 10, color: '#f44336' },
+];
+
+const desktopOS2 = [
+    { id: 'macOS', value: 20, color: '#f32160ff' },
+    { id: 'Others', value: 10, color: '#36e7f4ff' },
+    { id: 'Windows', value: 20, color: '#4c56afff' },
+    { id: 'Linux', value: 10, color: '#d39436ff' },
+    { id: 'Others', value: 10, color: '#59969bff' },
+    { id: 'Windows', value: 20, color: '#2b3480ff' },
+    { id: 'Linux', value: 10, color: '#c47705ff' },
+];
 
 const StyledCard = styled(Paper)(({ theme }) => ({
     display: 'flex',
@@ -65,48 +81,14 @@ const StyledCard = styled(Paper)(({ theme }) => ({
     },
 }));
 
-// Sample Data
-const kpiData = [
-    {
-        title: "Total Revenue",
-        value: "₹ 1,225",
-        icon: <MonetizationOnIcon fontSize="large" />,
-        color: "#4caf50",
-        change: "5.2%",
-    },
-    {
-        title: "Orders",
-        value: "4,580",
-        icon: <ShoppingCartIcon fontSize="large" />,
-        color: "#2196f3",
-        change: "1.8%",
-    },
-    {
-        title: "Customers",
-        value: "3,200",
-        icon: <PeopleIcon fontSize="large" />,
-        color: "#ff9800",
-        change: "3.1%",
-    },
-    {
-        title: "Growth Rate",
-        value: "12.4%",
-        icon: <TrendingUpIcon fontSize="large" />,
-        color: "#9c27b0",
-        change: "0.9%",
-    },
-];
-
-const salesData = [
-    { month: "Jan-25", sales: 4000000, profit: 2400000 },
-    { month: "Feb-25", sales: 3000000, profit: 1398000 },
-    { month: "Mar-25", sales: 2000000, profit: 980000 },
-    { month: "Apr-25", sales: 2780000, profit: 3908000 },
-    { month: "May-25", sales: 1890000, profit: 4800000 },
-    { month: "Jun-25", sales: 2390000, profit: 3800000 },
-    { month: "Jul-25", sales: 3490000, profit: 4300000 },
-    { month: "Aug-25", sales: 2000000, profit: 980000 },
-];
+const StyledCard2 = styled(Paper)(({ theme }) => ({
+    display: 'flex',
+    alignItems: 'center',
+    padding: theme.spacing(2),
+    borderRadius: '12px',
+   background: 'linear-gradient(135deg, #5d6bbbff 0%, #706161ff 100%)',
+    color: '#fff',
+}));
 
 const data = [
     { month: 'Jan-25', sales: 4000, profit: 2400 },
@@ -144,66 +126,123 @@ const lineChartData2 = [
     { name: 'Dec-25', value: 300 },
 ];
 
-const recentOrders = [
-    {
-        id: "#OD1001",
-        customer: "Rishabh",
-        amount: "₹ 25,000",
-        address: "Mumbai",
-        status: "Delivered",
-    },
-    {
-        id: "#OD1002",
-        customer: "MSD",
-        amount: "₹ 15,000",
-        address: "Delhi",
-        status: "In Transit",
-    },
-    {
-        id: "#OD1003",
-        customer: "Virat Kohli",
-        amount: "₹ 30,000",
-        address: "Lucknow",
-        status: "Cancelled",
-    },
-    {
-        id: "#OD1004",
-        customer: "Rohit Sharma",
-        amount: "₹ 22,000",
-        address: "Noida",
-        status: "Delivered",
-    },
-    {
-        id: "#OD1005",
-        customer: "Ranveer",
-        amount: "₹ 22,000",
-        address: "Noida",
-        status: "Pending",
-    },
-];
-
-// Helper function for dynamic status colors
-const getStatusColor = (status) => {
-    switch (status) {
-        case "Delivered":
-            return "#4caf50";
-        case "In Transit":
-            return "#2196f3";
-        case "Cancelled":
-            return "#f44336";
-        case "Pending":
-            return "#22f";
-        default:
-            return "#757575";
-    }
-};
-
 const SalesDashboard = () => {
     const theme = useTheme();
+    const [dateFrom, setDateFrom] = useState(dayjs().startOf('month'));
+    const [dateTo, setDateTo] = useState(dayjs().endOf('month'));
+    const [tableData, setTableData] = useState([]);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [summaryData, setSummaryData] = useState({
+        TOT_QTY: 0,
+        TOT_BALQTY: 0,
+        TOT_SALQTY: 0,
+        TOT_AMT: 0,
+        TOT_BALAMT: 0,
+        TOT_SALAMT: 0,
+    });
+
     const totalSales = data.reduce((acc, cur) => acc + cur.sales, 0);
+
+    const totalConversion = (
+        isNaN(parseFloat(summaryData.TOT_SALQTY)) || isNaN(parseFloat(summaryData.TOT_QTY)) || parseFloat(summaryData.TOT_QTY) === 0
+    )
+        ? 0
+        : (parseFloat(summaryData.TOT_SALQTY) / parseFloat(summaryData.TOT_QTY)) * 100;
+
+    useEffect(() => {
+        showTableData();
+    }, [])
+
+    useEffect(() => {
+        showTableData();
+        totalCoutData();
+    }, []);
+
+    const showTableData = async () => {
+        try {
+            const response = await axiosInstance.post('OrderDash/GetOrderDashBoard', {
+                COBR_ID: "02",
+                FCYR_KEY: "25",
+                FROM_DT: dayjs(dateFrom).format('YYYY-MM-DD'),
+                To_DT: dayjs(dateTo).format('YYYY-MM-DD'),
+                Flag: "",
+                PageNumber: 1,
+                PageSize: 10,
+                SearchText: ""
+            });
+
+            if (response.data.STATUS === 0 && Array.isArray(response.data.DATA)) {
+                setTableData(response.data.DATA);
+            } else {
+                toast.info("No record found.");
+            }
+        } catch (error) {
+            toast.error('Error while fetching the table data.');
+        }
+    };
+
+    const totalCoutData = async () => {
+        try {
+            const response = await axiosInstance.post("OrderDash/GetOrderDashBoard", {
+                COBR_ID: "02",
+                FCYR_KEY: "25",
+                FROM_DT: dayjs(dateFrom).format('YYYY-MM-DD'),
+                To_DT: dayjs(dateTo).format('YYYY-MM-DD'),
+                Flag: "OrdTotSum",
+                PageNumber: 1,
+                PageSize: 10,
+                SearchText: "",
+            });
+            if (response.data.STATUS === 0 && Array.isArray(response.data.DATA)) {
+                const summary = response.data.DATA[0];
+                setSummaryData({
+                    TOT_QTY: summary.TOT_QTY || 0,
+                    TOT_BALQTY: summary.TOT_BALQTY || 0,
+                    TOT_SALQTY: summary.TOT_SALQTY || 0,
+                    TOT_AMT: summary.TOT_AMT || 0,
+                    TOT_BALAMT: summary.TOT_BALAMT || 0,
+                    TOT_SALAMT: summary.TOT_SALAMT || 0,
+                });
+            } else {
+                toast.info("No record found.");
+            }
+        } catch (error) {
+            toast.error("Error from API response.");
+        }
+    };
+
+    const handleFetchedData = () => {
+        showTableData();
+        totalCoutData();
+    };
+
+    const handleViewDocument = () => {
+
+    };
+
+    // Handle search input change
+    const handleSearchChange = (event) => {
+        setSearchTerm(event.target.value);
+    };
+
+    // You would filter your data based on the search term
+    const filteredData = tableData.filter((item) => {
+        return (
+            (item.ORDBK_NO?.toLowerCase().includes(searchTerm.toLowerCase()) || '') ||
+            (item.PARTY_NAME?.toLowerCase().includes(searchTerm.toLowerCase()) || '') ||
+            (item.CITY_NAME?.toLowerCase().includes(searchTerm.toLowerCase()) || '') ||
+            (item.STATE_NAME?.toLowerCase().includes(searchTerm.toLowerCase()) || '') ||
+            (item.FGCAT_NAME?.toLowerCase().includes(searchTerm.toLowerCase()) || '') ||
+            (item.FGPRD_ABRV?.toLowerCase().includes(searchTerm.toLowerCase()) || '') ||
+            (item.BRAND_NAME?.toLowerCase().includes(searchTerm.toLowerCase()) || '') ||
+            (item.BROKER_NAME?.toLowerCase().includes(searchTerm.toLowerCase()) || '') ||
+            (item.SALEPERSON_NAME?.toLowerCase().includes(searchTerm.toLowerCase()) || '')
+        );
+    });
 
     return (
         <Box sx={{ p: 4, pt: 1, bgcolor: "#f5f7fa", minHeight: "70vh" }}>
+            <ToastContainer />
             <Box
                 sx={{
                     mb: 2,
@@ -217,185 +256,335 @@ const SalesDashboard = () => {
                     variant="h5"
                     fontWeight="bold"
                     sx={{
-                        background: 'linear-gradient(45deg, #42a5f5, #478ed1, #7b1fa2)',
-                        WebkitBackgroundClip: 'text',
-                        WebkitTextFillColor: 'transparent',
-                        backgroundClip: 'text',
-                        textFillColor: 'transparent',
-                        userSelect: 'none',
+                        background: "linear-gradient(45deg, #42a5f5, #478ed1, #7b1fa2)",
+                        WebkitBackgroundClip: "text",
+                        WebkitTextFillColor: "transparent",
+                        userSelect: "none",
                     }}
                 >
                     Order Dashboard
                 </Typography>
+
+                <LocalizationProvider dateAdapter={AdapterDayjs} >
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                        <DatePicker
+                            label="From-Date"
+                            value={dateFrom}
+                            onChange={(newValue) => setDateFrom(newValue)}
+                            format="DD/MM/YYYY"
+                            views={['day', 'month', 'year']}
+                            sx={{ width: 150 }}
+                        />
+                        <DatePicker
+                            label="To-Date"
+                            value={dateTo}
+                            onChange={(newValue) => setDateTo(newValue)}
+                            format="DD/MM/YYYY"
+                            views={['day', 'month', 'year']}
+                            sx={{ width: 150, }}
+                        />
+                        <Button
+                            variant='contained'
+                            onClick={handleFetchedData}
+                            sx={{
+                                borderRadius: '20px', backgroundColor: '#635bff', '&:hover': {
+                                    backgroundColor: '#635bff'
+                                },
+                            }}
+                        >
+                            Get Data
+                        </Button>
+                    </Box>
+                </LocalizationProvider>
             </Box>
 
-            {/* KPI Cards */}
-            <Grid container spacing={1} mb={4} gap={1}>
-                {kpiData.map(({ title, value, icon, color }) => (
-                    <Grid size={{ xs: 12, md: 3 }} key={title}>
-                        <StyledCard>
-                            <IconButton
-                                sx={{
-                                    bgcolor: `${color}22`,
-                                    color: color,
-                                    width: 60,
-                                    height: 60,
-                                    boxShadow: `0 0 20px ${color}66`,
-                                    "&:hover": { bgcolor: `${color}44` },
-                                }}
-                                aria-label={title}
-                            >
-                                {icon}
-                            </IconButton>
-                            <Box>
-                                <Typography variant="subtitle1" fontWeight="bold" sx={{ mb: 1 }}>
-                                    {title}
-                                </Typography>
-                                <Typography variant="h4" fontWeight="bold" letterSpacing={1}>
-                                    {value}
-                                </Typography>
-                            </Box>
-                        </StyledCard>
-                    </Grid>
-                ))}
-            </Grid>
-
-            {/* Sales Charts and Recent Orders */}
-            <Grid container spacing={2}>
-                <Grid size={{ xs: 12, md: 6 }}>
-                    <Paper
-                        elevation={5}
-                        sx={{
-                            p: 2,
-                            borderRadius: 4,
-                            bgcolor: "white",
-                            boxShadow: "0 10px 30px rgb(0 0 0 / 0.12)",
-                            height: "100%",
-                            display: "flex",
-                            flexDirection: "column",
-                        }}
-                    >
-                        <Typography variant="h6" fontWeight="bold" mb={1}>
-                            Monthly Sales & Profit
-                        </Typography>
-                        <Box sx={{ flexGrow: 1, minHeight: 300 }}>
-                            <ResponsiveContainer width="100%" height="100%">
-                                <BarChart
-                                    data={salesData}
-                                    margin={{ top: 10, right: 30, left: 20, bottom: 5 }}
-                                >
-                                    <CartesianGrid strokeDasharray="3 3" />
-                                    <XAxis dataKey="month" />
-                                    <YAxis
-                                        tickFormatter={(val) =>
-                                            val >= 1000000
-                                                ? `${(val / 1000000).toFixed(1)}M`
-                                                : val.toLocaleString()
-                                        }
-                                    />
-                                    <Tooltip
-                                        formatter={(value) =>
-                                            typeof value === "number"
-                                                ? `₹ ${value.toLocaleString()}`
-                                                : value
-                                        }
-                                    />
-                                    <Legend verticalAlign="top" height={36} />
-                                    <Bar
-                                        dataKey="sales"
-                                        name="Sales"
-                                        fill="#1976d2"
-                                        radius={[8, 8, 0, 0]}
-                                        barSize={30}
-                                    />
-                                    <Line
-                                        type="monotone"
-                                        dataKey="profit"
-                                        name="Profit"
-                                        stroke="#388e3c"
-                                        strokeWidth={3}
-                                        dot={{ r: 6 }}
-                                        activeDot={{ r: 8 }}
-                                    />
-                                </BarChart>
-                            </ResponsiveContainer>
+            {/* Cards Data */}
+            <Grid container spacing={1} mb={2} gap={1}>
+                <Grid size={{ xs: 12, md: 3 }}>
+                    <StyledCard>
+                        <IconButton
+                            sx={{
+                                bgcolor: "#4caf5022",
+                                color: "#4caf50",
+                                width: 60,
+                                height: 60,
+                                boxShadow: "0 0 20px #4caf5066",
+                                "&:hover": { bgcolor: "#4caf5044" },
+                            }}
+                            aria-label="Total Orders"
+                        >
+                            <CurrencyRupeeIcon fontSize="large" />
+                        </IconButton>
+                        <Box>
+                            <Typography variant="subtitle1" fontWeight="bold" sx={{ mb: 1 }}>
+                                Total Orders
+                            </Typography>
+                            <Typography variant="h5" fontWeight="bold" letterSpacing={1}>
+                                ₹ {summaryData.TOT_AMT}
+                            </Typography>
+                            <Typography variant="subtitle1" sx={{ mt: 1 }}>
+                                Qty: {summaryData.TOT_QTY}
+                            </Typography>
                         </Box>
-                    </Paper>
+                    </StyledCard>
                 </Grid>
 
-                <Grid size={{ xs: 12, md: 6 }}>
+                <Grid size={{ xs: 12, md: 3 }}>
+                    <StyledCard>
+                        <IconButton
+                            sx={{
+                                bgcolor: "#2196f322",
+                                color: "#2196f3",
+                                width: 60,
+                                height: 60,
+                                boxShadow: "0 0 20px #2196f366",
+                                "&:hover": { bgcolor: "#2196f344" },
+                            }}
+                            aria-label="Dispatch"
+                        >
+                            <ShoppingCartIcon fontSize="large" />
+                        </IconButton>
+                        <Box>
+                            <Typography variant="subtitle1" fontWeight="bold" sx={{ mb: 1 }}>
+                                Dispatch
+                            </Typography>
+                            <Typography variant="h5" fontWeight="bold" letterSpacing={1}>
+                                ₹ {summaryData.TOT_SALAMT}
+                            </Typography>
+                            <Typography variant="subtitle1" sx={{ mt: 1 }}>
+                                Qty: {summaryData.TOT_SALQTY}
+                            </Typography>
+                        </Box>
+                    </StyledCard>
+                </Grid>
+
+                <Grid size={{ xs: 12, md: 3 }}>
+                    <StyledCard>
+                        <IconButton
+                            sx={{
+                                bgcolor: "#ff980022",
+                                color: "#ff9800",
+                                width: 60,
+                                height: 60,
+                                boxShadow: "0 0 20px #ff980066",
+                                "&:hover": { bgcolor: "#ff980044" },
+                            }}
+                            aria-label="Order Balance"
+                        >
+                            <PeopleIcon fontSize="large" />
+                        </IconButton>
+                        <Box>
+                            <Typography variant="subtitle1" fontWeight="bold" sx={{ mb: 1 }}>
+                                Order Balance
+                            </Typography>
+                            <Typography variant="h5" fontWeight="bold" letterSpacing={1}>
+                                ₹ {summaryData.TOT_BALAMT}
+                            </Typography>
+                            <Typography variant="subtitle1" sx={{ mt: 1 }}>
+                                Qty: {summaryData.TOT_BALQTY}
+                            </Typography>
+                        </Box>
+                    </StyledCard>
+                </Grid>
+
+                <Grid size={{ xs: 12, md: 3 }}>
+                    <StyledCard>
+                        <IconButton
+                            sx={{
+                                bgcolor: "#9c27b022",
+                                color: "#9c27b0",
+                                width: 60,
+                                height: 60,
+                                boxShadow: "0 0 20px #9c27b066",
+                                "&:hover": { bgcolor: "#9c27b044" },
+                            }}
+                            aria-label="Conversion %"
+                        >
+                            <TrendingUpIcon fontSize="large" />
+                        </IconButton>
+                        <Box>
+                            <Typography variant="subtitle1" fontWeight="bold" sx={{ mb: 1 }}>
+                                Conversion Rate
+                            </Typography>
+                            <Typography variant="h5" fontWeight="bold" letterSpacing={1}>
+                                {totalConversion.toFixed(2)}%
+                            </Typography>
+                            <Box display="flex" alignItems="center" gap={0.5}>
+                                {totalConversion > 50 ? (
+                                    <ArrowUpwardIcon sx={{ color: '#4caf50' }} fontSize="small" />
+                                ) : (
+                                    <ArrowDownwardIcon sx={{ color: '#f44336' }} fontSize="small" />
+                                )}
+                                <Typography variant="body2" color={totalConversion > 50 ? "success.main" : "error.main"} fontWeight={600}>
+                                    {totalConversion.toFixed(0)}%
+                                </Typography>
+                            </Box>
+                            <Box sx={{ mt: 1 }}>
+                                <LinearProgress
+                                    variant="determinate"
+                                    value={totalConversion}
+                                    sx={{ height: 10, borderRadius: 5, bgcolor: '#fff3e0' }}
+                                    color="success"
+                                />
+                            </Box>
+                        </Box>
+                    </StyledCard>
+                </Grid>
+            </Grid>
+
+            <Grid container spacing={2} sx={{ height: '100%' }}>
+                <Grid size={{ xs: 12, md: 9 }} sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
                     <Paper
                         elevation={5}
                         sx={{
-                            p: 2,
+                            p: 1.5,
                             borderRadius: 4,
-                            bgcolor: "white",
-                            boxShadow: "0 10px 30px rgb(0 0 0 / 0.12)",
-                            height: "100%",
-                            display: "flex",
-                            flexDirection: "column",
+                            bgcolor: 'white',
+                            boxShadow: '0 10px 30px rgb(0 0 0 / 0.12)',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            height: '100%',
                         }}
                     >
-                        <Typography variant="h6" fontWeight="bold" mb={1}>
-                            Recent Orders
-                        </Typography>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                            <Typography variant="h6" fontWeight="bold">
+                                Recent Orders
+                            </Typography>
 
-                        <TableContainer sx={{ flexGrow: 1 }}>
+                            {/* Search Box */}
+                            <TextField
+                                label="Search Orders"
+                                variant="outlined"
+                                size="small"
+                                sx={{
+                                    width: 250,
+                                    borderRadius: '9px',
+                                    '& .MuiOutlinedInput-root': {
+                                        borderRadius: '9px',
+                                    },
+                                    '& .MuiInputLabel-root': {
+                                        borderRadius: '9px',
+                                    }
+                                }}
+                                value={searchTerm}
+                                onChange={handleSearchChange}
+                                placeholder="Search by Order No, Party, etc."
+                            />
+                        </Box>
+
+                        {/* Table Container with fixed height */}
+                        <TableContainer sx={{ flexGrow: 1, maxHeight: 400, overflowY: 'auto', overflowX: 'auto' }}>
                             <Table stickyHeader size="small" aria-label="recent orders">
                                 <TableHead>
                                     <TableRow>
-                                        <TableCell sx={{ fontWeight: "bold" }}>Order ID</TableCell>
-                                        <TableCell sx={{ fontWeight: "bold" }}>Customer</TableCell>
-                                        <TableCell sx={{ fontWeight: "bold" }}>
-                                            Amount
-                                        </TableCell>
-                                        <TableCell sx={{ fontWeight: "bold" }}>Address</TableCell>
-                                        <TableCell sx={{ fontWeight: "bold" }}>Status</TableCell>
+                                        <TableCell>Actions</TableCell>
+                                        <TableCell>OrderNo</TableCell>
+                                        <TableCell>Date</TableCell>
+                                        <TableCell>Party</TableCell>
+                                        <TableCell>City</TableCell>
+                                        <TableCell>State</TableCell>
+                                        <TableCell>Qty</TableCell>
+                                        <TableCell>Broker</TableCell>
+                                        <TableCell>SalesMan</TableCell>
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
-                                    {recentOrders.map(({ id, customer, amount, address, status }) => (
-                                        <TableRow key={id} hover>
-                                            <TableCell>{id}</TableCell>
-                                            <TableCell>{customer}</TableCell>
-                                            <TableCell >{amount}</TableCell>
-                                            <TableCell >{address}</TableCell>
-                                            <TableCell>
-                                                <Box
-                                                    sx={{
-                                                        px: 1.5,
-                                                        py: 0.4,
-                                                        borderRadius: 3,
-                                                        bgcolor: getStatusColor(status),
-                                                        color: "white",
-                                                        fontWeight: "bold",
-                                                        textAlign: "center",
-                                                        maxWidth: 100,
-                                                        fontSize: 13,
-                                                        userSelect: "none",
-                                                    }}
-                                                >
-                                                    {status}
-                                                </Box>
+                                    {filteredData.length > 0 ? (
+                                        filteredData.map((item, index) => (
+                                            <TableRow key={item.ORDBK_NO + index} hover>
+                                                <TableCell>
+                                                    <VisibilityIcon
+                                                        sx={{ cursor: 'pointer', color: '#1976d2' }}
+                                                        onClick={() => handleViewDocument(item.ORDBK_NO)}
+                                                    />
+                                                </TableCell>
+                                                <TableCell>{item.ORDBK_NO}</TableCell>
+                                                <TableCell>{dayjs(item.ORDBK_DT).format('DD/MM/YYYY')}</TableCell>
+                                                <TableCell>{item.PARTY_NAME}</TableCell>
+                                                <TableCell>{item.CITY_NAME}</TableCell>
+                                                <TableCell>{item.STATE_NAME}</TableCell>
+                                                <TableCell>{item.QTY}</TableCell>
+                                                <TableCell>{item.BROKER_NAME}</TableCell>
+                                                <TableCell>{item.SALEPERSON_NAME}</TableCell>
+                                            </TableRow>
+                                        ))
+                                    ) : (
+                                        <TableRow>
+                                            <TableCell colSpan={12} align="center">
+                                                No records found.
                                             </TableCell>
                                         </TableRow>
-                                    ))}
+                                    )}
                                 </TableBody>
                             </Table>
                         </TableContainer>
-
-                        <Box
-                            sx={{
-                                mt: 3,
-                                display: "flex",
-                                justifyContent: "flex-end",
-                            }}
-                        >
-                            <Button variant="contained" color="primary" size="small" >
-                                View All Orders
-                            </Button>
-                        </Box>
                     </Paper>
+                </Grid>
+
+                {/* Right Column with Cards */}
+                <Grid size={{ xs: 12, md: 3 }} sx={{ display: 'flex', flexDirection: 'column', gap: 1, height: '100%' }}>
+                    <StyledCard2 sx={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%' }}>
+                        <PieChart
+                            series={[
+                                {
+                                    data: desktopOS,
+                                    innerRadius: 30,
+                                    outerRadius: 100,
+                                    paddingAngle: 2,
+                                    cornerRadius: 5,
+                                },
+                            ]}
+                            width={250}
+                            height={200}
+                            legend={{
+                                hidden: false,
+                                position: {
+                                    vertical: 'middle',
+                                    horizontal: 'right',
+                                },
+                                padding: 10,
+                            }}
+                            slotProps={{
+                                legend: {
+                                    labelStyle: { fontSize: 12 },
+                                    itemMarkWidth: 22,
+                                    itemGap: 6,
+                                },
+                            }}
+                        />
+                    </StyledCard2>
+
+                    {/* Second Card */}
+                    <StyledCard2 sx={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%' }}>
+                        <PieChart
+                            series={[
+                                {
+                                    data: desktopOS2,
+                                    innerRadius: 30,
+                                    outerRadius: 100,
+                                    paddingAngle: 2,
+                                    cornerRadius: 5,
+                                },
+                            ]}
+                            width={250}
+                            height={200}
+                            legend={{
+                                hidden: false,
+                                position: {
+                                    vertical: 'middle',
+                                    horizontal: 'right',
+                                },
+                                padding: 10,
+                            }}
+                            slotProps={{
+                                legend: {
+                                    labelStyle: { fontSize: 12 },
+                                    itemMarkWidth: 22,
+                                    itemGap: 6,
+                                },
+                            }}
+                        />
+                    </StyledCard2>
                 </Grid>
             </Grid>
 
