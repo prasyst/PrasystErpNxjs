@@ -1,5 +1,5 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Grid,
@@ -30,6 +30,8 @@ import {
   Edit as EditIcon,
   Delete as DeleteIcon
 } from '@mui/icons-material';
+import AutoVibe from '@/GlobalFunction/CustomAutoComplete/AutoVibe';
+import axiosInstance from '@/lib/axios';
 
 // TabPanel component for rendering tab content
 function TabPanel({ children, value, index, ...other }) {
@@ -52,6 +54,13 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
   const [isAddingNew, setIsAddingNew] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   
+  // State for dropdown options
+  const [termGrpOptions, setTermGrpOptions] = useState([]);
+  const [termGrpMapping, setTermGrpMapping] = useState({}); // Store TERMGRP_NAME to TERMGRP_KEY mapping
+  const [termOptions, setTermOptions] = useState([]);
+  const [discPtnOptions, setDiscPtnOptions] = useState([]);
+  const [selectedDiscPtn, setSelectedDiscPtn] = useState('');
+
   // Sample data for the grid
   const [tableData, setTableData] = useState([
     {
@@ -95,10 +104,6 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
     termR: ''
   });
 
-  // State for dropdown options
-  const [discPtnOptions, setDiscPtnOptions] = useState(['Pattern 1', 'Pattern 2', 'Pattern 3']);
-  const [selectedDiscPtn, setSelectedDiscPtn] = useState('');
-
   // Style definitions
   const textInputSx = {
     '& .MuiInputBase-root': {
@@ -130,6 +135,42 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
     },
   };
 
+  const DropInputSx = {
+    '& .MuiInputBase-root': {
+      height: 36,
+      fontSize: '14px',
+    },
+    '& .MuiInputLabel-root': {
+      fontSize: '14px',
+      top: '-4px',
+    },
+    '& .MuiFilledInput-root': {
+      backgroundColor: '#fafafa',
+      border: '1px solid #e0e0e0',
+      borderRadius: '6px',
+      overflow: 'hidden',
+      height: 36,
+      fontSize: '14px',
+      paddingRight: '36px',
+    },
+    '& .MuiFilledInput-root:before': {
+      display: 'none',
+    },
+    '& .MuiFilledInput-root:after': {
+      display: 'none',
+    },
+    '& .MuiInputBase-input': {
+      padding: '10px 12px',
+      fontSize: '14px',
+      lineHeight: '1.4',
+    },
+    '& .MuiAutocomplete-endAdornment': {
+      top: '50%',
+      transform: 'translateY(-50%)',
+      right: '10px',
+    },
+  };
+
   const buttonSx = {
     margin: { xs: '0 4px', sm: '0 6px' },
     minWidth: { xs: 40, sm: 46, md: 60 },
@@ -141,6 +182,85 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
     // Form fields should be ENABLED when in Add/Edit mode
     return !(isAddingNew || isEditing);
   };
+
+  // Fetch Term Group Data - FIXED VERSION
+  const fetchTermGrpData = async () => {
+    try {
+      const payload = {
+        "Flag": "" 
+      };
+
+      console.log('Fetching term groups with payload:', payload);
+      const response = await axiosInstance.post('/TermGrp/GetTermGrpDrp', payload);
+      console.log('Term Group API Response:', response.data);
+
+      if (response.data.DATA && Array.isArray(response.data.DATA)) {
+        const termGrps = response.data.DATA.map(item => item.TERMGRP_NAME || '');
+        setTermGrpOptions(termGrps);
+        
+        // Create mapping for TERMGRP_NAME to TERMGRP_KEY
+        const mapping = {};
+        response.data.DATA.forEach(item => {
+          if (item.TERMGRP_NAME && item.TERMGRP_KEY) {
+            mapping[item.TERMGRP_NAME] = item.TERMGRP_KEY;
+          }
+        });
+        setTermGrpMapping(mapping);
+        console.log('Term Group Mapping:', mapping);
+      }
+    } catch (error) {
+      console.error('Error fetching term group data:', error);
+      showSnackbar('Error loading term groups', 'error');
+    }
+  };
+
+  // Fetch Term Data based on selected Term Group - FIXED VERSION
+  const fetchTermData = async (termGrpKey) => {
+    if (!termGrpKey) {
+      setTermOptions([]);
+      return;
+    }
+
+    try {
+      const payload = {
+        "Flag": "",
+        "TermGrp_KEY": termGrpKey
+      };
+
+      console.log('Fetching terms with payload:', payload);
+      const response = await axiosInstance.post('/Terms/GetTermsDrp', payload);
+      console.log('Terms API Response:', response.data);
+
+      if (response.data.DATA && Array.isArray(response.data.DATA)) {
+        const terms = response.data.DATA.map(item => item.TERM_NAME || '');
+        setTermOptions(terms);
+        console.log('Loaded terms:', terms);
+      } else {
+        setTermOptions([]);
+      }
+    } catch (error) {
+      console.error('Error fetching term data:', error);
+      showSnackbar('Error loading terms', 'error');
+      setTermOptions([]);
+    }
+  };
+
+  // Fetch Disc Ptn Data
+  const fetchDiscPtnData = async () => {
+    try {
+      // You can replace this with actual API call if needed
+      const patterns = ['Pattern 1', 'Pattern 2', 'Pattern 3'];
+      setDiscPtnOptions(patterns);
+    } catch (error) {
+      console.error('Error fetching disc pattern data:', error);
+    }
+  };
+
+  // Initialize dropdown data
+  useEffect(() => {
+    fetchTermGrpData();
+    fetchDiscPtnData();
+  }, []);
 
   // Handle tab change
   const handleTabChange = (event, newValue) => {
@@ -156,9 +276,44 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
     }));
   };
 
+  // Handle Term Group change - FIXED VERSION
+  const handleTermGrpChange = (name, value) => {
+    console.log('Term Group changed:', value);
+    
+    setTermFormData(prev => ({
+      ...prev,
+      [name]: value,
+      term: '' // Clear term when term group changes
+    }));
+
+    // When term group changes, fetch corresponding terms
+    if (name === "termGroup" && value) {
+      // Get the term group key from the mapping
+      const termGrpKey = termGrpMapping[value];
+      console.log('Found Term Group Key:', termGrpKey, 'for Term Group:', value);
+      
+      if (termGrpKey) {
+        fetchTermData(termGrpKey);
+      } else {
+        setTermOptions([]);
+        console.log('No term group key found for:', value);
+      }
+    } else {
+      setTermOptions([]);
+    }
+  };
+
+  // Handle Term change
+  const handleTermChange = (name, value) => {
+    setTermFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
   // Handle Disc Ptn dropdown change
-  const handleDiscPtnChange = (event) => {
-    setSelectedDiscPtn(event.target.value);
+  const handleDiscPtnChange = (event, value) => {
+    setSelectedDiscPtn(value);
   };
 
   // Open form for adding new item
@@ -465,48 +620,36 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
           </Button>
           
           <Button
-            variant="contained"
-            onClick={handlePartyTax}
-            disabled={isFormDisabled || isAddingNew || isEditing}
-            sx={{
-              backgroundColor: '#39ace2',
-              color: 'white',
-              margin: { xs: '0 4px', sm: '0 6px' },
-              minWidth: { xs: 40, sm: 46, md: 60 },
-              height: { xs: 40, sm: 46, md: 30 },
-              '&:disabled': {
-                backgroundColor: '#cccccc',
-                color: '#666666'
-              }
-            }}
-          >
-            Party Tax
-          </Button>
+    variant="contained"
+    onClick={handlePartyTax}
+    disabled={isFormDisabled || isAddingNew || isEditing}
+    sx={{
+      backgroundColor: '#39ace2',
+      color: 'white',
+      minWidth: { xs: 80, sm: 100, md: 120 },
+      height: { xs: 40, sm: 46, md: 30 },
+      '&:disabled': {
+        backgroundColor: '#cccccc',
+        color: '#666666'
+      }
+    }}
+  >
+    Party Tax
+  </Button>
           
-          {/* Disc Ptn Dropdown */}
-          <FormControl 
-            variant="filled" 
-            sx={{ 
-              minWidth: 120,
-              '& .MuiInputBase-root': {
-                height: 36,
-              }
-            }}
-          >
-            <InputLabel>Disc Ptn</InputLabel>
-            <Select
-              value={selectedDiscPtn}
-              onChange={handleDiscPtnChange}
-              disabled={isFormDisabled || isAddingNew || isEditing}
-            >
-              <MenuItem value=""><em>None</em></MenuItem>
-              {discPtnOptions.map((option, index) => (
-                <MenuItem key={index} value={option}>
-                  {option}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+          <Box sx={{ minWidth: 150, maxWidth: 180 }}>
+    <AutoVibe
+      id="DiscPtn"
+      disabled={isFormDisabled || isAddingNew || isEditing}
+      getOptionLabel={(option) => option || ''}
+      options={discPtnOptions}
+      label="Disc Ptn"
+      name="discPtn"
+      value={selectedDiscPtn}
+      onChange={handleDiscPtnChange}
+      sx={DropInputSx}
+    />
+  </Box>
         </Stack>
 
         {/* Tabs Section */}
@@ -522,28 +665,30 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
         <TabPanel value={tabIndex} index={0}>
           {/* Calc Terms Content */}
           <Grid container spacing={2}>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
+            <Grid item xs={12} sm={4}>
+              <AutoVibe
+                id="TermGrp"
+                disabled={shouldDisableFields()}
+                getOptionLabel={(option) => option || ''}
+                options={termGrpOptions}
                 label="Term Grp"
                 name="termGroup"
                 value={termFormData.termGroup}
-                onChange={handleInputChange}
-                variant="filled"
-                sx={textInputSx}
-                disabled={shouldDisableFields()} // FIXED: Now fields will be ENABLED when in Add/Edit mode
+                onChange={(event, value) => handleTermGrpChange("termGroup", value)}
+                sx={DropInputSx}
               />
             </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
+            <Grid item xs={12} sm={4}>
+              <AutoVibe
+                id="Term"
+                disabled={shouldDisableFields()}
+                getOptionLabel={(option) => option || ''}
+                options={termOptions}
                 label="Term"
                 name="term"
                 value={termFormData.term}
-                onChange={handleInputChange}
-                variant="filled"
-                sx={textInputSx}
-                disabled={shouldDisableFields()} // FIXED: Now fields will be ENABLED when in Add/Edit mode
+                onChange={(event, value) => handleTermChange("term", value)}
+                sx={DropInputSx}
               />
             </Grid>
             <Grid item xs={12} sm={6}>
@@ -556,7 +701,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
                 onChange={handleInputChange}
                 variant="filled"
                 sx={textInputSx}
-                disabled={shouldDisableFields()} // FIXED: Now fields will be ENABLED when in Add/Edit mode
+                disabled={shouldDisableFields()}
               />
             </Grid>
             <Grid item xs={12} sm={6}>
@@ -569,7 +714,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
                 onChange={handleInputChange}
                 variant="filled"
                 sx={textInputSx}
-                disabled={shouldDisableFields()} // FIXED: Now fields will be ENABLED when in Add/Edit mode
+                disabled={shouldDisableFields()}
               />
             </Grid>
             <Grid item xs={12}>
@@ -583,7 +728,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
                 sx={textInputSx}
                 multiline
                 rows={2}
-                disabled={shouldDisableFields()} // FIXED: Now fields will be ENABLED when in Add/Edit mode
+                disabled={shouldDisableFields()}
               />
             </Grid>
             <Grid item xs={12} sm={6}>
@@ -596,7 +741,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
                 onChange={handleInputChange}
                 variant="filled"
                 sx={textInputSx}
-                disabled={shouldDisableFields()} // FIXED: Now fields will be ENABLED when in Add/Edit mode
+                disabled={shouldDisableFields()}
               />
             </Grid>
             <Grid item xs={12} sm={6}>
@@ -609,14 +754,14 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
                 onChange={handleInputChange}
                 variant="filled"
                 sx={textInputSx}
-                disabled={shouldDisableFields()} // FIXED: Now fields will be ENABLED when in Add/Edit mode
+                disabled={shouldDisableFields()}
               />
             </Grid>
             <Grid item xs={12}>
               <Button 
                 variant="contained" 
                 onClick={handleApply}
-                disabled={shouldDisableFields()} // FIXED: Apply button will be ENABLED when in Add/Edit mode
+                disabled={shouldDisableFields()}
                 sx={{
                   backgroundColor: '#39ace2',
                   color: 'white',
@@ -636,15 +781,16 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
           {/* Tax Content */}
           <Grid container spacing={2}>
             <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
+              <AutoVibe
+                id="TermGrpTax"
+                disabled={shouldDisableFields()}
+                getOptionLabel={(option) => option || ''}
+                options={termGrpOptions}
                 label="Tax Grp"
                 name="termGroup"
                 value={termFormData.termGroup}
-                onChange={handleInputChange}
-                variant="filled"
-                sx={textInputSx}
-                disabled={shouldDisableFields()} // FIXED: Now fields will be ENABLED when in Add/Edit mode
+                onChange={(event, value) => handleTermGrpChange("termGroup", value)}
+                sx={DropInputSx}
               />
             </Grid>
             <Grid item xs={12} sm={6}>
@@ -656,7 +802,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
                 onChange={handleInputChange}
                 variant="filled"
                 sx={textInputSx}
-                disabled={shouldDisableFields()} // FIXED: Now fields will be ENABLED when in Add/Edit mode
+                disabled={shouldDisableFields()}
               />
             </Grid>
             <Grid item xs={12} sm={6}>
@@ -668,7 +814,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
                 onChange={handleInputChange}
                 variant="filled"
                 sx={textInputSx}
-                disabled={shouldDisableFields()} // FIXED: Now fields will be ENABLED when in Add/Edit mode
+                disabled={shouldDisableFields()}
               />
             </Grid>
             <Grid item xs={12} sm={6}>
@@ -681,7 +827,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
                 onChange={handleInputChange}
                 variant="filled"
                 sx={textInputSx}
-                disabled={shouldDisableFields()} // FIXED: Now fields will be ENABLED when in Add/Edit mode
+                disabled={shouldDisableFields()}
               />
             </Grid>
             <Grid item xs={12}>
@@ -693,7 +839,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
                 onChange={handleInputChange}
                 variant="filled"
                 sx={textInputSx}
-                disabled={shouldDisableFields()} // FIXED: Now fields will be ENABLED when in Add/Edit mode
+                disabled={shouldDisableFields()}
               />
             </Grid>
             <Grid item xs={12} sm={6}>
@@ -706,7 +852,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
                 onChange={handleInputChange}
                 variant="filled"
                 sx={textInputSx}
-                disabled={shouldDisableFields()} // FIXED: Now fields will be ENABLED when in Add/Edit mode
+                disabled={shouldDisableFields()}
               />
             </Grid>
             <Grid item xs={12} sm={6}>
@@ -719,14 +865,14 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
                 onChange={handleInputChange}
                 variant="filled"
                 sx={textInputSx}
-                disabled={shouldDisableFields()} // FIXED: Now fields will be ENABLED when in Add/Edit mode
+                disabled={shouldDisableFields()}
               />
             </Grid>
             <Grid item xs={12}>
               <Button 
                 variant="contained" 
                 onClick={handleApply}
-                disabled={shouldDisableFields()} // FIXED: Apply button will be ENABLED when in Add/Edit mode
+                disabled={shouldDisableFields()}
                 sx={{
                   backgroundColor: '#39ace2',
                   color: 'white',
@@ -746,27 +892,29 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
           {/* Non-Calc Terms Content */}
           <Grid container spacing={2}>
             <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
+              <AutoVibe
+                id="TermGrpNonCalc"
+                disabled={shouldDisableFields()}
+                getOptionLabel={(option) => option || ''}
+                options={termGrpOptions}
                 label="Term Grp"
                 name="termGroup"
                 value={termFormData.termGroup}
-                onChange={handleInputChange}
-                variant="filled"
-                sx={textInputSx}
-                disabled={shouldDisableFields()} // FIXED: Now fields will be ENABLED when in Add/Edit mode
+                onChange={(event, value) => handleTermGrpChange("termGroup", value)}
+                sx={DropInputSx}
               />
             </Grid>
             <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
+              <AutoVibe
+                id="TermNonCalc"
+                disabled={shouldDisableFields()}
+                getOptionLabel={(option) => option || ''}
+                options={termOptions}
                 label="Term"
                 name="term"
                 value={termFormData.term}
-                onChange={handleInputChange}
-                variant="filled"
-                sx={textInputSx}
-                disabled={shouldDisableFields()} // FIXED: Now fields will be ENABLED when in Add/Edit mode
+                onChange={(event, value) => handleTermChange("term", value)}
+                sx={DropInputSx}
               />
             </Grid>
             <Grid item xs={12} sm={6}>
@@ -779,7 +927,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
                 onChange={handleInputChange}
                 variant="filled"
                 sx={textInputSx}
-                disabled={shouldDisableFields()} // FIXED: Now fields will be ENABLED when in Add/Edit mode
+                disabled={shouldDisableFields()}
               />
             </Grid>
             <Grid item xs={12} sm={6}>
@@ -792,7 +940,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
                 onChange={handleInputChange}
                 variant="filled"
                 sx={textInputSx}
-                disabled={shouldDisableFields()} // FIXED: Now fields will be ENABLED when in Add/Edit mode
+                disabled={shouldDisableFields()}
               />
             </Grid>
             <Grid item xs={12}>
@@ -806,7 +954,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
                 sx={textInputSx}
                 multiline
                 rows={2}
-                disabled={shouldDisableFields()} // FIXED: Now fields will be ENABLED when in Add/Edit mode
+                disabled={shouldDisableFields()}
               />
             </Grid>
             <Grid item xs={12} sm={6}>
@@ -819,7 +967,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
                 onChange={handleInputChange}
                 variant="filled"
                 sx={textInputSx}
-                disabled={shouldDisableFields()} // FIXED: Now fields will be ENABLED when in Add/Edit mode
+                disabled={shouldDisableFields()}
               />
             </Grid>
             <Grid item xs={12} sm={6}>
@@ -832,14 +980,14 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
                 onChange={handleInputChange}
                 variant="filled"
                 sx={textInputSx}
-                disabled={shouldDisableFields()} // FIXED: Now fields will be ENABLED when in Add/Edit mode
+                disabled={shouldDisableFields()}
               />
             </Grid>
             <Grid item xs={12}>
               <Button 
                 variant="contained" 
                 onClick={handleApply}
-                disabled={shouldDisableFields()} // FIXED: Apply button will be ENABLED when in Add/Edit mode
+                disabled={shouldDisableFields()}
                 sx={{
                   backgroundColor: '#39ace2',
                   color: 'white',

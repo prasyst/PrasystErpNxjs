@@ -435,6 +435,7 @@ import { usePin } from '../../app/hooks/usePin';
 import { getAllMenuItemsWithPaths, getIconComponent } from './menuData';
 import Link from 'next/link';
 import ReportIcon from '@mui/icons-material/Report';
+import axiosInstance from '@/lib/axios'; // Import axios instance
 
 const Header = ({ isSidebarCollapsed, onMenuToggle, isMobile }) => {
   const [isSearchExpanded, setIsSearchExpanded] = useState(false);
@@ -448,6 +449,8 @@ const Header = ({ isSidebarCollapsed, onMenuToggle, isMobile }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [showSearchResults, setShowSearchResults] = useState(false);
+  const [companyName, setCompanyName] = useState(''); // New state for company name
+  const [branchName, setBranchName] = useState(''); // New state for branch name
   const searchRef = useRef(null);
   const dropdownRef = useRef(null);
   const notificationsRef = useRef(null);
@@ -471,11 +474,52 @@ const Header = ({ isSidebarCollapsed, onMenuToggle, isMobile }) => {
     if (storedRole) {
       setUserRole(storedRole);
     }
+    
+    // Fetch company and branch names
+    fetchCompanyAndBranchNames();
   }, []);
+
+  // Function to fetch company and branch names
+  const fetchCompanyAndBranchNames = async () => {
+    try {
+      const coId = localStorage.getItem('CO_ID');
+      const cobrId = localStorage.getItem('COBR_ID');
+
+      if (coId && cobrId) {
+        // Fetch company name
+        const companyResponse = await axiosInstance.post('COMPANY/Getdrpcofill', {
+          CO_ID: "",
+          Flag: ""
+        });
+
+        if (companyResponse.data?.STATUS === 0 && Array.isArray(companyResponse.data.DATA)) {
+          const company = companyResponse.data.DATA.find(c => c.CO_ID === coId);
+          if (company) {
+            setCompanyName(company.CO_NAME);
+          }
+        }
+
+        // Fetch branch name
+        const branchResponse = await axiosInstance.post('COMPANY/Getdrpcobrfill', {
+          COBR_ID: "",
+          CO_ID: coId,
+          Flag: ""
+        });
+
+        if (branchResponse.data?.STATUS === 0 && Array.isArray(branchResponse.data.DATA)) {
+          const branch = branchResponse.data.DATA.find(b => b.COBR_ID === cobrId);
+          if (branch) {
+            setBranchName(branch.COBR_NAME);
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching company/branch names:', error);
+    }
+  };
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-
       if (searchRef.current && !searchRef.current.contains(event.target)) {
         setShowSearchResults(false);
       }
@@ -488,7 +532,6 @@ const Header = ({ isSidebarCollapsed, onMenuToggle, isMobile }) => {
         setIsNotificationsOpen(false);
       }
       
-
       if (settingsRef.current && !settingsRef.current.contains(event.target)) {
         setIsQuickSettingsOpen(false);
       }
@@ -599,7 +642,6 @@ const Header = ({ isSidebarCollapsed, onMenuToggle, isMobile }) => {
         zIndex: 50,
         borderBottom: '1px solid #e0e0e0',
         transition: 'left 0.3s ease, padding 0.3s ease',
-        // height: '60px',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
@@ -655,7 +697,6 @@ const Header = ({ isSidebarCollapsed, onMenuToggle, isMobile }) => {
               color: 'white',
               display: 'flex',
               alignItems: 'center',
-              // justifyContent: 'center',
               minWidth: '30px',
               height: '20px',
               transition: 'transform 0.3s ease',
@@ -768,7 +809,6 @@ const Header = ({ isSidebarCollapsed, onMenuToggle, isMobile }) => {
             </div>
           )}
 
-
           {showSearchResults && searchResults.length === 0 && searchQuery.length > 0 && isSearchExpanded && (
             <div style={{
               position: 'absolute',
@@ -794,6 +834,43 @@ const Header = ({ isSidebarCollapsed, onMenuToggle, isMobile }) => {
             </div>
           )}
         </div>
+
+        {/* Company and Branch Name Display */}
+        {!isMobile && (companyName || branchName) && (
+          <div 
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'flex-start',
+              marginLeft: '1rem',
+              padding: '0.5rem 1rem',
+              backgroundColor: 'rgba(255, 255, 255, 0.1)',
+              borderRadius: '8px',
+              border: '1px solid rgba(255, 255, 255, 0.2)',
+              maxWidth: '300px',
+            }}
+          >
+            
+            {branchName && (
+              <span 
+                style={{
+                  color: 'rgba(255, 255, 255, 0.9)',
+                  fontSize: '1rem',
+                  lineHeight: '1.2',
+                  marginTop: '0.1rem',
+                  whiteSpace: 'nowrap',
+                  fontWeight: '600',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  width: '100%',
+                }}
+                title={branchName}
+              >
+                {branchName}
+              </span>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="flex items-center gap-2 md:gap-3">
@@ -1101,7 +1178,7 @@ const Header = ({ isSidebarCollapsed, onMenuToggle, isMobile }) => {
               
               <div style={{ padding: '0.5rem 0' }}>
                 <button 
-                  // onClick={handleProfile}
+                  onClick={handleProfile}
                   style={{
                     width: '100%',
                     padding: '0.75rem 1rem',
@@ -1123,7 +1200,7 @@ const Header = ({ isSidebarCollapsed, onMenuToggle, isMobile }) => {
                 </button>
                 
                 <button 
-                  // onClick={handleChangePassword}
+                  onClick={handleChangePassword}
                   style={{
                     width: '100%',
                     padding: '0.75rem 1rem',
@@ -1217,7 +1294,10 @@ const Header = ({ isSidebarCollapsed, onMenuToggle, isMobile }) => {
                 Cancel
               </button>
               <button
-                onClick={() => confirmUnpin(showUnpinConfirm)}
+                onClick={() => {
+                  unpinModule(showUnpinConfirm.id);
+                  setShowUnpinConfirm(null);
+                }}
                 style={{
                   padding: '0.6rem 1.5rem',
                   border: 'none',
