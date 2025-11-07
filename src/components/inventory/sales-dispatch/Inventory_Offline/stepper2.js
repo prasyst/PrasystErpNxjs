@@ -55,7 +55,6 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
   const [shadeOptions, setShadeOptions] = useState([]);
   const [lotNoOptions, setLotNoOptions] = useState([]);
   
-  
   // State for storing product mapping (FGPRD_NAME to FGPRD_KEY)
   const [productMapping, setProductMapping] = useState({});
   // State for storing style mapping (FGSTYLE_CODE to FGSTYLE_ID)
@@ -191,7 +190,11 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
     distributer: item.DISTBTR || "-",
     set: parseFloat(item.SETQTY) || 0,
     originalData: item,
-    FGSTYLE_ID: item.FGSTYLE_ID
+    FGSTYLE_ID: item.FGSTYLE_ID,
+    FGPRD_KEY: item.FGPRD_KEY,
+    FGTYPE_KEY: item.FGTYPE_KEY,
+    FGSHADE_KEY: item.FGSHADE_KEY,
+    FGPTN_KEY: item.FGPTN_KEY
   })) : [];
 
   // Use updatedTableData if available, otherwise use initial data
@@ -305,6 +308,63 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
       console.error('Error fetching style data:', error);
       setStyleOptions([]);
       setStyleMapping({});
+    }
+  };
+
+  // NEW: Fetch style data by style code (for case 2 - when user types in style dropdown)
+  const fetchStyleDataByCode = async (styleCode) => {
+    if (!styleCode) return;
+
+    try {
+      const payload = {
+        "FGSTYLE_ID": "",
+        "FGPRD_KEY": "",
+        "FGSTYLE_CODE": styleCode,
+        "FLAG": ""
+      };
+
+      console.log('Fetching style data by code with payload:', payload);
+
+      const response = await axiosInstance.post('/FGSTYLE/GetFgstyleDrp', payload);
+      console.log('Style by Code API Response:', response.data);
+
+      if (response.data.DATA && response.data.DATA.length > 0) {
+        const styleData = response.data.DATA[0];
+        
+        // Auto-fill the fields from response data
+        if (isAddingNew || isEditingSize) {
+          setNewItemData(prev => ({
+            ...prev,
+            product: styleData.FGPRD_NAME || '',
+            style: styleData.FGSTYLE_CODE || '',
+            type: styleData.FGTYPE_NAME || '',
+            mrp: styleData.MRP ? styleData.MRP.toString() : ''
+          }));
+          
+          // Update product mapping if needed
+          if (styleData.FGPRD_NAME && styleData.FGPRD_KEY) {
+            setProductMapping(prev => ({
+              ...prev,
+              [styleData.FGPRD_NAME]: styleData.FGPRD_KEY
+            }));
+          }
+          
+          // Update style mapping
+          if (styleData.FGSTYLE_CODE && styleData.FGSTYLE_ID) {
+            setStyleMapping(prev => ({
+              ...prev,
+              [styleData.FGSTYLE_CODE]: styleData.FGSTYLE_ID
+            }));
+          }
+          
+          showSnackbar("Fields auto-filled from style data!");
+        }
+      } else {
+        showSnackbar("No style data found for the entered code", 'warning');
+      }
+    } catch (error) {
+      console.error('Error fetching style data by code:', error);
+      showSnackbar("Error fetching style data", 'error');
     }
   };
 
@@ -513,7 +573,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
     }
   };
 
-  // Handle style selection change
+  // Handle style selection change - CASE 1: When user selects from dropdown
   const handleStyleChange = async (event, value) => {
     setSelectedStyle(value);
     
@@ -535,9 +595,53 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
         const fgstyleId = styleMapping[value];
         console.log('Selected style FGSTYLE_ID:', fgstyleId);
         
+        // CASE 1: Make API call when style is selected from dropdown
+        const payload = {
+          "FGSTYLE_ID": fgstyleId,
+          "FGPRD_KEY": "",
+          "FGSTYLE_CODE": value,
+          "FLAG": ""
+        };
+
+        console.log('CASE 1: Fetching style details with payload:', payload);
+
+        try {
+          const response = await axiosInstance.post('/FGSTYLE/GetFgstyleDrp', payload);
+          console.log('CASE 1 Style Details API Response:', response.data);
+
+          if (response.data.DATA && response.data.DATA.length > 0) {
+            const styleData = response.data.DATA[0];
+            
+            // Auto-fill MRP and Type fields
+            setNewItemData(prev => ({
+              ...prev,
+              mrp: styleData.MRP ? styleData.MRP.toString() : '',
+              type: styleData.FGTYPE_NAME || ''
+            }));
+            
+            showSnackbar("MRP and Type auto-filled from style data!");
+          }
+        } catch (error) {
+          console.error('Error fetching style details in CASE 1:', error);
+        }
+        
         await fetchTypeData(fgstyleId);
         await fetchShadeData(fgstyleId);
         await fetchLotNoData(fgstyleId);
+      }
+    }
+  };
+
+  // NEW: Handle style input key press for CASE 2 - when user types and presses Enter
+  const handleStyleKeyPress = (event) => {
+    if (event.key === 'Enter') {
+      const inputValue = event.target.value;
+      console.log('CASE 2: Enter pressed with value:', inputValue);
+      
+      if (inputValue && inputValue.trim() !== '') {
+        // CASE 2: User pressed Enter after typing style code
+        event.preventDefault();
+        fetchStyleDataByCode(inputValue.trim());
       }
     }
   };
@@ -706,224 +810,255 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
     showSnackbar('Add new item mode enabled');
   };
 
-  // Enhanced handleConfirmAdd function with validation
- // Enhanced handleConfirmAdd function with proper DBFLAG handling
-const handleConfirmAdd = () => {
-  // Validation
-  if (!newItemData.product || !newItemData.style) {
-    showSnackbar("Please fill required fields: Product and Style", 'error');
-    return;
-  }
+  // Enhanced handleConfirmAdd function with proper DBFLAG handling
+  const handleConfirmAdd = () => {
+    // Validation
+    if (!newItemData.product || !newItemData.style) {
+      showSnackbar("Please fill required fields: Product and Style", 'error');
+      return;
+    }
 
-  if (sizeDetailsData.length === 0) {
-    showSnackbar("Please load size details first by clicking 'Add Qty' button", 'error');
-    return;
-  }
+    if (sizeDetailsData.length === 0) {
+      showSnackbar("Please load size details first by clicking 'Add Qty' button", 'error');
+      return;
+    }
 
-  const sizesWithZeroQty = sizeDetailsData.filter(size => !size.QTY || size.QTY === 0);
-  if (sizesWithZeroQty.length > 0) {
-    showSnackbar("Please enter quantity for all sizes before confirming", 'error');
-    return;
-  }
+    const sizesWithZeroQty = sizeDetailsData.filter(size => !size.QTY || size.QTY === 0);
+    if (sizesWithZeroQty.length > 0) {
+      showSnackbar("Please enter quantity for all sizes before confirming", 'error');
+      return;
+    }
 
-  const fgprdKey = productMapping[newItemData.product] || productMapping[newItemData.style] || "";
-  const fgptnKey = lotNoMapping[newItemData.lotNo] || "";
+    const fgprdKey = productMapping[newItemData.product] || productMapping[newItemData.style] || "";
+    const fgstyleId = styleMapping[newItemData.style] || "";
+    const fgtypeKey = typeMapping[newItemData.type] || "";
+    const fgshadeKey = shadeMapping[newItemData.shade] || "";
+    const fgptnKey = lotNoMapping[newItemData.lotNo] || "";
 
-  console.log('Product and Lot No Keys:', {
-    product: newItemData.product,
-    fgprdKey,
-    lotNo: newItemData.lotNo,
-    fgptnKey
-  });
+    console.log('All Keys for new item:', {
+      product: newItemData.product,
+      fgprdKey,
+      style: newItemData.style,
+      fgstyleId,
+      type: newItemData.type,
+      fgtypeKey,
+      shade: newItemData.shade,
+      fgshadeKey,
+      lotNo: newItemData.lotNo,
+      fgptnKey
+    });
 
-  const totalQty = sizeDetailsData.reduce((sum, size) => sum + (parseFloat(size.QTY) || 0), 0);
-  const mrp = parseFloat(newItemData.mrp) || 0;
-  const totalAmount = sizeDetailsData.reduce((sum, size) => sum + (parseFloat(size.ITM_AMT) || 0), 0);
-  const discount = parseFloat(newItemData.discount) || 0;
-  const netAmount = totalAmount - discount;
+    const totalQty = sizeDetailsData.reduce((sum, size) => sum + (parseFloat(size.QTY) || 0), 0);
+    const mrp = parseFloat(newItemData.mrp) || 0;
+    const totalAmount = sizeDetailsData.reduce((sum, size) => sum + (parseFloat(size.ITM_AMT) || 0), 0);
+    const discount = parseFloat(newItemData.discount) || 0;
+    const netAmount = totalAmount - discount;
 
-  // Generate a temporary ID for new items (long number to distinguish from real IDs)
-  const tempId = Date.now();
+    // Generate a temporary ID for new items (long number to distinguish from real IDs)
+    const tempId = Date.now();
 
-  const newItem = {
-    id: tempId,
-    BarCode: newItemData.barcode || "-",
-    product: newItemData.product,
-    style: newItemData.style || "-",
-    type: newItemData.type || "-",
-    shade: newItemData.shade || "-",
-    lotNo: newItemData.lotNo || "-",
-    qty: totalQty,
-    rate: mrp,
-    amount: totalAmount,
-    varPer: parseFloat(newItemData.varPer) || 0,
-    varQty: 0,
-    varAmt: 0,
-    discAmt: discount,
-    netAmt: netAmount,
-    distributer: "-",
-    set: parseFloat(newItemData.sets) || 0,
-    originalData: {
-      ORDBKSTY_ID: tempId, // Temporary ID for new items
+    const newItem = {
+      id: tempId,
+      BarCode: newItemData.barcode || "-",
+      product: newItemData.product,
+      style: newItemData.style || "-",
+      type: newItemData.type || "-",
+      shade: newItemData.shade || "-",
+      lotNo: newItemData.lotNo || "-",
+      qty: totalQty,
+      rate: mrp,
+      amount: totalAmount,
+      varPer: parseFloat(newItemData.varPer) || 0,
+      varQty: 0,
+      varAmt: 0,
+      discAmt: discount,
+      netAmt: netAmount,
+      distributer: "-",
+      set: parseFloat(newItemData.sets) || 0,
+      originalData: {
+        ORDBKSTY_ID: tempId, // Temporary ID for new items
+        FGITEM_KEY: newItemData.barcode || "-",
+        PRODUCT: newItemData.product,
+        STYLE: newItemData.style,
+        TYPE: newItemData.type,
+        SHADE: newItemData.shade,
+        ITMQTY: totalQty,
+        ITMRATE: mrp,
+        ITMAMT: totalAmount,
+        DLV_VAR_PERC: parseFloat(newItemData.varPer) || 0,
+        DLV_VAR_QTY: 0,
+        DISC_AMT: discount,
+        NET_AMT: netAmount,
+        DISTBTR: "-",
+        SETQTY: parseFloat(newItemData.sets) || 0,
+        ORDBKSTYSZLIST: sizeDetailsData.map(size => ({
+          ...size,
+          ORDBKSTYSZ_ID: 0 // 0 for new size entries
+        })),
+        FGPRD_KEY: fgprdKey,
+        FGSTYLE_ID: fgstyleId,
+        FGTYPE_KEY: fgtypeKey,
+        FGSHADE_KEY: fgshadeKey,
+        FGPTN_KEY: fgptnKey,
+        // Set DBFLAG based on mode
+        DBFLAG: mode === 'add' ? 'I' : 'I' // Always 'I' for new items in both modes
+      },
+      FGSTYLE_ID: fgstyleId,
+      FGPRD_KEY: fgprdKey,
+      FGTYPE_KEY: fgtypeKey,
+      FGSHADE_KEY: fgshadeKey,
+      FGPTN_KEY: fgptnKey
+    };
+
+    const newTableData = [...tableData, newItem];
+    setUpdatedTableData(newTableData);
+
+    // Update formData with proper DBFLAG and all required fields
+    const newOrdbkStyleItem = {
+      ORDBKSTY_ID: tempId,
+      FGITEM_KEY: newItem.BarCode,
+      PRODUCT: newItem.product,
+      STYLE: newItem.style,
+      TYPE: newItem.type,
+      SHADE: newItem.shade,
+      ITMQTY: newItem.qty,
+      ITMRATE: newItem.rate,
+      ITMAMT: newItem.amount,
+      DLV_VAR_PERC: newItem.varPer,
+      DLV_VAR_QTY: newItem.varQty,
+      DISC_AMT: newItem.discAmt,
+      NET_AMT: newItem.netAmt,
+      DISTBTR: newItem.distributer,
+      SETQTY: newItem.set,
       ORDBKSTYSZLIST: sizeDetailsData.map(size => ({
         ...size,
         ORDBKSTYSZ_ID: 0 // 0 for new size entries
       })),
+      FGSTYLE_ID: newItem.FGSTYLE_ID,
       FGPRD_KEY: fgprdKey,
+      FGTYPE_KEY: fgtypeKey,
+      FGSHADE_KEY: fgshadeKey,
       FGPTN_KEY: fgptnKey,
-      // Set DBFLAG based on mode
-      DBFLAG: mode === 'add' ? 'I' : 'I' // Always 'I' for new items in both modes
-    },
-    FGSTYLE_ID: styleMapping[newItemData.style] || null,
-    FGPRD_KEY: fgprdKey,
-    FGPTN_KEY: fgptnKey
-  };
+      DBFLAG: mode === 'add' ? 'I' : 'I' // Always 'I' for new items
+    };
 
-  const newTableData = [...tableData, newItem];
-  setUpdatedTableData(newTableData);
-
-  // Update formData with proper DBFLAG
-  const newOrdbkStyleItem = {
-    ORDBKSTY_ID: tempId,
-    FGITEM_KEY: newItem.BarCode,
-    PRODUCT: newItem.product,
-    STYLE: newItem.style,
-    TYPE: newItem.type,
-    SHADE: newItem.shade,
-    ITMQTY: newItem.qty,
-    ITMRATE: newItem.rate,
-    ITMAMT: newItem.amount,
-    DLV_VAR_PERC: newItem.varPer,
-    DLV_VAR_QTY: newItem.varQty,
-    DISC_AMT: newItem.discAmt,
-    NET_AMT: newItem.netAmt,
-    DISTBTR: newItem.distributer,
-    SETQTY: newItem.set,
-    ORDBKSTYSZLIST: sizeDetailsData.map(size => ({
-      ...size,
-      ORDBKSTYSZ_ID: 0 // 0 for new size entries
-    })),
-    FGSTYLE_ID: newItem.FGSTYLE_ID,
-    FGPRD_KEY: fgprdKey,
-    FGPTN_KEY: fgptnKey,
-    DBFLAG: mode === 'add' ? 'I' : 'I' // Always 'I' for new items
-  };
-
-  setFormData(prev => ({
-    ...prev,
-    apiResponseData: {
-      ...prev.apiResponseData,
-      ORDBKSTYLIST: [...(prev.apiResponseData?.ORDBKSTYLIST || []), newOrdbkStyleItem]
-    }
-  }));
-
-  setIsAddingNew(false);
-  setNewItemData({
-    product: '',
-    barcode: '',
-    style: '',
-    type: '',
-    shade: '',
-    qty: '',
-    mrp: '',
-    setNo: '',
-    varPer: '',
-    stdQty: '',
-    convFact: '',
-    lotNo: '',
-    discount: '',
-    percent: '',
-    remark: '',
-    divDt: '',
-    rQty: '',
-    sets: ''
-  });
-  setSizeDetailsData([]);
-
-  showSnackbar("Item added successfully!");
-};
-
-// Enhanced handleEditItem function
-const handleEditItem = () => {
-  if (!selectedRow) {
-    showSnackbar("Please select an item to edit", 'error');
-    return;
-  }
-  
-  if (isEditingSize) {
-    const updatedTable = tableData.map(row => {
-      if (row.id === selectedRow) {
-        const totalSizeQty = sizeDetailsData.reduce((sum, size) => sum + (parseFloat(size.QTY) || 0), 0);
-        const rate = row.rate || 0;
-        const amount = totalSizeQty * rate;
-        const discount = row.discAmt || 0;
-        const netAmount = amount - discount;
-
-        // Preserve the original DBFLAG for existing items
-        const originalDbFlag = row.originalData?.DBFLAG || 'U';
-
-        return {
-          ...row,
-          qty: totalSizeQty,
-          amount: amount,
-          netAmt: netAmount,
-          originalData: {
-            ...row.originalData,
-            ORDBKSTYSZLIST: sizeDetailsData,
-            DBFLAG: originalDbFlag // Preserve original DBFLAG
-          }
-        };
-      }
-      return row;
-    });
-    
-    setUpdatedTableData(updatedTable);
-    
     setFormData(prev => ({
       ...prev,
       apiResponseData: {
         ...prev.apiResponseData,
-        ORDBKSTYLIST: prev.apiResponseData?.ORDBKSTYLIST?.map(item => {
-          if (item.ORDBKSTY_ID === selectedRow) {
-            const totalSizeQty = sizeDetailsData.reduce((sum, size) => sum + (parseFloat(size.QTY) || 0), 0);
-            const rate = item.ITMRATE || 0;
-            const amount = totalSizeQty * rate;
-            const discount = item.DISC_AMT || 0;
-            const netAmount = amount - discount;
+        ORDBKSTYLIST: [...(prev.apiResponseData?.ORDBKSTYLIST || []), newOrdbkStyleItem]
+      }
+    }));
 
-            // Preserve the original DBFLAG
-            const originalDbFlag = item.DBFLAG || 'U';
+    setIsAddingNew(false);
+    setNewItemData({
+      product: '',
+      barcode: '',
+      style: '',
+      type: '',
+      shade: '',
+      qty: '',
+      mrp: '',
+      setNo: '',
+      varPer: '',
+      stdQty: '',
+      convFact: '',
+      lotNo: '',
+      discount: '',
+      percent: '',
+      remark: '',
+      divDt: '',
+      rQty: '',
+      sets: ''
+    });
+    setSizeDetailsData([]);
 
-            return {
-              ...item,
+    showSnackbar("Item added successfully!");
+  };
+
+  // Enhanced handleEditItem function
+  const handleEditItem = () => {
+    if (!selectedRow) {
+      showSnackbar("Please select an item to edit", 'error');
+      return;
+    }
+    
+    if (isEditingSize) {
+      const updatedTable = tableData.map(row => {
+        if (row.id === selectedRow) {
+          const totalSizeQty = sizeDetailsData.reduce((sum, size) => sum + (parseFloat(size.QTY) || 0), 0);
+          const rate = row.rate || 0;
+          const amount = totalSizeQty * rate;
+          const discount = row.discAmt || 0;
+          const netAmount = amount - discount;
+
+          // Preserve the original DBFLAG for existing items
+          const originalDbFlag = row.originalData?.DBFLAG || 'U';
+
+          return {
+            ...row,
+            qty: totalSizeQty,
+            amount: amount,
+            netAmt: netAmount,
+            originalData: {
+              ...row.originalData,
+              ORDBKSTYSZLIST: sizeDetailsData,
               ITMQTY: totalSizeQty,
               ITMAMT: amount,
               NET_AMT: netAmount,
-              ORDBKSTYSZLIST: sizeDetailsData,
               DBFLAG: originalDbFlag // Preserve original DBFLAG
-            };
-          }
-          return item;
-        }) || []
+            }
+          };
+        }
+        return row;
+      });
+      
+      setUpdatedTableData(updatedTable);
+      
+      setFormData(prev => ({
+        ...prev,
+        apiResponseData: {
+          ...prev.apiResponseData,
+          ORDBKSTYLIST: prev.apiResponseData?.ORDBKSTYLIST?.map(item => {
+            if (item.ORDBKSTY_ID === selectedRow) {
+              const totalSizeQty = sizeDetailsData.reduce((sum, size) => sum + (parseFloat(size.QTY) || 0), 0);
+              const rate = item.ITMRATE || 0;
+              const amount = totalSizeQty * rate;
+              const discount = item.DISC_AMT || 0;
+              const netAmount = amount - discount;
+
+              // Preserve the original DBFLAG
+              const originalDbFlag = item.DBFLAG || 'U';
+
+              return {
+                ...item,
+                ITMQTY: totalSizeQty,
+                ITMAMT: amount,
+                NET_AMT: netAmount,
+                ORDBKSTYSZLIST: sizeDetailsData,
+                DBFLAG: originalDbFlag // Preserve original DBFLAG
+              };
+            }
+            return item;
+          }) || []
+        }
+      }));
+      
+      showSnackbar("Changes saved successfully!");
+    } else {
+      if (selectedRow) {
+        const selectedRowData = tableData.find(row => row.id === selectedRow);
+        if (selectedRowData) {
+          populateFormFields(selectedRowData);
+        }
       }
-    }));
-    
-    showSnackbar("Changes saved successfully!");
-  } else {
-    if (selectedRow) {
-      const selectedRowData = tableData.find(row => row.id === selectedRow);
-      if (selectedRowData) {
-        populateFormFields(selectedRowData);
-      }
+      showSnackbar('Edit mode enabled for selected item');
     }
-    showSnackbar('Edit mode enabled for selected item');
-  }
-  
-  setIsEditingSize(!isEditingSize);
-};
+    
+    setIsEditingSize(!isEditingSize);
+  };
 
   const handleCancelAdd = () => {
-   
     setIsAddingNew(false);
     setNewItemData({
       product: '',
@@ -950,31 +1085,29 @@ const handleEditItem = () => {
   };
 
   const handleEditCancel = () => {
-  setShowValidationErrors(false);
-  setIsEditingSize(false);
-  setNewItemData({
-    product: '',
-    barcode: '',
-    style: '',
-    type: '',
-    shade: '',
-    qty: '',
-    mrp: '',
-    setNo: '',
-    varPer: '',
-    stdQty: '',
-    convFact: '',
-    lotNo: '',
-    discount: '',
-    percent: '',
-    remark: '',
-    divDt: '',
-    rQty: '',
-    sets: ''
-  });
-};
-
-
+    setShowValidationErrors(false);
+    setIsEditingSize(false);
+    setNewItemData({
+      product: '',
+      barcode: '',
+      style: '',
+      type: '',
+      shade: '',
+      qty: '',
+      mrp: '',
+      setNo: '',
+      varPer: '',
+      stdQty: '',
+      convFact: '',
+      lotNo: '',
+      discount: '',
+      percent: '',
+      remark: '',
+      divDt: '',
+      rQty: '',
+      sets: ''
+    });
+  };
 
   const handleDeleteItem = () => {
     if (!selectedRow) {
@@ -1045,7 +1178,7 @@ const handleEditItem = () => {
     return !(isAddingNew || isEditingSize);
   };
 
-const getFieldError = (fieldName) => {
+  const getFieldError = (fieldName) => {
     if (!showValidationErrors) return '';
     
     const requiredFields = {
@@ -1318,11 +1451,12 @@ const getFieldError = (fieldName) => {
   name="style"
   value={isAddingNew || isEditingSize ? newItemData.style : selectedStyle}
   onChange={handleStyleChange}
+  onKeyPress={handleStyleKeyPress}
   sx={{
     ...DropInputSx,
     '& .MuiFilledInput-root': {
       ...DropInputSx['& .MuiFilledInput-root'],
-      border: getFieldError('style') ? '1px solid #f44336' : '1px solid #e0e0e0', // ✅ 'style' use karo
+      border: getFieldError('style') ? '1px solid #f44336' : '1px solid #e0e0e0',
     }
   }}
   error={!!getFieldError('style')}

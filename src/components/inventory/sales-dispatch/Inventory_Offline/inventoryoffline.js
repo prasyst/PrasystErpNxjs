@@ -77,7 +77,7 @@ const SalesOrderOffline = () => {
     EMAIL: "",
     REMARK_STATUS: "",
     MAIN_DETAILS: "G",
-    GST_APPL: "Y",
+    GST_APPL: "N", // Changed default to "N"
     RACK_MIN: "0",
     REGISTERED_DEALER: "0",
     SHORT_CLOSE: "0",
@@ -126,7 +126,12 @@ const SalesOrderOffline = () => {
     // New fields for Order Type and Merchandiser
     Order_Type: "",
     MERCHANDISER_ID: "",
-    MERCHANDISER_NAME: ""
+    MERCHANDISER_NAME: "",
+    // New fields for default selections
+    Delivery_Shedule: "comman",
+    Order_TNA: "ItemWise",
+    Status: "O",
+    ORDBK_TYPE: "0" // Default to "Only Sales"
   });
 
   const Buttonsx = {
@@ -238,7 +243,7 @@ const SalesOrderOffline = () => {
       const transporterName = transporterMapping[orderData.TRSP_KEY] || await getTransporterNameByKey(orderData.TRSP_KEY);
       const shippingPartyName = partyMapping[orderData.SHP_PARTY_KEY] || await getPartyNameByKey(orderData.SHP_PARTY_KEY) || partyName;
       const shippingPlaceName = branchMapping[orderData.SHP_PARTYDTL_ID] || await getBranchNameById(orderData.SHP_PARTYDTL_ID) || branchName;
-      const orderTypeName = orderTypeMapping[orderData.ORDBK_KEY] || await getOrderTypeNameByKey(orderData.ORDBK_KEY);
+      const orderTypeName = orderTypeMapping[orderData.ORDBK_TYPE] || await getOrderTypeNameByKey(orderData.ORDBK_TYPE);
       const merchandiserName = merchandiserMapping[orderData.MERCHANDISER_ID] || await getMerchandiserNameById(orderData.MERCHANDISER_ID);
 
       console.log('Mapped names:', {
@@ -285,7 +290,7 @@ const SalesOrderOffline = () => {
         EMAIL: "",
         REMARK_STATUS: orderData.REMK || "",
         MAIN_DETAILS: orderData.LotWise === "Y" ? "L" : "G",
-        GST_APPL: orderData.GST_APP || "Y",
+        GST_APPL: orderData.GST_APP || "N", // Changed to "N" as default
         RACK_MIN: orderData.STK_FLG || "0",
         REGISTERED_DEALER: "0",
         SHORT_CLOSE: "0",
@@ -326,6 +331,11 @@ const SalesOrderOffline = () => {
         Order_Type: orderTypeName || "",
         MERCHANDISER_ID: orderData.MERCHANDISER_ID || "",
         MERCHANDISER_NAME: merchandiserName || "",
+        // Default selections
+        Delivery_Shedule: "comman",
+        Order_TNA: "ItemWise", 
+        Status: orderData.STATUS === "C" ? "C" : (orderData.STATUS === "S" ? "S" : "O"),
+        ORDBK_TYPE: orderData.ORDBK_TYPE || "0",
         // Calculate totals from ORDBKSTYLIST
         TOTAL_QTY: calculateTotalQty(orderData.ORDBKSTYLIST),
         TOTAL_AMOUNT: orderData.ORDBK_AMT || 0,
@@ -571,27 +581,16 @@ const SalesOrderOffline = () => {
     }
   };
 
-  // New function to get Order Type name by key
-  const getOrderTypeNameByKey = async (ordbkKey) => {
-    if (!ordbkKey) return "";
+  // Updated function to get Order Type name by key
+  const getOrderTypeNameByKey = async (ordbkType) => {
+    if (!ordbkType) return "";
     try {
-      const payload = {
-        "ORDBK_KEY": ordbkKey,
-        "FLAG": "ORDTYPE",
-        "FCYR_KEY": "25",
-        "COBR_ID": "02",
-        "PageNumber": 1,
-        "PageSize": 25,
-        "SearchText": "",
-        "PARTY_KEY": formData.PARTY_KEY || "",
-        "PARTYDTL_ID": formData.PARTYDTL_ID || 0
+      const orderTypes = {
+        "0": "Only Sales",
+        "1": "Sample Order",
+        "2": "Export Order"
       };
-      const response = await axiosInstance.post('/ORDBK/GetOrdbkDrp', payload);
-      if (response.data.DATA && Array.isArray(response.data.DATA)) {
-        const orderType = response.data.DATA.find(item => item.ORDBK_KEY === ordbkKey);
-        return orderType ? orderType.ORDBK_NO : "";
-      }
-      return "";
+      return orderTypes[ordbkType] || "";
     } catch (error) {
       console.error('Error fetching order type name:', error);
       return "";
@@ -735,28 +734,18 @@ const SalesOrderOffline = () => {
         setTransporterMapping(transporterMap);
       }
 
-      // Fetch order types
-      const orderTypePayload = {
-        "ORDBK_KEY": "",
-        "FLAG": "ORDTYPE",
-        "FCYR_KEY": "25",
-        "COBR_ID": "02",
-        "PageNumber": 1,
-        "PageSize": 25,
-        "SearchText": "",
-        "PARTY_KEY": formData.PARTY_KEY || "",
-        "PARTYDTL_ID": formData.PARTYDTL_ID || 0
+      // Fetch order types - Updated to use ORDBK_TYPE
+      const orderTypes = {
+        "0": "Only Sales",
+        "1": "Sample Order", 
+        "2": "Export Order"
       };
-      const orderTypeResponse = await axiosInstance.post('/ORDBK/GetOrdbkDrp', orderTypePayload);
-      if (orderTypeResponse.data.DATA && Array.isArray(orderTypeResponse.data.DATA)) {
-        const orderTypeMap = {};
-        orderTypeResponse.data.DATA.forEach(item => {
-          if (item.ORDBK_NO && item.ORDBK_KEY) {
-            orderTypeMap[item.ORDBK_NO] = item.ORDBK_KEY;
-          }
-        });
-        setOrderTypeMapping(orderTypeMap);
-      }
+      
+      const orderTypeMap = {};
+      Object.keys(orderTypes).forEach(key => {
+        orderTypeMap[orderTypes[key]] = key;
+      });
+      setOrderTypeMapping(orderTypeMap);
 
       // Fetch merchandisers
       const merchandiserPayload = {
@@ -917,237 +906,236 @@ const SalesOrderOffline = () => {
   };
 
   // Function to prepare payload for submission
-  // Function to prepare payload for submission
-const prepareSubmitPayload = () => {
-  const dbFlag = mode === 'add' ? 'I' : 'U';
-  const currentDate = new Date().toISOString().replace('T', ' ').split('.')[0];
-  
-  const userId = localStorage.getItem('USER_ID') || '1';
-  const userName = localStorage.getItem('USER_NAME') || 'Admin';
-  
-  console.log('User Info:', { userId, userName });
-
-  // Get keys from mappings
-  const partyKey = formData.PARTY_KEY;
-  const branchId = formData.PARTYDTL_ID || 0;
-  const brokerKey = formData.BROKER_KEY || "";
-  const broker1Key = formData.BROKER1_KEY || "";
-  const salesperson1Key = formData.SALEPERSON1_KEY || "";
-  const salesperson2Key = formData.SALEPERSON2_KEY || "";
-  const consigneeKey = formData.DISTBTR_KEY || "";
-  const seasonKey = formData.CURR_SEASON_KEY || "";
-  const transporterKey = formData.TRSP_KEY || "";
-  const shippingPartyKey = formData.SHP_PARTY_KEY || "";
-  const shippingPartyDtlId = formData.SHP_PARTYDTL_ID || branchId || 0;
-  const merchandiserId = formData.MERCHANDISER_ID || 1;
-
-  console.log('Keys for payload:', {
-    partyKey,
-    branchId,
-    brokerKey,
-    broker1Key,
-    salesperson1Key,
-    salesperson2Key,
-    consigneeKey,
-    seasonKey,
-    transporterKey,
-    shippingPartyKey,
-    merchandiserId
-  });
-
-  // Get ORDBKSTYLIST from formData
-  const ordbkStyleList = formData.apiResponseData?.ORDBKSTYLIST || [];
-  
-  // CORRECT ORDBK_KEY generation: FCYR_KEY + COBR_ID + ORDBK_NO
-  const correctOrdbkKey = formData.ORDBK_KEY || `2502${formData.ORDER_NO}`;
-  
-  console.log('Using ORDBK_KEY:', correctOrdbkKey);
-
-  // Transform ORDBKSTYLIST for API with proper DBFLAG handling
-  const transformedOrdbkStyleList = ordbkStyleList.map(item => {
-    // Determine item DBFLAG: 
-    // - If mode is 'add', all items should be 'I'
-    // - If mode is 'edit', existing items (with ORDBKSTY_ID) should be 'U', new items should be 'I'
-    let itemDbFlag = dbFlag;
+  const prepareSubmitPayload = () => {
+    const dbFlag = mode === 'add' ? 'I' : 'U';
+    const currentDate = new Date().toISOString().replace('T', ' ').split('.')[0];
     
-    if (mode === 'edit') {
-      // Check if this is a new item (temporary ID created during edit mode)
-      const isNewItem = item.ORDBKSTY_ID && item.ORDBKSTY_ID.toString().length > 9; // Temporary IDs are usually long numbers
-      const hasOriginalId = item.ORDBKSTY_ID && item.ORDBKSTY_ID > 0 && !isNewItem;
-      
-      itemDbFlag = hasOriginalId ? 'U' : 'I';
-      
-      console.log('Item DBFLAG determination:', {
-        ORDBKSTY_ID: item.ORDBKSTY_ID,
-        isNewItem,
-        hasOriginalId,
-        itemDbFlag
-      });
-    }
+    const userId = localStorage.getItem('USER_ID') || '1';
+    const userName = localStorage.getItem('USER_NAME') || 'Admin';
+    
+    console.log('User Info:', { userId, userName });
 
-    return {
-      DBFLAG: itemDbFlag,
-      ORDBKSTY_ID: item.ORDBKSTY_ID || 0,
-      ORDBK_KEY: correctOrdbkKey,
-      FGPRD_KEY: item.FGPRD_KEY || "",
-      FGSTYLE_ID: item.FGSTYLE_ID || 0,
-      FGSTYLE_CODE: item.STYLE || "",
-      FGTYPE_KEY: item.FGTYPE_KEY || "",
-      FGSHADE_KEY: item.FGSHADE_KEY || "",
-      FGPTN_KEY: item.FGPTN_KEY || "",
-      FGITM_KEY: item.FGITEM_KEY || "",
-      QTY: parseFloat(item.ITMQTY) || 0,
-      STYCATRT_ID: item.STYCATRT_ID || 0,
-      RATE: parseFloat(item.ITMRATE) || 0,
-      AMT: parseFloat(item.ITMAMT) || 0,
-      DLV_VAR_PERCENT: parseFloat(item.DLV_VAR_PERC) || 0,
-      DLV_VAR_QTY: parseFloat(item.DLV_VAR_QTY) || 0,
-      OPEN_RATE: "",
-      TERM_KEY: "",
-      TERM_NAME: "",
-      TERM_PERCENT: 0,
-      TERM_FIX_AMT: 0,
-      TERM_RATE: 0,
-      TERM_PERQTY: 0,
-      DISC_AMT: parseFloat(item.DISC_AMT) || 0,
-      NET_AMT: parseFloat(item.NET_AMT) || 0,
-      INIT_DT: "1900-01-01 00:00:00.000",
-      INIT_REMK: "",
-      INIT_QTY: 0,
-      DLV_DT: "1900-01-01 00:00:00.000",
-      BAL_QTY: parseFloat(item.ITMQTY) || 0,
-      STATUS: "1",
-      STYLE_PRN: "",
-      TYPE_PRN: "",
-      MRP_PRN: parseFloat(item.ITMRATE) || 0,
-      REMK: item.REMARK || "",
-      QUOTEDTL_ID: 0,
-      SETQTY: parseFloat(item.SETQTY) || 0,
-      RQTY: 0,
-      DISTBTR_KEY: consigneeKey,
-      LOTNO: seasonKey,
-      WOBALQTY: parseFloat(item.ITMQTY) || 0,
-      REFORDBKSTY_ID: 0,
-      BOMSTY_ID: 0,
-      ISRMREQ: "N",
-      OP_QTY: 0,
-      ORDBKSTYSZLIST: (item.ORDBKSTYSZLIST || []).map(sizeItem => ({
-        DBFLAG: itemDbFlag, // Use same DBFLAG as parent item
-        ORDBKSTYSZ_ID: sizeItem.ORDBKSTYSZ_ID || 0,
-        ORDBK_KEY: correctOrdbkKey,
+    // Get keys from mappings
+    const partyKey = formData.PARTY_KEY;
+    const branchId = formData.PARTYDTL_ID || 0;
+    const brokerKey = formData.BROKER_KEY || "";
+    const broker1Key = formData.BROKER1_KEY || "";
+    const salesperson1Key = formData.SALEPERSON1_KEY || "";
+    const salesperson2Key = formData.SALEPERSON2_KEY || "";
+    const consigneeKey = formData.DISTBTR_KEY || "";
+    const seasonKey = formData.CURR_SEASON_KEY || "";
+    const transporterKey = formData.TRSP_KEY || "";
+    const shippingPartyKey = formData.SHP_PARTY_KEY || "";
+    const shippingPartyDtlId = formData.SHP_PARTYDTL_ID || branchId || 0;
+    const merchandiserId = formData.MERCHANDISER_ID || 1;
+
+    console.log('Keys for payload:', {
+      partyKey,
+      branchId,
+      brokerKey,
+      broker1Key,
+      salesperson1Key,
+      salesperson2Key,
+      consigneeKey,
+      seasonKey,
+      transporterKey,
+      shippingPartyKey,
+      merchandiserId
+    });
+
+    // Get ORDBKSTYLIST from formData
+    const ordbkStyleList = formData.apiResponseData?.ORDBKSTYLIST || [];
+    
+    // CORRECT ORDBK_KEY generation: FCYR_KEY + COBR_ID + ORDBK_NO
+    const correctOrdbkKey = formData.ORDBK_KEY || `2502${formData.ORDER_NO}`;
+    
+    console.log('Using ORDBK_KEY:', correctOrdbkKey);
+
+    // Transform ORDBKSTYLIST for API with proper DBFLAG handling
+    const transformedOrdbkStyleList = ordbkStyleList.map(item => {
+      // Determine item DBFLAG: 
+      // - If mode is 'add', all items should be 'I'
+      // - If mode is 'edit', existing items (with ORDBKSTY_ID) should be 'U', new items should be 'I'
+      let itemDbFlag = dbFlag;
+      
+      if (mode === 'edit') {
+        // Check if this is a new item (temporary ID created during edit mode)
+        const isNewItem = item.ORDBKSTY_ID && item.ORDBKSTY_ID.toString().length > 9; // Temporary IDs are usually long numbers
+        const hasOriginalId = item.ORDBKSTY_ID && item.ORDBKSTY_ID > 0 && !isNewItem;
+        
+        itemDbFlag = hasOriginalId ? 'U' : 'I';
+        
+        console.log('Item DBFLAG determination:', {
+          ORDBKSTY_ID: item.ORDBKSTY_ID,
+          isNewItem,
+          hasOriginalId,
+          itemDbFlag
+        });
+      }
+
+      return {
+        DBFLAG: itemDbFlag,
         ORDBKSTY_ID: item.ORDBKSTY_ID || 0,
-        STYSIZE_ID: sizeItem.STYSIZE_ID || 0,
-        STYSIZE_NAME: sizeItem.STYSIZE_NAME || "",
-        QTY: parseFloat(sizeItem.QTY) || 0,
+        ORDBK_KEY: correctOrdbkKey,
+        FGPRD_KEY: item.FGPRD_KEY || "",
+        FGSTYLE_ID: item.FGSTYLE_ID || 0,
+        FGSTYLE_CODE: item.STYLE || "",
+        FGTYPE_KEY: item.FGTYPE_KEY || "",
+        FGSHADE_KEY: item.FGSHADE_KEY || "",
+        FGPTN_KEY: item.FGPTN_KEY || "",
+        FGITM_KEY: item.FGITEM_KEY || "",
+        QTY: parseFloat(item.ITMQTY) || 0,
+        STYCATRT_ID: item.STYCATRT_ID || 0,
+        RATE: parseFloat(item.ITMRATE) || 0,
+        AMT: parseFloat(item.ITMAMT) || 0,
+        DLV_VAR_PERCENT: parseFloat(item.DLV_VAR_PERC) || 0,
+        DLV_VAR_QTY: parseFloat(item.DLV_VAR_QTY) || 0,
+        OPEN_RATE: "",
+        TERM_KEY: "",
+        TERM_NAME: "",
+        TERM_PERCENT: 0,
+        TERM_FIX_AMT: 0,
+        TERM_RATE: 0,
+        TERM_PERQTY: 0,
+        DISC_AMT: parseFloat(item.DISC_AMT) || 0,
+        NET_AMT: parseFloat(item.NET_AMT) || 0,
         INIT_DT: "1900-01-01 00:00:00.000",
         INIT_REMK: "",
         INIT_QTY: 0,
-        BAL_QTY: parseFloat(sizeItem.QTY) || 0,
-        MRP: parseFloat(item.ITMRATE) || 0,
-        WSP: parseFloat(item.ITMRATE) || 0,
+        DLV_DT: "1900-01-01 00:00:00.000",
+        BAL_QTY: parseFloat(item.ITMQTY) || 0,
+        STATUS: "1",
+        STYLE_PRN: "",
+        TYPE_PRN: "",
+        MRP_PRN: parseFloat(item.ITMRATE) || 0,
+        REMK: item.REMARK || "",
+        QUOTEDTL_ID: 0,
+        SETQTY: parseFloat(item.SETQTY) || 0,
         RQTY: 0,
-        WOBALQTY: parseFloat(sizeItem.QTY) || 0,
-        REFORDBKSTYSZ_ID: 0,
+        DISTBTR_KEY: consigneeKey,
+        LOTNO: seasonKey,
+        WOBALQTY: parseFloat(item.ITMQTY) || 0,
+        REFORDBKSTY_ID: 0,
+        BOMSTY_ID: 0,
+        ISRMREQ: "N",
         OP_QTY: 0,
-        HSNCODE_KEY: "IG001",
-        GST_RATE_SLAB_ID: 39,
-        ITM_AMT: parseFloat(sizeItem.ITM_AMT) || 0,
-        DISC_AMT: parseFloat(sizeItem.DISC_AMT) || 0,
-        NET_AMT: parseFloat(sizeItem.NET_AMT) || 0,
-        SGST_AMT: 0,
-        CGST_AMT: 0,
-        IGST_AMT: 0,
-        NET_SALE_RATE: 0,
-        OTHER_AMT: 0,
-        ADD_CESS_RATE: 0,
-        ADD_CESS_AMT: 0
-      }))
+        ORDBKSTYSZLIST: (item.ORDBKSTYSZLIST || []).map(sizeItem => ({
+          DBFLAG: itemDbFlag, // Use same DBFLAG as parent item
+          ORDBKSTYSZ_ID: sizeItem.ORDBKSTYSZ_ID || 0,
+          ORDBK_KEY: correctOrdbkKey,
+          ORDBKSTY_ID: item.ORDBKSTY_ID || 0,
+          STYSIZE_ID: sizeItem.STYSIZE_ID || 0,
+          STYSIZE_NAME: sizeItem.STYSIZE_NAME || "",
+          QTY: parseFloat(sizeItem.QTY) || 0,
+          INIT_DT: "1900-01-01 00:00:00.000",
+          INIT_REMK: "",
+          INIT_QTY: 0,
+          BAL_QTY: parseFloat(sizeItem.QTY) || 0,
+          MRP: parseFloat(item.ITMRATE) || 0,
+          WSP: parseFloat(item.ITMRATE) || 0,
+          RQTY: 0,
+          WOBALQTY: parseFloat(sizeItem.QTY) || 0,
+          REFORDBKSTYSZ_ID: 0,
+          OP_QTY: 0,
+          HSNCODE_KEY: "IG001",
+          GST_RATE_SLAB_ID: 39,
+          ITM_AMT: parseFloat(sizeItem.ITM_AMT) || 0,
+          DISC_AMT: parseFloat(sizeItem.DISC_AMT) || 0,
+          NET_AMT: parseFloat(sizeItem.NET_AMT) || 0,
+          SGST_AMT: 0,
+          CGST_AMT: 0,
+          IGST_AMT: 0,
+          NET_SALE_RATE: 0,
+          OTHER_AMT: 0,
+          ADD_CESS_RATE: 0,
+          ADD_CESS_AMT: 0
+        }))
+      };
+    });
+
+    console.log('Transformed ORDBKSTYLIST with DBFLAGS:', transformedOrdbkStyleList);
+
+    // Base payload for both insert and update
+    const basePayload = {
+      DBFLAG: dbFlag,
+      FCYR_KEY: "25",
+      CO_ID: "02",
+      COBR_ID: "02",
+      ORDBK_NO: formData.ORDER_NO || "",
+      CURR_SEASON_KEY: seasonKey,
+      ORDBK_X: "",
+      ORDBK_TNA_TYPE: "I",
+      MERCHANDISER_ID: parseInt(merchandiserId) || 1,
+      ORD_EVENT_KEY: "",
+      ORG_DLV_DT: "1900-01-01T00:00:00",
+      PLANNING: "0",
+      ORDBK_KEY: correctOrdbkKey,
+      ORDBK_DT: formatDateForAPI(formData.ORDER_DATE),
+      PORD_REF: formData.PARTY_ORD_NO || "",
+      PORD_DT: formatDateForAPI(formData.ORD_REF_DT),
+      QUOTE_NO: formData.QUOTE_NO || "",
+      QUOTE_DT: formatDateForAPI(formData.ORDER_DATE),
+      PARTY_KEY: partyKey,
+      PARTYDTL_ID: parseInt(branchId) || 100006,
+      BROKER_KEY: brokerKey,
+      BROKER1_KEY: broker1Key,
+      BROKER_COMM: 0.00,
+      COMMON_DLV_DT_FLG: "0",
+      STK_FLG: formData.RACK_MIN || "0",
+      DLV_DT: formatDateForAPI(formData.DLV_DT),
+      DLV_PLACE: formData.SHIPPING_PLACE || "",
+      TRSP_KEY: transporterKey,
+      ORDBK_AMT: parseFloat(formData.TOTAL_AMOUNT) || 0,
+      REMK: formData.REMARK_STATUS || "",
+      STATUS: "1",
+      CURRN_KEY: formData.CURRN_KEY || "",
+      EX_RATE: parseFloat(formData.EX_RATE) || 0,
+      IMP_ORDBK_KEY: "",
+      ORDBK_TYPE: formData.ORDBK_TYPE || "0", // Use dynamic ORDBK_TYPE from form data
+      ROUND_OFF_DESC: "",
+      ROUND_OFF: 0.00,
+      BOMSTY_ID: 0,
+      LOTWISE: formData.MAIN_DETAILS === "L" ? "Y" : "N",
+      IsWO: "0",
+      SuplKey: "",
+      KNIT_DT: "1900-01-01 00:00:00.000",
+      OrdBk_CoBr_Id: formData.PARTY_BRANCH || "02",
+      GR_AMT: parseFloat(formData.TOTAL_AMOUNT) || 0,
+      GST_APP: formData.GST_APPL || "N", // Use dynamic GST_APPL
+      GST_TYPE: "C",
+      SHP_PARTY_KEY: shippingPartyKey,
+      SHP_PARTYDTL_ID: parseInt(shippingPartyDtlId) || 100006,
+      STATE_CODE: "",
+      ORDBK_ITM_AMT: parseFloat(formData.ORDBK_ITM_AMT) || 0,
+      ORDBK_SGST_AMT: 0,
+      ORDBK_CGST_AMT: 0,
+      ORDBK_IGST_AMT: 0,
+      ORDBK_ADD_CESS_AMT: 0,
+      ORDBK_GST_AMT: parseFloat(formData.ORDBK_GST_AMT) || 0,
+      ORDBK_EXTRA_AMT: 0,
+      ORDBKSTYLIST: transformedOrdbkStyleList,
+      ORDBKTERMLIST: [],
+      ORDBKGSTLIST: [],
+      DISTBTR_KEY: consigneeKey,
+      SALEPERSON1_KEY: salesperson1Key,
+      SALEPERSON2_KEY: salesperson2Key,
+      TRSP_KEY: transporterKey,
+      PRICELIST_KEY: formData.PRICELIST_KEY || "",
+      DESP_PORT: formData.DESP_PORT || "",
     };
-  });
 
-  console.log('Transformed ORDBKSTYLIST with DBFLAGS:', transformedOrdbkStyleList);
+    // Add user fields based on operation type
+    if (dbFlag === 'I') {
+      basePayload.CREATED_BY = parseInt(userId) || 1;
+      basePayload.CREATED_DT = currentDate;
+    } else {
+      basePayload.UPDATED_BY = parseInt(userId) || 1;
+      basePayload.UPDATED_DT = currentDate;
+    }
 
-  // Base payload for both insert and update
-  const basePayload = {
-    DBFLAG: dbFlag,
-    FCYR_KEY: "25",
-    CO_ID: "02",
-    COBR_ID: "02",
-    ORDBK_NO: formData.ORDER_NO || "",
-    CURR_SEASON_KEY: seasonKey,
-    ORDBK_X: "",
-    ORDBK_TNA_TYPE: "I",
-    MERCHANDISER_ID: parseInt(merchandiserId) || 1,
-    ORD_EVENT_KEY: "",
-    ORG_DLV_DT: "1900-01-01T00:00:00",
-    PLANNING: "0",
-    ORDBK_KEY: correctOrdbkKey,
-    ORDBK_DT: formatDateForAPI(formData.ORDER_DATE),
-    PORD_REF: formData.PARTY_ORD_NO || "",
-    PORD_DT: formatDateForAPI(formData.ORD_REF_DT),
-    QUOTE_NO: formData.QUOTE_NO || "",
-    QUOTE_DT: formatDateForAPI(formData.ORDER_DATE),
-    PARTY_KEY: partyKey,
-    PARTYDTL_ID: parseInt(branchId) || 100006,
-    BROKER_KEY: brokerKey,
-    BROKER1_KEY: broker1Key,
-    BROKER_COMM: 0.00,
-    COMMON_DLV_DT_FLG: "0",
-    STK_FLG: formData.RACK_MIN || "0",
-    DLV_DT: formatDateForAPI(formData.DLV_DT),
-    DLV_PLACE: formData.SHIPPING_PLACE || "",
-    TRSP_KEY: transporterKey,
-    ORDBK_AMT: parseFloat(formData.TOTAL_AMOUNT) || 0,
-    REMK: formData.REMARK_STATUS || "",
-    STATUS: "1",
-    CURRN_KEY: formData.CURRN_KEY || "",
-    EX_RATE: parseFloat(formData.EX_RATE) || 0,
-    IMP_ORDBK_KEY: "",
-    ORDBK_TYPE: "2",
-    ROUND_OFF_DESC: "",
-    ROUND_OFF: 0.00,
-    BOMSTY_ID: 0,
-    LOTWISE: formData.MAIN_DETAILS === "L" ? "Y" : "N",
-    IsWO: "0",
-    SuplKey: "",
-    KNIT_DT: "1900-01-01 00:00:00.000",
-    OrdBk_CoBr_Id: formData.PARTY_BRANCH || "02",
-    GR_AMT: parseFloat(formData.TOTAL_AMOUNT) || 0,
-    GST_APP: formData.GST_APPL || "Y",
-    GST_TYPE: "C",
-    SHP_PARTY_KEY: shippingPartyKey,
-    SHP_PARTYDTL_ID: parseInt(shippingPartyDtlId) || 100006,
-    STATE_CODE: "",
-    ORDBK_ITM_AMT: parseFloat(formData.ORDBK_ITM_AMT) || 0,
-    ORDBK_SGST_AMT: 0,
-    ORDBK_CGST_AMT: 0,
-    ORDBK_IGST_AMT: 0,
-    ORDBK_ADD_CESS_AMT: 0,
-    ORDBK_GST_AMT: parseFloat(formData.ORDBK_GST_AMT) || 0,
-    ORDBK_EXTRA_AMT: 0,
-    ORDBKSTYLIST: transformedOrdbkStyleList,
-    ORDBKTERMLIST: [],
-    ORDBKGSTLIST: [],
-    DISTBTR_KEY: consigneeKey,
-    SALEPERSON1_KEY: salesperson1Key,
-    SALEPERSON2_KEY: salesperson2Key,
-    TRSP_KEY: transporterKey,
-    PRICELIST_KEY: formData.PRICELIST_KEY || "",
-    DESP_PORT: formData.DESP_PORT || "",
+    console.log('Final Payload:', JSON.stringify(basePayload, null, 2));
+    return basePayload;
   };
-
-  // Add user fields based on operation type
-  if (dbFlag === 'I') {
-    basePayload.CREATED_BY = parseInt(userId) || 1;
-    basePayload.CREATED_DT = currentDate;
-  } else {
-    basePayload.UPDATED_BY = parseInt(userId) || 1;
-    basePayload.UPDATED_DT = currentDate;
-  }
-
-  console.log('Final Payload:', JSON.stringify(basePayload, null, 2));
-  return basePayload;
-};
 
   const handlePrint = () => { }
   
@@ -1195,7 +1183,7 @@ const prepareSubmitPayload = () => {
       // Get today's date
       const todayDate = getTodayDate();
       
-      // Clear all form data for new entry but set today's date for date fields
+      // Clear all form data for new entry but set today's date for date fields and default values
       const emptyFormData = {
         ORDER_NO: "",
         ORDER_DATE: todayDate, // Set today's date
@@ -1221,7 +1209,7 @@ const prepareSubmitPayload = () => {
         EMAIL: "",
         REMARK_STATUS: "",
         MAIN_DETAILS: "G",
-        GST_APPL: "Y",
+        GST_APPL: "N", // Set default to "N"
         RACK_MIN: "0",
         REGISTERED_DEALER: "0",
         SHORT_CLOSE: "0",
@@ -1266,7 +1254,12 @@ const prepareSubmitPayload = () => {
         // New fields for Order Type and Merchandiser
         Order_Type: "",
         MERCHANDISER_ID: "",
-        MERCHANDISER_NAME: ""
+        MERCHANDISER_NAME: "",
+        // Default selections for new mode
+        Delivery_Shedule: "comman",
+        Order_TNA: "ItemWise",
+        Status: "O",
+        ORDBK_TYPE: "0" // Default to "Only Sales"
       };
       
       setFormData(emptyFormData);
@@ -1385,7 +1378,7 @@ const prepareSubmitPayload = () => {
         </Grid>
         <Grid>
           <Typography align="center" variant="h6">
-            {tabIndex === 0 ? "Sales Order(Offline)" : tabIndex === 1 ? "Branch Details" : "Terms Details"}
+            {tabIndex === 0 ? "Sales Order(Offline)" : tabIndex === 1 ? "Item Details" : "Terms Details"}
           </Typography>
         </Grid>
 
