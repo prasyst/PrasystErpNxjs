@@ -79,13 +79,23 @@ import Production from '@/app/dashboard/Production';
 import Stock from '@/app/dashboard/Stock';
 
 const DashboardTabs = () => {
-  // Initialize selectedTab with the value from localStorage, or default to 0 if not found
-  const savedTabIndex = localStorage.getItem('selectedTab');
-  const [selectedTab, setSelectedTab] = useState(savedTabIndex ? parseInt(savedTabIndex) : 0);
+  const [selectedTab, setSelectedTab] = useState(null);
 
   useEffect(() => {
-    // When the selected tab changes, save it to localStorage
-    localStorage.setItem('selectedTab', selectedTab);
+    if (typeof window !== 'undefined') {
+      const savedTabIndex = localStorage.getItem('selectedTab');
+      if (savedTabIndex !== null) {
+        setSelectedTab(parseInt(savedTabIndex, 10));
+      } else {
+        setSelectedTab(0);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    if (selectedTab !== null) {
+      localStorage.setItem('selectedTab', selectedTab);
+    }
   }, [selectedTab]);
 
   const handleChange = (event, newValue) => {
@@ -132,6 +142,8 @@ const DashboardTabs = () => {
         return <Stock />;
     }
   };
+
+  if (selectedTab === null) return null;
 
   return (
     <Box
