@@ -71,8 +71,9 @@ const Stepper1 = ({
   const [transporterOptions, setTransporterOptions] = useState([]);
   const [shippingPartyOptions, setShippingPartyOptions] = useState([]);
   const [shippingPlaceOptions, setShippingPlaceOptions] = useState([]);
-  const [orderTypeOptions, setOrderTypeOptions] = useState([]);
+  const [orderTypeOptions, setOrderTypeOptions] = useState(['Only Sales', 'Sample Order', 'Export Order']);
   const [merchandiserOptions, setMerchandiserOptions] = useState([]);
+  const [priceListOptions, setPriceListOptions] = useState([]);
   
   // State to track loading for branch API
   const [loadingBranches, setLoadingBranches] = useState(false);
@@ -414,36 +415,14 @@ const Stepper1 = ({
     }
   };
 
-  // Fetch Order Type Data
-  const fetchOrderTypeData = async () => {
+  // Fetch Price List Data
+  const fetchPriceListData = async () => {
     try {
-      const payload = {
-        "ORDBK_KEY": "",
-        "FLAG": "ORDTYPE",
-        "FCYR_KEY": "25",
-        "COBR_ID": "02",
-        "PageNumber": 1,
-        "PageSize": 25,
-        "SearchText": "",
-        "PARTY_KEY": formData.PARTY_KEY || "",
-        "PARTYDTL_ID": formData.PARTYDTL_ID || 0
-      };
-
-      const response = await axiosInstance.post('/ORDBK/GetOrdbkDrp', payload);
-      if (response.data.DATA && Array.isArray(response.data.DATA)) {
-        const orderTypes = response.data.DATA.map(item => item.ORDBK_NO || '');
-        setOrderTypeOptions(orderTypes);
-        
-        const mapping = {};
-        response.data.DATA.forEach(item => {
-          if (item.ORDBK_NO && item.ORDBK_KEY) {
-            mapping[item.ORDBK_NO] = item.ORDBK_KEY;
-          }
-        });
-        setOrderTypeMapping(mapping);
-      }
+      // Replace with actual API call if available
+      const priceLists = ['Price List 1', 'Price List 2', 'Price List 3'];
+      setPriceListOptions(priceLists);
     } catch (error) {
-      console.error('Error fetching order type data:', error);
+      console.error('Error fetching price list data:', error);
     }
   };
 
@@ -480,7 +459,7 @@ const Stepper1 = ({
     fetchConsigneeData();
     fetchSeasonData();
     fetchTransporterData();
-    fetchOrderTypeData();
+    fetchPriceListData();
     fetchMerchandiserData();
   }, []);
 
@@ -497,13 +476,6 @@ const Stepper1 = ({
       }));
     }
   }, [mode]);
-
-  // Refresh order type data when party or branch changes
-  useEffect(() => {
-    if (formData.PARTY_KEY || formData.PARTYDTL_ID) {
-      fetchOrderTypeData();
-    }
-  }, [formData.PARTY_KEY, formData.PARTYDTL_ID]);
 
   // Auto-population effects
   useEffect(() => {
@@ -581,11 +553,6 @@ const Stepper1 = ({
       setFormData(prev => ({ ...prev, SHIPPING_PLACE: shippingPlaceName }));
     }
 
-    if (formData.ORDBK_KEY && orderTypeMapping[formData.ORDBK_KEY]) {
-      const orderTypeName = orderTypeMapping[formData.ORDBK_KEY];
-      setFormData(prev => ({ ...prev, Order_Type: orderTypeName }));
-    }
-
     if (formData.MERCHANDISER_ID && merchandiserMapping[formData.MERCHANDISER_ID]) {
       const merchandiserName = merchandiserMapping[formData.MERCHANDISER_ID];
       setFormData(prev => ({ ...prev, MERCHANDISER_NAME: merchandiserName }));
@@ -595,10 +562,10 @@ const Stepper1 = ({
     formData.PARTY_KEY, formData.BROKER_KEY, formData.BROKER1_KEY, 
     formData.SALEPERSON1_KEY, formData.SALEPERSON2_KEY, formData.DISTBTR_KEY,
     formData.CURR_SEASON_KEY, formData.TRSP_KEY, formData.SHP_PARTY_KEY, formData.SHP_PARTYDTL_ID,
-    formData.ORDBK_KEY, formData.MERCHANDISER_ID,
+    formData.MERCHANDISER_ID,
     partyMapping, brokerMapping, broker1Mapping, salesperson1Mapping, 
     salesperson2Mapping, consigneeMapping, seasonMapping, transporterMapping, branchMapping,
-    orderTypeMapping, merchandiserMapping
+    merchandiserMapping
   ]);
 
   // Helper function to parse date from string
@@ -673,8 +640,9 @@ const Stepper1 = ({
       "CONSIGNEE": ["DISTBTR_KEY", consigneeMapping],
       "SEASON": ["CURR_SEASON_KEY", seasonMapping],
       "Transporter": ["TRSP_KEY", transporterMapping],
-      "Order_Type": ["ORDBK_KEY", orderTypeMapping],
-      "MERCHANDISER_NAME": ["MERCHANDISER_ID", merchandiserMapping]
+      "Order_Type": ["ORDBK_TYPE", orderTypeMapping], // Map to ORDBK_TYPE
+      "MERCHANDISER_NAME": ["MERCHANDISER_ID", merchandiserMapping],
+      "PRICE_LIST": ["PRICELIST_KEY", {}] // Add price list mapping if needed
     };
 
     if (keyMappings[name] && value) {
@@ -685,6 +653,19 @@ const Stepper1 = ({
           [keyField]: mapping[value]
         }));
       }
+    }
+
+    // Handle Order Type selection
+    if (name === "Order_Type" && value) {
+      const orderTypeMap = {
+        "Only Sales": "0",
+        "Sample Order": "1", 
+        "Export Order": "2"
+      };
+      setFormData(prev => ({
+        ...prev,
+        ORDBK_TYPE: orderTypeMap[value] || "0"
+      }));
     }
   };
 
@@ -829,7 +810,7 @@ const Stepper1 = ({
               name="GST_APPL"
               onChange={handleInputChange}
               disabled={isFormDisabled}
-              value={formData.GST_APPL || "Y"}
+              value={formData.GST_APPL || "N"} // Default to "N"
               sx={{ margin: '5px 0px 0px 0px' }}
             >
               <FormControlLabel 
@@ -845,13 +826,13 @@ const Stepper1 = ({
                 label={<Typography sx={{ fontSize: '12px' }}>No</Typography>} 
               />
               <FormControlLabel 
-                disabled={isFormDisabled}
+                disabled={true} // Disabled as requested
                 value="Y" 
                 control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
                 label={<Typography sx={{ fontSize: '12px' }}>State(CGST & SGST)</Typography>} 
               />
               <FormControlLabel 
-                disabled={isFormDisabled}
+                disabled={true} // Disabled as requested
                 value="N" 
                 control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
                 label={<Typography sx={{ fontSize: '12px' }}>IGST</Typography>} 
@@ -1249,19 +1230,20 @@ const Stepper1 = ({
             />
           </Box>
           <Box sx={{ width: { xs: '100%', sm: '20%', md: '20%' } }}>
-            <TextField
-              label="PriceList"
-              variant="filled"
-              fullWidth
-              onChange={handleInputChange}
-              value={formData.PRICE_LIST || ""}
+            <AutoVibe
+              id="PRICE_LIST"
               disabled={isFormDisabled}
+              getOptionLabel={(option) => option || ''}
+              options={priceListOptions}
+              label="PriceList"
               name="PRICE_LIST"
-              sx={textInputSx}
+              value={formData.PRICE_LIST || ""}
+              onChange={(event, value) => handleAutoCompleteChange("PRICE_LIST", value)}
+              sx={DropInputSx}
               inputProps={{
                 style: {
                   padding: '6px 8px',
-                  fontSize: '12px'
+                  fontSize: '12px',
                 },
               }}
             />
@@ -1664,7 +1646,7 @@ const Stepper1 = ({
           flexDirection: { xs: 'column', sm: 'row', md: 'row' },
           gap: { xs: 1, sm: 1.5, md: 2 }
         }}>
-          <Box sx={{ width: { xs: '100%', sm: '20%', md: '20%' } }}>
+          <Box sx={{ width: { xs: "100%", sm: "20%", md: "20%" } }}>
             <AutoVibe
               id="MERCHANDISER_NAME"
               disabled={isFormDisabled}
@@ -1709,7 +1691,7 @@ const Stepper1 = ({
               name="Delivery_Shedule"
               onChange={handleInputChange}
               disabled={isFormDisabled}
-              value={formData.Delivery_Shedule || "Y"}
+              value={formData.Delivery_Shedule || "comman"} // Default to "comman"
               sx={{ margin: '5px 0px 0px 0px' }}
             >
               <FormControlLabel 
@@ -1734,7 +1716,7 @@ const Stepper1 = ({
               name="Order_TNA"
               onChange={handleInputChange}
               disabled={isFormDisabled}
-              value={formData.Delivery_Shedule || "Y"}
+              value={formData.Order_TNA || "ItemWise"} // Default to "ItemWise"
               sx={{ margin: '5px 0px 0px 0px' }}
             >
               <FormControlLabel 
@@ -1766,7 +1748,7 @@ const Stepper1 = ({
               name="Status"
               onChange={handleInputChange}
               disabled={isFormDisabled}
-              value={formData.Status || "Y"}
+              value={formData.Status || "O"} // Default to "O" (Open)
               sx={{ margin: '5px 0px 0px 0px' }}
             >
               <FormControlLabel 
