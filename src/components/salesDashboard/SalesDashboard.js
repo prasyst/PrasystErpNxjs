@@ -25,6 +25,7 @@ import {
 import axiosInstance from "@/lib/axios";
 import { toast, ToastContainer } from "react-toastify";
 import { PieChart } from '@mui/x-charts/PieChart';
+import OrderDocument from "./OrderDocument";
 
 // Dynamic import for Gauge
 const GaugeComponent = dynamic(
@@ -53,13 +54,13 @@ const desktopOS = [
 ];
 
 const desktopOS2 = [
-    { id: 'macOS', value: 20, color: '#f32160ff' },
-    { id: 'Others', value: 10, color: '#36e7f4ff' },
-    { id: 'Windows', value: 20, color: '#4c56afff' },
-    { id: 'Linux', value: 10, color: '#d39436ff' },
-    { id: 'Others', value: 10, color: '#59969bff' },
-    { id: 'Windows', value: 20, color: '#2b3480ff' },
-    { id: 'Linux', value: 10, color: '#c47705ff' },
+    { id: 'Apple', value: 20, color: '#f32160ff' },
+    { id: 'Nokia', value: 10, color: '#36e7f4ff' },
+    { id: 'Samsung', value: 20, color: '#4c56afff' },
+    { id: 'Blueberry', value: 10, color: '#d39436ff' },
+    { id: 'Google', value: 10, color: '#59969bff' },
+    { id: 'RealMe', value: 20, color: '#2b3480ff' },
+    { id: 'Poco', value: 10, color: '#c47705ff' },
 ];
 
 const StyledCard = styled(Paper)(({ theme }) => ({
@@ -86,7 +87,7 @@ const StyledCard2 = styled(Paper)(({ theme }) => ({
     alignItems: 'center',
     padding: theme.spacing(2),
     borderRadius: '12px',
-   background: 'linear-gradient(135deg, #5d6bbbff 0%, #706161ff 100%)',
+    background: 'linear-gradient(135deg, #5d6bbbff 0%, #706161ff 100%)',
     color: '#fff',
 }));
 
