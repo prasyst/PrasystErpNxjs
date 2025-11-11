@@ -1,5 +1,5 @@
 'use client';
-import React, { useEffect, useState, useCallback, Suspense } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import {
   Box,
   Grid,
@@ -65,6 +65,16 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
   const [shadeMapping, setShadeMapping] = useState({});
   // State for storing lot no mapping (FGPTN_NAME to FGPTN_KEY)
   const [lotNoMapping, setLotNoMapping] = useState({});
+  
+  // NEW: State for style code text input and debounce timer
+  const [styleCodeInput, setStyleCodeInput] = useState('');
+  const [isLoadingStyleCode, setIsLoadingStyleCode] = useState(false);
+  const styleCodeTimeoutRef = useRef(null);
+  
+  // NEW: State for barcode text input and debounce timer
+  const [barcodeInput, setBarcodeInput] = useState('');
+  const [isLoadingBarcode, setIsLoadingBarcode] = useState(false);
+  const barcodeTimeoutRef = useRef(null);
   
   const [newItemData, setNewItemData] = useState({
     product: '',
@@ -311,11 +321,13 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
     }
   };
 
-  // NEW: Fetch style data by style code (for case 2 - when user types in style dropdown)
+  // NEW: Fetch style data by style code (for case 2 - when user types in style code text field)
   const fetchStyleDataByCode = async (styleCode) => {
     if (!styleCode) return;
 
     try {
+      setIsLoadingStyleCode(true);
+      
       const payload = {
         "FGSTYLE_ID": "",
         "FGPRD_KEY": "",
@@ -336,7 +348,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
           setNewItemData(prev => ({
             ...prev,
             product: styleData.FGPRD_NAME || '',
-            style: styleData.FGSTYLE_CODE || '',
+            style: styleData.FGSTYLE_CODE || styleData.FGSTYLE_NAME || '',
             type: styleData.FGTYPE_NAME || '',
             mrp: styleData.MRP ? styleData.MRP.toString() : ''
           }));
@@ -350,10 +362,10 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
           }
           
           // Update style mapping
-          if (styleData.FGSTYLE_CODE && styleData.FGSTYLE_ID) {
+          if ((styleData.FGSTYLE_CODE || styleData.FGSTYLE_NAME) && styleData.FGSTYLE_ID) {
             setStyleMapping(prev => ({
               ...prev,
-              [styleData.FGSTYLE_CODE]: styleData.FGSTYLE_ID
+              [styleData.FGSTYLE_CODE || styleData.FGSTYLE_NAME]: styleData.FGSTYLE_ID
             }));
           }
           
@@ -365,6 +377,110 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
     } catch (error) {
       console.error('Error fetching style data by code:', error);
       showSnackbar("Error fetching style data", 'error');
+    } finally {
+      setIsLoadingStyleCode(false);
+    }
+  };
+
+  // NEW: Fetch style data by barcode (for barcode search)
+  const fetchStyleDataByBarcode = async (barcode) => {
+    if (!barcode) return;
+
+    try {
+      setIsLoadingBarcode(true);
+      
+      const payload = {
+        "FGSTYLE_ID": "",
+        "FGPRD_KEY": "",
+        "FGSTYLE_CODE": "",
+        "ALT_BARCODE": barcode,
+        "FLAG": ""
+      };
+
+      console.log('Fetching style data by barcode with payload:', payload);
+
+      const response = await axiosInstance.post('/FGSTYLE/GetFgstyleDrp', payload);
+      console.log('Style by Barcode API Response:', response.data);
+
+      if (response.data.DATA && response.data.DATA.length > 0) {
+        const styleData = response.data.DATA[0];
+        
+        // Determine barcode value: ALT_BARCODE if available, otherwise STYSTKDTL_KEY
+        const barcodeValue = styleData.ALT_BARCODE || styleData.STYSTKDTL_KEY || '';
+        
+        // Auto-fill the fields from response data
+        if (isAddingNew || isEditingSize) {
+          setNewItemData(prev => ({
+            ...prev,
+            product: styleData.FGPRD_NAME || '',
+            style: styleData.FGSTYLE_CODE || styleData.FGSTYLE_NAME || '',
+            type: styleData.FGTYPE_NAME || '',
+            mrp: styleData.MRP ? styleData.MRP.toString() : '',
+            barcode: barcodeValue // Set barcode field with the determined value
+          }));
+          
+          // Update product mapping if needed
+          if (styleData.FGPRD_NAME && styleData.FGPRD_KEY) {
+            setProductMapping(prev => ({
+              ...prev,
+              [styleData.FGPRD_NAME]: styleData.FGPRD_KEY
+            }));
+          }
+          
+          // Update style mapping
+          if ((styleData.FGSTYLE_CODE || styleData.FGSTYLE_NAME) && styleData.FGSTYLE_ID) {
+            setStyleMapping(prev => ({
+              ...prev,
+              [styleData.FGSTYLE_CODE || styleData.FGSTYLE_NAME]: styleData.FGSTYLE_ID
+            }));
+          }
+          
+          showSnackbar("Fields auto-filled from barcode search!");
+        }
+      } else {
+        showSnackbar("No style data found for the entered barcode", 'warning');
+      }
+    } catch (error) {
+      console.error('Error fetching style data by barcode:', error);
+      showSnackbar("Error fetching style data by barcode", 'error');
+    } finally {
+      setIsLoadingBarcode(false);
+    }
+  };
+
+  // NEW: Handle style code text input change with debounce
+  const handleStyleCodeInputChange = (e) => {
+    const value = e.target.value;
+    setStyleCodeInput(value);
+    
+    // Clear existing timeout
+    if (styleCodeTimeoutRef.current) {
+      clearTimeout(styleCodeTimeoutRef.current);
+    }
+    
+    // Set new timeout for 500ms
+    if (value && value.trim() !== '') {
+      styleCodeTimeoutRef.current = setTimeout(() => {
+        fetchStyleDataByCode(value.trim());
+      }, 500);
+    }
+  };
+
+  // NEW: Handle barcode text input change with debounce
+  const handleBarcodeInputChange = (e) => {
+    const value = e.target.value;
+    setBarcodeInput(value);
+    
+    // Clear existing timeout
+    if (barcodeTimeoutRef.current) {
+      clearTimeout(barcodeTimeoutRef.current);
+    }
+    
+    // Set new timeout for 500ms
+    if (value && value.trim() !== '') {
+      barcodeTimeoutRef.current = setTimeout(() => {
+        fetchStyleDataByBarcode(value.trim());
+      }, 500);
     }
   };
 
@@ -632,19 +748,17 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
     }
   };
 
-  // NEW: Handle style input key press for CASE 2 - when user types and presses Enter
-  const handleStyleKeyPress = (event) => {
-    if (event.key === 'Enter') {
-      const inputValue = event.target.value;
-      console.log('CASE 2: Enter pressed with value:', inputValue);
-      
-      if (inputValue && inputValue.trim() !== '') {
-        // CASE 2: User pressed Enter after typing style code
-        event.preventDefault();
-        fetchStyleDataByCode(inputValue.trim());
+  // Cleanup timeout on component unmount
+  useEffect(() => {
+    return () => {
+      if (styleCodeTimeoutRef.current) {
+        clearTimeout(styleCodeTimeoutRef.current);
       }
-    }
-  };
+      if (barcodeTimeoutRef.current) {
+        clearTimeout(barcodeTimeoutRef.current);
+      }
+    };
+  }, []);
 
   // Handle type selection change
   const handleTypeChange = (event, value) => {
@@ -802,6 +916,8 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
       sets: ''
     });
     
+    setStyleCodeInput('');
+    setBarcodeInput('');
     setStyleOptions([]);
     setTypeOptions([]);
     setShadeOptions([]);
@@ -971,6 +1087,8 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
       rQty: '',
       sets: ''
     });
+    setStyleCodeInput('');
+    setBarcodeInput('');
     setSizeDetailsData([]);
 
     showSnackbar("Item added successfully!");
@@ -1080,6 +1198,8 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
       rQty: '',
       sets: ''
     });
+    setStyleCodeInput('');
+    setBarcodeInput('');
     setSizeDetailsData([]);
     showSnackbar('Add item cancelled');
   };
@@ -1107,6 +1227,8 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
       rQty: '',
       sets: ''
     });
+    setStyleCodeInput('');
+    setBarcodeInput('');
   };
 
   const handleDeleteItem = () => {
@@ -1422,46 +1544,72 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
                 name="product"
                 value={isAddingNew || isEditingSize ? newItemData.product : selectedProduct}
                 onChange={handleProductChange}
-                  sx={{
-    ...DropInputSx,
-    '& .MuiFilledInput-root': {
-      ...DropInputSx['& .MuiFilledInput-root'],
-      border: getFieldError('product') ? '1px solid #f44336' : '1px solid #e0e0e0',
-    }
-  }}
+                sx={{
+                  ...DropInputSx,
+                  '& .MuiFilledInput-root': {
+                    ...DropInputSx['& .MuiFilledInput-root'],
+                    border: getFieldError('product') ? '1px solid #f44336' : '1px solid #e0e0e0',
+                  }
+                }}
                 error={!!getFieldError('product')}
                 helperText={getFieldError('product')}
               />
+              
+             
+              {/* Style Dropdown - Made Smaller */}
+              <AutoVibe
+                id="Style_Cd"
+                disabled={shouldDisableFields()}
+                getOptionLabel={(option) => option || ''}
+                options={styleOptions}
+                label="Style Cd"
+                name="style"
+                value={isAddingNew || isEditingSize ? newItemData.style : selectedStyle}
+                onChange={handleStyleChange}
+                sx={{
+                  ...DropInputSx,
+                  '& .MuiFilledInput-root': {
+                    ...DropInputSx['& .MuiFilledInput-root'],
+                    border: getFieldError('style') ? '1px solid #f44336' : '1px solid #e0e0e0',
+                  }
+                }}
+                error={!!getFieldError('style')}
+                helperText={getFieldError('style')}
+              />
+              
+              {/* NEW: Style Code Text Field for Case 2 */}
+              <TextField 
+                label="Style Code" 
+                variant="filled" 
+                disabled={shouldDisableFields()}
+                name="styleCode"
+                value={styleCodeInput}
+                onChange={handleStyleCodeInputChange}
+                placeholder="Type style code"
+                sx={textInputSx} 
+                inputProps={{ 
+                  style: { padding: '6px 8px', fontSize: '12px' }
+                }}
+                helperText={isLoadingStyleCode ? "Loading..." : "Type style code"}
+              />
+
+               {/* Barcode Text Field with Debounce */}
               <TextField 
                 label="BarCode" 
                 variant="filled" 
                 disabled={shouldDisableFields()}
                 name="barcode"
-                value={isAddingNew || isEditingSize ? newItemData.barcode : ''}
-                onChange={handleNewItemChange}
+                value={barcodeInput}
+                onChange={handleBarcodeInputChange}
+                placeholder="Type barcode"
                 sx={textInputSx} 
-                inputProps={{ style: { padding: '6px 8px', fontSize: '12px' } }} 
+                inputProps={{ 
+                  style: { padding: '6px 8px', fontSize: '12px' }
+                }}
+                helperText={isLoadingBarcode ? "Loading..." : "Type barcode"}
               />
-             <AutoVibe
-  id="Style_Cd"
-  disabled={shouldDisableFields()}
-  getOptionLabel={(option) => option || ''}
-  options={styleOptions}
-  label="Style Cd"
-  name="style"
-  value={isAddingNew || isEditingSize ? newItemData.style : selectedStyle}
-  onChange={handleStyleChange}
-  onKeyPress={handleStyleKeyPress}
-  sx={{
-    ...DropInputSx,
-    '& .MuiFilledInput-root': {
-      ...DropInputSx['& .MuiFilledInput-root'],
-      border: getFieldError('style') ? '1px solid #f44336' : '1px solid #e0e0e0',
-    }
-  }}
-  error={!!getFieldError('style')}
-  helperText={getFieldError('style')}
-/>
+              
+              
               <AutoVibe
                 id="Type"
                 disabled={shouldDisableFields()}
@@ -1671,6 +1819,8 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
                           rQty: '',
                           sets: ''
                         });
+                        setStyleCodeInput('');
+                        setBarcodeInput('');
                       }}
                       sx={{ minWidth: '60px', height: '36px' }}
                     >
