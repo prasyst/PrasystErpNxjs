@@ -55,7 +55,8 @@ const Stepper1 = ({
   setTransporterMapping,
   setOrderTypeMapping,
   setMerchandiserMapping,
-  showSnackbar
+  showSnackbar,
+  fetchPartyDetailsForAutoFill
 }) => {
   const [selectedDate, setSelectedDate] = useState(null);
   
@@ -71,7 +72,7 @@ const Stepper1 = ({
   const [transporterOptions, setTransporterOptions] = useState([]);
   const [shippingPartyOptions, setShippingPartyOptions] = useState([]);
   const [shippingPlaceOptions, setShippingPlaceOptions] = useState([]);
-  const [orderTypeOptions, setOrderTypeOptions] = useState(['Only Sales', 'Sample Order', 'Export Order']);
+  const [orderTypeOptions, setOrderTypeOptions] = useState([]);
   const [merchandiserOptions, setMerchandiserOptions] = useState([]);
   const [priceListOptions, setPriceListOptions] = useState([]);
   
@@ -167,6 +168,45 @@ const Stepper1 = ({
     return `${day}/${month}/${year}`;
   };
 
+  // Fetch Order Type Data from API
+  const fetchOrderTypeData = async () => {
+    try {
+      const payload = {
+        "ORDBK_KEY": "",
+        "FLAG": "ORDTYPE",
+        "FCYR_KEY": "25",
+        "COBR_ID": "02",
+        "PageNumber": 1,
+        "PageSize": 25,
+        "SearchText": "",
+        "PARTY_KEY": "",
+        "PARTYDTL_ID": 0
+      };
+
+      const response = await axiosInstance.post('/ORDBK/GetOrdbkDrp', payload);
+      console.log('Order Type API Response:', response.data);
+
+      if (response.data.DATA && Array.isArray(response.data.DATA)) {
+        const orderTypes = response.data.DATA.map(item => item.ORDBK_TYPE_NM || '');
+        setOrderTypeOptions(orderTypes);
+        
+        const mapping = {};
+        response.data.DATA.forEach(item => {
+          if (item.ORDBK_TYPE_NM && item.ORDBK_TYPE) {
+            mapping[item.ORDBK_TYPE_NM] = item.ORDBK_TYPE;
+          }
+        });
+        
+        setOrderTypeMapping(mapping);
+        return orderTypes;
+      }
+      return [];
+    } catch (error) {
+      console.error('Error fetching order type data:', error);
+      return [];
+    }
+  };
+
   // Fetch Transporter Data
   const fetchTransporterData = async () => {
     try {
@@ -226,7 +266,7 @@ const Stepper1 = ({
     }
   };
 
-  // Fetch Party Branches - IMPROVED VERSION
+  // Fetch Party Branches
   const fetchPartyDetails = async (partyKey) => {
     if (!partyKey) {
       setBranchOptions([]);
@@ -461,6 +501,7 @@ const Stepper1 = ({
     fetchTransporterData();
     fetchPriceListData();
     fetchMerchandiserData();
+    fetchOrderTypeData();
   }, []);
 
   // Set today's date for all date fields when component mounts or mode changes to add
@@ -590,7 +631,7 @@ const Stepper1 = ({
     }));
   };
 
-  // Enhanced handleAutoCompleteChange function - FIXED BRANCH ISSUE
+  // Enhanced handleAutoCompleteChange function with party auto-fill
   const handleAutoCompleteChange = (name, value) => {
     console.log(`AutoComplete Change - Field: ${name}, Value: ${value}`);
     
@@ -599,13 +640,16 @@ const Stepper1 = ({
       [name]: value
     }));
 
-    // If party is selected, fetch branches and auto-select shipping party
+    // If party is selected, fetch branches, auto-select shipping party, and fetch party details
     if (name === "Party" && value && partyMapping[value]) {
       const partyKey = partyMapping[value];
       console.log(`Party selected: ${value}, Party Key: ${partyKey}`);
       
       // Fetch branches for the selected party
       fetchPartyDetails(partyKey);
+      
+      // Fetch party details for auto-population
+      fetchPartyDetailsForAutoFill(partyKey);
       
       setFormData(prev => ({
         ...prev,
@@ -640,9 +684,9 @@ const Stepper1 = ({
       "CONSIGNEE": ["DISTBTR_KEY", consigneeMapping],
       "SEASON": ["CURR_SEASON_KEY", seasonMapping],
       "Transporter": ["TRSP_KEY", transporterMapping],
-      "Order_Type": ["ORDBK_TYPE", orderTypeMapping], // Map to ORDBK_TYPE
+      "Order_Type": ["ORDBK_TYPE", orderTypeMapping],
       "MERCHANDISER_NAME": ["MERCHANDISER_ID", merchandiserMapping],
-      "PRICE_LIST": ["PRICELIST_KEY", {}] // Add price list mapping if needed
+      "PRICE_LIST": ["PRICELIST_KEY", {}]
     };
 
     if (keyMappings[name] && value) {
@@ -657,14 +701,10 @@ const Stepper1 = ({
 
     // Handle Order Type selection
     if (name === "Order_Type" && value) {
-      const orderTypeMap = {
-        "Only Sales": "0",
-        "Sample Order": "1", 
-        "Export Order": "2"
-      };
+      const orderTypeKey = orderTypeMapping[value] || "0";
       setFormData(prev => ({
         ...prev,
-        ORDBK_TYPE: orderTypeMap[value] || "0"
+        ORDBK_TYPE: orderTypeKey
       }));
     }
   };
@@ -810,7 +850,7 @@ const Stepper1 = ({
               name="GST_APPL"
               onChange={handleInputChange}
               disabled={isFormDisabled}
-              value={formData.GST_APPL || "N"} // Default to "N"
+              value={formData.GST_APPL || "N"}
               sx={{ margin: '5px 0px 0px 0px' }}
             >
               <FormControlLabel 
@@ -826,13 +866,13 @@ const Stepper1 = ({
                 label={<Typography sx={{ fontSize: '12px' }}>No</Typography>} 
               />
               <FormControlLabel 
-                disabled={true} // Disabled as requested
+                disabled={true}
                 value="Y" 
                 control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
                 label={<Typography sx={{ fontSize: '12px' }}>State(CGST & SGST)</Typography>} 
               />
               <FormControlLabel 
-                disabled={true} // Disabled as requested
+                disabled={true}
                 value="N" 
                 control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
                 label={<Typography sx={{ fontSize: '12px' }}>IGST</Typography>} 
@@ -872,7 +912,7 @@ const Stepper1 = ({
               disabled={isFormDisabled}
               getOptionLabel={(option) => option || ''}
               options={orderTypeOptions}
-              label="Order_Type"
+              label="Order Type"
               name="Order_Type"
               value={formData.Order_Type || ""}
               onChange={(event, value) => handleAutoCompleteChange("Order_Type", value)}
@@ -1691,7 +1731,7 @@ const Stepper1 = ({
               name="Delivery_Shedule"
               onChange={handleInputChange}
               disabled={isFormDisabled}
-              value={formData.Delivery_Shedule || "comman"} // Default to "comman"
+              value={formData.Delivery_Shedule || "comman"}
               sx={{ margin: '5px 0px 0px 0px' }}
             >
               <FormControlLabel 
@@ -1716,7 +1756,7 @@ const Stepper1 = ({
               name="Order_TNA"
               onChange={handleInputChange}
               disabled={isFormDisabled}
-              value={formData.Order_TNA || "ItemWise"} // Default to "ItemWise"
+              value={formData.Order_TNA || "ItemWise"}
               sx={{ margin: '5px 0px 0px 0px' }}
             >
               <FormControlLabel 
@@ -1748,7 +1788,7 @@ const Stepper1 = ({
               name="Status"
               onChange={handleInputChange}
               disabled={isFormDisabled}
-              value={formData.Status || "O"} // Default to "O" (Open)
+              value={formData.Status || "O"}
               sx={{ margin: '5px 0px 0px 0px' }}
             >
               <FormControlLabel 
