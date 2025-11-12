@@ -598,8 +598,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
     }
   };
 
-  // Fetch Size Details from API when Add Qty button is clicked
-  const fetchSizeDetails = async () => {
+ const fetchSizeDetails = async () => {
     if (!newItemData.product || !newItemData.style) {
       showSnackbar("Please select Product and Style first", 'error');
       return;
@@ -617,16 +616,20 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
         return;
       }
 
+      // Enhanced payload with MRP and Party details
       const payload = {
         "FGSTYLE_ID": fgstyleId,
         "FGPRD_KEY": fgprdKey,
         "FGTYPE_KEY": fgtypeKey,
         "FGSHADE_KEY": fgshadeKey,
         "FGPTN_KEY": fgptnKey,
+        "MRP": parseFloat(newItemData.mrp) || 0,
+        "PARTY_KEY": formData.PARTY_KEY || "",
+        "PARTYDTL_ID": formData.PARTYDTL_ID || 0,
         "FLAG": ""
       };
 
-      console.log('Fetching size details with payload:', payload);
+      console.log('Fetching size details with enhanced payload:', payload);
 
       const response = await axiosInstance.post('/STYSIZE/AddSizeDetail', payload);
       console.log('Size Details API Response:', response.data);
