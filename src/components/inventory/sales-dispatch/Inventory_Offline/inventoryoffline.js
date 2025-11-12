@@ -1018,7 +1018,7 @@ const SalesOrderOffline = () => {
         showSnackbar("Order submitted successfully!");
         setMode('view');
         setIsFormDisabled(true);
-        
+        setTabIndex(0)
         if (formData.ORDBK_KEY) {
           fetchOrderDetails(formData.ORDBK_KEY);
         }

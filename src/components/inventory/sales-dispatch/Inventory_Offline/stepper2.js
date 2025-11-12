@@ -75,6 +75,27 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
   const [barcodeInput, setBarcodeInput] = useState('');
   const [isLoadingBarcode, setIsLoadingBarcode] = useState(false);
   const barcodeTimeoutRef = useRef(null);
+
+  // NEW: State for table filters
+  const [tableFilters, setTableFilters] = useState({
+    BarCode: '',
+    product: '',
+    style: '',
+    type: '',
+    shade: '',
+    lotNo: '',
+    qty: '',
+    rate: '',
+    amount: '',
+    varPer: '',
+    varQty: '',
+    varAmt: '',
+    discAmt: '',
+    netAmt: '',
+    divDt: '',
+    distributer: '',
+    set: ''
+  });
   
   const [newItemData, setNewItemData] = useState({
     product: '',
@@ -210,6 +231,18 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
   // Use updatedTableData if available, otherwise use initial data
   const tableData = updatedTableData.length > 0 ? updatedTableData : initialTableData;
 
+  // NEW: Filter table data based on filters
+  const filteredTableData = tableData.filter(row => {
+    return Object.keys(tableFilters).every(key => {
+      if (!tableFilters[key]) return true;
+      
+      const filterValue = tableFilters[key].toString().toLowerCase();
+      const rowValue = row[key]?.toString().toLowerCase() || '';
+      
+      return rowValue.includes(filterValue);
+    });
+  });
+
   // Update hasRecords when tableData changes
   useEffect(() => {
     setHasRecords(tableData.length > 0);
@@ -235,6 +268,37 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
   useEffect(() => {
     calculateTotals();
   }, [tableData]);
+
+  // NEW: Handle table filter change
+  const handleTableFilterChange = (columnId, value) => {
+    setTableFilters(prev => ({
+      ...prev,
+      [columnId]: value
+    }));
+  };
+
+  // NEW: Clear all filters
+  const clearAllFilters = () => {
+    setTableFilters({
+      BarCode: '',
+      product: '',
+      style: '',
+      type: '',
+      shade: '',
+      lotNo: '',
+      qty: '',
+      rate: '',
+      amount: '',
+      varPer: '',
+      varQty: '',
+      varAmt: '',
+      discAmt: '',
+      netAmt: '',
+      divDt: '',
+      distributer: '',
+      set: ''
+    });
+  };
 
   // Fetch Product dropdown data from API
   const fetchProductData = async () => {
@@ -369,6 +433,13 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
             }));
           }
           
+          // Fetch type, shade, and lot no data for the style
+          if (styleData.FGSTYLE_ID) {
+            await fetchTypeData(styleData.FGSTYLE_ID);
+            await fetchShadeData(styleData.FGSTYLE_ID);
+            await fetchLotNoData(styleData.FGSTYLE_ID);
+          }
+          
           showSnackbar("Fields auto-filled from style data!");
         }
       } else {
@@ -433,6 +504,13 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
               ...prev,
               [styleData.FGSTYLE_CODE || styleData.FGSTYLE_NAME]: styleData.FGSTYLE_ID
             }));
+          }
+          
+          // Fetch type, shade, and lot no data for the style
+          if (styleData.FGSTYLE_ID) {
+            await fetchTypeData(styleData.FGSTYLE_ID);
+            await fetchShadeData(styleData.FGSTYLE_ID);
+            await fetchLotNoData(styleData.FGSTYLE_ID);
           }
           
           showSnackbar("Fields auto-filled from barcode search!");
@@ -1307,8 +1385,8 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
     if (!showValidationErrors) return '';
     
     const requiredFields = {
-      'product': 'Product',
-      'style': 'Style',
+      // 'product': 'Product',
+      // 'style': 'Style',
       // 'qty': 'Quantity'
     };
 
@@ -1367,9 +1445,50 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
               border: "1px solid #e0e0e0",
             }}
           >
-            <TableContainer sx={{ maxHeight: 200 }}>
+            <TableContainer sx={{ maxHeight: 400 }}>
               <Table stickyHeader size="small">
                 <TableHead>
+                  {/* Filter Row */}
+                  <TableRow>
+                    {columns.map((column) => (
+                      <TableCell
+                        key={`filter-${column.id}`}
+                        align={column.align || 'left'}
+                        sx={{
+                          backgroundColor: "#f4f8faff",
+                          padding: "2px 4px",
+                          borderBottom: "1px solid #ddd",
+                          minWidth: column.minWidth
+                        }}
+                      >
+                        <TextField
+                          size="small"
+                          placeholder={`Search ${column.label}`}
+                          value={tableFilters[column.id] || ''}
+                          onChange={(e) => handleTableFilterChange(column.id, e.target.value)}
+                          sx={{
+                            '& .MuiInputBase-root': {
+                              height: '28px',
+                              fontSize: '0.7rem',
+                            },
+                            '& .MuiInputBase-input': {
+                              padding: '4px 6px',
+                              fontSize: '0.7rem',
+                            },
+                          }}
+                          InputProps={{
+                            startAdornment: (
+                              <InputAdornment position="start">
+                                {/* <SearchIcon sx={{ fontSize: '16px' }} /> */}
+                              </InputAdornment>
+                            ),
+                          }}
+                        />
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                  
+                  {/* Header Row */}
                   <TableRow>
                     {columns.map((column) => (
                       <TableCell
@@ -1391,8 +1510,8 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
                 </TableHead>
 
                 <TableBody>
-                  {tableData.length > 0 ? (
-                    tableData.map((row, index) => (
+                  {filteredTableData.length > 0 ? (
+                    filteredTableData.map((row, index) => (
                       <TableRow
                         key={row.id}
                         hover
@@ -1425,7 +1544,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
                     <TableRow>
                       <TableCell colSpan={columns.length} align="center" sx={{ py: 2 }}>
                         <Typography variant="body2" color="textSecondary">
-                          No items found
+                          {tableData.length === 0 ? 'No items found' : 'No items match your filters'}
                         </Typography>
                       </TableCell>
                     </TableRow>
@@ -1433,6 +1552,20 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
                 </TableBody>
               </Table>
             </TableContainer>
+            
+            {/* Filter Controls */}
+            <Box sx={{ p: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#f9f9f9' }}>
+              <Typography variant="body2" color="textSecondary">
+                Showing {filteredTableData.length} of {tableData.length} items
+              </Typography>
+              <Button 
+                size="small" 
+                onClick={clearAllFilters}
+                disabled={Object.values(tableFilters).every(filter => !filter)}
+              >
+                Clear Filters
+              </Button>
+            </Box>
           </Paper>
         </Box>
 
@@ -1551,11 +1684,11 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
                   ...DropInputSx,
                   '& .MuiFilledInput-root': {
                     ...DropInputSx['& .MuiFilledInput-root'],
-                    border: getFieldError('product') ? '1px solid #f44336' : '1px solid #e0e0e0',
+                    // border: getFieldError('product') ? '1px solid #f44336' : '1px solid #e0e0e0',
                   }
                 }}
-                error={!!getFieldError('product')}
-                helperText={getFieldError('product')}
+                // error={!!getFieldError('product')}
+                // helperText={getFieldError('product')}
               />
               
              
@@ -1573,11 +1706,11 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
                   ...DropInputSx,
                   '& .MuiFilledInput-root': {
                     ...DropInputSx['& .MuiFilledInput-root'],
-                    border: getFieldError('style') ? '1px solid #f44336' : '1px solid #e0e0e0',
+                    // border: getFieldError('style') ? '1px solid #f44336' : '1px solid #e0e0e0',
                   }
                 }}
-                error={!!getFieldError('style')}
-                helperText={getFieldError('style')}
+                // error={!!getFieldError('style')}
+                // helperText={getFieldError('style')}
               />
               
               {/* NEW: Style Code Text Field for Case 2 */}
