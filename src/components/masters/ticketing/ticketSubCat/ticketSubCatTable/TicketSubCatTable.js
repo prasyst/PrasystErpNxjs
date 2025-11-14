@@ -25,6 +25,15 @@ const columnDefs = [
   // },
   {
     field: "TKTCATNAME",
+    headerName: "Category",
+    filter: 'agSetColumnFilter',
+    filterParams: {
+      defaultToNothingSelected: true,
+    },
+    sortable: true
+  },
+  {
+    field: "TKTSUBCATNAME",
     headerName: "Sub Category",
     filter: 'agSetColumnFilter',
     filterParams: {
