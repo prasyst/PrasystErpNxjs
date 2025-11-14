@@ -56,7 +56,7 @@ const columnDefs = [
   }
 ];
 
-export default function UnitTable() {
+export default function TypeTable() {
 
   const [isLoading, setIsLoading] = useState(true);
   const [rows, setRows] = useState([]);

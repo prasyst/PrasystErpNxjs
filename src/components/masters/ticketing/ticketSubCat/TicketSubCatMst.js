@@ -76,7 +76,9 @@ const TicketSubCatMst = () => {
                 router.replace(`/masters/ticketing/ticketSubCat?${newParams.toString()}`);
 
             } else if (response.data.STATUS === 1 && response.data.RESPONSESTATUSCODE === 2) {
-                toast.info(response.data.MESSAGE);
+                if (response.data.MESSAGE && response?.data?.DATA) {
+                    toast.info(response.data.MESSAGE);
+                }
             }
         } catch (error) {
             console.error('Error fetching ticket sub category data:', error);
@@ -131,7 +133,7 @@ const TicketSubCatMst = () => {
             try {
                 const response = await axiosInstance.post(`Employee/GetEmployeeDrp`,
                     {
-                       "FLAG":"" 
+                        "FLAG": ""
                     }
                 );
                 console.log("API response:", response.data.DATA);

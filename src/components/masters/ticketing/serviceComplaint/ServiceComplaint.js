@@ -88,7 +88,9 @@ const ServiceComplaint = () => {
                 router.replace(`/masters/ticketing/serviceComplaint?${newParams.toString()}`);
 
             } else if (response.data.STATUS === 1 && response.data.RESPONSESTATUSCODE === 2) {
-                toast.info(response.data.MESSAGE);
+                if (response.data.MESSAGE && response?.data?.DATA) {
+                    toast.info(response.data.MESSAGE);
+                }
             }
         } catch (error) {
             console.error('Error fetching data:', error);
@@ -449,7 +451,7 @@ const ServiceComplaint = () => {
                 sx={{
                     display: 'flex',
                     flexDirection: 'column',
-                    marginInline: { xs: '5%', sm: '5%', md: '5%', lg: '20%', xl: '5%' },
+                    marginInline: { xs: '5%', sm: '5%', md: '5%', lg: '15%', xl: '5%' },
                 }}
                 spacing={2}
             >
@@ -517,7 +519,7 @@ const ServiceComplaint = () => {
                             onChange={(e, newValue) => {
                                 setFormData((prevForm) => ({
                                     ...prevForm,
-                                    TKTCATID: newValue ? newValue.TKTCATID.toString()  : '',
+                                    TKTCATID: newValue ? newValue.TKTCATID.toString() : '',
                                 }));
                             }}
                             sx={DropInputSx}
@@ -632,7 +634,7 @@ const ServiceComplaint = () => {
                             options={Tag}
                             label="Ticket Tag"
                             name="TKTTAGID"
-                            value={Tag.find(option => option.TKTTAGID.toString() === formData?.TKTTAGID ) || ""}
+                            value={Tag.find(option => option.TKTTAGID.toString() === formData?.TKTTAGID) || ""}
                             onChange={(e, newValue) => {
                                 setFormData((prevForm) => ({
                                     ...prevForm,

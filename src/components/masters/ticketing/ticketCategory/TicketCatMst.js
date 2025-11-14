@@ -73,7 +73,9 @@ const TicketCatMst = () => {
                 router.replace(`/masters/ticketing/ticketCategory?${newParams.toString()}`);
 
             } else if (response.data.STATUS === 1 && response.data.RESPONSESTATUSCODE === 2) {
-                toast.info(response.data.MESSAGE);
+                if (response.data.MESSAGE && response?.data?.DATA) {
+                    toast.info(response.data.MESSAGE);
+                }
             }
         } catch (error) {
             console.error('Error fetching ticket category data:', error);
