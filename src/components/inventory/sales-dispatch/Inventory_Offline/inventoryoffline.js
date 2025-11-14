@@ -112,6 +112,7 @@ const SalesOrderOffline = () => {
     // New fields from API response
     CURR_SEASON_KEY: "",
     PRICELIST_KEY: "",
+    BROKER_KEY: "",
     BROKER1_KEY: "",
     SHP_PARTY_KEY: "",
     DESP_PORT: "",
@@ -955,18 +956,12 @@ const SalesOrderOffline = () => {
     }
   };
 
-  // Function to validate form data
+  // Function to validate form data - SIMPLIFIED VALIDATION
   const validateForm = () => {
     const requiredFields = [
       { field: 'Party', name: 'Party' },
-      { field: 'ORDER_DATE', name: 'Order Date' },
-      { field: 'SEASON', name: 'Season' },
-      { field: 'CONSIGNEE', name: 'Consignee' },
-      { field: 'Broker', name: 'Broker' },
-      { field: 'BROKER1', name: 'Broker1' },
-      { field: 'SALESPERSON_1', name: 'Salesperson 1' },
-      { field: 'SALESPERSON_2', name: 'Salesperson 2' },
-      { field: 'DLV_DT', name: 'Delivery Date' }
+      { field: 'ORDER_NO', name: 'Order No' },
+      { field: 'ORDER_DATE', name: 'Order Date' }
     ];
 
     const missingFields = requiredFields.filter(item => !formData[item.field]);
@@ -1053,8 +1048,8 @@ const SalesOrderOffline = () => {
     const consigneeKey = formData.DISTBTR_KEY || "";
     const seasonKey = formData.CURR_SEASON_KEY || "";
     const transporterKey = formData.TRSP_KEY || "";
-    const shippingPartyKey = formData.SHP_PARTY_KEY || "";
-    const shippingPartyDtlId = formData.SHP_PARTYDTL_ID || branchId || 0;
+    const shippingPartyKey = formData.SHP_PARTY_KEY || formData.PARTY_KEY;
+    const shippingPartyDtlId = formData.SHP_PARTYDTL_ID || formData.PARTYDTL_ID || 1;
     const merchandiserId = formData.MERCHANDISER_ID || 1;
 
     console.log('Keys for payload:', {
@@ -1081,22 +1076,26 @@ const SalesOrderOffline = () => {
 
     // Transform ORDBKSTYLIST for API with proper DBFLAG handling
     const transformedOrdbkStyleList = ordbkStyleList.map(item => {
-      // Determine item DBFLAG: 
-      // - If mode is 'add', all items should be 'I'
-      // - If mode is 'edit', existing items (with ORDBKSTY_ID) should be 'U', new items should be 'I'
-      let itemDbFlag = dbFlag;
+     
+      let itemDbFlag = item.DBFLAG || dbFlag;
       
       if (mode === 'edit') {
         // Check if this is a new item (temporary ID created during edit mode)
         const isNewItem = item.ORDBKSTY_ID && item.ORDBKSTY_ID.toString().length > 9; // Temporary IDs are usually long numbers
         const hasOriginalId = item.ORDBKSTY_ID && item.ORDBKSTY_ID > 0 && !isNewItem;
         
-        itemDbFlag = hasOriginalId ? 'U' : 'I';
+        // If DBFLAG is already 'D' (deleted), keep it as 'D'
+        if (item.DBFLAG === 'D') {
+          itemDbFlag = 'D';
+        } else {
+          itemDbFlag = hasOriginalId ? 'U' : 'I';
+        }
         
         console.log('Item DBFLAG determination:', {
           ORDBKSTY_ID: item.ORDBKSTY_ID,
           isNewItem,
           hasOriginalId,
+          currentDBFLAG: item.DBFLAG,
           itemDbFlag
         });
       }
@@ -1195,7 +1194,7 @@ const SalesOrderOffline = () => {
       ORDBK_TNA_TYPE: "I",
       MERCHANDISER_ID: parseInt(merchandiserId) || 1,
       ORD_EVENT_KEY: "",
-      ORG_DLV_DT: "1900-01-01T00:00:00",
+      ORG_DLV_DT: formatDateForAPI(formData.ORG_DLV_DT) || "1900-01-01T00:00:00",
       PLANNING: "0",
       ORDBK_KEY: correctOrdbkKey,
       ORDBK_DT: formatDateForAPI(formData.ORDER_DATE),
@@ -1379,13 +1378,13 @@ const SalesOrderOffline = () => {
         apiResponseData: null,
         PARTYDTL_ID: 0,
         SHP_PARTYDTL_ID: 0,
-        Order_Type: "",
+        Order_Type: "Sales And Work-Order",
         MERCHANDISER_ID: "",
         MERCHANDISER_NAME: "",
         Delivery_Shedule: "comman",
         Order_TNA: "ItemWise",
         Status: "O",
-        ORDBK_TYPE: "0"
+        ORDBK_TYPE: "2"
       };
       
       setFormData(emptyFormData);
@@ -1528,7 +1527,7 @@ const SalesOrderOffline = () => {
               },
             }}
           />
-          <TbListSearch onClick={handleTable} style={{ color: 'rgb(99, 91, 255)', width: '40%', height: '62%' }} />
+          <TbListSearch onClick={handleTable} style={{ color: 'rgb(99, 91, 255)', width: '50%', height: '62%' }} />
         </Grid>
 
         <Grid sx={{ display: "flex", justifyContent: "end" }}>

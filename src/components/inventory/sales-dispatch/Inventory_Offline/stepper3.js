@@ -58,6 +58,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
   const [termGrpOptions, setTermGrpOptions] = useState([]);
   const [termGrpMapping, setTermGrpMapping] = useState({}); // Store TERMGRP_NAME to TERMGRP_KEY mapping
   const [termOptions, setTermOptions] = useState([]);
+  const [termMapping, setTermMapping] = useState({}); // Store TERM_VAL_YN to TERM_PERCENT mapping
   const [discPtnOptions, setDiscPtnOptions] = useState([]);
   const [selectedDiscPtn, setSelectedDiscPtn] = useState('');
 
@@ -104,7 +105,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
     termR: ''
   });
 
-  // Style definitions
+  // Style definitions - UPDATED WIDTHS
   const textInputSx = {
     '& .MuiInputBase-root': {
       height: 36,
@@ -135,6 +136,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
     },
   };
 
+  // UPDATED: Increased width for dropdowns
   const DropInputSx = {
     '& .MuiInputBase-root': {
       height: 36,
@@ -152,6 +154,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
       height: 36,
       fontSize: '14px',
       paddingRight: '36px',
+      minWidth: '200px', // NEW: Increased minimum width
     },
     '& .MuiFilledInput-root:before': {
       display: 'none',
@@ -168,6 +171,38 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
       top: '50%',
       transform: 'translateY(-50%)',
       right: '10px',
+    },
+  };
+
+  // UPDATED: Smaller width for number/text fields
+  const smallInputSx = {
+    '& .MuiInputBase-root': {
+      height: 36,
+      fontSize: '14px',
+    },
+    '& .MuiInputLabel-root': {
+      fontSize: '14px',
+      top: '-8px',
+    },
+    '& .MuiFilledInput-root': {
+      backgroundColor: '#fafafa',
+      border: '1px solid #e0e0e0',
+      borderRadius: '6px',
+      overflow: 'hidden',
+      height: 36,
+      fontSize: '14px',
+      maxWidth: '150px', // NEW: Smaller width for number fields
+    },
+    '& .MuiFilledInput-root:before': {
+      display: 'none',
+    },
+    '& .MuiFilledInput-root:after': {
+      display: 'none',
+    },
+    '& .MuiInputBase-input': {
+      padding: '10px 12px !important',
+      fontSize: '14px !important',
+      lineHeight: '1.4',
     },
   };
 
@@ -218,6 +253,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
   const fetchTermData = async (termGrpKey) => {
     if (!termGrpKey) {
       setTermOptions([]);
+      setTermMapping({});
       return;
     }
 
@@ -232,16 +268,29 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
       console.log('Terms API Response:', response.data);
 
       if (response.data.DATA && Array.isArray(response.data.DATA)) {
-        const terms = response.data.DATA.map(item => item.TERM_NAME || '');
+        // Use TERM_VAL_YN for dropdown options
+        const terms = response.data.DATA.map(item => item.TERM_VAL_YN || '');
         setTermOptions(terms);
-        console.log('Loaded terms:', terms);
+        
+        // Create mapping for TERM_VAL_YN to TERM_PERCENT
+        const termPercentMapping = {};
+        response.data.DATA.forEach(item => {
+          if (item.TERM_VAL_YN && item.TERM_PERCENT !== undefined) {
+            termPercentMapping[item.TERM_VAL_YN] = item.TERM_PERCENT;
+          }
+        });
+        setTermMapping(termPercentMapping);
+        console.log('Loaded TERM_VAL_YN options:', terms);
+        console.log('Term Percent Mapping:', termPercentMapping);
       } else {
         setTermOptions([]);
+        setTermMapping({});
       }
     } catch (error) {
       console.error('Error fetching term data:', error);
       showSnackbar('Error loading terms', 'error');
       setTermOptions([]);
+      setTermMapping({});
     }
   };
 
@@ -283,7 +332,8 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
     setTermFormData(prev => ({
       ...prev,
       [name]: value,
-      term: '' // Clear term when term group changes
+      term: '', // Clear term when term group changes
+      termPercent: '' // Clear term percent when term group changes
     }));
 
     // When term group changes, fetch corresponding terms
@@ -296,19 +346,42 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
         fetchTermData(termGrpKey);
       } else {
         setTermOptions([]);
+        setTermMapping({});
         console.log('No term group key found for:', value);
       }
     } else {
       setTermOptions([]);
+      setTermMapping({});
     }
   };
 
-  // Handle Term change
+  // Handle Term change - FIXED VERSION
   const handleTermChange = (name, value) => {
+    console.log('Term changed:', value);
+    
     setTermFormData(prev => ({
       ...prev,
       [name]: value
     }));
+
+    // Auto-fill termPercent when term is selected
+    if (name === "term" && value && termMapping[value] !== undefined) {
+      const termPercent = termMapping[value];
+      console.log('Auto-filling term percent:', termPercent, 'for term:', value);
+      
+      setTermFormData(prev => ({
+        ...prev,
+        termPercent: termPercent.toString()
+      }));
+      
+      showSnackbar(`Term percent auto-filled: ${termPercent}%`);
+    } else if (name === "term" && value) {
+      // Clear termPercent if no mapping found
+      setTermFormData(prev => ({
+        ...prev,
+        termPercent: ''
+      }));
+    }
   };
 
   // Handle Disc Ptn dropdown change
@@ -620,36 +693,36 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
           </Button>
           
           <Button
-    variant="contained"
-    onClick={handlePartyTax}
-    disabled={isFormDisabled || isAddingNew || isEditing}
-    sx={{
-      backgroundColor: '#39ace2',
-      color: 'white',
-      minWidth: { xs: 80, sm: 100, md: 120 },
-      height: { xs: 40, sm: 46, md: 30 },
-      '&:disabled': {
-        backgroundColor: '#cccccc',
-        color: '#666666'
-      }
-    }}
-  >
-    Party Tax
-  </Button>
+            variant="contained"
+            onClick={handlePartyTax}
+            disabled={isFormDisabled || isAddingNew || isEditing}
+            sx={{
+              backgroundColor: '#39ace2',
+              color: 'white',
+              minWidth: { xs: 80, sm: 100, md: 120 },
+              height: { xs: 40, sm: 46, md: 30 },
+              '&:disabled': {
+                backgroundColor: '#cccccc',
+                color: '#666666'
+              }
+            }}
+          >
+            Party Tax
+          </Button>
           
-          <Box sx={{ minWidth: 150, maxWidth: 180 }}>
-    <AutoVibe
-      id="DiscPtn"
-      disabled={isFormDisabled || isAddingNew || isEditing}
-      getOptionLabel={(option) => option || ''}
-      options={discPtnOptions}
-      label="Disc Ptn"
-      name="discPtn"
-      value={selectedDiscPtn}
-      onChange={handleDiscPtnChange}
-      sx={DropInputSx}
-    />
-  </Box>
+          <Box sx={{ minWidth: 200, maxWidth: 250 }}> {/* UPDATED: Increased width */}
+            <AutoVibe
+              id="DiscPtn"
+              disabled={isFormDisabled || isAddingNew || isEditing}
+              getOptionLabel={(option) => option || ''}
+              options={discPtnOptions}
+              label="Disc Ptn"
+              name="discPtn"
+              value={selectedDiscPtn}
+              onChange={handleDiscPtnChange}
+              sx={DropInputSx}
+            />
+          </Box>
         </Stack>
 
         {/* Tabs Section */}
@@ -664,7 +737,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
         {/* Tab Content */}
         <TabPanel value={tabIndex} index={0}>
           {/* Calc Terms Content */}
-          <Grid container spacing={2}>
+          <Grid container spacing={2} alignItems="center">
             <Grid item xs={12} sm={4}>
               <AutoVibe
                 id="TermGrp"
@@ -691,7 +764,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
                 sx={DropInputSx}
               />
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid item xs={12} sm={2}> {/* UPDATED: Smaller width */}
               <TextField
                 fullWidth
                 label="Percent"
@@ -700,11 +773,11 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
                 value={termFormData.termPercent}
                 onChange={handleInputChange}
                 variant="filled"
-                sx={textInputSx}
+                sx={smallInputSx}  
                 disabled={shouldDisableFields()}
               />
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid item xs={12} sm={2}> {/* UPDATED: Smaller width */}
               <TextField
                 fullWidth
                 label="Rate On Qty"
@@ -713,7 +786,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
                 value={termFormData.rate}
                 onChange={handleInputChange}
                 variant="filled"
-                sx={textInputSx}
+                sx={smallInputSx}  
                 disabled={shouldDisableFields()}
               />
             </Grid>
@@ -731,7 +804,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
                 disabled={shouldDisableFields()}
               />
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid item xs={12} sm={3}> {/* UPDATED: Smaller width */}
               <TextField
                 fullWidth
                 label="Fix Amount"
@@ -740,11 +813,11 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
                 value={termFormData.taxAmount}
                 onChange={handleInputChange}
                 variant="filled"
-                sx={textInputSx}
+                sx={smallInputSx}  
                 disabled={shouldDisableFields()}
               />
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid item xs={12} sm={3}> {/* UPDATED: Smaller width */}
               <TextField
                 fullWidth
                 label="Per Qty"
@@ -753,7 +826,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
                 value={termFormData.taxable}
                 onChange={handleInputChange}
                 variant="filled"
-                sx={textInputSx}
+                sx={smallInputSx}  
                 disabled={shouldDisableFields()}
               />
             </Grid>
@@ -779,8 +852,8 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
 
         <TabPanel value={tabIndex} index={1}>
           {/* Tax Content */}
-          <Grid container spacing={2}>
-            <Grid item xs={12} sm={6}>
+          <Grid container spacing={2} alignItems="center">
+            <Grid item xs={12} sm={4}>
               <AutoVibe
                 id="TermGrpTax"
                 disabled={shouldDisableFields()}
@@ -793,7 +866,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
                 sx={DropInputSx}
               />
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid item xs={12} sm={3}> {/* UPDATED: Smaller width */}
               <TextField
                 fullWidth
                 label="Tax Type"
@@ -801,11 +874,11 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
                 value={termFormData.taxType}
                 onChange={handleInputChange}
                 variant="filled"
-                sx={textInputSx}
+                sx={smallInputSx}  
                 disabled={shouldDisableFields()}
               />
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid item xs={12} sm={3}> {/* UPDATED: Smaller width */}
               <TextField
                 fullWidth
                 label="Tax"
@@ -813,11 +886,11 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
                 value={termFormData.tax}
                 onChange={handleInputChange}
                 variant="filled"
-                sx={textInputSx}
+                sx={smallInputSx}  
                 disabled={shouldDisableFields()}
               />
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid item xs={12} sm={2}> {/* UPDATED: Smaller width */}
               <TextField
                 fullWidth
                 label="Tax Rate %"
@@ -826,11 +899,11 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
                 value={termFormData.rate}
                 onChange={handleInputChange}
                 variant="filled"
-                sx={textInputSx}
+                sx={smallInputSx}  
                 disabled={shouldDisableFields()}
               />
             </Grid>
-            <Grid item xs={12}>
+            <Grid item xs={12} sm={4}> {/* UPDATED: Smaller width */}
               <TextField
                 fullWidth
                 label="Taxable Amount"
@@ -838,11 +911,11 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
                 value={termFormData.taxable}
                 onChange={handleInputChange}
                 variant="filled"
-                sx={textInputSx}
+                sx={smallInputSx}  
                 disabled={shouldDisableFields()}
               />
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid item xs={12} sm={2}> {/* UPDATED: Smaller width */}
               <TextField
                 fullWidth
                 label="AOT 1"
@@ -851,11 +924,11 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
                 value={termFormData.aot1}
                 onChange={handleInputChange}
                 variant="filled"
-                sx={textInputSx}
+                sx={smallInputSx}  
                 disabled={shouldDisableFields()}
               />
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid item xs={12} sm={2}> {/* UPDATED: Smaller width */}
               <TextField
                 fullWidth
                 label="AOT 2"
@@ -864,7 +937,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
                 value={termFormData.aot2}
                 onChange={handleInputChange}
                 variant="filled"
-                sx={textInputSx}
+                sx={smallInputSx}  
                 disabled={shouldDisableFields()}
               />
             </Grid>
@@ -890,8 +963,8 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
 
         <TabPanel value={tabIndex} index={2}>
           {/* Non-Calc Terms Content */}
-          <Grid container spacing={2}>
-            <Grid item xs={12} sm={6}>
+          <Grid container spacing={2} alignItems="center">
+            <Grid item xs={12} sm={4}>
               <AutoVibe
                 id="TermGrpNonCalc"
                 disabled={shouldDisableFields()}
@@ -904,7 +977,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
                 sx={DropInputSx}
               />
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid item xs={12} sm={4}>
               <AutoVibe
                 id="TermNonCalc"
                 disabled={shouldDisableFields()}
@@ -917,7 +990,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
                 sx={DropInputSx}
               />
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid item xs={12} sm={2}> {/* UPDATED: Smaller width */}
               <TextField
                 fullWidth
                 label="Percent"
@@ -926,11 +999,11 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
                 value={termFormData.termPercent}
                 onChange={handleInputChange}
                 variant="filled"
-                sx={textInputSx}
+                sx={smallInputSx}  
                 disabled={shouldDisableFields()}
               />
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid item xs={12} sm={2}> {/* UPDATED: Smaller width */}
               <TextField
                 fullWidth
                 label="Rate On Qty"
@@ -939,7 +1012,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
                 value={termFormData.rate}
                 onChange={handleInputChange}
                 variant="filled"
-                sx={textInputSx}
+                sx={smallInputSx}  
                 disabled={shouldDisableFields()}
               />
             </Grid>
@@ -957,7 +1030,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
                 disabled={shouldDisableFields()}
               />
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid item xs={12} sm={3}> {/* UPDATED: Smaller width */}
               <TextField
                 fullWidth
                 label="Fix Amount"
@@ -966,11 +1039,11 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
                 value={termFormData.taxAmount}
                 onChange={handleInputChange}
                 variant="filled"
-                sx={textInputSx}
+                sx={smallInputSx}  
                 disabled={shouldDisableFields()}
               />
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid item xs={12} sm={3}> {/* UPDATED: Smaller width */}
               <TextField
                 fullWidth
                 label="Per Qty"
@@ -979,7 +1052,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
                 value={termFormData.taxable}
                 onChange={handleInputChange}
                 variant="filled"
-                sx={textInputSx}
+                sx={smallInputSx}  
                 disabled={shouldDisableFields()}
               />
             </Grid>

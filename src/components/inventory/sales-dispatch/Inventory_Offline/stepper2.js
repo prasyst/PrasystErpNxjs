@@ -1,5 +1,6 @@
 'use client';
 import React, { useEffect, useState, useCallback, useRef } from 'react';
+import { Tooltip } from '@mui/material';
 import {
   Box,
   Grid,
@@ -76,6 +77,9 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
   const [isLoadingBarcode, setIsLoadingBarcode] = useState(false);
   const barcodeTimeoutRef = useRef(null);
 
+  // NEW: Track source of data loading
+  const [dataSource, setDataSource] = useState(null); // 'barcode', 'styleCode', 'dropdown'
+
   // NEW: State for table filters
   const [tableFilters, setTableFilters] = useState({
     BarCode: '',
@@ -85,6 +89,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
     shade: '',
     lotNo: '',
     qty: '',
+    mrp: '',
     rate: '',
     amount: '',
     varPer: '',
@@ -105,6 +110,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
     shade: '',
     qty: '',
     mrp: '',
+    rate: '', // NEW: Added Rate field (SSP)
     setNo: '',
     varPer: '',
     stdQty: '',
@@ -211,6 +217,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
     shade: item.SHADE || "-",
     lotNo: formData.SEASON || "-",
     qty: parseFloat(item.ITMQTY) || 0,
+    mrp: parseFloat(item.MRP) || 0, // NEW: Added MRP column
     rate: parseFloat(item.ITMRATE) || 0,
     amount: parseFloat(item.ITMAMT) || 0,
     varPer: parseFloat(item.DLV_VAR_PERC) || 0,
@@ -287,6 +294,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
       shade: '',
       lotNo: '',
       qty: '',
+      mrp: '',
       rate: '',
       amount: '',
       varPer: '',
@@ -391,6 +399,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
 
     try {
       setIsLoadingStyleCode(true);
+      setDataSource('styleCode');
       
       const payload = {
         "FGSTYLE_ID": "",
@@ -407,14 +416,15 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
       if (response.data.DATA && response.data.DATA.length > 0) {
         const styleData = response.data.DATA[0];
         
-        // Auto-fill the fields from response data
+        // Auto-fill the fields from response data including Rate (SSP)
         if (isAddingNew || isEditingSize) {
           setNewItemData(prev => ({
             ...prev,
             product: styleData.FGPRD_NAME || '',
             style: styleData.FGSTYLE_CODE || styleData.FGSTYLE_NAME || '',
             type: styleData.FGTYPE_NAME || '',
-            mrp: styleData.MRP ? styleData.MRP.toString() : ''
+            mrp: styleData.MRP ? styleData.MRP.toString() : '',
+            rate: styleData.SSP ? styleData.SSP.toString() : '' // NEW: Fetch Rate (SSP) value
           }));
           
           // Update product mapping if needed
@@ -440,7 +450,8 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
             await fetchLotNoData(styleData.FGSTYLE_ID);
           }
           
-          showSnackbar("Fields auto-filled from style data!");
+          // For style code input, DO NOT auto-load size details
+          showSnackbar("Fields auto-filled from style code! Click 'Add Qty' to load size details.");
         }
       } else {
         showSnackbar("No style data found for the entered code", 'warning');
@@ -453,12 +464,13 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
     }
   };
 
-  // NEW: Fetch style data by barcode (for barcode search)
+  // NEW: Enhanced fetchStyleDataByBarcode function with auto size details loading
   const fetchStyleDataByBarcode = async (barcode) => {
     if (!barcode) return;
 
     try {
       setIsLoadingBarcode(true);
+      setDataSource('barcode');
       
       const payload = {
         "FGSTYLE_ID": "",
@@ -479,7 +491,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
         // Determine barcode value: ALT_BARCODE if available, otherwise STYSTKDTL_KEY
         const barcodeValue = styleData.ALT_BARCODE || styleData.STYSTKDTL_KEY || '';
         
-        // Auto-fill the fields from response data
+        // Auto-fill the fields from response data including Rate (SSP)
         if (isAddingNew || isEditingSize) {
           setNewItemData(prev => ({
             ...prev,
@@ -487,6 +499,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
             style: styleData.FGSTYLE_CODE || styleData.FGSTYLE_NAME || '',
             type: styleData.FGTYPE_NAME || '',
             mrp: styleData.MRP ? styleData.MRP.toString() : '',
+            rate: styleData.SSP ? styleData.SSP.toString() : '', // NEW: Fetch Rate (SSP) value
             barcode: barcodeValue // Set barcode field with the determined value
           }));
           
@@ -513,7 +526,10 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
             await fetchLotNoData(styleData.FGSTYLE_ID);
           }
           
-          showSnackbar("Fields auto-filled from barcode search!");
+          // NEW: Auto-load size details ONLY for barcode search
+          await fetchSizeDetailsForStyle(styleData);
+          
+          showSnackbar("Fields auto-filled from barcode search and size details loaded!");
         }
       } else {
         showSnackbar("No style data found for the entered barcode", 'warning');
@@ -523,6 +539,65 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
       showSnackbar("Error fetching style data by barcode", 'error');
     } finally {
       setIsLoadingBarcode(false);
+    }
+  };
+
+  // NEW: Function to auto-load size details for style data (used ONLY for barcode)
+  const fetchSizeDetailsForStyle = async (styleData) => {
+    try {
+      const fgprdKey = styleData.FGPRD_KEY;
+      const fgstyleId = styleData.FGSTYLE_ID;
+      const fgtypeKey = styleData.FGTYPE_KEY || "";
+      const fgshadeKey = styleData.FGSHADE_KEY || "";
+      const fgptnKey = styleData.FGPTN_KEY || "";
+
+      if (!fgprdKey || !fgstyleId) {
+        showSnackbar("Required data not available for size details.", 'error');
+        return;
+      }
+
+      // Enhanced payload with MRP, Rate (SSP) and Party details
+      const payload = {
+        "FGSTYLE_ID": fgstyleId,
+        "FGPRD_KEY": fgprdKey,
+        "FGTYPE_KEY": fgtypeKey,
+        "FGSHADE_KEY": fgshadeKey,
+        "FGPTN_KEY": fgptnKey,
+        "MRP": parseFloat(styleData.MRP) || 0,
+        "SSP": parseFloat(styleData.SSP) || 0, // NEW: Include Rate (SSP)
+        "PARTY_KEY": formData.PARTY_KEY || "",
+        "PARTYDTL_ID": formData.PARTYDTL_ID || 0,
+        "FLAG": ""
+      };
+
+      console.log('Auto-fetching size details with payload:', payload);
+
+      const response = await axiosInstance.post('/STYSIZE/AddSizeDetail', payload);
+      console.log('Auto Size Details API Response:', response.data);
+
+      if (response.data.DATA && response.data.DATA.length > 0) {
+        const transformedSizeDetails = response.data.DATA.map((size, index) => ({
+          STYSIZE_ID: size.STYSIZE_ID || index + 1,
+          STYSIZE_NAME: size.STYSIZE_NAME || `Size ${index + 1}`,
+          FGSTYLE_ID: size.FGSTYLE_ID || fgstyleId,
+          QTY: 0,
+          ITM_AMT: 0,
+          ORDER_QTY: 0,
+          MRP: parseFloat(styleData.MRP) || 0, // NEW: Add MRP to size details
+          RATE: parseFloat(styleData.SSP) || 0 // NEW: Add Rate to size details
+        }));
+
+        setSizeDetailsData(transformedSizeDetails);
+        console.log('Auto-transformed size details:', transformedSizeDetails);
+        
+        showSnackbar("Size details auto-loaded successfully! Please enter quantities for each size.");
+      } else {
+        showSnackbar("No size details found for the selected combination.", 'warning');
+        setSizeDetailsData([]);
+      }
+    } catch (error) {
+      console.error('Error auto-fetching size details:', error);
+      showSnackbar("Error auto-loading size details. Please try manually.", 'error');
     }
   };
 
@@ -694,7 +769,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
         return;
       }
 
-      // Enhanced payload with MRP and Party details
+      // Enhanced payload with MRP, Rate (SSP) and Party details
       const payload = {
         "FGSTYLE_ID": fgstyleId,
         "FGPRD_KEY": fgprdKey,
@@ -702,6 +777,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
         "FGSHADE_KEY": fgshadeKey,
         "FGPTN_KEY": fgptnKey,
         "MRP": parseFloat(newItemData.mrp) || 0,
+        "SSP": parseFloat(newItemData.rate) || 0, // NEW: Include Rate (SSP)
         "PARTY_KEY": formData.PARTY_KEY || "",
         "PARTYDTL_ID": formData.PARTYDTL_ID || 0,
         "FLAG": ""
@@ -719,7 +795,9 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
           FGSTYLE_ID: size.FGSTYLE_ID || fgstyleId,
           QTY: 0,
           ITM_AMT: 0,
-          ORDER_QTY: 0
+          ORDER_QTY: 0,
+          MRP: parseFloat(newItemData.mrp) || 0, // NEW: Add MRP to size details
+          RATE: parseFloat(newItemData.rate) || 0 // NEW: Add Rate to size details
         }));
 
         setSizeDetailsData(transformedSizeDetails);
@@ -739,6 +817,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
   // Handle product selection change
   const handleProductChange = async (event, value) => {
     setSelectedProduct(value);
+    setDataSource('dropdown');
     
     if (isAddingNew || isEditingSize) {
       setNewItemData(prev => ({ ...prev, product: value }));
@@ -773,6 +852,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
   // Handle style selection change - CASE 1: When user selects from dropdown
   const handleStyleChange = async (event, value) => {
     setSelectedStyle(value);
+    setDataSource('dropdown');
     
     if (isAddingNew || isEditingSize) {
       setNewItemData(prev => ({ ...prev, style: value }));
@@ -809,14 +889,16 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
           if (response.data.DATA && response.data.DATA.length > 0) {
             const styleData = response.data.DATA[0];
             
-            // Auto-fill MRP and Type fields
+            // Auto-fill MRP, Rate (SSP) and Type fields
             setNewItemData(prev => ({
               ...prev,
               mrp: styleData.MRP ? styleData.MRP.toString() : '',
+              rate: styleData.SSP ? styleData.SSP.toString() : '', // NEW: Fetch Rate (SSP)
               type: styleData.FGTYPE_NAME || ''
             }));
             
-            showSnackbar("MRP and Type auto-filled from style data!");
+            // For dropdown selection, DO NOT auto-load size details
+            showSnackbar("MRP and Rate auto-filled from style data! Click 'Add Qty' to load size details.");
           }
         } catch (error) {
           console.error('Error fetching style details in CASE 1:', error);
@@ -894,7 +976,8 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
       type: row.type || '',
       shade: row.shade || '',
       qty: row.qty?.toString() || '',
-      mrp: row.rate?.toString() || '',
+      mrp: row.mrp?.toString() || '',
+      rate: row.rate?.toString() || '', // NEW: Populate Rate
       setNo: '',
       varPer: row.varPer?.toString() || '',
       stdQty: '',
@@ -953,14 +1036,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
     }
   };
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-
+ 
   const handleNewItemChange = (e) => {
     const { name, value } = e.target;
     setNewItemData(prev => ({
@@ -969,43 +1045,56 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
     }));
   };
 
-  // Handle Add Item button click
-  const handleAddItem = async () => {
-    setIsAddingNew(true);
-    setSizeDetailsData([]);
-    
-    await fetchProductData();
-    
-    setNewItemData({
-      product: '',
-      barcode: '',
-      style: '',
-      type: '',
-      shade: '',
-      qty: '',
-      mrp: '',
-      setNo: '',
-      varPer: '',
-      stdQty: '',
-      convFact: '',
-      lotNo: '',
-      discount: '',
-      percent: '',
-      remark: '',
-      divDt: '',
-      rQty: '',
-      sets: ''
-    });
-    
-    setStyleCodeInput('');
-    setBarcodeInput('');
-    setStyleOptions([]);
-    setTypeOptions([]);
-    setShadeOptions([]);
-    setLotNoOptions([]);
-    
-    showSnackbar('Add new item mode enabled');
-  };
+ const isPartySelected = () => {
+  return !!formData.Party && !!formData.PARTY_KEY;
+};
+
+// Update the handleAddItem function
+const handleAddItem = async () => {
+  // Check if party is selected
+  if (!isPartySelected()) {
+    showSnackbar("Please select a Party first before adding items", 'error');
+    return;
+  }
+
+  setIsAddingNew(true);
+  setSizeDetailsData([]);
+  setDataSource(null);
+  
+  await fetchProductData();
+  
+  setNewItemData({
+    product: '',
+    barcode: '',
+    style: '',
+    type: '',
+    shade: '',
+    qty: '',
+    mrp: '',
+    rate: '', // NEW: Added Rate field
+    setNo: '',
+    varPer: '',
+    stdQty: '',
+    convFact: '',
+    lotNo: '',
+    discount: '',
+    percent: '',
+    remark: '',
+    divDt: '',
+    rQty: '',
+    sets: ''
+  });
+  
+  setStyleCodeInput('');
+  setBarcodeInput('');
+  setStyleOptions([]);
+  setTypeOptions([]);
+  setShadeOptions([]);
+  setLotNoOptions([]);
+  
+  showSnackbar('Add new item mode enabled');
+};
+  
 
   // Enhanced handleConfirmAdd function with proper DBFLAG handling
   const handleConfirmAdd = () => {
@@ -1016,7 +1105,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
     }
 
     if (sizeDetailsData.length === 0) {
-      showSnackbar("Please load size details first by clicking 'Add Qty' button", 'error');
+      showSnackbar("Please load size details first", 'error');
       return;
     }
 
@@ -1047,7 +1136,12 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
 
     const totalQty = sizeDetailsData.reduce((sum, size) => sum + (parseFloat(size.QTY) || 0), 0);
     const mrp = parseFloat(newItemData.mrp) || 0;
-    const totalAmount = sizeDetailsData.reduce((sum, size) => sum + (parseFloat(size.ITM_AMT) || 0), 0);
+    const rate = parseFloat(newItemData.rate) || 0; // NEW: Get Rate value
+    // Calculate amount using Rate instead of MRP (Qty * Rate)
+    const totalAmount = sizeDetailsData.reduce((sum, size) => {
+      const sizeQty = parseFloat(size.QTY) || 0;
+      return sum + (sizeQty * rate);
+    }, 0);
     const discount = parseFloat(newItemData.discount) || 0;
     const netAmount = totalAmount - discount;
 
@@ -1063,7 +1157,8 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
       shade: newItemData.shade || "-",
       lotNo: newItemData.lotNo || "-",
       qty: totalQty,
-      rate: mrp,
+      mrp: mrp, // NEW: Added MRP column
+      rate: rate, // NEW: Use Rate in main table
       amount: totalAmount,
       varPer: parseFloat(newItemData.varPer) || 0,
       varQty: 0,
@@ -1080,7 +1175,8 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
         TYPE: newItemData.type,
         SHADE: newItemData.shade,
         ITMQTY: totalQty,
-        ITMRATE: mrp,
+        MRP: mrp, // NEW: Store MRP
+        ITMRATE: rate, // NEW: Use Rate
         ITMAMT: totalAmount,
         DLV_VAR_PERC: parseFloat(newItemData.varPer) || 0,
         DLV_VAR_QTY: 0,
@@ -1097,7 +1193,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
         FGTYPE_KEY: fgtypeKey,
         FGSHADE_KEY: fgshadeKey,
         FGPTN_KEY: fgptnKey,
-        // Set DBFLAG based on mode
+        // Set DBFLAG for new items
         DBFLAG: mode === 'add' ? 'I' : 'I' // Always 'I' for new items in both modes
       },
       FGSTYLE_ID: fgstyleId,
@@ -1119,7 +1215,8 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
       TYPE: newItem.type,
       SHADE: newItem.shade,
       ITMQTY: newItem.qty,
-      ITMRATE: newItem.rate,
+      MRP: newItem.mrp, // NEW: Store MRP
+      ITMRATE: newItem.rate, // Rate
       ITMAMT: newItem.amount,
       DLV_VAR_PERC: newItem.varPer,
       DLV_VAR_QTY: newItem.varQty,
@@ -1156,6 +1253,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
       shade: '',
       qty: '',
       mrp: '',
+      rate: '', // NEW: Reset Rate field
       setNo: '',
       varPer: '',
       stdQty: '',
@@ -1171,6 +1269,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
     setStyleCodeInput('');
     setBarcodeInput('');
     setSizeDetailsData([]);
+    setDataSource(null);
 
     showSnackbar("Item added successfully!");
   };
@@ -1186,8 +1285,12 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
       const updatedTable = tableData.map(row => {
         if (row.id === selectedRow) {
           const totalSizeQty = sizeDetailsData.reduce((sum, size) => sum + (parseFloat(size.QTY) || 0), 0);
-          const rate = row.rate || 0;
-          const amount = totalSizeQty * rate;
+          const rate = parseFloat(newItemData.rate) || 0; // NEW: Use Rate for calculation
+          // Calculate amount using Rate instead of MRP (Qty * Rate)
+          const amount = sizeDetailsData.reduce((sum, size) => {
+            const sizeQty = parseFloat(size.QTY) || 0;
+            return sum + (sizeQty * rate);
+          }, 0);
           const discount = row.discAmt || 0;
           const netAmount = amount - discount;
 
@@ -1197,12 +1300,16 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
           return {
             ...row,
             qty: totalSizeQty,
+            mrp: parseFloat(newItemData.mrp) || 0, // NEW: Update MRP
+            rate: rate, // NEW: Use Rate
             amount: amount,
             netAmt: netAmount,
             originalData: {
               ...row.originalData,
               ORDBKSTYSZLIST: sizeDetailsData,
               ITMQTY: totalSizeQty,
+              MRP: parseFloat(newItemData.mrp) || 0, // NEW: Update MRP
+              ITMRATE: rate, // NEW: Use Rate
               ITMAMT: amount,
               NET_AMT: netAmount,
               DBFLAG: originalDbFlag // Preserve original DBFLAG
@@ -1221,8 +1328,12 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
           ORDBKSTYLIST: prev.apiResponseData?.ORDBKSTYLIST?.map(item => {
             if (item.ORDBKSTY_ID === selectedRow) {
               const totalSizeQty = sizeDetailsData.reduce((sum, size) => sum + (parseFloat(size.QTY) || 0), 0);
-              const rate = item.ITMRATE || 0;
-              const amount = totalSizeQty * rate;
+              const rate = parseFloat(newItemData.rate) || 0; // NEW: Use Rate for calculation
+              // Calculate amount using Rate instead of MRP (Qty * Rate)
+              const amount = sizeDetailsData.reduce((sum, size) => {
+                const sizeQty = parseFloat(size.QTY) || 0;
+                return sum + (sizeQty * rate);
+              }, 0);
               const discount = item.DISC_AMT || 0;
               const netAmount = amount - discount;
 
@@ -1232,6 +1343,8 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
               return {
                 ...item,
                 ITMQTY: totalSizeQty,
+                MRP: parseFloat(newItemData.mrp) || 0, // NEW: Update MRP
+                ITMRATE: rate, // NEW: Use Rate
                 ITMAMT: amount,
                 NET_AMT: netAmount,
                 ORDBKSTYSZLIST: sizeDetailsData,
@@ -1257,6 +1370,72 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
     setIsEditingSize(!isEditingSize);
   };
 
+  // Enhanced handleDeleteItem function with proper DBFLAG handling
+  const handleDeleteItem = () => {
+    if (!selectedRow) {
+      showSnackbar("Please select an item to delete", 'error');
+      return;
+    }
+    
+    // Mark the item as deleted by setting DBFLAG to 'D'
+    const updatedTableData = tableData.map(row => {
+      if (row.id === selectedRow) {
+        return {
+          ...row,
+          originalData: {
+            ...row.originalData,
+            DBFLAG: 'D' // Set DBFLAG to 'D' for deletion
+          }
+        };
+      }
+      return row;
+    });
+
+    // Filter out deleted items from display but keep them in the data for API submission
+    const displayTableData = updatedTableData.filter(row => 
+      !(row.id === selectedRow && row.originalData?.DBFLAG === 'D')
+    );
+
+    setUpdatedTableData(updatedTableData);
+
+    // Update formData with deleted items marked with DBFLAG = 'D'
+    setFormData(prev => ({
+      ...prev,
+      apiResponseData: {
+        ...prev.apiResponseData,
+        ORDBKSTYLIST: (prev.apiResponseData?.ORDBKSTYLIST || []).map(item => {
+          if (item.ORDBKSTY_ID === selectedRow) {
+            return {
+              ...item,
+              DBFLAG: 'D', // Set DBFLAG to 'D' for deletion
+              ORDBKSTYSZLIST: (item.ORDBKSTYSZLIST || []).map(sizeItem => ({
+                ...sizeItem,
+                DBFLAG: 'D' // Also mark size items for deletion
+              }))
+            };
+          }
+          return item;
+        })
+      }
+    }));
+
+    // Update selected row and size details
+    if (displayTableData.length > 0) {
+      const firstRow = displayTableData[0];
+      setSelectedRow(firstRow.id);
+      setSizeDetailsData(firstRow.originalData?.ORDBKSTYSZLIST || []);
+    } else {
+      setSelectedRow(null);
+      setSizeDetailsData([]);
+      setStyleOptions([]);
+      setTypeOptions([]);
+      setShadeOptions([]);
+      setLotNoOptions([]);
+    }
+
+    showSnackbar("Item marked for deletion! Click Submit to confirm deletion.");
+  };
+
   const handleCancelAdd = () => {
     setIsAddingNew(false);
     setNewItemData({
@@ -1267,6 +1446,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
       shade: '',
       qty: '',
       mrp: '',
+      rate: '', // NEW: Reset Rate field
       setNo: '',
       varPer: '',
       stdQty: '',
@@ -1282,6 +1462,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
     setStyleCodeInput('');
     setBarcodeInput('');
     setSizeDetailsData([]);
+    setDataSource(null);
     showSnackbar('Add item cancelled');
   };
 
@@ -1296,6 +1477,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
       shade: '',
       qty: '',
       mrp: '',
+      rate: '', // NEW: Reset Rate field
       setNo: '',
       varPer: '',
       stdQty: '',
@@ -1310,48 +1492,14 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
     });
     setStyleCodeInput('');
     setBarcodeInput('');
-  };
-
-  const handleDeleteItem = () => {
-    if (!selectedRow) {
-      showSnackbar("Please select an item to delete", 'error');
-      return;
-    }
-    
-    const newTableData = tableData.filter(row => row.id !== selectedRow);
-    setUpdatedTableData(newTableData);
-    
-    setFormData(prev => ({
-      ...prev,
-      apiResponseData: {
-        ...prev.apiResponseData,
-        ORDBKSTYLIST: (prev.apiResponseData?.ORDBKSTYLIST || []).filter(item => 
-          item.ORDBKSTY_ID !== selectedRow
-        )
-      }
-    }));
-
-    if (newTableData.length > 0) {
-      const firstRow = newTableData[0];
-      setSelectedRow(firstRow.id);
-      setSizeDetailsData(firstRow.originalData?.ORDBKSTYSZLIST || []);
-    } else {
-      setSelectedRow(null);
-      setSizeDetailsData([]);
-      setStyleOptions([]);
-      setTypeOptions([]);
-      setShadeOptions([]);
-      setLotNoOptions([]);
-    }
-
-    showSnackbar("Item deleted successfully!");
+    setDataSource(null);
   };
 
   const handleSizeQtyChange = (index, newQty) => {
     const updatedSizeDetails = [...sizeDetailsData];
     const qty = parseFloat(newQty) || 0;
-    const mrp = parseFloat(newItemData.mrp) || 0;
-    const amount = qty * mrp;
+    const rate = parseFloat(newItemData.rate) || 0; // NEW: Use Rate for amount calculation
+    const amount = qty * rate; // NEW: Calculate amount using Rate
     
     updatedSizeDetails[index] = {
       ...updatedSizeDetails[index],
@@ -1409,6 +1557,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
     { id: 'shade', label: 'Shade', minWidth: 100 },
     { id: 'lotNo', label: 'Lot No', minWidth: 100 },
     { id: 'qty', label: 'Qty', minWidth: 70, align: 'right' },
+    { id: 'mrp', label: 'MRP', minWidth: 70, align: 'right' }, // NEW: Added MRP column
     { id: 'rate', label: 'Rate', minWidth: 70, align: 'right' },
     { id: 'amount', label: 'Amount', minWidth: 80, align: 'right' },
     { id: 'varPer', label: 'Var Per', minWidth: 80, align: 'right' },
@@ -1462,28 +1611,41 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
                         }}
                       >
                         <TextField
-                          size="small"
-                          placeholder={`Search ${column.label}`}
-                          value={tableFilters[column.id] || ''}
-                          onChange={(e) => handleTableFilterChange(column.id, e.target.value)}
-                          sx={{
-                            '& .MuiInputBase-root': {
-                              height: '28px',
-                              fontSize: '0.7rem',
-                            },
-                            '& .MuiInputBase-input': {
-                              padding: '4px 6px',
-                              fontSize: '0.7rem',
-                            },
-                          }}
-                          InputProps={{
-                            startAdornment: (
-                              <InputAdornment position="start">
-                                {/* <SearchIcon sx={{ fontSize: '16px' }} /> */}
-                              </InputAdornment>
-                            ),
-                          }}
-                        />
+  size="small"
+  placeholder={`Search`}
+  value={tableFilters[column.id] || ''}
+  onChange={(e) => handleTableFilterChange(column.id, e.target.value)}
+  variant="outlined"
+  sx={{
+    '& .MuiOutlinedInput-root': {
+      backgroundColor: 'white', // 🔹 White background
+      '& fieldset': {
+        border: 'none', // Remove border
+      },
+      '&:hover fieldset': {
+        border: 'none',
+      },
+      '&.Mui-focused fieldset': {
+        border: 'none',
+      },
+      height: '28px',
+      fontSize: '0.7rem',
+      borderRadius: '4px', // optional: rounded corners
+    },
+    '& .MuiInputBase-input': {
+      padding: '4px 6px',
+      fontSize: '0.7rem',
+    },
+  }}
+  InputProps={{
+    startAdornment: (
+      <InputAdornment position="start">
+        {/* <SearchIcon sx={{ fontSize: '16px' }} /> */}
+      </InputAdornment>
+    ),
+  }}
+/>
+
                       </TableCell>
                     ))}
                   </TableRow>
@@ -1571,25 +1733,35 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
 
         {/* CRUD Buttons and Totals */}
         <Stack direction="row" spacing={2} sx={{ mt: 2, alignItems: 'center' }}>
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={handleAddItem}
-            disabled={isFormDisabled || isEditingSize || isAddingNew}
-            sx={{
-              backgroundColor: '#39ace2',
-              color: 'white',
-              margin: { xs: '0 4px', sm: '0 6px' },
-              minWidth: { xs: 40, sm: 46, md: 60 },
-              height: { xs: 40, sm: 46, md: 30 },
-              '&:disabled': {
-                backgroundColor: '#cccccc',
-                color: '#666666'
-              }
-            }}
-          >
-            Add
-          </Button>
+      
+
+
+<Tooltip 
+  title={!isPartySelected() ? "Please select a Party first" : "Add new item"}
+  placement="top"
+>
+  <span> {/* This span is needed for tooltip to work when button is disabled */}
+    <Button
+      variant="contained"
+      startIcon={<AddIcon />}
+      onClick={handleAddItem}
+      disabled={isFormDisabled || isEditingSize || isAddingNew}
+      sx={{
+        backgroundColor: '#39ace2',
+        color: 'white',
+        margin: { xs: '0 4px', sm: '0 6px' },
+        minWidth: { xs: 40, sm: 46, md: 60 },
+        height: { xs: 40, sm: 46, md: 30 },
+        '&:disabled': {
+          backgroundColor: '#cccccc',
+          color: '#666666'
+        }
+      }}
+    >
+      Add
+    </Button>
+  </span>
+</Tooltip>
 
           <Button
             variant="contained"
@@ -1779,18 +1951,38 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
                 inputProps={{ style: { padding: '6px 8px', fontSize: '12px' } }} 
               />
               
-              <TextField 
-                label="MRP" 
-                variant="filled" 
-                disabled={shouldDisableFields()}
-                name="mrp"
-                value={isAddingNew || isEditingSize ? newItemData.mrp : ''}
-                onChange={handleNewItemChange}
-                sx={textInputSx} 
-                inputProps={{ style: { padding: '6px 8px', fontSize: '12px' } }} 
-                error={!!getFieldError('mrp')}
-                helperText={getFieldError('mrp')}
-              />
+            <TextField 
+  label="MRP" 
+  variant="filled" 
+  disabled={shouldDisableFields()}
+  name="mrp"
+  value={isAddingNew || isEditingSize ? newItemData.mrp : ''}
+  onChange={handleNewItemChange}
+  sx={textInputSx} 
+  inputProps={{ 
+    style: { padding: '6px 8px', fontSize: '12px' },
+    type: 'number',
+    step: '0.01',
+    min: '0'
+  }} 
+/>
+
+{/* NEW: Rate Field (SSP) */}
+<TextField 
+  label="Rate" 
+  variant="filled" 
+  disabled={shouldDisableFields()}
+  name="rate"
+  value={isAddingNew || isEditingSize ? newItemData.rate : ''}
+  onChange={handleNewItemChange}
+  sx={textInputSx} 
+  inputProps={{ 
+    style: { padding: '6px 8px', fontSize: '12px' },
+    type: 'number',
+    step: '0.01',
+    min: '0'
+  }} 
+/>
               <TextField 
                 label="Set No" 
                 variant="filled" 
@@ -1850,15 +2042,21 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
                 sx={DropInputSx}
               />
               <TextField 
-                label="Percent" 
-                variant="filled" 
-                disabled={shouldDisableFields()}
-                name="percent"
-                value={isAddingNew || isEditingSize ? newItemData.percent : ''}
-                onChange={handleNewItemChange}
-                sx={textInputSx} 
-                inputProps={{ style: { padding: '6px 8px', fontSize: '12px' } }} 
-              />
+  label="Percent" 
+  variant="filled" 
+  disabled={shouldDisableFields()}
+  name="percent"
+  value={isAddingNew || isEditingSize ? newItemData.percent : ''}
+  onChange={handleNewItemChange}
+  sx={textInputSx} 
+  inputProps={{ 
+    style: { padding: '6px 8px', fontSize: '12px' },
+    type: 'number',
+    step: '0.01',
+    min: '0',
+    max: '100'
+  }} 
+/>
               <TextField 
                 label="Remark" 
                 variant="filled" 
@@ -1899,15 +2097,20 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
                 />
               </LocalizationProvider>
               <TextField 
-                label="RQty" 
-                variant="filled" 
-                disabled={shouldDisableFields()}
-                name="rQty"
-                value={isAddingNew || isEditingSize ? newItemData.rQty : ''}
-                onChange={handleNewItemChange}
-                sx={textInputSx} 
-                inputProps={{ style: { padding: '6px 8px', fontSize: '12px' } }} 
-              />
+  label="RQty" 
+  variant="filled" 
+  disabled={shouldDisableFields()}
+  name="rQty"
+  value={isAddingNew || isEditingSize ? newItemData.rQty : ''}
+  onChange={handleNewItemChange}
+  sx={textInputSx} 
+  inputProps={{ 
+    style: { padding: '6px 8px', fontSize: '12px' },
+    type: 'number',
+    step: '1',
+    min: '0'
+  }} 
+/>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <TextField 
                   label="Sets" 
@@ -1925,7 +2128,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
                       variant="contained"
                       color="primary"
                       onClick={fetchSizeDetails}
-                      disabled={!newItemData.product || !newItemData.style}
+                      disabled={!newItemData.product || !newItemData.style || dataSource === 'barcode'}
                       sx={{ minWidth: '80px', height: '36px' }}
                     >
                       Add Qty
@@ -1943,6 +2146,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
                           shade: '',
                           qty: '',
                           mrp: '',
+                          rate: '', // NEW: Reset Rate field
                           setNo: '',
                           varPer: '',
                           stdQty: '',
@@ -1957,6 +2161,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
                         });
                         setStyleCodeInput('');
                         setBarcodeInput('');
+                        setDataSource(null);
                       }}
                       sx={{ minWidth: '60px', height: '36px' }}
                     >
@@ -1989,9 +2194,10 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
                     <TableRow>
                       <TableCell sx={{ fontWeight: 'bold', fontSize: '0.8rem', padding: '6px 8px', backgroundColor: "#f5f5f5", borderBottom: "1px solid #ddd" }}>Size</TableCell>
                       <TableCell sx={{ fontWeight: 'bold', fontSize: '0.8rem', padding: '6px 8px', backgroundColor: "#f5f5f5", borderBottom: "1px solid #ddd" }}>Qty</TableCell>
+                      <TableCell sx={{ fontWeight: 'bold', fontSize: '0.8rem', padding: '6px 8px', backgroundColor: "#f5f5f5", borderBottom: "1px solid #ddd" }}>MRP</TableCell>
+                      <TableCell sx={{ fontWeight: 'bold', fontSize: '0.8rem', padding: '6px 8px', backgroundColor: "#f5f5f5", borderBottom: "1px solid #ddd" }}>Rate</TableCell>
                       <TableCell sx={{ fontWeight: 'bold', fontSize: '0.8rem', padding: '6px 8px', backgroundColor: "#f5f5f5", borderBottom: "1px solid #ddd" }}>Amount</TableCell>
                       <TableCell sx={{ fontWeight: 'bold', fontSize: '0.8rem', padding: '6px 8px', backgroundColor: "#f5f5f5", borderBottom: "1px solid #ddd" }}>Barcode</TableCell>
-                      <TableCell sx={{ fontWeight: 'bold', fontSize: '0.8rem', padding: '6px 8px', backgroundColor: "#f5f5f5", borderBottom: "1px solid #ddd" }}>Order</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -2016,16 +2222,25 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
                               disabled={!isAddingNew && !isEditingSize}
                             />
                           </TableCell>
+                          <TableCell sx={{ fontSize: '0.75rem', padding: '6px 8px' }}>
+                            {size.MRP || newItemData.mrp || 0}
+                          </TableCell>
+                          <TableCell sx={{ fontSize: '0.75rem', padding: '6px 8px' }}>
+                            {size.RATE || newItemData.rate || 0}
+                          </TableCell>
                           <TableCell sx={{ fontSize: '0.75rem', padding: '6px 8px' }}>{size.ITM_AMT || 0}</TableCell>
                           <TableCell sx={{ fontSize: '0.75rem', padding: '6px 8px' }}>{size.FGSTYLE_ID || "-"}</TableCell>
-                          <TableCell sx={{ fontSize: '0.75rem', padding: '6px 8px' }}>{size.QTY}</TableCell>
                         </TableRow>
                       ))
                     ) : (
                       <TableRow>
-                        <TableCell colSpan={5} align="center" sx={{ py: 1 }}>
+                        <TableCell colSpan={6} align="center" sx={{ py: 1 }}>
                           <Typography variant="body2" color="textSecondary">
-                            {isAddingNew ? "Click 'Add Qty' to load size details" : "No size details available"}
+                            {isAddingNew ? 
+                              (dataSource === 'barcode' ? 
+                                "Size details auto-loaded! Enter quantities." : 
+                                "Click 'Add Qty' to load size details") 
+                              : "No size details available"}
                           </Typography>
                         </TableCell>
                       </TableRow>

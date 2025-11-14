@@ -504,6 +504,17 @@ const Stepper1 = ({
     fetchOrderTypeData();
   }, []);
 
+  // Set default order type to "Sales And Work-Order" when component mounts
+  useEffect(() => {
+    if (!formData.Order_Type) {
+      setFormData(prev => ({
+        ...prev,
+        Order_Type: "Sales And Work-Order",
+        ORDBK_TYPE: "2"
+      }));
+    }
+  }, []);
+
   // Set today's date for all date fields when component mounts or mode changes to add
   useEffect(() => {
     if (mode === 'add') {
@@ -631,130 +642,188 @@ const Stepper1 = ({
     }));
   };
 
-  // Enhanced handleAutoCompleteChange function with party auto-fill
-  const handleAutoCompleteChange = (name, value) => {
-    console.log(`AutoComplete Change - Field: ${name}, Value: ${value}`);
+  
+ // Enhanced handleAutoCompleteChange function
+const handleAutoCompleteChange = (name, value) => {
+  console.log(`AutoComplete Change - Field: ${name}, Value: ${value}`);
+  
+  setFormData(prev => ({
+    ...prev,
+    [name]: value
+  }));
+
+  // If party is selected, fetch branches, auto-select shipping party, and fetch party details
+  if (name === "Party" && value && partyMapping[value]) {
+    const partyKey = partyMapping[value];
+    console.log(`Party selected: ${value}, Party Key: ${partyKey}`);
+    
+    // Fetch branches for the selected party
+    fetchPartyDetails(partyKey);
+    
+    // Fetch party details for auto-population
+    fetchPartyDetailsForAutoFill(partyKey);
     
     setFormData(prev => ({
       ...prev,
-      [name]: value
+      PARTY_KEY: partyKey,
+      Party: value,
+      // Only auto-populate shipping party if it's empty or same as current party
+      SHIPPING_PARTY: prev.SHIPPING_PARTY === prev.Party ? value : prev.SHIPPING_PARTY,
+      // Don't auto-set shipping party key if shipping party is different
+      SHP_PARTY_KEY: prev.SHIPPING_PARTY === prev.Party ? partyKey : prev.SHP_PARTY_KEY,
+      // Branch will be auto-selected in fetchPartyDetails
     }));
+  }
 
-    // If party is selected, fetch branches, auto-select shipping party, and fetch party details
-    if (name === "Party" && value && partyMapping[value]) {
-      const partyKey = partyMapping[value];
-      console.log(`Party selected: ${value}, Party Key: ${partyKey}`);
-      
-      // Fetch branches for the selected party
-      fetchPartyDetails(partyKey);
-      
-      // Fetch party details for auto-population
-      fetchPartyDetailsForAutoFill(partyKey);
-      
+  // If branch is selected, only auto-select shipping place if it's currently empty or same as branch
+  if (name === "Branch" && value) {
+    const branchId = branchMapping[value];
+    console.log(`Branch selected: ${value}, Branch ID: ${branchId}`);
+    
+    setFormData(prev => ({
+      ...prev,
+      PARTYDTL_ID: branchId,
+      Branch: value,
+      // Only auto-populate shipping place if it's empty or same as current branch
+      SHIPPING_PLACE: prev.SHIPPING_PLACE === prev.Branch ? value : prev.SHIPPING_PLACE,
+      // Only auto-set shipping place ID if shipping place is same as branch
+      SHP_PARTYDTL_ID: prev.SHIPPING_PLACE === prev.Branch ? branchId : prev.SHP_PARTYDTL_ID
+    }));
+  }
+
+  // Handle shipping party selection separately
+  if (name === "SHIPPING_PARTY" && value) {
+    const shippingPartyKey = partyMapping[value];
+    console.log(`Shipping Party selected: ${value}, Key: ${shippingPartyKey}`);
+    
+    if (shippingPartyKey) {
       setFormData(prev => ({
         ...prev,
-        PARTY_KEY: partyKey,
-        Party: value,
-        SHIPPING_PARTY: value, // Auto-populate shipping party
-        SHP_PARTY_KEY: partyKey, // Set shipping party key same as party key
-        // Branch will be auto-selected in fetchPartyDetails
+        SHP_PARTY_KEY: shippingPartyKey,
+        SHIPPING_PARTY: value,
+        // Clear shipping place when shipping party changes
+        SHIPPING_PLACE: "",
+        SHP_PARTYDTL_ID: 0
       }));
-    }
-
-    // If branch is selected, auto-select shipping place
-    if (name === "Branch" && value) {
-      const branchId = branchMapping[value];
-      console.log(`Branch selected: ${value}, Branch ID: ${branchId}`);
       
+      // Fetch branches for the selected shipping party
+      fetchShippingPartyDetails(shippingPartyKey);
+    }
+  }
+
+  // Handle shipping place selection
+  if (name === "SHIPPING_PLACE" && value) {
+    const shippingPlaceId = branchMapping[value];
+    console.log(`Shipping Place selected: ${value}, ID: ${shippingPlaceId}`);
+    
+    if (shippingPlaceId) {
       setFormData(prev => ({
         ...prev,
-        PARTYDTL_ID: branchId,
-        Branch: value,
-        SHIPPING_PLACE: value,
-        SHP_PARTYDTL_ID: branchId 
+        SHP_PARTYDTL_ID: shippingPlaceId,
+        SHIPPING_PLACE: value
       }));
     }
+  }
 
-    // Update corresponding key fields for other dropdowns
-    const keyMappings = {
-      "Broker": ["BROKER_KEY", brokerMapping],
-      "BROKER1": ["BROKER1_KEY", broker1Mapping], 
-      "SALESPERSON_1": ["SALEPERSON1_KEY", salesperson1Mapping],
-      "SALESPERSON_2": ["SALEPERSON2_KEY", salesperson2Mapping],
-      "CONSIGNEE": ["DISTBTR_KEY", consigneeMapping],
-      "SEASON": ["CURR_SEASON_KEY", seasonMapping],
-      "Transporter": ["TRSP_KEY", transporterMapping],
-      "Order_Type": ["ORDBK_TYPE", orderTypeMapping],
-      "MERCHANDISER_NAME": ["MERCHANDISER_ID", merchandiserMapping],
-      "PRICE_LIST": ["PRICELIST_KEY", {}]
-    };
+  // Update corresponding key fields for other dropdowns
+  const keyMappings = {
+    "Broker": ["BROKER_KEY", brokerMapping],
+    "BROKER1": ["BROKER1_KEY", broker1Mapping], 
+    "SALESPERSON_1": ["SALEPERSON1_KEY", salesperson1Mapping],
+    "SALESPERSON_2": ["SALEPERSON2_KEY", salesperson2Mapping],
+    "CONSIGNEE": ["DISTBTR_KEY", consigneeMapping],
+    "SEASON": ["CURR_SEASON_KEY", seasonMapping],
+    "Transporter": ["TRSP_KEY", transporterMapping],
+    "Order_Type": ["ORDBK_TYPE", orderTypeMapping],
+    "MERCHANDISER_NAME": ["MERCHANDISER_ID", merchandiserMapping],
+    "PRICE_LIST": ["PRICELIST_KEY", {}]
+  };
 
-    if (keyMappings[name] && value) {
-      const [keyField, mapping] = keyMappings[name];
-      if (mapping[value]) {
+  if (keyMappings[name] && value) {
+    const [keyField, mapping] = keyMappings[name];
+    if (mapping[value]) {
+      setFormData(prev => ({
+        ...prev,
+        [keyField]: mapping[value]
+      }));
+    }
+  }
+
+  // Handle Order Type selection
+  if (name === "Order_Type" && value) {
+    const orderTypeKey = orderTypeMapping[value] || "0";
+    setFormData(prev => ({
+      ...prev,
+      ORDBK_TYPE: orderTypeKey
+    }));
+  }
+};
+
+ // In Stepper1 component
+const handleShippingPartyChange = async (name, value) => {
+  setFormData(prev => ({
+    ...prev,
+    [name]: value
+  }));
+
+  // If shipping party is selected, fetch its branches for shipping place
+  if (name === "SHIPPING_PARTY" && value && partyMapping[value]) {
+    const partyKey = partyMapping[value];
+    setFormData(prev => ({
+      ...prev,
+      SHP_PARTY_KEY: partyKey,
+      SHIPPING_PLACE: "" // Clear previous shipping place
+    }));
+    
+    // Fetch branches for the selected shipping party
+    await fetchShippingPartyDetails(partyKey);
+  }
+};
+
+// Fetch branches for shipping party
+const fetchShippingPartyDetails = async (partyKey) => {
+  if (!partyKey) return;
+  
+  try {
+    const response = await axiosInstance.post("Party/GetPartyDtlDrp", {
+      PARTY_KEY: partyKey
+    });
+    
+    console.log('Shipping Party Branches API Response:', response.data);
+    
+    if (response.data.STATUS === 0 && Array.isArray(response.data.DATA)) {
+      const branches = response.data.DATA.map(item => item.PLACE || '');
+      setShippingPlaceOptions(branches);
+      
+      // Update branch mapping for shipping party
+      const mapping = {};
+      response.data.DATA.forEach(item => {
+        if (item.PLACE && item.PARTYDTL_ID) {
+          mapping[item.PLACE] = item.PARTYDTL_ID;
+        }
+      });
+      
+      // Auto-select the first branch if available
+      if (branches.length > 0) {
+        const firstBranch = branches[0];
+        const firstBranchId = mapping[firstBranch];
+        
         setFormData(prev => ({
           ...prev,
-          [keyField]: mapping[value]
+          SHIPPING_PLACE: firstBranch,
+          SHP_PARTYDTL_ID: firstBranchId
         }));
       }
-    }
-
-    // Handle Order Type selection
-    if (name === "Order_Type" && value) {
-      const orderTypeKey = orderTypeMapping[value] || "0";
-      setFormData(prev => ({
-        ...prev,
-        ORDBK_TYPE: orderTypeKey
-      }));
-    }
-  };
-
-  const handleShippingPartyChange = (name, value) => {
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-
-    // If shipping party is selected, fetch its branches for shipping place
-    if (name === "SHIPPING_PARTY" && value && partyMapping[value]) {
-      const partyKey = partyMapping[value];
-      setFormData(prev => ({
-        ...prev,
-        SHP_PARTY_KEY: partyKey
-      }));
-      // Fetch branches for the selected shipping party
-      fetchShippingPartyDetails(partyKey);
-    }
-  };
-
-  // Fetch branches for shipping party
-  const fetchShippingPartyDetails = async (partyKey) => {
-    if (!partyKey) return;
-    
-    try {
-      const response = await axiosInstance.post("Party/GetPartyDtlDrp", {
-        PARTY_KEY: partyKey
-      });
-      if (response.data.STATUS === 0 && Array.isArray(response.data.DATA)) {
-        const branches = response.data.DATA.map(item => item.PLACE || '');
-        setShippingPlaceOptions(branches);
-        
-        // Update branch mapping for shipping party
-        const mapping = {};
-        response.data.DATA.forEach(item => {
-          if (item.PLACE && item.PARTYDTL_ID) {
-            mapping[item.PLACE] = item.PARTYDTL_ID;
-          }
-        });
-        setBranchMapping(prev => ({ ...prev, ...mapping }));
-      } else {
-        setShippingPlaceOptions([]);
-      }
-    } catch (error) {
-      console.error("Error fetching shipping party details:", error);
+    } else {
       setShippingPlaceOptions([]);
     }
-  };
+  } catch (error) {
+    console.error("Error fetching shipping party details:", error);
+    setShippingPlaceOptions([]);
+  }
+};
+
+
 
   const handleChangeStatus = (event) => {
     const { name, checked } = event.target;
@@ -781,17 +850,14 @@ const Stepper1 = ({
     }
   };
 
- const getFieldError = (fieldName) => {
+  // SIMPLIFIED VALIDATION - Only Party, Order No, and Order Date
+  const getFieldError = (fieldName) => {
     if (!showValidationErrors) return '';
     
     const requiredFields = {
       'Party': 'Party',
-      'SEASON': 'Season',
-      'CONSIGNEE': 'Consignee',
-      'Broker': 'Broker',
-      'BROKER1': 'Broker1',
-      'SALESPERSON_1': 'Salesperson 1',
-      'SALESPERSON_2': 'Salesperson 2',
+      'ORDER_NO': 'Order No',
+      'ORDER_DATE': 'Order Date'
     };
 
     if (requiredFields[fieldName] && !formData[fieldName]) {
@@ -914,7 +980,7 @@ const Stepper1 = ({
               options={orderTypeOptions}
               label="Order Type"
               name="Order_Type"
-              value={formData.Order_Type || ""}
+              value={formData.Order_Type || "Sales And Work-Order"}
               onChange={(event, value) => handleAutoCompleteChange("Order_Type", value)}
               sx={DropInputSx}
               inputProps={{
@@ -952,13 +1018,21 @@ const Stepper1 = ({
               value={formData.ORDER_NO || ""}
               name="ORDER_NO"
               disabled={isFormDisabled}
-              sx={textInputSx}
+              sx={{
+                ...textInputSx,
+                '& .MuiFilledInput-root': {
+                  ...textInputSx['& .MuiFilledInput-root'],
+                  border: getFieldError('ORDER_NO') ? '1px solid #f44336' : '1px solid #e0e0e0',
+                }
+              }}
               inputProps={{
                 style: {
                   padding: '6px 8px',
                   fontSize: '12px',
                 },
               }}
+              error={!!getFieldError('ORDER_NO')}
+              helperText={getFieldError('ORDER_NO')}
             />
           </Box>
           <Box sx={{ width: { xs: '100%', sm: '20%', md: '20%' } }}>
@@ -996,9 +1070,9 @@ const Stepper1 = ({
                     InputProps: {
                       sx: {
                         ...datePickerSx,
-          '& .MuiFilledInput-root': {
-            border: getFieldError('ORDER_DATE') ? '1px solid #f44336' : '1px solid #e0e0e0',
-          },
+                        '& .MuiFilledInput-root': {
+                          border: getFieldError('ORDER_DATE') ? '1px solid #f44336' : '1px solid #e0e0e0',
+                        },
                         height: "32px",
                       },
                     },
@@ -1035,8 +1109,6 @@ const Stepper1 = ({
                   fontSize: '12px',
                 },
               }}
-              error={!!getFieldError('SEASON')}
-              helperText={getFieldError('SEASON')}
             />
           </Box>
           <Box sx={{ width: { xs: "100%", sm: "20%", md: "20%" } }}>
@@ -1095,15 +1167,9 @@ const Stepper1 = ({
                     sx: datePickerSx,
                     InputProps: {
                       sx: {
-                                     ...datePickerSx,
-          '& .MuiFilledInput-root': {
-            border: getFieldError('DLV_DT') ? '1px solid #f44336' : '1px solid #e0e0e0',
-          },
                         height: "32px",
                       },
                     },
-                    error: !!getFieldError('DLV_DT'),
-                    helperText: getFieldError('DLV_DT')
                   },
                 }}
               />
@@ -1147,12 +1213,12 @@ const Stepper1 = ({
               value={formData.Party || ""}
               onChange={(event, value) => handleAutoCompleteChange("Party", value)}
               sx={{
-    ...DropInputSx,
-    '& .MuiFilledInput-root': {
-      ...DropInputSx['& .MuiFilledInput-root'],
-      border: getFieldError('Party') ? '1px solid #f44336' : '1px solid #e0e0e0',
-    }
-  }}
+                ...DropInputSx,
+                '& .MuiFilledInput-root': {
+                  ...DropInputSx['& .MuiFilledInput-root'],
+                  border: getFieldError('Party') ? '1px solid #f44336' : '1px solid #e0e0e0',
+                }
+              }}
               inputProps={{
                 style: {
                   padding: '6px 8px',
@@ -1291,21 +1357,24 @@ const Stepper1 = ({
 
           <Box sx={{ width: { xs: '100%', sm: '20%', md: '20%' } }}>
             <TextField
-              label="Comm %"
-              variant="filled"
-              fullWidth
-              onChange={handleInputChange}
-              value={formData.Comm || ""}
-              disabled={isFormDisabled}
-              name="Comm"
-              sx={textInputSx}
-              inputProps={{
-                style: {
-                  padding: '6px 8px',
-                  fontSize: '12px'
-                },
-              }}
-            />
+  label="Comm %"
+  variant="filled"
+  fullWidth
+  onChange={handleInputChange}
+  value={formData.Comm || ""}
+  disabled={isFormDisabled}
+  name="Comm"
+  sx={textInputSx}
+  inputProps={{
+    style: {
+      padding: '6px 8px',
+      fontSize: '12px'
+    },
+    type: 'number',
+    step: '0.01',
+    min: '0'
+  }}
+/>
           </Box>
 
           <Box sx={{ width: { xs: '100%', sm: '20%', md: '15%' } }}>
@@ -1345,21 +1414,13 @@ const Stepper1 = ({
               name="Broker"
               value={formData.Broker || ""}
               onChange={(event, value) => handleAutoCompleteChange("Broker", value)}
-              sx={{
-    ...DropInputSx,
-    '& .MuiFilledInput-root': {
-      ...DropInputSx['& .MuiFilledInput-root'],
-      border: getFieldError('Broker') ? '1px solid #f44336' : '1px solid #e0e0e0',
-    }
-  }}
+              sx={DropInputSx}
               inputProps={{
                 style: {
                   padding: '6px 8px',
                   fontSize: '12px',
                 },
               }}
-              error={!!getFieldError('Broker')}
-              helperText={getFieldError('Broker')}
             />
           </Box>
 
@@ -1385,57 +1446,66 @@ const Stepper1 = ({
 
           <Box sx={{ width: { xs: '100%', sm: '20%', md: '20%' } }}>
             <TextField
-              label="Amount"
-              variant="filled"
-              fullWidth
-              onChange={handleInputChange}
-              value={formData.AMOUNT || ""}
-              disabled={isFormDisabled}
-              name="AMOUNT"
-              sx={textInputSx}
-              inputProps={{
-                style: {
-                  padding: '6px 8px',
-                  fontSize: '12px'
-                },
-              }}
-            />
+  label="Amount"
+  variant="filled"
+  fullWidth
+  onChange={handleInputChange}
+  value={formData.AMOUNT || ""}
+  disabled={isFormDisabled}
+  name="AMOUNT"
+  sx={textInputSx}
+  inputProps={{
+    style: {
+      padding: '6px 8px',
+      fontSize: '12px'
+    },
+    type: 'number',
+    step: '0.01',
+    min: '0'
+  }}
+/>
           </Box>
           <Box sx={{ width: { xs: '100%', sm: '20%', md: '20%' } }}>
             <TextField
-              label="Gross Amount"
-              variant="filled"
-              fullWidth
-              onChange={handleInputChange}
-              value={formData.AMOUNT_1 || ""}
-              disabled={isFormDisabled}
-              name="AMOUNT_1"
-              sx={textInputSx}
-              inputProps={{
-                style: {
-                  padding: '6px 8px',
-                  fontSize: '12px'
-                },
-              }}
-            />
+  label="Gross Amount"
+  variant="filled"
+  fullWidth
+  onChange={handleInputChange}
+  value={formData.AMOUNT_1 || ""}
+  disabled={isFormDisabled}
+  name="AMOUNT_1"
+  sx={textInputSx}
+  inputProps={{
+    style: {
+      padding: '6px 8px',
+      fontSize: '12px'
+    },
+    type: 'number',
+    step: '0.01',
+    min: '0'
+  }}
+/>
           </Box>
-           <Box sx={{ width: { xs: "100%", sm: "20%", md: "15%" } }}>
-            <TextField
-              label="Round Off(Net Amt)"
-              variant="filled"
-              fullWidth
-              onChange={handleInputChange}
-              value={formData.Net_Amt || ""}
-              disabled={isFormDisabled}
-              name="Net_Amt"
-              sx={textInputSx}
-              inputProps={{
-                style: {
-                  padding: '6px 8px',
-                  fontSize: '12px'
-                },
-              }}
-            />
+          <Box sx={{ width: { xs: '100%', sm: '20%', md: '15%' } }}>
+          <TextField
+  label="Round Off(Net Amt)"
+  variant="filled"
+  fullWidth
+  onChange={handleInputChange}
+  value={formData.Net_Amt || ""}
+  disabled={isFormDisabled}
+  name="Net_Amt"
+  sx={textInputSx}
+  inputProps={{
+    style: {
+      padding: '6px 8px',
+      fontSize: '12px'
+    },
+    type: 'number',
+    step: '0.01',
+    min: '0'
+  }}
+/>
           </Box>
         </Box>
 
@@ -1456,21 +1526,13 @@ const Stepper1 = ({
               name="BROKER1"
               value={formData.BROKER1 || ""}
               onChange={(event, value) => handleAutoCompleteChange("BROKER1", value)}
-                       sx={{
-    ...DropInputSx,
-    '& .MuiFilledInput-root': {
-      ...DropInputSx['& .MuiFilledInput-root'],
-      border: getFieldError('Broker1') ? '1px solid #f44336' : '1px solid #e0e0e0',
-    }
-  }}
+              sx={DropInputSx}
               inputProps={{
                 style: {
                   padding: '6px 8px',
                   fontSize: '12px',
                 },
               }}
-              error={!!getFieldError('BROKER1')}
-              helperText={getFieldError('BROKER1')}
             />
           </Box>
         
@@ -1514,16 +1576,14 @@ const Stepper1 = ({
                   fontSize: '12px',
                 },
               }}
-              error={!!getFieldError('CONSIGNEE')}
-              helperText={getFieldError('CONSIGNEE')}
             />
           </Box>
           <Box sx={{ width: { xs: "100%", sm: "20%", md: "20%" } }}>
             <LocalizationProvider dateAdapter={AdapterDateFns}>
               <DatePicker
                 label="Org Delivery Date"
-                value={parseDateFromString(formData.ORG_DIL_DT)}
-                onChange={(date) => handleDateChange(date, "ORG_DIL_DT")}
+                value={parseDateFromString(formData.ORG_DLV_DT)}
+                onChange={(date) => handleDateChange(date, "ORG_DLV_DT")}
                 format="dd/MM/yyyy"
                 disabled={isFormDisabled}
                 slotProps={{
@@ -1580,21 +1640,13 @@ const Stepper1 = ({
               name="SALESPERSON_1"
               value={formData.SALESPERSON_1 || ""}
               onChange={(event, value) => handleAutoCompleteChange("SALESPERSON_1", value)}
-                                 sx={{
-    ...DropInputSx,
-    '& .MuiFilledInput-root': {
-      ...DropInputSx['& .MuiFilledInput-root'],
-      border: getFieldError('SALESPERSON_1') ? '1px solid #f44336' : '1px solid #e0e0e0',
-    }
-  }}
+              sx={DropInputSx}
               inputProps={{
                 style: {
                   padding: '6px 8px',
                   fontSize: '12px',
                 },
               }}
-              error={!!getFieldError('SALESPERSON_1')}
-              helperText={getFieldError('SALESPERSON_1')}
             />
           </Box>
           <Box sx={{ width: { xs: '100%', sm: '20%', md: '20%' } }}>
@@ -1607,21 +1659,13 @@ const Stepper1 = ({
               name="SALESPERSON_2"
               value={formData.SALESPERSON_2 || ""}
               onChange={(event, value) => handleAutoCompleteChange("SALESPERSON_2", value)}
-                                            sx={{
-    ...DropInputSx,
-    '& .MuiFilledInput-root': {
-      ...DropInputSx['& .MuiFilledInput-root'],
-      border: getFieldError('SALESPERSON_2') ? '1px solid #f44336' : '1px solid #e0e0e0',
-    }
-  }}
+              sx={DropInputSx}
               inputProps={{
                 style: {
                   padding: '6px 8px',
                   fontSize: '12px',
                 },
               }}
-              error={!!getFieldError('SALESPERSON_2')}
-              helperText={getFieldError('SALESPERSON_2')}
             />
           </Box>
           <Box sx={{ width: { xs: "100%", sm: "20%", md: "20%" } }}>
@@ -1643,40 +1687,44 @@ const Stepper1 = ({
             />
           </Box>
           <Box sx={{ width: { xs: '100%', sm: '20%', md: '20%' } }}>
-            <TextField
-              label="Currency"
-              variant="filled"
-              fullWidth
-              onChange={handleInputChange}
-              value={formData.Currency || ""}
-              disabled={isFormDisabled}
-              name="Currency"
-              sx={textInputSx}
-              inputProps={{
-                style: {
-                  padding: '6px 8px',
-                  fontSize: '12px'
-                },
-              }}
-            />
+          <TextField
+  label="Currency"
+  variant="filled"
+  fullWidth
+  onChange={handleInputChange}
+  value={formData.Currency || ""}
+  disabled={isFormDisabled}
+  name="Currency"
+  sx={textInputSx}
+  inputProps={{
+    style: {
+      padding: '6px 8px',
+      fontSize: '12px'
+    },
+    type: 'text' // Keep as text for currency codes
+  }}
+/>
           </Box>
           <Box sx={{ width: { xs: '100%', sm: '20%', md: '15%' } }}>
             <TextField
-              label="Ex Rate"
-              variant="filled"
-              fullWidth
-              onChange={handleInputChange}
-              value={formData.EX_RATE || ""}
-              disabled={isFormDisabled}
-              name="EX_RATE"
-              sx={textInputSx}
-              inputProps={{
-                style: {
-                  padding: '6px 8px',
-                  fontSize: '12px'
-                },
-              }}
-            />
+  label="Ex Rate"
+  variant="filled"
+  fullWidth
+  onChange={handleInputChange}
+  value={formData.EX_RATE || ""}
+  disabled={isFormDisabled}
+  name="EX_RATE"
+  sx={textInputSx}
+  inputProps={{
+    style: {
+      padding: '6px 8px',
+      fontSize: '12px'
+    },
+    type: 'number',
+    step: '0.0001',
+    min: '0'
+  }}
+/>
           </Box>
         </Box>
 
