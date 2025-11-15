@@ -1,8 +1,7 @@
 import React from "react";
 import { Page, Text, View, Document } from "@react-pdf/renderer";
 
-
-const OrderDocument = () => {
+const OrderDocument = ({ orderDetails }) => {
     const today = new Date().toLocaleDateString();
 
     return (
@@ -29,15 +28,15 @@ const OrderDocument = () => {
                 >
                     <View>
                         <Text style={{ fontSize: 14, fontWeight: "bold" }}>
-                            DHANLAXMI TRENDS PVT. LTD.
+                            {orderDetails.CO_NAME}
                         </Text>
-                        <Text>107-108, INDUSTRIAL ESTATE AREA,</Text>
-                        <Text>POLOGROUND, INDORE, MADHYAPRADESH</Text>
+                        <Text>{orderDetails.CITY_NAME}</Text>
+                        <Text>{orderDetails.STATE_NAME}</Text>
                     </View>
                     <View style={{ textAlign: "right" }}>
-                        <Text>Tel: 9425911749</Text>
+                        <Text>Tel: 9988776655</Text>
                         <Text>Fax:</Text>
-                        <Text>Email: dhanlaxmitrent@gmail.com</Text>
+                        <Text>Email: yourgmail@gmail.com</Text>
                     </View>
                 </View>
 
@@ -47,10 +46,10 @@ const OrderDocument = () => {
                         style={{
                             display: "inline-block",
                             fontWeight: "bold",
-                            fontSize: 14,
+                            fontSize: 11,
                             paddingVertical: 5,
                             paddingHorizontal: 10,
-                            borderWidth: 2,
+                            borderWidth: 1,
                             borderColor: "#000",
                             alignSelf: "center",
                         }}
@@ -70,7 +69,7 @@ const OrderDocument = () => {
                     {/* Main Border Box */}
                     <View
                         style={{
-                            borderWidth: 2,
+                            borderWidth: 1,
                             borderColor: "#000",
                             padding: 10,
                             flexDirection: "column",
@@ -96,10 +95,10 @@ const OrderDocument = () => {
                                 }}
                             >
                                 <Text style={{ fontWeight: "bold", fontSize: 12 }}>
-                                    Party: KALAMANDIR CREATION GANDHINAGAR
+                                    Party: {orderDetails.PARTY_NAME}
                                 </Text>
-                                <Text style={{ fontSize: 12 }}>Shp No. 5, Survey No. 4131,</Text>
-                                <Text style={{ fontSize: 12 }}>NR Eloom Opp. Sony, KOHAPUR (M.H)</Text>
+                                <Text style={{ fontSize: 12 }}>{orderDetails.CITY_NAME}</Text>
+                                <Text style={{ fontSize: 12 }}>{orderDetails.STATE_NAME}</Text>
                             </View>
 
                             <View style={{ flex: 1, paddingLeft: 10, fontSize: 12 }}>
@@ -110,10 +109,11 @@ const OrderDocument = () => {
                                     }}
                                 >
                                     <Text>
-                                        <Text style={{ fontWeight: "bold", fontSize: 12 }}>Order No:</Text> XV0015
+                                        <Text style={{ fontWeight: "bold", fontSize: 12 }}>Order No:</Text> {orderDetails.ORDBK_NO}
                                     </Text>
                                     <Text>
-                                        <Text style={{ fontWeight: "bold", fontSize: 12 }}>Date:</Text> {today}
+                                        <Text style={{ fontWeight: "bold", fontSize: 12 }}>Date:</Text>
+                                        {new Date(orderDetails.ORDBK_DT).toLocaleDateString()}
                                     </Text>
                                 </View>
                                 <View
@@ -123,10 +123,10 @@ const OrderDocument = () => {
                                     }}
                                 >
                                     <Text>
-                                        <Text style={{ fontWeight: "bold", fontSize: 12 }}>Other Ref No:</Text> XV0015
+                                        <Text style={{ fontWeight: "bold", fontSize: 12 }}>Month:</Text> {orderDetails.MONTH}
                                     </Text>
                                     <Text>
-                                        <Text style={{ fontWeight: "bold", fontSize: 12 }}>Date:</Text> {today}
+                                        <Text style={{ fontWeight: "bold", fontSize: 12 }}>Year:</Text> {orderDetails.YEAR}
                                     </Text>
                                 </View>
                                 <View
@@ -203,8 +203,8 @@ const OrderDocument = () => {
                                     <Text>1</Text>
                                 </View>
                             </View>
-                            <Text style={{ flex: 0.5, paddingVertical: 6, paddingHorizontal: 1 }}>4</Text>
-                            <Text style={{ flex: 1, paddingVertical: 6, paddingHorizontal: 1 }}>799</Text>
+                            <Text style={{ flex: 0.5, paddingVertical: 6, paddingHorizontal: 1 }}>{orderDetails.QTY}</Text>
+                            <Text style={{ flex: 1, paddingVertical: 6, paddingHorizontal: 1 }}>{orderDetails.AMOUNT}</Text>
                         </View>
                         <View style={{ flexDirection: "row", fontSize: 12 }}>
                             <Text style={{ flex: 0.5, paddingVertical: 6, paddingHorizontal: 1 }}>2</Text>
@@ -225,8 +225,8 @@ const OrderDocument = () => {
                                     <Text>2</Text>
                                 </View>
                             </View>
-                            <Text style={{ flex: 0.5, paddingVertical: 6, paddingHorizontal: 1 }}>2</Text>
-                            <Text style={{ flex: 1, paddingVertical: 6, paddingHorizontal: 1 }}>599</Text>
+                            <Text style={{ flex: 0.5, paddingVertical: 6, paddingHorizontal: 1 }}>{orderDetails.QTY}</Text>
+                            <Text style={{ flex: 1, paddingVertical: 6, paddingHorizontal: 1 }}>{orderDetails.AMOUNT}</Text>
                         </View>
                         {/* Footer */}
                         <View
@@ -242,14 +242,14 @@ const OrderDocument = () => {
                                     Total:
                                 </Text>
                                 <Text style={{ flex: 1, fontWeight: "bold", paddingVertical: 6 }}>
-                                    Rs. 1398.00
+                                    Rs. {orderDetails.AMOUNT}
                                 </Text>
                             </View>
 
                             <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-                                <View style={{ flex: 1, padding: 8 }}>
-                                    <Text>VAT Reg No.: </Text>
-                                    <Text>C.S.T. Reg No.: </Text>
+                                <View style={{ flex: 1, padding: 8, fontSize: 11 }}>
+                                    <Text>VAT Reg No: </Text>
+                                    <Text>C.S.T. Reg No: </Text>
                                     <Text>Created By: </Text>
                                 </View>
 
@@ -258,12 +258,12 @@ const OrderDocument = () => {
                                     style={{
                                         flex: 1,
                                         padding: 8,
-                                        borderLeftWidth: 1,
+                                        borderLeftWidth: 0.5,
                                         borderColor: "#000",
                                         alignItems: "center",
                                     }}
                                 >
-                                    <Text>Customer&apos;s Signature</Text>
+                                    <Text style={{ fontSize: 12 }}>Customer&apos;s Signature</Text>
                                     <Text style={{ fontSize: 12 }}>(below Rubber stamp)</Text>
                                 </View>
 
@@ -273,18 +273,17 @@ const OrderDocument = () => {
                                         flex: 1,
                                         padding: 8,
                                         paddingLeft: 0,
-                                        borderLeftWidth: 1,
+                                        borderLeftWidth: 0.5,
                                         borderColor: "#000",
                                         alignItems: "flex-start",
                                     }}
                                 >
-                                    <Text style={{ textAlign: 'left', paddingLeft: 0, marginLeft: 0 }}>
-                                        For<Text style={{ fontWeight: "bold", fontSize: 12 }}>DHANLAXMI TRENDS PVT. LTD.</Text>
+                                    <Text style={{ textAlign: 'left', paddingLeft: 3, marginLeft: 0 }}>
+                                        For <Text style={{ fontWeight: "bold", fontSize: 10 }}>{orderDetails.CO_NAME}</Text>
                                     </Text>
-                                    <Text style={{ marginTop: 10, textAlign: 'left', paddingLeft: 0, marginLeft: 0 }}>Authorised Signatory</Text>
+                                    <Text style={{ marginTop: 10, textAlign: 'left', paddingLeft: 3, marginLeft: 0 }}>Authorised Signatory</Text>
                                 </View>
                             </View>
-
                         </View>
                     </View>
                 </View>
