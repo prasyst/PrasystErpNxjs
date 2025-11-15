@@ -279,3 +279,7 @@ div[class*="Watermark"],
 .css-c7axfe-MuiButtonBase-root-MuiTab-root{
   min-width: 75px !important;
 }
+
+.custom-datepicker .css-1fb7els-MuiPickersSectionList-root-MuiPickersInputBase-sectionsContainer-MuiPickersOutlinedInput-sectionsContainer {
+    padding: 9.5px 0 !important;
+}

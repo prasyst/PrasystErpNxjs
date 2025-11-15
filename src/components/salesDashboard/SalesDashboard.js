@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
 import {
     Box, Typography, Grid, Paper, IconButton, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Avatar, Button,
-    styled, useTheme, TextField
+    styled, useTheme, TextField, DialogTitle, DialogActions, Dialog
 } from "@mui/material";
 import { LinearProgress, Chip } from '@mui/material';
 import CurrencyRupeeIcon from '@mui/icons-material/CurrencyRupee';
@@ -26,6 +26,8 @@ import axiosInstance from "@/lib/axios";
 import { toast, ToastContainer } from "react-toastify";
 import { PieChart } from '@mui/x-charts/PieChart';
 import OrderDocument from "./OrderDocument";
+import { PDFViewer } from "@react-pdf/renderer";
+import CloseIcon from '@mui/icons-material/Close';
 
 // Dynamic import for Gauge
 const GaugeComponent = dynamic(
@@ -133,6 +135,8 @@ const SalesDashboard = () => {
     const [dateTo, setDateTo] = useState(dayjs().endOf('month'));
     const [tableData, setTableData] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
+    const [selectedOrder, setSelectedOrder] = useState(null);
+    const [isModalOpen, setIsModalOpen] = useState(false);
     const [summaryData, setSummaryData] = useState({
         TOT_QTY: 0,
         TOT_BALQTY: 0,
@@ -217,8 +221,13 @@ const SalesDashboard = () => {
         totalCoutData();
     };
 
-    const handleViewDocument = () => {
+    const handleViewDocument = (order) => {
+        setSelectedOrder(order);
+        setIsModalOpen(true);
+    };
 
+    const handleCloseModal = () => {
+        setIsModalOpen(false);
     };
 
     // Handle search input change
@@ -241,8 +250,12 @@ const SalesDashboard = () => {
         );
     });
 
+    const handleRowDoubleClick = (order) => {
+        // router.push(`/inverntory/stock-enquiry-table/${order.ORDBK_KEY}`);
+    };
+
     return (
-        <Box sx={{ p: 4, pt: 1, bgcolor: "#f5f7fa", minHeight: "70vh" }}>
+        <Box sx={{ p: 2, pt: 1, bgcolor: "#f5f7fa", minHeight: "70vh" }}>
             <ToastContainer />
             <Box
                 sx={{
@@ -275,6 +288,7 @@ const SalesDashboard = () => {
                             format="DD/MM/YYYY"
                             views={['day', 'month', 'year']}
                             sx={{ width: 150 }}
+                            className="custom-datepicker"
                         />
                         <DatePicker
                             label="To-Date"
@@ -283,6 +297,7 @@ const SalesDashboard = () => {
                             format="DD/MM/YYYY"
                             views={['day', 'month', 'year']}
                             sx={{ width: 150, }}
+                            className="custom-datepicker"
                         />
                         <Button
                             variant='contained'
@@ -478,7 +493,7 @@ const SalesDashboard = () => {
                             <Table stickyHeader size="small" aria-label="recent orders">
                                 <TableHead>
                                     <TableRow>
-                                        <TableCell>Actions</TableCell>
+                                        <TableCell>View</TableCell>
                                         <TableCell>OrderNo</TableCell>
                                         <TableCell>Date</TableCell>
                                         <TableCell>Party</TableCell>
@@ -492,11 +507,15 @@ const SalesDashboard = () => {
                                 <TableBody>
                                     {filteredData.length > 0 ? (
                                         filteredData.map((item, index) => (
-                                            <TableRow key={item.ORDBK_NO + index} hover>
+                                            <TableRow
+                                                key={item.ORDBK_NO}
+                                                hover
+                                                onDoubleClick={() => handleRowDoubleClick(item)}
+                                            >
                                                 <TableCell>
                                                     <VisibilityIcon
                                                         sx={{ cursor: 'pointer', color: '#1976d2' }}
-                                                        onClick={() => handleViewDocument(item.ORDBK_NO)}
+                                                        onClick={() => handleViewDocument(item)}
                                                     />
                                                 </TableCell>
                                                 <TableCell>{item.ORDBK_NO}</TableCell>
@@ -589,6 +608,18 @@ const SalesDashboard = () => {
                 </Grid>
             </Grid>
 
+            <Dialog open={isModalOpen} onClose={handleCloseModal} maxWidth='lg' fullWidth>
+                <Box display='flex' justifyContent='space-between'>
+                    <DialogTitle sx={{ padding: '10px !important' }}>Order Document</DialogTitle>
+                    <DialogActions>
+                        <Button onClick={handleCloseModal}><CloseIcon color="error" /></Button>
+                    </DialogActions>
+                </Box>
+                <PDFViewer width='100%' height='800px'>
+                    {selectedOrder && <OrderDocument orderDetails={selectedOrder} />}
+                </PDFViewer>
+            </Dialog>
+
             <Grid container spacing={2} mt={3}>
                 <Grid size={{ xs: 12, md: 6 }}>
                     <Paper
@@ -630,6 +661,7 @@ const SalesDashboard = () => {
                         sx={{
                             p: 2,
                             borderRadius: 4,
+                            bgcolor: "white",
                             bgcolor: "white",
                             boxShadow: "0 10px 30px rgb(0 0 0 / 0.12)",
                             height: 300,
