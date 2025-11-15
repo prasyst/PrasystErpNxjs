@@ -15,15 +15,7 @@ import {
   TableHead,
   TableRow,
   Tabs,
-  Tab,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem
+  Tab
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -56,56 +48,32 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
   
   // State for dropdown options
   const [termGrpOptions, setTermGrpOptions] = useState([]);
-  const [termGrpMapping, setTermGrpMapping] = useState({}); // Store TERMGRP_NAME to TERMGRP_KEY mapping
+  const [termGrpMapping, setTermGrpMapping] = useState({});
+  const [termGrpNameToKey, setTermGrpNameToKey] = useState({});
   const [termOptions, setTermOptions] = useState([]);
-  const [termMapping, setTermMapping] = useState({}); // Store TERM_VAL_YN to TERM_PERCENT mapping
+  const [termMapping, setTermMapping] = useState({});
+  const [termNameToKey, setTermNameToKey] = useState({});
   const [discPtnOptions, setDiscPtnOptions] = useState([]);
   const [selectedDiscPtn, setSelectedDiscPtn] = useState('');
 
-  // Sample data for the grid
-  const [tableData, setTableData] = useState([
-    {
-      id: 1,
-      type: "GST",
-      taxType: "SGST",
-      tax: "State GST",
-      rate: 9.00,
-      taxable: 35486.00,
-      taxAmount: 3193.74,
-      aot1A: 0.00,
-      aot2A: 0.00,
-      aot1: 0.00,
-      aot1R: 0.00,
-      aot2: 0.00,
-      aot2R: 0.00,
-      termGroup: "Tax",
-      term: "SGST",
-      termPercent: 9.00,
-      termR: 3193.74
-    }
-  ]);
+  // Initialize table data from formData
+  const [tableData, setTableData] = useState([]);
 
   // Form state
   const [termFormData, setTermFormData] = useState({
-    type: '',
-    taxType: '',
-    tax: '',
-    rate: '',
-    taxable: '',
-    taxAmount: '',
-    aot1A: '',
-    aot2A: '',
-    aot1: '',
-    aot1R: '',
-    aot2: '',
-    aot2R: '',
-    termGroup: '',
-    term: '',
-    termPercent: '',
-    termR: ''
+    TERMGRP_NAME: '',
+    TERM_NAME: '',
+    TERM_PERCENT: '',
+    TERM_FIX_AMT: '',
+    TERM_DESC: '',
+    TAXABLE_AMT: '',
+    TAX_AMT: '',
+    TAX_RATE: '',
+    TAX_NAME: '',
+    TAXGRP_NAME: '0'
   });
 
-  // Style definitions - UPDATED WIDTHS
+  // Style definitions (same as your existing code)
   const textInputSx = {
     '& .MuiInputBase-root': {
       height: 36,
@@ -136,7 +104,6 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
     },
   };
 
-  // UPDATED: Increased width for dropdowns
   const DropInputSx = {
     '& .MuiInputBase-root': {
       height: 36,
@@ -154,7 +121,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
       height: 36,
       fontSize: '14px',
       paddingRight: '36px',
-      minWidth: '200px', // NEW: Increased minimum width
+      minWidth: '200px',
     },
     '& .MuiFilledInput-root:before': {
       display: 'none',
@@ -174,7 +141,6 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
     },
   };
 
-  // UPDATED: Smaller width for number/text fields
   const smallInputSx = {
     '& .MuiInputBase-root': {
       height: 36,
@@ -191,7 +157,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
       overflow: 'hidden',
       height: 36,
       fontSize: '14px',
-      maxWidth: '150px', // NEW: Smaller width for number fields
+      maxWidth: '150px',
     },
     '& .MuiFilledInput-root:before': {
       display: 'none',
@@ -206,26 +172,120 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
     },
   };
 
-  const buttonSx = {
-    margin: { xs: '0 4px', sm: '0 6px' },
-    minWidth: { xs: 40, sm: 46, md: 60 },
-    height: { xs: 40, sm: 46, md: 30 },
+  // Load data from formData when component mounts or formData changes
+  useEffect(() => {
+    console.log('FormData changed in Stepper3:', formData.apiResponseData?.ORDBKTERMLIST);
+    
+    if (formData.apiResponseData?.ORDBKTERMLIST && formData.apiResponseData.ORDBKTERMLIST.length > 0) {
+      const transformedData = formData.apiResponseData.ORDBKTERMLIST.map((term, index) => ({
+        id: term.ORDBKTERM_ID || index + 1,
+        type: term.TAXGRP_NAME ? "Tax" : "Term",
+        taxType: term.TAX_NAME || "",
+        tax: term.TERM_DESC || "",
+        rate: term.TAX_RATE || term.TERM_PERCENT || 0,
+        taxable: term.TAXABLE_AMT || 0,
+        taxAmount: term.TAX_AMT || 0,
+        aot1A: term.AOT1_AMT || 0,
+        aot2A: term.AOT2_AMT || 0,
+        aot1: term.T_AOT1_R || 0,
+        aot1R: term.T_AOT1_R || 0,
+        aot2: term.T_AOT2_R || 0,
+        aot2R: term.T_AOT2_R || 0,
+        termGroup: term.TERMGRP_NAME || "",
+        term: term.TERM_NAME || "",
+        termPercent: term.TERM_PERCENT || 0,
+        termR: term.TERM_FIX_AMT || 0,
+        originalData: term
+      }));
+      console.log('Transformed table data:', transformedData);
+      setTableData(transformedData);
+    } else {
+      console.log('No ORDBKTERMLIST data found, setting empty table');
+      setTableData([]);
+    }
+  }, [formData.apiResponseData]);
+
+  // FIXED: Update formData when tableData changes with proper DBFLAG handling
+  const updateFormDataWithTerms = (updatedTableData) => {
+    console.log('Updating formData with terms, raw table data:', updatedTableData);
+    
+    // Include ALL terms including deleted ones (they need to be sent to API with DBFLAG='D')
+    const updatedTermList = updatedTableData.map(item => {
+      // Get TERMGRP_KEY from mapping
+      const termGrpKey = termGrpNameToKey[item.termGroup] || item.originalData?.TERMGRP_KEY || "";
+      
+      // Get TERM_KEY from mapping
+      const termKey = termNameToKey[item.term] || item.originalData?.TERM_KEY || "";
+      
+      // Determine DBFLAG: if originalData has DBFLAG='D', keep it as 'D', otherwise use appropriate flag
+      let dbFlag = item.originalData?.DBFLAG;
+      
+      if (!dbFlag) {
+        // If no DBFLAG exists, determine based on whether it's new or existing
+        dbFlag = item.originalData?.ORDBKTERM_ID > 0 ? 'U' : 'I';
+      }
+      
+      console.log(`Term ${item.id}: DBFLAG = ${dbFlag}, ORDBKTERM_ID = ${item.originalData?.ORDBKTERM_ID}`);
+      
+      return {
+        DBFLAG: dbFlag, // Use the determined DBFLAG
+        TAXGRP_NAME: item.type === "Tax" ? 1 : 0,
+        TAX_NAME: item.taxType || "",
+        TAX_RATE: parseFloat(item.rate) || 0,
+        TAX_FORM: "",
+        T_AOT1_D: "",
+        T_AOT1_R: parseFloat(item.aot1R) || 0,
+        TERMGRP_NAME: item.termGroup || "",
+        TERM_NAME: item.term || "",
+        TERM_PERCENT: parseFloat(item.termPercent) || 0,
+        TERM_FIX_AMT: parseFloat(item.termR) || 0,
+        TERM_RATE: 0,
+        TERM_PERQTY: 0,
+        TERM_DESC: item.tax || "",
+        TERM_OPR: "+",
+        TAXABLE_AMT: parseFloat(item.taxable) || 0,
+        TAX_AMT: parseFloat(item.taxAmount) || 0,
+        AOT1_AMT: parseFloat(item.aot1A) || 0,
+        TAX_KEY: "",
+        STATUS: "1",
+        TERM_KEY: termKey,
+        TAXGRP_KEY: "",
+        TERMGRP_KEY: termGrpKey,
+        TERM_VAL_YN: item.term || "1",
+        TAXGRP_ABRV: "",
+        ORDBKTERM_ID: item.originalData?.ORDBKTERM_ID || 0,
+        CHG_TAXABLE: " ",
+        TAX_ABRV: "",
+        T_AOT2_D: "",
+        T_AOT2_R: parseFloat(item.aot2R) || 0,
+        AOT2_AMT: parseFloat(item.aot2A) || 0,
+        GST_APP: "Y"
+      };
+    });
+
+    console.log('Final ORDBKTERMLIST for API:', updatedTermList);
+
+    setFormData(prev => ({
+      ...prev,
+      apiResponseData: {
+        ...prev.apiResponseData,
+        ORDBKTERMLIST: updatedTermList
+      }
+    }));
   };
 
-  // Determine if form fields should be disabled - FIXED LOGIC
+  // Determine if form fields should be disabled
   const shouldDisableFields = () => {
-    // Form fields should be ENABLED when in Add/Edit mode
     return !(isAddingNew || isEditing);
   };
 
-  // Fetch Term Group Data - FIXED VERSION
+  // Fetch Term Group Data
   const fetchTermGrpData = async () => {
     try {
       const payload = {
         "Flag": "" 
       };
 
-      console.log('Fetching term groups with payload:', payload);
       const response = await axiosInstance.post('/TermGrp/GetTermGrpDrp', payload);
       console.log('Term Group API Response:', response.data);
 
@@ -233,15 +293,14 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
         const termGrps = response.data.DATA.map(item => item.TERMGRP_NAME || '');
         setTermGrpOptions(termGrps);
         
-        // Create mapping for TERMGRP_NAME to TERMGRP_KEY
-        const mapping = {};
+        const nameToKeyMapping = {};
         response.data.DATA.forEach(item => {
           if (item.TERMGRP_NAME && item.TERMGRP_KEY) {
-            mapping[item.TERMGRP_NAME] = item.TERMGRP_KEY;
+            nameToKeyMapping[item.TERMGRP_NAME] = item.TERMGRP_KEY;
           }
         });
-        setTermGrpMapping(mapping);
-        console.log('Term Group Mapping:', mapping);
+        setTermGrpNameToKey(nameToKeyMapping);
+        console.log('Term Group Name to Key mapping:', nameToKeyMapping);
       }
     } catch (error) {
       console.error('Error fetching term group data:', error);
@@ -249,11 +308,12 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
     }
   };
 
-  // Fetch Term Data based on selected Term Group - FIXED VERSION
+  // Fetch Term Data based on selected Term Group
   const fetchTermData = async (termGrpKey) => {
     if (!termGrpKey) {
       setTermOptions([]);
       setTermMapping({});
+      setTermNameToKey({});
       return;
     }
 
@@ -264,40 +324,48 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
       };
 
       console.log('Fetching terms with payload:', payload);
+
       const response = await axiosInstance.post('/Terms/GetTermsDrp', payload);
       console.log('Terms API Response:', response.data);
 
       if (response.data.DATA && Array.isArray(response.data.DATA)) {
-        // Use TERM_VAL_YN for dropdown options
         const terms = response.data.DATA.map(item => item.TERM_VAL_YN || '');
         setTermOptions(terms);
         
-        // Create mapping for TERM_VAL_YN to TERM_PERCENT
         const termPercentMapping = {};
+        const termKeyMapping = {};
+        
         response.data.DATA.forEach(item => {
           if (item.TERM_VAL_YN && item.TERM_PERCENT !== undefined) {
             termPercentMapping[item.TERM_VAL_YN] = item.TERM_PERCENT;
           }
+          if (item.TERM_VAL_YN && item.TERM_KEY) {
+            termKeyMapping[item.TERM_VAL_YN] = item.TERM_KEY;
+          }
         });
+        
         setTermMapping(termPercentMapping);
-        console.log('Loaded TERM_VAL_YN options:', terms);
-        console.log('Term Percent Mapping:', termPercentMapping);
+        setTermNameToKey(termKeyMapping);
+        
+        console.log('Term Percent mapping:', termPercentMapping);
+        console.log('Term Key mapping:', termKeyMapping);
       } else {
         setTermOptions([]);
         setTermMapping({});
+        setTermNameToKey({});
       }
     } catch (error) {
       console.error('Error fetching term data:', error);
       showSnackbar('Error loading terms', 'error');
       setTermOptions([]);
       setTermMapping({});
+      setTermNameToKey({});
     }
   };
 
   // Fetch Disc Ptn Data
   const fetchDiscPtnData = async () => {
     try {
-      // You can replace this with actual API call if needed
       const patterns = ['Pattern 1', 'Pattern 2', 'Pattern 3'];
       setDiscPtnOptions(patterns);
     } catch (error) {
@@ -325,62 +393,52 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
     }));
   };
 
-  // Handle Term Group change - FIXED VERSION
+  // Handle Term Group change
   const handleTermGrpChange = (name, value) => {
-    console.log('Term Group changed:', value);
-    
     setTermFormData(prev => ({
       ...prev,
       [name]: value,
-      term: '', // Clear term when term group changes
-      termPercent: '' // Clear term percent when term group changes
+      TERM_NAME: '',
+      TERM_PERCENT: ''
     }));
 
-    // When term group changes, fetch corresponding terms
-    if (name === "termGroup" && value) {
-      // Get the term group key from the mapping
-      const termGrpKey = termGrpMapping[value];
-      console.log('Found Term Group Key:', termGrpKey, 'for Term Group:', value);
+    if (name === "TERMGRP_NAME" && value) {
+      const termGrpKey = termGrpNameToKey[value];
+      console.log(`Selected Term Group: ${value}, TERMGRP_KEY: ${termGrpKey}`);
       
       if (termGrpKey) {
         fetchTermData(termGrpKey);
       } else {
         setTermOptions([]);
         setTermMapping({});
-        console.log('No term group key found for:', value);
+        setTermNameToKey({});
       }
     } else {
       setTermOptions([]);
       setTermMapping({});
+      setTermNameToKey({});
     }
   };
 
-  // Handle Term change - FIXED VERSION
+  // Handle Term change
   const handleTermChange = (name, value) => {
-    console.log('Term changed:', value);
-    
     setTermFormData(prev => ({
       ...prev,
       [name]: value
     }));
 
-    // Auto-fill termPercent when term is selected
-    if (name === "term" && value && termMapping[value] !== undefined) {
+    if (name === "TERM_NAME" && value && termMapping[value] !== undefined) {
       const termPercent = termMapping[value];
-      console.log('Auto-filling term percent:', termPercent, 'for term:', value);
+      const termKey = termNameToKey[value];
+      
+      console.log(`Selected Term: ${value}, TERM_PERCENT: ${termPercent}, TERM_KEY: ${termKey}`);
       
       setTermFormData(prev => ({
         ...prev,
-        termPercent: termPercent.toString()
+        TERM_PERCENT: termPercent.toString()
       }));
       
       showSnackbar(`Term percent auto-filled: ${termPercent}%`);
-    } else if (name === "term" && value) {
-      // Clear termPercent if no mapping found
-      setTermFormData(prev => ({
-        ...prev,
-        termPercent: ''
-      }));
     }
   };
 
@@ -395,22 +453,16 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
     
     setIsAddingNew(true);
     setTermFormData({
-      type: '',
-      taxType: '',
-      tax: '',
-      rate: '',
-      taxable: '',
-      taxAmount: '',
-      aot1A: '',
-      aot2A: '',
-      aot1: '',
-      aot1R: '',
-      aot2: '',
-      aot2R: '',
-      termGroup: '',
-      term: '',
-      termPercent: '',
-      termR: ''
+      TERMGRP_NAME: '',
+      TERM_NAME: '',
+      TERM_PERCENT: '',
+      TERM_FIX_AMT: '',
+      TERM_DESC: '',
+      TAXABLE_AMT: '',
+      TAX_AMT: '',
+      TAX_RATE: '',
+      TAX_NAME: '',
+      TAXGRP_NAME: '0'
     });
     showSnackbar('Add new term mode enabled');
   };
@@ -425,11 +477,25 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
     }
     
     setIsEditing(true);
-    setTermFormData({ ...selectedRow });
+    const selectedData = tableData.find(item => item.id === selectedRow);
+    if (selectedData) {
+      setTermFormData({
+        TERMGRP_NAME: selectedData.termGroup || '',
+        TERM_NAME: selectedData.term || '',
+        TERM_PERCENT: selectedData.termPercent?.toString() || '',
+        TERM_FIX_AMT: selectedData.termR?.toString() || '',
+        TERM_DESC: selectedData.tax || '',
+        TAXABLE_AMT: selectedData.taxable?.toString() || '',
+        TAX_AMT: selectedData.taxAmount?.toString() || '',
+        TAX_RATE: selectedData.rate?.toString() || '',
+        TAX_NAME: selectedData.taxType || '',
+        TAXGRP_NAME: selectedData.type === "Tax" ? "1" : "0"
+      });
+    }
     showSnackbar('Edit mode enabled for selected item');
   };
 
-  // Delete selected item
+  // FIXED: Delete selected item with proper DBFLAG handling
   const handleDelete = () => {
     if (mode !== 'add' && mode !== 'edit') return;
     
@@ -438,51 +504,160 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
       return;
     }
     
-    setTableData(prev => prev.filter(item => item.id !== selectedRow.id));
+    const updatedTableData = tableData.map(item => {
+      if (item.id === selectedRow) {
+        console.log(`Marking term ${item.id} for deletion, original ORDBKTERM_ID: ${item.originalData?.ORDBKTERM_ID}`);
+        
+        // If it's a new item (ORDBKTERM_ID = 0), we can remove it completely
+        // If it's an existing item, mark it with DBFLAG='D'
+        if (item.originalData?.ORDBKTERM_ID === 0) {
+          return null; // Remove completely from array
+        } else {
+          return {
+            ...item,
+            originalData: {
+              ...item.originalData,
+              DBFLAG: 'D' // Set DBFLAG to 'D' for deletion
+            }
+          };
+        }
+      }
+      return item;
+    }).filter(Boolean); // Remove null entries
+
+    console.log('After deletion, table data:', updatedTableData);
+    
+    setTableData(updatedTableData);
+    updateFormDataWithTerms(updatedTableData);
+    
+    // Clear selection
     setSelectedRow(null);
-    showSnackbar("Item deleted successfully!");
+    
+    showSnackbar("Item marked for deletion! Click Submit to confirm deletion.");
   };
 
   // Save form data (add or edit)
   const handleSave = () => {
+    let updatedTableData;
+
+    // Get dynamic keys from mappings
+    const termGrpKey = termGrpNameToKey[termFormData.TERMGRP_NAME] || "";
+    const termKey = termNameToKey[termFormData.TERM_NAME] || "";
+
+    console.log('Saving with dynamic keys:', {
+      TERMGRP_NAME: termFormData.TERMGRP_NAME,
+      TERMGRP_KEY: termGrpKey,
+      TERM_NAME: termFormData.TERM_NAME,
+      TERM_KEY: termKey
+    });
+
     if (isAddingNew) {
       // Add new item
       const newItem = {
-        id: Math.max(...tableData.map(item => item.id), 0) + 1,
-        ...termFormData
+        id: Date.now(),
+        type: termFormData.TAXGRP_NAME === "1" ? "Tax" : "Term",
+        taxType: termFormData.TAX_NAME,
+        tax: termFormData.TERM_DESC,
+        rate: parseFloat(termFormData.TAX_RATE) || 0,
+        taxable: parseFloat(termFormData.TAXABLE_AMT) || 0,
+        taxAmount: parseFloat(termFormData.TAX_AMT) || 0,
+        aot1A: 0,
+        aot2A: 0,
+        aot1: 0,
+        aot1R: 0,
+        aot2: 0,
+        aot2R: 0,
+        termGroup: termFormData.TERMGRP_NAME,
+        term: termFormData.TERM_NAME,
+        termPercent: parseFloat(termFormData.TERM_PERCENT) || 0,
+        termR: parseFloat(termFormData.TERM_FIX_AMT) || 0,
+        originalData: {
+          ORDBKTERM_ID: 0, // 0 for new items
+          DBFLAG: 'I', // 'I' for insert
+          TERMGRP_NAME: termFormData.TERMGRP_NAME,
+          TERM_NAME: termFormData.TERM_NAME,
+          TERM_PERCENT: parseFloat(termFormData.TERM_PERCENT) || 0,
+          TERM_FIX_AMT: parseFloat(termFormData.TERM_FIX_AMT) || 0,
+          TERM_DESC: termFormData.TERM_DESC,
+          TAXABLE_AMT: parseFloat(termFormData.TAXABLE_AMT) || 0,
+          TAX_AMT: parseFloat(termFormData.TAX_AMT) || 0,
+          TAX_RATE: parseFloat(termFormData.TAX_RATE) || 0,
+          TAX_NAME: termFormData.TAX_NAME,
+          TAXGRP_NAME: termFormData.TAXGRP_NAME === "1" ? 1 : 0,
+          TERM_VAL_YN: termFormData.TERM_NAME,
+          TERMGRP_KEY: termGrpKey,
+          TERM_KEY: termKey
+        }
       };
-      setTableData(prev => [...prev, newItem]);
+      updatedTableData = [...tableData, newItem];
+      setTableData(updatedTableData);
       showSnackbar("Term added successfully!");
     } else if (isEditing) {
       // Update existing item
-      setTableData(prev => 
-        prev.map(item => 
-          item.id === selectedRow.id ? { ...termFormData, id: selectedRow.id } : item
-        )
-      );
+      updatedTableData = tableData.map(item => {
+        if (item.id === selectedRow) {
+          // Preserve the original DBFLAG if it was 'D', otherwise set to 'U'
+          const originalDbFlag = item.originalData?.DBFLAG;
+          const newDbFlag = originalDbFlag === 'D' ? 'D' : 'U';
+          
+          console.log(`Editing term ${item.id}, DBFLAG: ${newDbFlag}`);
+          
+          return {
+            ...item,
+            type: termFormData.TAXGRP_NAME === "1" ? "Tax" : "Term",
+            taxType: termFormData.TAX_NAME,
+            tax: termFormData.TERM_DESC,
+            rate: parseFloat(termFormData.TAX_RATE) || 0,
+            taxable: parseFloat(termFormData.TAXABLE_AMT) || 0,
+            taxAmount: parseFloat(termFormData.TAX_AMT) || 0,
+            termGroup: termFormData.TERMGRP_NAME,
+            term: termFormData.TERM_NAME,
+            termPercent: parseFloat(termFormData.TERM_PERCENT) || 0,
+            termR: parseFloat(termFormData.TERM_FIX_AMT) || 0,
+            originalData: {
+              ...item.originalData,
+              DBFLAG: newDbFlag, // Preserve deletion status if it was marked for deletion
+              TERMGRP_NAME: termFormData.TERMGRP_NAME,
+              TERM_NAME: termFormData.TERM_NAME,
+              TERM_PERCENT: parseFloat(termFormData.TERM_PERCENT) || 0,
+              TERM_FIX_AMT: parseFloat(termFormData.TERM_FIX_AMT) || 0,
+              TERM_DESC: termFormData.TERM_DESC,
+              TAXABLE_AMT: parseFloat(termFormData.TAXABLE_AMT) || 0,
+              TAX_AMT: parseFloat(termFormData.TAX_AMT) || 0,
+              TAX_RATE: parseFloat(termFormData.TAX_RATE) || 0,
+              TAX_NAME: termFormData.TAX_NAME,
+              TAXGRP_NAME: termFormData.TAXGRP_NAME === "1" ? 1 : 0,
+              TERM_VAL_YN: termFormData.TERM_NAME,
+              TERMGRP_KEY: termGrpKey,
+              TERM_KEY: termKey
+            }
+          };
+        }
+        return item;
+      });
+      setTableData(updatedTableData);
       showSnackbar("Term updated successfully!");
+    }
+
+    // Update form data
+    if (updatedTableData) {
+      updateFormDataWithTerms(updatedTableData);
     }
     
     setIsAddingNew(false);
     setIsEditing(false);
     setSelectedRow(null);
     setTermFormData({
-      type: '',
-      taxType: '',
-      tax: '',
-      rate: '',
-      taxable: '',
-      taxAmount: '',
-      aot1A: '',
-      aot2A: '',
-      aot1: '',
-      aot1R: '',
-      aot2: '',
-      aot2R: '',
-      termGroup: '',
-      term: '',
-      termPercent: '',
-      termR: ''
+      TERMGRP_NAME: '',
+      TERM_NAME: '',
+      TERM_PERCENT: '',
+      TERM_FIX_AMT: '',
+      TERM_DESC: '',
+      TAXABLE_AMT: '',
+      TAX_AMT: '',
+      TAX_RATE: '',
+      TAX_NAME: '',
+      TAXGRP_NAME: '0'
     });
   };
 
@@ -492,35 +667,23 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
     setIsEditing(false);
     setSelectedRow(null);
     setTermFormData({
-      type: '',
-      taxType: '',
-      tax: '',
-      rate: '',
-      taxable: '',
-      taxAmount: '',
-      aot1A: '',
-      aot2A: '',
-      aot1: '',
-      aot1R: '',
-      aot2: '',
-      aot2R: '',
-      termGroup: '',
-      term: '',
-      termPercent: '',
-      termR: ''
+      TERMGRP_NAME: '',
+      TERM_NAME: '',
+      TERM_PERCENT: '',
+      TERM_FIX_AMT: '',
+      TERM_DESC: '',
+      TAXABLE_AMT: '',
+      TAX_AMT: '',
+      TAX_RATE: '',
+      TAX_NAME: '',
+      TAXGRP_NAME: '0'
     });
     showSnackbar('Operation cancelled');
   };
 
   // Select a row in the table
   const handleRowSelect = (row) => {
-    setSelectedRow(row);
-  };
-
-  // Handle Party Tax button click
-  const handlePartyTax = () => {
-    if (mode !== 'add' && mode !== 'edit') return;
-    showSnackbar('Party Tax functionality');
+    setSelectedRow(row.id);
   };
 
   // Handle Apply button click
@@ -536,17 +699,16 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
     { id: 'rate', label: 'Rate', minWidth: 80, align: 'right' },
     { id: 'taxable', label: 'Taxable', minWidth: 100, align: 'right' },
     { id: 'taxAmount', label: 'Tax Amount', minWidth: 100, align: 'right' },
-    { id: 'aot1A', label: 'AOT1 A', minWidth: 70, align: 'right' },
-    { id: 'aot2A', label: 'AOT2 A', minWidth: 70, align: 'right' },
-    { id: 'aot1', label: 'AOT1', minWidth: 80, align: 'right' },
-    { id: 'aot1R', label: 'AOT1 R', minWidth: 80, align: 'right' },
-    { id: 'aot2', label: 'AOT2', minWidth: 80, align: 'right' },
-    { id: 'aot2R', label: 'AOT2 R', minWidth: 80, align: 'right' },
     { id: 'termGroup', label: 'Term Group', minWidth: 80, align: 'right' },
     { id: 'term', label: 'Term', minWidth: 80, align: 'right' },
     { id: 'termPercent', label: 'Tm(%)', minWidth: 80, align: 'right' },
     { id: 'termR', label: 'Tm R', minWidth: 80, align: 'right' },
   ];
+
+  // Filter table data to show only non-deleted items in UI
+  const displayTableData = tableData.filter(item => 
+    !item.originalData?.DBFLAG || item.originalData.DBFLAG !== 'D'
+  );
 
   return (
     <Box>
@@ -594,16 +756,16 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
                 </TableHead>
 
                 <TableBody>
-                  {tableData.map((row, index) => (
+                  {displayTableData.map((row, index) => (
                     <TableRow
-                      key={index}
+                      key={row.id}
                       hover
                       onClick={() => handleRowSelect(row)}
                       sx={{
-                        backgroundColor: selectedRow?.id === row.id ? "#e3f2fd" : (index % 2 === 0 ? "#fafafa" : "#fff"),
+                        backgroundColor: selectedRow === row.id ? "#e3f2fd" : (index % 2 === 0 ? "#fafafa" : "#fff"),
                         "&:hover": { backgroundColor: "#e3f2fd" },
                         cursor: 'pointer',
-                        border: selectedRow?.id === row.id ? '2px solid #2196f3' : 'none',
+                        border: selectedRow === row.id ? '2px solid #2196f3' : 'none',
                       }}
                     >
                       {columns.map((column) => (
@@ -624,6 +786,15 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
                       ))}
                     </TableRow>
                   ))}
+                  {displayTableData.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={columns.length} align="center" sx={{ py: 2 }}>
+                        <Typography variant="body2" color="textSecondary">
+                          No terms added
+                        </Typography>
+                      </TableCell>
+                    </TableRow>
+                  )}
                 </TableBody>
               </Table>
             </TableContainer>
@@ -656,7 +827,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
             variant="contained"
             startIcon={<EditIcon />}
             onClick={handleEdit}
-            disabled={isFormDisabled || isAddingNew || isEditing}
+            disabled={isFormDisabled || isAddingNew || isEditing || !selectedRow}
             sx={{
               backgroundColor: '#39ace2',
               color: 'white',
@@ -676,7 +847,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
             variant="contained"
             startIcon={<DeleteIcon />}
             onClick={handleDelete}
-            disabled={isFormDisabled || isAddingNew || isEditing}
+            disabled={isFormDisabled || isAddingNew || isEditing || !selectedRow}
             sx={{
               backgroundColor: '#39ace2',
               color: 'white',
@@ -692,25 +863,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
             Delete
           </Button>
           
-          <Button
-            variant="contained"
-            onClick={handlePartyTax}
-            disabled={isFormDisabled || isAddingNew || isEditing}
-            sx={{
-              backgroundColor: '#39ace2',
-              color: 'white',
-              minWidth: { xs: 80, sm: 100, md: 120 },
-              height: { xs: 40, sm: 46, md: 30 },
-              '&:disabled': {
-                backgroundColor: '#cccccc',
-                color: '#666666'
-              }
-            }}
-          >
-            Party Tax
-          </Button>
-          
-          <Box sx={{ minWidth: 200, maxWidth: 250 }}> {/* UPDATED: Increased width */}
+          <Box sx={{ minWidth: 200, maxWidth: 250 }}>
             <AutoVibe
               id="DiscPtn"
               disabled={isFormDisabled || isAddingNew || isEditing}
@@ -734,7 +887,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
           </Tabs>
         </Box>
 
-        {/* Tab Content */}
+        {/* Tab Content (same as your existing code) */}
         <TabPanel value={tabIndex} index={0}>
           {/* Calc Terms Content */}
           <Grid container spacing={2} alignItems="center">
@@ -745,9 +898,9 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
                 getOptionLabel={(option) => option || ''}
                 options={termGrpOptions}
                 label="Term Grp"
-                name="termGroup"
-                value={termFormData.termGroup}
-                onChange={(event, value) => handleTermGrpChange("termGroup", value)}
+                name="TERMGRP_NAME"
+                value={termFormData.TERMGRP_NAME}
+                onChange={(event, value) => handleTermGrpChange("TERMGRP_NAME", value)}
                 sx={DropInputSx}
               />
             </Grid>
@@ -758,32 +911,32 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
                 getOptionLabel={(option) => option || ''}
                 options={termOptions}
                 label="Term"
-                name="term"
-                value={termFormData.term}
-                onChange={(event, value) => handleTermChange("term", value)}
+                name="TERM_NAME"
+                value={termFormData.TERM_NAME}
+                onChange={(event, value) => handleTermChange("TERM_NAME", value)}
                 sx={DropInputSx}
               />
             </Grid>
-            <Grid item xs={12} sm={2}> {/* UPDATED: Smaller width */}
+            <Grid item xs={12} sm={2}>
               <TextField
                 fullWidth
                 label="Percent"
-                name="termPercent"
+                name="TERM_PERCENT"
                 type="number"
-                value={termFormData.termPercent}
+                value={termFormData.TERM_PERCENT}
                 onChange={handleInputChange}
                 variant="filled"
                 sx={smallInputSx}  
                 disabled={shouldDisableFields()}
               />
             </Grid>
-            <Grid item xs={12} sm={2}> {/* UPDATED: Smaller width */}
+            <Grid item xs={12} sm={2}>
               <TextField
                 fullWidth
-                label="Rate On Qty"
-                name="rate"
+                label="Fix Amount"
+                name="TERM_FIX_AMT"
                 type="number"
-                value={termFormData.rate}
+                value={termFormData.TERM_FIX_AMT}
                 onChange={handleInputChange}
                 variant="filled"
                 sx={smallInputSx}  
@@ -794,8 +947,8 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
               <TextField
                 fullWidth
                 label="Term Desc"
-                name="tax"
-                value={termFormData.tax}
+                name="TERM_DESC"
+                value={termFormData.TERM_DESC}
                 onChange={handleInputChange}
                 variant="filled"
                 sx={textInputSx}
@@ -804,26 +957,26 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
                 disabled={shouldDisableFields()}
               />
             </Grid>
-            <Grid item xs={12} sm={3}> {/* UPDATED: Smaller width */}
+            <Grid item xs={12} sm={3}>
               <TextField
                 fullWidth
-                label="Fix Amount"
-                name="taxAmount"
+                label="Taxable Amount"
+                name="TAXABLE_AMT"
                 type="number"
-                value={termFormData.taxAmount}
+                value={termFormData.TAXABLE_AMT}
                 onChange={handleInputChange}
                 variant="filled"
                 sx={smallInputSx}  
                 disabled={shouldDisableFields()}
               />
             </Grid>
-            <Grid item xs={12} sm={3}> {/* UPDATED: Smaller width */}
+            <Grid item xs={12} sm={3}>
               <TextField
                 fullWidth
-                label="Per Qty"
-                name="taxable"
+                label="Tax Amount"
+                name="TAX_AMT"
                 type="number"
-                value={termFormData.taxable}
+                value={termFormData.TAX_AMT}
                 onChange={handleInputChange}
                 variant="filled"
                 sx={smallInputSx}  
@@ -854,87 +1007,49 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
           {/* Tax Content */}
           <Grid container spacing={2} alignItems="center">
             <Grid item xs={12} sm={4}>
-              <AutoVibe
-                id="TermGrpTax"
-                disabled={shouldDisableFields()}
-                getOptionLabel={(option) => option || ''}
-                options={termGrpOptions}
-                label="Tax Grp"
-                name="termGroup"
-                value={termFormData.termGroup}
-                onChange={(event, value) => handleTermGrpChange("termGroup", value)}
-                sx={DropInputSx}
-              />
-            </Grid>
-            <Grid item xs={12} sm={3}> {/* UPDATED: Smaller width */}
               <TextField
                 fullWidth
                 label="Tax Type"
-                name="taxType"
-                value={termFormData.taxType}
+                name="TAX_NAME"
+                value={termFormData.TAX_NAME}
                 onChange={handleInputChange}
                 variant="filled"
                 sx={smallInputSx}  
                 disabled={shouldDisableFields()}
               />
             </Grid>
-            <Grid item xs={12} sm={3}> {/* UPDATED: Smaller width */}
-              <TextField
-                fullWidth
-                label="Tax"
-                name="tax"
-                value={termFormData.tax}
-                onChange={handleInputChange}
-                variant="filled"
-                sx={smallInputSx}  
-                disabled={shouldDisableFields()}
-              />
-            </Grid>
-            <Grid item xs={12} sm={2}> {/* UPDATED: Smaller width */}
+            <Grid item xs={12} sm={3}>
               <TextField
                 fullWidth
                 label="Tax Rate %"
-                name="rate"
+                name="TAX_RATE"
                 type="number"
-                value={termFormData.rate}
+                value={termFormData.TAX_RATE}
                 onChange={handleInputChange}
                 variant="filled"
                 sx={smallInputSx}  
                 disabled={shouldDisableFields()}
               />
             </Grid>
-            <Grid item xs={12} sm={4}> {/* UPDATED: Smaller width */}
+            <Grid item xs={12} sm={3}>
               <TextField
                 fullWidth
                 label="Taxable Amount"
-                name="taxable"
-                value={termFormData.taxable}
+                name="TAXABLE_AMT"
+                value={termFormData.TAXABLE_AMT}
                 onChange={handleInputChange}
                 variant="filled"
                 sx={smallInputSx}  
                 disabled={shouldDisableFields()}
               />
             </Grid>
-            <Grid item xs={12} sm={2}> {/* UPDATED: Smaller width */}
+            <Grid item xs={12} sm={2}>
               <TextField
                 fullWidth
-                label="AOT 1"
-                name="aot1"
+                label="Tax Amount"
+                name="TAX_AMT"
                 type="number"
-                value={termFormData.aot1}
-                onChange={handleInputChange}
-                variant="filled"
-                sx={smallInputSx}  
-                disabled={shouldDisableFields()}
-              />
-            </Grid>
-            <Grid item xs={12} sm={2}> {/* UPDATED: Smaller width */}
-              <TextField
-                fullWidth
-                label="AOT 2"
-                name="aot2"
-                type="number"
-                value={termFormData.aot2}
+                value={termFormData.TAX_AMT}
                 onChange={handleInputChange}
                 variant="filled"
                 sx={smallInputSx}  
@@ -971,9 +1086,9 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
                 getOptionLabel={(option) => option || ''}
                 options={termGrpOptions}
                 label="Term Grp"
-                name="termGroup"
-                value={termFormData.termGroup}
-                onChange={(event, value) => handleTermGrpChange("termGroup", value)}
+                name="TERMGRP_NAME"
+                value={termFormData.TERMGRP_NAME}
+                onChange={(event, value) => handleTermGrpChange("TERMGRP_NAME", value)}
                 sx={DropInputSx}
               />
             </Grid>
@@ -984,32 +1099,32 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
                 getOptionLabel={(option) => option || ''}
                 options={termOptions}
                 label="Term"
-                name="term"
-                value={termFormData.term}
-                onChange={(event, value) => handleTermChange("term", value)}
+                name="TERM_NAME"
+                value={termFormData.TERM_NAME}
+                onChange={(event, value) => handleTermChange("TERM_NAME", value)}
                 sx={DropInputSx}
               />
             </Grid>
-            <Grid item xs={12} sm={2}> {/* UPDATED: Smaller width */}
+            <Grid item xs={12} sm={2}>
               <TextField
                 fullWidth
                 label="Percent"
-                name="termPercent"
+                name="TERM_PERCENT"
                 type="number"
-                value={termFormData.termPercent}
+                value={termFormData.TERM_PERCENT}
                 onChange={handleInputChange}
                 variant="filled"
                 sx={smallInputSx}  
                 disabled={shouldDisableFields()}
               />
             </Grid>
-            <Grid item xs={12} sm={2}> {/* UPDATED: Smaller width */}
+            <Grid item xs={12} sm={2}>
               <TextField
                 fullWidth
-                label="Rate On Qty"
-                name="rate"
+                label="Fix Amount"
+                name="TERM_FIX_AMT"
                 type="number"
-                value={termFormData.rate}
+                value={termFormData.TERM_FIX_AMT}
                 onChange={handleInputChange}
                 variant="filled"
                 sx={smallInputSx}  
@@ -1020,39 +1135,13 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
               <TextField
                 fullWidth
                 label="Term Desc"
-                name="tax"
-                value={termFormData.tax}
+                name="TERM_DESC"
+                value={termFormData.TERM_DESC}
                 onChange={handleInputChange}
                 variant="filled"
                 sx={textInputSx}
                 multiline
                 rows={2}
-                disabled={shouldDisableFields()}
-              />
-            </Grid>
-            <Grid item xs={12} sm={3}> {/* UPDATED: Smaller width */}
-              <TextField
-                fullWidth
-                label="Fix Amount"
-                name="taxAmount"
-                type="number"
-                value={termFormData.taxAmount}
-                onChange={handleInputChange}
-                variant="filled"
-                sx={smallInputSx}  
-                disabled={shouldDisableFields()}
-              />
-            </Grid>
-            <Grid item xs={12} sm={3}> {/* UPDATED: Smaller width */}
-              <TextField
-                fullWidth
-                label="Per Qty"
-                name="taxable"
-                type="number"
-                value={termFormData.taxable}
-                onChange={handleInputChange}
-                variant="filled"
-                sx={smallInputSx}  
                 disabled={shouldDisableFields()}
               />
             </Grid>
