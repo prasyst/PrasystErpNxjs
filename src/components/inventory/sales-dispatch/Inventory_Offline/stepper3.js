@@ -53,6 +53,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
   const [termOptions, setTermOptions] = useState([]);
   const [termMapping, setTermMapping] = useState({});
   const [termNameToKey, setTermNameToKey] = useState({});
+  const [termValFixMapping, setTermValFixMapping] = useState({}); // NEW: Store TERM_VAL_FIX values
   const [discPtnOptions, setDiscPtnOptions] = useState([]);
   const [selectedDiscPtn, setSelectedDiscPtn] = useState('');
 
@@ -72,6 +73,9 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
     TAX_NAME: '',
     TAXGRP_NAME: '0'
   });
+
+  // NEW: State to track current term's TERM_VAL_FIX value
+  const [currentTermValFix, setCurrentTermValFix] = useState('0');
 
   // Style definitions (same as your existing code)
   const textInputSx = {
@@ -279,6 +283,46 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
     return !(isAddingNew || isEditing);
   };
 
+  // NEW: Function to determine field states based on TERM_VAL_FIX
+  const getFieldStates = () => {
+    const baseDisabled = shouldDisableFields();
+    
+    if (currentTermValFix === '0') {
+      // TERM_VAL_FIX = "0" - Only Term Group and Term dropdown enabled
+      return {
+        termGrpDisabled: baseDisabled,
+        termDisabled: baseDisabled,
+        percentDisabled: true, // Always disabled for TERM_VAL_FIX = "0"
+        fixAmtDisabled: true,  // Always disabled for TERM_VAL_FIX = "0"
+        termDescDisabled: baseDisabled,
+        taxableAmtDisabled: baseDisabled,
+        taxAmtDisabled: baseDisabled
+      };
+    } else if (currentTermValFix === '1') {
+      // TERM_VAL_FIX = "1" - Term Group, Term dropdown, and Fix Amount enabled
+      return {
+        termGrpDisabled: baseDisabled,
+        termDisabled: baseDisabled,
+        percentDisabled: true, // Always disabled for TERM_VAL_FIX = "1"
+        fixAmtDisabled: baseDisabled, // Enabled for TERM_VAL_FIX = "1"
+        termDescDisabled: baseDisabled,
+        taxableAmtDisabled: baseDisabled,
+        taxAmtDisabled: baseDisabled
+      };
+    } else {
+      // Default case - all fields follow base disabled state
+      return {
+        termGrpDisabled: baseDisabled,
+        termDisabled: baseDisabled,
+        percentDisabled: baseDisabled,
+        fixAmtDisabled: baseDisabled,
+        termDescDisabled: baseDisabled,
+        taxableAmtDisabled: baseDisabled,
+        taxAmtDisabled: baseDisabled
+      };
+    }
+  };
+
   // Fetch Term Group Data
   const fetchTermGrpData = async () => {
     try {
@@ -314,6 +358,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
       setTermOptions([]);
       setTermMapping({});
       setTermNameToKey({});
+      setTermValFixMapping({}); // Reset TERM_VAL_FIX mapping
       return;
     }
 
@@ -334,6 +379,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
         
         const termPercentMapping = {};
         const termKeyMapping = {};
+        const termValFixMapping = {}; // NEW: Store TERM_VAL_FIX values
         
         response.data.DATA.forEach(item => {
           if (item.TERM_VAL_YN && item.TERM_PERCENT !== undefined) {
@@ -342,17 +388,24 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
           if (item.TERM_VAL_YN && item.TERM_KEY) {
             termKeyMapping[item.TERM_VAL_YN] = item.TERM_KEY;
           }
+          // NEW: Store TERM_VAL_FIX value
+          if (item.TERM_VAL_YN && item.TERM_VAL_FIX !== undefined) {
+            termValFixMapping[item.TERM_VAL_YN] = item.TERM_VAL_FIX.toString();
+          }
         });
         
         setTermMapping(termPercentMapping);
         setTermNameToKey(termKeyMapping);
+        setTermValFixMapping(termValFixMapping); // Set TERM_VAL_FIX mapping
         
         console.log('Term Percent mapping:', termPercentMapping);
         console.log('Term Key mapping:', termKeyMapping);
+        console.log('TERM_VAL_FIX mapping:', termValFixMapping); // Log TERM_VAL_FIX mapping
       } else {
         setTermOptions([]);
         setTermMapping({});
         setTermNameToKey({});
+        setTermValFixMapping({});
       }
     } catch (error) {
       console.error('Error fetching term data:', error);
@@ -360,6 +413,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
       setTermOptions([]);
       setTermMapping({});
       setTermNameToKey({});
+      setTermValFixMapping({});
     }
   };
 
@@ -399,8 +453,12 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
       ...prev,
       [name]: value,
       TERM_NAME: '',
-      TERM_PERCENT: ''
+      TERM_PERCENT: '',
+      TERM_FIX_AMT: ''
     }));
+
+    // Reset current TERM_VAL_FIX when term group changes
+    setCurrentTermValFix('0');
 
     if (name === "TERMGRP_NAME" && value) {
       const termGrpKey = termGrpNameToKey[value];
@@ -412,11 +470,13 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
         setTermOptions([]);
         setTermMapping({});
         setTermNameToKey({});
+        setTermValFixMapping({});
       }
     } else {
       setTermOptions([]);
       setTermMapping({});
       setTermNameToKey({});
+      setTermValFixMapping({});
     }
   };
 
@@ -424,21 +484,33 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
   const handleTermChange = (name, value) => {
     setTermFormData(prev => ({
       ...prev,
-      [name]: value
+      [name]: value,
+      TERM_PERCENT: '',
+      TERM_FIX_AMT: ''
     }));
 
-    if (name === "TERM_NAME" && value && termMapping[value] !== undefined) {
-      const termPercent = termMapping[value];
-      const termKey = termNameToKey[value];
+    if (name === "TERM_NAME" && value) {
+      // Set TERM_PERCENT if available in mapping
+      if (termMapping[value] !== undefined) {
+        const termPercent = termMapping[value];
+        setTermFormData(prev => ({
+          ...prev,
+          TERM_PERCENT: termPercent.toString()
+        }));
+        showSnackbar(`Term percent auto-filled: ${termPercent}%`);
+      }
+
+      // NEW: Set current TERM_VAL_FIX and handle field states
+      const termValFix = termValFixMapping[value] || '0';
+      setCurrentTermValFix(termValFix);
       
-      console.log(`Selected Term: ${value}, TERM_PERCENT: ${termPercent}, TERM_KEY: ${termKey}`);
+      console.log(`Selected Term: ${value}, TERM_VAL_FIX: ${termValFix}`);
       
-      setTermFormData(prev => ({
-        ...prev,
-        TERM_PERCENT: termPercent.toString()
-      }));
-      
-      showSnackbar(`Term percent auto-filled: ${termPercent}%`);
+      if (termValFix === '0') {
+        showSnackbar('Percentage mode: Only Term Group and Term fields are editable');
+      } else if (termValFix === '1') {
+        showSnackbar('Fixed Amount mode: Term Group, Term, and Fix Amount fields are editable');
+      }
     }
   };
 
@@ -464,6 +536,8 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
       TAX_NAME: '',
       TAXGRP_NAME: '0'
     });
+    // Reset TERM_VAL_FIX when adding new
+    setCurrentTermValFix('0');
     showSnackbar('Add new term mode enabled');
   };
 
@@ -491,6 +565,10 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
         TAX_NAME: selectedData.taxType || '',
         TAXGRP_NAME: selectedData.type === "Tax" ? "1" : "0"
       });
+      
+      // NEW: Determine TERM_VAL_FIX for editing
+      const termValFix = termValFixMapping[selectedData.term] || '0';
+      setCurrentTermValFix(termValFix);
     }
     showSnackbar('Edit mode enabled for selected item');
   };
@@ -548,7 +626,8 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
       TERMGRP_NAME: termFormData.TERMGRP_NAME,
       TERMGRP_KEY: termGrpKey,
       TERM_NAME: termFormData.TERM_NAME,
-      TERM_KEY: termKey
+      TERM_KEY: termKey,
+      TERM_VAL_FIX: currentTermValFix
     });
 
     if (isAddingNew) {
@@ -659,6 +738,8 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
       TAX_NAME: '',
       TAXGRP_NAME: '0'
     });
+    // Reset TERM_VAL_FIX after save
+    setCurrentTermValFix('0');
   };
 
   // Close form without saving
@@ -678,6 +759,8 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
       TAX_NAME: '',
       TAXGRP_NAME: '0'
     });
+    // Reset TERM_VAL_FIX after cancel
+    setCurrentTermValFix('0');
     showSnackbar('Operation cancelled');
   };
 
@@ -709,6 +792,9 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
   const displayTableData = tableData.filter(item => 
     !item.originalData?.DBFLAG || item.originalData.DBFLAG !== 'D'
   );
+
+  // Get current field states based on TERM_VAL_FIX
+  const fieldStates = getFieldStates();
 
   return (
     <Box>
@@ -887,14 +973,14 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
           </Tabs>
         </Box>
 
-        {/* Tab Content (same as your existing code) */}
+        {/* Tab Content */}
         <TabPanel value={tabIndex} index={0}>
           {/* Calc Terms Content */}
           <Grid container spacing={2} alignItems="center">
             <Grid item xs={12} sm={4}>
               <AutoVibe
                 id="TermGrp"
-                disabled={shouldDisableFields()}
+                disabled={fieldStates.termGrpDisabled}
                 getOptionLabel={(option) => option || ''}
                 options={termGrpOptions}
                 label="Term Grp"
@@ -907,7 +993,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
             <Grid item xs={12} sm={4}>
               <AutoVibe
                 id="Term"
-                disabled={shouldDisableFields()}
+                disabled={fieldStates.termDisabled}
                 getOptionLabel={(option) => option || ''}
                 options={termOptions}
                 label="Term"
@@ -927,7 +1013,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
                 onChange={handleInputChange}
                 variant="filled"
                 sx={smallInputSx}  
-                disabled={shouldDisableFields()}
+                disabled={fieldStates.percentDisabled}
               />
             </Grid>
             <Grid item xs={12} sm={2}>
@@ -940,7 +1026,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
                 onChange={handleInputChange}
                 variant="filled"
                 sx={smallInputSx}  
-                disabled={shouldDisableFields()}
+                disabled={fieldStates.fixAmtDisabled}
               />
             </Grid>
             <Grid item xs={12}>
@@ -954,7 +1040,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
                 sx={textInputSx}
                 multiline
                 rows={2}
-                disabled={shouldDisableFields()}
+                disabled={fieldStates.termDescDisabled}
               />
             </Grid>
             <Grid item xs={12} sm={3}>
@@ -967,7 +1053,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
                 onChange={handleInputChange}
                 variant="filled"
                 sx={smallInputSx}  
-                disabled={shouldDisableFields()}
+                disabled={fieldStates.taxableAmtDisabled}
               />
             </Grid>
             <Grid item xs={12} sm={3}>
@@ -980,7 +1066,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
                 onChange={handleInputChange}
                 variant="filled"
                 sx={smallInputSx}  
-                disabled={shouldDisableFields()}
+                disabled={fieldStates.taxAmtDisabled}
               />
             </Grid>
             <Grid item xs={12}>
@@ -1082,7 +1168,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
             <Grid item xs={12} sm={4}>
               <AutoVibe
                 id="TermGrpNonCalc"
-                disabled={shouldDisableFields()}
+                disabled={fieldStates.termGrpDisabled}
                 getOptionLabel={(option) => option || ''}
                 options={termGrpOptions}
                 label="Term Grp"
@@ -1095,7 +1181,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
             <Grid item xs={12} sm={4}>
               <AutoVibe
                 id="TermNonCalc"
-                disabled={shouldDisableFields()}
+                disabled={fieldStates.termDisabled}
                 getOptionLabel={(option) => option || ''}
                 options={termOptions}
                 label="Term"
@@ -1115,7 +1201,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
                 onChange={handleInputChange}
                 variant="filled"
                 sx={smallInputSx}  
-                disabled={shouldDisableFields()}
+                disabled={fieldStates.percentDisabled}
               />
             </Grid>
             <Grid item xs={12} sm={2}>
@@ -1128,7 +1214,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
                 onChange={handleInputChange}
                 variant="filled"
                 sx={smallInputSx}  
-                disabled={shouldDisableFields()}
+                disabled={fieldStates.fixAmtDisabled}
               />
             </Grid>
             <Grid item xs={12}>
@@ -1142,7 +1228,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
                 sx={textInputSx}
                 multiline
                 rows={2}
-                disabled={shouldDisableFields()}
+                disabled={fieldStates.termDescDisabled}
               />
             </Grid>
             <Grid item xs={12}>

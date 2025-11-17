@@ -267,7 +267,9 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
       TOTAL_QTY: totalQty,
       TOTAL_AMOUNT: totalAmount,
       NET_AMOUNT: totalNetAmt,
-      DISCOUNT: totalDiscount
+      DISCOUNT: totalDiscount,
+     AMOUNT: totalAmount.toString(),
+    AMOUNT_1: totalAmount.toString() 
     }));
   };
 
