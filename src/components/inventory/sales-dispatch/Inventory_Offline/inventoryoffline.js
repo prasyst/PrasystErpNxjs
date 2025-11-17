@@ -231,6 +231,14 @@ const SalesOrderOffline = () => {
       await fetchAllDropdownData();
       
       console.log('Order Data received:', orderData);
+      const getDisplayStatus = (apiStatus) => {
+  const statusMapping = {
+    '1': 'O',  // 1 -> Open
+    '0': 'C',  // 0 -> Cancel
+    '5': 'S'   // 5 -> Short
+  };
+  return statusMapping[apiStatus] || 'O';
+};
       
       // Get display names from mappings using the actual API response keys
       const partyName = partyMapping[orderData.PARTY_KEY] || await getPartyNameByKey(orderData.PARTY_KEY);
@@ -335,7 +343,7 @@ const SalesOrderOffline = () => {
         // Default selections
         Delivery_Shedule: "comman",
         Order_TNA: "ItemWise", 
-        Status: orderData.STATUS === "C" ? "C" : (orderData.STATUS === "S" ? "S" : "O"),
+       Status: getDisplayStatus(orderData.STATUS),
         ORDBK_TYPE: orderData.ORDBK_TYPE || "0",
         // Calculate totals from ORDBKSTYLIST
         TOTAL_QTY: calculateTotalQty(orderData.ORDBKSTYLIST),
@@ -365,7 +373,14 @@ const SalesOrderOffline = () => {
     
     console.log('User Info:', { userId, userName });
 
-    // Get keys from mappings
+ const getStatusValue = (status) => {
+  const statusMapping = {
+    'O': '1',  // Open -> 1
+    'C': '0',  // Cancel -> 0  
+    'S': '5'   // Short -> 5
+  };
+  return statusMapping[status] || "1";
+};
     const partyKey = formData.PARTY_KEY;
     const branchId = formData.PARTYDTL_ID || 0;
     const brokerKey = formData.BROKER_KEY || "";
@@ -528,6 +543,7 @@ const SalesOrderOffline = () => {
       ORD_EVENT_KEY: "",
       ORG_DLV_DT: formatDateForAPI(formData.ORG_DLV_DT) || "1900-01-01T00:00:00",
       PLANNING: "0",
+       STATUS: getStatusValue(formData.Status),
       ORDBK_KEY: correctOrdbkKey,
       ORDBK_DT: formatDateForAPI(formData.ORDER_DATE),
       PORD_REF: formData.PARTY_ORD_NO || "",
@@ -546,7 +562,7 @@ const SalesOrderOffline = () => {
       TRSP_KEY: transporterKey,
       ORDBK_AMT: parseFloat(formData.TOTAL_AMOUNT) || 0,
       REMK: formData.REMARK_STATUS || "",
-      STATUS: "1",
+     
       CURRN_KEY: formData.CURRN_KEY || "",
       EX_RATE: parseFloat(formData.EX_RATE) || 0,
       IMP_ORDBK_KEY: "",
