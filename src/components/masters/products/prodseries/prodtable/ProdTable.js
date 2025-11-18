@@ -1,145 +1,174 @@
 'use client';
 import React, { useState, useEffect, useCallback } from "react";
-
+import axiosInstance from '../../../../../lib/axios';
 import {
-    Button,
+  Button, Stack, Box
 } from '@mui/material';
-import AddIcon from "@mui/icons-material/Add";
-import axiosInstance from "@/lib/axios";
-import ReusableHandsontable from "@/components/datatable/ReusableHandsontable";
-import { useRouter } from "next/navigation";
+import ReusableTable, { getCustomDateFilter } from '@/components/datatable/ReusableTable';
+import { useRouter } from 'next/navigation';
 
-const handsontableColumns = [
-    // { field: "ROWNUM", headerName: "SrNo", width: "16%", type: "numeric" },
-    { field: "FGPRD_KEY", headerName: "Code", width: "16%", type: "text" },
-     { field: "PRODSRMST_ID", headerName: "Product", width: "15%", type: "text" },
-    { field: "Name", headerName: "Name", width: "15%", type: "text" },
-    { field: "Mrp", headerName: "Mrp", width: "15%", type: "text" },
-    { field: "Wsp", headerName: "Wsp", width: "15%", type: "text" },
-   
-    { field: "STATUS", headerName: "Status", width: "15%", type: "numeric" }
+// Column definitions for AG Grid with Serial No and Checkbox
+const columnDefs = [
+  {
+    field: "FGPRD_KEY",
+    headerName: "Code",
+    filter: 'agSetColumnFilter',
+    filterParams: {
+      defaultToNothingSelected: true,
+    },
+    sortable: true
+  },
+  {
+    field: "PRODSRMST_ID",
+    headerName: "Product",
+    filter: 'agSetColumnFilter',
+    filterParams: {
+      defaultToNothingSelected: true,
+    },
+    sortable: true
+  },
+  {
+    field: "Name",
+    headerName: "Name",
+    filter: 'agSetColumnFilter',
+    filterParams: {
+      defaultToNothingSelected: true,
+    },
+    sortable: true
+  },
+  {
+    field: "Mrp",
+    headerName: "Mrp",
+    filter: 'agSetColumnFilter',
+    filterParams: {
+      defaultToNothingSelected: true,
+    },
+    sortable: true
+  },
+  {
+    field: "Wsp",
+    headerName: "Wsp",
+    filter: 'agSetColumnFilter',
+    filterParams: {
+      defaultToNothingSelected: true,
+    },
+    sortable: true
+  },
+  {
+    field: "STATUS",
+    headerName: "Status",
+    filter: 'agSetColumnFilter',
+    filterParams: {
+      defaultToNothingSelected: true,
+    },
+    sortable: true
+  }
 ];
 
-export default function ProdTable() {
-    const router = useRouter();
-    const [isLoading, setIsLoading] = useState(true);
-    const [rows, setRows] = useState([]);
+export default function CatTable() {
 
-    useEffect(() => {
-        fetchTableData();
-    }, []);
+  const [isLoading, setIsLoading] = useState(true);
+  const [rows, setRows] = useState([]);
+  const router = useRouter();
+  const [selectedRows, setSelectedRows] = useState([]);
 
-    const fetchTableData = async () => {
-        setIsLoading(true);
-        try {
-            const response = await axiosInstance.post(`PRODSRMST/GetPRODSRMSTDashBoard?currentPage=1&limit=5000`, {
-                "SearchText": ''
-            });
-            const { data: { STATUS, DATA } } = response;
-            if (STATUS === 0 && Array.isArray(DATA)) {
-                const formattedData = DATA.map((row, index) => ({
-                    id: index,
-                    ...row,
-                    STATUS: row.STATUS === "1" ? "Active" : "Inactive"
-                }));
-                setRows(formattedData);
-            }
-        } catch (error) {
-            console.error("Error fetching series data:", error);
-        } finally {
-            setIsLoading(false);
-        }
-    };
+  useEffect(() => {
+    fetchTableData();
+  }, []);
 
-    const handleAfterChange = (changes, source) => {
-        if (source === 'edit') {
-            console.log('Data changed:', changes);
-        }
-    };
+  const fetchTableData = async () => {
+    setIsLoading(true);
+    try {
+      const response = await axiosInstance.post(`PRODSRMST/GetPRODSRMSTDashBoard?currentPage=1&limit=5000`, {
+        "SearchText": ""
+      });
+      const { data: { STATUS, DATA } } = response;
+      if (STATUS === 0 && Array.isArray(DATA)) {
+        const formattedData = DATA.map((row) => ({
+          ...row,
+          STATUS: row.STATUS === "1" ? "Active" : "Inactive"
+        }));
+        setRows(formattedData);
+      }
+    } catch (error) {
+      console.error("Error fetching data:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-    const handleAfterSelection = (row, column, row2, column2) => {
-        console.log('Selection changed:', { row, column, row2, column2 });
-    };
+  const handleRowDoubleClick = (row) => {
+    const params = new URLSearchParams({
+      FGPRD_KEY: row.FGPRD_KEY,
+      mode: "view"
+    }).toString();
+    router.push(`/masters/products/prodseries?${params}`);
+  };
 
-    const handleRowClick = (row) => {
-        const params = new URLSearchParams({
-            FGPRD_KEY: row.FGPRD_KEY,
-            mode: "view"
-        }).toString();
-        router.push(`/masters/products/prodseries?${params}`);
-    };
+  const handleSelectionChanged = useCallback((event) => {
+    const selectedNodes = event.api.getSelectedNodes();
+    const selectedData = selectedNodes.map(node => node.data);
+    setSelectedRows(selectedData);
+    console.log('Selected rows:', selectedData);
+  }, []);
 
+  return (
+    <div className="p-2 w-full">
+      <div className="w-full mx-auto" style={{ maxWidth: '100%' }}>
 
-    const addButtonStyles = {
-        background: "#39ace2",
-        height: 40,
-        color: "white",
-        borderRadius: "50px",
-        padding: "5px 20px",
-        boxShadow: "0px 6px 15px rgba(0, 0, 0, 0.3)",
-        transition: "background 0.3s ease",
-        "&:hover": { background: "#2199d6" },
-        "&:disabled": {
-            backgroundColor: "#39ace2",
-            color: "rgba(0, 0, 0, 0.26)",
-        },
-    };
-
-    return (
-        <div className="p-2 w-full">
-            <div className="w-full mx-auto" style={{ maxWidth: '100%' }}>
-                <div className="mb-4 flex flex-wrap gap-4 items-center">
-
-                    <Button
-                        variant="contained"
-                        size="small"
-                        sx={addButtonStyles}
-                        startIcon={<AddIcon />}
-                        onClick={() => router.push('/masters/products/prodseries')}
-                    >
-                        New
-                    </Button>
-                </div>
-
-                <div style={{ height: 'calc(100vh - 180px)', width: '100%' }}>
-                    {isLoading ? (
-                        <div style={{
-                            display: 'flex',
-                            justifyContent: 'center',
-                            alignItems: 'center',
-                            height: '100%'
-                        }}>
-                            Loading...
-                        </div>
-                    ) : (
-                        <ReusableHandsontable
-                            data={rows}
-                            columns={handsontableColumns}
-                            height="auto"
-                            width="100%"
-                            colHeaders={true}
-                            rowHeaders={true}
-                            afterChange={handleAfterChange}
-                            handleRowDoubleClick={handleRowClick}
-                            afterSelection={handleAfterSelection}
-                            readOnly={true}
-                            customSettings={{
-                                stretchH: 'all',
-                                dropdownMenu: true,
-                                filters: {
-                                    indicators: true,
-                                    showOperators: true
-                                },
-                                contextMenu: true,
-                                search: true,
-                                filteringCaseSensitive: false,
-                                filteringIndicator: true,
-                                licenseKey: "non-commercial-and-evaluation"
-                            }}
-                        />
-                    )}
-                </div>
+        <div style={{ height: 'calc(100vh - 80px)', width: '100%' }}>
+          {isLoading ? (
+            <div style={{
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              height: '100%'
+            }}>
+              Loading...
             </div>
+          ) : (
+            <ReusableTable
+              columnDefs={columnDefs}
+              rowData={rows}
+              height="100%"
+              theme="ag-theme-quartz"
+              isDarkMode={false}
+              pagination={true}
+              paginationPageSize={25}
+              paginationPageSizeSelector={[25, 50, 100, 250, 500, 1000]}
+              quickFilter={true}
+              onRowClick={(params) => {
+                console.log('Row clicked:', params);
+              }}
+              onRowDoubleClick={handleRowDoubleClick}
+              onSelectionChanged={handleSelectionChanged}
+              loading={isLoading}
+              enableExport={true}
+              exportSelectedOnly={true}
+              selectedRows={selectedRows}
+              enableCheckbox={true}
+              compactMode={true}
+              rowHeight={24}
+              headerHeight={30}
+              className="custom-ag-table"
+              defaultColDef={{
+                resizable: true,
+                sortable: true,
+                filter: true,
+                flex: 1,
+                minWidth: 100
+              }}
+              customGridOptions={{
+                suppressRowClickSelection: true,
+                rowSelection: 'multiple',
+                animateRows: true,
+                enableCellTextSelection: true,
+                ensureDomOrder: true
+              }}
+            />
+          )}
         </div>
-    );
+      </div>
+    </div>
+  );
 }

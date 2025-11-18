@@ -278,6 +278,7 @@ export default function MasterPage() {
                     sx={{ 
                       cursor: item.path !== '#' ? 'pointer' : 'default',
                       transition: 'all 0.3s ease',
+                      width: 150, 
                       height: '100%',
                       background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
                       border: '1px solid #e0e0e0',
