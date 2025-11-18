@@ -109,6 +109,9 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
       fontSize: '14px !important',
       lineHeight: '1.4',
     },
+    '& .MuiFilledInput-root.Mui-disabled': {
+    backgroundColor: '#ffffff' // White background for disabled state
+  }
   };
 
   const DropInputSx = {
@@ -146,6 +149,9 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
       transform: 'translateY(-50%)',
       right: '10px',
     },
+    '& .MuiFilledInput-root.Mui-disabled': {
+    backgroundColor: '#ffffff' // White background for disabled state
+  }
   };
 
   const smallInputSx = {

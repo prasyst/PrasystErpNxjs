@@ -127,71 +127,79 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
   // State for updated table data
   const [updatedTableData, setUpdatedTableData] = useState([]);
 
-  const textInputSx = {
-    '& .MuiInputBase-root': {
-      height: 36,
-      fontSize: '14px',
-    },
-    '& .MuiInputLabel-root': {
-      fontSize: '14px',
-      top: '-8px',
-    },
-    '& .MuiFilledInput-root': {
-      backgroundColor: '#fafafa',
-      border: '1px solid #e0e0e0',
-      borderRadius: '6px',
-      overflow: 'hidden',
-      height: 36,
-      fontSize: '14px',
-    },
-    '& .MuiFilledInput-root:before': {
-      display: 'none',
-    },
-    '& .MuiFilledInput-root:after': {
-      display: 'none',
-    },
-    '& .MuiInputBase-input': {
-      padding: '10px 12px !important',
-      fontSize: '14px !important',
-      lineHeight: '1.4',
-    },
-  };
+// Updated textInputSx with white background for disabled state
+const textInputSx = {
+  '& .MuiInputBase-root': {
+    height: 36,
+    fontSize: '14px',
+  },
+  '& .MuiInputLabel-root': {
+    fontSize: '14px',
+    top: '-8px',
+  },
+  '& .MuiFilledInput-root': {
+    backgroundColor: '#fafafa',
+    border: '1px solid #e0e0e0',
+    borderRadius: '6px',
+    overflow: 'hidden',
+    height: 36,
+    fontSize: '14px',
+  },
+  '& .MuiFilledInput-root:before': {
+    display: 'none',
+  },
+  '& .MuiFilledInput-root:after': {
+    display: 'none',
+  },
+  '& .MuiInputBase-input': {
+    padding: '10px 12px !important',
+    fontSize: '14px !important',
+    lineHeight: '1.4',
+  },
+  '& .MuiFilledInput-root.Mui-disabled': {
+    backgroundColor: '#ffffff' // White background for disabled state
+  }
+};
 
-  const DropInputSx = {
-    '& .MuiInputBase-root': {
-      height: 36,
-      fontSize: '14px',
-    },
-    '& .MuiInputLabel-root': {
-      fontSize: '14px',
-      top: '-4px',
-    },
-    '& .MuiFilledInput-root': {
-      backgroundColor: '#fafafa',
-      border: '1px solid #e0e0e0',
-      borderRadius: '6px',
-      overflow: 'hidden',
-      height: 36,
-      fontSize: '14px',
-      paddingRight: '36px',
-    },
-    '& .MuiFilledInput-root:before': {
-      display: 'none',
-    },
-    '& .MuiFilledInput-root:after': {
-      display: 'none',
-    },
-    '& .MuiInputBase-input': {
-      padding: '10px 12px',
-      fontSize: '14px',
-      lineHeight: '1.4',
-    },
-    '& .MuiAutocomplete-endAdornment': {
-      top: '50%',
-      transform: 'translateY(-50%)',
-      right: '10px',
-    },
-  };
+// Updated DropInputSx with white background for disabled state
+const DropInputSx = {
+  '& .MuiInputBase-root': {
+    height: 36,
+    fontSize: '14px',
+  },
+  '& .MuiInputLabel-root': {
+    fontSize: '14px',
+    top: '-4px',
+  },
+  '& .MuiFilledInput-root': {
+    backgroundColor: '#fafafa',
+    border: '1px solid #e0e0e0',
+    borderRadius: '6px',
+    overflow: 'hidden',
+    height: 36,
+    fontSize: '14px',
+    paddingRight: '36px',
+  },
+  '& .MuiFilledInput-root:before': {
+    display: 'none',
+  },
+  '& .MuiFilledInput-root:after': {
+    display: 'none',
+  },
+  '& .MuiInputBase-input': {
+    padding: '10px 12px',
+    fontSize: '14px',
+    lineHeight: '1.4',
+  },
+  '& .MuiAutocomplete-endAdornment': {
+    top: '50%',
+    transform: 'translateY(-50%)',
+    right: '10px',
+  },
+  '& .MuiFilledInput-root.Mui-disabled': {
+    backgroundColor: '#ffffff' // White background for disabled state
+  }
+};
 
   const datePickerSx = {
     "& .MuiInputBase-root": {
@@ -205,6 +213,16 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
       top: "-6px", 
       fontSize: "12px",
     },
+    "& .MuiInputBase-root.Mui-disabled": {
+    backgroundColor: '#ffffff', // White background for disabled state
+    '& .MuiFilledInput-root': {
+      backgroundColor: '#ffffff', // White background for filled input
+    }
+  },
+  // Specifically for filled variant
+  "& .MuiFilledInput-root.Mui-disabled": {
+    backgroundColor: '#ffffff', // White background for disabled filled input
+  }
   };
 
   // Parse ORDBKSTYLIST data for table - initial data
@@ -1599,78 +1617,79 @@ const handleAddItem = async () => {
             <TableContainer sx={{ maxHeight: 400 }}>
               <Table stickyHeader size="small">
                 <TableHead>
-                  {/* Filter Row */}
-                  <TableRow>
-                    {columns.map((column) => (
-                      <TableCell
-                        key={`filter-${column.id}`}
-                        align={column.align || 'left'}
-                        sx={{
-                          backgroundColor: "#f4f8faff",
-                          padding: "2px 4px",
-                          borderBottom: "1px solid #ddd",
-                          minWidth: column.minWidth
-                        }}
-                      >
-                        <TextField
-  size="small"
-  placeholder={`Search`}
-  value={tableFilters[column.id] || ''}
-  onChange={(e) => handleTableFilterChange(column.id, e.target.value)}
-  variant="outlined"
-  sx={{
-    '& .MuiOutlinedInput-root': {
-      backgroundColor: 'white', // 🔹 White background
-      '& fieldset': {
-        border: 'none', // Remove border
-      },
-      '&:hover fieldset': {
-        border: 'none',
-      },
-      '&.Mui-focused fieldset': {
-        border: 'none',
-      },
-      height: '28px',
-      fontSize: '0.7rem',
-      borderRadius: '4px', // optional: rounded corners
-    },
-    '& .MuiInputBase-input': {
-      padding: '4px 6px',
-      fontSize: '0.7rem',
-    },
-  }}
-  InputProps={{
-    startAdornment: (
-      <InputAdornment position="start">
-        {/* <SearchIcon sx={{ fontSize: '16px' }} /> */}
-      </InputAdornment>
-    ),
-  }}
-/>
-
-                      </TableCell>
-                    ))}
-                  </TableRow>
+ 
                   
                   {/* Header Row */}
-                  <TableRow>
-                    {columns.map((column) => (
-                      <TableCell
-                        key={column.id}
-                        align={column.align || 'left'}
-                        sx={{
-                          backgroundColor: "#f5f5f5",
-                          fontWeight: "bold",
-                          fontSize: "0.8rem",
-                          padding: "6px 8px",
-                          borderBottom: "1px solid #ddd",
-                          minWidth: column.minWidth
-                        }}
-                      >
-                        {column.label}
-                      </TableCell>
-                    ))}
-                  </TableRow>
+                   <TableRow>
+    {columns.map((column) => (
+      <TableCell
+        key={column.id}
+        align={column.align || 'left'}
+        sx={{
+          backgroundColor: "#f5f5f5",
+          fontWeight: "bold",
+          fontSize: "0.8rem",
+          padding: "6px 8px",
+          borderBottom: "1px solid #ddd",
+          minWidth: column.minWidth
+        }}
+      >
+        {column.label}
+      </TableCell>
+    ))}
+  </TableRow>
+
+                   {/* Filter Row */}
+                 <TableRow>
+    {columns.map((column) => (
+      <TableCell
+        key={`filter-${column.id}`}
+        align={column.align || 'left'}
+        sx={{
+          backgroundColor: "#f4f8faff",
+          padding: "2px 4px",
+          borderBottom: "1px solid #ddd",
+          minWidth: column.minWidth
+        }}
+      >
+        <TextField
+          size="small"
+          placeholder={`Search ${column.label}`}
+          value={tableFilters[column.id] || ''}
+          onChange={(e) => handleTableFilterChange(column.id, e.target.value)}
+          variant="outlined"
+          sx={{
+            '& .MuiOutlinedInput-root': {
+              backgroundColor: 'white',
+              '& fieldset': {
+                border: 'none',
+              },
+              '&:hover fieldset': {
+                border: 'none',
+              },
+              '&.Mui-focused fieldset': {
+                border: 'none',
+              },
+              height: '28px',
+              fontSize: '0.7rem',
+              borderRadius: '4px',
+            },
+            '& .MuiInputBase-input': {
+              padding: '4px 6px',
+              fontSize: '0.7rem',
+            },
+          }}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                {/* <SearchIcon sx={{ fontSize: '16px', color: '#666' }} /> */}
+              </InputAdornment>
+            ),
+          }}
+        />
+      </TableCell>
+    ))}
+  </TableRow>
                 </TableHead>
 
                 <TableBody>

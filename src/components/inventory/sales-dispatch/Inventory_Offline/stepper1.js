@@ -107,6 +107,9 @@ const Stepper1 = ({
       fontSize: '14px !important',
       lineHeight: '1.4',
     },
+    '& .MuiFilledInput-root.Mui-disabled': {
+    backgroundColor: '#ffffff' // White background for disabled state
+  }
   };
 
   const DropInputSx = {
@@ -143,6 +146,9 @@ const Stepper1 = ({
       transform: 'translateY(-50%)',
       right: '10px',
     },
+    '& .MuiFilledInput-root.Mui-disabled': {
+    backgroundColor: '#ffffff' // White background for disabled state
+  }
   };
 
   const datePickerSx = {
@@ -157,6 +163,17 @@ const Stepper1 = ({
       top: "-6px", 
       fontSize: "12px",
     },
+    "& .MuiInputBase-root.Mui-disabled": {
+    backgroundColor: '#ffffff', // White background for disabled state
+    '& .MuiFilledInput-root': {
+      backgroundColor: '#ffffff', // White background for filled input
+    }
+  },
+  // Specifically for filled variant
+  "& .MuiFilledInput-root.Mui-disabled": {
+    backgroundColor: '#ffffff', // White background for disabled filled input
+  }
+    
   };
 
   // Function to get today's date in DD/MM/YYYY format
