@@ -618,67 +618,77 @@ const SalesOrderOffline = () => {
     router.push('/inverntory/stock-enquiry-table');
   };
 
-  const handlePrevClick = async () => {
-    if (mode !== 'view') return;
-    
-    try {
-      setLoading(true);
-      const payload = {
-        ORDBK_KEY: formData.ORDBK_KEY,
-        FLAG: "N" 
-      };
+const handlePrevClick = async () => {
+  if (mode !== 'view') return;
+  
+  try {
+    setLoading(true);
+    const payload = {
+      ORDBK_KEY: formData.ORDBK_KEY,
+      FLAG: "N" 
+    };
 
-      console.log('Fetching previous order with payload:', payload);
+    console.log('Fetching previous order with payload:', payload);
 
-      const response = await axiosInstance.post('/ORDBK/RetriveOrder', payload);
-      console.log('Previous Order API Response:', response.data);
+    const response = await axiosInstance.post('/ORDBK/RetriveOrder', payload);
+    console.log('Previous Order API Response:', response.data);
 
-      if (response.data.RESPONSESTATUSCODE === 1 && response.data.DATA.ORDBKList.length > 0) {
-        const orderData = response.data.DATA.ORDBKList[0];
-        await populateFormData(orderData);
-        setCurrentPARTY_KEY(orderData.PARTY_KEY);
-        showSnackbar('Previous order loaded');
-      } else {
-        showSnackbar('No previous order found', 'info');
-      }
-    } catch (error) {
-      console.error('Error fetching previous order:', error);
-      showSnackbar('Error loading previous order', 'error');
-    } finally {
-      setLoading(false);
+    if (response.data.RESPONSESTATUSCODE === 1 && response.data.DATA.ORDBKList.length > 0) {
+      const orderData = response.data.DATA.ORDBKList[0];
+      // Update the current ORDBK_KEY for next navigation
+      setFormData(prev => ({
+        ...prev,
+        ORDBK_KEY: orderData.ORDBK_KEY
+      }));
+      await populateFormData(orderData);
+      setCurrentPARTY_KEY(orderData.PARTY_KEY);
+      showSnackbar('Previous order loaded');
+    } else {
+      showSnackbar('No previous order found', 'info');
     }
-  };
+  } catch (error) {
+    console.error('Error fetching previous order:', error);
+    showSnackbar('Error loading previous order', 'error');
+  } finally {
+    setLoading(false);
+  }
+};
 
-  const handleNextClick = async () => {
-    if (mode !== 'view') return;
-    
-    try {
-      setLoading(true);
-      const payload = {
-        ORDBK_KEY: formData.ORDBK_KEY,
-        FLAG: "P"
-      };
+const handleNextClick = async () => {
+  if (mode !== 'view') return;
+  
+  try {
+    setLoading(true);
+    const payload = {
+      ORDBK_KEY: formData.ORDBK_KEY,
+      FLAG: "P"
+    };
 
-      console.log('Fetching next order with payload:', payload);
+    console.log('Fetching next order with payload:', payload);
 
-      const response = await axiosInstance.post('/ORDBK/RetriveOrder', payload);
-      console.log('Next Order API Response:', response.data);
+    const response = await axiosInstance.post('/ORDBK/RetriveOrder', payload);
+    console.log('Next Order API Response:', response.data);
 
-      if (response.data.RESPONSESTATUSCODE === 1 && response.data.DATA.ORDBKList.length > 0) {
-        const orderData = response.data.DATA.ORDBKList[0];
-        await populateFormData(orderData);
-        setCurrentPARTY_KEY(orderData.PARTY_KEY);
-        showSnackbar('Next order loaded');
-      } else {
-        showSnackbar('No next order found', 'info');
-      }
-    } catch (error) {
-      console.error('Error fetching next order:', error);
-      showSnackbar('Error loading next order', 'error');
-    } finally {
-      setLoading(false);
+    if (response.data.RESPONSESTATUSCODE === 1 && response.data.DATA.ORDBKList.length > 0) {
+      const orderData = response.data.DATA.ORDBKList[0];
+      // Update the current ORDBK_KEY for next navigation
+      setFormData(prev => ({
+        ...prev,
+        ORDBK_KEY: orderData.ORDBK_KEY
+      }));
+      await populateFormData(orderData);
+      setCurrentPARTY_KEY(orderData.PARTY_KEY);
+      showSnackbar('Next order loaded');
+    } else {
+      showSnackbar('No next order found', 'info');
     }
-  };
+  } catch (error) {
+    console.error('Error fetching next order:', error);
+    showSnackbar('Error loading next order', 'error');
+  } finally {
+    setLoading(false);
+  }
+};
 
   // Calculate total quantity from ORDBKSTYLIST
   const calculateTotalQty = (ordbkStyleList) => {
