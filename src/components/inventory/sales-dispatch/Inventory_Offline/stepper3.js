@@ -53,12 +53,15 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
   const [termOptions, setTermOptions] = useState([]);
   const [termMapping, setTermMapping] = useState({});
   const [termNameToKey, setTermNameToKey] = useState({});
-  const [termValFixMapping, setTermValFixMapping] = useState({}); // NEW: Store TERM_VAL_FIX values
+  const [termValFixMapping, setTermValFixMapping] = useState({});
   const [discPtnOptions, setDiscPtnOptions] = useState([]);
   const [selectedDiscPtn, setSelectedDiscPtn] = useState('');
 
   // Initialize table data from formData
   const [tableData, setTableData] = useState([]);
+
+  // State for Order Amount (from Stepper2's TOTAL_AMOUNT)
+  const [orderAmount, setOrderAmount] = useState(0);
 
   // Form state
   const [termFormData, setTermFormData] = useState({
@@ -74,10 +77,10 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
     TAXGRP_NAME: '0'
   });
 
-  // NEW: State to track current term's TERM_VAL_FIX value
+  // State to track current term's TERM_VAL_FIX value
   const [currentTermValFix, setCurrentTermValFix] = useState('0');
 
-  // Style definitions (same as your existing code)
+  // Style definitions
   const textInputSx = {
     '& .MuiInputBase-root': {
       height: 36,
@@ -180,6 +183,11 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
   useEffect(() => {
     console.log('FormData changed in Stepper3:', formData.apiResponseData?.ORDBKTERMLIST);
     
+    // Get Order Amount from Stepper2's TOTAL_AMOUNT
+    const stepper2TotalAmount = formData.TOTAL_AMOUNT || 0;
+    setOrderAmount(stepper2TotalAmount);
+    console.log('Order Amount from Stepper2:', stepper2TotalAmount);
+    
     if (formData.apiResponseData?.ORDBKTERMLIST && formData.apiResponseData.ORDBKTERMLIST.length > 0) {
       const transformedData = formData.apiResponseData.ORDBKTERMLIST.map((term, index) => ({
         id: term.ORDBKTERM_ID || index + 1,
@@ -207,9 +215,52 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
       console.log('No ORDBKTERMLIST data found, setting empty table');
       setTableData([]);
     }
-  }, [formData.apiResponseData]);
+  }, [formData.apiResponseData, formData.TOTAL_AMOUNT]);
 
-  // FIXED: Update formData when tableData changes with proper DBFLAG handling
+  // Calculate current order amount based on all terms
+  const calculateCurrentOrderAmount = () => {
+    let currentAmount = orderAmount;
+    
+    tableData.forEach(item => {
+      if (!item.originalData?.DBFLAG || item.originalData.DBFLAG !== 'D') {
+        // Subtract tax amount from order amount for both Tax and Term items
+        currentAmount -= parseFloat(item.taxAmount) || 0;
+      }
+    });
+    
+    return Math.max(0, currentAmount); // Ensure non-negative
+  };
+
+  // NEW: Calculate tax amount based on current term configuration
+  const calculateTaxAmountForCurrentTerm = () => {
+    const currentOrderAmount = calculateCurrentOrderAmount();
+    let taxableAmount = currentOrderAmount;
+    let taxAmount = 0;
+
+    if (currentTermValFix === '0') {
+      // Percentage based calculation
+      const percent = parseFloat(termFormData.TERM_PERCENT) || 0;
+      taxAmount = (currentOrderAmount * percent) / 100;
+    } else if (currentTermValFix === '1') {
+      // Fix amount based calculation
+      taxAmount = parseFloat(termFormData.TERM_FIX_AMT) || 0;
+    }
+
+    return { taxableAmount, taxAmount };
+  };
+
+  // FIXED: Auto-update tax amount when term or values change
+  const updateTaxAmountFields = () => {
+    const { taxableAmount, taxAmount } = calculateTaxAmountForCurrentTerm();
+    
+    setTermFormData(prev => ({
+      ...prev,
+      TAXABLE_AMT: taxableAmount.toString(),
+      TAX_AMT: taxAmount.toString()
+    }));
+  };
+
+  // Update formData when tableData changes with proper DBFLAG handling
   const updateFormDataWithTerms = (updatedTableData) => {
     console.log('Updating formData with terms, raw table data:', updatedTableData);
     
@@ -283,7 +334,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
     return !(isAddingNew || isEditing);
   };
 
-  // NEW: Function to determine field states based on TERM_VAL_FIX
+  // Function to determine field states based on TERM_VAL_FIX
   const getFieldStates = () => {
     const baseDisabled = shouldDisableFields();
     
@@ -295,8 +346,9 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
         percentDisabled: true, // Always disabled for TERM_VAL_FIX = "0"
         fixAmtDisabled: true,  // Always disabled for TERM_VAL_FIX = "0"
         termDescDisabled: baseDisabled,
-        taxableAmtDisabled: baseDisabled,
-        taxAmtDisabled: baseDisabled
+        taxableAmtDisabled: true, // Auto-calculated
+        taxAmtDisabled: true, // Auto-calculated
+        taxRateDisabled: baseDisabled
       };
     } else if (currentTermValFix === '1') {
       // TERM_VAL_FIX = "1" - Term Group, Term dropdown, and Fix Amount enabled
@@ -306,8 +358,9 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
         percentDisabled: true, // Always disabled for TERM_VAL_FIX = "1"
         fixAmtDisabled: baseDisabled, // Enabled for TERM_VAL_FIX = "1"
         termDescDisabled: baseDisabled,
-        taxableAmtDisabled: baseDisabled,
-        taxAmtDisabled: baseDisabled
+        taxableAmtDisabled: true, // Auto-calculated
+        taxAmtDisabled: true, // Auto-calculated
+        taxRateDisabled: baseDisabled
       };
     } else {
       // Default case - all fields follow base disabled state
@@ -318,7 +371,8 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
         fixAmtDisabled: baseDisabled,
         termDescDisabled: baseDisabled,
         taxableAmtDisabled: baseDisabled,
-        taxAmtDisabled: baseDisabled
+        taxAmtDisabled: baseDisabled,
+        taxRateDisabled: baseDisabled
       };
     }
   };
@@ -358,7 +412,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
       setTermOptions([]);
       setTermMapping({});
       setTermNameToKey({});
-      setTermValFixMapping({}); // Reset TERM_VAL_FIX mapping
+      setTermValFixMapping({});
       return;
     }
 
@@ -379,7 +433,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
         
         const termPercentMapping = {};
         const termKeyMapping = {};
-        const termValFixMapping = {}; // NEW: Store TERM_VAL_FIX values
+        const termValFixMapping = {};
         
         response.data.DATA.forEach(item => {
           if (item.TERM_VAL_YN && item.TERM_PERCENT !== undefined) {
@@ -388,7 +442,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
           if (item.TERM_VAL_YN && item.TERM_KEY) {
             termKeyMapping[item.TERM_VAL_YN] = item.TERM_KEY;
           }
-          // NEW: Store TERM_VAL_FIX value
+          // Store TERM_VAL_FIX value
           if (item.TERM_VAL_YN && item.TERM_VAL_FIX !== undefined) {
             termValFixMapping[item.TERM_VAL_YN] = item.TERM_VAL_FIX.toString();
           }
@@ -396,11 +450,11 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
         
         setTermMapping(termPercentMapping);
         setTermNameToKey(termKeyMapping);
-        setTermValFixMapping(termValFixMapping); // Set TERM_VAL_FIX mapping
+        setTermValFixMapping(termValFixMapping);
         
         console.log('Term Percent mapping:', termPercentMapping);
         console.log('Term Key mapping:', termKeyMapping);
-        console.log('TERM_VAL_FIX mapping:', termValFixMapping); // Log TERM_VAL_FIX mapping
+        console.log('TERM_VAL_FIX mapping:', termValFixMapping);
       } else {
         setTermOptions([]);
         setTermMapping({});
@@ -445,6 +499,13 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
       ...prev,
       [name]: value
     }));
+
+    // Recalculate tax amount when percentage or fix amount changes
+    if (name === 'TERM_PERCENT' || name === 'TERM_FIX_AMT') {
+      setTimeout(() => {
+        updateTaxAmountFields();
+      }, 100);
+    }
   };
 
   // Handle Term Group change
@@ -454,7 +515,9 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
       [name]: value,
       TERM_NAME: '',
       TERM_PERCENT: '',
-      TERM_FIX_AMT: ''
+      TERM_FIX_AMT: '',
+      TAXABLE_AMT: '',
+      TAX_AMT: ''
     }));
 
     // Reset current TERM_VAL_FIX when term group changes
@@ -486,7 +549,9 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
       ...prev,
       [name]: value,
       TERM_PERCENT: '',
-      TERM_FIX_AMT: ''
+      TERM_FIX_AMT: '',
+      TAXABLE_AMT: '',
+      TAX_AMT: ''
     }));
 
     if (name === "TERM_NAME" && value) {
@@ -497,21 +562,39 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
           ...prev,
           TERM_PERCENT: termPercent.toString()
         }));
-        showSnackbar(`Term percent auto-filled: ${termPercent}%`);
       }
 
-      // NEW: Set current TERM_VAL_FIX and handle field states
+      // Set current TERM_VAL_FIX and handle field states
       const termValFix = termValFixMapping[value] || '0';
       setCurrentTermValFix(termValFix);
       
       console.log(`Selected Term: ${value}, TERM_VAL_FIX: ${termValFix}`);
       
+      // Auto-calculate tax amount when term is selected
+      setTimeout(() => {
+        updateTaxAmountFields();
+      }, 100);
+      
       if (termValFix === '0') {
-        showSnackbar('Percentage mode: Only Term Group and Term fields are editable');
+        showSnackbar('Percentage mode: Tax amount will be calculated based on percentage');
       } else if (termValFix === '1') {
-        showSnackbar('Fixed Amount mode: Term Group, Term, and Fix Amount fields are editable');
+        showSnackbar('Fixed Amount mode: You can enter fixed tax amount');
       }
     }
+  };
+
+  // Handle Fix Amount change
+  const handleFixAmountChange = (e) => {
+    const { name, value } = e.target;
+    setTermFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+    
+    // Recalculate tax amount when fix amount changes
+    setTimeout(() => {
+      updateTaxAmountFields();
+    }, 100);
   };
 
   // Handle Disc Ptn dropdown change
@@ -566,14 +649,14 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
         TAXGRP_NAME: selectedData.type === "Tax" ? "1" : "0"
       });
       
-      // NEW: Determine TERM_VAL_FIX for editing
+      // Determine TERM_VAL_FIX for editing
       const termValFix = termValFixMapping[selectedData.term] || '0';
       setCurrentTermValFix(termValFix);
     }
     showSnackbar('Edit mode enabled for selected item');
   };
 
-  // FIXED: Delete selected item with proper DBFLAG handling
+  // Delete selected item with proper DBFLAG handling
   const handleDelete = () => {
     if (mode !== 'add' && mode !== 'edit') return;
     
@@ -614,7 +697,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
     showSnackbar("Item marked for deletion! Click Submit to confirm deletion.");
   };
 
-  // Save form data (add or edit)
+  // FIXED: Save form data (add or edit) with proper tax amount calculation
   const handleSave = () => {
     let updatedTableData;
 
@@ -630,6 +713,9 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
       TERM_VAL_FIX: currentTermValFix
     });
 
+    // Calculate final tax amount before saving
+    const { taxableAmount, taxAmount } = calculateTaxAmountForCurrentTerm();
+
     if (isAddingNew) {
       // Add new item
       const newItem = {
@@ -637,9 +723,9 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
         type: termFormData.TAXGRP_NAME === "1" ? "Tax" : "Term",
         taxType: termFormData.TAX_NAME,
         tax: termFormData.TERM_DESC,
-        rate: parseFloat(termFormData.TAX_RATE) || 0,
-        taxable: parseFloat(termFormData.TAXABLE_AMT) || 0,
-        taxAmount: parseFloat(termFormData.TAX_AMT) || 0,
+        rate: parseFloat(termFormData.TAX_RATE) || parseFloat(termFormData.TERM_PERCENT) || 0,
+        taxable: taxableAmount,
+        taxAmount: taxAmount,
         aot1A: 0,
         aot2A: 0,
         aot1: 0,
@@ -658,8 +744,8 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
           TERM_PERCENT: parseFloat(termFormData.TERM_PERCENT) || 0,
           TERM_FIX_AMT: parseFloat(termFormData.TERM_FIX_AMT) || 0,
           TERM_DESC: termFormData.TERM_DESC,
-          TAXABLE_AMT: parseFloat(termFormData.TAXABLE_AMT) || 0,
-          TAX_AMT: parseFloat(termFormData.TAX_AMT) || 0,
+          TAXABLE_AMT: taxableAmount,
+          TAX_AMT: taxAmount,
           TAX_RATE: parseFloat(termFormData.TAX_RATE) || 0,
           TAX_NAME: termFormData.TAX_NAME,
           TAXGRP_NAME: termFormData.TAXGRP_NAME === "1" ? 1 : 0,
@@ -686,9 +772,9 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
             type: termFormData.TAXGRP_NAME === "1" ? "Tax" : "Term",
             taxType: termFormData.TAX_NAME,
             tax: termFormData.TERM_DESC,
-            rate: parseFloat(termFormData.TAX_RATE) || 0,
-            taxable: parseFloat(termFormData.TAXABLE_AMT) || 0,
-            taxAmount: parseFloat(termFormData.TAX_AMT) || 0,
+            rate: parseFloat(termFormData.TAX_RATE) || parseFloat(termFormData.TERM_PERCENT) || 0,
+            taxable: taxableAmount,
+            taxAmount: taxAmount,
             termGroup: termFormData.TERMGRP_NAME,
             term: termFormData.TERM_NAME,
             termPercent: parseFloat(termFormData.TERM_PERCENT) || 0,
@@ -701,8 +787,8 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
               TERM_PERCENT: parseFloat(termFormData.TERM_PERCENT) || 0,
               TERM_FIX_AMT: parseFloat(termFormData.TERM_FIX_AMT) || 0,
               TERM_DESC: termFormData.TERM_DESC,
-              TAXABLE_AMT: parseFloat(termFormData.TAXABLE_AMT) || 0,
-              TAX_AMT: parseFloat(termFormData.TAX_AMT) || 0,
+              TAXABLE_AMT: taxableAmount,
+              TAX_AMT: taxAmount,
               TAX_RATE: parseFloat(termFormData.TAX_RATE) || 0,
               TAX_NAME: termFormData.TAX_NAME,
               TAXGRP_NAME: termFormData.TAXGRP_NAME === "1" ? 1 : 0,
@@ -796,6 +882,9 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
   // Get current field states based on TERM_VAL_FIX
   const fieldStates = getFieldStates();
 
+  // Calculate current order amount for display
+  const currentOrderAmount = calculateCurrentOrderAmount();
+
   return (
     <Box>
       <Box
@@ -864,8 +953,8 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
                             whiteSpace: "nowrap",
                           }}
                         >
-                          {column.format && typeof row[column.id] === 'number' 
-                            ? column.format(row[column.id])
+                          {column.id === 'taxable' || column.id === 'taxAmount' || column.id === 'rate' || column.id === 'termPercent' || column.id === 'termR'
+                            ? (row[column.id] || 0).toFixed(2)
                             : row[column.id] || "—"
                           }
                         </TableCell>
@@ -887,7 +976,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
           </Paper>
         </Box>
 
-        {/* CRUD Buttons */}
+        {/* CRUD Buttons with NEW buttons */}
         <Stack direction="row" spacing={2} sx={{ mt: 2, alignItems: 'center' }}>
           <Button
             variant="contained"
@@ -948,6 +1037,43 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
           >
             Delete
           </Button>
+
+          {/* Party Tax and Apply GST Buttons */}
+          <Button
+            variant="contained"
+            disabled={isFormDisabled || isAddingNew || isEditing}
+            sx={{
+              backgroundColor: '#39ace2',
+              color: 'white',
+              margin: { xs: '0 4px', sm: '0 6px' },
+              minWidth: { xs: 80, sm: 90, md: 100 },
+              height: { xs: 40, sm: 46, md: 30 },
+              '&:disabled': {
+                backgroundColor: '#cccccc',
+                color: '#666666'
+              }
+            }}
+          >
+            Party Tax
+          </Button>
+
+          <Button
+            variant="contained"
+            disabled={isFormDisabled || isAddingNew || isEditing}
+            sx={{
+              backgroundColor: '#39ace2',
+              color: 'white',
+              margin: { xs: '0 4px', sm: '0 6px' },
+              minWidth: { xs: 80, sm: 90, md: 100 },
+              height: { xs: 40, sm: 46, md: 30 },
+              '&:disabled': {
+                backgroundColor: '#cccccc',
+                color: '#666666'
+              }
+            }}
+          >
+            Apply GST
+          </Button>
           
           <Box sx={{ minWidth: 200, maxWidth: 250 }}>
             <AutoVibe
@@ -962,6 +1088,29 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
               sx={DropInputSx}
             />
           </Box>
+
+          {/* Order Amount Text Field */}
+          <TextField
+            label="Order Amount"
+            variant="filled"
+            value={currentOrderAmount.toFixed(2)}
+            disabled
+            sx={{
+              ...textInputSx,
+              minWidth: 150,
+              '& .MuiInputBase-input': {
+                fontWeight: 'bold',
+                color: '#1976d2'
+              }
+            }}
+            inputProps={{ 
+              style: { 
+                padding: '6px 8px', 
+                fontSize: '12px',
+                textAlign: 'right'
+              } 
+            }}
+          />
         </Stack>
 
         {/* Tabs Section */}
@@ -1023,7 +1172,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
                 name="TERM_FIX_AMT"
                 type="number"
                 value={termFormData.TERM_FIX_AMT}
-                onChange={handleInputChange}
+                onChange={handleFixAmountChange}
                 variant="filled"
                 sx={smallInputSx}  
                 disabled={fieldStates.fixAmtDisabled}
@@ -1114,7 +1263,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
                 onChange={handleInputChange}
                 variant="filled"
                 sx={smallInputSx}  
-                disabled={shouldDisableFields()}
+                disabled={fieldStates.taxRateDisabled}
               />
             </Grid>
             <Grid item xs={12} sm={3}>
@@ -1126,7 +1275,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
                 onChange={handleInputChange}
                 variant="filled"
                 sx={smallInputSx}  
-                disabled={shouldDisableFields()}
+                disabled={fieldStates.taxableAmtDisabled}
               />
             </Grid>
             <Grid item xs={12} sm={2}>
@@ -1139,7 +1288,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
                 onChange={handleInputChange}
                 variant="filled"
                 sx={smallInputSx}  
-                disabled={shouldDisableFields()}
+                disabled={fieldStates.taxAmtDisabled}
               />
             </Grid>
             <Grid item xs={12}>
@@ -1211,7 +1360,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
                 name="TERM_FIX_AMT"
                 type="number"
                 value={termFormData.TERM_FIX_AMT}
-                onChange={handleInputChange}
+                onChange={handleFixAmountChange}
                 variant="filled"
                 sx={smallInputSx}  
                 disabled={fieldStates.fixAmtDisabled}
