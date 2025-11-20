@@ -1,32 +1,28 @@
-'use client';
-
-import React, { useState, useEffect, useCallback } from 'react';
+"use client"
+import React, { useState, useRef, useEffect } from 'react';
 import {
-    Box,
-    TextField,
-    Button,
-    Paper,
-    Typography,
-    Grid,
-    RadioGroup,
-    Radio
-} from '@mui/material';
-import FormGroup from '@mui/material/FormGroup';
-import FormControlLabel from '@mui/material/FormControlLabel';
-import Checkbox from '@mui/material/Checkbox';
-import CrudButton from '@/GlobalFunction/CrudButton';
-import { useSearchParams, useRouter } from 'next/navigation';
-import { TbListSearch } from "react-icons/tb";
+    MdAdd, MdClose, MdAttachFile, MdSend, MdPerson,
+    MdCategory, MdPriorityHigh, MdDescription, MdArrowBack,
+    MdQrCodeScanner, MdQrCode
+} from 'react-icons/md';
+import { useRouter } from 'next/navigation';
+import { CloudUpload } from '@mui/icons-material';
+import { Html5QrcodeScanner } from 'html5-qrcode';
+import { Box, Button, Typography, TextField, Grid, RadioGroup, Radio, FormControlLabel } from '@mui/material';
 import { toast, ToastContainer } from 'react-toastify';
-import axiosInstance from '../../../../lib/axios';
-import KeyboardArrowLeftIcon from "@mui/icons-material/KeyboardArrowLeft";
-import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import UploadIcon from '@mui/icons-material/Upload';
 import AutoVibe from '@/GlobalFunction/CustomAutoComplete/AutoVibe';
+import { ArrowBack } from '@mui/icons-material';
 
 const RaiseTicketMst = () => {
+    const router = useRouter();
 
     const [selectedRadio, setSelectedRadio] = useState('Machine');
+    const [ImgName, setImgName] = useState('Machine');
+
+    const [formData, setFormData] = useState({
+     ImgName
+    });
 
     const handleRadioChange = (event) => {
         setSelectedRadio(event.target.value);
@@ -104,251 +100,320 @@ const RaiseTicketMst = () => {
         }
     };
 
+     const handleFileChange = (e) => {
+        const file = e.target.files[0];
+        setImgName(file);
+        setFormData((prev) => {
+            const updatedFormData = { ...prev, ImgName: file };
+            console.log("Updated formData:", updatedFormData);
+            return updatedFormData;
+        });
+    };
+
     return (
-        <>
+        <Grid
+            sx={{
+                width: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'flex-start',
+                alignItems: 'center',
+                backgroundColor: '#f3f4f6',
+                boxSizing: 'border-box',
+                minHeight: '100vh',
+                overflowX: 'hidden',
+                overflowY: 'auto',
+                padding: { xs: '20px', sm: '40px' },
+            }}
+        >
             <ToastContainer />
+
+            {/* --- Header Section --- */}
             <Grid
-                container
-                justifyContent="center"
-                alignItems="center"
+                size={{ xs: 12, sm: 12, md: 12 }}
                 sx={{
-                    marginInline: { xs: '5%', sm: '5%', md: '5%', lg: '20%', xl: '5%' },
-                    maxHeight: "100vh",
-                    paddingTop: "65px",
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor: '#ffffff',
+                    borderRadius: '15px',
+                    boxShadow: '0 8px 20px rgba(0, 0, 0, 0.08)',
+                    padding: { xs: '20px', sm: '30px', md: '10px' },
+                    width: { xs: '90%', sm: '60%', md: '60%' },
+                    marginBottom: '10px',
                 }}
             >
-                <Grid sx={{ width: '100%' }}>
-                    <Paper
-                        elevation={3}
-                        style={{ padding: "16px", borderRadius: "10px" }}
-                    >
-                        <Typography variant="h6" align="center" gutterBottom>
-                            Raise Service Ticket
-                        </Typography>
+                <Typography
+                    variant="h4"
+                    sx={{
+                        margin: 0,
+                        color: '#1f2937',
+                        fontFamily: 'Inter, sans-serif',
+                        textAlign: 'center',
+                    }}
+                >
+                    Raise Service Ticket
+                </Typography>
+                <Typography
+                    variant="body1"
+                    sx={{
+                        color: '#4b5563',
+                        fontSize: '16px',
+                        marginTop: '8px',
+                        textAlign: 'center',
+                    }}
+                >
+                    Please fill the details below to raise a new service request.
+                </Typography>
+            </Grid>
 
-                        <Grid container spacing={0.5}>
-                            <Grid size={{ xs: 12, sm: 6, md: 12 }}>
-                                <Typography variant="h6">Ticket For</Typography>
-                                <RadioGroup
-                                    row
-                                    name="asc-radio"
-                                    value={selectedRadio}
-                                    onChange={handleRadioChange}
-                                >
-                                    <FormControlLabel
-                                        value="Machine"
-                                        control={<Radio />}
-                                        label="Machine"
-                                    />
-                                    <FormControlLabel
-                                        value="Department"
-                                        control={<Radio />}
-                                        label="Department"
-                                    />
-                                </RadioGroup>
-                            </Grid>
+            {/* --- Form Section --- */}
+            <Grid
+                size={{ xs: 12, sm: 12, md: 12 }}
+                sx={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    width: { xs: '90%', sm: '60%', md: '60%' },
+                    backgroundColor: '#ffffff',
+                    padding: { xs: '20px', sm: '30px', md: '40px' },
+                    borderRadius: '15px',
+                    boxShadow: '0 10px 30px rgba(0,0,0,0.1)',
+                }}
+            >
+                <Grid container spacing={2}>
 
-                            {selectedRadio === 'Machine' && (
-                                <>
-                                    <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-                                        <AutoVibe
-                                            id=""
-                                            disabled={''}
-                                            getOptionLabel={(option) => option || ''}
-                                            options={''}
-                                            label="Machine"
-                                            name=""
-                                            value={""}
-                                            onChange={''}
-                                            sx={DropInputSx}
-                                            inputProps={{
-                                                style: {
-                                                    padding: '6px 8px',
-                                                    fontSize: '12px',
-                                                },
-                                            }}
-                                        />
-                                    </Grid>
-                                    <Grid size={{ xs: 12, sm: 6, md: 4 }}></Grid>
-                                    <Grid size={{ xs: 12, sm: 6, md: 4 }}></Grid>
-                                </>
-                            )}
+                    <Grid size={{ xs: 12, sm: 6, md: 12 }}>
+                        <Typography variant="h6">Ticket For</Typography>
+                        <RadioGroup
+                            row
+                            name="asc-radio"
+                            value={selectedRadio}
+                            onChange={handleRadioChange}
+                        >
+                            <FormControlLabel
+                                value="Machine"
+                                control={<Radio />}
+                                label="Machine"
+                            />
+                            <FormControlLabel
+                                value="Department"
+                                control={<Radio />}
+                                label="Department"
+                            />
+                        </RadioGroup>
+                    </Grid>
 
-                            {selectedRadio === 'Department' && (
-                            <>
-                                <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-                                    <AutoVibe
-                                        id=""
-                                        disabled={''}
-                                        getOptionLabel={(option) => option || ''}
-                                        options={''}
-                                        label="Department"
-                                        name=""
-                                        value={""}
-                                        onChange={''}
-                                        sx={DropInputSx}
-                                        inputProps={{
-                                            style: {
-                                                padding: '6px 8px',
-                                                fontSize: '12px',
-                                            },
-                                        }}
-                                    />
-                                </Grid>
-                                <Grid size={{ xs: 12, sm: 6, md: 4 }}></Grid>
-                                <Grid size={{ xs: 12, sm: 6, md: 4 }}></Grid>
-                             </>
-                            )}
-
-                            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-                                <AutoVibe
-                                    id=""
-                                    disabled={''}
-                                    getOptionLabel={(option) => option || ''}
-                                    options={''}
-                                    label="Category Name"
-                                    name=""
-                                    value={""}
-                                    onChange={''}
-                                    sx={DropInputSx}
-                                    inputProps={{
-                                        style: {
-                                            padding: '6px 8px',
-                                            fontSize: '12px',
-                                        },
-                                    }}
-                                />
-                            </Grid>
-
-                            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-                                <AutoVibe
-                                    id=""
-                                    disabled={''}
-                                    getOptionLabel={(option) => option || ''}
-                                    options={''}
-                                    label="Sub Category Name"
-                                    name=""
-                                    value={""}
-                                    onChange={''}
-                                    sx={DropInputSx}
-                                    inputProps={{
-                                        style: {
-                                            padding: '6px 8px',
-                                            fontSize: '12px',
-                                        },
-                                    }}
-                                />
-                            </Grid>
-
-                            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-                                <AutoVibe
-                                    id=""
-                                    disabled={''}
-                                    getOptionLabel={(option) => option || ''}
-                                    options={''}
-                                    label="Service/Complaint"
-                                    name=""
-                                    value={""}
-                                    onChange={''}
-                                    sx={DropInputSx}
-                                    inputProps={{
-                                        style: {
-                                            padding: '6px 8px',
-                                            fontSize: '12px',
-                                        },
-                                    }}
-                                />
-                            </Grid>
-
-                            <Grid item xs={12} sm={6} md={4}>
-                                <label htmlFor="upload-photo">
-                                    <input
-                                        accept="image/*"
-                                        style={{ display: 'none' }}
-                                        id="upload-photo"
-                                        type="file"
-                                        onChange={''}
-                                        disabled={false}
-                                    />
-                                    <Button
-                                        component="span"
-                                        variant="outlined"
-                                        fullWidth
-                                        startIcon={<UploadIcon />}
-                                        sx={{
-                                            fontSize: '0.8rem',
-                                            py: 0.5,
-                                            borderRadius: 2,
-                                            borderColor: '#90caf9',
-                                            color: '#1976d2',
-                                        }}
-                                    >
-                                        Upload Image
-                                    </Button>
-                                </label>
-                            </Grid>
-
-                            <Grid size={{ xs: 12, sm: 6, md: 4 }}></Grid>
-                            <Grid size={{ xs: 12, sm: 6, md: 4 }}></Grid>
-
-                            <Grid size={{ xs: 12, sm: 6, md: 12 }}>
-                                <TextField
-                                    label="Description"
-                                    variant="filled"
-                                    fullWidth
-                                    onChange={''}
-                                    value={""}
-                                    name=""
-                                    disabled={''}
-                                    sx={doubleInputSx}
-                                    inputProps={{
-                                        style: {
-                                            padding: '6px 8px',
-                                            fontSize: '12px',
-                                        },
-                                    }}
-                                />
-                            </Grid>
-
-                            <Grid sx={{
-                                display: "flex",
-                                justifyContent: "end",
-                                ml: '100.5%',
-                                position: 'relative',
-                                top: 10
-                            }}>
-                                <>
-                                    <Button variant="contained"
-                                        sx={{
-                                            background: 'linear-gradient(290deg, #d4d4d4, #ffffff)',
-                                            margin: { xs: '0 4px', sm: '0 6px' },
-                                            minWidth: { xs: 40, sm: 46, md: 60 },
-                                            height: { xs: 40, sm: 46, md: 30 },
-                                        }}
-                                        onClick={''} disabled>
-                                        Back
-                                    </Button>
-                                    <Button variant="contained"
-                                        sx={{
-                                            background: 'linear-gradient(290deg, #a7c5e9, #ffffff)',
-                                            margin: { xs: '0 4px', sm: '0 6px' },
-                                            minWidth: { xs: 40, sm: 46, md: 60 },
-                                            height: { xs: 40, sm: 46, md: 30 },
-                                        }}
-                                        onClick={''}
-                                        disabled
-                                    >
-                                        Submit
-                                    </Button>
-                                </>
-
-                            </Grid>
-
+                    <>
+                        <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+                            <AutoVibe
+                                id=""
+                                disabled={selectedRadio === 'Department'}
+                                getOptionLabel={(option) => option || ''}
+                                options={''}
+                                label="Machine"
+                                name=""
+                                value={""}
+                                onChange={''}
+                                sx={DropInputSx}
+                                inputProps={{
+                                    style: {
+                                        padding: '6px 8px',
+                                        fontSize: '12px',
+                                    },
+                                }}
+                            />
                         </Grid>
-                    </Paper>
+                        <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+                            <AutoVibe
+                                id=""
+                                disabled={selectedRadio === 'Machine'}
+                                getOptionLabel={(option) => option || ''}
+                                options={''}
+                                label="Department"
+                                name=""
+                                value={""}
+                                onChange={''}
+                                sx={DropInputSx}
+                                inputProps={{
+                                    style: {
+                                        padding: '6px 8px',
+                                        fontSize: '12px',
+                                    },
+                                }}
+                            />
+                        </Grid>
+                        <Grid size={{ xs: 12, sm: 6, md: 4 }}></Grid>
+                    </>
+
+                    <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+                        <AutoVibe
+                            id=""
+                            disabled={''}
+                            getOptionLabel={(option) => option || ''}
+                            options={''}
+                            label="Category Name"
+                            name=""
+                            value={""}
+                            onChange={''}
+                            sx={DropInputSx}
+                            inputProps={{
+                                style: {
+                                    padding: '6px 8px',
+                                    fontSize: '12px',
+                                },
+                            }}
+                        />
+                    </Grid>
+
+                    <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+                        <AutoVibe
+                            id=""
+                            disabled={''}
+                            getOptionLabel={(option) => option || ''}
+                            options={''}
+                            label="Sub Category Name"
+                            name=""
+                            value={""}
+                            onChange={''}
+                            sx={DropInputSx}
+                            inputProps={{
+                                style: {
+                                    padding: '6px 8px',
+                                    fontSize: '12px',
+                                },
+                            }}
+                        />
+                    </Grid>
+
+                    <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+                        <AutoVibe
+                            id=""
+                            disabled={''}
+                            getOptionLabel={(option) => option || ''}
+                            options={''}
+                            label="Service/Complaint"
+                            name=""
+                            value={""}
+                            onChange={''}
+                            sx={DropInputSx}
+                            inputProps={{
+                                style: {
+                                    padding: '6px 8px',
+                                    fontSize: '12px',
+                                },
+                            }}
+                        />
+                    </Grid>
+
+                    <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+                        <Button
+                            variant="contained"
+                            component="label"
+                            sx={{
+                                backgroundColor: 'pink',
+                                color: 'white',
+                                '&:hover': {
+                                    backgroundColor: 'pink',
+                                },
+                                padding: '10px 20px',
+                                borderRadius: '8px',
+                                // marginTop: 6,
+                                textTransform: 'none',
+                                boxShadow: 2,
+                            }}
+                            startIcon={<CloudUpload />}
+                        >
+                            Upload Image
+                            <input
+                                type="file"
+                                hidden
+                                accept="image/*"
+                                onChange={handleFileChange}
+                            />
+                        </Button>
+
+                        {/* Image Preview */}
+                        <Box
+                            sx={{
+                                marginTop: 2,
+                                width: 150,
+                                height: 150,
+                                border: '2px dashed',
+                                borderColor: 'purple',
+                                borderRadius: '10px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                overflow: 'hidden',
+                                backgroundColor: '#f7f7f7',
+                                boxShadow: 1,
+                            }}
+                        >
+                            {formData.ImgName ? (
+                                <img
+                                    // src={URL.createObjectURL(formData.ImgName)}
+                                    src={
+                                        typeof formData.ImgName === "string"
+                                            ? formData.ImgName
+                                            : URL.createObjectURL(formData.ImgName)
+                                    }
+                                    alt="preview"
+                                    style={{
+                                        width: '100%',
+                                        height: '100%',
+                                        objectFit: 'cover',
+                                    }}
+                                />
+                            ) : (
+                                <Typography variant="body2" color="textSecondary">
+                                    No Image
+                                </Typography>
+                            )}
+                        </Box>
+                    </Grid>
+
+                    <Grid size={{ xs: 12, sm: 6, md: 8 }}>
+                        <TextField
+                            label="Description"
+                            variant="filled"
+                            fullWidth
+                            onChange={''}
+                            value={""}
+                            name=""
+                            disabled={''}
+                            sx={doubleInputSx}
+                            inputProps={{
+                                style: {
+                                    padding: '6px 8px',
+                                    fontSize: '12px',
+                                },
+                            }}
+                        />
+                    </Grid>
+
+                    <Grid
+                        size={{ xs: 12, sm: 12, md: 12 }}
+                        sx={{ textAlign: 'center', marginTop: '15px' }}
+                    >
+                        <Button
+                            variant="contained"
+                            color="primary"
+                            sx={{
+                                width: { xs: '100%', sm: '50%' },
+                                padding: '14px',
+                                fontSize: '16px',
+                                textTransform: 'none',
+                                borderRadius: '10px',
+                                boxShadow: '0 4px 15px rgba(0,0,0,0.1)',
+                            }}
+                        >
+                            Submit Ticket
+                        </Button>
+                    </Grid>
                 </Grid>
             </Grid>
-        </>
+        </Grid>
     );
 };
 

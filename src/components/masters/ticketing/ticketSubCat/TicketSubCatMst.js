@@ -133,7 +133,7 @@ const TicketSubCatMst = () => {
             try {
                 const response = await axiosInstance.post(`Employee/GetEmployeeDrp`,
                     {
-                        "FLAG": ""
+                        "FLAG": "TN"
                     }
                 );
                 console.log("API response:", response.data.DATA);
