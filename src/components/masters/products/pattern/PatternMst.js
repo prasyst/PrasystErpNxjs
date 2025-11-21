@@ -457,7 +457,7 @@ const PatternMst = () => {
     };
 
     const handleExit = () => {
-        router.push('/masters/products/pattern/patterntable');
+        router.push("/masterpage");
     };
 
     const Buttonsx = {

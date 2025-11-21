@@ -497,7 +497,7 @@ const CategoryMst = () => {
         router.push("/masters/products/category/cattable");
     };
 
-    const handleExit = () => { router.push("/masters/products/category/cattable") };
+    const handleExit = () => { router.push("/masterpage") };
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -511,12 +511,7 @@ const CategoryMst = () => {
         backgroundColor: '#39ace2',
         margin: { xs: '0 4px', sm: '0 6px' },
         minWidth: { xs: 40, sm: 46, md: 60 },
-        height: { xs: 40, sm: 46, md: 27 },
-        // "&:disabled": {
-        //   backgroundColor: "rgba(0, 0, 0, 0.12)",
-        //   color: "rgba(0, 0, 0, 0.26)",
-        //   boxShadow: "none",
-        // }
+        height: { xs: 40, sm: 46, md: 27 }
     };
 
     const textInputSx = {
