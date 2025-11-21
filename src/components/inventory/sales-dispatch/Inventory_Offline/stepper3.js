@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Box,
   Grid,
@@ -63,6 +63,33 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
   // State for Order Amount (from Stepper2's TOTAL_AMOUNT)
   const [orderAmount, setOrderAmount] = useState(0);
 
+  // State for GST Summary and GST Table Data
+  const [gstSummary, setGstSummary] = useState({
+    sgstRate: 0,
+    cgstRate: 0,
+    igstRate: 0,
+    sgstAmount: 0,
+    cgstAmount: 0,
+    igstAmount: 0,
+    taxableAmount: 0,
+    totalGstAmount: 0
+  });
+
+  // State for GST Table Data - Will be used to populate ORDBKGSTLIST
+  const [gstTableData, setGstTableData] = useState([]);
+
+  // NEW: State for top table data with proper tax rows
+  const [topTableData, setTopTableData] = useState([]);
+
+  // NEW: State for final amount calculation
+  const [finalAmount, setFinalAmount] = useState(0);
+
+  // NEW: Track discount amount from terms
+  const [totalDiscountFromTerms, setTotalDiscountFromTerms] = useState(0);
+
+  // NEW: Track if GST calculation is in progress to prevent infinite loops
+  const [isGstCalculating, setIsGstCalculating] = useState(false);
+
   // Form state
   const [termFormData, setTermFormData] = useState({
     TERMGRP_NAME: '',
@@ -110,8 +137,8 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
       lineHeight: '1.4',
     },
     '& .MuiFilledInput-root.Mui-disabled': {
-    backgroundColor: '#ffffff' // White background for disabled state
-  }
+      backgroundColor: '#ffffff'
+    }
   };
 
   const DropInputSx = {
@@ -150,8 +177,8 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
       right: '10px',
     },
     '& .MuiFilledInput-root.Mui-disabled': {
-    backgroundColor: '#ffffff' // White background for disabled state
-  }
+      backgroundColor: '#ffffff'
+    }
   };
 
   const smallInputSx = {
@@ -185,15 +212,296 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
     },
   };
 
+  // NEW: Function to calculate total discount from terms - FIXED to prevent infinite loop
+  const calculateTotalDiscountFromTerms = useCallback((tableData) => {
+    return tableData
+      .filter(row => !row.originalData?.isGstRow && 
+                    (!row.originalData?.DBFLAG || row.originalData.DBFLAG !== 'D') &&
+                    row.type === "Term")
+      .reduce((sum, row) => sum + (parseFloat(row.taxAmount) || 0), 0);
+  }, []);
+
+  // NEW: Function to transform GST data for top table based on tax type - FIXED DUPLICATE ISSUE
+  const transformGSTDataForTopTable = useCallback((gstData) => {
+    if (!gstData || gstData.length === 0) return [];
+
+    const gstType = formData.GST_TYPE || 'C'; // 'C' for CGST+SGST, 'I' for IGST
+    const topTableRows = [];
+
+    // Calculate totals across all HSN codes
+    let totalNetAmount = 0;
+    let totalSgstAmount = 0;
+    let totalCgstAmount = 0;
+    let totalIgstAmount = 0;
+
+    gstData.forEach(item => {
+      totalNetAmount += item.netAmount || 0;
+      totalSgstAmount += item.sgstAmount || 0;
+      totalCgstAmount += item.cgstAmount || 0;
+      totalIgstAmount += item.igstAmount || 0;
+    });
+
+    if (gstType === 'I') {
+      // IGST - Single row for all HSN codes
+      topTableRows.push({
+        id: `igst_total`,
+        type: "Tax",
+        taxType: "GST",
+        tax: "IGST",
+        rate: gstData[0]?.igstRate || 0, // Use first item's rate
+        taxable: totalNetAmount, // Use total net amount from GST summary
+        taxAmount: totalIgstAmount,
+        termGroup: "",
+        term: "",
+        termPercent: 0,
+        termR: 0,
+        originalData: { isGstRow: true }
+      });
+    } else {
+      // CGST + SGST - Two rows for all HSN codes (not per HSN code)
+      topTableRows.push({
+        id: `cgst_total`,
+        type: "Tax",
+        taxType: "GST", 
+        tax: "CGST",
+        rate: gstData[0]?.cgstRate || 0, // Use first item's rate
+        taxable: totalNetAmount, // Use total net amount from GST summary
+        taxAmount: totalCgstAmount,
+        termGroup: "",
+        term: "",
+        termPercent: 0,
+        termR: 0,
+        originalData: { isGstRow: true }
+      });
+
+      topTableRows.push({
+        id: `sgst_total`,
+        type: "Tax",
+        taxType: "GST",
+        tax: "SGST", 
+        rate: gstData[0]?.sgstRate || 0, // Use first item's rate
+        taxable: totalNetAmount, // Use total net amount from GST summary
+        taxAmount: totalSgstAmount,
+        termGroup: "",
+        term: "",
+        termPercent: 0,
+        termR: 0,
+        originalData: { isGstRow: true }
+      });
+    }
+
+    return topTableRows;
+  }, [formData.GST_TYPE]);
+
+  // NEW: Enhanced function to fetch GST rates and populate GST table with proper ORDBKGSTLIST structure
+  const fetchGSTRates = useCallback(async () => {
+    if (!formData.apiResponseData?.ORDBKSTYLIST || formData.apiResponseData.ORDBKSTYLIST.length === 0) {
+      showSnackbar('No items found to calculate GST', 'error');
+      return;
+    }
+
+    if (isGstCalculating) {
+      console.log('GST calculation already in progress, skipping...');
+      return;
+    }
+
+    try {
+      setIsGstCalculating(true);
+      const currentDate = new Date().toISOString().replace('T', ' ').split('.')[0];
+      const gstTableItems = [];
+      let totalTaxableAmount = 0;
+      let totalSgstAmount = 0;
+      let totalCgstAmount = 0;
+      let totalIgstAmount = 0;
+      let totalGstAmount = 0;
+      let totalItemAmount = 0;
+      let totalDiscAmount = 0;
+      let totalNetAmount = 0;
+
+      // Calculate total discount from terms
+      const discountFromTerms = calculateTotalDiscountFromTerms(topTableData);
+      setTotalDiscountFromTerms(discountFromTerms);
+
+      console.log('Total discount from terms:', discountFromTerms);
+
+      for (const item of formData.apiResponseData.ORDBKSTYLIST) {
+        if (item.DBFLAG === 'D') continue; // Skip deleted items
+        
+        const payload = {
+          "MRP": parseFloat(item.MRP) || 0,
+          "WSP": parseFloat(item.ITMRATE) || 0,
+          "intStyle_Id": item.FGSTYLE_ID || 0,
+          "Byhsncode_key": 0,
+          "HSNCODE_KEY": item.HSNCODE_KEY || "IG001",
+          "intGST_P_ID": 1
+        };
+
+        console.log('Fetching GST rates for item:', payload);
+
+        const response = await axiosInstance.post('/Hsncode/GetGstRates', payload);
+        console.log('GST Rates API Response:', response.data);
+
+        if (response.data.RESPONSESTATUSCODE === 1 && response.data.DATA && response.data.DATA.length > 0) {
+          const gstData = response.data.DATA[0];
+          
+          // Calculate GST amounts based on GST type from Stepper1
+          const gstType = formData.GST_TYPE || 'C'; // 'C' for CGST+SGST, 'I' for IGST
+          
+          // Apply discount to item amount
+          const originalItemAmount = parseFloat(item.ITMAMT) || 0;
+          const itemDiscount = (originalItemAmount / orderAmount) * discountFromTerms;
+          const discountedItemAmount = Math.max(0, originalItemAmount - itemDiscount);
+          
+          let sgstAmount = 0;
+          let cgstAmount = 0;
+          let igstAmount = 0;
+          let itemGstAmount = 0;
+
+          if (gstType === 'I') {
+            // IGST calculation
+            igstAmount = (discountedItemAmount * parseFloat(gstData.IGST_RATE)) / 100;
+            itemGstAmount = igstAmount;
+          } else {
+            // CGST + SGST calculation
+            sgstAmount = (discountedItemAmount * parseFloat(gstData.SGST_RATE)) / 100;
+            cgstAmount = (discountedItemAmount * parseFloat(gstData.CGST_RATE)) / 100;
+            itemGstAmount = sgstAmount + cgstAmount;
+          }
+
+          // Check if this GST item already exists to determine DBFLAG
+          const existingGstItem = formData.apiResponseData?.ORDBKGSTLIST?.find(
+            gst => gst.HSN_CODE === (gstData.HSN_CODE || "64021010") && 
+                   gst.FGSTYLE_ID === item.FGSTYLE_ID
+          );
+
+          const dbFlag = existingGstItem ? 'U' : 'I';
+
+          // Create GST item in ORDBKGSTLIST format
+          const gstItem = {
+            DBFLAG: dbFlag,
+            ORDBK_GST_ID: existingGstItem?.ORDBK_GST_ID || 0,
+            GSTTIN_NO: "URD",
+            ORDBK_KEY: formData.ORDBK_KEY,
+            ORDBK_DT: currentDate,
+            GST_TYPE: gstType,
+            HSNCODE_KEY: gstData.HSNCODE_KEY || "IG001",
+            HSN_CODE: gstData.HSN_CODE || "64021010",
+            QTY: parseFloat(item.ITMQTY) || 0,
+            UNIT_KEY: "UN005",
+            GST_RATE_SLAB_ID: parseInt(gstData.GST_RATE_SLAB_ID) || 39,
+            ITM_AMT: originalItemAmount,
+            DISC_AMT: itemDiscount,
+            NET_AMT: discountedItemAmount,
+            SGST_RATE: gstType === 'I' ? 0 : parseFloat(gstData.SGST_RATE) || 0,
+            SGST_AMT: sgstAmount,
+            CGST_RATE: gstType === 'I' ? 0 : parseFloat(gstData.CGST_RATE) || 0,
+            CGST_AMT: cgstAmount,
+            IGST_RATE: gstType === 'I' ? parseFloat(gstData.IGST_RATE) || 0 : 0,
+            IGST_AMT: igstAmount,
+            ROUND_OFF: 0,
+            OTHER_AMT: 0,
+            PARTYDTL_ID: formData.PARTYDTL_ID || 106634,
+            ADD_CESS_RATE: 0,
+            ADD_CESS_AMT: 0,
+            FGSTYLE_ID: item.FGSTYLE_ID // Add FGSTYLE_ID to track items
+          };
+
+          // Add item to GST table for display
+          gstTableItems.push({
+            id: existingGstItem?.ORDBK_GST_ID || Date.now(),
+            hsnCode: gstData.HSN_CODE || '64021010',
+            qty: parseFloat(item.ITMQTY) || 0,
+            itemAmount: originalItemAmount,
+            discAmount: itemDiscount,
+            netAmount: discountedItemAmount,
+            sgstRate: gstType === 'I' ? 0 : parseFloat(gstData.SGST_RATE) || 0,
+            sgstAmount: sgstAmount,
+            cgstRate: gstType === 'I' ? 0 : parseFloat(gstData.CGST_RATE) || 0,
+            cgstAmount: cgstAmount,
+            igstRate: gstType === 'I' ? parseFloat(gstData.IGST_RATE) || 0 : 0,
+            igstAmount: igstAmount,
+            cessRate: 0.00,
+            cessAmount: 0.00,
+            dbFlag: dbFlag,
+            // Store the original GST item for ORDBKGSTLIST
+            originalGstData: gstItem
+          });
+
+          // Accumulate totals
+          totalItemAmount += originalItemAmount;
+          totalDiscAmount += itemDiscount;
+          totalNetAmount += discountedItemAmount;
+          totalSgstAmount += sgstAmount;
+          totalCgstAmount += cgstAmount;
+          totalIgstAmount += igstAmount;
+          totalGstAmount += itemGstAmount;
+        }
+      }
+
+      // Update GST table data
+      setGstTableData(gstTableItems);
+
+      // NEW: Transform GST data for top table - FIXED: Now shows only 2 rows for CGST+SGST
+      const topTableGstRows = transformGSTDataForTopTable(gstTableItems);
+      
+      // Combine existing non-GST terms with GST rows - FIXED: Preserve existing terms
+      const existingNonGstRows = topTableData.filter(row => !row.originalData?.isGstRow);
+      const updatedTopTableData = [...existingNonGstRows, ...topTableGstRows];
+      setTopTableData(updatedTopTableData);
+
+      // Update GST summary with proper total calculation
+      setGstSummary({
+        sgstRate: gstTableItems.length > 0 ? gstTableItems[0].sgstRate : 0,
+        cgstRate: gstTableItems.length > 0 ? gstTableItems[0].cgstRate : 0,
+        igstRate: gstTableItems.length > 0 ? gstTableItems[0].igstRate : 0,
+        sgstAmount: totalSgstAmount,
+        cgstAmount: totalCgstAmount,
+        igstAmount: totalIgstAmount,
+        taxableAmount: totalNetAmount, // Use net amount after discount
+        totalGstAmount: totalGstAmount
+      });
+
+      // Calculate final amount (Net Amount + Total GST Amount)
+      const calculatedFinalAmount = totalNetAmount + totalGstAmount;
+      setFinalAmount(calculatedFinalAmount);
+
+      // Update formData with GST amounts and ORDBKGSTLIST
+      const ordbkGstList = gstTableItems.map(item => item.originalGstData);
+      
+      setFormData(prev => ({
+        ...prev,
+        ORDBK_GST_AMT: totalGstAmount,
+        ORDBK_SGST_AMT: totalSgstAmount,
+        ORDBK_CGST_AMT: totalCgstAmount,
+        ORDBK_IGST_AMT: totalIgstAmount,
+        FINAL_AMOUNT: calculatedFinalAmount,
+        apiResponseData: {
+          ...prev.apiResponseData,
+          ORDBKGSTLIST: ordbkGstList
+        }
+      }));
+
+      console.log('Generated ORDBKGSTLIST with proper DBFLAGS:', ordbkGstList);
+      console.log('Updated top table data with GST rows:', updatedTopTableData);
+      showSnackbar('GST calculated successfully with discount applied!');
+    } catch (error) {
+      console.error('Error fetching GST rates:', error);
+      showSnackbar('Error calculating GST', 'error');
+    } finally {
+      setIsGstCalculating(false);
+    }
+  }, [formData, orderAmount, topTableData, calculateTotalDiscountFromTerms, transformGSTDataForTopTable, showSnackbar, isGstCalculating]);
+
   // Load data from formData when component mounts or formData changes
   useEffect(() => {
-    console.log('FormData changed in Stepper3:', formData.apiResponseData?.ORDBKTERMLIST);
+    console.log('FormData changed in Stepper3:', formData.apiResponseData);
     
     // Get Order Amount from Stepper2's TOTAL_AMOUNT
     const stepper2TotalAmount = formData.TOTAL_AMOUNT || 0;
     setOrderAmount(stepper2TotalAmount);
     console.log('Order Amount from Stepper2:', stepper2TotalAmount);
     
+    // Load ORDBKTERMLIST data
     if (formData.apiResponseData?.ORDBKTERMLIST && formData.apiResponseData.ORDBKTERMLIST.length > 0) {
       const transformedData = formData.apiResponseData.ORDBKTERMLIST.map((term, index) => ({
         id: term.ORDBKTERM_ID || index + 1,
@@ -217,19 +525,67 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
       }));
       console.log('Transformed table data:', transformedData);
       setTableData(transformedData);
+      setTopTableData(transformedData); // Initialize top table with term data
+
+      // Calculate and set initial discount
+      const initialDiscount = calculateTotalDiscountFromTerms(transformedData);
+      setTotalDiscountFromTerms(initialDiscount);
     } else {
       console.log('No ORDBKTERMLIST data found, setting empty table');
       setTableData([]);
+      setTopTableData([]);
+      setTotalDiscountFromTerms(0);
     }
-  }, [formData.apiResponseData, formData.TOTAL_AMOUNT]);
+
+    // Load ORDBKGSTLIST data if available
+    if (formData.apiResponseData?.ORDBKGSTLIST && formData.apiResponseData.ORDBKGSTLIST.length > 0) {
+      const gstDisplayData = formData.apiResponseData.ORDBKGSTLIST.map((gstItem, index) => ({
+        id: gstItem.ORDBK_GST_ID || index + 1,
+        hsnCode: gstItem.HSN_CODE || '64021010',
+        qty: parseFloat(gstItem.QTY) || 0,
+        itemAmount: parseFloat(gstItem.ITM_AMT) || 0,
+        discAmount: parseFloat(gstItem.DISC_AMT) || 0,
+        netAmount: parseFloat(gstItem.NET_AMT) || 0,
+        sgstRate: parseFloat(gstItem.SGST_RATE) || 0,
+        sgstAmount: parseFloat(gstItem.SGST_AMT) || 0,
+        cgstRate: parseFloat(gstItem.CGST_RATE) || 0,
+        cgstAmount: parseFloat(gstItem.CGST_AMT) || 0,
+        igstRate: parseFloat(gstItem.IGST_RATE) || 0,
+        igstAmount: parseFloat(gstItem.IGST_AMT) || 0,
+        cessRate: parseFloat(gstItem.ADD_CESS_RATE) || 0,
+        cessAmount: parseFloat(gstItem.ADD_CESS_AMT) || 0,
+        dbFlag: gstItem.DBFLAG || 'U',
+        originalGstData: gstItem
+      }));
+      setGstTableData(gstDisplayData);
+      
+      // Transform existing GST data for top table - FIXED: Now shows only 2 rows for CGST+SGST
+      const topTableGstRows = transformGSTDataForTopTable(gstDisplayData);
+      const existingNonGstRows = topTableData.filter(row => !row.originalData?.isGstRow);
+      const updatedTopTableData = [...existingNonGstRows, ...topTableGstRows];
+      setTopTableData(updatedTopTableData);
+      
+      // Calculate final amount
+      const totalNetAmount = gstDisplayData.reduce((sum, item) => sum + item.netAmount, 0);
+      const totalGstAmount = gstDisplayData.reduce((sum, item) => sum + item.sgstAmount + item.cgstAmount + item.igstAmount, 0);
+      setFinalAmount(totalNetAmount + totalGstAmount);
+      
+      console.log('Loaded existing ORDBKGSTLIST data:', gstDisplayData);
+      console.log('Updated top table with existing GST data:', updatedTopTableData);
+    }
+  }, [formData.apiResponseData, formData.TOTAL_AMOUNT, calculateTotalDiscountFromTerms, transformGSTDataForTopTable]);
+
+  // FIXED: Remove the problematic useEffect that was causing infinite API calls
+  // Instead, we'll manually trigger GST recalculation when needed
 
   // Calculate current order amount based on all terms
   const calculateCurrentOrderAmount = () => {
     let currentAmount = orderAmount;
     
-    tableData.forEach(item => {
-      if (!item.originalData?.DBFLAG || item.originalData.DBFLAG !== 'D') {
-        // Subtract tax amount from order amount for both Tax and Term items
+    topTableData.forEach(item => {
+      if (!item.originalData?.isGstRow && 
+          (!item.originalData?.DBFLAG || item.originalData.DBFLAG !== 'D')) {
+        // Subtract tax amount from order amount for non-GST terms
         currentAmount -= parseFloat(item.taxAmount) || 0;
       }
     });
@@ -237,7 +593,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
     return Math.max(0, currentAmount); // Ensure non-negative
   };
 
-  // NEW: Calculate tax amount based on current term configuration
+  // Calculate tax amount based on current term configuration
   const calculateTaxAmountForCurrentTerm = () => {
     const currentOrderAmount = calculateCurrentOrderAmount();
     let taxableAmount = currentOrderAmount;
@@ -255,7 +611,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
     return { taxableAmount, taxAmount };
   };
 
-  // FIXED: Auto-update tax amount when term or values change
+  // Auto-update tax amount when term or values change
   const updateTaxAmountFields = () => {
     const { taxableAmount, taxAmount } = calculateTaxAmountForCurrentTerm();
     
@@ -270,8 +626,11 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
   const updateFormDataWithTerms = (updatedTableData) => {
     console.log('Updating formData with terms, raw table data:', updatedTableData);
     
+    // Filter out GST rows from top table data for ORDBKTERMLIST
+    const nonGstRows = updatedTableData.filter(row => !row.originalData?.isGstRow);
+    
     // Include ALL terms including deleted ones (they need to be sent to API with DBFLAG='D')
-    const updatedTermList = updatedTableData.map(item => {
+    const updatedTermList = nonGstRows.map(item => {
       // Get TERMGRP_KEY from mapping
       const termGrpKey = termGrpNameToKey[item.termGroup] || item.originalData?.TERMGRP_KEY || "";
       
@@ -582,9 +941,9 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
       }, 100);
       
       if (termValFix === '0') {
-        showSnackbar('Percentage mode: Tax amount will be calculated based on percentage');
+        // showSnackbar('Percentage mode: Tax amount will be calculated based on percentage');
       } else if (termValFix === '1') {
-        showSnackbar('Fixed Amount mode: You can enter fixed tax amount');
+        // showSnackbar('Fixed Amount mode: You can enter fixed tax amount');
       }
     }
   };
@@ -627,7 +986,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
     });
     // Reset TERM_VAL_FIX when adding new
     setCurrentTermValFix('0');
-    showSnackbar('Add new term mode enabled');
+    // showSnackbar('Add new term mode enabled');
   };
 
   // Open form for editing existing item
@@ -640,7 +999,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
     }
     
     setIsEditing(true);
-    const selectedData = tableData.find(item => item.id === selectedRow);
+    const selectedData = topTableData.find(item => item.id === selectedRow);
     if (selectedData) {
       setTermFormData({
         TERMGRP_NAME: selectedData.termGroup || '',
@@ -659,7 +1018,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
       const termValFix = termValFixMapping[selectedData.term] || '0';
       setCurrentTermValFix(termValFix);
     }
-    showSnackbar('Edit mode enabled for selected item');
+    // showSnackbar('Edit mode enabled for selected item');
   };
 
   // Delete selected item with proper DBFLAG handling
@@ -671,7 +1030,15 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
       return;
     }
     
-    const updatedTableData = tableData.map(item => {
+    const selectedData = topTableData.find(item => item.id === selectedRow);
+    
+    if (selectedData && selectedData.originalData?.isGstRow) {
+      // GST rows cannot be deleted individually
+      showSnackbar("GST rows cannot be deleted. Use 'Apply GST' to recalculate.", 'error');
+      return;
+    }
+    
+    const updatedTopTableData = topTableData.map(item => {
       if (item.id === selectedRow) {
         console.log(`Marking term ${item.id} for deletion, original ORDBKTERM_ID: ${item.originalData?.ORDBKTERM_ID}`);
         
@@ -692,20 +1059,20 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
       return item;
     }).filter(Boolean); // Remove null entries
 
-    console.log('After deletion, table data:', updatedTableData);
+    console.log('After deletion, top table data:', updatedTopTableData);
     
-    setTableData(updatedTableData);
-    updateFormDataWithTerms(updatedTableData);
+    setTopTableData(updatedTopTableData);
+    updateFormDataWithTerms(updatedTopTableData);
     
     // Clear selection
     setSelectedRow(null);
     
-    showSnackbar("Item marked for deletion! Click Submit to confirm deletion.");
+    // showSnackbar("Item marked for deletion! Click Submit to confirm deletion.");
   };
 
-  // FIXED: Save form data (add or edit) with proper tax amount calculation
+  // Save form data (add or edit) with proper tax amount calculation
   const handleSave = () => {
-    let updatedTableData;
+    let updatedTopTableData;
 
     // Get dynamic keys from mappings
     const termGrpKey = termGrpNameToKey[termFormData.TERMGRP_NAME] || "";
@@ -760,12 +1127,16 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
           TERM_KEY: termKey
         }
       };
-      updatedTableData = [...tableData, newItem];
-      setTableData(updatedTableData);
-      showSnackbar("Term added successfully!");
+      
+      // Keep existing GST rows and add new term - FIXED: Properly preserve existing data
+      const existingGstRows = topTableData.filter(row => row.originalData?.isGstRow);
+      const existingNonGstRows = topTableData.filter(row => !row.originalData?.isGstRow);
+      updatedTopTableData = [...existingNonGstRows, newItem, ...existingGstRows];
+      setTopTableData(updatedTopTableData);
+      // showSnackbar("Term added successfully!");
     } else if (isEditing) {
       // Update existing item
-      updatedTableData = tableData.map(item => {
+      updatedTopTableData = topTableData.map(item => {
         if (item.id === selectedRow) {
           // Preserve the original DBFLAG if it was 'D', otherwise set to 'U'
           const originalDbFlag = item.originalData?.DBFLAG;
@@ -806,13 +1177,13 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
         }
         return item;
       });
-      setTableData(updatedTableData);
-      showSnackbar("Term updated successfully!");
+      setTopTableData(updatedTopTableData);
+      // showSnackbar("Term updated successfully!");
     }
 
     // Update form data
-    if (updatedTableData) {
-      updateFormDataWithTerms(updatedTableData);
+    if (updatedTopTableData) {
+      updateFormDataWithTerms(updatedTopTableData);
     }
     
     setIsAddingNew(false);
@@ -853,7 +1224,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
     });
     // Reset TERM_VAL_FIX after cancel
     setCurrentTermValFix('0');
-    showSnackbar('Operation cancelled');
+    // showSnackbar('Operation cancelled');
   };
 
   // Select a row in the table
@@ -863,7 +1234,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
 
   // Handle Apply button click
   const handleApply = () => {
-    showSnackbar('Changes applied successfully!');
+    // showSnackbar('Changes applied successfully!');
   };
 
   // Table columns for the main grid
@@ -880,8 +1251,25 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
     { id: 'termR', label: 'Tm R', minWidth: 80, align: 'right' },
   ];
 
+  // GST Summary Table columns
+  const gstSummaryColumns = [
+    { id: 'hsnCode', label: 'HSN Code', minWidth: 100, align: 'center' },
+    { id: 'qty', label: 'Qty', minWidth: 80, align: 'right' },
+    { id: 'itemAmount', label: 'Itm Amt', minWidth: 100, align: 'right' },
+    { id: 'discAmount', label: 'Disc Amt', minWidth: 100, align: 'right' },
+    { id: 'netAmount', label: 'Net Amt', minWidth: 100, align: 'right' },
+    { id: 'sgstRate', label: 'SGST Rate', minWidth: 100, align: 'right' },
+    { id: 'sgstAmount', label: 'SGST Amt', minWidth: 100, align: 'right' },
+    { id: 'cgstRate', label: 'CGST Rate', minWidth: 100, align: 'right' },
+    { id: 'cgstAmount', label: 'CGST Amt', minWidth: 100, align: 'right' },
+    { id: 'igstRate', label: 'IGST Rate', minWidth: 100, align: 'right' },
+    { id: 'igstAmount', label: 'IGST Amt', minWidth: 100, align: 'right' },
+    { id: 'cessRate', label: 'Cess Rate', minWidth: 100, align: 'right' },
+    { id: 'cessAmount', label: 'Cess Amt', minWidth: 100, align: 'right' },
+  ];
+
   // Filter table data to show only non-deleted items in UI
-  const displayTableData = tableData.filter(item => 
+  const displayTopTableData = topTableData.filter(item => 
     !item.originalData?.DBFLAG || item.originalData.DBFLAG !== 'D'
   );
 
@@ -890,6 +1278,15 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
 
   // Calculate current order amount for display
   const currentOrderAmount = calculateCurrentOrderAmount();
+
+  // Calculate totals for GST summary fields
+  const totalItemAmount = gstTableData.reduce((sum, item) => sum + item.itemAmount, 0);
+  const totalDiscAmount = gstTableData.reduce((sum, item) => sum + item.discAmount, 0);
+  const totalNetAmount = gstTableData.reduce((sum, item) => sum + item.netAmount, 0);
+  const totalSgstAmount = gstTableData.reduce((sum, item) => sum + item.sgstAmount, 0);
+  const totalCgstAmount = gstTableData.reduce((sum, item) => sum + item.cgstAmount, 0);
+  const totalIgstAmount = gstTableData.reduce((sum, item) => sum + item.igstAmount, 0);
+  const totalCessAmount = gstTableData.reduce((sum, item) => sum + item.cessAmount, 0);
 
   return (
     <Box>
@@ -937,7 +1334,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
                 </TableHead>
 
                 <TableBody>
-                  {displayTableData.map((row, index) => (
+                  {displayTopTableData.map((row, index) => (
                     <TableRow
                       key={row.id}
                       hover
@@ -959,15 +1356,18 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
                             whiteSpace: "nowrap",
                           }}
                         >
-                          {column.id === 'taxable' || column.id === 'taxAmount' || column.id === 'rate' || column.id === 'termPercent' || column.id === 'termR'
-                            ? (row[column.id] || 0).toFixed(2)
-                            : row[column.id] || "—"
+                          {column.id === 'taxable' && row.originalData?.isGstRow
+                            ? totalNetAmount.toFixed(2) // FIXED: Always show Net Amount from GST summary for GST rows
+                            : (column.id === 'taxAmount' || column.id === 'rate' || column.id === 'termPercent' || column.id === 'termR' || column.id === 'taxable'
+                              ? (row[column.id] || 0).toFixed(2)
+                              : row[column.id] || "—"
+                            )
                           }
                         </TableCell>
                       ))}
                     </TableRow>
                   ))}
-                  {displayTableData.length === 0 && (
+                  {displayTopTableData.length === 0 && (
                     <TableRow>
                       <TableCell colSpan={columns.length} align="center" sx={{ py: 2 }}>
                         <Typography variant="body2" color="textSecondary">
@@ -1065,7 +1465,8 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
 
           <Button
             variant="contained"
-            disabled={isFormDisabled || isAddingNew || isEditing}
+            onClick={fetchGSTRates}
+            disabled={isFormDisabled || isAddingNew || isEditing || isGstCalculating}
             sx={{
               backgroundColor: '#39ace2',
               color: 'white',
@@ -1078,7 +1479,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
               }
             }}
           >
-            Apply GST
+            {isGstCalculating ? 'Calculating...' : 'Apply GST'}
           </Button>
           
           <Box sx={{ minWidth: 200, maxWidth: 250 }}>
@@ -1099,7 +1500,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
           <TextField
             label="Order Amount"
             variant="filled"
-            value={currentOrderAmount.toFixed(2)}
+            value={finalAmount.toFixed(2)}
             disabled
             sx={{
               ...textInputSx,
@@ -1123,7 +1524,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
         <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2, mt: 2 }}>
           <Tabs value={tabIndex} onChange={handleTabChange} aria-label="sales order tabs">
             <Tab label="Calc Terms" />
-            <Tab label="Tax" />
+            <Tab label="GST Summary" />
             <Tab label="Non-Calc Terms" />
           </Tabs>
         </Box>
@@ -1204,7 +1605,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
                 label="Taxable Amount"
                 name="TAXABLE_AMT"
                 type="number"
-                value={termFormData.TAXABLE_AMT}
+                value={totalNetAmount.toFixed(2)}
                 onChange={handleInputChange}
                 variant="filled"
                 sx={smallInputSx}  
@@ -1227,8 +1628,8 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
             <Grid item xs={12}>
               <Button 
                 variant="contained" 
-                onClick={handleApply}
-                disabled={shouldDisableFields()}
+                onClick={handleSave}
+                disabled={!(isAddingNew || isEditing)}
                 sx={{
                   backgroundColor: '#39ace2',
                   color: 'white',
@@ -1238,81 +1639,194 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
                   }
                 }}
               >
-                Apply
+                {isAddingNew ? 'Confirm' : (isEditing ? 'Save' : 'Apply')}
               </Button>
             </Grid>
           </Grid>
         </TabPanel>
 
         <TabPanel value={tabIndex} index={1}>
-          {/* Tax Content */}
+          {/* GST Summary Content */}
+          <Box sx={{ mb: 3 }}>
+            <Paper
+              elevation={1}
+              sx={{
+                width: "100%",
+                borderRadius: 2,
+                overflow: "hidden",
+                backgroundColor: "#fff",
+                border: "1px solid #e0e0e0",
+            }}
+            >
+              <TableContainer sx={{ maxHeight: 200 }}>
+                <Table stickyHeader size="small">
+                  <TableHead>
+                    <TableRow>
+                      {gstSummaryColumns.map((column) => (
+                        <TableCell
+                          key={column.id}
+                          align={column.align || 'left'}
+                          sx={{
+                            backgroundColor: "#f5f5f5",
+                            fontWeight: "bold",
+                            fontSize: "0.7rem",
+                            padding: "4px 6px",
+                            borderBottom: "1px solid #ddd",
+                            minWidth: column.minWidth
+                          }}
+                        >
+                          {column.label}
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  </TableHead>
+
+                  <TableBody>
+                    {gstTableData.length > 0 ? (
+                      gstTableData.map((row, index) => (
+                        <TableRow
+                          key={row.id}
+                          sx={{
+                            backgroundColor: index % 2 === 0 ? "#fafafa" : "#fff",
+                          }}
+                        >
+                          {gstSummaryColumns.map((column) => (
+                            <TableCell
+                              key={column.id}
+                              align={column.align || 'left'}
+                              sx={{
+                                fontSize: "0.7rem",
+                                padding: "4px 6px",
+                                whiteSpace: "nowrap",
+                              }}
+                            >
+                              {['qty', 'itemAmount', 'discAmount', 'netAmount', 'sgstRate', 'sgstAmount', 'cgstRate', 'cgstAmount', 'igstRate', 'igstAmount', 'cessRate', 'cessAmount'].includes(column.id)
+                                ? (row[column.id] || 0).toFixed(column.id === 'qty' ? 3 : 2)
+                                : row[column.id] || "—"
+                              }
+                            </TableCell>
+                          ))}
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={gstSummaryColumns.length} align="center" sx={{ py: 2 }}>
+                          <Typography variant="body2" color="textSecondary">
+                            No GST data available. Click Apply GST to calculate.
+                          </Typography>
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </Paper>
+          </Box>
+
+          {/* Summary Fields below GST Table */}
           <Grid container spacing={2} alignItems="center">
-            <Grid item xs={12} sm={4}>
+            <Grid item xs={12} sm={1.5}>
               <TextField
                 fullWidth
-                label="Tax Type"
-                name="TAX_NAME"
-                value={termFormData.TAX_NAME}
-                onChange={handleInputChange}
+                label="Itm Amt"
+                value={totalItemAmount.toFixed(2)}
                 variant="filled"
                 sx={smallInputSx}  
-                disabled={shouldDisableFields()}
+                disabled
               />
             </Grid>
-            <Grid item xs={12} sm={3}>
+            <Grid item xs={12} sm={1.5}>
               <TextField
                 fullWidth
-                label="Tax Rate %"
-                name="TAX_RATE"
-                type="number"
-                value={termFormData.TAX_RATE}
-                onChange={handleInputChange}
+                label="Disc Amt"
+                value={totalDiscAmount.toFixed(2)}
                 variant="filled"
                 sx={smallInputSx}  
-                disabled={fieldStates.taxRateDisabled}
+                disabled
               />
             </Grid>
-            <Grid item xs={12} sm={3}>
+            <Grid item xs={12} sm={1.5}>
               <TextField
                 fullWidth
-                label="Taxable Amount"
-                name="TAXABLE_AMT"
-                value={termFormData.TAXABLE_AMT}
-                onChange={handleInputChange}
+                label="NET Amt"
+                value={totalNetAmount.toFixed(2)}
                 variant="filled"
                 sx={smallInputSx}  
-                disabled={fieldStates.taxableAmtDisabled}
+                disabled
               />
             </Grid>
-            <Grid item xs={12} sm={2}>
+            <Grid item xs={12} sm={1.5}>
               <TextField
                 fullWidth
-                label="Tax Amount"
-                name="TAX_AMT"
-                type="number"
-                value={termFormData.TAX_AMT}
-                onChange={handleInputChange}
+                label="SGST Amt"
+                value={totalSgstAmount.toFixed(2)}
                 variant="filled"
                 sx={smallInputSx}  
-                disabled={fieldStates.taxAmtDisabled}
+                disabled
               />
             </Grid>
-            <Grid item xs={12}>
-              <Button 
-                variant="contained" 
-                onClick={handleApply}
-                disabled={shouldDisableFields()}
+            <Grid item xs={12} sm={1.5}>
+              <TextField
+                fullWidth
+                label="CGST Amt"
+                value={totalCgstAmount.toFixed(2)}
+                variant="filled"
+                sx={smallInputSx}  
+                disabled
+              />
+            </Grid>
+            <Grid item xs={12} sm={1.5}>
+              <TextField
+                fullWidth
+                label="IGST Amt"
+                value={totalIgstAmount.toFixed(2)}
+                variant="filled"
+                sx={smallInputSx}  
+                disabled
+              />
+            </Grid>
+            <Grid item xs={12} sm={1.5}>
+              <TextField
+                fullWidth
+                label="Cess"
+                value={totalCessAmount.toFixed(2)}
+                variant="filled"
+                sx={smallInputSx}  
+                disabled
+              />
+            </Grid>
+            <Grid item xs={12} sm={1.5}>
+              <TextField
+                fullWidth
+                label="GST Amt"
+                value={gstSummary.totalGstAmount.toFixed(2)}
+                variant="filled"
                 sx={{
-                  backgroundColor: '#39ace2',
-                  color: 'white',
-                  '&:disabled': {
-                    backgroundColor: '#cccccc',
-                    color: '#666666'
+                  ...smallInputSx,
+                  '& .MuiInputBase-input': {
+                    fontWeight: 'bold',
+                    color: '#1976d2'
                   }
-                }}
-              >
-                Apply
-              </Button>
+                }}  
+                disabled
+              />
+            </Grid>
+            {/* NEW: Final Amount Text Field */}
+            <Grid item xs={12} sm={1.5}>
+              <TextField
+                fullWidth
+                label="Final Amount"
+                value={finalAmount.toFixed(2)}
+                variant="filled"
+                sx={{
+                  ...smallInputSx,
+                  '& .MuiInputBase-input': {
+                    fontWeight: 'bold',
+                    color: '#2e7d32'
+                  }
+                }}  
+                disabled
+              />
             </Grid>
           </Grid>
         </TabPanel>
@@ -1389,8 +1903,8 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
             <Grid item xs={12}>
               <Button 
                 variant="contained" 
-                onClick={handleApply}
-                disabled={shouldDisableFields()}
+                onClick={handleSave}
+                disabled={!(isAddingNew || isEditing)}
                 sx={{
                   backgroundColor: '#39ace2',
                   color: 'white',
@@ -1400,7 +1914,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
                   }
                 }}
               >
-                Apply
+                {isAddingNew ? 'Confirm' : (isEditing ? 'Save' : 'Apply')}
               </Button>
             </Grid>
           </Grid>
@@ -1459,5 +1973,5 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
     </Box>
   );
 };
-
+  
 export default Stepper3;
