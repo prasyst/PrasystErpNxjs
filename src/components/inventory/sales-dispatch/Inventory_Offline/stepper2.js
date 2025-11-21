@@ -471,10 +471,10 @@ const DropInputSx = {
           }
           
           // For style code input, DO NOT auto-load size details
-          showSnackbar("Fields auto-filled from style code! Click 'Add Qty' to load size details.");
+          // showSnackbar("Fields auto-filled from style code! Click 'Add Qty' to load size details.");
         }
       } else {
-        showSnackbar("No style data found for the entered code", 'warning');
+        // showSnackbar("No style data found for the entered code", 'warning');
       }
     } catch (error) {
       console.error('Error fetching style data by code:', error);
@@ -549,7 +549,7 @@ const DropInputSx = {
           // NEW: Auto-load size details ONLY for barcode search
           await fetchSizeDetailsForStyle(styleData);
           
-          showSnackbar("Fields auto-filled from barcode search and size details loaded!");
+          // showSnackbar("Fields auto-filled from barcode search and size details loaded!");
         }
       } else {
         showSnackbar("No style data found for the entered barcode", 'warning');
@@ -610,7 +610,7 @@ const DropInputSx = {
         setSizeDetailsData(transformedSizeDetails);
         console.log('Auto-transformed size details:', transformedSizeDetails);
         
-        showSnackbar("Size details auto-loaded successfully! Please enter quantities for each size.");
+        // showSnackbar("Size details auto-loaded successfully! Please enter quantities for each size.");
       } else {
         showSnackbar("No size details found for the selected combination.", 'warning');
         setSizeDetailsData([]);
@@ -785,7 +785,7 @@ const DropInputSx = {
       const fgptnKey = lotNoMapping[newItemData.lotNo] || "";
 
       if (!fgprdKey || !fgstyleId) {
-        showSnackbar("Required data not available. Please check Product and Style selection.", 'error');
+        // showSnackbar("Required data not available. Please check Product and Style selection.", 'error');
         return;
       }
 
@@ -823,14 +823,14 @@ const DropInputSx = {
         setSizeDetailsData(transformedSizeDetails);
         console.log('Transformed size details:', transformedSizeDetails);
         
-        showSnackbar("Size details loaded successfully! Please enter quantities for each size.");
+        // showSnackbar("Size details loaded successfully! Please enter quantities for each size.");
       } else {
         showSnackbar("No size details found for the selected combination.", 'warning');
         setSizeDetailsData([]);
       }
     } catch (error) {
       console.error('Error fetching size details:', error);
-      showSnackbar("Error loading size details. Please try again.", 'error');
+      // showSnackbar("Error loading size details. Please try again.", 'error');
     }
   };
 
@@ -918,7 +918,7 @@ const DropInputSx = {
             }));
             
             // For dropdown selection, DO NOT auto-load size details
-            showSnackbar("MRP and Rate auto-filled from style data! Click 'Add Qty' to load size details.");
+            // showSnackbar("MRP and Rate auto-filled from style data! Click 'Add Qty' to load size details.");
           }
         } catch (error) {
           console.error('Error fetching style details in CASE 1:', error);
@@ -1112,187 +1112,201 @@ const handleAddItem = async () => {
   setShadeOptions([]);
   setLotNoOptions([]);
   
-  showSnackbar('Add new item mode enabled');
+  // showSnackbar('Add new item mode enabled');
 };
   
 
   // Enhanced handleConfirmAdd function with proper DBFLAG handling
-  const handleConfirmAdd = () => {
-    // Validation
-    if (!newItemData.product || !newItemData.style) {
-      showSnackbar("Please fill required fields: Product and Style", 'error');
-      return;
-    }
+  // Enhanced handleConfirmAdd function with proper DBFLAG handling - UPDATED
+const handleConfirmAdd = () => {
+  // Validation
+  if (!newItemData.product || !newItemData.style) {
+    showSnackbar("Please fill required fields: Product and Style", 'error');
+    return;
+  }
 
-    if (sizeDetailsData.length === 0) {
-      showSnackbar("Please load size details first", 'error');
-      return;
-    }
+  if (sizeDetailsData.length === 0) {
+    // showSnackbar("Please load size details first", 'error');
+    return;
+  }
 
-    const sizesWithZeroQty = sizeDetailsData.filter(size => !size.QTY || size.QTY === 0);
-    if (sizesWithZeroQty.length > 0) {
-      showSnackbar("Please enter quantity for all sizes before confirming", 'error');
-      return;
-    }
+  // CHANGED: At least one size should have quantity > 0 (sabhi compulsory nahi)
+  const sizesWithQty = sizeDetailsData.filter(size => size.QTY && size.QTY > 0);
+  if (sizesWithQty.length === 0) {
+    showSnackbar("Please enter quantity for at least one size before confirming", 'error');
+    return;
+  }
 
-    const fgprdKey = productMapping[newItemData.product] || productMapping[newItemData.style] || "";
-    const fgstyleId = styleMapping[newItemData.style] || "";
-    const fgtypeKey = typeMapping[newItemData.type] || "";
-    const fgshadeKey = shadeMapping[newItemData.shade] || "";
-    const fgptnKey = lotNoMapping[newItemData.lotNo] || "";
+  const fgprdKey = productMapping[newItemData.product] || productMapping[newItemData.style] || "";
+  const fgstyleId = styleMapping[newItemData.style] || "";
+  const fgtypeKey = typeMapping[newItemData.type] || "";
+  const fgshadeKey = shadeMapping[newItemData.shade] || "";
+  const fgptnKey = lotNoMapping[newItemData.lotNo] || "";
 
-    console.log('All Keys for new item:', {
-      product: newItemData.product,
-      fgprdKey,
-      style: newItemData.style,
-      fgstyleId,
-      type: newItemData.type,
-      fgtypeKey,
-      shade: newItemData.shade,
-      fgshadeKey,
-      lotNo: newItemData.lotNo,
-      fgptnKey
-    });
+  console.log('All Keys for new item:', {
+    product: newItemData.product,
+    fgprdKey,
+    style: newItemData.style,
+    fgstyleId,
+    type: newItemData.type,
+    fgtypeKey,
+    shade: newItemData.shade,
+    fgshadeKey,
+    lotNo: newItemData.lotNo,
+    fgptnKey
+  });
 
-    const totalQty = sizeDetailsData.reduce((sum, size) => sum + (parseFloat(size.QTY) || 0), 0);
-    const mrp = parseFloat(newItemData.mrp) || 0;
-    const rate = parseFloat(newItemData.rate) || 0; // NEW: Get Rate value
-    // Calculate amount using Rate instead of MRP (Qty * Rate)
-    const totalAmount = sizeDetailsData.reduce((sum, size) => {
-      const sizeQty = parseFloat(size.QTY) || 0;
-      return sum + (sizeQty * rate);
-    }, 0);
-    const discount = parseFloat(newItemData.discount) || 0;
-    const netAmount = totalAmount - discount;
+  // CHANGED: Only calculate total from sizes with quantity > 0
+  const totalQty = sizesWithQty.reduce((sum, size) => sum + (parseFloat(size.QTY) || 0), 0);
+  const mrp = parseFloat(newItemData.mrp) || 0;
+  const rate = parseFloat(newItemData.rate) || 0;
+  
+  // CHANGED: Calculate amount only from sizes with quantity
+  const totalAmount = sizesWithQty.reduce((sum, size) => {
+    const sizeQty = parseFloat(size.QTY) || 0;
+    return sum + (sizeQty * rate);
+  }, 0);
+  
+  const discount = parseFloat(newItemData.discount) || 0;
+  const netAmount = totalAmount - discount;
 
-    // Generate a temporary ID for new items (long number to distinguish from real IDs)
-    const tempId = Date.now();
+  // Generate a temporary ID for new items (long number to distinguish from real IDs)
+  const tempId = Date.now();
 
-    const newItem = {
-      id: tempId,
-      BarCode: newItemData.barcode || "-",
-      product: newItemData.product,
-      style: newItemData.style || "-",
-      type: newItemData.type || "-",
-      shade: newItemData.shade || "-",
-      lotNo: newItemData.lotNo || "-",
-      qty: totalQty,
-      mrp: mrp, // NEW: Added MRP column
-      rate: rate, // NEW: Use Rate in main table
-      amount: totalAmount,
-      varPer: parseFloat(newItemData.varPer) || 0,
-      varQty: 0,
-      varAmt: 0,
-      discAmt: discount,
-      netAmt: netAmount,
-      distributer: "-",
-      set: parseFloat(newItemData.sets) || 0,
-      originalData: {
-        ORDBKSTY_ID: tempId, // Temporary ID for new items
-        FGITEM_KEY: newItemData.barcode || "-",
-        PRODUCT: newItemData.product,
-        STYLE: newItemData.style,
-        TYPE: newItemData.type,
-        SHADE: newItemData.shade,
-        ITMQTY: totalQty,
-        MRP: mrp, // NEW: Store MRP
-        ITMRATE: rate, // NEW: Use Rate
-        ITMAMT: totalAmount,
-        DLV_VAR_PERC: parseFloat(newItemData.varPer) || 0,
-        DLV_VAR_QTY: 0,
-        DISC_AMT: discount,
-        NET_AMT: netAmount,
-        DISTBTR: "-",
-        SETQTY: parseFloat(newItemData.sets) || 0,
-        ORDBKSTYSZLIST: sizeDetailsData.map(size => ({
-          ...size,
-          ORDBKSTYSZ_ID: 0 // 0 for new size entries
-        })),
-        FGPRD_KEY: fgprdKey,
-        FGSTYLE_ID: fgstyleId,
-        FGTYPE_KEY: fgtypeKey,
-        FGSHADE_KEY: fgshadeKey,
-        FGPTN_KEY: fgptnKey,
-        // Set DBFLAG for new items
-        DBFLAG: mode === 'add' ? 'I' : 'I' // Always 'I' for new items in both modes
-      },
-      FGSTYLE_ID: fgstyleId,
-      FGPRD_KEY: fgprdKey,
-      FGTYPE_KEY: fgtypeKey,
-      FGSHADE_KEY: fgshadeKey,
-      FGPTN_KEY: fgptnKey
-    };
+  // CHANGED: Size details me zero quantity wale bhi include karo
+  const updatedSizeDetails = sizeDetailsData.map(size => ({
+    ...size,
+    QTY: parseFloat(size.QTY) || 0, // Zero bhi allow karo
+    ITM_AMT: (parseFloat(size.QTY) || 0) * rate
+  }));
 
-    const newTableData = [...tableData, newItem];
-    setUpdatedTableData(newTableData);
-
-    // Update formData with proper DBFLAG and all required fields
-    const newOrdbkStyleItem = {
-      ORDBKSTY_ID: tempId,
-      FGITEM_KEY: newItem.BarCode,
-      PRODUCT: newItem.product,
-      STYLE: newItem.style,
-      TYPE: newItem.type,
-      SHADE: newItem.shade,
-      ITMQTY: newItem.qty,
-      MRP: newItem.mrp, // NEW: Store MRP
-      ITMRATE: newItem.rate, // Rate
-      ITMAMT: newItem.amount,
-      DLV_VAR_PERC: newItem.varPer,
-      DLV_VAR_QTY: newItem.varQty,
-      DISC_AMT: newItem.discAmt,
-      NET_AMT: newItem.netAmt,
-      DISTBTR: newItem.distributer,
-      SETQTY: newItem.set,
-      ORDBKSTYSZLIST: sizeDetailsData.map(size => ({
+  const newItem = {
+    id: tempId,
+    BarCode: newItemData.barcode || "-",
+    product: newItemData.product,
+    style: newItemData.style || "-",
+    type: newItemData.type || "-",
+    shade: newItemData.shade || "-",
+    lotNo: newItemData.lotNo || "-",
+    qty: totalQty, // Only total of sizes with quantity > 0
+    mrp: mrp,
+    rate: rate,
+    amount: totalAmount,
+    varPer: parseFloat(newItemData.varPer) || 0,
+    varQty: 0,
+    varAmt: 0,
+    discAmt: discount,
+    netAmt: netAmount,
+    distributer: "-",
+    set: parseFloat(newItemData.sets) || 0,
+    originalData: {
+      ORDBKSTY_ID: tempId, // Temporary ID for new items
+      FGITEM_KEY: newItemData.barcode || "-",
+      PRODUCT: newItemData.product,
+      STYLE: newItemData.style,
+      TYPE: newItemData.type,
+      SHADE: newItemData.shade,
+      ITMQTY: totalQty, // Only total of sizes with quantity > 0
+      MRP: mrp,
+      ITMRATE: rate,
+      ITMAMT: totalAmount,
+      DLV_VAR_PERC: parseFloat(newItemData.varPer) || 0,
+      DLV_VAR_QTY: 0,
+      DISC_AMT: discount,
+      NET_AMT: netAmount,
+      DISTBTR: "-",
+      SETQTY: parseFloat(newItemData.sets) || 0,
+      ORDBKSTYSZLIST: updatedSizeDetails.map(size => ({
         ...size,
-        ORDBKSTYSZ_ID: 0 // 0 for new size entries
+        ORDBKSTYSZ_ID: 0, // 0 for new size entries
+        QTY: size.QTY, // Zero quantity bhi include karo
+        ITM_AMT: size.ITM_AMT
       })),
-      FGSTYLE_ID: newItem.FGSTYLE_ID,
       FGPRD_KEY: fgprdKey,
+      FGSTYLE_ID: fgstyleId,
       FGTYPE_KEY: fgtypeKey,
       FGSHADE_KEY: fgshadeKey,
       FGPTN_KEY: fgptnKey,
-      DBFLAG: mode === 'add' ? 'I' : 'I' // Always 'I' for new items
-    };
-
-    setFormData(prev => ({
-      ...prev,
-      apiResponseData: {
-        ...prev.apiResponseData,
-        ORDBKSTYLIST: [...(prev.apiResponseData?.ORDBKSTYLIST || []), newOrdbkStyleItem]
-      }
-    }));
-
-    setIsAddingNew(false);
-    setNewItemData({
-      product: '',
-      barcode: '',
-      style: '',
-      type: '',
-      shade: '',
-      qty: '',
-      mrp: '',
-      rate: '', // NEW: Reset Rate field
-      setNo: '',
-      varPer: '',
-      stdQty: '',
-      convFact: '',
-      lotNo: '',
-      discount: '',
-      percent: '',
-      remark: '',
-      divDt: '',
-      rQty: '',
-      sets: ''
-    });
-    setStyleCodeInput('');
-    setBarcodeInput('');
-    setSizeDetailsData([]);
-    setDataSource(null);
-
-    showSnackbar("Item added successfully!");
+      // Set DBFLAG for new items
+      DBFLAG: mode === 'add' ? 'I' : 'I' // Always 'I' for new items in both modes
+    },
+    FGSTYLE_ID: fgstyleId,
+    FGPRD_KEY: fgprdKey,
+    FGTYPE_KEY: fgtypeKey,
+    FGSHADE_KEY: fgshadeKey,
+    FGPTN_KEY: fgptnKey
   };
+
+  const newTableData = [...tableData, newItem];
+  setUpdatedTableData(newTableData);
+
+  // Update formData with proper DBFLAG and all required fields
+  const newOrdbkStyleItem = {
+    ORDBKSTY_ID: tempId,
+    FGITEM_KEY: newItem.BarCode,
+    PRODUCT: newItem.product,
+    STYLE: newItem.style,
+    TYPE: newItem.type,
+    SHADE: newItem.shade,
+    ITMQTY: newItem.qty,
+    MRP: newItem.mrp,
+    ITMRATE: newItem.rate,
+    ITMAMT: newItem.amount,
+    DLV_VAR_PERC: newItem.varPer,
+    DLV_VAR_QTY: newItem.varQty,
+    DISC_AMT: newItem.discAmt,
+    NET_AMT: newItem.netAmt,
+    DISTBTR: newItem.distributer,
+    SETQTY: newItem.set,
+    ORDBKSTYSZLIST: updatedSizeDetails.map(size => ({
+      ...size,
+      ORDBKSTYSZ_ID: 0 // 0 for new size entries
+    })),
+    FGSTYLE_ID: newItem.FGSTYLE_ID,
+    FGPRD_KEY: fgprdKey,
+    FGTYPE_KEY: fgtypeKey,
+    FGSHADE_KEY: fgshadeKey,
+    FGPTN_KEY: fgptnKey,
+    DBFLAG: mode === 'add' ? 'I' : 'I' // Always 'I' for new items
+  };
+
+  setFormData(prev => ({
+    ...prev,
+    apiResponseData: {
+      ...prev.apiResponseData,
+      ORDBKSTYLIST: [...(prev.apiResponseData?.ORDBKSTYLIST || []), newOrdbkStyleItem]
+    }
+  }));
+
+  setIsAddingNew(false);
+  setNewItemData({
+    product: '',
+    barcode: '',
+    style: '',
+    type: '',
+    shade: '',
+    qty: '',
+    mrp: '',
+    rate: '',
+    setNo: '',
+    varPer: '',
+    stdQty: '',
+    convFact: '',
+    lotNo: '',
+    discount: '',
+    percent: '',
+    remark: '',
+    divDt: '',
+    rQty: '',
+    sets: ''
+  });
+  setStyleCodeInput('');
+  setBarcodeInput('');
+  setSizeDetailsData([]);
+  setDataSource(null);
+
+  // showSnackbar("Item added successfully!");
+};
 
   // Enhanced handleEditItem function
   const handleEditItem = () => {
@@ -1376,7 +1390,7 @@ const handleAddItem = async () => {
         }
       }));
       
-      showSnackbar("Changes saved successfully!");
+      // showSnackbar("Changes saved successfully!");
     } else {
       if (selectedRow) {
         const selectedRowData = tableData.find(row => row.id === selectedRow);
@@ -1384,7 +1398,7 @@ const handleAddItem = async () => {
           populateFormFields(selectedRowData);
         }
       }
-      showSnackbar('Edit mode enabled for selected item');
+      // showSnackbar('Edit mode enabled for selected item');
     }
     
     setIsEditingSize(!isEditingSize);
@@ -1453,7 +1467,7 @@ const handleAddItem = async () => {
       setLotNoOptions([]);
     }
 
-    showSnackbar("Item marked for deletion! Click Submit to confirm deletion.");
+    // showSnackbar("Item marked for deletion! Click Submit to confirm deletion.");
   };
 
   const handleCancelAdd = () => {
@@ -1483,7 +1497,7 @@ const handleAddItem = async () => {
     setBarcodeInput('');
     setSizeDetailsData([]);
     setDataSource(null);
-    showSnackbar('Add item cancelled');
+    // showSnackbar('Add item cancelled');
   };
 
   const handleEditCancel = () => {

@@ -56,7 +56,8 @@ const Stepper1 = ({
   setOrderTypeMapping,
   setMerchandiserMapping,
   showSnackbar,
-  fetchPartyDetailsForAutoFill
+  fetchPartyDetailsForAutoFill,
+   isDataLoading,
 }) => {
   const [selectedDate, setSelectedDate] = useState(null);
   
@@ -78,6 +79,9 @@ const Stepper1 = ({
   
   // State to track loading for branch API
   const [loadingBranches, setLoadingBranches] = useState(false);
+
+  // NEW: State for GST Type
+  const [gstType, setGstType] = useState('state'); // 'state' or 'igst'
 
   const textInputSx = {
     '& .MuiInputBase-root': {
@@ -183,6 +187,43 @@ const Stepper1 = ({
     const month = String(today.getMonth() + 1).padStart(2, '0');
     const year = today.getFullYear();
     return `${day}/${month}/${year}`;
+  };
+
+  // NEW: Function to fetch GST type based on party details
+  const fetchGSTType = async (partyDtlId, shipPartyDtlId) => {
+    try {
+      const payload = {
+        "COBR_ID": "02",
+        "PARTYDTL_ID": partyDtlId,
+        "SHIPPARTYDTL_ID": shipPartyDtlId
+      };
+
+      console.log('Fetching GST type with payload:', payload);
+
+      const response = await axiosInstance.post('/PARTY/GetGST_TYPE', payload);
+      console.log('GST Type API Response:', response.data);
+
+      if (response.data.RESPONSESTATUSCODE === 1 && response.data.DATA && response.data.DATA.length > 0) {
+        const gstData = response.data.DATA[0];
+        
+        if (gstData.IGST === "true") {
+          setGstType('igst');
+          // showSnackbar('IGST selected based on party details');
+        } else if (gstData.SGST === "true") {
+          setGstType('state');
+          // showSnackbar('State GST (CGST & SGST) selected based on party details');
+        }
+        
+        // Update formData with GST type
+        setFormData(prev => ({
+          ...prev,
+          GST_TYPE: gstData.IGST === "true" ? "IGST" : "STATE"
+        }));
+      }
+    } catch (error) {
+      console.error('Error fetching GST type:', error);
+      // showSnackbar('Error fetching GST type', 'error');
+    }
   };
 
   // Fetch Order Type Data from API
@@ -325,6 +366,11 @@ const Stepper1 = ({
           }));
           
           console.log('Auto-selected branch:', firstBranch, 'with ID:', firstBranchId);
+          
+          // NEW: Fetch GST type when party and branch are selected
+          if (formData.GST_APPL === "Y") {
+            await fetchGSTType(firstBranchId, firstBranchId);
+          }
         }
       } else {
         setBranchOptions([]);
@@ -532,6 +578,17 @@ const Stepper1 = ({
     }
   }, []);
 
+  useEffect(() => {
+  // Handle GST Type when formData changes (for retrieved data)
+  if (formData.GST_TYPE) {
+    if (formData.GST_TYPE === "STATE" || formData.GST_TYPE === "S") {
+      setGstType('state');
+    } else if (formData.GST_TYPE === "IGST" || formData.GST_TYPE === "I") {
+      setGstType('igst');
+    }
+  }
+}, [formData.GST_TYPE]);
+
   // Set today's date for all date fields when component mounts or mode changes to add
   useEffect(() => {
     if (mode === 'add') {
@@ -653,14 +710,34 @@ const Stepper1 = ({
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    
+    if (name === "GST_APPL") {
+      setFormData(prev => ({
+        ...prev,
+        [name]: value
+      }));
+
+      // If GST is enabled and party details are available, fetch GST type
+      if (value === "Y" && formData.PARTYDTL_ID && formData.SHP_PARTYDTL_ID) {
+        fetchGSTType(formData.PARTYDTL_ID, formData.SHP_PARTYDTL_ID);
+      } else if (value === "N") {
+        // Reset GST type when GST is disabled
+        setGstType('state');
+        setFormData(prev => ({
+          ...prev,
+          GST_TYPE: ""
+        }));
+      }
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [name]: value
+      }));
+    }
   };
 
   
- // Enhanced handleAutoCompleteChange function
+
 const handleAutoCompleteChange = (name, value) => {
   console.log(`AutoComplete Change - Field: ${name}, Value: ${value}`);
   
@@ -673,6 +750,8 @@ const handleAutoCompleteChange = (name, value) => {
   if (name === "Party" && value && partyMapping[value]) {
     const partyKey = partyMapping[value];
     console.log(`Party selected: ${value}, Party Key: ${partyKey}`);
+
+    
     
     // Fetch branches for the selected party
     fetchPartyDetails(partyKey);
@@ -693,20 +772,26 @@ const handleAutoCompleteChange = (name, value) => {
   }
 
   // If branch is selected, only auto-select shipping place if it's currently empty or same as branch
-  if (name === "Branch" && value) {
-    const branchId = branchMapping[value];
-    console.log(`Branch selected: ${value}, Branch ID: ${branchId}`);
-    
-    setFormData(prev => ({
-      ...prev,
-      PARTYDTL_ID: branchId,
-      Branch: value,
-      // Only auto-populate shipping place if it's empty or same as current branch
-      SHIPPING_PLACE: prev.SHIPPING_PLACE === prev.Branch ? value : prev.SHIPPING_PLACE,
-      // Only auto-set shipping place ID if shipping place is same as branch
-      SHP_PARTYDTL_ID: prev.SHIPPING_PLACE === prev.Branch ? branchId : prev.SHP_PARTYDTL_ID
-    }));
+  // If branch is selected, auto-update shipping place
+if (name === "Branch" && value) {
+  const branchId = branchMapping[value];
+  console.log(`Branch selected: ${value}, Branch ID: ${branchId}`);
+  
+  setFormData(prev => ({
+    ...prev,
+    PARTYDTL_ID: branchId,
+    Branch: value,
+    // AUTO-UPDATE: Always update shipping place when branch changes
+    SHIPPING_PLACE: value,
+    SHP_PARTYDTL_ID: branchId
+  }));
+
+  // NEW: Fetch GST type when branch is selected and GST is enabled
+  if (formData.GST_APPL === "Y" && branchId) {
+    const shipPartyDtlId = formData.SHP_PARTYDTL_ID || branchId;
+    fetchGSTType(branchId, shipPartyDtlId);
   }
+}
 
   // Handle shipping party selection separately
   if (name === "SHIPPING_PARTY" && value) {
@@ -739,6 +824,11 @@ const handleAutoCompleteChange = (name, value) => {
         SHP_PARTYDTL_ID: shippingPlaceId,
         SHIPPING_PLACE: value
       }));
+
+      // NEW: Fetch GST type when shipping place is selected and GST is enabled
+      if (formData.GST_APPL === "Y" && formData.PARTYDTL_ID) {
+        fetchGSTType(formData.PARTYDTL_ID, shippingPlaceId);
+      }
     }
   }
 
@@ -830,6 +920,11 @@ const fetchShippingPartyDetails = async (partyKey) => {
           SHIPPING_PLACE: firstBranch,
           SHP_PARTYDTL_ID: firstBranchId
         }));
+
+        // NEW: Fetch GST type when shipping party branch is selected and GST is enabled
+        if (formData.GST_APPL === "Y" && formData.PARTYDTL_ID) {
+          fetchGSTType(formData.PARTYDTL_ID, firstBranchId);
+        }
       }
     } else {
       setShippingPlaceOptions([]);
@@ -926,45 +1021,60 @@ const fetchShippingPartyDetails = async (partyKey) => {
             </RadioGroup>
           </Box>
 
-          <Box sx={{ display: 'flex', alignItems: 'center', width: { xs: '100%', sm: '48%', md: '50%' } }}>
-            <FormLabel sx={{ margin: '7px 14px 0px 10px', fontSize: '12px', fontWeight: 'bold', color: 'black' }} component="legend">GST Appl.</FormLabel>
-            <RadioGroup
-              row
-              name="GST_APPL"
-              onChange={handleInputChange}
-              disabled={isFormDisabled}
-              value={formData.GST_APPL || "N"}
-              sx={{ margin: '5px 0px 0px 0px' }}
-            >
-              <FormControlLabel 
-                disabled={isFormDisabled}
-                value="Y" 
-                control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
-                label={<Typography sx={{ fontSize: '12px' }}>Yes</Typography>} 
-              />
-              <FormControlLabel 
-                disabled={isFormDisabled}
-                value="N" 
-                control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
-                label={<Typography sx={{ fontSize: '12px' }}>No</Typography>} 
-              />
-              <FormControlLabel 
-                disabled={true}
-                value="Y" 
-                control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
-                label={<Typography sx={{ fontSize: '12px' }}>State(CGST & SGST)</Typography>} 
-              />
-              <FormControlLabel 
-                disabled={true}
-                value="N" 
-                control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
-                label={<Typography sx={{ fontSize: '12px' }}>IGST</Typography>} 
-              />
-            </RadioGroup>
-          </Box>
+         <Box sx={{ display: 'flex', alignItems: 'center', width: { xs: '100%', sm: '48%', md: '50%' } }}>
+  <FormLabel sx={{ margin: '7px 14px 0px 10px', fontSize: '12px', fontWeight: 'bold', color: 'black' }} component="legend">GST Apply</FormLabel>
+  <RadioGroup
+    row
+    name="GST_APPL"
+    onChange={handleInputChange}
+    disabled={isFormDisabled}
+    value={formData.GST_APPL || "N"}
+    sx={{ margin: '5px 0px 0px 0px' }}
+  >
+    <FormControlLabel 
+      disabled={isFormDisabled}
+      value="Y" 
+      control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
+      label={<Typography sx={{ fontSize: '12px' }}>Yes</Typography>} 
+    />
+    <FormControlLabel 
+      disabled={isFormDisabled}
+      value="N" 
+      control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
+      label={<Typography sx={{ fontSize: '12px' }}>No</Typography>} 
+    />
+    <FormControlLabel 
+      disabled={formData.GST_APPL !== "Y"}
+      value="state" 
+      control={<Radio 
+        sx={{ transform: 'scale(0.6)', padding: '2px' }} 
+        checked={gstType === 'state' && formData.GST_APPL === "Y"}
+        onChange={() => {
+          setGstType('state');
+          setFormData(prev => ({ ...prev, GST_TYPE: "STATE" }));
+        }}
+      />}
+      label={<Typography sx={{ fontSize: '12px' }}>State(CGST & SGST)</Typography>} 
+    />
+    <FormControlLabel 
+      disabled={formData.GST_APPL !== "Y"}
+      value="igst" 
+      control={<Radio 
+        sx={{ transform: 'scale(0.6)', padding: '2px' }} 
+        checked={gstType === 'igst' && formData.GST_APPL === "Y"}
+        onChange={() => {
+          setGstType('igst');
+          setFormData(prev => ({ ...prev, GST_TYPE: "IGST" }));
+        }}
+      />}
+      label={<Typography sx={{ fontSize: '12px' }}>IGST</Typography>} 
+    />
+  </RadioGroup>
+</Box>
           
         </Box>
 
+        {/* Rest of the component remains the same */}
         {/* Series, Last Ord No, Order No, Date Row */}
         <Box sx={{
           display: 'flex',
