@@ -873,7 +873,7 @@ const ProductMst = () => {
   };
 
   const handleExit = () => {
-    router.push('/dashboard');
+    router.push('/masterpage?activeTab=products');
   };
 
   const handleTable = () => {

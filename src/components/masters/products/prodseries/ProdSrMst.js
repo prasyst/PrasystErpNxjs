@@ -340,7 +340,7 @@ const ProdSrMst = () => {
         }
     };
 
-    const handleExit = () => { router.push("/masters/products/prodseries/prodtable") };
+    const handleExit = () => { router.push("/masterpage?activeTab=products") };
 
     const handleTable = () => {
         router.push("/masters/products/prodseries/prodtable");

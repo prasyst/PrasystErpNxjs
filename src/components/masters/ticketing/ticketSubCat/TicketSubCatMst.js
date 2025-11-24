@@ -228,7 +228,7 @@ const TicketSubCatMst = () => {
     };
 
     const handleExit = () => {
-        router.push('/dashboard');
+        router.push('/masterpage?activeTab=ticketing');
     };
 
     const handleTable = () => {

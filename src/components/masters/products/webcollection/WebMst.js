@@ -381,7 +381,7 @@ const WebMst = () => {
     };
 
     const handleExit = () => {
-        router.push('/masters/products/webcollection/webtable');
+        router.push('/masterpage?activeTab=products');
     };
 
     const handleTable = () => {

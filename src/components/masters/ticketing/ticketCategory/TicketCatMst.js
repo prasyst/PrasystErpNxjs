@@ -201,7 +201,7 @@ const TicketCatMst = () => {
     };
 
     const handleExit = () => {
-        router.push('/dashboard');
+        router.push('/masterpage?activeTab=ticketing');
     };
 
     const handleTable = () => {
