@@ -21,7 +21,7 @@ const RaiseTicketMst = () => {
     const [ImgName, setImgName] = useState('Machine');
 
     const [formData, setFormData] = useState({
-     ImgName
+        ImgName
     });
 
     const handleRadioChange = (event) => {
@@ -100,7 +100,7 @@ const RaiseTicketMst = () => {
         }
     };
 
-     const handleFileChange = (e) => {
+    const handleFileChange = (e) => {
         const file = e.target.files[0];
         setImgName(file);
         setFormData((prev) => {
