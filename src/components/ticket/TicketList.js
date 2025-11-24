@@ -1,579 +1,413 @@
-"use client"
-import React, { useState } from 'react';
-import { 
-  MdSearch, MdFilterList, MdSort, MdEdit, 
-  MdVisibility, MdRefresh, MdAdd 
+"use client";
+
+import React, { useEffect, useState } from 'react';
+import {
+  MdSearch,
+  MdSort,
+  MdAdd,
+  MdVisibility,
+  MdEdit,
+  MdRefresh,
 } from 'react-icons/md';
+import {
+  Paper,
+  Box,
+  Typography,
+  Button,
+  TextField,
+  InputAdornment,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
+  Table,
+  TableHead,
+  TableBody,
+  TableRow,
+  TableCell,
+  TableContainer,
+  Chip,
+  IconButton,
+  Stack,
+} from '@mui/material';
+import axiosInstance from '@/lib/axios';
+import { useRouter } from 'next/navigation';
+import { toast } from 'react-toastify';
 
 const TicketList = ({ onViewTicket, onEditTicket, onCreateTicket }) => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [sortBy, setSortBy] = useState('createdAt');
-  const [sortOrder, setSortOrder] = useState('desc');
+  const [tickets, setTickets] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const router = useRouter();
+
   const [filters, setFilters] = useState({
     status: '',
     priority: '',
     category: '',
-    assignee: ''
   });
 
-  // Dummy data - context ke bina
-  const tickets = [
-    {
-      id: 'TKT-001',
-      title: 'Login Issue',
-      description: 'Unable to login to the system',
-      category: 'Technical',
-      priority: 'High',
-      status: 'open',
-      assignee: 'John Doe',
-      reporter: 'Alice Smith',
-      createdAt: new Date('2024-01-15'),
-      updatedAt: new Date('2024-01-15'),
-      dueDate: new Date('2024-01-18'),
-      tags: ['login', 'authentication'],
-      comments: []
-    },
-    {
-      id: 'TKT-002',
-      title: 'Password Reset Request',
-      description: 'Need to reset my password',
-      category: 'Account',
-      priority: 'Medium',
-      status: 'in-progress',
-      assignee: 'Jane Smith',
-      reporter: 'Bob Johnson',
-      createdAt: new Date('2024-01-14'),
-      updatedAt: new Date('2024-01-15'),
-      dueDate: new Date('2024-01-17'),
-      tags: ['password'],
-      comments: []
-    },
-    {
-      id: 'TKT-003',
-      title: 'Feature Request - Dark Mode',
-      description: 'Add dark mode theme to the application',
-      category: 'Enhancement',
-      priority: 'Low',
-      status: 'resolved',
-      assignee: 'Mike Wilson',
-      reporter: 'Sarah Davis',
-      createdAt: new Date('2024-01-10'),
-      updatedAt: new Date('2024-01-12'),
-      dueDate: new Date('2024-01-20'),
-      tags: ['ui', 'feature'],
-      comments: []
-    },
-    {
-      id: 'TKT-004',
-      title: 'Payment Gateway Issue',
-      description: 'Payment not processing correctly',
-      category: 'Billing',
-      priority: 'High',
-      status: 'open',
-      assignee: 'David Brown',
-      reporter: 'Emma Wilson',
-      createdAt: new Date('2024-01-13'),
-      updatedAt: new Date('2024-01-13'),
-      dueDate: new Date('2024-01-16'),
-      tags: ['payment', 'billing'],
-      comments: []
-    },
-    {
-      id: 'TKT-005',
-      title: 'Mobile App Crash',
-      description: 'App crashes on iOS when opening settings',
-      category: 'Technical',
-      priority: 'Critical',
-      status: 'in-progress',
-      assignee: 'Lisa Anderson',
-      reporter: 'Tom Clark',
-      createdAt: new Date('2024-01-12'),
-      updatedAt: new Date('2024-01-14'),
-      dueDate: new Date('2024-01-15'),
-      tags: ['mobile', 'ios', 'crash'],
-      comments: []
-    }
-  ];
-
-  const categories = [
-    { id: 1, name: 'Technical', color: '#ef4444' },
-    { id: 2, name: 'Account', color: '#3b82f6' },
-    { id: 3, name: 'Billing', color: '#8b5cf6' },
-    { id: 4, name: 'Feature Request', color: '#10b981' },
-    { id: 5, name: 'Enhancement', color: '#f59e0b' }
+  // Static filter options (only for dropdowns)
+  const statuses = [
+    { id: 1, name: 'O', displayName: 'Open' },
+    { id: 2, name: 'P', displayName: 'In Progress' },
+    { id: 3, name: 'R', displayName: 'Resolved' },
+    { id: 4, name: 'C', displayName: 'Closed' },
   ];
 
   const priorities = [
-    { id: 1, name: 'Low', color: '#10b981' },
-    { id: 2, name: 'Medium', color: '#f59e0b' },
-    { id: 3, name: 'High', color: '#ef4444' },
-    { id: 4, name: 'Critical', color: '#dc2626' }
+    { id: 1, name: 'Low' },
+    { id: 2, name: 'Medium' },
+    { id: 3, name: 'High' },
+    { id: 4, name: 'Critical' },
   ];
 
-  const statuses = [
-    { id: 1, name: 'open', displayName: 'Open', color: '#ef4444' },
-    { id: 2, name: 'in-progress', displayName: 'In Progress', color: '#f59e0b' },
-    { id: 3, name: 'resolved', displayName: 'Resolved', color: '#10b981' },
-    { id: 4, name: 'closed', displayName: 'Closed', color: '#6b7280' }
-  ];
+  // Status & Priority colors
+  const getStatusColor = (code) => {
+    const map = { O: '#86940dff', P: '#f59e0b', R: '#10b981', C: '#6b7280' };
+    return map[code] || '#9ca3af';
+  };
 
-  // Filter tickets based on search and filters
+  const getPriorityColor = (name) => {
+    const map = { Low: '#10b981', Medium: '#f59e0b', High: '#ef4444', Critical: '#dc2626' };
+    return map[name] || '#9ca3af';
+  };
+
+  // Fetch real tickets
+  useEffect(() => {
+    const getDashboard = async () => {
+      try {
+        setLoading(true);
+        const response = await axiosInstance.post(
+          "TrnTkt/GetTrnTktDashBoard?currentPage=1&limit=15",
+          { SearchText: "" }
+        );
+        if (response.data.STATUS === 0 && Array.isArray(response.data.DATA)) {
+          setTickets(response.data.DATA);
+        }
+      } catch (error) {
+        toast.error("Error while fetching tickets.");
+      } finally {
+        setLoading(false);
+      }
+    };
+    getDashboard();
+  }, []);
+
+  // Filter real tickets
   const filteredTickets = tickets.filter(ticket => {
-    const matchesSearch = ticket.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         ticket.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         ticket.id.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesStatus = !filters.status || ticket.status === filters.status;
-    const matchesPriority = !filters.priority || ticket.priority === filters.priority;
-    const matchesCategory = !filters.category || ticket.category === filters.category;
-    const matchesAssignee = !filters.assignee || ticket.assignee === filters.assignee;
+    const search = searchTerm.toLowerCase();
+    const matchesSearch =
+      (ticket.TKTNO || '').toLowerCase().includes(search) ||
+      (ticket.REASON || '').toLowerCase().includes(search) ||
+      (ticket.TKTDESC || '').toLowerCase().includes(search);
 
-    return matchesSearch && matchesStatus && matchesPriority && matchesCategory && matchesAssignee;
+    const matchesStatus = !filters.status || ticket.TKTSTATUS === filters.status;
+    const matchesPriority = !filters.priority || ticket.TKTSVRTYNAME === filters.priority;
+    const matchesCategory = !filters.category || ticket.TKTTYPENAME === filters.category;
+
+    return matchesSearch && matchesStatus && matchesPriority && matchesCategory;
   });
-
-  // Sort tickets
-  const sortedTickets = filteredTickets.sort((a, b) => {
-    let aValue = a[sortBy];
-    let bValue = b[sortBy];
-
-    if (sortBy === 'createdAt' || sortBy === 'updatedAt' || sortBy === 'dueDate') {
-      aValue = new Date(aValue);
-      bValue = new Date(bValue);
-    }
-
-    if (sortOrder === 'asc') {
-      return aValue < bValue ? -1 : aValue > bValue ? 1 : 0;
-    } else {
-      return aValue > bValue ? -1 : aValue < bValue ? 1 : 0;
-    }
-  });
-
-  const getStatusColor = (status) => {
-    const statusObj = statuses.find(s => s.name === status);
-    return statusObj ? statusObj.color : '#9ca3af';
-  };
-
-  const getPriorityColor = (priority) => {
-    const priorityObj = priorities.find(p => p.name === priority);
-    return priorityObj ? priorityObj.color : '#9ca3af';
-  };
-
-  const handleSort = (field) => {
-    if (sortBy === field) {
-      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortBy(field);
-      setSortOrder('desc');
-    }
-  };
 
   const clearFilters = () => {
-    setFilters({
-      status: '',
-      priority: '',
-      category: '',
-      assignee: ''
-    });
+    setFilters({ status: '', priority: '', category: '' });
     setSearchTerm('');
   };
 
-  const updateFilters = (newFilters) => {
-    setFilters(prev => ({ ...prev, ...newFilters }));
-  };
+  const hasActiveFilters = searchTerm || filters.status || filters.priority || filters.category;
+
+  if (loading) {
+    return (
+      <Paper sx={{ p: 8, textAlign: 'center' }}>
+        Loading tickets...
+      </Paper>
+    );
+  }
 
   return (
-    <div style={{
-      backgroundColor: 'white',
-      borderRadius: '0.75rem',
-      boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
-      border: '1px solid #e5e7eb'
-    }}>
+    <Paper
+      elevation={0}
+      sx={{
+        backgroundColor: 'white',
+        borderRadius: '0.75rem',
+        boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
+        border: '1px solid #e5e7eb',
+        overflow: 'hidden'
+      }}
+    >
       {/* Header */}
-      <div style={{ padding: '1.5rem', borderBottom: '1px solid #e5e7eb' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-          <h2 style={{ fontSize: '1.25rem', fontWeight: '600', color: '#111827', margin: 0 }}>
-            All Tickets ({filteredTickets.length})
-          </h2>
-          <button
-            onClick={onCreateTicket}
-            style={{
-              padding: '0.5rem 1rem',
-              backgroundColor: '#2563eb',
-              color: 'white',
-              border: 'none',
-              borderRadius: '0.5rem',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              fontSize: '0.875rem',
-              fontWeight: '500'
+      <Box sx={{ p: '1.5rem', borderBottom: '1px solid #e5e7eb' }}>
+        <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2}>
+          <Typography
+            variant="h6"
+            sx={{
+              fontSize: '1.25rem',
+              fontWeight: 600,
+              color: 'transparent',
+              background: 'linear-gradient(to right, #7e1f0a, #054711, #610514ff)',
+              WebkitBackgroundClip: 'text',
+              m: 0,
             }}
           >
-            <MdAdd size={16} />
-            New Ticket
-          </button>
-        </div>
+            All Tickets ({filteredTickets.length})
+          </Typography>
 
-        {/* Search and Filters */}
-        <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-          {/* Search */}
-          <div style={{ position: 'relative', flex: '1', minWidth: '250px' }}>
-            <MdSearch 
-              size={20} 
-              style={{ 
-                position: 'absolute', 
-                left: '0.75rem', 
-                top: '50%', 
-                transform: 'translateY(-50%)', 
-                color: '#9ca3af' 
-              }} 
-            />
-            <input
-              type="text"
+          <Button
+            variant="contained"
+            startIcon={<MdAdd size={16} />}
+            onClick={() => router.push("/tickets/create-tickets")}
+            sx={{
+              bgcolor: '#2563eb',
+              '&:hover': { bgcolor: '#1d4ed8' },
+              borderRadius: '0.5rem',
+              textTransform: 'none',
+              fontWeight: 500,
+              fontSize: '0.875rem',
+              px: 2,
+              py: 1
+            }}
+          >
+            New Ticket
+          </Button>
+        </Stack>
+
+        {/* Search + Filters */}
+        <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} alignItems="flex-start">
+          <Box sx={{ flex: 1, minWidth: 200 }}>
+            <TextField
+              fullWidth
+              size="small"
               placeholder="Search tickets..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '0.5rem 0.5rem 0.5rem 2.5rem',
-                border: '1px solid #d1d5db',
-                borderRadius: '0.5rem',
-                fontSize: '0.875rem'
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <MdSearch size={20} color="#9ca3af" />
+                  </InputAdornment>
+                ),
+              }}
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  height: 40,
+                  fontSize: '0.875rem',
+                  borderRadius: '0.5rem',
+                },
               }}
             />
-          </div>
+          </Box>
 
-          {/* Filters */}
-          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-            <select
-              value={filters.status}
-              onChange={(e) => updateFilters({ status: e.target.value })}
-              style={{
-                padding: '0.5rem',
-                border: '1px solid #d1d5db',
-                borderRadius: '0.5rem',
-                fontSize: '0.875rem',
-                minWidth: '120px'
-              }}
-            >
-              <option value="">All Status</option>
-              {statuses.map(status => (
-                <option key={status.id} value={status.name}>
-                  {status.displayName}
-                </option>
-              ))}
-            </select>
+          <Stack direction="row" spacing={1} flexWrap="wrap" alignItems="center">
+            <FormControl size="small" sx={{ minWidth: 120 }}>
+              <InputLabel>All Status</InputLabel>
+              <Select
+                value={filters.status}
+                label="All Status"
+                onChange={(e) => setFilters(prev => ({ ...prev, status: e.target.value }))}
+                sx={{ borderRadius: '0.5rem', fontSize: '0.875rem' }}
+              >
+                <MenuItem value="">All Status</MenuItem>
+                {statuses.map(s => (
+                  <MenuItem key={s.id} value={s.name}>{s.displayName}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
 
-            <select
-              value={filters.priority}
-              onChange={(e) => updateFilters({ priority: e.target.value })}
-              style={{
-                padding: '0.5rem',
-                border: '1px solid #d1d5db',
-                borderRadius: '0.5rem',
-                fontSize: '0.875rem',
-                minWidth: '120px'
-              }}
-            >
-              <option value="">All Priority</option>
-              {priorities.map(priority => (
-                <option key={priority.id} value={priority.name}>
-                  {priority.name}
-                </option>
-              ))}
-            </select>
+            <FormControl size="small" sx={{ minWidth: 120 }}>
+              <InputLabel>All Priority</InputLabel>
+              <Select
+                value={filters.priority}
+                label="All Priority"
+                onChange={(e) => setFilters(prev => ({ ...prev, priority: e.target.value }))}
+                sx={{ borderRadius: '0.5rem', fontSize: '0.875rem' }}
+              >
+                <MenuItem value="">All Priority</MenuItem>
+                {priorities.map(p => (
+                  <MenuItem key={p.id} value={p.name}>{p.name}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
 
-            <select
-              value={filters.category}
-              onChange={(e) => updateFilters({ category: e.target.value })}
-              style={{
-                padding: '0.5rem',
-                border: '1px solid #d1d5db',
-                borderRadius: '0.5rem',
-                fontSize: '0.875rem',
-                minWidth: '140px'
-              }}
-            >
-              <option value="">All Categories</option>
-              {categories.map(category => (
-                <option key={category.id} value={category.name}>
-                  {category.name}
-                </option>
-              ))}
-            </select>
+            <FormControl size="small" sx={{ minWidth: 140 }}>
+              <InputLabel>All Categories</InputLabel>
+              <Select
+                value={filters.category}
+                label="All Categories"
+                onChange={(e) => setFilters(prev => ({ ...prev, category: e.target.value }))}
+                sx={{ borderRadius: '0.5rem', fontSize: '0.875rem' }}
+              >
+                <MenuItem value="">All Categories</MenuItem>
+                {[...new Set(tickets.map(t => t.TKTTYPENAME).filter(Boolean))].map(cat => (
+                  <MenuItem key={cat} value={cat}>{cat}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
 
-            {(filters.status || filters.priority || filters.category || searchTerm) && (
-              <button
+            {hasActiveFilters && (
+              <Button
+                variant="outlined"
+                startIcon={<MdRefresh size={16} />}
                 onClick={clearFilters}
-                style={{
-                  padding: '0.5rem 1rem',
-                  border: '1px solid #d1d5db',
-                  borderRadius: '0.5rem',
-                  backgroundColor: 'white',
+                size="small"
+                sx={{
+                  borderColor: '#d1d5db',
                   color: '#374151',
-                  cursor: 'pointer',
+                  textTransform: 'none',
                   fontSize: '0.875rem',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.5rem'
+                  borderRadius: '0.5rem'
                 }}
               >
-                <MdRefresh size={16} />
                 Clear
-              </button>
+              </Button>
             )}
-          </div>
-        </div>
-      </div>
+          </Stack>
+        </Stack>
+      </Box>
 
-      {/* Tickets Table */}
-      <div style={{ overflowX: 'auto' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead>
-            <tr style={{ borderBottom: '1px solid #e5e7eb', backgroundColor: '#f9fafb' }}>
-              <th style={{ 
-                textAlign: 'left', 
-                padding: '1rem 0.75rem', 
-                fontSize: '0.75rem',
-                fontWeight: '600',
-                color: '#6b7280',
-                textTransform: 'uppercase',
-                letterSpacing: '0.05em',
-                cursor: 'pointer'
-              }} onClick={() => handleSort('id')}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  Ticket ID
-                  <MdSort size={14} />
-                </div>
-              </th>
-              <th style={{ 
-                textAlign: 'left', 
-                padding: '1rem 0.75rem', 
-                fontSize: '0.75rem',
-                fontWeight: '600',
-                color: '#6b7280',
-                textTransform: 'uppercase',
-                letterSpacing: '0.05em',
-                cursor: 'pointer'
-              }} onClick={() => handleSort('title')}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  Title
-                  <MdSort size={14} />
-                </div>
-              </th>
-              <th style={{ 
-                textAlign: 'left', 
-                padding: '1rem 0.75rem', 
-                fontSize: '0.75rem',
-                fontWeight: '600',
-                color: '#6b7280',
-                textTransform: 'uppercase',
-                letterSpacing: '0.05em'
-              }}>
-                Category
-              </th>
-              <th style={{ 
-                textAlign: 'left', 
-                padding: '1rem 0.75rem', 
-                fontSize: '0.75rem',
-                fontWeight: '600',
-                color: '#6b7280',
-                textTransform: 'uppercase',
-                letterSpacing: '0.05em',
-                cursor: 'pointer'
-              }} onClick={() => handleSort('priority')}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  Priority
-                  <MdSort size={14} />
-                </div>
-              </th>
-              <th style={{ 
-                textAlign: 'left', 
-                padding: '1rem 0.75rem', 
-                fontSize: '0.75rem',
-                fontWeight: '600',
-                color: '#6b7280',
-                textTransform: 'uppercase',
-                letterSpacing: '0.05em',
-                cursor: 'pointer'
-              }} onClick={() => handleSort('status')}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  Status
-                  <MdSort size={14} />
-                </div>
-              </th>
-              <th style={{ 
-                textAlign: 'left', 
-                padding: '1rem 0.75rem', 
-                fontSize: '0.75rem',
-                fontWeight: '600',
-                color: '#6b7280',
-                textTransform: 'uppercase',
-                letterSpacing: '0.05em'
-              }}>
-                Assignee
-              </th>
-              <th style={{ 
-                textAlign: 'left', 
-                padding: '1rem 0.75rem', 
-                fontSize: '0.75rem',
-                fontWeight: '600',
-                color: '#6b7280',
-                textTransform: 'uppercase',
-                letterSpacing: '0.05em'
-              }}>
-                Actions
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {sortedTickets.length === 0 ? (
-              <tr>
-                <td colSpan="7" style={{ textAlign: 'center', padding: '3rem', color: '#6b7280' }}>
-                  No tickets found. {searchTerm || Object.values(filters).some(f => f) ? 'Try adjusting your search or filters.' : 'Create your first ticket!'}
-                </td>
-              </tr>
+      {/* Table - Only Real API Data */}
+      <TableContainer sx={{ overflowX: 'auto' }}>
+        <Table sx={{ minWidth: 650 }}>
+          <TableHead>
+            <TableRow
+              sx={{
+                backgroundColor: '#f9fafb',
+                height: 36,
+                '& th': {
+                  p: '0.5rem 0.75rem',
+                  fontSize: '0.6875rem',
+                  fontWeight: 600,
+                  color: '#6b7280',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em',
+                  lineHeight: 1.2,
+                  borderBottom: '1px solid #e5e7eb'
+                }
+              }}
+            >
+              <TableCell>Ticket No</TableCell>
+              <TableCell sx={{ textTransform: 'none' }}>Ticket Key</TableCell>
+              <TableCell sx={{ textTransform: 'none' }}>Time</TableCell>
+              <TableCell sx={{ textTransform: 'none' }}>Title</TableCell>
+              <TableCell sx={{ textTransform: 'none' }}>CCN</TableCell>
+              <TableCell sx={{ textTransform: 'none' }}>Category</TableCell>
+              <TableCell sx={{ textTransform: 'none' }}>Mobile</TableCell>
+              <TableCell sx={{ textTransform: 'none' }}>Priority</TableCell>
+              <TableCell sx={{ textTransform: 'none' }}>Status</TableCell>
+              <TableCell sx={{ textTransform: 'none' }}>Machine</TableCell>
+              <TableCell sx={{ textTransform: 'none' }}>Actions</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {filteredTickets.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={11} align="center" sx={{ py: '2rem', color: '#6b7280' }}>
+                  No tickets found.
+                </TableCell>
+              </TableRow>
             ) : (
-              sortedTickets.map((ticket) => (
-                <tr 
-                  key={ticket.id}
-                  style={{ 
-                    borderBottom: '1px solid #f3f4f6',
-                    cursor: 'pointer',
-                    transition: 'background-color 0.2s'
+              filteredTickets.map((ticket) => (
+                <TableRow
+                  key={ticket.TKTKEY}
+                  hover
+                  sx={{
+                    height: 28,
+                    '& td': { p: '0.2rem 0.75rem' },
                   }}
                 >
-                  <td style={{ 
-                    padding: '1rem 0.75rem',
-                    fontSize: '0.875rem',
-                    fontWeight: '600',
-                    color: '#2563eb'
-                  }}>
-                    {ticket.id}
-                  </td>
-                  <td style={{ 
-                    padding: '1rem 0.75rem',
-                    fontSize: '0.875rem',
-                    fontWeight: '500',
-                    color: '#111827'
-                  }}>
-                    <div>
-                      <div style={{ fontWeight: '600', marginBottom: '0.25rem' }}>
-                        {ticket.title}
-                      </div>
-                      <div style={{ 
-                        fontSize: '0.75rem', 
-                        color: '#6b7280',
+                  <TableCell sx={{ fontWeight: 600, color: '#2563eb', fontSize: '0.875rem' }}>
+                    {ticket.TKTNO || '—'}
+                  </TableCell>
+
+                  <TableCell sx={{ fontWeight: 600, color: '#c50b7eff', fontSize: '0.875rem' }}>
+                    {ticket.TKTKEY || '—'}
+                  </TableCell>
+
+                  <TableCell sx={{ fontWeight: 600, color: '#057928ff', fontSize: '0.875rem' }}>
+                    {ticket.TKTTIME || '—'}
+                  </TableCell>
+
+                  <TableCell>
+                    <Typography
+                      fontWeight={600}
+                      fontSize="0.875rem"
+                      color="#111827"
+                      sx={{
+                        whiteSpace: 'nowrap',
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
-                        display: '-webkit-box',
-                        WebkitLineClamp: 2,
-                        WebkitBoxOrient: 'vertical'
-                      }}>
-                        {ticket.description}
-                      </div>
-                    </div>
-                  </td>
-                  <td style={{ padding: '1rem 0.75rem' }}>
-                    <span style={{
-                      fontSize: '0.75rem',
-                      fontWeight: '500',
-                      color: '#374151',
-                      backgroundColor: '#f3f4f6',
-                      padding: '0.25rem 0.5rem',
-                      borderRadius: '0.375rem'
-                    }}>
-                      {ticket.category}
-                    </span>
-                  </td>
-                  <td style={{ padding: '1rem 0.75rem' }}>
-                    <span style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      padding: '0.25rem 0.75rem',
-                      borderRadius: '9999px',
-                      fontSize: '0.75rem',
-                      fontWeight: '600',
-                      backgroundColor: getPriorityColor(ticket.priority) + '20',
-                      color: getPriorityColor(ticket.priority)
-                    }}>
-                      {ticket.priority}
-                    </span>
-                  </td>
-                  <td style={{ padding: '1rem 0.75rem' }}>
-                    <span style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      padding: '0.25rem 0.75rem',
-                      borderRadius: '9999px',
-                      fontSize: '0.75rem',
-                      fontWeight: '600',
-                      backgroundColor: getStatusColor(ticket.status) + '20',
-                      color: getStatusColor(ticket.status),
-                      textTransform: 'capitalize'
-                    }}>
-                      {ticket.status.replace('-', ' ')}
-                    </span>
-                  </td>
-                  <td style={{ 
-                    padding: '1rem 0.75rem',
-                    fontSize: '0.875rem',
-                    color: '#6b7280'
-                  }}>
-                    {ticket.assignee}
-                  </td>
-                  <td style={{ padding: '1rem 0.75rem' }}>
-                    <div style={{ display: 'flex', gap: '0.5rem' }}>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onViewTicket(ticket);
-                        }}
-                        style={{
-                          padding: '0.5rem',
-                          border: 'none',
-                          backgroundColor: '#3b82f6',
-                          color: 'white',
-                          borderRadius: '0.375rem',
-                          cursor: 'pointer',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center'
-                        }}
-                        title="View Ticket"
-                      >
-                        <MdVisibility size={16} />
-                      </button>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onEditTicket(ticket);
-                        }}
-                        style={{
-                          padding: '0.5rem',
-                          border: '1px solid #d1d5db',
-                          backgroundColor: 'white',
-                          color: '#374151',
-                          borderRadius: '0.375rem',
-                          cursor: 'pointer',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center'
-                        }}
-                        title="Edit Ticket"
-                      >
-                        <MdEdit size={16} />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
+                        maxWidth: '180px',
+                      }}
+                      title={ticket.REASON}
+                    >
+                      {ticket.REASON || 'No title'}
+                    </Typography>
+                  </TableCell>
+
+                  <TableCell sx={{ fontWeight: 600, color: '#057928ff', fontSize: '0.875rem' }}>
+                    {ticket.CCN_KEY || '—'}
+                  </TableCell>
+
+                  <TableCell>
+                    <Chip label={ticket.TKTTYPENAME || '—'} size="small" sx={{ fontSize: '0.75rem', height: 24 }} />
+                  </TableCell>
+
+                  <TableCell sx={{ fontWeight: 600, color: '#057928ff', fontSize: '0.875rem' }}>
+                    {ticket.MOBILENO || '—'}
+                  </TableCell>
+
+                  <TableCell>
+                    <Chip
+                      label={ticket.TKTSVRTYNAME || '—'}
+                      size="small"
+                      sx={{
+                        bgcolor: `${getPriorityColor(ticket.TKTSVRTYNAME)}20`,
+                        color: getPriorityColor(ticket.TKTSVRTYNAME),
+                        fontSize: '0.75rem',
+                        height: 24,
+                      }}
+                    />
+                  </TableCell>
+
+                  <TableCell>
+                    <Chip
+                      label={
+                        ticket.TKTSTATUS === 'O' ? 'Open' :
+                          ticket.TKTSTATUS === 'P' ? 'In Progress' :
+                            ticket.TKTSTATUS === 'R' ? 'Resolved' :
+                              ticket.TKTSTATUS === 'C' ? 'Closed' : 'Unknown'
+                      }
+                      size="small"
+                      sx={{
+                        bgcolor: `${getStatusColor(ticket.TKTSTATUS)}20`,
+                        color: getStatusColor(ticket.TKTSTATUS),
+                        fontSize: '0.75rem',
+                        height: 24,
+                      }}
+                    />
+                  </TableCell>
+
+                  <TableCell sx={{ color: '#6b7280', fontSize: '0.875rem' }}>
+                    {ticket.MACHINERY_NAME || '—'}
+                  </TableCell>
+
+                  <TableCell>
+                    <Stack direction="row" spacing={0.5}>
+                      <IconButton size="small" onClick={(e) => { e.stopPropagation(); onViewTicket(ticket); }}
+                        sx={{ bgcolor: '#3b82f6', color: 'white', '&:hover': { bgcolor: '#2563eb' }, width: 32, height: 32 }}>
+                        <MdVisibility size={14} />
+                      </IconButton>
+                      <IconButton size="small" onClick={(e) => { e.stopPropagation(); onEditTicket(ticket); }}
+                        sx={{ border: '1px solid #d1d5db', color: '#374151', width: 32, height: 32 }}>
+                        <MdEdit size={14} />
+                      </IconButton>
+                    </Stack>
+                  </TableCell>
+                </TableRow>
               ))
             )}
-          </tbody>
-        </table>
-      </div>
-    </div>
+          </TableBody>
+        </Table>
+      </TableContainer>
+    </Paper>
   );
 };
 

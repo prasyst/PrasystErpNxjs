@@ -1,38 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter} from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import {
-  Box,
-  Container,
-  Card,
-  CardContent,
-  Typography,
-  Button,
-  TextField,
-  MenuItem,
-  IconButton,
-  Chip,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
-  Stack,
-  InputAdornment,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  useMediaQuery,
-  useTheme,
-  Grid,
-  Avatar,
-  Divider,
-  Tooltip,
-  Fab
+  Box, Container, Card, CardContent, Typography, Button, TextField, MenuItem, IconButton, Chip, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Stack,
+  InputAdornment, Dialog, DialogTitle, DialogContent, DialogActions, useMediaQuery, useTheme, Grid, Avatar, Divider, Tooltip, Fab
 } from '@mui/material';
 import {
   ArrowBack as ArrowBackIcon,
@@ -45,15 +17,16 @@ import {
   MoreVert as MoreVertIcon,
   Close as CloseIcon
 } from '@mui/icons-material';
+import axiosInstance from '@/lib/axios';
 
 const AllTicketsPage = () => {
   const router = useRouter();
-//   const searchParams = useSearchParams();
+  //   const searchParams = useSearchParams();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const isSmallMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
-  const [tickets, setTickets] = useState([]);
+  const [ticketData, setTicketData] = useState([]);
   const [filteredTickets, setFilteredTickets] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -63,93 +36,67 @@ const AllTicketsPage = () => {
   const [ticketToDelete, setTicketToDelete] = useState(null);
 
   useEffect(() => {
-    loadTickets();
+    fetchTicketDash();
   }, []);
 
-  useEffect(() => {
-    filterTickets();
-  }, [searchTerm, statusFilter, priorityFilter, tickets]);
+  const fetchTicketDash = async () => {
+    try {
+      const response = await axiosInstance.post(
+        "TrnTkt/GetTrnTktDashBoard?currentPage=1&limit=50",
+        { SearchText: "" }
+      );
 
-  const loadTickets = () => {
-    const mockTickets = [
-      {
-        id: 'TKT-001',
-        title: 'Login Issue',
-        description: 'Unable to login to the system with correct credentials',
-        category: 'Technical',
-        priority: 'High',
-        status: 'open',
-        assignee: 'John Doe',
-        reporter: 'Alice Smith',
-        createdAt: '2024-01-15',
-        dueDate: '2024-01-18',
-        lastUpdated: '2024-01-16'
-      },
-      {
-        id: 'TKT-002',
-        title: 'Password Reset Request',
-        description: 'Need to reset my password for email account',
-        category: 'Account',
-        priority: 'Medium',
-        status: 'in-progress',
-        assignee: 'Jane Smith',
-        reporter: 'Bob Johnson',
-        createdAt: '2024-01-14',
-        dueDate: '2024-01-17',
-        lastUpdated: '2024-01-15'
-      },
-      {
-        id: 'TKT-003',
-        title: 'Mobile App Crash',
-        description: 'Application crashes when opening settings page on iOS',
-        category: 'Bug',
-        priority: 'High',
-        status: 'open',
-        assignee: 'Mike Wilson',
-        reporter: 'Sarah Davis',
-        createdAt: '2024-01-16',
-        dueDate: '2024-01-20',
-        lastUpdated: '2024-01-16'
-      },
-      {
-        id: 'TKT-004',
-        title: 'Feature Request - Dark Mode',
-        description: 'Add dark mode theme to the application',
-        category: 'Enhancement',
-        priority: 'Low',
-        status: 'resolved',
-        assignee: 'Tom Brown',
-        reporter: 'Emma Wilson',
-        createdAt: '2024-01-10',
-        dueDate: '2024-01-25',
-        lastUpdated: '2024-01-12'
+      if (response.data.STATUS === 0 && Array.isArray(response.data.DATA)) {
+        const realTickets = response.data.DATA;
+
+        // Map API fields to UI-friendly names
+        const mappedTickets = realTickets.map(tkt => ({
+          id: tkt.TKTNO,
+          title: tkt.REMARK || "No Title",
+          description: tkt.TKTDESC || tkt.REASON || "No description",
+          category: tkt.TKTSERVICENAME || "General",
+          priority: tkt.TKTSVRTYNAME || "Medium",
+          status: tkt.TKTSTATUS === "O" ? "open" :
+            tkt.TKTSTATUS === "P" ? "in-progress" :
+              tkt.TKTSTATUS === "R" ? "resolved" : "closed",
+          assignee: tkt.TECHEMP_NAME || "Unassigned",
+          reporter: tkt.RAISEBYNM || "Unknown",
+          createdAt: tkt.TKTDATE,
+          dueDate: tkt.ASSIGNDT || tkt.TKTDATE,
+          tktFor: tkt.TKTFOR === "M" ? "Machine" : "Department",
+          ccnName: tkt.CCN_NAME || "",
+          machineryName: tkt.MACHINERY_NAME || "",
+        }));
+
+        setTicketData(mappedTickets);
+        setFilteredTickets(mappedTickets);
       }
-    ];
-    setTickets(mockTickets);
+    } catch (error) {
+      toast.error("Failed to load tickets");
+    }
   };
 
-  const filterTickets = () => {
-    let filtered = tickets;
+  useEffect(() => {
+    let filtered = ticketData;
 
     if (searchTerm) {
-      filtered = filtered.filter(ticket =>
-        ticket.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        ticket.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        ticket.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        ticket.assignee.toLowerCase().includes(searchTerm.toLowerCase())
+      filtered = filtered.filter(t =>
+        t.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        t.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        t.description.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
 
     if (statusFilter !== 'all') {
-      filtered = filtered.filter(ticket => ticket.status === statusFilter);
+      filtered = filtered.filter(t => t.status === statusFilter);
     }
 
     if (priorityFilter !== 'all') {
-      filtered = filtered.filter(ticket => ticket.priority === priorityFilter);
+      filtered = filtered.filter(t => t.priority === priorityFilter);
     }
 
     setFilteredTickets(filtered);
-  };
+  }, [searchTerm, statusFilter, priorityFilter, ticketData]);
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -169,8 +116,6 @@ const AllTicketsPage = () => {
       default: return 'default';
     }
   };
-
- 
 
   const handleViewTicket = (ticket) => {
     setSelectedTicket(ticket);
@@ -205,7 +150,6 @@ const AllTicketsPage = () => {
     return name.split(' ').map(n => n[0]).join('').toUpperCase();
   };
 
-
   const MobileTicketCard = ({ ticket }) => (
     <Card sx={{ mb: 2, cursor: 'pointer' }} onClick={() => handleViewTicket(ticket)}>
       <CardContent sx={{ p: 2 }}>
@@ -219,14 +163,14 @@ const AllTicketsPage = () => {
             color={getStatusColor(ticket.status)}
           />
         </Box>
-        
+
         <Typography variant="h6" fontWeight="600" sx={{ mb: 1 }} noWrap>
           {ticket.title}
         </Typography>
-        
+
         <Typography variant="body2" color="text.secondary" sx={{ mb: 2, lineHeight: 1.4 }}>
-          {ticket.description.length > 80 
-            ? `${ticket.description.substring(0, 80)}...` 
+          {ticket.description.length > 80
+            ? `${ticket.description.substring(0, 80)}...`
             : ticket.description
           }
         </Typography>
@@ -260,8 +204,8 @@ const AllTicketsPage = () => {
         <Divider sx={{ my: 1 }} />
 
         <Box display="flex" justifyContent="space-between" alignItems="center">
-          <Button 
-            size="small" 
+          <Button
+            size="small"
             startIcon={<VisibilityIcon />}
             onClick={(e) => {
               e.stopPropagation();
@@ -271,8 +215,8 @@ const AllTicketsPage = () => {
             View
           </Button>
           <Box display="flex" gap={1}>
-            <IconButton 
-              size="small" 
+            <IconButton
+              size="small"
               color="primary"
               onClick={(e) => {
                 e.stopPropagation();
@@ -281,8 +225,8 @@ const AllTicketsPage = () => {
             >
               <EditIcon fontSize="small" />
             </IconButton>
-            <IconButton 
-              size="small" 
+            <IconButton
+              size="small"
               color="error"
               onClick={(e) => {
                 e.stopPropagation();
@@ -299,17 +243,33 @@ const AllTicketsPage = () => {
 
   const DesktopTableView = () => (
     <TableContainer component={Paper} sx={{ boxShadow: 2 }}>
-      <Table sx={{ minWidth: 800 }}>
+      <Table sx={{
+        minWidth: 800,
+        '& .MuiTableCell-root': {
+          padding: '2px 10px',
+          fontSize: '0.8125rem',
+          lineHeight: 1.2,
+        },
+        '& .MuiTableCell-head': {
+          padding: '10px 16px',
+          fontSize: '0.75rem',
+          textTransform: 'uppercase',
+          letterSpacing: '0.5px',
+        },
+      }}>
         <TableHead>
           <TableRow sx={{ backgroundColor: 'primary.light' }}>
             <TableCell sx={{ fontWeight: 'bold', color: 'white', fontSize: '0.875rem' }}>
-              Ticket ID
+              Ticket No
             </TableCell>
             <TableCell sx={{ fontWeight: 'bold', color: 'white', fontSize: '0.875rem' }}>
-              Title & Description
+              Title
             </TableCell>
             <TableCell sx={{ fontWeight: 'bold', color: 'white', fontSize: '0.875rem' }}>
               Category
+            </TableCell>
+            <TableCell sx={{ fontWeight: 'bold', color: 'white', fontSize: '0.875rem' }}>
+              Mobile No
             </TableCell>
             <TableCell sx={{ fontWeight: 'bold', color: 'white', fontSize: '0.875rem' }}>
               Priority
@@ -318,10 +278,10 @@ const AllTicketsPage = () => {
               Status
             </TableCell>
             <TableCell sx={{ fontWeight: 'bold', color: 'white', fontSize: '0.875rem' }}>
-              Assignee
+              TKTFOR
             </TableCell>
             <TableCell sx={{ fontWeight: 'bold', color: 'white', fontSize: '0.875rem' }}>
-              Created
+              Raised At
             </TableCell>
             <TableCell sx={{ fontWeight: 'bold', color: 'white', fontSize: '0.875rem', textAlign: 'center' }}>
               Actions
@@ -329,36 +289,33 @@ const AllTicketsPage = () => {
           </TableRow>
         </TableHead>
         <TableBody>
-          {filteredTickets.map((ticket, index) => (
-            <TableRow 
-              key={index}
+          {filteredTickets.map((ticket) => (
+            <TableRow
+              key={ticket.TKTKEY}
               hover
-              sx={{ 
+              sx={{
                 cursor: 'pointer',
-                '&:last-child td, &:last-child th': { border: 0 }
+                '&:last-child td, &:last-child th': { border: 0 },
               }}
               onClick={() => handleViewTicket(ticket)}
             >
+              {/* Ticket No */}
               <TableCell>
                 <Typography variant="body2" fontWeight="600" color="primary">
                   {ticket.id}
                 </Typography>
               </TableCell>
+
+              {/* Title & Description */}
               <TableCell sx={{ maxWidth: 300 }}>
                 <Box>
                   <Typography variant="subtitle2" fontWeight="600" noWrap>
                     {ticket.title}
                   </Typography>
-                  <Typography variant="body2" color="text.secondary" sx={{ 
-                    display: '-webkit-box',
-                    WebkitLineClamp: 2,
-                    WebkitBoxOrient: 'vertical',
-                    overflow: 'hidden'
-                  }}>
-                    {ticket.description}
-                  </Typography>
                 </Box>
               </TableCell>
+
+              {/* Category (Service) */}
               <TableCell>
                 <Chip
                   label={ticket.category}
@@ -367,6 +324,10 @@ const AllTicketsPage = () => {
                   color="primary"
                 />
               </TableCell>
+
+              <TableCell>{ticket.MOBILENO} </TableCell>
+
+              {/* Priority */}
               <TableCell>
                 <Chip
                   label={ticket.priority}
@@ -374,64 +335,50 @@ const AllTicketsPage = () => {
                   color={getPriorityColor(ticket.priority)}
                 />
               </TableCell>
+
+              {/* Status */}
               <TableCell>
                 <Chip
-                  label={ticket.status.replace('-', ' ')}
+                  label={
+                    ticket.status === 'open' ? 'Open' :
+                      ticket.status === 'in-progress' ? 'In Progress' :
+                        ticket.status === 'resolved' ? 'Resolved' : 'Closed'
+                  }
                   size="small"
                   color={getStatusColor(ticket.status)}
                   variant="filled"
                 />
               </TableCell>
+
+              {/* TKTFOR - Machine or Department */}
               <TableCell>
-                <Box display="flex" alignItems="center" gap={1}>
-                  <Avatar sx={{ width: 32, height: 32, fontSize: '0.875rem' }}>
-                    {getInitials(ticket.assignee)}
-                  </Avatar>
-                  <Typography variant="body2">
-                    {ticket.assignee}
-                  </Typography>
-                </Box>
+                <Typography variant="body2">
+                  {ticket.tktFor}
+                </Typography>
               </TableCell>
+
+              {/* Created Date */}
               <TableCell>
                 <Typography variant="body2" color="text.secondary">
                   {formatDate(ticket.createdAt)}
                 </Typography>
               </TableCell>
-              <TableCell>
+
+              {/* Actions */}
+              <TableCell onClick={(e) => e.stopPropagation()}>
                 <Box display="flex" justifyContent="center" gap={1}>
-                  <Tooltip title="View">
-                    <IconButton 
-                      size="small" 
-                      color="primary"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleViewTicket(ticket);
-                      }}
-                    >
+                  <Tooltip title="View" arrow>
+                    <IconButton size="small" color="primary" onClick={() => handleViewTicket(ticket)}>
                       <VisibilityIcon fontSize="small" />
                     </IconButton>
                   </Tooltip>
-                  <Tooltip title="Edit">
-                    <IconButton 
-                      size="small" 
-                      color="secondary"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleEditTicket(ticket);
-                      }}
-                    >
+                  <Tooltip title="Edit" arrow>
+                    <IconButton size="small" color="secondary" onClick={() => handleEditTicket(ticket)}>
                       <EditIcon fontSize="small" />
                     </IconButton>
                   </Tooltip>
-                  <Tooltip title="Delete">
-                    <IconButton 
-                      size="small" 
-                      color="error"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDeleteClick(ticket);
-                      }}
-                    >
+                  <Tooltip title="Delete" arrow>
+                    <IconButton size="small" color="error" onClick={() => handleDeleteClick(ticket)}>
                       <DeleteIcon fontSize="small" />
                     </IconButton>
                   </Tooltip>
@@ -445,50 +392,43 @@ const AllTicketsPage = () => {
   );
 
   return (
-    <Box sx={{ 
-      minHeight: '100vh', 
-      backgroundColor: 'grey.50', 
+    <Box sx={{
+      minHeight: '100vh',
+      backgroundColor: 'grey.50',
       py: { xs: 2, md: 2 },
       px: { xs: 1, sm: 2 }
     }}>
       <Container maxWidth="xl" sx={{ px: { xs: 1, sm: 2 } }}>
-   
-        <Box sx={{ mb: 3 }}>
-          
+        <Box sx={{ mb: 2 }}>
           <Box display="flex" justifyContent="space-between" alignItems={{ xs: 'flex-start', sm: 'center' }} flexDirection={{ xs: 'column', sm: 'row' }} gap={2}>
             <Box>
-              <Button 
-            startIcon={<ArrowBackIcon />}
-            onClick={() => router.push('/tickets/ticket-dashboard')}
-            sx={{ 
-              mb: 2,
-              fontWeight: '600',
-              color: 'primary.main'
-            }}
-            variant="outlined"
-          >
-            Back to Dashboard
-          </Button>
-              <Typography 
-                variant={isSmallMobile ? "h5" : "h4"} 
-                component="h1" 
-                fontWeight="bold" 
-                // gutterBottom
-              >
-                All Tickets
-              </Typography>
-              <Typography variant="body1" color="text.secondary">
-                View and manage all tickets in the system
-              </Typography>
+              <Tooltip title='Go to ticket dashboard' arrow>
+                <Button
+                  startIcon={<ArrowBackIcon />}
+                  onClick={() => router.push('/tickets/ticket-dashboard')}
+                  sx={{
+                    fontWeight: '600',
+                    color: 'primary.main',
+                    textTransform: 'none',
+                    borderRadius: '20px'
+                  }}
+                  variant="outlined"
+                >
+                  Dashboard
+                </Button>
+              </Tooltip>
             </Box>
-            <Button 
-              variant="contained"
-              startIcon={<AddIcon />}
-              onClick={() => router.push('/tickets/create-tickets')}
-              size={isSmallMobile ? "small" : "medium"}
-            >
-              {isSmallMobile ? 'New' : 'New Ticket'}
-            </Button>
+            <Tooltip title='Create New Ticket' arrow>
+              <Button
+                variant="contained"
+                startIcon={<AddIcon />}
+                onClick={() => router.push('/tickets/create-tickets')}
+                size={isSmallMobile ? "small" : "medium"}
+                sx={{ textTransform: 'none', borderRadius: '20px', backgroundColor: '#615ec9ff' }}
+              >
+                {isSmallMobile ? 'New' : 'New Ticket'}
+              </Button>
+            </Tooltip>
           </Box>
         </Box>
 
@@ -496,6 +436,19 @@ const AllTicketsPage = () => {
         <Card sx={{ mb: 3, boxShadow: 2 }}>
           <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
             <Grid container spacing={2} alignItems="flex-end">
+              <Typography
+                variant={isSmallMobile ? "h5" : "h4"}
+                component="h1"
+                fontWeight="bold"
+                sx={{
+                  background: "linear-gradient(to right, #7e1f0aff, #054711ff)",
+                  WebkitBackgroundClip: "text",
+                  color: "transparent",
+                  display: "inline",
+                }}
+              >
+                Tickets
+              </Typography>
               <Grid item xs={12} md={4}>
                 <TextField
                   fullWidth
@@ -512,7 +465,7 @@ const AllTicketsPage = () => {
                   }}
                 />
               </Grid>
-              
+
               <Grid item xs={6} sm={4} md={2}>
                 <TextField
                   fullWidth
@@ -590,7 +543,7 @@ const AllTicketsPage = () => {
                 }
               </Typography>
               {!searchTerm && statusFilter === 'all' && priorityFilter === 'all' && (
-                <Button 
+                <Button
                   variant="contained"
                   size="large"
                   startIcon={<AddIcon />}
@@ -634,7 +587,7 @@ const AllTicketsPage = () => {
           </DialogTitle>
           <DialogContent>
             <Typography>
-              Are you sure you want to delete ticket <strong>{ticketToDelete?.id}</strong>? 
+              Are you sure you want to delete ticket <strong>{ticketToDelete?.id}</strong>?
               This action cannot be undone.
             </Typography>
           </DialogContent>
@@ -642,9 +595,9 @@ const AllTicketsPage = () => {
             <Button onClick={() => setDeleteDialogOpen(false)}>
               Cancel
             </Button>
-            <Button 
-              onClick={handleDeleteConfirm} 
-              color="error" 
+            <Button
+              onClick={handleDeleteConfirm}
+              color="error"
               variant="contained"
             >
               Delete
@@ -759,8 +712,8 @@ const AllTicketsPage = () => {
             <Button onClick={() => setSelectedTicket(null)}>
               Close
             </Button>
-            <Button 
-              variant="contained" 
+            <Button
+              variant="contained"
               onClick={() => selectedTicket && handleEditTicket(selectedTicket)}
             >
               Edit Ticket

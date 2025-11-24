@@ -989,13 +989,13 @@ const TicketDashboard = () => {
                     color: '#111827',
                     margin: 0,
                   }}>
-                    {activeModule === 'overview' ? '🎫 Ticket Management System' :
+                    {activeModule === 'overview' ? '🎫 Ticket Management' :
                       activeModule === 'ticket-list' ? 'All Tickets' :
                         activeModule === 'categories' ? 'Ticket Categories' :
                           activeModule === 'priorities' ? 'Priority Management' :
                             activeModule === 'status' ? 'Status Workflow' :
                               activeModule === 'reports' ? 'Reports & Analytics' :
-                                activeModule === 'team' ? 'Team Management' : 'Ticket Management System'}
+                                activeModule === 'team' ? 'Team Management' : 'Ticket Management'}
                   </h1>
                   <p style={{
                     color: '#6b7280',
