@@ -411,7 +411,7 @@ const ProductGrp = () => {
         }
     };
 
-    const handleExit = () => { router.push("/masters/products/productgrp/prdgrptable") };
+    const handleExit = () => { router.push("/masterpage?activeTab=products") };
 
     const Buttonsx = {
         backgroundColor: '#39ace2',

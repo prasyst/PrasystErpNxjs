@@ -424,7 +424,7 @@ const TypeMst = () => {
     };
 
     const handleExit = () => {
-        router.push('/masters/products/type/typetable');
+        router.push('/masterpage?activeTab=products');
     };
     const Buttonsx = {
         backgroundColor: '#39ace2',

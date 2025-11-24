@@ -457,7 +457,7 @@ const PatternMst = () => {
     };
 
     const handleExit = () => {
-        router.push("/masterpage");
+        router.push("/masterpage?activeTab=products");
     };
 
     const Buttonsx = {

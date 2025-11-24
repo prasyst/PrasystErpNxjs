@@ -45,7 +45,9 @@ const columns = [
     { id: "SR_CODE", label: "Cat_Series", minWidth: 40 },
 
 ];
+
 const CategoryMst = () => {
+
     const router = useRouter();
     const searchParams = useSearchParams();
     const FGCAT_KEY = searchParams.get('FGCAT_KEY');
@@ -497,7 +499,11 @@ const CategoryMst = () => {
         router.push("/masters/products/category/cattable");
     };
 
-    const handleExit = () => { router.push("/masterpage") };
+    const handleExit = async () => { 
+
+        router.push("/masterpage?activeTab=products"); 
+
+    };
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;

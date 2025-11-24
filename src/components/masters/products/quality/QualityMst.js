@@ -404,7 +404,7 @@ const QualityMst = () => {
         router.push("/masters/products/quality/qualitytable");
     };
 
-    const handleExit = () => { router.push("/masters/products/quality/qualitytable") };
+    const handleExit = () => { router.push("/masterpage?activeTab=products") };
 
     const Buttonsx = {
         backgroundColor: '#39ace2',

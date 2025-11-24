@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Box,
   Typography,
@@ -44,6 +44,7 @@ import {
   Event as EventIcon
 } from '@mui/icons-material';
 
+
 function TabPanel(props) {
   const { children, value, index, ...other } = props;
 
@@ -68,8 +69,11 @@ export default function MasterPage() {
   const [activeTab, setActiveTab] = useState(0);
 
   const handleTabChange = (event, newValue) => {
+    console.log('Changing active tab to:', newValue);
     setActiveTab(newValue);
   };
+
+  console.log('Active tab in Page:', activeTab);
 
   const StyledTabs = styled(Tabs)({
     backgroundColor: '#e1e7ef',
@@ -237,10 +241,24 @@ export default function MasterPage() {
     }
   ];
 
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const tabParam = urlParams.get('activeTab');
+
+    if(tabParam){
+     const tabIndex = menuData.findIndex(tab => tab.id === tabParam);
+     if(tabIndex !== -1){
+      setActiveTab(tabIndex);
+     }
+    } 
+
+  }, []);
+
   return (
+    <>
     <Box sx={{ width: '100%' }}>
-      <Typography variant="h5" component="h5" gutterBottom sx={{ 
-        fontWeight: 'bold', 
+      <Typography variant="h5" component="h5" gutterBottom sx={{
+        fontWeight: 'bold',
         mb: 1,
         background: 'linear-gradient(45deg, #2196F3 30%, #21CBF3 90%)',
         backgroundClip: 'text',
@@ -250,7 +268,7 @@ export default function MasterPage() {
       }}>
         Masters Menu
       </Typography>
-      
+
       <Box
         sx={{
           width: '100%',
@@ -274,11 +292,11 @@ export default function MasterPage() {
               const ItemIcon = item.icon;
               return (
                 <Grid item xs={6} sm={6} md={4} lg={3} key={itemIndex}>
-                  <Card 
-                    sx={{ 
+                  <Card
+                    sx={{
                       cursor: item.path !== '#' ? 'pointer' : 'default',
                       transition: 'all 0.3s ease',
-                      width: 150, 
+                      width: 150,
                       height: '100%',
                       background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
                       border: '1px solid #e0e0e0',
@@ -292,19 +310,18 @@ export default function MasterPage() {
                     }}
                     onClick={() => item.path !== '#' && (window.location.href = item.path)}
                   >
-                    <CardContent sx={{ 
-                      textAlign: 'center', 
+                    <CardContent sx={{
+                      textAlign: 'center',
                       p: 2,
                       '&:last-child': { pb: 2 }
                     }}>
-                      <ItemIcon 
-                        sx={{ 
-                          fontSize: 25, 
+                      <ItemIcon
+                        sx={{
+                          fontSize: 25,
                           mb: 1,
                           color: 'inherit'
-                        }} 
-                      />
-                      <Typography variant="body1" component="div" sx={{ 
+                        }} />
+                      <Typography variant="body1" component="div" sx={{
                         fontWeight: '500',
                         fontSize: '0.8rem',
                       }}>
@@ -319,5 +336,7 @@ export default function MasterPage() {
         </TabPanel>
       ))}
     </Box>
+    
+    </>
   );
 }

@@ -404,7 +404,7 @@ const RackMst = () => {
         }));
     };
 
-    const handleExit = () => { router.push("/masters/products/rack/racktable") };
+    const handleExit = () => { router.push("/masterpage?activeTab=products") };
 
     const handleTable = () => {
         router.push("/masters/products/rack/racktable");

@@ -381,7 +381,9 @@ const ShadeMst = () => {
           console.error("Print Error:", error);
       }
   };
-    const handleExit = () => { router.push("/masters/products/shade/shadetable") };
+
+   const handleExit = () => { router.push("/masterpage?activeTab=products") };
+
    const Buttonsx = {
     backgroundColor: '#39ace2',
     margin: { xs: '0 4px', sm: '0 6px' },

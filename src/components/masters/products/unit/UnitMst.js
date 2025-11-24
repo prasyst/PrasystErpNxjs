@@ -415,7 +415,7 @@ const UnitMst = () => {
     };
 
     const handleExit = () => {
-        router.push('/masters/products/unit/unittable');
+        router.push('/masterpage?activeTab=products');
     };
 
     const Buttonsx = {
