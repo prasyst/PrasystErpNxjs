@@ -324,74 +324,81 @@ const Stepper1 = ({
     }
   };
 
-  // Fetch Party Branches
-  const fetchPartyDetails = async (partyKey) => {
-    if (!partyKey) {
-      setBranchOptions([]);
-      return;
-    }
+// Fetch Party Branches - FIXED: Proper branch selection based on API response
+const fetchPartyDetails = async (partyKey, forceBranchId = null) => {
+  if (!partyKey) {
+    setBranchOptions([]);
+    return;
+  }
+  
+  try {
+    setLoadingBranches(true);
+    const response = await axiosInstance.post("Party/GetPartyDtlDrp", {
+      PARTY_KEY: partyKey
+    });
     
-    try {
-      setLoadingBranches(true);
-      const response = await axiosInstance.post("Party/GetPartyDtlDrp", {
-        PARTY_KEY: partyKey
+    console.log('Branch API Response:', response.data);
+    
+    if (response.data.STATUS === 0 && Array.isArray(response.data.DATA)) {
+      const branches = response.data.DATA.map(item => item.PLACE || '');
+      setBranchOptions(branches);
+      setShippingPlaceOptions(branches);
+      
+      const mapping = {};
+      response.data.DATA.forEach(item => {
+        if (item.PLACE && item.PARTYDTL_ID) {
+          mapping[item.PLACE] = item.PARTYDTL_ID;
+        }
       });
+      setBranchMapping(mapping);
       
-      console.log('Branch API Response:', response.data);
+      // FIXED: Don't auto-select first branch when loading existing data
+      // Only auto-select when in add mode or when no specific branch is provided
+      if (mode === 'add' && !forceBranchId && branches.length > 0) {
+        const firstBranch = branches[0];
+        const firstBranchId = mapping[firstBranch];
+        
+        setFormData(prev => ({
+          ...prev,
+          Branch: firstBranch,
+          PARTYDTL_ID: firstBranchId,
+          SHIPPING_PLACE: firstBranch,
+          SHP_PARTYDTL_ID: firstBranchId
+        }));
+        
+        console.log('Auto-selected branch for new order:', firstBranch, 'with ID:', firstBranchId);
+      }
       
-      if (response.data.STATUS === 0 && Array.isArray(response.data.DATA)) {
-        const branches = response.data.DATA.map(item => item.PLACE || '');
-        setBranchOptions(branches);
-        setShippingPlaceOptions(branches);
-        
-        const mapping = {};
-        response.data.DATA.forEach(item => {
-          if (item.PLACE && item.PARTYDTL_ID) {
-            mapping[item.PLACE] = item.PARTYDTL_ID;
-          }
-        });
-        setBranchMapping(mapping);
-        
-        // Auto-select the first branch if available
-        if (branches.length > 0) {
-          const firstBranch = branches[0];
-          const firstBranchId = mapping[firstBranch];
+      // NEW: If we have a specific branch ID to select (from API response), find and select it
+      if (forceBranchId) {
+        const branchToSelect = response.data.DATA.find(item => item.PARTYDTL_ID === forceBranchId);
+        if (branchToSelect && branchToSelect.PLACE) {
+          const branchName = branchToSelect.PLACE;
+          const branchId = mapping[branchName];
           
           setFormData(prev => ({
             ...prev,
-            Branch: firstBranch,
-            PARTYDTL_ID: firstBranchId,
-            SHIPPING_PLACE: firstBranch,
-            SHP_PARTYDTL_ID: firstBranchId
+            Branch: branchName,
+            PARTYDTL_ID: branchId,
+            SHIPPING_PLACE: branchName,
+            SHP_PARTYDTL_ID: branchId
           }));
           
-          console.log('Auto-selected branch:', firstBranch, 'with ID:', firstBranchId);
-          
-          // NEW: Fetch GST type when party and branch are selected
-          if (formData.GST_APPL === "Y") {
-            await fetchGSTType(firstBranchId, firstBranchId);
-          }
+          console.log('Forced branch selection:', branchName, 'with ID:', branchId);
         }
-      } else {
-        setBranchOptions([]);
-        setShippingPlaceOptions([]);
-        // Clear branch related fields if no branches found
-        setFormData(prev => ({
-          ...prev,
-          Branch: "",
-          PARTYDTL_ID: 0,
-          SHIPPING_PLACE: "",
-          SHP_PARTYDTL_ID: 0
-        }));
       }
-    } catch (error) {
-      console.error("Error fetching party details:", error);
+    } else {
       setBranchOptions([]);
       setShippingPlaceOptions([]);
-    } finally {
-      setLoadingBranches(false);
     }
-  };
+  } catch (error) {
+    console.error("Error fetching party details:", error);
+    setBranchOptions([]);
+    setShippingPlaceOptions([]);
+  } finally {
+    setLoadingBranches(false);
+  }
+};
 
   // Fetch Broker Data
   const fetchBrokerData = async () => {

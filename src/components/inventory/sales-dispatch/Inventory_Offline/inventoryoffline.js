@@ -227,7 +227,7 @@ const SalesOrderOffline = () => {
     }
   };
 
- // Function to populate form data from API response - FIXED
+// Function to populate form data from API response - FIXED branch selection
 const populateFormData = async (orderData) => {
   try {
     console.log('Order Data received:', orderData);
@@ -263,7 +263,7 @@ const populateFormData = async (orderData) => {
     // Get display names from mappings using the actual API response keys
     const partyName = partyMapping[orderData.PARTY_KEY] || await getDisplayNameWithRetry(getPartyNameByKey, orderData.PARTY_KEY);
     
-    // Get branch name by ID from API response
+    // FIXED: Get branch name by actual ID from API response
     const branchName = await getDisplayNameWithRetry(getBranchNameById, orderData.PARTYDTL_ID);
     
     const brokerName = brokerMapping[orderData.BROKER_KEY] || await getDisplayNameWithRetry(getBrokerNameByKey, orderData.BROKER_KEY);
@@ -275,7 +275,7 @@ const populateFormData = async (orderData) => {
     const transporterName = transporterMapping[orderData.TRSP_KEY] || await getDisplayNameWithRetry(getTransporterNameByKey, orderData.TRSP_KEY);
     const shippingPartyName = partyMapping[orderData.SHP_PARTY_KEY] || await getDisplayNameWithRetry(getPartyNameByKey, orderData.SHP_PARTY_KEY) || partyName;
     
-    // Get shipping place name by ID from API response
+    // FIXED: Get shipping place name by actual ID from API response
     const shippingPlaceName = await getDisplayNameWithRetry(getBranchNameById, orderData.SHP_PARTYDTL_ID);
     
     const orderTypeName = await getDisplayNameWithRetry(getOrderTypeNameByKey, orderData.ORDBK_TYPE);
@@ -320,7 +320,7 @@ const populateFormData = async (orderData) => {
       SHIPPING_PARTY: shippingPartyName || partyName,
       DIV_PLACE: orderData.DESP_PORT || "",
       AR_SALES: orderData.SALEPERSON1_KEY || "",
-      // Use the actual shipping place name from API response
+      // FIXED: Use the actual shipping place name from API response
       SHIPPING_PLACE: shippingPlaceName || branchName,
       PRICE_LIST: orderData.PRICELIST_KEY || "",
       BROKER_TRANSPORTER: brokerName || "",
@@ -396,12 +396,16 @@ const populateFormData = async (orderData) => {
     // Set form data
     setFormData(formattedData);
     
+    // FIXED: Fetch branches with the correct branch ID from API response
+    if (orderData.PARTY_KEY && orderData.PARTYDTL_ID) {
+      await fetchPartyDetails(orderData.PARTY_KEY, orderData.PARTYDTL_ID);
+    }
+    
     // Set current party key for navigation
     setCurrentPARTY_KEY(orderData.PARTY_KEY);
 
     // Force update dropdown options in Stepper1
     setTimeout(() => {
-      // This ensures Stepper1 components get the updated data
       setFormData(prev => ({ ...prev, forceUpdate: Date.now() }));
     }, 100);
 
