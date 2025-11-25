@@ -221,362 +221,391 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
       .reduce((sum, row) => sum + (parseFloat(row.taxAmount) || 0), 0);
   }, []);
 
-  // NEW: Function to transform GST data for top table based on tax type - FIXED DUPLICATE ISSUE
-  const transformGSTDataForTopTable = useCallback((gstData) => {
-    if (!gstData || gstData.length === 0) return [];
+// NEW: Function to transform GST data for top table with proper IGST support - FIXED
+const transformGSTDataForTopTable = useCallback((gstData) => {
+  if (!gstData || gstData.length === 0) return [];
 
-    const gstType = formData.GST_TYPE || 'C'; // 'C' for CGST+SGST, 'I' for IGST
-    const topTableRows = [];
+  const gstType = formData.GST_TYPE; // 'S' for State GST, 'I' for IGST
+  const topTableRows = [];
 
-    // Calculate totals across all HSN codes
-    let totalNetAmount = 0;
+  // Calculate totals across all HSN codes
+  let totalNetAmount = 0;
+  let totalSgstAmount = 0;
+  let totalCgstAmount = 0;
+  let totalIgstAmount = 0;
+
+  gstData.forEach(item => {
+    totalNetAmount += item.netAmount || 0;
+    totalSgstAmount += item.sgstAmount || 0;
+    totalCgstAmount += item.cgstAmount || 0;
+    totalIgstAmount += item.igstAmount || 0;
+  });
+
+  console.log(`Transforming GST data for type: ${gstType}`, {
+    totalNetAmount,
+    totalSgstAmount,
+    totalCgstAmount,
+    totalIgstAmount
+  });
+
+  if (gstType === "I" || gstType === "IGST") {
+    // IGST - Single row for all HSN codes
+    const igstRate = gstData.length > 0 ? gstData[0].igstRate : 0;
+    topTableRows.push({
+      id: `igst_total_${Date.now()}`,
+      type: "Tax",
+      taxType: "GST",
+      tax: "IGST",
+      rate: igstRate,
+      taxable: totalNetAmount,
+      taxAmount: totalIgstAmount,
+      termGroup: "",
+      term: "",
+      termPercent: 0,
+      termR: 0,
+      originalData: { 
+        isGstRow: true,
+        gstType: "IGST"
+      }
+    });
+    console.log(`Added IGST row: Rate=${igstRate}, Amount=${totalIgstAmount}`);
+  } else {
+    // CGST + SGST - Two rows for all HSN codes
+    const cgstRate = gstData.length > 0 ? gstData[0].cgstRate : 0;
+    const sgstRate = gstData.length > 0 ? gstData[0].sgstRate : 0;
+    
+    topTableRows.push({
+      id: `cgst_total_${Date.now()}`,
+      type: "Tax",
+      taxType: "GST", 
+      tax: "CGST",
+      rate: cgstRate,
+      taxable: totalNetAmount,
+      taxAmount: totalCgstAmount,
+      termGroup: "",
+      term: "",
+      termPercent: 0,
+      termR: 0,
+      originalData: { 
+        isGstRow: true,
+        gstType: "CGST"
+      }
+    });
+
+    topTableRows.push({
+      id: `sgst_total_${Date.now() + 1}`,
+      type: "Tax",
+      taxType: "GST",
+      tax: "SGST", 
+      rate: sgstRate,
+      taxable: totalNetAmount,
+      taxAmount: totalSgstAmount,
+      termGroup: "",
+      term: "",
+      termPercent: 0,
+      termR: 0,
+      originalData: { 
+        isGstRow: true,
+        gstType: "SGST"
+      }
+    });
+    console.log(`Added State GST rows: CGST Rate=${cgstRate}, SGST Rate=${sgstRate}`);
+  }
+
+  return topTableRows;
+}, [formData.GST_TYPE]);
+
+ // NEW: Enhanced function to fetch GST rates and populate GST table with proper IGST support
+const fetchGSTRates = useCallback(async () => {
+  if (!formData.apiResponseData?.ORDBKSTYLIST || formData.apiResponseData.ORDBKSTYLIST.length === 0) {
+    showSnackbar('No items found to calculate GST', 'error');
+    return;
+  }
+
+  if (isGstCalculating) {
+    console.log('GST calculation already in progress, skipping...');
+    return;
+  }
+
+  try {
+    setIsGstCalculating(true);
+    const currentDate = new Date().toISOString().replace('T', ' ').split('.')[0];
+    const gstTableItems = [];
+    let totalTaxableAmount = 0;
     let totalSgstAmount = 0;
     let totalCgstAmount = 0;
     let totalIgstAmount = 0;
+    let totalGstAmount = 0;
+    let totalItemAmount = 0;
+    let totalDiscAmount = 0;
+    let totalNetAmount = 0;
 
-    gstData.forEach(item => {
-      totalNetAmount += item.netAmount || 0;
-      totalSgstAmount += item.sgstAmount || 0;
-      totalCgstAmount += item.cgstAmount || 0;
-      totalIgstAmount += item.igstAmount || 0;
-    });
+    // Calculate total discount from terms
+    const discountFromTerms = calculateTotalDiscountFromTerms(topTableData);
+    setTotalDiscountFromTerms(discountFromTerms);
 
-    if (gstType === 'I') {
-      // IGST - Single row for all HSN codes
-      topTableRows.push({
-        id: `igst_total`,
-        type: "Tax",
-        taxType: "GST",
-        tax: "IGST",
-        rate: gstData[0]?.igstRate || 0, // Use first item's rate
-        taxable: totalNetAmount, // Use total net amount from GST summary
-        taxAmount: totalIgstAmount,
-        termGroup: "",
-        term: "",
-        termPercent: 0,
-        termR: 0,
-        originalData: { isGstRow: true }
-      });
-    } else {
-      // CGST + SGST - Two rows for all HSN codes (not per HSN code)
-      topTableRows.push({
-        id: `cgst_total`,
-        type: "Tax",
-        taxType: "GST", 
-        tax: "CGST",
-        rate: gstData[0]?.cgstRate || 0, // Use first item's rate
-        taxable: totalNetAmount, // Use total net amount from GST summary
-        taxAmount: totalCgstAmount,
-        termGroup: "",
-        term: "",
-        termPercent: 0,
-        termR: 0,
-        originalData: { isGstRow: true }
-      });
+    console.log('Total discount from terms:', discountFromTerms);
+    console.log('Current GST Type:', formData.GST_TYPE);
 
-      topTableRows.push({
-        id: `sgst_total`,
-        type: "Tax",
-        taxType: "GST",
-        tax: "SGST", 
-        rate: gstData[0]?.sgstRate || 0, // Use first item's rate
-        taxable: totalNetAmount, // Use total net amount from GST summary
-        taxAmount: totalSgstAmount,
-        termGroup: "",
-        term: "",
-        termPercent: 0,
-        termR: 0,
-        originalData: { isGstRow: true }
-      });
-    }
+    for (const item of formData.apiResponseData.ORDBKSTYLIST) {
+      if (item.DBFLAG === 'D') continue; // Skip deleted items
+      
+      const payload = {
+        "MRP": parseFloat(item.MRP) || 0,
+        "WSP": parseFloat(item.ITMRATE) || 0,
+        "intStyle_Id": item.FGSTYLE_ID || 0,
+        "Byhsncode_key": 0,
+        "HSNCODE_KEY": item.HSNCODE_KEY || "IG001",
+        "intGST_P_ID": 1
+      };
 
-    return topTableRows;
-  }, [formData.GST_TYPE]);
+      console.log('Fetching GST rates for item:', payload);
 
-  // NEW: Enhanced function to fetch GST rates and populate GST table with proper ORDBKGSTLIST structure
-  const fetchGSTRates = useCallback(async () => {
-    if (!formData.apiResponseData?.ORDBKSTYLIST || formData.apiResponseData.ORDBKSTYLIST.length === 0) {
-      showSnackbar('No items found to calculate GST', 'error');
-      return;
-    }
+      const response = await axiosInstance.post('/Hsncode/GetGstRates', payload);
+      console.log('GST Rates API Response:', response.data);
 
-    if (isGstCalculating) {
-      console.log('GST calculation already in progress, skipping...');
-      return;
-    }
-
-    try {
-      setIsGstCalculating(true);
-      const currentDate = new Date().toISOString().replace('T', ' ').split('.')[0];
-      const gstTableItems = [];
-      let totalTaxableAmount = 0;
-      let totalSgstAmount = 0;
-      let totalCgstAmount = 0;
-      let totalIgstAmount = 0;
-      let totalGstAmount = 0;
-      let totalItemAmount = 0;
-      let totalDiscAmount = 0;
-      let totalNetAmount = 0;
-
-      // Calculate total discount from terms
-      const discountFromTerms = calculateTotalDiscountFromTerms(topTableData);
-      setTotalDiscountFromTerms(discountFromTerms);
-
-      console.log('Total discount from terms:', discountFromTerms);
-
-      for (const item of formData.apiResponseData.ORDBKSTYLIST) {
-        if (item.DBFLAG === 'D') continue; // Skip deleted items
+      if (response.data.RESPONSESTATUSCODE === 1 && response.data.DATA && response.data.DATA.length > 0) {
+        const gstData = response.data.DATA[0];
         
-        const payload = {
-          "MRP": parseFloat(item.MRP) || 0,
-          "WSP": parseFloat(item.ITMRATE) || 0,
-          "intStyle_Id": item.FGSTYLE_ID || 0,
-          "Byhsncode_key": 0,
-          "HSNCODE_KEY": item.HSNCODE_KEY || "IG001",
-          "intGST_P_ID": 1
+        // FIXED: Use GST type from formData (S for State, I for IGST)
+        const gstType = formData.GST_TYPE; // 'S' for State GST, 'I' for IGST
+        
+        // Apply discount to item amount
+        const originalItemAmount = parseFloat(item.ITMAMT) || 0;
+        const itemDiscount = (originalItemAmount / orderAmount) * discountFromTerms;
+        const discountedItemAmount = Math.max(0, originalItemAmount - itemDiscount);
+        
+        let sgstAmount = 0;
+        let cgstAmount = 0;
+        let igstAmount = 0;
+        let itemGstAmount = 0;
+
+        // FIXED: Proper GST calculation based on GST_TYPE
+        if (gstType === "I" || gstType === "IGST") {
+          // IGST calculation
+          const igstRate = parseFloat(gstData.IGST_RATE) || 0;
+          igstAmount = (discountedItemAmount * igstRate) / 100;
+          itemGstAmount = igstAmount;
+          console.log(`IGST Calculation: ${discountedItemAmount} * ${igstRate}% = ${igstAmount}`);
+        } else {
+          // CGST + SGST calculation (State GST)
+          const sgstRate = parseFloat(gstData.SGST_RATE) || 0;
+          const cgstRate = parseFloat(gstData.CGST_RATE) || 0;
+          sgstAmount = (discountedItemAmount * sgstRate) / 100;
+          cgstAmount = (discountedItemAmount * cgstRate) / 100;
+          itemGstAmount = sgstAmount + cgstAmount;
+          console.log(`State GST Calculation: ${discountedItemAmount} * (${sgstRate}% + ${cgstRate}%) = ${itemGstAmount}`);
+        }
+
+        // Check if this GST item already exists to determine DBFLAG
+        const existingGstItem = formData.apiResponseData?.ORDBKGSTLIST?.find(
+          gst => gst.HSN_CODE === (gstData.HSN_CODE || "64021010") && 
+                 gst.FGSTYLE_ID === item.FGSTYLE_ID
+        );
+
+        const dbFlag = existingGstItem ? 'U' : 'I';
+
+        // Create GST item in ORDBKGSTLIST format
+        const gstItem = {
+          DBFLAG: dbFlag,
+          ORDBK_GST_ID: existingGstItem?.ORDBK_GST_ID || 0,
+          GSTTIN_NO: "URD",
+          ORDBK_KEY: formData.ORDBK_KEY,
+          ORDBK_DT: currentDate,
+          GST_TYPE: gstType === "I" || gstType === "IGST" ? "I" : "S", // FIXED: Proper GST_TYPE
+          HSNCODE_KEY: gstData.HSNCODE_KEY || "IG001",
+          HSN_CODE: gstData.HSN_CODE || "64021010",
+          QTY: parseFloat(item.ITMQTY) || 0,
+          UNIT_KEY: "UN005",
+          GST_RATE_SLAB_ID: parseInt(gstData.GST_RATE_SLAB_ID) || 39,
+          ITM_AMT: originalItemAmount,
+          DISC_AMT: itemDiscount,
+          NET_AMT: discountedItemAmount,
+          SGST_RATE: (gstType === "I" || gstType === "IGST") ? 0 : parseFloat(gstData.SGST_RATE) || 0,
+          SGST_AMT: sgstAmount,
+          CGST_RATE: (gstType === "I" || gstType === "IGST") ? 0 : parseFloat(gstData.CGST_RATE) || 0,
+          CGST_AMT: cgstAmount,
+          IGST_RATE: (gstType === "I" || gstType === "IGST") ? parseFloat(gstData.IGST_RATE) || 0 : 0,
+          IGST_AMT: igstAmount,
+          ROUND_OFF: 0,
+          OTHER_AMT: 0,
+          PARTYDTL_ID: formData.PARTYDTL_ID || 106634,
+          ADD_CESS_RATE: 0,
+          ADD_CESS_AMT: 0,
+          FGSTYLE_ID: item.FGSTYLE_ID // Add FGSTYLE_ID to track items
         };
 
-        console.log('Fetching GST rates for item:', payload);
+        // Add item to GST table for display
+        gstTableItems.push({
+          id: existingGstItem?.ORDBK_GST_ID || Date.now(),
+          hsnCode: gstData.HSN_CODE || '64021010',
+          qty: parseFloat(item.ITMQTY) || 0,
+          itemAmount: originalItemAmount,
+          discAmount: itemDiscount,
+          netAmount: discountedItemAmount,
+          sgstRate: (gstType === "I" || gstType === "IGST") ? 0 : parseFloat(gstData.SGST_RATE) || 0,
+          sgstAmount: sgstAmount,
+          cgstRate: (gstType === "I" || gstType === "IGST") ? 0 : parseFloat(gstData.CGST_RATE) || 0,
+          cgstAmount: cgstAmount,
+          igstRate: (gstType === "I" || gstType === "IGST") ? parseFloat(gstData.IGST_RATE) || 0 : 0,
+          igstAmount: igstAmount,
+          cessRate: 0.00,
+          cessAmount: 0.00,
+          dbFlag: dbFlag,
+          // Store the original GST item for ORDBKGSTLIST
+          originalGstData: gstItem
+        });
 
-        const response = await axiosInstance.post('/Hsncode/GetGstRates', payload);
-        console.log('GST Rates API Response:', response.data);
-
-        if (response.data.RESPONSESTATUSCODE === 1 && response.data.DATA && response.data.DATA.length > 0) {
-          const gstData = response.data.DATA[0];
-          
-          // Calculate GST amounts based on GST type from Stepper1
-          const gstType = formData.GST_TYPE || 'C'; // 'C' for CGST+SGST, 'I' for IGST
-          
-          // Apply discount to item amount
-          const originalItemAmount = parseFloat(item.ITMAMT) || 0;
-          const itemDiscount = (originalItemAmount / orderAmount) * discountFromTerms;
-          const discountedItemAmount = Math.max(0, originalItemAmount - itemDiscount);
-          
-          let sgstAmount = 0;
-          let cgstAmount = 0;
-          let igstAmount = 0;
-          let itemGstAmount = 0;
-
-          if (gstType === 'I') {
-            // IGST calculation
-            igstAmount = (discountedItemAmount * parseFloat(gstData.IGST_RATE)) / 100;
-            itemGstAmount = igstAmount;
-          } else {
-            // CGST + SGST calculation
-            sgstAmount = (discountedItemAmount * parseFloat(gstData.SGST_RATE)) / 100;
-            cgstAmount = (discountedItemAmount * parseFloat(gstData.CGST_RATE)) / 100;
-            itemGstAmount = sgstAmount + cgstAmount;
-          }
-
-          // Check if this GST item already exists to determine DBFLAG
-          const existingGstItem = formData.apiResponseData?.ORDBKGSTLIST?.find(
-            gst => gst.HSN_CODE === (gstData.HSN_CODE || "64021010") && 
-                   gst.FGSTYLE_ID === item.FGSTYLE_ID
-          );
-
-          const dbFlag = existingGstItem ? 'U' : 'I';
-
-          // Create GST item in ORDBKGSTLIST format
-          const gstItem = {
-            DBFLAG: dbFlag,
-            ORDBK_GST_ID: existingGstItem?.ORDBK_GST_ID || 0,
-            GSTTIN_NO: "URD",
-            ORDBK_KEY: formData.ORDBK_KEY,
-            ORDBK_DT: currentDate,
-            GST_TYPE: gstType,
-            HSNCODE_KEY: gstData.HSNCODE_KEY || "IG001",
-            HSN_CODE: gstData.HSN_CODE || "64021010",
-            QTY: parseFloat(item.ITMQTY) || 0,
-            UNIT_KEY: "UN005",
-            GST_RATE_SLAB_ID: parseInt(gstData.GST_RATE_SLAB_ID) || 39,
-            ITM_AMT: originalItemAmount,
-            DISC_AMT: itemDiscount,
-            NET_AMT: discountedItemAmount,
-            SGST_RATE: gstType === 'I' ? 0 : parseFloat(gstData.SGST_RATE) || 0,
-            SGST_AMT: sgstAmount,
-            CGST_RATE: gstType === 'I' ? 0 : parseFloat(gstData.CGST_RATE) || 0,
-            CGST_AMT: cgstAmount,
-            IGST_RATE: gstType === 'I' ? parseFloat(gstData.IGST_RATE) || 0 : 0,
-            IGST_AMT: igstAmount,
-            ROUND_OFF: 0,
-            OTHER_AMT: 0,
-            PARTYDTL_ID: formData.PARTYDTL_ID || 106634,
-            ADD_CESS_RATE: 0,
-            ADD_CESS_AMT: 0,
-            FGSTYLE_ID: item.FGSTYLE_ID // Add FGSTYLE_ID to track items
-          };
-
-          // Add item to GST table for display
-          gstTableItems.push({
-            id: existingGstItem?.ORDBK_GST_ID || Date.now(),
-            hsnCode: gstData.HSN_CODE || '64021010',
-            qty: parseFloat(item.ITMQTY) || 0,
-            itemAmount: originalItemAmount,
-            discAmount: itemDiscount,
-            netAmount: discountedItemAmount,
-            sgstRate: gstType === 'I' ? 0 : parseFloat(gstData.SGST_RATE) || 0,
-            sgstAmount: sgstAmount,
-            cgstRate: gstType === 'I' ? 0 : parseFloat(gstData.CGST_RATE) || 0,
-            cgstAmount: cgstAmount,
-            igstRate: gstType === 'I' ? parseFloat(gstData.IGST_RATE) || 0 : 0,
-            igstAmount: igstAmount,
-            cessRate: 0.00,
-            cessAmount: 0.00,
-            dbFlag: dbFlag,
-            // Store the original GST item for ORDBKGSTLIST
-            originalGstData: gstItem
-          });
-
-          // Accumulate totals
-          totalItemAmount += originalItemAmount;
-          totalDiscAmount += itemDiscount;
-          totalNetAmount += discountedItemAmount;
-          totalSgstAmount += sgstAmount;
-          totalCgstAmount += cgstAmount;
-          totalIgstAmount += igstAmount;
-          totalGstAmount += itemGstAmount;
-        }
+        // Accumulate totals
+        totalItemAmount += originalItemAmount;
+        totalDiscAmount += itemDiscount;
+        totalNetAmount += discountedItemAmount;
+        totalSgstAmount += sgstAmount;
+        totalCgstAmount += cgstAmount;
+        totalIgstAmount += igstAmount;
+        totalGstAmount += itemGstAmount;
       }
-
-      // Update GST table data
-      setGstTableData(gstTableItems);
-
-      // NEW: Transform GST data for top table - FIXED: Now shows only 2 rows for CGST+SGST
-      const topTableGstRows = transformGSTDataForTopTable(gstTableItems);
-      
-      // Combine existing non-GST terms with GST rows - FIXED: Preserve existing terms
-      const existingNonGstRows = topTableData.filter(row => !row.originalData?.isGstRow);
-      const updatedTopTableData = [...existingNonGstRows, ...topTableGstRows];
-      setTopTableData(updatedTopTableData);
-
-      // Update GST summary with proper total calculation
-      setGstSummary({
-        sgstRate: gstTableItems.length > 0 ? gstTableItems[0].sgstRate : 0,
-        cgstRate: gstTableItems.length > 0 ? gstTableItems[0].cgstRate : 0,
-        igstRate: gstTableItems.length > 0 ? gstTableItems[0].igstRate : 0,
-        sgstAmount: totalSgstAmount,
-        cgstAmount: totalCgstAmount,
-        igstAmount: totalIgstAmount,
-        taxableAmount: totalNetAmount, // Use net amount after discount
-        totalGstAmount: totalGstAmount
-      });
-
-      // Calculate final amount (Net Amount + Total GST Amount)
-      const calculatedFinalAmount = totalNetAmount + totalGstAmount;
-      setFinalAmount(calculatedFinalAmount);
-
-      // Update formData with GST amounts and ORDBKGSTLIST
-      const ordbkGstList = gstTableItems.map(item => item.originalGstData);
-      
-      setFormData(prev => ({
-        ...prev,
-        ORDBK_GST_AMT: totalGstAmount,
-        ORDBK_SGST_AMT: totalSgstAmount,
-        ORDBK_CGST_AMT: totalCgstAmount,
-        ORDBK_IGST_AMT: totalIgstAmount,
-        FINAL_AMOUNT: calculatedFinalAmount,
-        apiResponseData: {
-          ...prev.apiResponseData,
-          ORDBKGSTLIST: ordbkGstList
-        }
-      }));
-
-      console.log('Generated ORDBKGSTLIST with proper DBFLAGS:', ordbkGstList);
-      console.log('Updated top table data with GST rows:', updatedTopTableData);
-      showSnackbar('GST calculated successfully with discount applied!');
-    } catch (error) {
-      console.error('Error fetching GST rates:', error);
-      showSnackbar('Error calculating GST', 'error');
-    } finally {
-      setIsGstCalculating(false);
     }
-  }, [formData, orderAmount, topTableData, calculateTotalDiscountFromTerms, transformGSTDataForTopTable, showSnackbar, isGstCalculating]);
 
-  // Load data from formData when component mounts or formData changes
-  useEffect(() => {
-    console.log('FormData changed in Stepper3:', formData.apiResponseData);
+    // Update GST table data
+    setGstTableData(gstTableItems);
+
+    // Transform GST data for top table - FIXED: Now properly handles IGST vs State GST
+    const topTableGstRows = transformGSTDataForTopTable(gstTableItems);
     
-    // Get Order Amount from Stepper2's TOTAL_AMOUNT
-    const stepper2TotalAmount = formData.TOTAL_AMOUNT || 0;
-    setOrderAmount(stepper2TotalAmount);
-    console.log('Order Amount from Stepper2:', stepper2TotalAmount);
+    // Combine existing non-GST terms with GST rows - FIXED: Preserve existing terms
+    const existingNonGstRows = topTableData.filter(row => row.originalData?.isTermRow);
+    const updatedTopTableData = [...existingNonGstRows, ...topTableGstRows];
+    setTopTableData(updatedTopTableData);
+
+    // Update GST summary with proper total calculation
+    setGstSummary({
+      sgstRate: gstTableItems.length > 0 ? gstTableItems[0].sgstRate : 0,
+      cgstRate: gstTableItems.length > 0 ? gstTableItems[0].cgstRate : 0,
+      igstRate: gstTableItems.length > 0 ? gstTableItems[0].igstRate : 0,
+      sgstAmount: totalSgstAmount,
+      cgstAmount: totalCgstAmount,
+      igstAmount: totalIgstAmount,
+      taxableAmount: totalNetAmount, // Use net amount after discount
+      totalGstAmount: totalGstAmount
+    });
+
+    // Calculate final amount (Net Amount + Total GST Amount)
+    const calculatedFinalAmount = totalNetAmount + totalGstAmount;
+    setFinalAmount(calculatedFinalAmount);
+
+    // Update formData with GST amounts and ORDBKGSTLIST
+    const ordbkGstList = gstTableItems.map(item => item.originalGstData);
     
-    // Load ORDBKTERMLIST data
-    if (formData.apiResponseData?.ORDBKTERMLIST && formData.apiResponseData.ORDBKTERMLIST.length > 0) {
-      const transformedData = formData.apiResponseData.ORDBKTERMLIST.map((term, index) => ({
-        id: term.ORDBKTERM_ID || index + 1,
-        type: term.TAXGRP_NAME ? "Tax" : "Term",
-        taxType: term.TAX_NAME || "",
-        tax: term.TERM_DESC || "",
-        rate: term.TAX_RATE || term.TERM_PERCENT || 0,
-        taxable: term.TAXABLE_AMT || 0,
-        taxAmount: term.TAX_AMT || 0,
-        aot1A: term.AOT1_AMT || 0,
-        aot2A: term.AOT2_AMT || 0,
-        aot1: term.T_AOT1_R || 0,
-        aot1R: term.T_AOT1_R || 0,
-        aot2: term.T_AOT2_R || 0,
-        aot2R: term.T_AOT2_R || 0,
-        termGroup: term.TERMGRP_NAME || "",
-        term: term.TERM_NAME || "",
-        termPercent: term.TERM_PERCENT || 0,
-        termR: term.TERM_FIX_AMT || 0,
-        originalData: term
-      }));
-      console.log('Transformed table data:', transformedData);
-      setTableData(transformedData);
-      setTopTableData(transformedData); // Initialize top table with term data
+    setFormData(prev => ({
+      ...prev,
+      ORDBK_GST_AMT: totalGstAmount,
+      ORDBK_SGST_AMT: totalSgstAmount,
+      ORDBK_CGST_AMT: totalCgstAmount,
+      ORDBK_IGST_AMT: totalIgstAmount,
+      FINAL_AMOUNT: calculatedFinalAmount,
+      apiResponseData: {
+        ...prev.apiResponseData,
+        ORDBKGSTLIST: ordbkGstList
+      }
+    }));
 
-      // Calculate and set initial discount
-      const initialDiscount = calculateTotalDiscountFromTerms(transformedData);
-      setTotalDiscountFromTerms(initialDiscount);
-    } else {
-      console.log('No ORDBKTERMLIST data found, setting empty table');
-      setTableData([]);
-      setTopTableData([]);
-      setTotalDiscountFromTerms(0);
-    }
+    console.log('Generated ORDBKGSTLIST with proper GST_TYPE:', ordbkGstList);
+    console.log('Updated top table data with GST rows:', updatedTopTableData);
+    showSnackbar('GST calculated successfully with discount applied!');
+  } catch (error) {
+    console.error('Error fetching GST rates:', error);
+    showSnackbar('Error calculating GST', 'error');
+  } finally {
+    setIsGstCalculating(false);
+  }
+}, [formData, orderAmount, topTableData, calculateTotalDiscountFromTerms, transformGSTDataForTopTable, showSnackbar, isGstCalculating]);
 
-    // Load ORDBKGSTLIST data if available
-    if (formData.apiResponseData?.ORDBKGSTLIST && formData.apiResponseData.ORDBKGSTLIST.length > 0) {
-      const gstDisplayData = formData.apiResponseData.ORDBKGSTLIST.map((gstItem, index) => ({
-        id: gstItem.ORDBK_GST_ID || index + 1,
-        hsnCode: gstItem.HSN_CODE || '64021010',
-        qty: parseFloat(gstItem.QTY) || 0,
-        itemAmount: parseFloat(gstItem.ITM_AMT) || 0,
-        discAmount: parseFloat(gstItem.DISC_AMT) || 0,
-        netAmount: parseFloat(gstItem.NET_AMT) || 0,
-        sgstRate: parseFloat(gstItem.SGST_RATE) || 0,
-        sgstAmount: parseFloat(gstItem.SGST_AMT) || 0,
-        cgstRate: parseFloat(gstItem.CGST_RATE) || 0,
-        cgstAmount: parseFloat(gstItem.CGST_AMT) || 0,
-        igstRate: parseFloat(gstItem.IGST_RATE) || 0,
-        igstAmount: parseFloat(gstItem.IGST_AMT) || 0,
-        cessRate: parseFloat(gstItem.ADD_CESS_RATE) || 0,
-        cessAmount: parseFloat(gstItem.ADD_CESS_AMT) || 0,
-        dbFlag: gstItem.DBFLAG || 'U',
-        originalGstData: gstItem
-      }));
-      setGstTableData(gstDisplayData);
-      
-      // Transform existing GST data for top table - FIXED: Now shows only 2 rows for CGST+SGST
-      const topTableGstRows = transformGSTDataForTopTable(gstDisplayData);
-      const existingNonGstRows = topTableData.filter(row => !row.originalData?.isGstRow);
-      const updatedTopTableData = [...existingNonGstRows, ...topTableGstRows];
-      setTopTableData(updatedTopTableData);
-      
-      // Calculate final amount
-      const totalNetAmount = gstDisplayData.reduce((sum, item) => sum + item.netAmount, 0);
-      const totalGstAmount = gstDisplayData.reduce((sum, item) => sum + item.sgstAmount + item.cgstAmount + item.igstAmount, 0);
-      setFinalAmount(totalNetAmount + totalGstAmount);
-      
-      console.log('Loaded existing ORDBKGSTLIST data:', gstDisplayData);
-      console.log('Updated top table with existing GST data:', updatedTopTableData);
-    }
-  }, [formData.apiResponseData, formData.TOTAL_AMOUNT, calculateTotalDiscountFromTerms, transformGSTDataForTopTable]);
+ // In Stepper3 component, update the useEffect that loads data
+useEffect(() => {
+  console.log('FormData changed in Stepper3:', formData.apiResponseData);
+  
+  // Get Order Amount from Stepper2's TOTAL_AMOUNT
+  const stepper2TotalAmount = formData.TOTAL_AMOUNT || 0;
+  setOrderAmount(stepper2TotalAmount);
+  console.log('Order Amount from Stepper2:', stepper2TotalAmount);
+  
+  // FIXED: Load ORDBKTERMLIST data properly
+  let termListData = [];
+  if (formData.apiResponseData?.ORDBKTERMLIST && formData.apiResponseData.ORDBKTERMLIST.length > 0) {
+    termListData = formData.apiResponseData.ORDBKTERMLIST.map((term, index) => ({
+      id: term.ORDBKTERM_ID || `term_${index + 1}`,
+      type: term.TAXGRP_NAME === 1 ? "Tax" : "Term",
+      taxType: term.TAX_NAME || "",
+      tax: term.TERM_DESC || "",
+      rate: term.TAX_RATE || term.TERM_PERCENT || 0,
+      taxable: term.TAXABLE_AMT || 0,
+      taxAmount: term.TAX_AMT || 0,
+      aot1A: term.AOT1_AMT || 0,
+      aot2A: term.AOT2_AMT || 0,
+      aot1: term.T_AOT1_R || 0,
+      aot1R: term.T_AOT1_R || 0,
+      aot2: term.T_AOT2_R || 0,
+      aot2R: term.T_AOT2_R || 0,
+      termGroup: term.TERMGRP_NAME || "",
+      term: term.TERM_NAME || "",
+      termPercent: term.TERM_PERCENT || 0,
+      termR: term.TERM_FIX_AMT || 0,
+      originalData: {
+        ...term,
+        isTermRow: true // Mark as term row to distinguish from GST rows
+      }
+    }));
+    console.log('Transformed ORDBKTERMLIST data:', termListData);
+  }
 
-  // FIXED: Remove the problematic useEffect that was causing infinite API calls
-  // Instead, we'll manually trigger GST recalculation when needed
+  // FIXED: Load ORDBKGSTLIST data if available and transform for top table
+  let gstRows = [];
+  if (formData.apiResponseData?.ORDBKGSTLIST && formData.apiResponseData.ORDBKGSTLIST.length > 0) {
+    const gstDisplayData = formData.apiResponseData.ORDBKGSTLIST.map((gstItem, index) => ({
+      id: gstItem.ORDBK_GST_ID || `gst_${index + 1}`,
+      hsnCode: gstItem.HSN_CODE || '64021010',
+      qty: parseFloat(gstItem.QTY) || 0,
+      itemAmount: parseFloat(gstItem.ITM_AMT) || 0,
+      discAmount: parseFloat(gstItem.DISC_AMT) || 0,
+      netAmount: parseFloat(gstItem.NET_AMT) || 0,
+      sgstRate: parseFloat(gstItem.SGST_RATE) || 0,
+      sgstAmount: parseFloat(gstItem.SGST_AMT) || 0,
+      cgstRate: parseFloat(gstItem.CGST_RATE) || 0,
+      cgstAmount: parseFloat(gstItem.CGST_AMT) || 0,
+      igstRate: parseFloat(gstItem.IGST_RATE) || 0,
+      igstAmount: parseFloat(gstItem.IGST_AMT) || 0,
+      cessRate: parseFloat(gstItem.ADD_CESS_RATE) || 0,
+      cessAmount: parseFloat(gstItem.ADD_CESS_AMT) || 0,
+      dbFlag: gstItem.DBFLAG || 'U',
+      originalGstData: gstItem
+    }));
+    setGstTableData(gstDisplayData);
+    
+    // Transform existing GST data for top table
+    gstRows = transformGSTDataForTopTable(gstDisplayData);
+    
+    // Calculate final amount from GST data
+    const totalNetAmount = gstDisplayData.reduce((sum, item) => sum + item.netAmount, 0);
+    const totalGstAmount = gstDisplayData.reduce((sum, item) => sum + item.sgstAmount + item.cgstAmount + item.igstAmount, 0);
+    setFinalAmount(totalNetAmount + totalGstAmount);
+    
+    console.log('Loaded existing ORDBKGSTLIST data:', gstDisplayData);
+  }
+
+  // FIXED: Combine terms and GST rows for top table
+  const combinedTopTableData = [...termListData, ...gstRows];
+  setTopTableData(combinedTopTableData);
+  
+  console.log('Final combined top table data:', combinedTopTableData);
+  
+  // Calculate and set initial discount from terms
+  const initialDiscount = calculateTotalDiscountFromTerms(combinedTopTableData);
+  setTotalDiscountFromTerms(initialDiscount);
+  
+}, [formData.apiResponseData, formData.TOTAL_AMOUNT, calculateTotalDiscountFromTerms, transformGSTDataForTopTable]);
+
+
 
   // Calculate current order amount based on all terms
   const calculateCurrentOrderAmount = () => {
@@ -1463,24 +1492,25 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
             Party Tax
           </Button>
 
-          <Button
-            variant="contained"
-            onClick={fetchGSTRates}
-            disabled={isFormDisabled || isAddingNew || isEditing || isGstCalculating}
-            sx={{
-              backgroundColor: '#39ace2',
-              color: 'white',
-              margin: { xs: '0 4px', sm: '0 6px' },
-              minWidth: { xs: 80, sm: 90, md: 100 },
-              height: { xs: 40, sm: 46, md: 30 },
-              '&:disabled': {
-                backgroundColor: '#cccccc',
-                color: '#666666'
-              }
-            }}
-          >
-            {isGstCalculating ? 'Calculating...' : 'Apply GST'}
-          </Button>
+          
+<Button
+  variant="contained"
+  onClick={fetchGSTRates}
+  disabled={isFormDisabled || isAddingNew || isEditing || isGstCalculating || formData.GST_APPL !== "Y"}
+  sx={{
+    backgroundColor: '#39ace2',
+    color: 'white',
+    margin: { xs: '0 4px', sm: '0 6px' },
+    minWidth: { xs: 80, sm: 90, md: 100 },
+    height: { xs: 40, sm: 46, md: 30 },
+    '&:disabled': {
+      backgroundColor: '#cccccc',
+      color: '#666666'
+    }
+  }}
+>
+  {isGstCalculating ? 'Calculating...' : 'Apply GST'}
+</Button>
           
           <Box sx={{ minWidth: 200, maxWidth: 250 }}>
             <AutoVibe
