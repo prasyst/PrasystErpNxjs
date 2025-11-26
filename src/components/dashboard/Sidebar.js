@@ -568,23 +568,23 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
 
   ];
 
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (
-        sidebarRef.current &&
-        !sidebarRef.current.contains(event.target) &&
-        megaMenuRef.current &&
-        !megaMenuRef.current.contains(event.target)
-      ) {
-        closeMegaMenu();
-      }
-    };
+  // useEffect(() => {
+  //   const handleClickOutside = (event) => {
+  //     if (
+  //       sidebarRef.current &&
+  //       !sidebarRef.current.contains(event.target) &&
+  //       megaMenuRef.current &&
+  //       !megaMenuRef.current.contains(event.target)
+  //     ) {
+  //       closeMegaMenu();
+  //     }
+  //   };
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, []);
+  //   document.addEventListener('mousedown', handleClickOutside);
+  //   return () => {
+  //     document.removeEventListener('mousedown', handleClickOutside);
+  //   };
+  // }, []);
 
   // Find menu item by path
   const findMenuItemByPath = (items, path) => {
@@ -762,14 +762,18 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
           return (
             <div key={`${item.name}-${levelIndex}-${index}`}>
               <div
-                onMouseEnter={(e) => hasChildren && handleSubMenuHover(item, levelIndex, e)}
+                // onMouseEnter={(e) => hasChildren && handleSubMenuHover(item, levelIndex, e)}
                 onClick={(e) => {
                   e.preventDefault();
+                  handleSubMenuHover(item, levelIndex, e);
                   if (hasValidPath) {
                     handleNavigation(item.path);
-                  } else if (hasChildren) {
-                    handleSubMenuHover(item, levelIndex, e);
                   }
+                  // if (hasValidPath) {
+                  //   handleNavigation(item.path);
+                  // } else if (hasChildren) {
+                  //   handleSubMenuHover(item, levelIndex, e);
+                  // }
                 }}
                 style={{
                   display: 'flex',
@@ -860,7 +864,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
     try {
       return (
         <div
-          ref={megaMenuRef}
+          // ref={megaMenuRef}
           style={{
             position: 'fixed',
             top: `${megaMenuPosition.top}px`,
@@ -877,7 +881,8 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
             maxWidth: '1000px',
             overflow: 'hidden',
           }}
-          onMouseLeave={closeMegaMenu}
+        // onMouseLeave={closeMegaMenu};
+        // onClick={handleClickOutside}
         >
           {megaMenuLevels.map((level, index) =>
             renderMenuLevel(
@@ -907,19 +912,25 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
           <div
             onClick={(e) => {
               e.preventDefault();
-              if (item.path && item.path !== '#') {
-                handleNavigation(item.path);
-              } else if (hasChildren) {
-                handleMainMenuHover(item, e);
-              }
+              handleMainMenuHover(item, e);
+
+              // if (item.path && item.path !== '#') {
+              //   handleNavigation(item.path);
+              // }
+
+              // if (item.path && item.path !== '#') {
+              //   handleNavigation(item.path);
+              // } else if (hasChildren) {
+              //   handleMainMenuHover(item, e);
+              // }
             }}
-            onMouseEnter={(e) => {
-              if (hasChildren) {
-                handleMainMenuHover(item, e);
-              } else {
-                closeMegaMenu();
-              }
-            }}
+            // onMouseEnter={(e) => {
+            //   if (hasChildren) {
+            //     handleMainMenuHover(item, e);
+            //   } else {
+            //     closeMegaMenu();
+            //   }
+            // }}
             style={{
               display: 'flex',
               alignItems: 'center',
