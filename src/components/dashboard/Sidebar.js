@@ -864,7 +864,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
     try {
       return (
         <div
-          // ref={megaMenuRef}
+          ref={megaMenuRef}
           style={{
             position: 'fixed',
             top: `${megaMenuPosition.top}px`,
@@ -990,15 +990,15 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
     <>
       <div
         ref={sidebarRef}
-        onMouseLeave={() => {
-          if (!isMobile) {
-            setTimeout(() => {
-              if (megaMenuRef.current && !megaMenuRef.current.matches(':hover')) {
-                closeMegaMenu();
-              }
-            }, 150);
-          }
-        }}
+        // onMouseLeave={() => {
+        //   if (!isMobile) {
+        //     setTimeout(() => {
+        //       if (megaMenuRef.current && !megaMenuRef.current.matches(':hover')) {
+        //         closeMegaMenu();
+        //       }
+        //     }, 150);
+        //   }
+        // }}
         style={{
           backgroundColor: '#fff',
           color: '#333',
