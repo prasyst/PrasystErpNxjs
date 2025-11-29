@@ -8,6 +8,7 @@ import {
   MdVisibility,
   MdEdit,
   MdRefresh,
+   MdArrowBack
 } from 'react-icons/md';
 import {
   Paper,
@@ -137,6 +138,9 @@ const TicketList = ({ onViewTicket, onEditTicket, onCreateTicket }) => {
       {/* Header */}
       <Box sx={{ p: '1.5rem', borderBottom: '1px solid #e5e7eb' }}>
         <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2}>
+           <IconButton onClick={() => router.back()} sx={{ color: "#6b7280" }}>
+                          <MdArrowBack />
+                        </IconButton>
           <Typography
             variant="h6"
             sx={{
@@ -170,7 +174,6 @@ const TicketList = ({ onViewTicket, onEditTicket, onCreateTicket }) => {
           </Button>
         </Stack>
 
-        {/* Search + Filters */}
         <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} alignItems="flex-start">
           <Box sx={{ flex: 1, minWidth: 200 }}>
             <TextField
