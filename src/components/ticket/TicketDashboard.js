@@ -11,7 +11,26 @@ import {
   ArrowBack as ArrowBackIcon,
 
 } from '@mui/icons-material';
-import { Button } from '@mui/material';
+import {
+  Card,
+  CardContent,
+  Typography,
+  Button,
+  TableContainer,
+  Table,
+  TableHead,
+  TableBody,
+  TableRow,
+  TableCell,
+  Chip,
+  Box,
+  Grid,
+  IconButton,
+  Stack,
+  Paper,
+  LinearProgress
+} from '@mui/material';
+import axiosInstance from '@/lib/axios';
 import { FaExclamationTriangle, FaUsers, FaChartPie } from 'react-icons/fa';
 import { TiTicket } from "react-icons/ti";
 
@@ -42,60 +61,61 @@ const TicketDashboard = () => {
   const [showCreateTicket, setShowCreateTicket] = useState(false);
   const [selectedTicket, setSelectedTicket] = useState(null);
   const [editingTicket, setEditingTicket] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const fetchRecentTickets = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const payload = {
+        SearchText: ""
+      };
 
+      const response = await axiosInstance.post(
+        "TrnTkt/GetTrnTktDashBoard",
+        payload
+      );
+
+      if (response.data.STATUS === 0 && Array.isArray(response.data.DATA)) {
+        const realTickets = response.data.DATA;
+        const mappedTickets = realTickets.map(tkt => ({
+          TKTKEY: tkt.TKTKEY,
+          id: tkt.TKTNO,
+          title: tkt.REMARK || "No Title",
+          description: tkt.TKTDESC || tkt.REASON || "No description",
+          category: tkt.TKTSERVICENAME || "General",
+          priority: tkt.TKTSVRTYNAME || "Medium",
+           status: tkt.TKTSTATUS === "O" ? "open" :
+            tkt.TKTSTATUS === "P" ? "in-progress" :
+              tkt.TKTSTATUS === "R" ? "resolved" : "closed",
+          assignee: tkt.TECHEMP_NAME || "Unassigned",
+          reporter: tkt.RAISEBYNM || "Unknown",
+          createdAt: tkt.TKTDATE,
+          dueDate: tkt.ASSIGNDT || tkt.TKTDATE,
+          tktFor: tkt.TKTFOR === "M" ? "Machine" : "Department",
+          ccnName: tkt.CCN_NAME || "",
+          machineryName: tkt.MACHINERY_NAME || "",
+        }));
+
+        setTickets(mappedTickets);
+      }
+
+      else {
+        setError("Failed to load tickets");
+      }
+    } catch (err) {
+      console.error('Error fetching tickets:', err);
+      setError("Failed to load tickets. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const mockTickets = [
-      {
-        id: 'TKT-001',
-        title: 'Login Issue',
-        description: 'Unable to login to the system',
-        category: 'Technical',
-        priority: 'High',
-        status: 'open',
-        assignee: 'John Doe',
-        reporter: 'Alice Smith',
-        createdAt: new Date('2024-01-15'),
-        updatedAt: new Date('2024-01-15'),
-        dueDate: new Date('2024-01-18'),
-        tags: ['login', 'authentication'],
-        comments: []
-      },
-      {
-        id: 'TKT-002',
-        title: 'Password Reset Request',
-        description: 'Need to reset my password',
-        category: 'Account',
-        priority: 'Medium',
-        status: 'in-progress',
-        assignee: 'Jane Smith',
-        reporter: 'Bob Johnson',
-        createdAt: new Date('2024-01-14'),
-        updatedAt: new Date('2024-01-15'),
-        dueDate: new Date('2024-01-17'),
-        tags: ['password'],
-        comments: []
-      },
-      {
-        id: 'TKT-003',
-        title: 'Feature Request - Dark Mode',
-        description: 'Add dark mode theme to the application',
-        category: 'Enhancement',
-        priority: 'Low',
-        status: 'resolved',
-        assignee: 'Mike Wilson',
-        reporter: 'Sarah Davis',
-        createdAt: new Date('2024-01-10'),
-        updatedAt: new Date('2024-01-12'),
-        dueDate: new Date('2024-01-20'),
-        tags: ['ui', 'feature'],
-        comments: []
-      }
-    ];
-
-    setTickets(mockTickets);
-    calculateStats(mockTickets);
+    fetchRecentTickets();
   }, []);
+
+
 
   const calculateStats = (tickets) => {
     const stats = {
@@ -113,7 +133,8 @@ const TicketDashboard = () => {
     console.log('Navigating to:', modulePath);
     router.push(modulePath);
   };
-
+  console.log('tickets', tickets)
+  console.log('filter', tickets.filter(ticket => ticket.TKTSTATUS === "O").length,)
 
   const handleCreateTicket = (newTicket) => {
     const ticket = {
@@ -236,7 +257,7 @@ const TicketDashboard = () => {
       title: 'SLA Management',
       description: 'Service level agreements',
       icon: MdTimer,
-      // path: '/tickets/sla',
+      path: '/tickets/sla-manage',
       color: '#0891b2'
     },
     {
@@ -250,7 +271,7 @@ const TicketDashboard = () => {
       title: 'Team Management',
       description: 'Manage support team',
       icon: FaUsers,
-      // path: '/tickets/team',
+      path: '/tickets/team-management',
       color: '#6b7280'
     }
   ];
@@ -364,6 +385,7 @@ const TicketDashboard = () => {
         return renderOverview();
     }
   };
+
 
   const renderOverview = () => (
     <>
@@ -540,7 +562,7 @@ const TicketDashboard = () => {
                         e.currentTarget.style.boxShadow = '0 1px 3px 0 rgba(0, 0, 0, 0.1)';
                         e.currentTarget.style.borderColor = '#e5e7eb';
                       }}
-                      onClick={() => handleModuleClick(module.path)} // Ye line sahi hai
+                      onClick={() => handleModuleClick(module.path)} hai
                     >
                       <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem' }}>
                         <div style={{
@@ -581,180 +603,191 @@ const TicketDashboard = () => {
             </div>
           </div>
 
-          <div style={{
-            backgroundColor: 'white',
-            borderRadius: '0.75rem',
-            boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
-            border: '1px solid #e5e7eb'
-          }}>
-            <div style={{ padding: '1.5rem' }}>
-              <div style={{
+          <Card
+            variant="outlined"
+            sx={{
+              borderRadius: 2,
+              boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
+              border: '1px solid #e5e7eb'
+            }}
+          >
+            <CardContent sx={{ p: 2 }}>
+              <Box sx={{
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
-                marginBottom: '1.5rem'
+                mb: 1
               }}>
-                <h2 style={{
-                  fontSize: '1.25rem',
-                  fontWeight: '600',
-                  color: '#111827',
-                  margin: 0
-                }}>
+                <Typography
+                  variant="h6"
+                  sx={{
+                    fontWeight: 600,
+                    color: '#111827',
+                    fontSize: '1.25rem'
+                  }}
+                >
                   Recent Tickets
-                </h2>
-                <button
-                  style={{
+                </Typography>
+                <Button
+                  onClick={() => setActiveModule('ticket-list')}
+                  sx={{
                     color: '#2563eb',
                     fontSize: '0.875rem',
-                    fontWeight: '500',
-                    border: 'none',
-                    backgroundColor: 'transparent',
-                    cursor: 'pointer'
+                    fontWeight: 500,
+                    textTransform: 'none',
+                    minWidth: 'auto',
+                    p: 0
                   }}
-                  onClick={() => setActiveModule('ticket-list')}
                 >
                   View All
-                </button>
-              </div>
+                </Button>
+              </Box>
 
-              <div style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                  <thead>
-                    <tr style={{ borderBottom: '1px solid #e5e7eb' }}>
-                      <th style={{
-                        textAlign: 'left',
-                        padding: '0.75rem 0.5rem',
+              <TableContainer>
+                <Table>
+                  <TableHead>
+                    <TableRow sx={{ borderBottom: '1px solid #e5e7eb' }}>
+                      <TableCell sx={{
                         fontSize: '0.75rem',
-                        fontWeight: '600',
+                        fontWeight: 600,
                         color: '#6b7280',
                         textTransform: 'uppercase',
-                        letterSpacing: '0.05em'
+                        letterSpacing: '0.05em',
+                        py: 1.5,
+                        px: 1,
+                        border: 'none'
                       }}>
-                        Ticket ID
-                      </th>
-                      <th style={{
-                        textAlign: 'left',
-                        padding: '0.75rem 0.5rem',
+                        Ticket No
+                      </TableCell>
+                      <TableCell sx={{
                         fontSize: '0.75rem',
-                        fontWeight: '600',
+                        fontWeight: 600,
                         color: '#6b7280',
                         textTransform: 'uppercase',
-                        letterSpacing: '0.05em'
+                        letterSpacing: '0.05em',
+                        py: 1.5,
+                        px: 1,
+                        border: 'none'
                       }}>
                         Title
-                      </th>
-                      <th style={{
-                        textAlign: 'left',
-                        padding: '0.75rem 0.5rem',
+                      </TableCell>
+                      <TableCell sx={{
                         fontSize: '0.75rem',
-                        fontWeight: '600',
+                        fontWeight: 600,
                         color: '#6b7280',
                         textTransform: 'uppercase',
-                        letterSpacing: '0.05em'
+                        letterSpacing: '0.05em',
+                        py: 1.5,
+                        px: 1,
+                        border: 'none'
                       }}>
                         Priority
-                      </th>
-                      <th style={{
-                        textAlign: 'left',
-                        padding: '0.75rem 0.5rem',
+                      </TableCell>
+                      <TableCell sx={{
                         fontSize: '0.75rem',
-                        fontWeight: '600',
+                        fontWeight: 600,
                         color: '#6b7280',
                         textTransform: 'uppercase',
-                        letterSpacing: '0.05em'
+                        letterSpacing: '0.05em',
+                        py: 1.5,
+                        px: 1,
+                        border: 'none'
                       }}>
                         Status
-                      </th>
-                      <th style={{
-                        textAlign: 'left',
-                        padding: '0.75rem 0.5rem',
+                      </TableCell>
+                      <TableCell sx={{
                         fontSize: '0.75rem',
-                        fontWeight: '600',
+                        fontWeight: 600,
                         color: '#6b7280',
                         textTransform: 'uppercase',
-                        letterSpacing: '0.05em'
+                        letterSpacing: '0.05em',
+                        py: 1.5,
+                        px: 1,
+                        border: 'none'
                       }}>
                         Assignee
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {tickets.slice(0, 5).map((ticket, index) => (
-                      <tr
+                      </TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {tickets.slice(0, 3).map((ticket, index) => (
+                      <TableRow
                         key={index}
-                        style={{
+                        sx={{
                           borderBottom: '1px solid #f3f4f6',
                           cursor: 'pointer',
-                          transition: 'background-color 0.2s'
+                          transition: 'background-color 0.2s',
+                          '&:last-child': { borderBottom: 'none' },
+                          '&:hover': { backgroundColor: '#f9fafb' }
                         }}
                         onClick={() => setSelectedTicket(ticket)}
-                        onMouseOver={(e) => { e.currentTarget.style.backgroundColor = '#f9fafb'; }}
-                        onMouseOut={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
                       >
-                        <td style={{
-                          padding: '1rem 0.5rem',
+                        <TableCell sx={{
                           fontSize: '0.875rem',
-                          fontWeight: '600',
-                          color: '#2563eb'
+                          fontWeight: 600,
+                          color: '#2563eb',
+                          py: 1,
+                          px: 1,
+                          border: 'none'
                         }}>
-                          {ticket.id}
-                        </td>
-                        <td style={{
-                          padding: '1rem 0.5rem',
+                          {ticket?.id}
+                        </TableCell>
+                        <TableCell sx={{
                           fontSize: '0.875rem',
-                          fontWeight: '500',
-                          color: '#111827'
+                          fontWeight: 500,
+                          color: '#111827',
+                          py: 1,
+                          px: 1,
+                          border: 'none'
                         }}>
                           {ticket.title}
-                        </td>
-                        <td style={{ padding: '1rem 0.5rem' }}>
-                          <span style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            padding: '0.25rem 0.75rem',
-                            borderRadius: '9999px',
-                            fontSize: '0.75rem',
-                            fontWeight: '600',
-                            backgroundColor: getPriorityColor(ticket.priority) + '20',
-                            color: getPriorityColor(ticket.priority)
-                          }}>
-                            {ticket.priority}
-                          </span>
-                        </td>
-                        <td style={{ padding: '1rem 0.5rem' }}>
-                          <span style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            padding: '0.25rem 0.75rem',
-                            borderRadius: '9999px',
-                            fontSize: '0.75rem',
-                            fontWeight: '600',
-                            backgroundColor: getStatusColor(ticket.status) + '20',
-                            color: getStatusColor(ticket.status),
-                            textTransform: 'capitalize'
-                          }}>
-                            {ticket.status.replace('-', ' ')}
-                          </span>
-                        </td>
-                        <td style={{
-                          padding: '1rem 0.5rem',
+                        </TableCell>
+                        <TableCell sx={{ py: 1, px: 1, border: 'none' }}>
+                          <Chip
+                            label={ticket.priority}
+                            size="small"
+                            sx={{
+                              fontSize: '0.75rem',
+                              fontWeight: 600,
+                              backgroundColor: `${getPriorityColor(ticket.priority)}20`,
+                              color: getPriorityColor(ticket.priority),
+                              height: '24px'
+                            }}
+                          />
+                        </TableCell>
+                        <TableCell sx={{ py: 1, px: 1, border: 'none' }}>
+                          <Chip
+                            label={ticket.status.replace('-', ' ')}
+                            size="small"
+                            sx={{
+                              fontSize: '0.75rem',
+                              fontWeight: 600,
+                              backgroundColor: `${getStatusColor(ticket.status)}20`,
+                              color: getStatusColor(ticket.status),
+                              height: '24px',
+                              textTransform: 'capitalize'
+                            }}
+                          />
+                        </TableCell>
+                        <TableCell sx={{
                           fontSize: '0.875rem',
-                          color: '#6b7280'
+                          color: '#6b7280',
+                          py: 1,
+                          px: 1,
+                          border: 'none'
                         }}>
                           {ticket.assignee}
-                        </td>
-                      </tr>
+                        </TableCell>
+                      </TableRow>
                     ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </CardContent>
+          </Card>
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-
-
           <div style={{
             backgroundColor: 'white',
             borderRadius: '0.75rem',
@@ -890,47 +923,81 @@ const TicketDashboard = () => {
           </div>
 
 
-          <div style={{
-            background: 'linear-gradient(135deg, rgba(148, 211, 164, 0.95) 0%, rgba(255,255,255,0.85) 100%)',
-            borderRadius: '0.75rem',
-            backdropFilter: 'blur(10px)',
-            boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
-            border: '1px solid #e5e7eb',
-            padding: '1.5rem'
-          }}>
-            <h3 style={{
-              fontSize: '1rem',
-              fontWeight: '600',
-              color: '#111827',
-              margin: '0 0 1rem 0'
-            }}>
+          <Card
+            sx={{
+              borderRadius: 2,
+              background: 'linear-gradient(135deg, rgba(148, 211, 164, 0.95) 0%, rgba(255,255,255,0.85) 100%)',
+              backdropFilter: 'blur(10px)',
+              boxShadow: 1,
+              border: '1px solid',
+              borderColor: 'grey.200',
+              p: 3
+            }}
+          >
+            <Typography
+              variant="h6"
+              sx={{
+                fontWeight: 600,
+                mb: 2
+              }}
+            >
               Status Distribution
-            </h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+            </Typography>
+
+            <Stack spacing={1.5}>
               {[
-                { status: 'Open', count: stats.open, color: '#ef4444' },
-                { status: 'In Progress', count: stats.inProgress, color: '#f59e0b' },
-                { status: 'Resolved', count: stats.resolved, color: '#10b981' },
-                { status: 'Closed', count: stats.closed, color: '#6b7280' }
+                {
+                  status: 'Open',
+                  count: tickets.filter(ticket => ticket.status == "open").length,
+                  color: 'error.main'
+                },
+                {
+                  status: 'In Progress',
+                  count: tickets.filter(ticket => ticket.status == "in-progress").length,
+                  color: 'warning.main'
+                },
+                {
+                  status: 'Resolved',
+                  count: tickets.filter(ticket => ticket.status == "resolved").length,
+                  color: 'success.main'
+                },
+                {
+                  status: 'Closed',
+                  count: tickets.filter(ticket => ticket.status == "C").length,
+                  color: 'grey.500'
+                }
               ].map((item, index) => (
-                <div key={index} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                  <div style={{
-                    width: '12px',
-                    height: '12px',
-                    backgroundColor: item.color,
-                    borderRadius: '50%',
-                    flexShrink: 0
-                  }}></div>
-                  <div style={{ flex: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: '0.875rem', color: '#374151' }}>{item.status}</span>
-                    <span style={{ fontSize: '0.875rem', fontWeight: '600', color: '#111827' }}>
-                      {item.count} tickets
-                    </span>
-                  </div>
-                </div>
+                <Stack
+                  key={index}
+                  direction="row"
+                  alignItems="center"
+                  spacing={1.5}
+                >
+                  <Box
+                    sx={{
+                      width: 12,
+                      height: 12,
+                      backgroundColor: item.color,
+                      borderRadius: '50%',
+                      flexShrink: 0
+                    }}
+                  />
+                  <Typography
+                    variant="body2"
+                    sx={{ flex: 1 }}
+                  >
+                    {item.status}
+                  </Typography>
+                  <Typography
+                    variant="body2"
+                    fontWeight="bold"
+                  >
+                    {item.count} tickets
+                  </Typography>
+                </Stack>
               ))}
-            </div>
-          </div>
+            </Stack>
+          </Card>
         </div>
       </div>
     </>

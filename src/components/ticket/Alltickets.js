@@ -18,6 +18,7 @@ import {
   Close as CloseIcon
 } from '@mui/icons-material';
 import axiosInstance from '@/lib/axios';
+import TicketDetailsDialog from './ViewTicketDetailsDialog/TicketDetailsDialog';
 
 const AllTicketsPage = () => {
   const router = useRouter();
@@ -34,7 +35,10 @@ const AllTicketsPage = () => {
   const [selectedTicket, setSelectedTicket] = useState(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [ticketToDelete, setTicketToDelete] = useState(null);
+  const [selectedTicketId, setSelectedTicketId] = useState(null);
+  const [ticketDetailsOpen, setTicketDetailsOpen] = useState(false);
 
+  
   useEffect(() => {
     fetchTicketDash();
   }, []);
@@ -51,6 +55,7 @@ const AllTicketsPage = () => {
 
         // Map API fields to UI-friendly names
         const mappedTickets = realTickets.map(tkt => ({
+          TKTKEY:tkt.TKTKEY,
           id: tkt.TKTNO,
           title: tkt.REMARK || "No Title",
           description: tkt.TKTDESC || tkt.REASON || "No description",
@@ -118,8 +123,15 @@ const AllTicketsPage = () => {
   };
 
   const handleViewTicket = (ticket) => {
-    setSelectedTicket(ticket);
+    setSelectedTicketId(ticket.TKTKEY); 
+    setTicketDetailsOpen(true);
   };
+
+   const handleCloseTicketDetails = () => {
+    setTicketDetailsOpen(false);
+    setSelectedTicketId(null);
+  };
+
 
   const handleEditTicket = (ticket) => {
     // router.push(`/tickets/edit-ticket?id=${ticket.id}`);
@@ -290,7 +302,7 @@ const AllTicketsPage = () => {
         </TableHead>
         <TableBody>
           {filteredTickets.map((ticket) => (
-            <TableRow
+             <TableRow
               key={ticket.TKTKEY}
               hover
               sx={{
@@ -605,121 +617,15 @@ const AllTicketsPage = () => {
           </DialogActions>
         </Dialog>
 
-        <Dialog
-          open={!!selectedTicket}
-          onClose={() => setSelectedTicket(null)}
-          maxWidth="md"
-          fullWidth
-          fullScreen={isMobile}
-        >
-          <DialogTitle>
-            <Box display="flex" justifyContent="space-between" alignItems="center">
-              <Typography variant="h6">Ticket Details</Typography>
-              <IconButton onClick={() => setSelectedTicket(null)}>
-                <CloseIcon />
-              </IconButton>
-            </Box>
-          </DialogTitle>
-          <DialogContent>
-            {selectedTicket && (
-              <Stack spacing={3}>
-                <Box>
-                  <Typography variant="h5" gutterBottom fontWeight="600">
-                    {selectedTicket.title}
-                  </Typography>
-                  <Typography variant="body1" color="text.secondary">
-                    {selectedTicket.description}
-                  </Typography>
-                </Box>
-
-                <Grid container spacing={3}>
-                  <Grid item xs={12} sm={6}>
-                    <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                      Ticket ID
-                    </Typography>
-                    <Typography variant="body1" fontWeight="600">
-                      {selectedTicket.id}
-                    </Typography>
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                      Status
-                    </Typography>
-                    <Chip
-                      label={selectedTicket.status.replace('-', ' ')}
-                      color={getStatusColor(selectedTicket.status)}
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                      Priority
-                    </Typography>
-                    <Chip
-                      label={selectedTicket.priority}
-                      color={getPriorityColor(selectedTicket.priority)}
-                    />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                      Category
-                    </Typography>
-                    <Typography variant="body1">
-                      {selectedTicket.category}
-                    </Typography>
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                      Assignee
-                    </Typography>
-                    <Box display="flex" alignItems="center" gap={1}>
-                      <Avatar sx={{ width: 32, height: 32, fontSize: '0.875rem' }}>
-                        {getInitials(selectedTicket.assignee)}
-                      </Avatar>
-                      <Typography variant="body1">
-                        {selectedTicket.assignee}
-                      </Typography>
-                    </Box>
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                      Reporter
-                    </Typography>
-                    <Typography variant="body1">
-                      {selectedTicket.reporter}
-                    </Typography>
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                      Created Date
-                    </Typography>
-                    <Typography variant="body1">
-                      {formatDate(selectedTicket.createdAt)}
-                    </Typography>
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                      Due Date
-                    </Typography>
-                    <Typography variant="body1">
-                      {formatDate(selectedTicket.dueDate)}
-                    </Typography>
-                  </Grid>
-                </Grid>
-              </Stack>
-            )}
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setSelectedTicket(null)}>
-              Close
-            </Button>
-            <Button
-              variant="contained"
-              onClick={() => selectedTicket && handleEditTicket(selectedTicket)}
-            >
-              Edit Ticket
-            </Button>
-          </DialogActions>
-        </Dialog>
+         <TicketDetailsDialog
+          open={ticketDetailsOpen}
+          onClose={handleCloseTicketDetails}
+          ticketId={selectedTicketId}
+          onEdit={(ticket) => {
+            handleCloseTicketDetails();
+            handleEditTicket(ticket);
+          }}
+        />
       </Container>
     </Box>
   );
