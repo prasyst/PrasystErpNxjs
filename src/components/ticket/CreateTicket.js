@@ -1,10 +1,11 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import {
   Box, Button, TextField, FormControl, Typography, Paper, Divider, Alert, Modal, Backdrop, Container,
-  Grid, Stack, Chip, IconButton, Autocomplete, FormLabel, RadioGroup, FormControlLabel, Radio,
+  Grid, Stack, Chip, IconButton, Autocomplete, FormLabel, RadioGroup, FormControlLabel, Radio, Link,
+  FormGroup, Checkbox
 } from "@mui/material";
 
 import {
@@ -20,7 +21,12 @@ import dayjs from 'dayjs';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import axiosInstance from "@/lib/axios";
+import Dialog from "@mui/material/Dialog";
+import DialogTitle from "@mui/material/DialogTitle";
 import { toast, ToastContainer } from "react-toastify";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import LogoutIcon from "@mui/icons-material/Logout";
+import ReusableTable, { getCustomDateFilter } from '@/components/datatable/ReusableTable';
 
 const inputStyle = {
   '& .MuiInputBase-root': {
@@ -55,6 +61,88 @@ const inputStyle = {
   },
 };
 
+// Column definitions for AG Grid with Serial No and Checkbox
+const columnDefs = [
+  {
+    headerName: "Select",
+    width: 50,
+    maxWidth: 40,
+    checkboxSelection: true,
+    headerCheckboxSelection: true,
+    // pinned: 'left',
+    lockPosition: true,
+    suppressMenu: true,
+    sortable: false,
+    filter: false,
+    resizable: false,
+
+    headerClass: 'checkbox-header'
+  },
+  {
+    field: "ITM_KEY",
+    headerName: "ItemCode",
+    filter: 'agSetColumnFilter',
+    filterParams: {
+      defaultToNothingSelected: true,
+    },
+    sortable: true
+  },
+  {
+    field: "ITMCAT_NAME",
+    headerName: "Category",
+    filter: 'agSetColumnFilter',
+    filterParams: {
+      defaultToNothingSelected: true,
+    },
+    sortable: true
+  },
+  {
+    field: "ITMGRP_NAME",
+    headerName: "Group",
+    filter: 'agSetColumnFilter',
+    filterParams: {
+      defaultToNothingSelected: true,
+    },
+    sortable: true
+  },
+  {
+    field: "ITMSUBGRP_NAME",
+    headerName: "SubGroup",
+    filter: 'agSetColumnFilter',
+    filterParams: {
+      defaultToNothingSelected: true,
+    },
+    sortable: true
+  },
+  {
+    field: "ITM_NAME",
+    headerName: "Item",
+    filter: 'agSetColumnFilter',
+    filterParams: {
+      defaultToNothingSelected: true,
+    },
+    sortable: true
+  },
+  {
+    field: "TO_UNIT_NAME",
+    headerName: "Unit",
+    filter: 'agSetColumnFilter',
+    filterParams: {
+      defaultToNothingSelected: true,
+    },
+    sortable: true
+  },
+  {
+    field: "TO_UNIT_NAME",
+    headerName: "Qty",
+    filter: 'agSetColumnFilter',
+    filterParams: {
+      defaultToNothingSelected: true,
+    },
+    sortable: true
+  }
+];
+
 const CreateTicketPage = () => {
   const router = useRouter();
   const [formData, setFormData] = useState({
@@ -71,6 +159,21 @@ const CreateTicketPage = () => {
     department: "",
     dueDate: "",
     tags: [],
+    trnTktDtlEntities: [
+      {
+        TktDtlId: "",
+        TktKey: "",
+        ITM_KEY: "",
+        UNIT_KEY: "",
+        ITM_QTY: "",
+        BARCODE: "",
+        RATE: "",
+        REMARK: "",
+        TktdtlImage: "",
+        ImgName: "",
+        DBFLAG: ""
+      }
+    ]
   });
 
   const [errors, setErrors] = useState({
@@ -95,10 +198,17 @@ const CreateTicketPage = () => {
   const [deptGrp, setDeptGrp] = useState([]);
   const [dept, setDept] = useState([]);
   const [ticketFor, setTicketFor] = useState("C");
+  const [Item, setItem] = useState([]);
   const [seriesKey, setSeriesKey] = useState([]);
   const [seriesData, setSeriesData] = useState([]);
   const [cobrId, setCobrId] = useState(null);
   const [fcyrKey, setFcyrKey] = useState(null);
+  const [selectedOptions, setSelectedOptions] = useState([]);
+  const [openConfirmDialog, setOpenConfirmDialog] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [rows, setRows] = useState([]);
+  const [selectedRows, setSelectedRows] = useState([]);
+  const [rowsSecondTable, setRowsSecondTable] = useState([]);
   const fileInputRef = useRef(null);
 
   useEffect(() => {
@@ -121,6 +231,87 @@ const CreateTicketPage = () => {
     getSeriesKey();
     getSeriesData();
   }, [cobrId, fcyrKey])
+
+  useEffect(() => {
+    fetchTableData();
+  }, []);
+
+  const fetchTableData = async () => {
+    setIsLoading(true);
+    try {
+      const response = await axiosInstance.post(`Itm/GetItmDrp`, {
+        "FLAG": "",
+        "ITM_KEY": "",
+        "ITMCAT_KEY": "",
+        "ITMGRP_KEY": "",
+        "ITMSUBGRP_KEY": ""
+      });
+      const { data: { STATUS, DATA } } = response;
+      if (STATUS === 0 && Array.isArray(DATA)) {
+        const formattedData = DATA.map((row) => ({
+          ...row,
+
+        }));
+        setRows(formattedData);
+      }
+    } catch (error) {
+      console.error("Error fetching data:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSelectionChanged = useCallback((event) => {
+    const selectedNodes = event.api.getSelectedNodes();
+    const selectedData = selectedNodes.map(node => node.data);
+    setSelectedRows(selectedData);
+    console.log('Selected rows:', selectedData);
+  }, []);
+
+  const handleConfirmButton = () => {
+    // setRowsSecondTable([...rowsSecondTable, ...selectedRows]);
+    setRowsSecondTable((prevData) => [...prevData, ...selectedRows]);
+  };
+
+  const handleSaveButton = () => {
+    handleSubmit();
+    setOpenConfirmDialog(false);
+  };
+
+  const handleCancel = () => {
+    setSelectedRows([]);
+    setRowsSecondTable([]);
+    setFormData({
+      title: "",
+      description: "",
+      category: "",
+      subCategory: "",
+      priority: "Medium",
+      machGrp: "",
+      machine: "",
+      machineryKey: "",
+      service: "",
+      depGrp: "",
+      department: "",
+      dueDate: "",
+      tags: [],
+      trnTktDtlEntities: [
+        {
+          TktDtlId: "",
+          TktKey: "",
+          ITM_KEY: "",
+          UNIT_KEY: "",
+          ITM_QTY: "",
+          BARCODE: "",
+          RATE: "",
+          REMARK: "",
+          TktdtlImage: "",
+          ImgName: "",
+          DBFLAG: ""
+        }
+      ]
+    });
+  };
 
   const getSeriesKey = async () => {
     try {
@@ -267,6 +458,23 @@ const CreateTicketPage = () => {
     }
   };
 
+  const fetchItem = async () => {
+    try {
+      const response = await axiosInstance.post("Itm/GetItmDrp", {
+        FLAG: "",
+        ITM_KEY: "",
+        ITMCAT_KEY: "",
+        ITMGRP_KEY: "",
+        ITMSUBGRP_KEY: ""
+      });
+      if (response.data.STATUS === 0 && Array.isArray(response.data.DATA)) {
+        setItem(response.data.DATA);
+      }
+    } catch (error) {
+      toast.error("Error while fetching Items.");
+    }
+  };
+
   const handleTicketChange = (event) => {
     setTicketFor(event.target.value);
   };
@@ -372,7 +580,10 @@ const CreateTicketPage = () => {
         CreatedBy: 1,
         TktImage: attachmentData.TktImage,
         ImgName: attachmentData.ImgName,
+        trnTktDtlEntities: rowsSecondTable
       };
+
+      console.log('Data to Submit:', ticketData);
 
       const response = await axiosInstance.post(
         `TrnTkt/InsertTrnTkt?UserName=PC0001&strCobrid=${cobrId}`,
@@ -418,6 +629,14 @@ const CreateTicketPage = () => {
 
   const handleRemoveAttachment = (index) => {
     setAttachments((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleHostel = () => {
+    setOpenConfirmDialog(true);
+  };
+
+  const closeConfirmation = () => {
+    setOpenConfirmDialog(false);
   };
 
   return (
@@ -530,8 +749,23 @@ const CreateTicketPage = () => {
                       control={<Radio size="small" />}
                       label="Cost Center/Department"
                     />
+                    {/* <FormControlLabel
+                      value="S"
+                      control={<Radio size="small" />}
+                      label="Store Item/Asset"
+                    /> */}
                   </RadioGroup>
                 </FormControl>
+                <Link onClick={handleHostel}
+                  sx={{
+                    fontSize: '14px',
+                    textDecoration: 'none',
+                    cursor: 'pointer',
+                    ml: 'auto',
+                    mr: 1
+                  }}>
+                  Item Recognition
+                </Link>
               </Box>
 
               {ticketFor === "M" && (
@@ -607,6 +841,20 @@ const CreateTicketPage = () => {
                   </Grid>
                 </Grid>
               )}
+
+              {/* {ticketFor === "S" && (
+                <Grid container spacing={1} sx={{ mb: 2 }}>
+                  <Grid size={{ xs: 12, sm: 6, md: 12 }}>
+                    <Autocomplete
+                      options={[]}
+                      getOptionLabel={(option) => option.CCGRP_NAME || ""}
+                      value={deptGrp.find(dept => dept.CCGRP_NAME === formData.depGrp) || null}
+                      onChange={(_, value) => setFormData(prev => ({ ...prev, depGrp: value?.CCGRP_NAME || "" }))}
+                      renderInput={(params) => <TextField {...params} label={<><span>Item/Asset/Accessories</span><span style={{ color: 'red' }}>*</span></>} sx={inputStyle} />}
+                    />
+                  </Grid>
+                </Grid>
+              )} */}
 
               <Grid container spacing={1} sx={{ mb: 2 }}>
                 <Grid size={{ xs: 12, sm: 6 }}>
@@ -756,6 +1004,283 @@ const CreateTicketPage = () => {
           </Box>
         </Paper>
       </Container>
+
+      <Dialog
+        open={openConfirmDialog}
+        onClose={closeConfirmation}
+        aria-labelledby="alert-dialog-title"
+        aria-describedby="alert-dialog-description"
+        sx={{
+          "& .MuiDialog-paper": {
+            maxWidth: "100%",
+            width: {
+              xs: "80%",
+              sm: "600px",
+              md: "690px",
+              lg: "1000px",
+              xl: "800px",
+            },
+            height: "auto",
+            padding: {
+              xs: "10px",
+              sm: "15px",
+              md: "20px",
+              lg: "20px",
+              xl: "20px",
+            },
+            margin: {
+              xs: "20px",
+              sm: "40px",
+              md: "60px",
+              lg: "60px",
+              xl: "60px",
+            },
+            backgroundColor: "white",
+            borderRadius: "10px",
+            border: "1px solid #ccc",
+            boxShadow: "0px 4px 6px rgba(0, 0, 0, 0.1)",
+          },
+        }}
+      >
+        <DialogTitle id="alert-dialog-title">
+          <Grid>
+            <Box
+              sx={{
+                border: "1px solid #ccc",
+                borderRadius: "8px",
+                backgroundColor: "transparent",
+                overflow: "auto",
+                maxHeight: {
+                  xs: "50vh",
+                  sm: "55vh",
+                  md: "60vh",
+                  lg: "65vh",
+                  xl: "70vh",
+                },
+                height: {
+                  xs: "50vh",
+                  sm: "50vh",
+                  md: "56vh",
+                  lg: "80vh",
+                  xl: "65vh",
+                },
+                margin: {
+                  xs: "0px 0px 0px 1px",
+                  sm: "0px 0px 0px 2.5px",
+                  md: "0px 0px 0px 2.5px",
+                  lg: "0px 0px 0px 2.5px",
+                  xl: "0px 0px 0px 2.5px",
+                },
+                padding: {
+                  xs: "0px",
+                  sm: "0px",
+                  md: "0px",
+                  lg: "0px",
+                  xl: "0px",
+                },
+                gap: 2,
+                maxWidth: {
+                  xs: "100%",
+                  sm: "90vw",
+                  md: "80vw",
+                  lg: "70vw",
+                  xl: "60vw",
+                },
+                display: 'flex',
+                flexDirection: 'column', // Ensure checkboxes are displayed vertically
+                justifyContent: 'space-between', // Align content correctly
+              }}
+            >
+
+              <div className="p-2 w-full">
+                <div className="w-full mx-auto" style={{ maxWidth: '100%' }}>
+
+                  <div style={{ height: 'calc(100vh - 80px)', width: '100%' }}>
+                    {isLoading ? (
+                      <div style={{
+                        display: 'flex',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        height: '100%'
+                      }}>
+                        Loading...
+                      </div>
+                    ) : (
+                      <ReusableTable
+                        columnDefs={columnDefs}
+                        rowData={rows}
+                        height="50%"
+                        theme="ag-theme-quartz"
+                        isDarkMode={false}
+                        pagination={true}
+                        paginationPageSize={25}
+                        paginationPageSizeSelector={[25, 50, 100, 250, 500, 1000]}
+                        quickFilter={false}
+                        onRowClick={(params) => {
+                          console.log('Row clicked:', params);
+                        }}
+                        onRowDoubleClick={''}
+                        onSelectionChanged={handleSelectionChanged}
+                        loading={isLoading}
+                        enableExport={false}
+                        exportSelectedOnly={false}
+                        selectedRows={false}
+                        enableCheckbox={true}
+                        enableResetButton={false}
+                        enableExitBackButton={false}
+                        enableLanguageSwitch={false}
+                        compactMode={true}
+                        rowHeight={24}
+                        headerHeight={30}
+                        className="custom-ag-table"
+                        defaultColDef={{
+                          resizable: true,
+                          sortable: true,
+                          filter: true,
+                          flex: 1,
+                          minWidth: 100
+                        }}
+                        customGridOptions={{
+                          suppressRowClickSelection: true,
+                          rowSelection: 'multiple',
+                          animateRows: true,
+                          enableCellTextSelection: true,
+                          ensureDomOrder: true
+                        }}
+                      />
+                    )}
+                    <div className="flex flex-wrap gap-4 items-center">
+                      <Box sx={{ margin: '10px 16px 0 0' }} width="100%" display="flex" justifyContent="flex-end">
+                        <Stack direction="row" spacing={2} alignItems="center">
+                          {/* Back Button */}
+                          <Button
+                            onClick={handleConfirmButton}
+                            variant="outlined"
+                            size="small"
+                            color="primary"
+                            style={{
+                              height: '29.5px'
+                            }}
+                            sx={{ backgroundColor: '#635bff', color: '#fff', '&:hover': { backgroundColor: '#635bff' } }}
+                          >
+                            Confirm
+                          </Button>
+
+                          {/* Exit Button */}
+                          <Button
+                            onClick={''}
+                            variant="outlined"
+                            size="small"
+                            style={{
+                              height: '29.5px'
+                            }}
+                            sx={{
+                              backgroundColor: 'red',
+                              color: '#fff',
+                              borderColor: 'red',
+                              '&:hover': {
+                                backgroundColor: '#cc0000',
+                                borderColor: '#cc0000',
+                              },
+                            }}
+                          >
+                            Cancel
+                          </Button>
+                        </Stack>
+                      </Box>
+                    </div>
+
+                    <ReusableTable
+                      columnDefs={columnDefs}
+                      rowData={rowsSecondTable}
+                      height="50%"
+                      theme="ag-theme-quartz"
+                      isDarkMode={false}
+                      pagination={true}
+                      paginationPageSize={25}
+                      paginationPageSizeSelector={[25, 50, 100, 250, 500, 1000]}
+                      quickFilter={false}
+                      onRowClick={(params) => {
+                        console.log('Row clicked:', params);
+                      }}
+                      onRowDoubleClick={''}
+                      onSelectionChanged={handleSelectionChanged}
+                      loading={isLoading}
+                      enableExport={false}
+                      exportSelectedOnly={false}
+                      selectedRows={false}
+                      enableCheckbox={false}
+                      enableResetButton={false}
+                      enableExitBackButton={false}
+                      enableLanguageSwitch={false}
+                      compactMode={true}
+                      rowHeight={24}
+                      headerHeight={30}
+                      className="custom-ag-table"
+                      defaultColDef={{
+                        resizable: true,
+                        sortable: true,
+                        filter: true,
+                        flex: 1,
+                        minWidth: 100
+                      }}
+                      customGridOptions={{
+                        suppressRowClickSelection: true,
+                        rowSelection: 'multiple',
+                        animateRows: true,
+                        enableCellTextSelection: true,
+                        ensureDomOrder: true
+                      }}
+                    />
+
+                    <div className="flex flex-wrap gap-4 items-center">
+                      <Box sx={{ margin: '10px 16px 0 0' }} width="100%" display="flex" justifyContent="flex-end">
+                        <Stack direction="row" spacing={2} alignItems="center">
+                          {/* Back Button */}
+                          <Button
+                            onClick={handleSaveButton}
+                            variant="outlined"
+                            size="small"
+                            color="primary"
+                            style={{
+                              height: '29.5px'
+                            }}
+                            sx={{ backgroundColor: '#635bff', color: '#fff', '&:hover': { backgroundColor: '#635bff' } }}
+                          >
+                            Save
+                          </Button>
+
+                          {/* Exit Button */}
+                          <Button
+                            onClick={''}
+                            variant="outlined"
+                            size="small"
+                            style={{
+                              height: '29.5px'
+                            }}
+                            sx={{
+                              backgroundColor: 'red',
+                              color: '#fff',
+                              borderColor: 'red',
+                              '&:hover': {
+                                backgroundColor: '#cc0000',
+                                borderColor: '#cc0000',
+                              },
+                            }}
+                          >
+                            Cancel
+                          </Button>
+                        </Stack>
+                      </Box>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+            </Box>
+          </Grid>
+        </DialogTitle>
+      </Dialog>
     </Box>
   );
 };

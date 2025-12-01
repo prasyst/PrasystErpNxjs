@@ -1029,6 +1029,8 @@ const ReusableTable = ({
   selectedRows = [],
   enableCheckbox = false,
   defaultColDef = {},
+  enableResetButton = true,
+  enableExitBackButton = true,
   autoSizeStrategy = null,
   compactMode = false,
   exportParams = {},
@@ -1334,7 +1336,9 @@ const ReusableTable = ({
           </div>
         )}
         
+        
         <div style={{ display: 'flex', marginRight: 'auto', gap: '4px' }}>
+          {enableResetButton && (
           <Button
             variant="contained"
             size="small"
@@ -1347,6 +1351,7 @@ const ReusableTable = ({
           >
             {t('reset')}
           </Button>
+          )}
           
           {enableExport && (
             <div style={{ position: 'relative' }} ref={exportDropdownRef}>
@@ -1530,6 +1535,7 @@ const ReusableTable = ({
           )}
         </div>
 
+        {enableExitBackButton && (
         <div className="flex flex-wrap gap-4 items-center">
           <Box width="100%" display="flex" justifyContent="flex-end">
             <Stack direction="row" spacing={2} alignItems="center">
@@ -1572,6 +1578,7 @@ const ReusableTable = ({
             </Stack>
           </Box>
         </div>
+        )}
       </div>
 
       {/* AG Grid */}
