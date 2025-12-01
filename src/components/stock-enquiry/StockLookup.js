@@ -1,10 +1,10 @@
 
 'use client';
-import React, { useState, useEffect, useCallback, useMemo,useRef } from "react";
-import { 
-  Box, 
-  Button, 
-  TextField, 
+import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import {
+  Box,
+  Button,
+  TextField,
   CircularProgress,
   Autocomplete,
 } from "@mui/material";
@@ -16,24 +16,24 @@ import RestoreIcon from '@mui/icons-material/Restore';
 
 // Column definitions for AG Grid with Serial No and Checkbox
 const columnDefs = [
- { 
-  headerName: "Select", 
-  width: 50, 
-  maxWidth: 40, 
-  checkboxSelection: true,
-  headerCheckboxSelection: true,
-  // pinned: 'left',
-  lockPosition: true,
-  suppressMenu: true,
-  sortable: false,
-  filter: false,
-  resizable: false,
-  
-  headerClass: 'checkbox-header'
-},
-  { 
-    field: "ORDBK_NO", 
-    headerName: "ORDER NO", 
+  {
+    headerName: "Select",
+    width: 50,
+    maxWidth: 40,
+    checkboxSelection: true,
+    headerCheckboxSelection: true,
+    // pinned: 'left',
+    lockPosition: true,
+    suppressMenu: true,
+    sortable: false,
+    filter: false,
+    resizable: false,
+
+    headerClass: 'checkbox-header'
+  },
+  {
+    field: "ORDBK_NO",
+    headerName: "ORDER NO",
     width: 130,
     maxWidth: 140,
     filter: 'agSetColumnFilter',
@@ -42,9 +42,9 @@ const columnDefs = [
     },
     sortable: true
   },
-  { 
-    field: "ORDER_Date", 
-    headerName: "ORDER DATE", 
+  {
+    field: "ORDER_Date",
+    headerName: "ORDER DATE",
     width: 130,
     filter: 'agDateColumnFilter',
     filterParams: {
@@ -65,9 +65,9 @@ const columnDefs = [
     },
     sortable: true
   },
-  { 
-    field: "PORD_REF", 
-    headerName: "P ORDER REF", 
+  {
+    field: "PORD_REF",
+    headerName: "P ORDER REF",
     width: 160,
     filter: 'agSetColumnFilter',
     filterParams: {
@@ -75,9 +75,9 @@ const columnDefs = [
     },
     sortable: true
   },
-  { 
-    field: "DLV_DT", 
-    headerName: "DELIVERY DT", 
+  {
+    field: "DLV_DT",
+    headerName: "DELIVERY DT",
     width: 130,
     filter: 'agDateColumnFilter',
     filterParams: {
@@ -96,44 +96,44 @@ const columnDefs = [
     },
     sortable: true
   },
-  { 
-    field: "PARTY_NAME", 
-    headerName: "PARTY NAME", 
+  {
+    field: "PARTY_NAME",
+    headerName: "PARTY NAME",
     width: 230,
-     filter: 'agSetColumnFilter',
+    filter: 'agSetColumnFilter',
     filterParams: {
-      defaultToNothingSelected: true, 
+      defaultToNothingSelected: true,
     },
     sortable: true
   },
-  { 
-    field: "BROKER_NAME", 
-    headerName: "BROKER NAME", 
+  {
+    field: "BROKER_NAME",
+    headerName: "BROKER NAME",
     width: 140,
-     filter: 'agSetColumnFilter',
+    filter: 'agSetColumnFilter',
     filterParams: {
       defaultToNothingSelected: true, // This ensures all options are initially unchecked
     },
     sortable: true
   },
-  { 
-    field: "QTY", 
-    headerName: "QUANTITY", 
+  {
+    field: "QTY",
+    headerName: "QUANTITY",
     width: 120,
-     maxWidth: 130,
+    maxWidth: 130,
     filter: 'agNumberColumnFilter',
   },
-  { 
-    field: "BAL_QTY", 
-    headerName: "BALANCE QTY", 
+  {
+    field: "BAL_QTY",
+    headerName: "BALANCE QTY",
     width: 130,
     filter: 'agNumberColumnFilter',
   },
-  { 
-    field: "AMT", 
-    headerName: "AMOUNT", 
+  {
+    field: "AMT",
+    headerName: "AMOUNT",
     width: 120,
-     maxWidth: 130,
+    maxWidth: 130,
     filter: 'agNumberColumnFilter',
     valueFormatter: (params) => {
       if (params.value != null) {
@@ -291,7 +291,7 @@ export default function StockLookup() {
     },
   };
 
-  const handleReset=async()=>{
+  const handleReset = async () => {
     await fetchTableData()
   }
 
@@ -299,8 +299,8 @@ export default function StockLookup() {
     <div className="p-2 w-full">
       <div className="w-full mx-auto" style={{ maxWidth: '100%' }}>
         <Box sx={{ width: "100%", px: 2, mb: 2 }}>
-          <Box sx={{ 
-            display: "flex", 
+          <Box sx={{
+            display: "flex",
             flexDirection: { xs: "column", sm: "row" },
             justifyContent: "flex-start",
             alignItems: "center",
@@ -337,9 +337,9 @@ export default function StockLookup() {
                         ...prev,
                         PARTY_KEY: newValue?.PARTY_KEY || '',
                         PARTY_NAME: newValue?.PARTY_NAME || '',
-                        PARTYDTL_ID: '' 
+                        PARTYDTL_ID: ''
                       }));
-                    
+
                       if (newValue?.PARTY_KEY) {
                         fetchPartyDetails(newValue.PARTY_KEY);
                       } else {
@@ -418,18 +418,18 @@ export default function StockLookup() {
             >
               New
             </Button>
-            
+
           </Box>
         </Box>
 
         {/* AG Grid Table */}
         <div style={{ height: 'calc(100vh - 150px)', width: '100%' }}>
           {isLoading ? (
-            <div style={{ 
-              display: 'flex', 
-              justifyContent: 'center', 
-              alignItems: 'center', 
-              height: '100%' 
+            <div style={{
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              height: '100%'
             }}>
               <CircularProgress />
             </div>
@@ -453,7 +453,7 @@ export default function StockLookup() {
               selectedRows={selectedRows}
               enableCheckbox={true}
               compactMode={true}
-              rowHeight={24} 
+              rowHeight={24}
               defaultColDef={{
                 resizable: true,
                 sortable: true,
@@ -468,11 +468,11 @@ export default function StockLookup() {
                 enableCellTextSelection: true,
                 ensureDomOrder: true
               }}
-                exportParams={{
-    suppressTextAsCDATA: true,
-    fileName: 'Order_Details',
-    sheetName: 'Order Details'
-  }}
+              exportParams={{
+                suppressTextAsCDATA: true,
+                fileName: 'Order_Details',
+                sheetName: 'Order Details'
+              }}
             />
           )}
         </div>
