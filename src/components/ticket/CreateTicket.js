@@ -764,7 +764,7 @@ const CreateTicketPage = () => {
                     ml: 'auto',
                     mr: 1
                   }}>
-                  Item Recognition
+                  Item Requisition
                 </Link>
               </Box>
 
