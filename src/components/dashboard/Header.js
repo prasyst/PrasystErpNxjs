@@ -52,7 +52,7 @@
 //   const handleSearchChange = (e) => {
 //     const query = e.target.value;
 //     setSearchQuery(query);
-    
+
 //     if (query.length > 0) {
 //       const results = searchableItems.filter(item => 
 //         item.name.toLowerCase().includes(query.toLowerCase())
@@ -125,7 +125,7 @@
 //       }}
 //       className="flex items-center justify-between"
 //     >
-      
+
 //       <div className="flex items-center gap-4">
 //         {/* Enhanced Search Bar with Auto-suggest */}
 //         <div 
@@ -160,7 +160,7 @@
 //           >
 //             <IoIosSearch size={20} color="white" />
 //           </button>
-          
+
 //           <input 
 //             type="text" 
 //             placeholder="Search modules..." 
@@ -200,7 +200,7 @@
 //             }}>
 //               {searchResults.map((item, index) => {
 //                 const IconComponent = getIconComponent(item.icon);
-                
+
 //                 return (
 //                   <div
 //                     key={index}
@@ -276,7 +276,7 @@
 //               <MdPushPin size={30} />
 //             </button>
 //           </Link>
-          
+
 //         {/* User Dropdown */}
 //         <div 
 //           style={{
@@ -474,7 +474,7 @@ const Header = ({ isSidebarCollapsed, onMenuToggle, isMobile }) => {
     if (storedRole) {
       setUserRole(storedRole);
     }
-    
+
     // Fetch company and branch names
     fetchCompanyAndBranchNames();
   }, []);
@@ -523,15 +523,15 @@ const Header = ({ isSidebarCollapsed, onMenuToggle, isMobile }) => {
       if (searchRef.current && !searchRef.current.contains(event.target)) {
         setShowSearchResults(false);
       }
-      
+
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setIsDropdownOpen(false);
       }
-      
+
       if (notificationsRef.current && !notificationsRef.current.contains(event.target)) {
         setIsNotificationsOpen(false);
       }
-      
+
       if (settingsRef.current && !settingsRef.current.contains(event.target)) {
         setIsQuickSettingsOpen(false);
       }
@@ -546,9 +546,9 @@ const Header = ({ isSidebarCollapsed, onMenuToggle, isMobile }) => {
   const handleSearchChange = (e) => {
     const query = e.target.value;
     setSearchQuery(query);
-    
+
     if (query.length > 0) {
-      const results = searchableItems.filter(item => 
+      const results = searchableItems.filter(item =>
         item.name.toLowerCase().includes(query.toLowerCase())
       );
       setSearchResults(results);
@@ -607,7 +607,7 @@ const Header = ({ isSidebarCollapsed, onMenuToggle, isMobile }) => {
   };
 
   const markNotificationAsRead = (id) => {
-    setNotifications(notifications.map(notif => 
+    setNotifications(notifications.map(notif =>
       notif.id === id ? { ...notif, read: true } : notif
     ));
   };
@@ -631,7 +631,7 @@ const Header = ({ isSidebarCollapsed, onMenuToggle, isMobile }) => {
   };
 
   return (
-    <header 
+    <header
       style={{
         backgroundColor: '#635bff',
         padding: isMobile ? '0.2rem 0.8rem' : '0.2rem 1.5rem',
@@ -651,7 +651,7 @@ const Header = ({ isSidebarCollapsed, onMenuToggle, isMobile }) => {
 
       <div className="flex items-center gap-3 md:gap-4">
         {isMobile && (
-          <button 
+          <button
             onClick={onMenuToggle}
             style={{
               background: 'none',
@@ -673,7 +673,7 @@ const Header = ({ isSidebarCollapsed, onMenuToggle, isMobile }) => {
           </button>
         )}
 
-        <div 
+        <div
           ref={searchRef}
           className="flex items-center relative"
           style={{
@@ -688,7 +688,7 @@ const Header = ({ isSidebarCollapsed, onMenuToggle, isMobile }) => {
             WebkitBackdropFilter: 'blur(10px)',
           }}
         >
-          <button 
+          <button
             onClick={handleSearchIconClick}
             style={{
               background: 'none',
@@ -706,10 +706,10 @@ const Header = ({ isSidebarCollapsed, onMenuToggle, isMobile }) => {
           >
             <IoIosSearch size={20} />
           </button>
-          
-          <input 
-            type="text" 
-            placeholder="Search modules, features..." 
+
+          <input
+            type="text"
+            placeholder="Search modules, features..."
             value={searchQuery}
             onChange={handleSearchChange}
             onFocus={() => setShowSearchResults(true)}
@@ -758,13 +758,13 @@ const Header = ({ isSidebarCollapsed, onMenuToggle, isMobile }) => {
               </div>
               {searchResults.map((item, index) => {
                 const IconComponent = getIconComponent(item.icon);
-                
+
                 return (
                   <div
                     key={index}
                     onClick={() => handleSearchResultClick(item.path)}
                     style={{
-                      padding: '0.875rem 1rem',
+                      padding: '0.4rem 1rem',
                       cursor: 'pointer',
                       display: 'flex',
                       alignItems: 'center',
@@ -775,8 +775,8 @@ const Header = ({ isSidebarCollapsed, onMenuToggle, isMobile }) => {
                     className="hover:bg-gray-50 active:bg-gray-100"
                   >
                     {IconComponent && (
-                      <span style={{ 
-                        marginRight: '0.875rem', 
+                      <span style={{
+                        marginRight: '0.875rem',
                         color: '#635bff',
                         display: 'flex',
                         alignItems: 'center',
@@ -786,9 +786,9 @@ const Header = ({ isSidebarCollapsed, onMenuToggle, isMobile }) => {
                         <IconComponent size={16} />
                       </span>
                     )}
-                    <span style={{ 
-                      fontSize: '0.9rem', 
-                      color: '#333', 
+                    <span style={{
+                      fontSize: '0.9rem',
+                      color: '#333',
                       fontWeight: '500',
                       flex: 1,
                     }}>
@@ -837,7 +837,7 @@ const Header = ({ isSidebarCollapsed, onMenuToggle, isMobile }) => {
 
         {/* Company and Branch Name Display */}
         {!isMobile && (companyName || branchName) && (
-          <div 
+          <div
             style={{
               display: 'flex',
               flexDirection: 'column',
@@ -850,9 +850,9 @@ const Header = ({ isSidebarCollapsed, onMenuToggle, isMobile }) => {
               maxWidth: '300px',
             }}
           >
-            
+
             {branchName && (
-              <span 
+              <span
                 style={{
                   color: 'rgba(255, 255, 255, 0.9)',
                   fontSize: '1rem',
@@ -876,7 +876,7 @@ const Header = ({ isSidebarCollapsed, onMenuToggle, isMobile }) => {
       <div className="flex items-center gap-2 md:gap-3">
         {!isMobile && (
           <Link href="/pinned-modules" passHref>
-            <button 
+            <button
               style={{
                 background: 'none',
                 border: 'none',
@@ -900,7 +900,7 @@ const Header = ({ isSidebarCollapsed, onMenuToggle, isMobile }) => {
         )}
         {!isMobile && (
           <Link href="/analytics" passHref>
-            <button 
+            <button
               style={{
                 background: 'none',
                 border: 'none',
@@ -924,7 +924,7 @@ const Header = ({ isSidebarCollapsed, onMenuToggle, isMobile }) => {
         )}
 
         <div ref={notificationsRef} style={{ position: 'relative' }}>
-          <button 
+          <button
             onClick={() => {
               setIsNotificationsOpen(!isNotificationsOpen);
               setIsQuickSettingsOpen(false);
@@ -993,7 +993,7 @@ const Header = ({ isSidebarCollapsed, onMenuToggle, isMobile }) => {
               }}>
                 <span style={{ fontWeight: '600', color: '#333' }}>Notifications</span>
                 {notifications.length > 0 && (
-                  <button 
+                  <button
                     onClick={clearAllNotifications}
                     style={{
                       background: 'none',
@@ -1008,7 +1008,7 @@ const Header = ({ isSidebarCollapsed, onMenuToggle, isMobile }) => {
                   </button>
                 )}
               </div>
-              
+
               <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
                 {notifications.length > 0 ? (
                   notifications.map((notification) => (
@@ -1029,16 +1029,16 @@ const Header = ({ isSidebarCollapsed, onMenuToggle, isMobile }) => {
                           {getNotificationIcon(notification.type)}
                         </span>
                         <div style={{ flex: 1 }}>
-                          <div style={{ 
-                            fontSize: '0.9rem', 
+                          <div style={{
+                            fontSize: '0.9rem',
                             color: '#333',
                             fontWeight: notification.read ? '400' : '500',
                             lineHeight: '1.4',
                           }}>
                             {notification.text}
                           </div>
-                          <div style={{ 
-                            fontSize: '0.75rem', 
+                          <div style={{
+                            fontSize: '0.75rem',
                             color: '#999',
                             marginTop: '0.25rem',
                           }}>
@@ -1072,7 +1072,7 @@ const Header = ({ isSidebarCollapsed, onMenuToggle, isMobile }) => {
           )}
         </div>
 
-        <div 
+        <div
           ref={dropdownRef}
           style={{
             display: 'flex',
@@ -1091,7 +1091,7 @@ const Header = ({ isSidebarCollapsed, onMenuToggle, isMobile }) => {
             setIsQuickSettingsOpen(false);
           }}
         >
-          <div 
+          <div
             style={{
               width: '36px',
               height: '36px',
@@ -1112,76 +1112,94 @@ const Header = ({ isSidebarCollapsed, onMenuToggle, isMobile }) => {
           </div>
 
           {!isMobile && (
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-              <span style={{ 
-                color: 'white', 
-                fontWeight: '600', 
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'flex-start',
+              lineHeight: '1.3'
+            }}>
+              <span style={{
+                color: 'white',
+                fontWeight: '600',
                 fontSize: '0.9rem',
-                lineHeight: '1.2',
               }}>
                 {userName || 'User'}
-              </span>
-              <span style={{ 
-                color: 'rgba(255, 255, 255, 0.8)', 
-                fontSize: '0.75rem',
-                lineHeight: '1.2',
-              }}>
-                {userRole || 'Admin'}
+                {userRole && (
+                  <span style={{
+                    marginLeft: '0px',
+                    fontWeight: '500',
+                    color: 'rgba(255, 255, 255, 0.85)',
+                    fontSize: '0.88rem',
+                    padding: '0.15rem 0.1rem',
+                    borderRadius: '6px',
+                    backdropFilter: 'blur(4px)',
+                  }}>
+                    ({userRole})
+                  </span>
+                )}
               </span>
             </div>
           )}
 
-          <svg 
-            width="12" 
-            height="12" 
-            viewBox="0 0 12 12" 
-            fill="none" 
+          <svg
+            width="12"
+            height="12"
+            viewBox="0 0 12 12"
+            fill="none"
             style={{
               transition: 'transform 0.2s ease',
               transform: isDropdownOpen ? 'rotate(180deg)' : 'rotate(0)',
             }}
           >
-            <path d="M3 4.5L6 7.5L9 4.5" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M3 4.5L6 7.5L9 4.5" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
 
           {isDropdownOpen && (
             <div style={{
               position: 'absolute',
-              top: '100%',
+              top: '90%',
               right: 0,
               backgroundColor: 'white',
               border: '1px solid #e0e0e0',
               borderRadius: '12px',
-              width: '220px',
+              width: '170px',
               zIndex: 1000,
               boxShadow: '0 8px 25px rgba(0,0,0,0.15)',
-              marginTop: '0.75rem',
+              marginTop: '0.15rem',
               overflow: 'hidden',
             }}>
               {/* User header */}
+              {/* Header inside dropdown */}
               <div style={{
                 padding: '1rem',
                 backgroundColor: '#f8fbff',
                 borderBottom: '1px solid #e8f0fe',
               }}>
-                <div style={{ fontWeight: '600', color: '#333', fontSize: '0.95rem' }}>
-                  {userName || 'User'}
-                </div>
-                <div style={{ 
-                  color: '#666', 
-                  fontSize: '0.8rem',
-                  marginTop: '0.25rem',
+                <div style={{
+                  fontWeight: '600',
+                  color: '#333',
+                  fontSize: '0.95rem',
                 }}>
-                  {userRole || 'Administrator'}
+                  {userName || 'User'}
+                  {userRole && (
+                    <span style={{
+                      marginLeft: '0.4rem',
+                      fontWeight: '500',
+                      fontSize: '0.85rem',
+                      color: '#635bff',
+                    }}>
+                      ({userRole})
+                    </span>
+                  )}
                 </div>
               </div>
-              
-              <div style={{ padding: '0.5rem 0' }}>
-                <button 
+
+              <div style={{ padding: '0.1rem 0' }}>
+                <button
                   onClick={handleProfile}
                   style={{
-                    width: '100%',
-                    padding: '0.75rem 1rem',
+                    width: '90%',
+                    padding: '0.3rem 1rem',
                     background: 'none',
                     border: 'none',
                     textAlign: 'left',
@@ -1198,12 +1216,12 @@ const Header = ({ isSidebarCollapsed, onMenuToggle, isMobile }) => {
                   <span>👤</span>
                   <span>My Profile</span>
                 </button>
-                
-                <button 
+
+                <button
                   onClick={handleChangePassword}
                   style={{
                     width: '100%',
-                    padding: '0.75rem 1rem',
+                    padding: '0.3rem 1rem',
                     background: 'none',
                     border: 'none',
                     textAlign: 'left',
@@ -1220,12 +1238,15 @@ const Header = ({ isSidebarCollapsed, onMenuToggle, isMobile }) => {
                   <span>🔒</span>
                   <span>Change Password</span>
                 </button>
-                <div style={{ height: '1px', backgroundColor: '#f0f0f0', margin: '0.5rem 0' }} />
-                <button 
+                
+                {/* <div style={{ height: '1px', backgroundColor: '#f0f0f0', margin: '0.25rem 0' }} /> */}
+
+                <button
                   onClick={handleLogout}
                   style={{
                     width: '100%',
-                    padding: '0.75rem 1rem',
+                    padding: '0.3rem 1rem',
+                    marginBottom:'3px',
                     background: 'none',
                     border: 'none',
                     textAlign: 'left',
@@ -1243,7 +1264,9 @@ const Header = ({ isSidebarCollapsed, onMenuToggle, isMobile }) => {
                   <span>🚪</span>
                   <span>Logout</span>
                 </button>
+
               </div>
+
             </div>
           )}
         </div>
