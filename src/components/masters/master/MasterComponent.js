@@ -57,6 +57,8 @@ import {
   AttachMoney as MoneyIcon,
   Event as EventIcon
 } from '@mui/icons-material';
+import AnnouncementIcon from '@mui/icons-material/Announcement';
+import CreateIcon from '@mui/icons-material/Create';
 
 function TabPanel(props) {
   const { children, value, index, ...other } = props;
@@ -281,10 +283,10 @@ export default function MasterPage() {
       id: 'ticketing',
       name: 'Ticketing',
       children: [
-        { name: 'Ticket Category', icon: AssignmentIcon, path: '/masters/ticketing/ticketCategory' },
+        { name: 'Ticket Category', icon: CategoryIcon, path: '/masters/ticketing/ticketCategory' },
         { name: 'Ticket SubCategory', icon: AssignmentIcon, path: '/masters/ticketing/ticketSubCat' },
-        { name: 'Service/Complaint', icon: BuildIcon, path: '/masters/ticketing/serviceComplaint' },
-        { name: 'Raise Ticket', icon: BuildIcon, path: '/tickets/create-tickets' },
+        { name: 'Service/Complaint', icon:  AnnouncementIcon, path: '/masters/ticketing/serviceComplaint' },
+        { name: 'Raise Ticket', icon: CreateIcon, path: '/tickets/create-tickets' },
       ],
     }
   ]; 
