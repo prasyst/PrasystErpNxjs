@@ -579,10 +579,10 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
     {
       name: 'Accounts',
       icon: MdAccountBalance,
-      path: '#',
-      // path: '/accountspage',
+      // path: '#',
+      //  path: '/accountspage?activeTab=general-ledger',
       children: [
-        { name: 'General Ledger', icon: MdAssignment, path: '/accountspage/general-ledger' },
+        { name: 'General Ledger', icon: MdAssignment, path: '#' },
         { name: 'Accounts Payable', icon: MdPayments, path: '#' },
         { name: 'Accounts Receivable', icon: MdReceipt, path: '#' },
         { name: 'Financial Reports', icon: MdAnalytics, path: '#' },
@@ -1085,14 +1085,9 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
               if (isMobile) {
                 onClose();
               } else {
-                // Only allow manual collapse if NOT on masters routes
-                // const isMastersRoute = pathname === '/masterpage';
-                // if (!isMastersRoute) {
-                //   setIsCollapsed(!isCollapsed);
                 setIsCollapsed(true);
                 setOpenSections({});
                 setHasOpenSubmenu(false);
-
               }
             }}
             style={{
