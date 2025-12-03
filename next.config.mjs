@@ -1,15 +1,12 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-    // output: 'export',
-      experimental: {
-    turbopack: true, // Enable Turbopack (faster bundler)
-  },
-      reactStrictMode: true, 
-     assetPrefix: '/',
+  // output: 'export',
+  reactStrictMode: true,
+  assetPrefix: '/',
   trailingSlash: true,
-   images: {
+  images: {
     // unoptimized: true, 
-       unoptimized: process.env.NODE_ENV === 'development',
+    unoptimized: process.env.NODE_ENV === 'development',
   },
 };
 
