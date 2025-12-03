@@ -1,6 +1,9 @@
 'use client';
-
 import { useEffect, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
+import { RiSubtractLine } from "react-icons/ri";
+
 import {
   MdDashboard, MdSearch, MdOutlineApartment, MdClose, MdMenu, MdChevronRight,
   MdDomain, MdMap, MdOutlineGroupWork, MdCategory, MdWarehouse, MdWork,
@@ -9,8 +12,29 @@ import {
   MdLocalMall, MdCollectionsBookmark, MdStraighten, MdBrandingWatermark,
   MdReceipt, MdGavel, MdAssignment, MdAttachMoney, MdEvent, MdAnalytics,
   MdSettings, MdInventory, MdAccountBalance, MdPayments, MdSummarize,
-  MdPushPin, MdOutlinePushPin, MdOutlineInventory,
+  MdPushPin, MdOutlinePushPin, MdOutlineInventory, MdCalendarToday,
+  MdSubdirectoryArrowRight, MdSupervisorAccount, MdAnchor, MdPercent, MdPayment, MdSettingsSuggest, MdHowToReg, MdRuleFolder,
+  MdAssignmentTurnedIn,
+  MdSupport, MdSupportAgent,
+  MdAddTask,
 } from 'react-icons/md';
+import {
+  RiFileList3Line, RiScissors2Line, RiLoopLeftLine, RiUserSharedLine, RiCheckboxBlankCircleLine,
+  RiFileList2Line,
+  RiToolsLine, RiShoppingBag3Line, RiShoppingBasket2Line,
+  RiBarcodeLine, RiInboxArchiveLine, RiFileShield2Line,
+  RiImageAddLine, RiDownload2Line, RiShareForwardLine, RiSettings4Line,
+  RiPriceTag3Line, RiExchangeLine,
+  RiStackLine, RiBriefcase2Line,
+  RiSearchLine, RiPlayListAddLine,
+  RiUserSearchLine, RiShoppingCart2Line,
+  RiTaskLine, RiTruckLine,
+  RiTimer2Line, RiBuilding4Line,
+  RiDraftLine,
+  RiCheckboxCircleLine,
+  RiArchiveStackLine
+} from 'react-icons/ri';
+
 import { TiTicket } from "react-icons/ti";
 import { FaBuilding, FaTruck, FaUserTag, FaHandshake, FaBalanceScale, FaBoxOpen, FaBoxes, FaUserTie, FaRupeeSign } from 'react-icons/fa';
 import { FiUser } from 'react-icons/fi';
@@ -19,104 +43,102 @@ import { AiOutlineUsergroupAdd, AiOutlineNodeIndex } from 'react-icons/ai';
 import { IoIosConstruct } from 'react-icons/io';
 import { usePin } from '../../app/hooks/usePin';
 
-const iconMap = {
-  MdDashboard,
-  MdSearch,
-  MdOutlineApartment,
-  MdDomain,
-  MdMap,
-  MdOutlineGroupWork,
-  MdCategory,
-  MdWarehouse,
-  MdWork,
-  MdAccountBox,
-  MdEmojiPeople,
-  MdAccessibility,
-  MdLocalShipping,
-  MdPeople,
-  MdPersonAdd,
-  MdClass,
-  MdLocalOffer,
-  MdStars,
-  MdRateReview,
-  MdBuild,
-  MdLocalMall,
-  MdCollectionsBookmark,
-  MdStraighten,
-  MdBrandingWatermark,
-  MdReceipt,
-  MdGavel,
-  MdAssignment,
-  MdAttachMoney,
-  MdEvent,
-  MdAnalytics,
-  MdSettings,
-  MdInventory,
-  MdAccountBalance,
-  MdPayments,
-  MdSummarize,
-  FaBuilding,
-  FaTruck,
-  FaUserTag,
-  FaHandshake,
-  FaBalanceScale,
-  FaBoxOpen,
-  FaBoxes,
-  FaUserTie,
-  FiUser,
-  AiOutlineUsergroupAdd,
-  AiOutlineNodeIndex,
-  TiTicket
-};
-
 const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => {
   const sidebarRef = useRef(null);
-  const megaMenuRef = useRef(null);
+  const router = useRouter();
+  const pathname = usePathname();
   const [activeItem, setActiveItem] = useState('');
-  const [hoveredItems, setHoveredItems] = useState([]);
-  const [openMegaMenu, setOpenMegaMenu] = useState(null);
-  const [megaMenuPosition, setMegaMenuPosition] = useState({ top: 0, left: 0 });
-  const [megaMenuLevels, setMegaMenuLevels] = useState([]);
+  const [openSections, setOpenSections] = useState({});
   const { pinnedModules, pinModule, unpinModule, isPinned } = usePin();
   const [showPinConfirm, setShowPinConfirm] = useState(null);
   const [showUnpinConfirm, setShowUnpinConfirm] = useState(null);
+  // Add this state at the top with your other useState
+  const [hasOpenSubmenu, setHasOpenSubmenu] = useState(false);
+
+
+
 
   useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (isMobile && sidebarRef.current && !sidebarRef.current.contains(event.target)) {
-        onClose();
+    const protectedRoutes = [
+      '/masterpage',
+      '/inventorypage',
+      '/tickets'
+    ];
+
+    const isProtected = protectedRoutes.some(route =>
+      pathname.startsWith(route) || pathname.includes(route)
+    );
+
+    if (isProtected) {
+      setIsCollapsed(false);
+      setOpenSections(prev => ({
+        ...prev,
+        Masters: pathname.includes('masterpage'),
+        Inventory: pathname === '/inventorypage'
+      }));
+      setHasOpenSubmenu(true);
+    }
+  }, [pathname]);
+  // Add this function
+  const toggleSection = (name) => {
+    setOpenSections(prev => {
+      const newState = { ...prev };
+
+      if (newState[name]) {
+        delete newState[name];
+      } else {
+        newState[name] = true;
       }
 
-      if (
-        megaMenuRef.current &&
-        !megaMenuRef.current.contains(event.target) &&
-        sidebarRef.current &&
-        !sidebarRef.current.contains(event.target)
-      ) {
-        closeMegaMenu();
-      }
-    };
+      // NEVER auto-close Masters or Inventory if we're on their pages
+      const isOnMasters = pathname === '/masterpage';
+      const isOnInventory = pathname === '/inventorypage';
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [isMobile, onClose]);
+      if (isOnMasters) newState['Masters'] = true;
+      if (isOnInventory) newState['Inventory'] = true;
+
+      setHasOpenSubmenu(Object.keys(newState).length > 0);
+      return newState;
+    });
+  };
+
+
+  useEffect(() => {
+    // Auto-open "Masters" if current path starts with /masters
+    if (typeof window !== 'undefined') {
+      const path = window.location.pathname;
+      if (path === '/masterpage') {
+        setOpenSections(prev => ({ ...prev, Masters: true }));
+        setHasOpenSubmenu(true);
+        setIsCollapsed(false); // force open
+      }
+    }
+  }, []);
+
+  // useEffect(() => {
+  //   const handleClickOutside = (event) => {
+  //     if (isMobile && sidebarRef.current && !sidebarRef.current.contains(event.target)) {
+  //       onClose();
+  //     }
+  //   };
+
+  //   document.addEventListener('mousedown', handleClickOutside);
+  //   return () => {
+  //     document.removeEventListener('mousedown', handleClickOutside);
+  //   };
+  // }, [isMobile, onClose]);
 
   useEffect(() => {
     if (isMobile && !isOpen) {
-      closeMegaMenu();
     }
   }, [isMobile, isOpen]);
 
   const menuItems = [
-    { name: 'Dashboard', icon: MdDashboard, path: '/dashboard', },
-    // { name: 'SalesDash', icon: FaRupeeSign, path: '/dashboard/sales-dashboard', },
-    // { name: 'Stock Enquiry', icon: MdSearch, path: '/dashboard/stock-enquiry-table' },
+    { name: 'Dashboard', icon: MdDashboard, path: '/dashboard' },
     {
       name: 'Masters',
       icon: MdOutlineApartment,
-      path: '/masterpage',
+      path: '/masterpage?activeTab=company',
       children: [
         {
           name: 'Company',
@@ -134,19 +156,18 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
             { name: 'Employee', icon: MdAccessibility, path: '#' },
           ],
         },
-        ,
         {
           name: 'Location',
           icon: FaTruck,
-          path: '#',
-          // children: [
-          //   { name: 'Broker', icon: FaHandshake, path: '#' },
-          // ],
+          path: '/masterpage?activeTab=location',
+          children: [
+            { name: 'Location master', icon: FaHandshake, path: '#' },
+          ],
         },
         {
           name: 'Vendors',
-          icon: FaTruck,
-          // path: '/masters/vendors',
+          icon: MdLocalShipping,
+          path: '/masterpage?activeTab=vendors',
           children: [
             { name: 'Broker', icon: FaHandshake, path: '#' },
             { name: 'Transporter', icon: MdLocalShipping, path: '#' },
@@ -156,7 +177,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
         {
           name: 'Customers',
           icon: MdPeople,
-          // path: '/masters/customers',
+          path: '/masterpage?activeTab=customers',
           children: [
             { name: 'Debtors/Customers', icon: MdPeople, path: '/masters/customers' },
             { name: 'Category (For Rate)', icon: MdCategory, path: '#' },
@@ -173,7 +194,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
         {
           name: 'Process',
           icon: FaTruck,
-          path: '#',
+          path: '/masterpage?activeTab=process',
           // children: [
           //   { name: 'Broker', icon: FaHandshake, path: '#' },
           // ],
@@ -181,7 +202,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
         {
           name: 'Products',
           icon: FaBoxOpen,
-          // path: '/masters/products',
+          path: '/masterpage?activeTab=products',
           children: [
             { name: 'Category Master', icon: MdCategory, path: '/masters/products/category' },
             { name: 'Product Group', icon: AiOutlineNodeIndex, path: '/masters/products/productgrp' },
@@ -201,7 +222,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
         {
           name: 'GST/SAC Code',
           icon: MdReceipt,
-          // path: '/masters/gst-sac',
+          path: '/masterpage?activeTab=gst',
           children: [
             { name: 'GST Codes', icon: MdReceipt, path: '#' },
           ],
@@ -209,7 +230,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
         {
           name: 'Tax/Terms',
           icon: FaBalanceScale,
-          // path: '/masters/tax-terms',
+          path: '/masterpage?activeTab=tax',
           children: [
             { name: 'Tax Group', icon: MdGavel, path: '#' },
             { name: 'Tax Master', icon: MdGavel, path: '/masters/taxterms/taxmaster' },
@@ -236,7 +257,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
         {
           name: 'TDS Master',
           icon: FaTruck,
-          path: '#',
+          path: '/masterpage?activeTab=tds',
           children: [
             { name: 'Broker', icon: FaHandshake, path: '#' },
           ],
@@ -245,7 +266,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
         {
           name: 'QC Master',
           icon: FaTruck,
-          path: '#',
+          path: '/masterpage?activeTab=qc',
           children: [
             { name: 'Broker', icon: FaHandshake, path: '#' },
           ],
@@ -253,7 +274,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
         {
           name: 'Season',
           icon: MdEvent,
-          // path: '/masters/season',
+          path: '/masterpage?activeTab=season',
           children: [
             { name: 'Season Master', icon: MdEvent, path: '/masters/season/season' },
           ],
@@ -261,7 +282,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
 
         {
           name: 'Managers',
-          icon: FaTruck,
+          icon: MdSupervisorAccount,
           path: '#',
           children: [
             { name: 'Broker', icon: FaHandshake, path: '#' },
@@ -269,7 +290,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
         },
         {
           name: 'WareHouse Management',
-          icon: FaTruck,
+          icon: MdWarehouse,
           path: '#',
           children: [
             { name: 'Broker', icon: FaHandshake, path: '#' },
@@ -278,7 +299,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
         ,
         {
           name: 'Port Master',
-          icon: FaTruck,
+          icon: MdAnchor,
           path: '#',
           children: [
             { name: 'Broker', icon: FaHandshake, path: '#' },
@@ -287,7 +308,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
         ,
         {
           name: 'Pay ment term',
-          icon: FaTruck,
+          icon: MdPayment,
           path: '#',
           children: [
             { name: 'Broker', icon: FaHandshake, path: '#' },
@@ -295,7 +316,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
         },
         {
           name: 'Rate term',
-          icon: FaTruck,
+          icon: MdPercent,
           path: '#',
           children: [
             { name: 'Broker', icon: FaHandshake, path: '#' },
@@ -304,7 +325,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
         },
         {
           name: 'Approval Settings',
-          icon: FaTruck,
+          icon: MdSettingsSuggest,
           path: '#',
           children: [
             { name: 'Broker', icon: FaHandshake, path: '#' },
@@ -312,15 +333,15 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
         },
         {
           name: 'Approval',
-          icon: FaTruck,
-          path: '#',
+          icon: MdHowToReg,
+          path: '/masterpage?activeTab=Approval',
           children: [
             { name: 'Broker', icon: FaHandshake, path: '#' },
           ],
         },
         {
           name: 'TransApproval',
-          icon: FaTruck,
+          icon: MdAssignmentTurnedIn,
           path: '#',
           children: [
             { name: 'Broker', icon: FaHandshake, path: '#' },
@@ -328,7 +349,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
         },
         {
           name: 'TransApproval Setting',
-          icon: FaTruck,
+          icon: MdRuleFolder,
           path: '#',
           children: [
             { name: 'Broker', icon: FaHandshake, path: '#' },
@@ -337,13 +358,13 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
         },
         {
           name: 'Ticketing',
-          icon: FaTruck,
-          path: '#',
+          icon: TiTicket,
+          path: '/masterpage?activeTab=ticketing',
           children: [
-            { name: 'Ticket Category', icon: FaHandshake, path: '/masters/ticketing/ticketCategory' },
-            { name: 'Ticket SubCategory', icon: FaHandshake, path: '/masters/ticketing/ticketSubCat' },
-            { name: 'Service/Complaint', icon: FaHandshake, path: '/masters/ticketing/serviceComplaint' },
-            { name: 'Raise Service Ticket', icon: FaHandshake, path: '/masters/ticketing/raiseTicket' },
+            { name: 'Ticket Category', icon: MdCategory, path: '/masters/ticketing/ticketCategory' },
+            { name: 'Ticket SubCategory', icon: MdSubdirectoryArrowRight, path: '/masters/ticketing/ticketSubCat' },
+            { name: 'Service/Complaint', icon: MdSupport, path: '/masters/ticketing/serviceComplaint' },
+            { name: 'Raise Service Ticket', icon: MdAddTask, path: '/masters/ticketing/raiseTicket' },
           ],
         },
       ],
@@ -351,137 +372,217 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
 
     {
       name: 'Inventory',
-      icon: MdInventory,
+      icon: MdWarehouse,
       path: '/inventorypage',
       children: [
-        { name: 'Artical/Style Master', icon: MdSummarize, path: '/inverntory/style/' },
-        { name: 'Style/Parts Master', icon: MdSummarize, path: '#' },
-        { name: 'BarCode Printing', icon: MdSummarize, path: '#' },
-        { name: 'Style Shade Image upload', icon: MdSummarize, path: '#' },
-        { name: 'Price List Detailes', icon: MdSummarize, path: '#' },
+        { name: 'Artical/Style Master', icon: RiFileList3Line, path: '/inverntory/style/' },
         {
-          name: 'Sampling & Developement', icon: FaBoxes, path: '#',
-          children: [
-            { name: 'Stock Enquiry', icon: MdSearch, path: '#' },
-            { name: 'Buyer Enquiry', icon: FaBoxes, path: '#' },
-            { name: 'Enquiry Followups', icon: FaBoxes, path: '/inverntory/packeging-barcode/' },
-            { name: 'Pending for Acceptance', icon: FaBoxes, path: '/inverntory/packeging-barcode/' },
-            { name: 'Sampling Form', icon: FaBoxes, path: '/inverntory/packeging-barcode/' },
-            { name: 'Enquiry Status', icon: FaBoxes, path: '/inverntory/packeging-barcode/' },
-          ],
+          name: 'Style/Parts Master',
+          icon: RiToolsLine, // Parts/Tools
+          path: '#'
         },
         {
-          name: 'Opening Stock', icon: FaBoxes, path: '#',
-          children: [
-            { name: 'RM Stock', icon: MdSearch, path: '/inverntory/packeging-barcode/' },
-            { name: 'Trims & Stores with Party', icon: FaBoxes, path: '#' },
-            { name: 'Finished good stock', icon: FaBoxes, path: '/inverntory/packeging-barcode/' },
-            { name: 'Process stock with party', icon: FaBoxes, path: '/inverntory/packeging-barcode/' },
-            { name: 'RM stock with party', icon: FaBoxes, path: '/inverntory/packeging-barcode/' },
-          ],
+          name: 'BarCode Printing',
+          icon: RiBarcodeLine, // Barcode icon
+          path: '#'
         },
         {
-          name: 'Purchase Order', icon: FaBoxes, path: '#',
-          children: [
-            { name: 'RM Purchase Order', icon: MdSearch, path: '/inverntory/packeging-barcode/' },
-            { name: 'Finished goods product order', icon: FaBoxes, path: '#' },
-            { name: 'Trims & Stores purchase order', icon: FaBoxes, path: '/inverntory/packeging-barcode/' },
-          ],
+          name: 'Style Shade Image Upload',
+          icon: RiImageAddLine, // Image upload
+          path: '#'
         },
         {
-          name: 'Inward Approvel', icon: FaBoxes, path: '#',
-          children: [
-            { name: 'Finished Goods', icon: MdSearch, path: '#' },
-            { name: 'Finished goods product order', icon: FaBoxes, path: '#' },
-            { name: 'Trims & Stores purchase order', icon: FaBoxes, path: '/inverntory/packeging-barcode/' },
-          ],
-        },
-        {
-          name: 'Provisonal GRN', icon: FaBoxes, path: '#',
-          children: [
-            { name: 'Finished Goods', icon: MdSearch, path: '#' },
-            { name: 'Finished goods product order', icon: FaBoxes, path: '#' },
-            { name: 'Trims & Stores purchase order', icon: FaBoxes, path: '/inverntory/packeging-barcode/' },
-          ],
-        },
-        {
-          name: 'Purchase Inward', icon: FaBoxes, path: '#',
-          children: [
-            { name: 'Finished Goods', icon: MdSearch, path: '#' },
-            { name: 'Finished goods product order', icon: FaBoxes, path: '#' },
-            { name: 'Trims & Stores purchase order', icon: FaBoxes, path: '/inverntory/packeging-barcode/' },
-          ],
-        },
-        {
-          name: 'RM/Acc Issue', icon: FaBoxes, path: '#',
-          children: [
-            { name: 'Finished Goods', icon: MdSearch, path: '#' },
-            { name: 'Finished goods product order', icon: FaBoxes, path: '#' },
-            { name: 'Trims & Stores purchase order', icon: FaBoxes, path: '/inverntory/packeging-barcode/' },
-          ],
-        },
-        {
-          name: 'Manufactring', icon: FaBoxes, path: '#',
-          children: [
-            { name: 'Finished Goods', icon: MdSearch, path: '#' },
-            { name: 'Finished goods product order', icon: FaBoxes, path: '#' },
-            { name: 'Trims & Stores purchase order', icon: FaBoxes, path: '/inverntory/packeging-barcode/' },
-          ],
-        },
-        {
-          name: 'Other Transaction', icon: FaBoxes, path: '#',
-          children: [
-
-            { name: 'Finished Goods', icon: MdSearch, path: '#' },
-            { name: 'Finished goods product order', icon: FaBoxes, path: '#' },
-            { name: 'Trims & Stores purchase order', icon: FaBoxes, path: '/inverntory/packeging-barcode/' },
-
-          ],
+          name: 'Price List Details',
+          icon: RiPriceTag3Line, // Price tag
+          path: '#',
+          dividerAfter: true,
         },
 
         {
-          name: 'Sample Packing', icon: FaBoxes, path: '#',
+          name: 'Sampling & Development',
+          icon: RiStackLine, // Boxes/stack to represent samples
+          path: '#',
           children: [
-            { name: 'Finished Goods', icon: MdSearch, path: '#' },
-            { name: 'Finished goods product order', icon: FaBoxes, path: '#' },
-            { name: 'Trims & Stores purchase order', icon: FaBoxes, path: '/inverntory/packeging-barcode/' },
+            {
+              name: 'Stock Enquiry',
+              icon: RiSearchLine, // Search
+              path: '#'
+            },
+            {
+              name: 'Buyer Enquiry',
+              icon: RiUserSearchLine, // Buyer search
+              path: '#'
+            },
+            {
+              name: 'Enquiry Follow-ups',
+              icon: RiTaskLine, // Follow up / task progress
+              path: '/inverntory/packeging-barcode/'
+            },
+            {
+              name: 'Pending for Acceptance',
+              icon: RiTimer2Line, // Pending / waiting
+              path: '/inverntory/packeging-barcode/'
+            },
+            {
+              name: 'Sampling Form',
+              icon: RiDraftLine, // Form / draft
+              path: '/inverntory/packeging-barcode/'
+            },
+            {
+              name: 'Enquiry Status',
+              icon: RiCheckboxCircleLine, // Status / check
+              path: '/inverntory/packeging-barcode/'
+            },
           ],
         },
         {
-          name: 'Make to order', icon: FaBoxes, path: '#',
+          name: 'Opening Stock', icon: MdInventory, path: '#',
           children: [
-            { name: 'Finished Goods', icon: MdSearch, path: '#' },
-            { name: 'Finished goods product order', icon: FaBoxes, path: '#' },
-            { name: 'Trims & Stores purchase order', icon: FaBoxes, path: '/inverntory/packeging-barcode/' },
+            {
+              name: 'RM Stock',
+              icon: RiArchiveStackLine,   // raw material stack
+              path: '/inverntory/packeging-barcode/'
+            },
+            {
+              name: 'Trims & Stores with Party',
+              icon: RiScissors2Line,       // trims / cutting
+              path: '#'
+            },
+            {
+              name: 'Finished Good Stock',
+              icon: RiCheckboxCircleLine,  // finished / approved
+              path: '/inverntory/packeging-barcode/'
+            },
+            {
+              name: 'Process Stock with Party',
+              icon: RiLoopLeftLine,        // processing/looping
+              path: '/inverntory/packeging-barcode/'
+            },
+            {
+              name: 'RM Stock with Party',
+              icon: RiUserSharedLine,      // shared with party/vendor
+              path: '/inverntory/packeging-barcode/'
+            },
           ],
         },
         {
-          name: 'Sales/Dispatch', icon: FaBoxes, path: '#',
+          name: 'Purchase Order', icon: RiFileList2Line, path: '#',
           children: [
-            // { name: 'Stock Enquiry', icon: MdSearch, path: '/dashboard/stock-enquiry-table' },
-            { name: 'Sales Offline', icon: FaBoxes, path: '/inverntory/inventory-offline/' },
-            // { name: 'Sales Offline', icon: FaBoxes, path: '/inverntory/stock-enquiry-table' },
-            { name: 'Packaging/Barcode', icon: FaBoxes, path: '/inverntory/packeging-barcode/' },
+            { name: 'RM Purchase Order', icon: RiShoppingBag3Line, path: '/inverntory/packeging-barcode/' },
+            { name: 'Finished goods product order', icon: RiCheckboxBlankCircleLine, path: '#' },
+            { name: 'Trims & Stores purchase order', icon: RiScissors2Line, path: '/inverntory/packeging-barcode/' },
           ],
         },
         {
-          name: 'Sampling & Production', icon: FaBoxes, path: '#',
+          name: 'Inward Approval', icon: RiInboxArchiveLine, path: '#',
           children: [
-            { name: 'Buyer Enq', icon: MdSearch, path: '#' },
-            // { name: 'Sales Offline', icon: FaBoxes, path: '/inverntory/inventory-offline/' },
-            { name: 'Sales Offline', icon: FaBoxes, path: '/inverntory/stock-enquiry-table' },
-            { name: 'Packaging/Barcode', icon: FaBoxes, path: '/inverntory/packeging-barcode/' },
+            { name: 'Finished Goods', icon: RiCheckboxCircleLine, path: '#' },
+            { name: 'Finished goods product order', icon: RiShoppingBasket2Line, path: '#' },
+            { name: 'Trims & Stores purchase order', icon: RiScissors2Line, path: '/inverntory/packeging-barcode/' },
           ],
         },
-        { name: 'Stock Adjustment', icon: MdBuild, path: '#' },
-        { name: 'Inventory Valuation', icon: MdAttachMoney, path: '#' },
+        {
+          name: 'Provisonal GRN', icon: RiFileShield2Line, path: '#',
+          children: [
+            { name: 'Finished Goods', icon: RiCheckboxCircleLine, path: '#' },
+            { name: 'Finished goods product order', icon: RiShoppingBasket2Line, path: '#' },
+            { name: 'Trims & Stores purchase order', icon: RiScissors2Line, path: '/inverntory/packeging-barcode/' },
+          ],
+        },
+        {
+          name: 'Purchase Inward', icon: RiDownload2Line, path: '#',
+          children: [
+            { name: 'Finished Goods', icon: RiCheckboxCircleLine, path: '#' },
+            { name: 'Finished goods product order', icon: RiShoppingBasket2Line, path: '#' },
+            { name: 'Trims & Stores purchase order', icon: RiScissors2Line, path: '/inverntory/packeging-barcode/' },
+          ],
+        },
+        {
+          name: 'RM/Acc Issue',
+          icon: RiShareForwardLine, // ✔ issuing / sending items outward
+          path: '#',
+          children: [
+            { name: 'Finished Goods', icon: RiCheckboxCircleLine, path: '#' },
+            { name: 'Finished goods product order', icon: RiShoppingBasket2Line, path: '#' },
+            { name: 'Trims & Stores purchase order', icon: RiScissors2Line, path: '/inverntory/packeging-barcode/' },
+          ],
+        },
+        {
+          name: 'Manufacturing',
+          icon: RiSettings4Line, // ✔ processing / operations
+          path: '#',
+          children: [
+            { name: 'Finished Goods', icon: RiCheckboxCircleLine, path: '#' },
+            { name: 'Finished goods product order', icon: RiShoppingBasket2Line, path: '#' },
+            { name: 'Trims & Stores purchase order', icon: RiScissors2Line, path: '/inverntory/packeging-barcode/' },
+          ],
+        }
+        ,
+        {
+          name: 'Other Transaction',
+          icon: RiExchangeLine, // ✔ other transfers / transactions
+          path: '#',
+          children: [
+            { name: 'Finished Goods', icon: RiCheckboxCircleLine, path: '#' },
+            { name: 'Finished goods product order', icon: RiShoppingBasket2Line, path: '#' },
+            { name: 'Trims & Stores purchase order', icon: RiScissors2Line, path: '/inverntory/packeging-barcode/' },
+          ],
+        }
+        ,
+
+        {
+          name: 'Sample Packing',
+          icon: RiBriefcase2Line, // ✔ packaging / sample case
+          path: '#',
+          children: [
+            { name: 'Finished Goods', icon: RiCheckboxCircleLine, path: '#' },
+            { name: 'Finished goods product order', icon: RiShoppingBasket2Line, path: '#' },
+            { name: 'Trims & Stores purchase order', icon: RiScissors2Line, path: '/inverntory/packeging-barcode/' },
+          ],
+        }
+        , {
+          name: 'Make to Order',
+          icon: RiPlayListAddLine, // ✔ custom order creation
+          path: '#',
+          children: [
+            { name: 'Finished Goods', icon: RiCheckboxCircleLine, path: '#' },
+            { name: 'Finished goods product order', icon: RiShoppingBasket2Line, path: '#' },
+            { name: 'Trims & Stores purchase order', icon: RiScissors2Line, path: '/inverntory/packeging-barcode/' },
+          ],
+        },
+
+        {
+          name: 'Sales/Dispatch',
+          icon: RiTruckLine, // ✔ delivery / dispatch
+          path: '#',
+          children: [
+            { name: 'Sales Offline', icon: RiShoppingCart2Line, path: '/inverntory/inventory-offline/' }, // ✔ offline sales
+            { name: 'Packaging/Barcode', icon: RiBarcodeLine, path: '/inverntory/packeging-barcode/' }, // ✔ barcode/packaging
+          ],
+        },
+        {
+          name: 'Sampling & Production',
+          icon: RiBuilding4Line, // ✔ production / factory
+          path: '#',
+          children: [
+            { name: 'Buyer Enq', icon: RiSearchLine, path: '#' }, // ✔ search/enquiry
+            { name: 'Sales Offline', icon: RiShoppingCart2Line, path: '/inverntory/stock-enquiry-table' }, // ✔ offline sales
+            { name: 'Packaging/Barcode', icon: RiBarcodeLine, path: '/inverntory/packeging-barcode/' }, // ✔ barcode/packaging
+          ],
+        },
+
+        { name: 'Stock Adjustment', icon: RiSettings4Line, path: '#' },
+        { name: 'Inventory Valuation', icon: RiPriceTag3Line, path: '#' },
       ],
     },
+
     {
       name: 'Accounts',
       icon: MdAccountBalance,
+      path: '#',
+      // path: '/accountspage',
       children: [
-        { name: 'General Ledger', icon: MdAssignment, path: '#' },
+        { name: 'General Ledger', icon: MdAssignment, path: '/accountspage/general-ledger' },
         { name: 'Accounts Payable', icon: MdPayments, path: '#' },
         { name: 'Accounts Receivable', icon: MdReceipt, path: '#' },
         { name: 'Financial Reports', icon: MdAnalytics, path: '#' },
@@ -490,14 +591,16 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
     {
       name: 'Ticketing',
       icon: TiTicket,
+      path: '/masterpage?activeTab=ticketing',
       children: [
         { name: 'Dashboard', icon: MdReceipt, path: '/tickets/ticket-dashboard' },
         {
-          name: 'Master', icon: MdAssignment, path: '/masterpage/',
+          name: 'Master', icon: MdAssignment,
+          //  path: '/masterpage/',
           children: [
-            { name: 'Category', icon: FaBoxes, path: '/masters/ticketing/ticketCategory/' },
-            { name: 'SubCategory', icon: FaBoxes, path: '/masters/ticketing/ticketSubCat/' },
-            { name: 'Service/Complaint', icon: FaBoxes, path: '/masters/ticketing/serviceComplaint/' },
+            { name: 'Category', icon: MdCategory, path: '/masters/ticketing/ticketCategory/' },
+            { name: 'SubCategory', icon: MdSubdirectoryArrowRight, path: '/masters/ticketing/ticketSubCat/' },
+            { name: 'Service/Complaint', icon: MdSupportAgent, path: '/masters/ticketing/serviceComplaint/' },
           ],
         },
         { name: 'Raise Ticket', icon: MdPayments, path: '/tickets/create-tickets/' },
@@ -565,26 +668,25 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
         { name: 'Financial Reports', icon: MdAccountBalance, path: '#' },
       ],
     },
+    {
+      name: 'Help',
+      icon: IoIosConstruct,
+      children: [
+        { name: 'User Info', icon: MdPeople, path: '#' },
+        { name: 'Customer Care', icon: MdPayments, path: '#' },
+        // { name: 'Cascade', icon: MdEvent, path: '#' },
+        // { name: 'Tile Horizontal', icon: MdSummarize, path: '#' },
+        // { name: 'Tile Vertical', icon: MdPayments, path: '#' },
+        { name: 'Barcode History', icon: MdEvent, path: '#' },
+        { name: 'Query Help', icon: MdSummarize, path: '#' },
+        { name: 'Close All Windows', icon: MdEvent, path: '#' },
+        { name: ' Help', icon: MdSummarize, path: '#' },
+      ],
+    },
 
   ];
 
-  // useEffect(() => {
-  //   const handleClickOutside = (event) => {
-  //     if (
-  //       sidebarRef.current &&
-  //       !sidebarRef.current.contains(event.target) &&
-  //       megaMenuRef.current &&
-  //       !megaMenuRef.current.contains(event.target)
-  //     ) {
-  //       closeMegaMenu();
-  //     }
-  //   };
 
-  //   document.addEventListener('mousedown', handleClickOutside);
-  //   return () => {
-  //     document.removeEventListener('mousedown', handleClickOutside);
-  //   };
-  // }, []);
 
   // Find menu item by path
   const findMenuItemByPath = (items, path) => {
@@ -598,61 +700,12 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
     return null;
   };
 
-  const handleMainMenuHover = (item, event) => {
-    if (item.children && item.children.length > 0) {
-      const rect = event.currentTarget.getBoundingClientRect();
-
-      // Fixed top position for all mega menus (100px from top)
-      const fixedTop = 100;
-
-      let leftPosition;
-      if (isMobile) {
-        leftPosition = 280;
-      } else {
-        leftPosition = isCollapsed ? 80 : 260;
-      }
-
-      setMegaMenuPosition({
-        top: fixedTop,
-        left: isCollapsed ? 80 : 260
-      });
-      setOpenMegaMenu(item.name);
-      setHoveredItems([item]);
-      setMegaMenuLevels([item.children]);
-    } else {
-      closeMegaMenu();
-    }
-  };
-
-  const handleSubMenuHover = (subItem, levelIndex, event) => {
-    // Clear all levels beyond the current one
-    const newHoveredItems = hoveredItems.slice(0, levelIndex + 1);
-    const newLevels = megaMenuLevels.slice(0, levelIndex + 1);
-
-    if (subItem.children && subItem.children.length > 0) {
-      newHoveredItems[levelIndex + 1] = subItem;
-      newLevels[levelIndex + 1] = subItem.children;
-    }
-    setHoveredItems(newHoveredItems);
-    setMegaMenuLevels(newLevels);
-  };
-
-  const closeMegaMenu = () => {
-    setOpenMegaMenu(null);
-    setHoveredItems([]);
-    setMegaMenuLevels([]);
-  };
-
   // Handle navigation
   const handleNavigation = (path) => {
     if (path && path !== '#') {
-      setActiveItem(path);
-      closeMegaMenu();
+      router.push(path);
       if (isMobile) {
         onClose();
-      }
-      if (typeof window !== 'undefined') {
-        window.location.href = path;
       }
     }
   };
@@ -680,23 +733,16 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
   // Get all searchable items
   const searchableItems = findAllItemsWithPaths(menuItems);
 
-  // Close mega menu when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (
-        sidebarRef.current &&
-        !sidebarRef.current.contains(event.target) &&
-        megaMenuRef.current &&
-        !megaMenuRef.current.contains(event.target)
-      ) {
-        closeMegaMenu();
+      if (sidebarRef.current && !sidebarRef.current.contains(event.target)) {
+        setOpenSections({});
+        setHasOpenSubmenu(false);
       }
     };
 
     document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
   // Handle pin confirmation
@@ -714,7 +760,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
     pinModule({
       name: item.name,
       path: item.path,
-      icon: item.icon // Store the string identifier instead of the component
+      icon: item.icon
     });
     setShowPinConfirm(null);
   };
@@ -729,259 +775,244 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
     setShowUnpinConfirm(null);
   };
 
-  const renderMenuLevel = (items, levelIndex, title = null) => {
-    return (
-      <div key={levelIndex} style={{
-        width: '250px',
-        borderRight: levelIndex < megaMenuLevels.length - 1 ? '1px solid #f0f0f0' : 'none',
-        padding: '0.5rem 0',
-        overflowY: 'auto',
-        backgroundColor: levelIndex === 0 ? '#fafbfc' : '#fff',
-      }}>
-        {title && (
-          <div style={{
-            padding: '0.75rem 1rem',
-            fontWeight: '600',
-            color: '#1b69e7',
-            fontSize: '0.9rem',
-            borderBottom: '1px solid #e8f0fe',
-            marginBottom: '0.5rem',
-            backgroundColor: '#fff',
-          }}>
-            {title}
-          </div>
-        )}
-
-        {items.map((item, index) => {
-          const IconComponent = iconMap[item.icon];
-          const hasChildren = item.children && item.children.length > 0;
-          const isActive = activeItem === item.path;
-          const isHovered = hoveredItems[levelIndex + 1]?.name === item.name;
-          const hasValidPath = item.path && item.path !== '#';
-
-          return (
-            <div key={`${item.name}-${levelIndex}-${index}`}>
-              <div
-                // onMouseEnter={(e) => hasChildren && handleSubMenuHover(item, levelIndex, e)}
-                onClick={(e) => {
-                  e.preventDefault();
-                  handleSubMenuHover(item, levelIndex, e);
-                  if (hasValidPath) {
-                    handleNavigation(item.path);
-                  }
-                  // if (hasValidPath) {
-                  //   handleNavigation(item.path);
-                  // } else if (hasChildren) {
-                  //   handleSubMenuHover(item, levelIndex, e);
-                  // }
-                }}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  padding: '0.18rem 0.8rem',
-                  cursor: hasValidPath || hasChildren ? 'pointer' : 'default',
-                  backgroundColor: isActive ? '#e8f0fe' : isHovered ? '#f0f8ff' : 'transparent',
-                  borderLeft: isActive ? '4px solid #1b69e7' : isHovered ? '4px solid #a0c4ff' : '4px solid transparent',
-                  transition: 'all 0.2s ease',
-                  margin: '0.1rem 0',
-                  borderRadius: '0 4px 4px 0',
-                  position: 'relative',
-                }}
-              >
-                {/* 🔹 Pin Icon on the LEFT side */}
-                {hasValidPath && (
-                  <div
-                    style={{
-                      marginRight: '0.5rem',
-                      cursor: 'pointer',
-                      color: isPinned(item.path) ? '#1b69e7' : '#999',
-                      transition: 'color 0.2s ease',
-                      display: 'flex',
-                      alignItems: 'center',
-                    }}
-                    onClick={(e) => handlePinClick(item, e)}
-                    onMouseEnter={(e) => e.stopPropagation()}
-                  >
-                    {isPinned(item.path) ? <MdPushPin size={18} /> : <MdOutlinePushPin size={18} />}
-                  </div>
-                )}
-
-                {/* Menu Icon */}
-                {IconComponent && (
-                  <IconComponent
-                    size={18}
-                    style={{
-                      marginRight: '0.75rem',
-                      color: isActive ? '#1b69e7' : isHovered ? '#1b69e7' : '#555',
-                      transition: 'color 0.2s ease'
-                    }}
-                  />
-                )}
-
-                {/* Menu Label */}
-                <span style={{
-                  flex: 1,
-                  fontSize: '0.85rem',
-                  color: isActive ? '#1b69e7' : isHovered ? '#1b69e7' : '#333',
-                  fontWeight: isActive ? '600' : isHovered ? '500' : '400',
-                  transition: 'all 0.2s ease'
-                }}>
-                  {item.name}
-                </span>
-
-                {/* Submenu Arrow */}
-                {hasChildren && (
-                  <MdChevronRight
-                    size={16}
-                    style={{
-                      color: isHovered ? '#1b69e7' : '#777',
-                      transition: 'color 0.2s ease',
-                      marginLeft: '0.5rem'
-                    }}
-                  />
-                )}
-              </div>
-
-              {/* Divider */}
-              {index < items.length - 1 && (
-                <div style={{
-                  height: '1px',
-                  backgroundColor: '#e8f0fe',
-                  margin: '0.1rem 0.8rem',
-                }} />
-              )}
-            </div>
-          );
-        })}
-
-      </div>
-    );
-  };
-
-  const renderMegaMenu = () => {
-    if (!openMegaMenu || megaMenuLevels.length === 0) return null;
-
-    try {
-      return (
-        <div
-          ref={megaMenuRef}
-          style={{
-            position: 'fixed',
-            top: `${megaMenuPosition.top}px`,
-            left: `${megaMenuPosition.left}px`,
-            backgroundColor: '#fff',
-            border: '1px solid #e0e0e0',
-            borderRadius: '8px',
-            boxShadow: '0 8px 25px rgba(0,0,0,0.15)',
-            zIndex: 1001,
-            display: 'flex',
-            minHeight: '400px',
-            maxHeight: '600px',
-            minWidth: `${250 * Math.min(megaMenuLevels.length, 4)}px`,
-            maxWidth: '1000px',
-            overflow: 'hidden',
-          }}
-        // onMouseLeave={closeMegaMenu};
-        // onClick={handleClickOutside}
-        >
-          {megaMenuLevels.map((level, index) =>
-            renderMenuLevel(
-              level,
-              index,
-              index === 0 ? hoveredItems[0]?.name : null
-            )
-          )}
-        </div>
-      );
-    } catch (error) {
-      console.error('Error rendering mega menu:', error);
-      return null;
-    }
-  };
-
-  // Render main menu items
   const renderMainMenu = (items) => {
     return items.map((item, index) => {
+      // DIVIDER RENDERING — MUST BE AT THE TOP LEVEL
+      if (item.divider) {
+        return (
+          <div
+            key={`divider-${index}`}
+            style={{
+              height: '1px',
+              backgroundColor: '#c8d6e5',
+              margin: '18px 24px',
+              borderRadius: '2px',
+              boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
+            }}
+          />
+        );
+      }
+
       const IconComponent = item.icon;
       const hasChildren = item.children && item.children.length > 0;
-      const isActive = activeItem === item.path;
-      const isHovered = hoveredItems[0]?.name === item.name;
+      const isOpen = openSections[item.name];
+      const isActive = false;
+
+      const hasValidPath = item.path && item.path !== '#';
 
       return (
-        <li key={`${item.name}-${index}`} style={{ marginBottom: '0.2rem' }}>
+        <div key={item.name}>
           <div
             onClick={(e) => {
-              e.preventDefault();
-              handleMainMenuHover(item, e);
-
-              // if (item.path && item.path !== '#') {
-              //   handleNavigation(item.path);
-              // }
-
-              // if (item.path && item.path !== '#') {
-              //   handleNavigation(item.path);
-              // } else if (hasChildren) {
-              //   handleMainMenuHover(item, e);
-              // }
+              e.stopPropagation();
+              if (hasChildren) toggleSection(item.name);
+              if (hasValidPath) handleNavigation(item.path);
             }}
-            // onMouseEnter={(e) => {
-            //   if (hasChildren) {
-            //     handleMainMenuHover(item, e);
-            //   } else {
-            //     closeMegaMenu();
-            //   }
-            // }}
             style={{
               display: 'flex',
               alignItems: 'center',
-              padding: '0.5rem 0.8rem',
-              borderRadius: '6px',
+              padding: '0.45rem 0.2rem',
               cursor: 'pointer',
+              backgroundColor: isActive ? '#5ba8ffff' : 'transparent',
+              color: isActive ? 'white' : '#333',
               transition: 'all 0.2s ease',
-              userSelect: 'none',
-              backgroundColor: isActive ? '#e8f0fe' : isHovered ? '#f0f8ff' : 'transparent',
-              color: isActive ? '#1b69e7' : '#333',
-              fontSize: '0.85rem',
-              fontWeight: isActive ? '600' : '500',
-              border: isActive ? '1px solid #1b69e7' : '1px solid transparent',
+              margin: '0.10rem 0.4rem',
             }}
           >
             {IconComponent && (
-              <span style={{
-                fontSize: '1.1rem',
-                minWidth: '24px',
-                display: 'flex',
-                justifyContent: 'center',
-                marginRight: isCollapsed ? 0 : '0.75rem',
-                // color: isActive ? '#1b69e7' : isHovered ? '#1b69e7' : '#555',
-                color: '#635bff',
-                transition: 'color 0.2s ease'
-              }}>
-                <IconComponent size={20} />
-              </span>
+              <IconComponent
+                size={20}
+                style={{
+                  marginRight: isCollapsed ? 0 : '12px',
+                  minWidth: '24px',
+                  color: isActive ? 'white' : '#635bff',
+                }}
+              />
             )}
             {!isCollapsed && (
               <>
-                <span style={{
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  flex: 1,
-                }}>
+                <span style={{ flex: 1, fontWeight: isActive ? 600 : 500 }}>
                   {item.name}
                 </span>
                 {hasChildren && (
-                  <span style={{
-                    color: isHovered ? '#1b69e7' : '#777',
-                    transition: 'color 0.2s ease'
-                  }}>
-                    <MdChevronRight size={16} />
-                  </span>
+                  <MdChevronRight
+                    size={18}
+                    style={{
+                      transform: isOpen ? 'rotate(90deg)' : 'rotate(0)',
+                      transition: 'transform 0.25s ease',
+                      color: isActive ? 'white' : '#777',
+                    }}
+                  />
                 )}
               </>
             )}
           </div>
-        </li>
+
+          {/* Inline Collapsible Children */}
+
+          {hasChildren && isOpen && !isCollapsed && (
+            <div style={{ marginLeft: '10px', borderLeft: '2px solid #e0e0e0', paddingLeft: '12px' }}>
+              {item.children
+                .filter(child => child)
+                .map((child) => {
+                  const ChildIcon = child.icon;
+                  const childIsOpen = openSections[child.name];
+                  const hasGrandChildren = child.children && child.children.length > 0;
+
+                  return (
+                    <div key={child.name}>
+                      {/* Clickable group header (Company, Vendors, Products, …) */}
+                      <div
+                        onClick={(e) => {
+                          e.stopPropagation();
+
+                          // Use the path if it exists (like Ticketing, Location, Vendors)
+                          if (child.path && child.path !== '#') {
+                            router.push(child.path);
+                          } else {
+                            // Fallback to tab mapping
+                            const tabIdMap = {
+                              Company: 'company',
+                              Location: 'location',
+                              Vendors: 'vendors',
+                              Ticketing: 'ticketing',
+                              // add others as needed
+                            };
+                            const tabId = tabIdMap[child.name] || 'company';
+                            router.push(`/masterpage?activeTab=${tabId}`);
+                          }
+
+                          toggleSection(child.name);
+                          if (isMobile) onClose();
+                        }}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          padding: '0.5rem 0.2rem',
+                          cursor: 'pointer',
+                          borderRadius: '6px',
+                          margin: '2px 0',
+                          backgroundColor: childIsOpen ? '#f0f2ff' : 'transparent',
+                          color: childIsOpen ? '#635bff' : '#444',
+                          fontWeight: childIsOpen ? 600 : 500,
+                        }}
+                      >
+                        {ChildIcon && <ChildIcon size={18} style={{ marginRight: '5px' }} />}
+                        {/* <span style={{ flex: 1, fontSize: '0.9rem' }}>{child.name}</span> */}
+                        <span
+                          style={{
+                            flex: 1,
+                            fontSize: '0.9rem',
+                            display: child.hideName ? 'none' : 'inline',
+                          }}
+                        >
+                          {child.name}
+                        </span>
+
+                        {hasGrandChildren && (
+                          <MdChevronRight
+                            size={16}
+                            style={{
+                              transform: childIsOpen ? 'rotate(90deg)' : 'rotate(0)',
+                              transition: 'transform 0.2s',
+                            }}
+                          />
+                        )}
+                      </div>
+
+                      {/* Grandchildren (only shown when this group is open) */}
+                      {hasGrandChildren && childIsOpen && (
+                        <div style={{ marginLeft: '20px', paddingLeft: '8px' }}>
+                          {child.children.map((grandchild) => {
+                            const GrandIcon = grandchild.icon;
+                            const isGrandActive = activeItem === grandchild.path;
+                            const hasPath = grandchild.path && grandchild.path !== '#';
+                            // // Decide where we should navigate
+                            return (
+                              <div
+                                key={grandchild.name}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+
+                                  const hasPath = grandchild.path && grandchild.path !== '#';
+
+                                  // Case 1: Grandchild has real path → go directly
+                                  if (hasPath && grandchild.path.startsWith('/masters/')) {
+                                    router.push(grandchild.path);
+                                  }
+                                  // Case 2: Grandchild has no real path OR is a tab opener → use parent tab logic
+                                  else {
+                                    const tabIdMap = {
+                                      Company: 'company',
+                                      Location: 'location',
+                                      Vendors: 'vendors',
+                                      Customers: 'customers',
+                                      Products: 'products',
+                                      'Tax/Terms': 'tax',
+                                      Season: 'season',
+                                      Ticketing: 'ticketing',
+                                      'GST/SAC Code': 'gst',
+                                      'Other Misc': 'other',
+                                      'TDS Master': 'tds',
+                                      'QC Master': 'qc',
+                                      Process: 'process',
+                                    };
+
+                                    const tabId = tabIdMap[child.name] || 'company';
+                                    router.push(`/masterpage?activeTab=${tabId}`);
+                                  }
+
+                                  // Always keep sidebar state correct
+                                  toggleSection('Masters');
+                                  toggleSection(child.name);
+                                  if (isMobile) onClose();
+                                }}
+                                style={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  padding: '0.35rem 0.1rem',
+                                  cursor: hasPath ? 'pointer' : 'default',
+                                  backgroundColor: isGrandActive ? '#635bff' : 'transparent',
+                                  color: isGrandActive ? 'white' : '#333',
+                                  borderRadius: '6px',
+                                  margin: '1px 1px',
+                                  fontSize: '0.85rem',
+                                }}
+                              >
+                                {GrandIcon && (
+                                  <GrandIcon
+                                    size={16}
+                                    style={{ marginRight: '2px', color: isGrandActive ? 'white' : '#635bff' }}
+                                  />
+                                )}
+                                {/* <span>{grandchild.name}</span> */}
+                                <span style={{ display: grandchild.hideName ? 'none' : 'inline' }}>
+                                  {grandchild.name}
+                                </span>
+
+                                {/* Pin icon for leaf nodes */}
+                                {hasPath && (
+                                  <div
+                                    onClick={(e) => handlePinClick(grandchild, e)}
+                                    style={{ marginLeft: 'auto', color: isPinned(grandchild.path) ? '#635bff' : '#aaa' }}
+                                  >
+                                    {isPinned(grandchild.path) ? <MdPushPin size={15} /> : <MdOutlinePushPin size={15} />}
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+            </div>
+          )}
+
+
+
+        </div>
       );
     });
   };
@@ -990,25 +1021,35 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
     <>
       <div
         ref={sidebarRef}
-        // onMouseLeave={() => {
-        //   if (!isMobile) {
-        //     setTimeout(() => {
-        //       if (megaMenuRef.current && !megaMenuRef.current.matches(':hover')) {
-        //         closeMegaMenu();
-        //       }
-        //     }, 150);
-        //   }
-        // }}
+        onMouseEnter={() => {
+          if (!isMobile) {
+            setIsCollapsed(false);
+          }
+        }}
+        onMouseLeave={() => {
+          if (!isMobile) {
+            // ONLY collapse if we're NOT on masters routes
+            const isMastersRoute = pathname === '/masterpage';
+            if (!isMastersRoute) {
+              setIsCollapsed(true);
+              setOpenSections({});
+              setHasOpenSubmenu(false);
+            }
+          }
+        }}
+        onClick={(e) => e.stopPropagation()}
         style={{
           backgroundColor: '#fff',
-          color: '#333',
+          color: '#0e0d0dff',
           height: '100vh',
           position: isMobile ? 'fixed' : 'fixed',
           borderRight: '1px solid #e0e0e0',
           left: 0,
           top: 0,
-          width: isMobile ? (isOpen ? '230px' : '0') : (isCollapsed ? '' : '250px'),
-          transition: isMobile ? 'width 0.3s ease' : 'width 0.3s ease',
+          width: isMobile
+            ? (isOpen ? '270px' : '0')
+            : (isCollapsed ? '77px' : '240px'),
+          transition: 'width 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
           padding: isMobile ? (isOpen ? '0.8rem 0.6rem' : '0') : '0.8rem 0.6rem',
           overflow: 'hidden',
           zIndex: isMobile ? 1000 : 1000,
@@ -1019,7 +1060,6 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
           visibility: isMobile ? (isOpen ? 'visible' : 'hidden') : 'visible',
         }}
       >
-
         <div style={{
           display: 'flex',
           alignItems: 'center',
@@ -1041,7 +1081,20 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
             </h2>
           )}
           <button
-            onClick={() => isMobile ? onClose() : setIsCollapsed(!isCollapsed)}
+            onClick={() => {
+              if (isMobile) {
+                onClose();
+              } else {
+                // Only allow manual collapse if NOT on masters routes
+                // const isMastersRoute = pathname === '/masterpage';
+                // if (!isMastersRoute) {
+                //   setIsCollapsed(!isCollapsed);
+                setIsCollapsed(true);
+                setOpenSections({});
+                setHasOpenSubmenu(false);
+
+              }
+            }}
             style={{
               background: 'none',
               border: 'none',
@@ -1066,8 +1119,10 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
           >
             {isMobile ? (
               <MdClose size={22} color={'#635bff'} />
+            ) : isCollapsed ? (
+              <MdMenu color={'#635bff'} size={22} />
             ) : (
-              isCollapsed ? <MdMenu color={'#635bff'} size={22} /> : <MdClose size={22} />
+              <MdClose size={22} />
             )}
           </button>
         </div>
@@ -1090,7 +1145,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
         </div>
       </div>
 
-      {renderMegaMenu()}
+
 
       {/* Pin Confirmation Modal */}
       {showPinConfirm && (

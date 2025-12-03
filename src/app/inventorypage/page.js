@@ -58,6 +58,7 @@ export default function InventoryPage() {
     backgroundColor: '#e1e7ef',
     borderRadius: '10px',
     padding: '4px',
+    marginInline: '5px',
     minHeight: '36px',
     '& .MuiTabs-indicator': {
       display: 'none',
@@ -218,18 +219,6 @@ export default function InventoryPage() {
 
   return (
     <Box sx={{ width: '100%' }}>
-      <Typography variant="h5" component="h5" gutterBottom sx={{ 
-        fontWeight: 'bold', 
-        mb: 1,
-        background: 'linear-gradient(45deg, #2196F3 30%, #21CBF3 90%)',
-        backgroundClip: 'text',
-        WebkitBackgroundClip: 'text',
-        color: 'transparent',
-        textAlign: 'center'
-      }}>
-        Inventory Menu
-      </Typography>
-      
       <Box
         sx={{
           width: '100%',
@@ -239,7 +228,28 @@ export default function InventoryPage() {
           },
         }}
       >
-        <StyledTabs value={activeTab} onChange={handleTabChange} variant="scrollable" scrollButtons="auto">
+        {/* <StyledTabs value={activeTab} onChange={handleTabChange} variant="scrollable" scrollButtons="auto">
+          {inventoryData.map((tab, index) => (
+            <StyledTab key={tab.id} label={tab.name} />
+          ))}
+        </StyledTabs> */}
+        <StyledTabs
+          value={activeTab}
+          onChange={handleTabChange}
+          variant="scrollable"
+          //scrollButtons={false}                    // Hide arrows
+          TabIndicatorProps={{ style: { display: 'none' } }}
+          sx={{
+            '& .MuiTabs-flexContainer': {
+              flexWrap: 'wrap',
+              gap: '4px',
+              paddingInline: '2px'                       // Optional: nice spacing between wrapped rows
+            },
+            '& .MuiTabs-scroller': {
+              overflow: 'visible !important',
+            },
+          }}
+        >
           {inventoryData.map((tab, index) => (
             <StyledTab key={tab.id} label={tab.name} />
           ))}
@@ -252,12 +262,15 @@ export default function InventoryPage() {
             {tab.children?.map((item, itemIndex) => {
               const ItemIcon = item.icon;
               return (
-                <Grid item xs={6} sm={6} md={4} lg={3} key={itemIndex}>
-                  <Card 
-                    sx={{ 
+                <Grid item xs={4} sm={6} md={4} lg={3} key={itemIndex}>
+                  <Card
+                    sx={{
                       cursor: item.path !== '#' ? 'pointer' : 'default',
                       transition: 'all 0.3s ease',
-                      height: '100%',
+                      width: { xs: 150, sm: 180 }, 
+                      minWidth: { xs: 150, sm: 180 },
+                      maxWidth: { xs: 150, sm: 180 }, 
+                      height: 100,
                       background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
                       border: '1px solid #e0e0e0',
                       borderRadius: '8px',
@@ -270,19 +283,19 @@ export default function InventoryPage() {
                     }}
                     onClick={() => item.path !== '#' && (window.location.href = item.path)}
                   >
-                    <CardContent sx={{ 
-                      textAlign: 'center', 
+                    <CardContent sx={{
+                      textAlign: 'center',
                       p: 2,
                       '&:last-child': { pb: 2 }
                     }}>
-                      <ItemIcon 
-                        sx={{ 
-                          fontSize: 25, 
+                      <ItemIcon
+                        sx={{
+                          fontSize: 25,
                           mb: 1,
                           color: 'inherit'
-                        }} 
+                        }}
                       />
-                      <Typography variant="body1" component="div" sx={{ 
+                      <Typography variant="body1" component="div" sx={{
                         fontWeight: '500',
                         fontSize: '0.8rem',
                       }}>

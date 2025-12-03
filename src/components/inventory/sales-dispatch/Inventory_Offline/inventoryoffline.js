@@ -1705,7 +1705,7 @@ if (loading || isDataLoading) {
         </Grid>
         <Grid>
           <Typography align="center" variant="h6">
-            {tabIndex === 0 ? "Sales Order" : tabIndex === 1 ? "Item Details" : "Terms Details"}
+            {tabIndex === 0 ? "Sales Order " : tabIndex === 1 ? "Item Details" : "Terms Details"}
           </Typography>
         </Grid>
 
