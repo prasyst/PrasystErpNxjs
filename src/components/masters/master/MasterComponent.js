@@ -80,7 +80,7 @@ function TabPanel(props) {
 }
 
 export default function MasterPage() {
-  const [activeTab, setActiveTab] = useState(0);
+  const [activeTab, setActiveTab] = useState(-1);
   const [isClient, setIsClient] = useState(false);
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -94,16 +94,22 @@ export default function MasterPage() {
     const tabId = menuData[newValue]?.id;
     if (tabId) {
       router.push(`/masterpage?activeTab=${tabId}`, { scroll: false });
+      setActiveTab(newValue);
     }
   };
 
   useEffect(() => {
     if (!isClient) return; // Only run on the client-side
 
-    const tabParam = searchParams.get('activeTab') || 'company';
+    const tabParam = searchParams.get('activeTab') || '';
     const index = menuData.findIndex(tab => tab.id === tabParam);
-    if (index !== -1 && index !== activeTab) {
-      setActiveTab(index >= 0 ? index : 0);
+    // if (index !== -1 && index !== activeTab) {
+    //   setActiveTab(index >= 0 ? index : 0);
+    // }
+    if (tabParam && index !== -1 && index !== activeTab) {  // If tabParam is valid, set it
+      setActiveTab(index);
+    } else if (!tabParam) {
+      setActiveTab(-1);  // Optionally set to 0 if no activeTab query exists
     }
   }, [searchParams, isClient, activeTab]);
 
@@ -131,7 +137,7 @@ export default function MasterPage() {
     }
   }));
 
- const menuData = [
+  const menuData = [
     {
       id: 'company',
       name: 'Company',
@@ -285,11 +291,11 @@ export default function MasterPage() {
       children: [
         { name: 'Ticket Category', icon: CategoryIcon, path: '/masters/ticketing/ticketCategory' },
         { name: 'Ticket SubCategory', icon: AssignmentIcon, path: '/masters/ticketing/ticketSubCat' },
-        { name: 'Service/Complaint', icon:  AnnouncementIcon, path: '/masters/ticketing/serviceComplaint' },
+        { name: 'Service/Complaint', icon: AnnouncementIcon, path: '/masters/ticketing/serviceComplaint' },
         { name: 'Raise Ticket', icon: CreateIcon, path: '/tickets/create-tickets' },
       ],
     }
-  ]; 
+  ];
 
   return (
     <Suspense fallback={<div>Loading...</div>}>

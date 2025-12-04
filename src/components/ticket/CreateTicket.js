@@ -26,7 +26,8 @@ import DialogTitle from "@mui/material/DialogTitle";
 import { toast, ToastContainer } from "react-toastify";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import LogoutIcon from "@mui/icons-material/Logout";
-import ReusableTable, { getCustomDateFilter } from '@/components/datatable/ReusableTable';
+import ItemReqTable, { getCustomDateFilter } from '@/components/datatable/ItemReqTable';
+import ItemRequisitionDialog from "./ItemRequisitiondlog";
 
 const inputStyle = {
   '& .MuiInputBase-root': {
@@ -208,6 +209,7 @@ const CreateTicketPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [rows, setRows] = useState([]);
   const [selectedRows, setSelectedRows] = useState([]);
+  const [openRequisitionDialog, setOpenRequisitionDialog] = useState(false);
   const [rowsSecondTable, setRowsSecondTable] = useState([]);
   const fileInputRef = useRef(null);
 
@@ -276,6 +278,11 @@ const CreateTicketPage = () => {
   const handleSaveButton = () => {
     handleSubmit();
     setOpenConfirmDialog(false);
+  };
+  // Add this handler
+  const handleItemsSave = (selectedItemsWithQty) => {
+    setRowsSecondTable(selectedItemsWithQty);
+    toast.success(`${selectedItemsWithQty.length} item(s) added to ticket.`);
   };
 
   const handleCancel = () => {
@@ -677,56 +684,6 @@ const CreateTicketPage = () => {
         <Paper elevation={2} sx={{ border: "1px solid #e5e7eb", borderRadius: 3 }}>
           <Box component="form">
             <Box p={{ xs: 2, md: 3 }}>
-              {/* <Grid container spacing={1}>
-                <Grid size={{ xs: 6, sm: 2 }}>
-                  <TextField
-                    label={<span>Series<span style={{ color: 'red' }}>*</span></span>}
-                    fullWidth
-                    value={formData.title}
-                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                    placeholder="Enter ticket title..."
-                    sx={{ mb: 2, ...inputStyle }}
-                    disabled={true}
-                  />
-                </Grid>
-                <Grid size={{ xs: 6, sm: 2 }}>
-                  <TextField
-                    label={<span>Last No<span style={{ color: 'red' }}>*</span></span>}
-                    fullWidth
-                    value={formData.title}
-                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                    placeholder="Enter ticket title..."
-                    sx={{ mb: 2, ...inputStyle }}
-                    disabled={true}
-                  />
-                </Grid>
-                <Grid size={{ xs: 6, sm: 4 }}>
-                  <TextField
-                    label={<span>Ticket No<span style={{ color: 'red' }}>*</span></span>}
-                    fullWidth
-                    value={formData.title}
-                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                    placeholder="Enter ticket title..."
-                    sx={{ mb: 2, ...inputStyle }}
-                    disabled={true}
-                  />
-                </Grid>
-                <Grid size={{ xs: 6, sm: 4 }}>
-                  <LocalizationProvider dateAdapter={AdapterDayjs} >
-                    <DatePicker
-                      label="Date"
-                      value={dateFrom}
-                      onChange={(newValue) => setDateFrom(newValue)}
-                      format="DD/MM/YYYY"
-                      views={['day', 'month', 'year']}
-                      fullWidth
-                      className="custom-datepicker"
-                      disabled={true}
-                    />
-                  </LocalizationProvider>
-                </Grid>
-              </Grid> */}
-
               <Box display="flex" alignItems="center" sx={{ mb: 1 }}>
                 <FormLabel id="demo-row-radio-buttons-group-label" sx={{ marginRight: 2, fontSize: '1rem', color: '#000' }}>
                   Ticket For →
@@ -749,14 +706,10 @@ const CreateTicketPage = () => {
                       control={<Radio size="small" />}
                       label="Cost Center/Department"
                     />
-                    {/* <FormControlLabel
-                      value="S"
-                      control={<Radio size="small" />}
-                      label="Store Item/Asset"
-                    /> */}
                   </RadioGroup>
                 </FormControl>
-                <Link onClick={handleHostel}
+                <Link
+                  onClick={() => setOpenConfirmDialog(true)}
                   sx={{
                     fontSize: '14px',
                     textDecoration: 'none',
@@ -841,20 +794,6 @@ const CreateTicketPage = () => {
                   </Grid>
                 </Grid>
               )}
-
-              {/* {ticketFor === "S" && (
-                <Grid container spacing={1} sx={{ mb: 2 }}>
-                  <Grid size={{ xs: 12, sm: 6, md: 12 }}>
-                    <Autocomplete
-                      options={[]}
-                      getOptionLabel={(option) => option.CCGRP_NAME || ""}
-                      value={deptGrp.find(dept => dept.CCGRP_NAME === formData.depGrp) || null}
-                      onChange={(_, value) => setFormData(prev => ({ ...prev, depGrp: value?.CCGRP_NAME || "" }))}
-                      renderInput={(params) => <TextField {...params} label={<><span>Item/Asset/Accessories</span><span style={{ color: 'red' }}>*</span></>} sx={inputStyle} />}
-                    />
-                  </Grid>
-                </Grid>
-              )} */}
 
               <Grid container spacing={1} sx={{ mb: 2 }}>
                 <Grid size={{ xs: 12, sm: 6 }}>
@@ -984,9 +923,7 @@ const CreateTicketPage = () => {
                 )}
               </Box>
             </Box>
-
             <Divider />
-
             <Box sx={{ bgcolor: "#f9fafb", p: 3, display: "flex", justifyContent: "flex-end", gap: 2 }}>
               <Button variant="outlined" color="error" onClick={() => router.push("/tickets/ticket-dashboard/")}>
                 Cancel
@@ -1004,283 +941,17 @@ const CreateTicketPage = () => {
           </Box>
         </Paper>
       </Container>
-
-      <Dialog
+      {/* // Add the dialog just before closing </Box> of main return */}
+      <ItemRequisitionDialog
         open={openConfirmDialog}
-        onClose={closeConfirmation}
-        aria-labelledby="alert-dialog-title"
-        aria-describedby="alert-dialog-description"
-        sx={{
-          "& .MuiDialog-paper": {
-            maxWidth: "100%",
-            width: {
-              xs: "80%",
-              sm: "600px",
-              md: "690px",
-              lg: "1000px",
-              xl: "800px",
-            },
-            height: "auto",
-            padding: {
-              xs: "10px",
-              sm: "15px",
-              md: "20px",
-              lg: "20px",
-              xl: "20px",
-            },
-            margin: {
-              xs: "20px",
-              sm: "40px",
-              md: "60px",
-              lg: "60px",
-              xl: "60px",
-            },
-            backgroundColor: "white",
-            borderRadius: "10px",
-            border: "1px solid #ccc",
-            boxShadow: "0px 4px 6px rgba(0, 0, 0, 0.1)",
-          },
+        onClose={() => setOpenConfirmDialog(false)}
+        rows={rows}
+        isLoading={isLoading}
+        onSave={(selectedItems) => {
+          setRowsSecondTable(selectedItems);
+          setOpenConfirmDialog(false);
         }}
-      >
-        <DialogTitle id="alert-dialog-title">
-          <Grid>
-            <Box
-              sx={{
-                border: "1px solid #ccc",
-                borderRadius: "8px",
-                backgroundColor: "transparent",
-                overflow: "auto",
-                maxHeight: {
-                  xs: "50vh",
-                  sm: "55vh",
-                  md: "60vh",
-                  lg: "65vh",
-                  xl: "70vh",
-                },
-                height: {
-                  xs: "50vh",
-                  sm: "50vh",
-                  md: "56vh",
-                  lg: "80vh",
-                  xl: "65vh",
-                },
-                margin: {
-                  xs: "0px 0px 0px 1px",
-                  sm: "0px 0px 0px 2.5px",
-                  md: "0px 0px 0px 2.5px",
-                  lg: "0px 0px 0px 2.5px",
-                  xl: "0px 0px 0px 2.5px",
-                },
-                padding: {
-                  xs: "0px",
-                  sm: "0px",
-                  md: "0px",
-                  lg: "0px",
-                  xl: "0px",
-                },
-                gap: 2,
-                maxWidth: {
-                  xs: "100%",
-                  sm: "90vw",
-                  md: "80vw",
-                  lg: "70vw",
-                  xl: "60vw",
-                },
-                display: 'flex',
-                flexDirection: 'column', // Ensure checkboxes are displayed vertically
-                justifyContent: 'space-between', // Align content correctly
-              }}
-            >
-
-              <div className="p-2 w-full">
-                <div className="w-full mx-auto" style={{ maxWidth: '100%' }}>
-
-                  <div style={{ height: 'calc(100vh - 80px)', width: '100%' }}>
-                    {isLoading ? (
-                      <div style={{
-                        display: 'flex',
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                        height: '100%'
-                      }}>
-                        Loading...
-                      </div>
-                    ) : (
-                      <ReusableTable
-                        columnDefs={columnDefs}
-                        rowData={rows}
-                        height="50%"
-                        theme="ag-theme-quartz"
-                        isDarkMode={false}
-                        pagination={true}
-                        paginationPageSize={25}
-                        paginationPageSizeSelector={[25, 50, 100, 250, 500, 1000]}
-                        quickFilter={false}
-                        onRowClick={(params) => {
-                          console.log('Row clicked:', params);
-                        }}
-                        onRowDoubleClick={''}
-                        onSelectionChanged={handleSelectionChanged}
-                        loading={isLoading}
-                        enableExport={false}
-                        exportSelectedOnly={false}
-                        selectedRows={false}
-                        enableCheckbox={true}
-                        enableResetButton={false}
-                        enableExitBackButton={false}
-                        enableLanguageSwitch={false}
-                        compactMode={true}
-                        rowHeight={24}
-                        headerHeight={30}
-                        className="custom-ag-table"
-                        defaultColDef={{
-                          resizable: true,
-                          sortable: true,
-                          filter: true,
-                          flex: 1,
-                          minWidth: 100
-                        }}
-                        customGridOptions={{
-                          suppressRowClickSelection: true,
-                          rowSelection: 'multiple',
-                          animateRows: true,
-                          enableCellTextSelection: true,
-                          ensureDomOrder: true
-                        }}
-                      />
-                    )}
-                    <div className="flex flex-wrap gap-4 items-center">
-                      <Box sx={{ margin: '10px 16px 0 0' }} width="100%" display="flex" justifyContent="flex-end">
-                        <Stack direction="row" spacing={2} alignItems="center">
-                          {/* Back Button */}
-                          <Button
-                            onClick={handleConfirmButton}
-                            variant="outlined"
-                            size="small"
-                            color="primary"
-                            style={{
-                              height: '29.5px'
-                            }}
-                            sx={{ backgroundColor: '#635bff', color: '#fff', '&:hover': { backgroundColor: '#635bff' } }}
-                          >
-                            Confirm
-                          </Button>
-
-                          {/* Exit Button */}
-                          <Button
-                            onClick={''}
-                            variant="outlined"
-                            size="small"
-                            style={{
-                              height: '29.5px'
-                            }}
-                            sx={{
-                              backgroundColor: 'red',
-                              color: '#fff',
-                              borderColor: 'red',
-                              '&:hover': {
-                                backgroundColor: '#cc0000',
-                                borderColor: '#cc0000',
-                              },
-                            }}
-                          >
-                            Cancel
-                          </Button>
-                        </Stack>
-                      </Box>
-                    </div>
-
-                    <ReusableTable
-                      columnDefs={columnDefs}
-                      rowData={rowsSecondTable}
-                      height="50%"
-                      theme="ag-theme-quartz"
-                      isDarkMode={false}
-                      pagination={true}
-                      paginationPageSize={25}
-                      paginationPageSizeSelector={[25, 50, 100, 250, 500, 1000]}
-                      quickFilter={false}
-                      onRowClick={(params) => {
-                        console.log('Row clicked:', params);
-                      }}
-                      onRowDoubleClick={''}
-                      onSelectionChanged={handleSelectionChanged}
-                      loading={isLoading}
-                      enableExport={false}
-                      exportSelectedOnly={false}
-                      selectedRows={false}
-                      enableCheckbox={false}
-                      enableResetButton={false}
-                      enableExitBackButton={false}
-                      enableLanguageSwitch={false}
-                      compactMode={true}
-                      rowHeight={24}
-                      headerHeight={30}
-                      className="custom-ag-table"
-                      defaultColDef={{
-                        resizable: true,
-                        sortable: true,
-                        filter: true,
-                        flex: 1,
-                        minWidth: 100
-                      }}
-                      customGridOptions={{
-                        suppressRowClickSelection: true,
-                        rowSelection: 'multiple',
-                        animateRows: true,
-                        enableCellTextSelection: true,
-                        ensureDomOrder: true
-                      }}
-                    />
-
-                    <div className="flex flex-wrap gap-4 items-center">
-                      <Box sx={{ margin: '10px 16px 0 0' }} width="100%" display="flex" justifyContent="flex-end">
-                        <Stack direction="row" spacing={2} alignItems="center">
-                          {/* Back Button */}
-                          <Button
-                            onClick={handleSaveButton}
-                            variant="outlined"
-                            size="small"
-                            color="primary"
-                            style={{
-                              height: '29.5px'
-                            }}
-                            sx={{ backgroundColor: '#635bff', color: '#fff', '&:hover': { backgroundColor: '#635bff' } }}
-                          >
-                            Save
-                          </Button>
-
-                          {/* Exit Button */}
-                          <Button
-                            onClick={''}
-                            variant="outlined"
-                            size="small"
-                            style={{
-                              height: '29.5px'
-                            }}
-                            sx={{
-                              backgroundColor: 'red',
-                              color: '#fff',
-                              borderColor: 'red',
-                              '&:hover': {
-                                backgroundColor: '#cc0000',
-                                borderColor: '#cc0000',
-                              },
-                            }}
-                          >
-                            Cancel
-                          </Button>
-                        </Stack>
-                      </Box>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-            </Box>
-          </Grid>
-        </DialogTitle>
-      </Dialog>
+      />
     </Box>
   );
 };
