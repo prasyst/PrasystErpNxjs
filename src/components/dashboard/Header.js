@@ -1,447 +1,23 @@
-// // src/components/Header.js
-// 'use client';
-
-// import { useEffect, useState, useRef } from 'react';
-// import { useTheme } from '../../../src/app/context/ThemeContext';
-// import { IoIosSearch, IoIosPin } from "react-icons/io";
-// import { useRouter } from "next/navigation";
-// import { MdPushPin } from 'react-icons/md';
-// import { usePin } from '../../app/hooks/usePin';
-// import { getAllMenuItemsWithPaths, getIconComponent } from './menuData'; // Import from shared file
-// import Link from 'next/link';
-
-// const Header = ({ isSidebarCollapsed }) => {
-//   const [isSearchExpanded, setIsSearchExpanded] = useState(false);
-//   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-//   const [isPinnedMenuOpen, setIsPinnedMenuOpen] = useState(false);
-//   const { theme, toggleTheme } = useTheme();
-//   const router = useRouter();
-//   const [userName, setUserName] = useState('');
-//   const [searchQuery, setSearchQuery] = useState('');
-//   const [searchResults, setSearchResults] = useState([]);
-//   const [showSearchResults, setShowSearchResults] = useState(false);
-//   const searchRef = useRef(null);
-//   const { pinnedModules, unpinModule } = usePin();
-//   const [showUnpinConfirm, setShowUnpinConfirm] = useState(null);
-
-//   // Get all searchable items from shared menu data
-//   const searchableItems = getAllMenuItemsWithPaths();
-
-//   useEffect(() => {
-//     const storedName = localStorage.getItem('USER_NAME');
-//     if (storedName) {
-//       setUserName(storedName);
-//     }
-//   }, []);
-
-//   // Close search results when clicking outside
-//   useEffect(() => {
-//     const handleClickOutside = (event) => {
-//       if (searchRef.current && !searchRef.current.contains(event.target)) {
-//         setShowSearchResults(false);
-//       }
-//     };
-
-//     document.addEventListener('mousedown', handleClickOutside);
-//     return () => {
-//       document.removeEventListener('mousedown', handleClickOutside);
-//     };
-//   }, []);
-
-//   // Handle search input change with auto-suggest
-//   const handleSearchChange = (e) => {
-//     const query = e.target.value;
-//     setSearchQuery(query);
-
-//     if (query.length > 0) {
-//       const results = searchableItems.filter(item => 
-//         item.name.toLowerCase().includes(query.toLowerCase())
-//       );
-//       setSearchResults(results);
-//       setShowSearchResults(true);
-//     } else {
-//       setSearchResults(results.length > 0 ? searchableItems.slice(0, 10) : searchableItems.slice(0, 10));
-//       setShowSearchResults(true);
-//     }
-//   };
-
-//   // Handle search result click
-//   const handleSearchResultClick = (path) => {
-//     setSearchQuery('');
-//     setShowSearchResults(false);
-//     setIsSearchExpanded(false); // Collapse search after selection
-//     router.push(path);
-//   };
-
-//   // Handle search icon click
-//   const handleSearchIconClick = () => {
-//     setIsSearchExpanded(!isSearchExpanded);
-//     if (!isSearchExpanded) {
-//       // Show all items when expanded
-//       setSearchResults(searchableItems.slice(0, 10)); // Show first 10 items
-//       setShowSearchResults(true);
-//       // Focus input after expansion animation
-//       setTimeout(() => {
-//         const input = searchRef.current?.querySelector('input');
-//         input?.focus();
-//       }, 300);
-//     } else {
-//       setShowSearchResults(false);
-//       setSearchQuery('');
-//     }
-//   };
-
-//   const getInitial = (name) => name?.charAt(0)?.toUpperCase() || '?';
-
-//   const handleLogout = () => {
-//     localStorage.removeItem('authenticated');
-//     localStorage.removeItem('userRole');
-//     localStorage.removeItem('CO_ID');
-//     localStorage.removeItem('COBR_ID');
-//     localStorage.removeItem('PARTY_NAME');
-//     localStorage.removeItem('PARTY_KEY');
-//     localStorage.removeItem('FCYR_KEY');
-//     router.push("/login");
-//   };
-
-//   // Handle unpin confirmation
-//   const confirmUnpin = (module) => {
-//     unpinModule(module);
-//     setShowUnpinConfirm(null);
-//   };
-
-//   return (
-//     <header 
-//       style={{
-//         backgroundColor: '#635bff',
-//         padding: '0.2rem',
-//         position: 'fixed',
-//         top: 0,
-//         right: 0,
-//         left: isSidebarCollapsed ? '80px' : '250px',
-//         zIndex: 50,
-//         borderBottom: '1px solid var(--border-color)',
-//         transition: 'left 0.3s ease',
-//       }}
-//       className="flex items-center justify-between"
-//     >
-
-//       <div className="flex items-center gap-4">
-//         {/* Enhanced Search Bar with Auto-suggest */}
-//         <div 
-//           ref={searchRef}
-//           className="flex items-center"
-//           style={{
-//             backgroundColor: 'rgba(255, 255, 255, 0.15)',
-//             borderRadius: '2rem',
-//             padding: '0.5rem',
-//             overflow: 'visible',
-//             border: isSearchExpanded ? '2px solid white' : '2px solid transparent',
-//             transition: 'all 0.3s ease-out',
-//             width: isSearchExpanded ? '300px' : '40px',
-//             position: 'relative',
-//           }}
-//         >
-//           <button 
-//             onClick={handleSearchIconClick}
-//             style={{
-//               background: 'none',
-//               border: 'none',
-//               cursor: 'pointer',
-//               color: 'white',
-//               display: 'flex',
-//               alignItems: 'center',
-//               justifyContent: 'center',
-//               minWidth: '30px',
-//               height: '20px',
-//               transition: 'transform 0.3s ease',
-//               transform: isSearchExpanded ? 'scale(1.1)' : 'scale(1)',
-//             }}
-//           >
-//             <IoIosSearch size={20} color="white" />
-//           </button>
-
-//           <input 
-//             type="text" 
-//             placeholder="Search modules..." 
-//             value={searchQuery}
-//             onChange={handleSearchChange}
-//             onFocus={() => searchQuery.length > 0 && setShowSearchResults(true)}
-//             style={{
-//               background: 'none',
-//               border: 'none',
-//               outline: 'none',
-//               color: 'white',
-//               marginLeft: '0.5rem',
-//               width: isSearchExpanded ? '250px' : '0',
-//               padding: isSearchExpanded ? '0.25rem' : '0',
-//               opacity: isSearchExpanded ? 1 : 0,
-//               transition: 'all 0.3s ease-out',
-//               fontSize: '0.9rem',
-//             }}
-//             className="placeholder:text-white placeholder:text-opacity-70"
-//           />
-
-//           {/* Auto-suggest Search Results Dropdown */}
-//           {showSearchResults && searchResults.length > 0 && isSearchExpanded && (
-//             <div style={{
-//               position: 'absolute',
-//               top: '100%',
-//               left: 0,
-//               right: 0,
-//               backgroundColor: 'white',
-//               border: '1px solid #e0e0e0',
-//               borderRadius: '0.5rem',
-//               marginTop: '0.5rem',
-//               maxHeight: '300px',
-//               overflowY: 'auto',
-//               boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-//               zIndex: 100,
-//             }}>
-//               {searchResults.map((item, index) => {
-//                 const IconComponent = getIconComponent(item.icon);
-
-//                 return (
-//                   <div
-//                     key={index}
-//                     onClick={() => handleSearchResultClick(item.path)}
-//                     style={{
-//                       padding: '0.75rem 1rem',
-//                       cursor: 'pointer',
-//                       display: 'flex',
-//                       alignItems: 'center',
-//                       borderBottom: index < searchResults.length - 1 ? '1px solid #f0f0f0' : 'none',
-//                       transition: 'background-color 0.2s',
-//                     }}
-//                     className="hover:bg-gray-50"
-//                   >
-//                     {IconComponent && (
-//                       <span style={{ marginRight: '0.75rem', color: '#1b69e7' }}>
-//                         <IconComponent size={16} />
-//                       </span>
-//                     )}
-//                     <span style={{ fontSize: '0.9rem', color: '#333', fontWeight: '500' }}>
-//                       {item.name}
-//                     </span>
-//                   </div>
-//                 );
-//               })}
-//             </div>
-//           )}
-
-//           {/* No results message */}
-//           {showSearchResults && searchResults.length === 0 && searchQuery.length > 0 && isSearchExpanded && (
-//             <div style={{
-//               position: 'absolute',
-//               top: '100%',
-//               left: 0,
-//               right: 0,
-//               backgroundColor: 'white',
-//               border: '1px solid #e0e0e0',
-//               borderRadius: '0.5rem',
-//               marginTop: '0.5rem',
-//               padding: '1rem',
-//               textAlign: 'center',
-//               color: '#666',
-//               fontSize: '0.9rem',
-//               boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-//               zIndex: 100,
-//             }}>
-//               No modules found for `{searchQuery}`
-//             </div>
-//           )}
-//         </div>
-//       </div>
-
-//       <div className="flex items-center gap-4 relative">
-//          {/* Pinned Modules Button */}
-//           <Link href="/pinned-modules" passHref>
-//             <button 
-//               style={{
-//                 background: 'none',
-//                 border: 'none',
-//                 cursor: 'pointer',
-//                 color: 'white',
-//                 display: 'flex',
-//                 alignItems: 'center',
-//                 justifyContent: 'center',
-//                 width: '40px',
-//                 height: '40px',
-//                 borderRadius: '50%',
-//                 transition: 'background-color 0.2s',
-//               }}
-//               className="hover:bg-white hover:bg-opacity-10"
-//               title="View pinned modules"
-//             >
-//               <MdPushPin size={30} />
-//             </button>
-//           </Link>
-
-//         {/* User Dropdown */}
-//         <div 
-//           style={{
-//             display: 'flex',
-//             alignItems: 'center',
-//             gap: '0.5rem',
-//             cursor: 'pointer',
-//             position: 'relative',
-//           }}
-//           onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-//         >
-//           <div 
-//             style={{
-//               width: '40px',
-//               height: '40px',
-//               borderRadius: '50%',
-//               backgroundColor: 'rgba(255, 255, 255, 0.2)',
-//               display: 'flex',
-//               alignItems: 'center',
-//               justifyContent: 'center',
-//               color: 'white',
-//               fontWeight: 'bold',
-//               border: '2px solid rgba(255, 255, 255, 0.3)',
-//             }}
-//           >
-//              {getInitial(userName)}
-//           </div>
-
-//           <span style={{ color: 'white', fontWeight: '500' }}> {userName || 'User'}!</span>
-
-//           {isDropdownOpen && (
-//             <div 
-//               style={{
-//                 position: 'absolute',
-//                 top: '100%',
-//                 right: 0,
-//                 backgroundColor: 'white',
-//                 border: '1px solid #e0e0e0',
-//                 borderRadius: '0.5rem',
-//                 padding: '0.5rem 0',
-//                 width: '200px',
-//                 zIndex: 100,
-//                 boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-//                 marginTop: '0.5rem',
-//               }}
-//             >
-//               <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>
-//                 <li style={{ 
-//                   padding: '0.75rem 1rem', 
-//                   color: '#333',
-//                   transition: 'background-color 0.2s',
-//                   cursor: 'pointer',
-//                 }} 
-//                   className="hover:bg-gray-50"
-//                 >
-//                   Profile
-//                 </li>
-//                 <li style={{ 
-//                   padding: '0.75rem 1rem', 
-//                   color: '#333',
-//                   transition: 'background-color 0.2s',
-//                   cursor: 'pointer',
-//                 }} 
-//                   className="hover:bg-gray-50"
-//                 >
-//                   Change Password
-//                 </li>
-//                 <li style={{ 
-//                   padding: '0.75rem 1rem', 
-//                   color: '#333',
-//                   transition: 'background-color 0.2s',
-//                   cursor: 'pointer',
-//                 }} 
-//                 onClick={handleLogout}
-//                   className="hover:bg-gray-50"
-//                 >
-//                   Logout
-//                 </li>
-//               </ul>
-//             </div>
-//           )}
-//         </div>
-//       </div>
-
-//       {/* Unpin Confirmation Modal */}
-//       {showUnpinConfirm && (
-//         <div style={{
-//           position: 'fixed',
-//           top: 0,
-//           left: 0,
-//           right: 0,
-//           bottom: 0,
-//           backgroundColor: 'rgba(0,0,0,0.5)',
-//           display: 'flex',
-//           alignItems: 'center',
-//           justifyContent: 'center',
-//           zIndex: 2000,
-//         }}>
-//           <div style={{
-//             backgroundColor: 'white',
-//             padding: '1.5rem',
-//             borderRadius: '8px',
-//             maxWidth: '400px',
-//             width: '90%',
-//             textAlign: 'center',
-//           }}>
-//             <h3 style={{ marginTop: 0 }}>Unpin Module</h3>
-//             <p>Are you sure you want to unpin `${showUnpinConfirm.name}` from your quick access?</p>
-//             <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', marginTop: '1.5rem' }}>
-//               <button
-//                 onClick={() => setShowUnpinConfirm(null)}
-//                 style={{
-//                   padding: '0.5rem 1rem',
-//                   border: '1px solid #ccc',
-//                   borderRadius: '4px',
-//                   backgroundColor: '#f5f5f5',
-//                   cursor: 'pointer',
-//                 }}
-//               >
-//                 Cancel
-//               </button>
-//               <button
-//                 onClick={() => confirmUnpin(showUnpinConfirm)}
-//                 style={{
-//                   padding: '0.5rem 1rem',
-//                   border: 'none',
-//                   borderRadius: '4px',
-//                   backgroundColor: '#ff4d4f',
-//                   color: 'white',
-//                   cursor: 'pointer',
-//                 }}
-//               >
-//                 Yes, Unpin It
-//               </button>
-//             </div>
-//           </div>
-//         </div>
-//       )}
-//     </header>
-//   );
-// };
-
-// export default Header;
-
-
-
-// src/components/Header.js
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
 import { useTheme } from '../../../src/app/context/ThemeContext';
-import { IoIosSearch, IoIosPin } from "react-icons/io";
+import { IoIosSearch, IoIosPin, IoIosTime } from "react-icons/io";
 import { useRouter } from "next/navigation";
-import { MdPushPin, MdMenu, MdClose, MdNotifications, MdSettings, MdHelp } from 'react-icons/md';
+import { MdPushPin, MdMenu, MdClose, MdNotifications, MdSettings, MdHelp, MdHistory } from 'react-icons/md';
 import { usePin } from '../../app/hooks/usePin';
 import { getAllMenuItemsWithPaths, getIconComponent } from './menuData';
 import Link from 'next/link';
 import ReportIcon from '@mui/icons-material/Report';
-import axiosInstance from '@/lib/axios'; // Import axios instance
+import axiosInstance from '@/lib/axios';
+import { useRecentPaths } from '../../../src/app/context/RecentPathsContext';
 
 const Header = ({ isSidebarCollapsed, onMenuToggle, isMobile }) => {
   const [isSearchExpanded, setIsSearchExpanded] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [isQuickSettingsOpen, setIsQuickSettingsOpen] = useState(false);
+  const [isRecentlyVisitedOpen, setIsRecentlyVisitedOpen] = useState(false);
   const { theme, toggleTheme } = useTheme();
   const router = useRouter();
   const [userName, setUserName] = useState('');
@@ -449,14 +25,16 @@ const Header = ({ isSidebarCollapsed, onMenuToggle, isMobile }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [showSearchResults, setShowSearchResults] = useState(false);
-  const [companyName, setCompanyName] = useState(''); // New state for company name
-  const [branchName, setBranchName] = useState(''); // New state for branch name
+  const [companyName, setCompanyName] = useState('');
+  const [branchName, setBranchName] = useState('');
   const searchRef = useRef(null);
   const dropdownRef = useRef(null);
   const notificationsRef = useRef(null);
   const settingsRef = useRef(null);
+  const recentlyVisitedRef = useRef(null);
   const { pinnedModules, unpinModule } = usePin();
   const [showUnpinConfirm, setShowUnpinConfirm] = useState(null);
+  const { recentPaths, clearRecentPaths, removeRecentPath } = useRecentPaths();
   const [notifications, setNotifications] = useState([
     { id: 1, text: 'New ticket assigned to you', time: '5 min ago', read: false, type: 'ticket' },
     { id: 2, text: 'Inventory stock running low', time: '1 hour ago', read: false, type: 'inventory' },
@@ -475,18 +53,15 @@ const Header = ({ isSidebarCollapsed, onMenuToggle, isMobile }) => {
       setUserRole(storedRole);
     }
 
-    // Fetch company and branch names
     fetchCompanyAndBranchNames();
   }, []);
 
-  // Function to fetch company and branch names
   const fetchCompanyAndBranchNames = async () => {
     try {
       const coId = localStorage.getItem('CO_ID');
       const cobrId = localStorage.getItem('COBR_ID');
 
       if (coId && cobrId) {
-        // Fetch company name
         const companyResponse = await axiosInstance.post('COMPANY/Getdrpcofill', {
           CO_ID: "",
           Flag: ""
@@ -499,7 +74,6 @@ const Header = ({ isSidebarCollapsed, onMenuToggle, isMobile }) => {
           }
         }
 
-        // Fetch branch name
         const branchResponse = await axiosInstance.post('COMPANY/Getdrpcobrfill', {
           COBR_ID: "",
           CO_ID: coId,
@@ -535,6 +109,10 @@ const Header = ({ isSidebarCollapsed, onMenuToggle, isMobile }) => {
       if (settingsRef.current && !settingsRef.current.contains(event.target)) {
         setIsQuickSettingsOpen(false);
       }
+
+      if (recentlyVisitedRef.current && !recentlyVisitedRef.current.contains(event.target)) {
+        setIsRecentlyVisitedOpen(false);
+      }
     };
 
     document.addEventListener('mousedown', handleClickOutside);
@@ -559,12 +137,11 @@ const Header = ({ isSidebarCollapsed, onMenuToggle, isMobile }) => {
     }
   };
 
-  // Handle search result click
   const handleSearchResultClick = (path) => {
     setSearchQuery('');
     setShowSearchResults(false);
     setIsSearchExpanded(false);
-    router.push(path);
+    window.open(path, '_blank');
   };
 
   const handleSearchIconClick = () => {
@@ -628,6 +205,24 @@ const Header = ({ isSidebarCollapsed, onMenuToggle, isMobile }) => {
       case 'report': return '📊';
       default: return '🔔';
     }
+  };
+
+  const formatTimeAgo = (timestamp) => {
+    const date = new Date(timestamp);
+    const now = new Date();
+    const diffInSeconds = Math.floor((now - date) / 1000);
+    
+    if (diffInSeconds < 60) return 'Just now';
+    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
+    if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
+    if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)}d ago`;
+    return date.toLocaleDateString();
+  };
+
+  const handleRecentPathClick = (path) => {
+    // Open in new tab
+    window.open(path, '_blank');
+    setIsRecentlyVisitedOpen(false);
   };
 
   return (
@@ -850,7 +445,6 @@ const Header = ({ isSidebarCollapsed, onMenuToggle, isMobile }) => {
               maxWidth: '300px',
             }}
           >
-
             {branchName && (
               <span
                 style={{
@@ -874,6 +468,249 @@ const Header = ({ isSidebarCollapsed, onMenuToggle, isMobile }) => {
       </div>
 
       <div className="flex items-center gap-2 md:gap-3">
+        {/* Recently Visited Button */}
+        {!isMobile && (
+          <div ref={recentlyVisitedRef} style={{ position: 'relative' }}>
+            <button
+              onClick={() => {
+                setIsRecentlyVisitedOpen(!isRecentlyVisitedOpen);
+                setIsNotificationsOpen(false);
+                setIsDropdownOpen(false);
+              }}
+              style={{
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                color: 'white',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: '40px',
+                height: '40px',
+                borderRadius: '50%',
+                transition: 'all 0.2s ease',
+                position: 'relative',
+              }}
+              className="hover:bg-white hover:bg-opacity-10 active:bg-opacity-20"
+              title={`Recently Visited (${recentPaths.length})`}
+            >
+              <IoIosTime size={20} />
+              {/* Red notification badge for recently visited count */}
+              {recentPaths.length > 0 && (
+                <span style={{
+                  position: 'absolute',
+                  top: '2px',
+                  right: '2px',
+                  backgroundColor: '#ff4757',
+                  color: 'white',
+                  borderRadius: '50%',
+                  width: '15px',
+                  height: '15px',
+                  fontSize: '0.7rem',
+                  fontWeight: 'bold',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  // border: '2px solid #635bff',
+                  // boxShadow: '0 0 0 2px rgba(255, 255, 255, 0.8)',
+                }}>
+                  {recentPaths.length}
+                </span>
+              )}
+            </button>
+
+            {isRecentlyVisitedOpen && (
+              <div style={{
+                position: 'absolute',
+                top: '100%',
+                right: 0,
+                backgroundColor: 'white',
+                border: '1px solid #e0e0e0',
+                borderRadius: '12px',
+                width: '280px',
+                maxHeight: '400px',
+                zIndex: 1000,
+                boxShadow: '0 8px 25px rgba(0,0,0,0.15)',
+                marginTop: '0.5rem',
+              }}>
+                <div style={{
+                  padding: '1rem',
+                  borderBottom: '1px solid #f0f0f0',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                }}>
+                  <span style={{ fontWeight: '600', color: '#333' }}>
+                    Recently Visited
+                    {recentPaths.length > 0 && (
+                      <span style={{
+                        marginLeft: '0.5rem',
+                        fontSize: '0.8rem',
+                        backgroundColor: '#635bff',
+                        color: 'white',
+                        padding: '0.2rem 0.5rem',
+                        borderRadius: '10px',
+                        fontWeight: '500',
+                      }}>
+                        {recentPaths.length}
+                      </span>
+                    )}
+                  </span>
+                  {recentPaths.length > 0 && (
+                    <button
+                      onClick={clearRecentPaths}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: '#635bff',
+                        fontSize: '0.8rem',
+                        cursor: 'pointer',
+                        fontWeight: '500',
+                      }}
+                    >
+                      Clear All
+                    </button>
+                  )}
+                </div>
+
+                <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
+                  {recentPaths.length > 0 ? (
+                    recentPaths.map((item, index) => (
+                      <div
+                        key={item.id}
+                        style={{
+                          padding: '0.75rem 1rem',
+                          borderBottom: index < recentPaths.length - 1 ? '1px solid #f8f8f8' : 'none',
+                          cursor: 'pointer',
+                          backgroundColor: '#fff',
+                          transition: 'background-color 0.2s ease',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                        }}
+                        className="hover:bg-gray-50"
+                        onClick={() => handleRecentPathClick(item.path)}
+                        title={`Click to open "${item.name}" in new tab`}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flex: 1 }}>
+                          <div style={{
+                            width: '28px',
+                            height: '28px',
+                            borderRadius: '6px',
+                            backgroundColor: '#f0f2ff',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: '#635bff',
+                            fontSize: '0.8rem',
+                            fontWeight: '600',
+                          }}>
+                            {index + 1}
+                          </div>
+                          <div style={{ flex: 1 }}>
+                            <div style={{
+                              fontSize: '0.9rem',
+                              color: '#333',
+                              fontWeight: '500',
+                              lineHeight: '1.4',
+                              marginBottom: '0.2rem',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '0.25rem',
+                            }}>
+                              {item.name}
+                              <span style={{
+                                fontSize: '0.7rem',
+                                color: '#999',
+                                marginLeft: 'auto',
+                              }}>
+                                {formatTimeAgo(item.timestamp)}
+                              </span>
+                            </div>
+                            {/* Time ago indicator */}
+                            <div style={{
+                              fontSize: '0.7rem',
+                              color: '#999',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '0.25rem',
+                            }}>
+                              <span style={{
+                                fontSize: '0.6rem',
+                                color: '#635bff',
+                                backgroundColor: '#f0f2ff',
+                                padding: '0.1rem 0.4rem',
+                                borderRadius: '4px',
+                                fontWeight: '500',
+                              }}>
+                                New Tab
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            removeRecentPath(item.id);
+                          }}
+                          style={{
+                            background: 'none',
+                            border: 'none',
+                            color: '#999',
+                            cursor: 'pointer',
+                            fontSize: '1rem',
+                            padding: '0.25rem',
+                            borderRadius: '4px',
+                            transition: 'all 0.2s ease',
+                          }}
+                          className="hover:bg-gray-100 hover:text-red-500"
+                          title="Remove from history"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ))
+                  ) : (
+                    <div style={{
+                      padding: '2rem 1rem',
+                      textAlign: 'center',
+                      color: '#999',
+                      fontSize: '0.9rem',
+                    }}>
+                      <div style={{ fontSize: '2rem', marginBottom: '0.5rem', color: '#ccc' }}>
+                        <IoIosTime />
+                      </div>
+                      No recent visits
+                      <div style={{ fontSize: '0.8rem', color: '#ccc', marginTop: '0.5rem' }}>
+                        Visit pages to see them here
+                      </div>
+                    </div>
+                  )}
+                </div>
+                
+                {/* Footer with info */}
+                {recentPaths.length > 0 && (
+                  <div style={{
+                    padding: '0.75rem 1rem',
+                    borderTop: '1px solid #f0f0f0',
+                    fontSize: '0.75rem',
+                    color: '#999',
+                    textAlign: 'center',
+                    backgroundColor: '#f9f9f9',
+                    borderBottomLeftRadius: '12px',
+                    borderBottomRightRadius: '12px',
+                  }}>
+                    <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.25rem' }}>
+                      <span style={{ color: '#635bff' }}>ℹ️</span>
+                      Click any item to open in new tab
+                    </span>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
         {!isMobile && (
           <Link href="/pinned-modules" passHref>
             <button
@@ -927,7 +764,7 @@ const Header = ({ isSidebarCollapsed, onMenuToggle, isMobile }) => {
           <button
             onClick={() => {
               setIsNotificationsOpen(!isNotificationsOpen);
-              setIsQuickSettingsOpen(false);
+              setIsRecentlyVisitedOpen(false);
               setIsDropdownOpen(false);
             }}
             style={{
@@ -1088,7 +925,7 @@ const Header = ({ isSidebarCollapsed, onMenuToggle, isMobile }) => {
           onClick={() => {
             setIsDropdownOpen(!isDropdownOpen);
             setIsNotificationsOpen(false);
-            setIsQuickSettingsOpen(false);
+            setIsRecentlyVisitedOpen(false);
           }}
         >
           <div
@@ -1168,8 +1005,6 @@ const Header = ({ isSidebarCollapsed, onMenuToggle, isMobile }) => {
               marginTop: '0.15rem',
               overflow: 'hidden',
             }}>
-              {/* User header */}
-              {/* Header inside dropdown */}
               <div style={{
                 padding: '1rem',
                 backgroundColor: '#f8fbff',
@@ -1239,8 +1074,6 @@ const Header = ({ isSidebarCollapsed, onMenuToggle, isMobile }) => {
                   <span>Change Password</span>
                 </button>
                 
-                {/* <div style={{ height: '1px', backgroundColor: '#f0f0f0', margin: '0.25rem 0' }} /> */}
-
                 <button
                   onClick={handleLogout}
                   style={{
