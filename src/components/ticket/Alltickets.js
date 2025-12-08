@@ -134,7 +134,7 @@ const AllTicketsPage = () => {
 
 
   const handleEditTicket = (ticket) => {
-    // router.push(`/tickets/edit-ticket?id=${ticket.id}`);
+    router.push(`/tickets/create-tickets/?TKTKEY=${ticket.TKTKEY}`);
   };
 
   const handleDeleteClick = (ticket) => {
@@ -386,6 +386,7 @@ const AllTicketsPage = () => {
                   </Tooltip>
                   <Tooltip title="Edit" arrow>
                     <IconButton size="small" color="secondary" onClick={() => handleEditTicket(ticket)}>
+                   
                       <EditIcon fontSize="small" />
                     </IconButton>
                   </Tooltip>

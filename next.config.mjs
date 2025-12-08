@@ -1,11 +1,11 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // output: 'export',
+   output: 'export',
   reactStrictMode: true,
   assetPrefix: '/',
   trailingSlash: true,
   images: {
-    // unoptimized: true, 
+     unoptimized: true, 
     unoptimized: process.env.NODE_ENV === 'development',
   },
 };
