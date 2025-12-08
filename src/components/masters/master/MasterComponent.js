@@ -97,42 +97,22 @@ export default function MasterPage() {
       // setActiveTab(newValue);
     }
   };
-  // const handleTabChange = (event, newValue) => {
-  //    const tabId = inventoryData[newValue]?.id;
-  //    if (tabId) {
-  //      router.push(`/inventorypage?activeTab=${tabId}`, { scroll: false });
-  //    }
-  //  };
- 
-  // useEffect(() => {
-  //   if (!isClient) return; 
-  //   const tabParam = searchParams.get('activeTab') || '';
-  //   const index = menuData.findIndex(tab => tab.id === tabParam);
-  //   if (tabParam && index !== -1 && index !== activeTab) {  
-  //   } else if (!tabParam) {
-  //     setActiveTab(-1); 
-  //   }
-  // }, [searchParams, isClient, activeTab]);
+
   useEffect(() => {
-  if (!isClient) return; // Only run on the client side
+    if (!isClient) return; // Only run on the client-side
 
-  // Get the activeTab parameter from the URL
-  const tabParam = searchParams.get('activeTab') || '';
-
-  // If the `activeTab` parameter is found in the URL
-  if (tabParam) {
-    // Find the index of the tab with the corresponding id
-    const index = menuData.findIndex((tab) => tab.id === tabParam);
-
-    // If a valid index is found, set the active tab to that index
-    if (index !== -1 && index !== activeTab) {
-      setActiveTab(index); // This ensures that the tab is selected based on the URL
+    const tabParam = searchParams.get('activeTab') || '';
+    const index = menuData.findIndex(tab => tab.id === tabParam);
+    // if (index !== -1 && index !== activeTab) {
+    //   setActiveTab(index >= 0 ? index : 0);
+    // }
+    if (tabParam && index !== -1 && index !== activeTab) {  // If tabParam is valid, set it
+      setActiveTab(index);
+    } else if (!tabParam) {
+      setActiveTab(-1);  // Optionally set to 0 if no activeTab query exists
     }
-  } else {
-    // If no tabParam is found, set the default tab to -1
-    setActiveTab(-1);
-  }
-}, [searchParams, isClient]);
+  }, [searchParams, isClient, activeTab]);
+
   const StyledTabs = styled(Tabs)({
     backgroundColor: '#e1e7ef',
     borderRadius: '10px',
