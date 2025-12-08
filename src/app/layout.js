@@ -35,12 +35,14 @@
 
 
 // src/app/layout.js
+// src/app/layout.js
 
 import "./globals.css";
 import { ThemeProvider } from './context/ThemeContext';
 import StoreProvider from './redux/providers';
 import { TicketProvider } from "./context/TicketContext";
 import { LocalizationProvider } from "../context/LocalizationContext";
+import { RecentPathsProvider } from '../app/context/RecentPathsContext';
 
 export const metadata = {
   title: "PrasystERP",
@@ -58,7 +60,9 @@ export default function RootLayout({ children }) {
           <ThemeProvider>
             <LocalizationProvider>
               <TicketProvider>
-                {children}
+                <RecentPathsProvider>
+                  {children}
+                </RecentPathsProvider>
               </TicketProvider>
             </LocalizationProvider>
           </ThemeProvider>
