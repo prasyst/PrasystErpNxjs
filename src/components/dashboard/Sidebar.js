@@ -58,6 +58,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
     }
   };
 
+
   const toggleSection = (name) => {
     setOpenSections(prev => {
       const newState = { ...prev };
@@ -67,12 +68,19 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
       } else {
         newState[name] = true;
       }
-
+      // setHasOpenSubmenu(Object.keys(newState).length > 0);
       setHasOpenSubmenu(Object.keys(newState).length > 0);
       return newState;
     });
   };
-
+  
+   useEffect(() => {
+    if (isMobile) {  
+      setIsCollapsed(false); 
+    } else {
+      setIsCollapsed(true); 
+    }
+  }, [isMobile, setIsCollapsed]);
   useEffect(() => {
     if (pathname.startsWith('/masterpage')) {
       setOpenSections(prev => ({
@@ -141,8 +149,8 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
   }, [isMobile, isOpen]);
 
   const handleChildClick = (child) => {
-    setActiveChild(child.name); 
-    setActiveGrandchild(null); 
+    setActiveChild(child.name);
+    setActiveGrandchild(null);
   };
 
   const handleGrandchildClick = (grandchild) => {
@@ -164,8 +172,16 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
   };
 
   // Handle navigation
-  const handleNavigation = (path, name) => {
-    handleNavigationWithTracking(path, name);
+  const handleNavigation = (path) => {
+    if (path && path !== '#' && path !== '#') {
+      router.push(path);
+      if (isMobile) {
+        onClose();
+      }
+          // Update active state
+    const activeItem = findMenuItemByPath(menuItems, path);
+    setActiveItem(activeItem?.name || '');
+    }
   };
 
   const findAllItemsWithPaths = (items) => {
@@ -234,6 +250,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
     setShowUnpinConfirm(null);
   };
 
+
   const renderMainMenu = useCallback((items) => {
     return items.map((item, index) => {
       // DIVIDER RENDERING — MUST BE AT THE TOP LEVEL
@@ -251,21 +268,23 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
           />
         );
       }
-
       const IconComponent = item.icon;
       const hasChildren = item.children && item.children.length > 0;
       const isOpen = openSections[item.name];
       const isActive = false;
-
       const hasValidPath = item.path && item.path !== '#';
-
       return (
         <div key={item.name}>
           <div
             onClick={(e) => {
               e.stopPropagation();
               if (hasChildren) toggleSection(item.name);
+              if (hasValidPath) handleNavigation(item.path);
+              if (item.name === 'Masters') {
+                router.push('/masterpage?activeTab=company');
+              }
               if (hasValidPath) handleNavigation(item.path, item.name);
+
               if (item.name !== 'Masters' && item.name !== 'Inventory') {
                 setActiveChild(null);
                 setActiveGrandchild(null);
@@ -487,7 +506,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
         </div>
       );
     });
-  },[openSections, activeChild, activeGrandchild, isCollapsed])
+  }, [openSections, activeChild, activeGrandchild, isCollapsed])
 
   return (
     <>

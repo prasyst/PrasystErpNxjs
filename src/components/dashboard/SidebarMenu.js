@@ -447,7 +447,6 @@ export const sidebarMenuItems =[
           ],
         }
         ,
-
         {
           name: 'Sample Packing',
           icon: RiBriefcase2Line, // ✔ packaging / sample case
@@ -488,10 +487,6 @@ export const sidebarMenuItems =[
             { name: 'Packaging/Barcode', icon: RiBarcodeLine, path: '/inverntory/packeging-barcode/' }, // ✔ barcode/packaging
           ],
         },
-
-        // { name: 'Stock Adjustment', icon: RiSettings4Line, path: '/inventorypage?activeTab=stockadjustment' },
-        // { name: 'Inventory Valuation', icon: RiPriceTag3Line,
-        //    path: '/inventorypage?activeTab=inventory-valuation' },
       ],
     },
 
@@ -591,11 +586,8 @@ export const sidebarMenuItems =[
       name: 'Help',
       icon: IoIosConstruct,
       children: [
-        { name: 'User Info', icon: MdPeople, path: '#' },
+        { name: 'User Info', icon: MdPeople, path: null },
         { name: 'Customer Care', icon: MdPayments, path: '#' },
-        // { name: 'Cascade', icon: MdEvent, path: '#' },
-        // { name: 'Tile Horizontal', icon: MdSummarize, path: '#' },
-        // { name: 'Tile Vertical', icon: MdPayments, path: '#' },
         { name: 'Barcode History', icon: MdEvent, path: '#' },
         { name: 'Query Help', icon: MdSummarize, path: '#' },
         { name: 'Close All Windows', icon: MdEvent, path: '#' },
