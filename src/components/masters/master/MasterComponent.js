@@ -94,10 +94,16 @@ export default function MasterPage() {
     const tabId = menuData[newValue]?.id;
     if (tabId) {
       router.push(`/masterpage?activeTab=${tabId}`, { scroll: false });
-      setActiveTab(newValue);
+      // setActiveTab(newValue);
     }
   };
-
+  // const handleTabChange = (event, newValue) => {
+  //    const tabId = inventoryData[newValue]?.id;
+  //    if (tabId) {
+  //      router.push(`/inventorypage?activeTab=${tabId}`, { scroll: false });
+  //    }
+  //  };
+ 
   // useEffect(() => {
   //   if (!isClient) return; 
   //   const tabParam = searchParams.get('activeTab') || '';

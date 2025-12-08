@@ -586,7 +586,7 @@ export const sidebarMenuItems =[
       name: 'Help',
       icon: IoIosConstruct,
       children: [
-        { name: 'User Info', icon: MdPeople, path: null },
+        { name: 'User Info', icon: MdPeople, path: '#'},
         { name: 'Customer Care', icon: MdPayments, path: '#' },
         { name: 'Barcode History', icon: MdEvent, path: '#' },
         { name: 'Query Help', icon: MdSummarize, path: '#' },
