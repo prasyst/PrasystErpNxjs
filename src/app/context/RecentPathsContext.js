@@ -31,10 +31,11 @@ export const RecentPathsProvider = ({ children }) => {
   // Save to localStorage whenever recentPaths changes
   useEffect(() => {
     localStorage.setItem('recentPaths', JSON.stringify(recentPaths));
+    console.log("888888", recentPaths)
   }, [recentPaths]);
 
   const addRecentPath = (path, name) => {
-    if (!path || path === '#' || path === '/') return;
+    if (!path || path === '#' || path === '/' || !name) return;
 
     const newPath = {
       path,
