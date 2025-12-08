@@ -24,27 +24,27 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
   const [activeChild, setActiveChild] = useState(null);
   const [activeGrandchild, setActiveGrandchild] = useState(null);
 
-  useEffect(() => {
-    const protectedRoutes = [
-      '/masterpage',
-      '/inventorypage',
-      '/tickets'
-    ];
+  // useEffect(() => {
+  //   const protectedRoutes = [
+  //     '/masterpage',
+  //     '/inventorypage',
+  //     '/tickets'
+  //   ];
 
-    const isProtected = protectedRoutes.some(route =>
-      pathname.startsWith(route) || pathname.includes(route)
-    );
+  //   const isProtected = protectedRoutes.some(route =>
+  //     pathname.startsWith(route) || pathname.includes(route)
+  //   );
 
-    if (isProtected) {
-      setIsCollapsed(false);
-      setOpenSections(prev => ({
-        ...prev,
-        Masters: pathname.includes('masterpage'),
-        Inventory: pathname.includes('inventorypage')
-      }));
-      setHasOpenSubmenu(true);
-    }
-  }, [pathname]);
+  //   if (isProtected) {
+  //     setIsCollapsed(false);
+  //     setOpenSections(prev => ({
+  //       ...prev,
+  //       Masters: pathname.includes('masterpage'),
+  //       Inventory: pathname.includes('inventorypage')
+  //     }));
+  //     setHasOpenSubmenu(true);
+  //   }
+  // }, [pathname]);
 
   // Function to add to recent paths when navigating
   const handleNavigationWithTracking = (path, name) => {
@@ -79,7 +79,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
         ...prev,
         Masters: true,
       }));
-      setIsCollapsed(false);
+      setIsCollapsed(true);    //addnew
       setHasOpenSubmenu(true);
 
       // Determine activeChild based on activeTab
@@ -104,7 +104,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
         ...prev,
         Inventory: true,
       }));
-      setIsCollapsed(false);
+      setIsCollapsed(true);  //addnew
       setHasOpenSubmenu(true);
 
       // Determine activeChild based on activeTab
@@ -327,6 +327,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
                       <div
                         onClick={(e) => {
                           e.stopPropagation();
+                            if (child.path === '#') return;
                           handleChildClick(child);
                           let targetPath = child.path;
 
@@ -500,7 +501,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
         }}
         onMouseLeave={() => {
           if (!isMobile) {
-            const isMastersRoute = pathname === '/masterpage';
+            const isMastersRoute = pathname === '/masterpage'; 
             if (!isMastersRoute) {
               setIsCollapsed(true);
               setOpenSections({});

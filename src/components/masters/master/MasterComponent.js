@@ -94,7 +94,7 @@ export default function MasterPage() {
     const tabId = menuData[newValue]?.id;
     if (tabId) {
       router.push(`/masterpage?activeTab=${tabId}`, { scroll: false });
-      setActiveTab(newValue);
+      // setActiveTab(newValue);
     }
   };
 
