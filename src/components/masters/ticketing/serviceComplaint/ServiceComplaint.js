@@ -147,8 +147,11 @@ const ServiceComplaint = () => {
 
     useEffect(() => {
         const fetchSubCat = async () => {
+              if (formData.TKTCATID) {
             try {
-                const response = await axiosInstance.post(`TktsubCat/GetTktsubCatDrp`);
+                const response = await axiosInstance.post(`TktsubCat/GetTktCatWiseSubCatDrp`,{ 
+                     TktCatId: formData.TKTCATID,  }
+                );
                 console.log("API response:", response.data.DATA);
                 if (
                     response.data.STATUS === 0 &&
@@ -162,10 +165,10 @@ const ServiceComplaint = () => {
                 console.error("Error fetching Ticket Sub Category Name", error);
                 toast.error("Error fetching Ticket Sub Category Name. Please try again.");
             }
+        }
         };
-
         fetchSubCat();
-    }, []);
+    }, [formData.TKTCATID]);
 
     useEffect(() => {
         const fetchSeverity = async () => {

@@ -1,5 +1,4 @@
 'use client';
-
 import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import {
@@ -85,7 +84,6 @@ export default function MasterPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  // Ensure that `useSearchParams` is only called on the client side
   useEffect(() => {
     setIsClient(true);
   }, []);
@@ -94,22 +92,18 @@ export default function MasterPage() {
     const tabId = menuData[newValue]?.id;
     if (tabId) {
       router.push(`/masterpage?activeTab=${tabId}`, { scroll: false });
-      setActiveTab(newValue);
     }
   };
 
   useEffect(() => {
-    if (!isClient) return; // Only run on the client-side
+    if (!isClient) return; 
 
     const tabParam = searchParams.get('activeTab') || '';
     const index = menuData.findIndex(tab => tab.id === tabParam);
-    // if (index !== -1 && index !== activeTab) {
-    //   setActiveTab(index >= 0 ? index : 0);
-    // }
-    if (tabParam && index !== -1 && index !== activeTab) {  // If tabParam is valid, set it
+    if (tabParam && index !== -1 && index !== activeTab) {  
       setActiveTab(index);
     } else if (!tabParam) {
-      setActiveTab(-1);  // Optionally set to 0 if no activeTab query exists
+      setActiveTab(-1);  
     }
   }, [searchParams, isClient, activeTab]);
 
