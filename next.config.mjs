@@ -6,7 +6,6 @@ const nextConfig = {
   trailingSlash: true,
   images: {
   unoptimized: true, 
-  unoptimized: process.env.NODE_ENV === 'development',
   },
 };
 
