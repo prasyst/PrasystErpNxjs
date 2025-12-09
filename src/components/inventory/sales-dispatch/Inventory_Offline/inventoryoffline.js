@@ -228,6 +228,7 @@ const SalesOrderOffline = () => {
   };
 
 // Function to populate form data from API response - FIXED branch selection
+// Function to populate form data from API response - FIXED branch and shipping party selection
 const populateFormData = async (orderData) => {
   try {
     console.log('Order Data received:', orderData);
@@ -263,8 +264,8 @@ const populateFormData = async (orderData) => {
     // Get display names from mappings using the actual API response keys
     const partyName = partyMapping[orderData.PARTY_KEY] || await getDisplayNameWithRetry(getPartyNameByKey, orderData.PARTY_KEY);
     
-    // FIXED: Get branch name by actual ID from API response
-    const branchName = await getDisplayNameWithRetry(getBranchNameById, orderData.PARTYDTL_ID);
+    // FIXED: Get branch name by actual ID from API response - Use PLACE from ORDBKList
+    const branchName = orderData.PLACE || await getDisplayNameWithRetry(getBranchNameById, orderData.PARTYDTL_ID);
     
     const brokerName = brokerMapping[orderData.BROKER_KEY] || await getDisplayNameWithRetry(getBrokerNameByKey, orderData.BROKER_KEY);
     const broker1Name = broker1Mapping[orderData.BROKER1_KEY] || await getDisplayNameWithRetry(getBrokerNameByKey, orderData.BROKER1_KEY);
@@ -273,10 +274,10 @@ const populateFormData = async (orderData) => {
     const consigneeName = consigneeMapping[orderData.DISTBTR_KEY] || await getDisplayNameWithRetry(getConsigneeNameByKey, orderData.DISTBTR_KEY);
     const seasonName = seasonMapping[orderData.CURR_SEASON_KEY] || await getDisplayNameWithRetry(getSeasonNameByKey, orderData.CURR_SEASON_KEY);
     const transporterName = transporterMapping[orderData.TRSP_KEY] || await getDisplayNameWithRetry(getTransporterNameByKey, orderData.TRSP_KEY);
-    const shippingPartyName = partyMapping[orderData.SHP_PARTY_KEY] || await getDisplayNameWithRetry(getPartyNameByKey, orderData.SHP_PARTY_KEY) || partyName;
     
-    // FIXED: Get shipping place name by actual ID from API response
-    const shippingPlaceName = await getDisplayNameWithRetry(getBranchNameById, orderData.SHP_PARTYDTL_ID);
+    // FIXED: Use SHIPPARTY and SHIPPLACE from API response directly
+    const shippingPartyName = orderData.SHIPPARTY || partyMapping[orderData.SHP_PARTY_KEY] || await getDisplayNameWithRetry(getPartyNameByKey, orderData.SHP_PARTY_KEY) || partyName;
+    const shippingPlaceName = orderData.SHIPPLACE || orderData.DLV_PLACE || branchName;
     
     const orderTypeName = await getDisplayNameWithRetry(getOrderTypeNameByKey, orderData.ORDBK_TYPE);
     const merchandiserName = merchandiserMapping[orderData.MERCHANDISER_ID] || await getDisplayNameWithRetry(getMerchandiserNameById, orderData.MERCHANDISER_ID);
@@ -307,8 +308,25 @@ const populateFormData = async (orderData) => {
       gstTypeValue
     });
 
+    // FIXED: Also process ORDBKSTYLIST to preserve Type and Pattern keys
+    const processedOrdbkStyleList = orderData.ORDBKSTYLIST ? orderData.ORDBKSTYLIST.map(item => ({
+      ...item,
+      // Preserve Type and Pattern keys
+      FGTYPE_KEY: item.FGTYPE_KEY || "",
+      FGSHADE_KEY: item.FGSHADE_KEY || "",
+      FGPTN_KEY: item.FGPTN_KEY || "",
+      // Ensure other required fields
+      FGPRD_KEY: item.FGPRD_KEY || "",
+      FGSTYLE_ID: item.FGSTYLE_ID || 0,
+      FGSTYLE_CODE: item.FGSTYLE_CODE || "",
+      DBFLAG: item.DBFLAG || "U"
+    })) : [];
+
     const formattedData = {
-      apiResponseData: orderData,
+      apiResponseData: {
+        ...orderData,
+        ORDBKSTYLIST: processedOrdbkStyleList
+      },
       ORDER_NO: orderData.ORDBK_NO || "",
       ORDER_DATE: orderData.ORDBK_DT ? formatDateForDisplay(orderData.ORDBK_DT) : "",
       PARTY_ORD_NO: orderData.PORD_REF || "",
@@ -317,11 +335,11 @@ const populateFormData = async (orderData) => {
       ENQ_NO: orderData.Enq_Key || "",
       PARTY_BRANCH: orderData.OrdBk_CoBr_Id || "",
       QUOTE_NO: orderData.QUOTE_NO || "",
-      SHIPPING_PARTY: shippingPartyName || partyName,
+      SHIPPING_PARTY: shippingPartyName,
       DIV_PLACE: orderData.DESP_PORT || "",
       AR_SALES: orderData.SALEPERSON1_KEY || "",
-      // FIXED: Use the actual shipping place name from API response
-      SHIPPING_PLACE: shippingPlaceName || branchName,
+      // FIXED: Use the actual shipping place from API response
+      SHIPPING_PLACE: shippingPlaceName,
       PRICE_LIST: orderData.PRICELIST_KEY || "",
       BROKER_TRANSPORTER: brokerName || "",
       B_EAST_II: "",
@@ -362,7 +380,7 @@ const populateFormData = async (orderData) => {
       Party: partyName || "",
       Branch: branchName || "",
       Broker: brokerName || "",
-      // API specific fields
+      // API specific fields - PRESERVE TYPE AND PATTERN KEYS
       CURR_SEASON_KEY: orderData.CURR_SEASON_KEY || "",
       PRICELIST_KEY: orderData.PRICELIST_KEY || "",
       BROKER1_KEY: orderData.BROKER1_KEY || "",
@@ -411,12 +429,11 @@ const populateFormData = async (orderData) => {
 
   } catch (error) {
     console.error('Error populating form data:', error);
-    showSnackbar('Error populating form data', 'error');
+    // showSnackbar('Error populating form data', 'error');
   }
 };
 
-  // Function to prepare payload for submission - FIXED ORDBKTERMLIST
-// Function to prepare payload for submission - FIXED ORDBKGSTLIST DBFLAG
+// Function to prepare payload for submission - FIXED with proper Type and Pattern keys preservation
 const prepareSubmitPayload = () => {
   const dbFlag = mode === 'add' ? 'I' : 'U';
   const currentDate = new Date().toISOString().replace('T', ' ').split('.')[0];
@@ -428,9 +445,9 @@ const prepareSubmitPayload = () => {
 
   const getStatusValue = (status) => {
     const statusMapping = {
-      'O': '1',  // Open -> 1
-      'C': '0',  // Cancel -> 0  
-      'S': '5'   // Short -> 5
+      'O': '1',
+      'C': '0',
+      'S': '5'
     };
     return statusMapping[status] || "1";
   };
@@ -465,19 +482,18 @@ const prepareSubmitPayload = () => {
   // Get ORDBKSTYLIST from formData
   const ordbkStyleList = formData.apiResponseData?.ORDBKSTYLIST || [];
   
-  // CORRECT ORDBK_KEY generation: FCYR_KEY + COBR_ID + ORDBK_NO
+  // CORRECT ORDBK_KEY generation
   const correctOrdbkKey = formData.ORDBK_KEY || `2502${formData.ORDER_NO}`;
   
   console.log('Using ORDBK_KEY:', correctOrdbkKey);
 
-  // Transform ORDBKSTYLIST for API with proper DBFLAG handling
+  // Transform ORDBKSTYLIST for API with proper keys handling
   const transformedOrdbkStyleList = ordbkStyleList.map(item => {
-   
     let itemDbFlag = item.DBFLAG || dbFlag;
     
     if (mode === 'edit') {
-      // Check if this is a new item (temporary ID created during edit mode)
-      const isNewItem = item.ORDBKSTY_ID && item.ORDBKSTY_ID.toString().length > 9; // Temporary IDs are usually long numbers
+      // Check if this is a new item
+      const isNewItem = item.ORDBKSTY_ID && item.ORDBKSTY_ID.toString().length > 9;
       const hasOriginalId = item.ORDBKSTY_ID && item.ORDBKSTY_ID > 0 && !isNewItem;
       
       // If DBFLAG is already 'D' (deleted), keep it as 'D'
@@ -486,14 +502,21 @@ const prepareSubmitPayload = () => {
       } else {
         itemDbFlag = hasOriginalId ? 'U' : 'I';
       }
-      
-      console.log('Item DBFLAG determination:', {
-        ORDBKSTY_ID: item.ORDBKSTY_ID,
-        isNewItem,
-        hasOriginalId,
-        currentDBFLAG: item.DBFLAG,
-        itemDbFlag
-      });
+    }
+
+    // FIXED: Preserve original Type and Pattern keys for existing items in edit mode
+    let fgtypeKey, fgshadeKey, fgptnKey;
+    
+    if (mode === 'edit' && item.ORDBKSTY_ID && item.ORDBKSTY_ID > 0) {
+      // For existing items in edit mode, preserve original keys
+      fgtypeKey = item.FGTYPE_KEY || "";
+      fgshadeKey = item.FGSHADE_KEY || "";
+      fgptnKey = item.FGPTN_KEY || "";
+    } else {
+      // For new items or add mode, use current values
+      fgtypeKey = item.FGTYPE_KEY || "";
+      fgshadeKey = item.FGSHADE_KEY || "";
+      fgptnKey = item.FGPTN_KEY || "";
     }
 
     return {
@@ -502,16 +525,17 @@ const prepareSubmitPayload = () => {
       ORDBK_KEY: correctOrdbkKey,
       FGPRD_KEY: item.FGPRD_KEY || "",
       FGSTYLE_ID: item.FGSTYLE_ID || 0,
-      FGSTYLE_CODE: item.STYLE || "",
-      FGTYPE_KEY: item.FGTYPE_KEY || "",
-      FGSHADE_KEY: item.FGSHADE_KEY || "",
-      FGPTN_KEY: item.FGPTN_KEY || "",
-      FGITM_KEY: item.FGITEM_KEY || "",
-      QTY: parseFloat(item.ITMQTY) || 0,
+      FGSTYLE_CODE: item.FGSTYLE_CODE || "",
+      // FIXED: Preserve these keys properly in all modes
+      FGTYPE_KEY: fgtypeKey,
+      FGSHADE_KEY: fgshadeKey,
+      FGPTN_KEY: fgptnKey,
+      FGITM_KEY: item.FGITM_KEY || "",
+      QTY: parseFloat(item.QTY || item.ITMQTY) || 0,
       STYCATRT_ID: item.STYCATRT_ID || 0,
-      RATE: parseFloat(item.ITMRATE) || 0,
-      AMT: parseFloat(item.ITMAMT) || 0,
-      DLV_VAR_PERCENT: parseFloat(item.DLV_VAR_PERC) || 0,
+      RATE: parseFloat(item.RATE || item.ITMRATE) || 0,
+      AMT: parseFloat(item.AMT || item.ITMAMT) || 0,
+      DLV_VAR_PERCENT: parseFloat(item.DLV_VAR_PERCENT || item.DLV_VAR_PERC) || 0,
       DLV_VAR_QTY: parseFloat(item.DLV_VAR_QTY) || 0,
       OPEN_RATE: "",
       TERM_KEY: "",
@@ -526,24 +550,24 @@ const prepareSubmitPayload = () => {
       INIT_REMK: "",
       INIT_QTY: 0,
       DLV_DT: "1900-01-01 00:00:00.000",
-      BAL_QTY: parseFloat(item.ITMQTY) || 0,
+      BAL_QTY: parseFloat(item.QTY || item.ITMQTY) || 0,
       STATUS: "1",
       STYLE_PRN: "",
       TYPE_PRN: "",
-      MRP_PRN: parseFloat(item.ITMRATE) || 0,
+      MRP_PRN: parseFloat(item.RATE || item.ITMRATE) || 0,
       REMK: item.REMARK || "",
       QUOTEDTL_ID: 0,
       SETQTY: parseFloat(item.SETQTY) || 0,
       RQTY: 0,
       DISTBTR_KEY: consigneeKey,
       LOTNO: seasonKey,
-      WOBALQTY: parseFloat(item.ITMQTY) || 0,
+      WOBALQTY: parseFloat(item.QTY || item.ITMQTY) || 0,
       REFORDBKSTY_ID: 0,
       BOMSTY_ID: 0,
       ISRMREQ: "N",
       OP_QTY: 0,
       ORDBKSTYSZLIST: (item.ORDBKSTYSZLIST || []).map(sizeItem => ({
-        DBFLAG: itemDbFlag, // Use same DBFLAG as parent item
+        DBFLAG: itemDbFlag,
         ORDBKSTYSZ_ID: sizeItem.ORDBKSTYSZ_ID || 0,
         ORDBK_KEY: correctOrdbkKey,
         ORDBKSTY_ID: item.ORDBKSTY_ID || 0,
@@ -554,8 +578,8 @@ const prepareSubmitPayload = () => {
         INIT_REMK: "",
         INIT_QTY: 0,
         BAL_QTY: parseFloat(sizeItem.QTY) || 0,
-        MRP: parseFloat(item.ITMRATE) || 0,
-        WSP: parseFloat(item.ITMRATE) || 0,
+        MRP: parseFloat(item.RATE || item.ITMRATE) || 0,
+        WSP: parseFloat(item.RATE || item.ITMRATE) || 0,
         RQTY: 0,
         WOBALQTY: parseFloat(sizeItem.QTY) || 0,
         REFORDBKSTYSZ_ID: 0,
@@ -576,42 +600,29 @@ const prepareSubmitPayload = () => {
     };
   });
 
-  console.log('Transformed ORDBKSTYLIST with DBFLAGS:', transformedOrdbkStyleList);
+  console.log('Transformed ORDBKSTYLIST with proper keys:', transformedOrdbkStyleList);
 
   // Get ORDBKTERMLIST from formData
   const ordbkTermList = formData.apiResponseData?.ORDBKTERMLIST || [];
   
-  console.log('ORDBKTERMLIST from formData:', ordbkTermList);
-
-  // FIXED: Generate ORDBKGSTLIST from GST table data with proper DBFLAG handling
-  const generateOrdbkGstList = () => {
-    // If we have GST table data from Stepper3, use that
+  // FIXED: Generate ORDBKGSTLIST only if GST_APPL is "Y"
+  let ordbkGstList = [];
+  
+  if (formData.GST_APPL === "Y") {
     if (formData.apiResponseData?.ORDBKGSTLIST && formData.apiResponseData.ORDBKGSTLIST.length > 0) {
-      console.log('Using existing ORDBKGSTLIST from formData');
-      return formData.apiResponseData.ORDBKGSTLIST.map(gstItem => {
-        // FIXED: Proper DBFLAG determination for GST items
+      ordbkGstList = formData.apiResponseData.ORDBKGSTLIST.map(gstItem => {
         let gstDbFlag;
         
         if (mode === 'add') {
-          // In add mode, all GST items should be 'I'
           gstDbFlag = 'I';
         } else {
-          // In edit mode, check if it's existing or new
           const hasOriginalId = gstItem.ORDBK_GST_ID && gstItem.ORDBK_GST_ID > 0;
           gstDbFlag = hasOriginalId ? 'U' : 'I';
         }
         
-        // If DBFLAG is explicitly set to 'D' (deleted), keep it as 'D'
         if (gstItem.DBFLAG === 'D') {
           gstDbFlag = 'D';
         }
-
-        console.log('GST Item DBFLAG determination:', {
-          ORDBK_GST_ID: gstItem.ORDBK_GST_ID,
-          originalDBFLAG: gstItem.DBFLAG,
-          finalDBFLAG: gstDbFlag,
-          mode: mode
-        });
 
         return {
           DBFLAG: gstDbFlag,
@@ -619,7 +630,7 @@ const prepareSubmitPayload = () => {
           GSTTIN_NO: gstItem.GSTTIN_NO || "URD",
           ORDBK_KEY: correctOrdbkKey,
           ORDBK_DT: formatDateForAPI(formData.ORDER_DATE)?.replace('T', ' ') || currentDate,
-          GST_TYPE: formData.GST_TYPE === "STATE" ? "S" : "I", // FIXED: "S" for State GST, "I" for IGST
+          GST_TYPE: formData.GST_TYPE === "STATE" ? "S" : "I",
           HSNCODE_KEY: gstItem.HSNCODE_KEY || "IG001",
           HSN_CODE: gstItem.HSN_CODE || "64021010",
           QTY: parseFloat(gstItem.QTY) || 0,
@@ -642,19 +653,16 @@ const prepareSubmitPayload = () => {
         };
       });
     } else {
-      // Fallback: Calculate GST from items if no explicit GST data
-      console.log('Generating ORDBKGSTLIST from item data');
-      const gstList = [];
-      
+      // Generate GST list from items if GST is enabled but no GST data exists
       transformedOrdbkStyleList.forEach(item => {
         if (item.DBFLAG !== 'D') {
           const gstItem = {
-            DBFLAG: mode === 'add' ? 'I' : 'I', // FIXED: Always 'I' for new GST items in both modes
+            DBFLAG: mode === 'add' ? 'I' : 'I',
             ORDBK_GST_ID: 0,
             GSTTIN_NO: "URD",
             ORDBK_KEY: correctOrdbkKey,
             ORDBK_DT: formatDateForAPI(formData.ORDER_DATE)?.replace('T', ' ') || currentDate,
-            GST_TYPE: formData.GST_TYPE === "STATE" ? "S" : "I", // FIXED: "S" for State GST, "I" for IGST
+            GST_TYPE: formData.GST_TYPE === "STATE" ? "S" : "I",
             HSNCODE_KEY: "IG001",
             HSN_CODE: "64021010",
             QTY: item.QTY || 0,
@@ -663,7 +671,7 @@ const prepareSubmitPayload = () => {
             ITM_AMT: item.AMT || 0,
             DISC_AMT: item.DISC_AMT || 0,
             NET_AMT: item.NET_AMT || 0,
-            SGST_RATE: formData.GST_TYPE === "STATE" ? 2.5 : 0, // Example rates
+            SGST_RATE: formData.GST_TYPE === "STATE" ? 2.5 : 0,
             SGST_AMT: formData.GST_TYPE === "STATE" ? (item.NET_AMT * 0.025) : 0,
             CGST_RATE: formData.GST_TYPE === "STATE" ? 2.5 : 0,
             CGST_AMT: formData.GST_TYPE === "STATE" ? (item.NET_AMT * 0.025) : 0,
@@ -675,16 +683,15 @@ const prepareSubmitPayload = () => {
             ADD_CESS_RATE: 0,
             ADD_CESS_AMT: 0
           };
-          gstList.push(gstItem);
+          ordbkGstList.push(gstItem);
         }
       });
-      
-      return gstList;
     }
-  };
-
-  const ordbkGstList = generateOrdbkGstList();
-  console.log('Generated ORDBKGSTLIST with proper DBFLAGS:', ordbkGstList);
+  } else {
+    // GST_APPL is "N" - send empty array
+    ordbkGstList = [];
+    console.log('GST_APPL is "N", sending empty ORDBKGSTLIST');
+  }
 
   // Base payload for both insert and update
   const basePayload = {
@@ -733,7 +740,7 @@ const prepareSubmitPayload = () => {
     OrdBk_CoBr_Id: formData.PARTY_BRANCH || "02",
     GR_AMT: parseFloat(formData.TOTAL_AMOUNT) || 0,
     GST_APP: formData.GST_APPL || "N",
-    GST_TYPE: formData.GST_TYPE === "STATE" ? "S" : "I", // FIXED: "S" for State GST, "I" for IGST
+    GST_TYPE: formData.GST_TYPE === "STATE" ? "S" : "I",
     SHP_PARTY_KEY: shippingPartyKey,
     SHP_PARTYDTL_ID: parseInt(shippingPartyDtlId) || 100006,
     STATE_CODE: "",
@@ -746,8 +753,7 @@ const prepareSubmitPayload = () => {
     ORDBK_EXTRA_AMT: 0,
     ORDBKSTYLIST: transformedOrdbkStyleList,
     ORDBKTERMLIST: ordbkTermList,
-    // NEW: Include ORDBKGSTLIST in payload
-    ORDBKGSTLIST: ordbkGstList,
+    ORDBKGSTLIST: ordbkGstList, // Will be empty array if GST_APPL = "N"
     DISTBTR_KEY: consigneeKey,
     SALEPERSON1_KEY: salesperson1Key,
     SALEPERSON2_KEY: salesperson2Key,
@@ -765,7 +771,8 @@ const prepareSubmitPayload = () => {
     basePayload.UPDATED_DT = currentDate;
   }
 
-  console.log('Final Payload with ORDBKGSTLIST:', JSON.stringify(basePayload, null, 2));
+  console.log('Final Payload with GST_APPL:', formData.GST_APPL, 'ORDBKGSTLIST length:', ordbkGstList.length);
+  console.log('Final Payload:', JSON.stringify(basePayload, null, 2));
   return basePayload;
 };
 
@@ -773,6 +780,12 @@ const prepareSubmitPayload = () => {
   const handleTable = () => {
     router.push('/inverntory/stock-enquiry-table');
   };
+
+  const handlePrev = () => {
+  if (tabIndex > 0) {
+    setTabIndex(tabIndex - 1);
+  }
+}
 
 const handlePrevClick = async () => {
   if (mode !== 'view') return;
@@ -1856,6 +1869,7 @@ if (loading || isDataLoading) {
             onSubmit={handleSubmit}
             onCancel={handleCancel}
             onNext={handleNext}
+            onPrev={handlePrev} 
             showSnackbar={showSnackbar}
             showValidationErrors={showValidationErrors}
           />
@@ -1867,6 +1881,7 @@ if (loading || isDataLoading) {
             mode={mode}
             onSubmit={handleSubmit}
             onCancel={handleCancel}
+            onPrev={handlePrev} 
             showSnackbar={showSnackbar}
           />
         )}
@@ -1938,6 +1953,62 @@ if (loading || isDataLoading) {
           )}
         </Grid>
       )}
+
+      {/* {(tabIndex === 1 || tabIndex === 2) && (
+      <Grid xs={12} sx={{ display: "flex", justifyContent: "end", mr: '4.5%', gap: 1, mt: 2 }}>
+        {tabIndex === 1 && (
+          <>
+            <Button
+              variant="contained"
+              color="primary"
+              sx={{
+                margin: { xs: '0 4px', sm: '0 6px' },
+                backgroundColor: '#39ace2',
+                color: '#fff',
+                minWidth: { xs: 40, sm: 46, md: 60 },
+                height: { xs: 40, sm: 46, md: 30 },
+              }}
+              onClick={handlePrev}
+              disabled={mode === 'view'}
+            >
+              Previous
+            </Button>
+            <Button
+              variant="contained"
+              color="primary"
+              sx={{
+                margin: { xs: '0 4px', sm: '0 6px' },
+                backgroundColor: '#39ace2',
+                color: '#fff',
+                minWidth: { xs: 40, sm: 46, md: 60 },
+                height: { xs: 40, sm: 46, md: 30 },
+              }}
+              onClick={handleNext}
+              disabled={mode === 'view'}
+            >
+              Next
+            </Button>
+          </>
+        )}
+        {tabIndex === 2 && (
+          <Button
+            variant="contained"
+            color="primary"
+            sx={{
+              margin: { xs: '0 4px', sm: '0 6px' },
+              backgroundColor: '#39ace2',
+              color: '#fff',
+              minWidth: { xs: 40, sm: 46, md: 60 },
+              height: { xs: 40, sm: 46, md: 30 },
+            }}
+            onClick={handlePrev}
+            disabled={mode === 'view'}
+          >
+            Previous
+          </Button>
+        )}
+      </Grid>
+    )} */}
     </Box>
   );
 };
