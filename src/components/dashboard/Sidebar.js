@@ -24,29 +24,6 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
   const [activeChild, setActiveChild] = useState(null);
   const [activeGrandchild, setActiveGrandchild] = useState(null);
 
-  // useEffect(() => {
-  //   const protectedRoutes = [
-  //     '/masterpage',
-  //     '/inventorypage',
-  //     '/tickets'
-  //   ];
-
-  //   const isProtected = protectedRoutes.some(route =>
-  //     pathname.startsWith(route) || pathname.includes(route)
-  //   );
-
-  //   if (isProtected) {
-  //     setIsCollapsed(false);
-  //     setOpenSections(prev => ({
-  //       ...prev,
-  //       Masters: pathname.includes('masterpage'),
-  //       Inventory: pathname.includes('inventorypage')
-  //     }));
-  //     setHasOpenSubmenu(true);
-  //   }
-  // }, [pathname]);
-
-  // Function to add to recent paths when navigating
   const handleNavigationWithTracking = (path, name) => {
     console.log('path',path)
     if (path && path !== '#') {

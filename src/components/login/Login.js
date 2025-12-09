@@ -215,8 +215,11 @@ const Login = () => {
       if (loginResponse.data.STATUS === 0) {
         const loginDetails = loginResponse.data.DATA[0];
         const USER_NAME = loginDetails.USER_NAME;
+            const USER_ID = loginDetails.USER_ID; 
         const currentYear = new Date().getFullYear();
         const lastTwoDigits = currentYear.toString().slice(-2);
+        localStorage.setItem('USER_NAME', USER_NAME);
+         localStorage.setItem('USER_ID', USER_ID); 
         localStorage.setItem('USER_NAME', USER_NAME);
         localStorage.setItem('FCYR_KEY', lastTwoDigits);
         localStorage.setItem('authenticated', 'true');
