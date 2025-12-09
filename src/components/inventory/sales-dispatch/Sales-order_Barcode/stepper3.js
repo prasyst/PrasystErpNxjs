@@ -331,8 +331,6 @@ const fetchGSTRates = useCallback(async () => {
     setIsGstCalculating(true);
     const currentDate = new Date().toISOString().replace('T', ' ').split('.')[0];
     const gstTableItems = [];
-    const processedStyles = new Set(); // Track processed FGSTYLE_ID to avoid duplicates
-    
     let totalTaxableAmount = 0;
     let totalSgstAmount = 0;
     let totalCgstAmount = 0;
@@ -349,50 +347,22 @@ const fetchGSTRates = useCallback(async () => {
     console.log('Total discount from terms:', discountFromTerms);
     console.log('Current GST Type:', formData.GST_TYPE);
 
-    // Group items by FGSTYLE_ID to avoid duplicate GST entries
-    const itemsByStyle = {};
-    formData.apiResponseData.ORDBKSTYLIST.forEach(item => {
-      if (item.DBFLAG === 'D') return;
-      
-      const fgstyleId = item.FGSTYLE_ID || 0;
-      if (!itemsByStyle[fgstyleId]) {
-        itemsByStyle[fgstyleId] = {
-          items: [],
-          totalQty: 0,
-          totalAmount: 0,
-          hsnCode: item.HSNCODE_KEY || "IG001"
-        };
-      }
-      
-      itemsByStyle[fgstyleId].items.push(item);
-      itemsByStyle[fgstyleId].totalQty += parseFloat(item.ITMQTY) || 0;
-      itemsByStyle[fgstyleId].totalAmount += parseFloat(item.ITMAMT) || 0;
-    });
-
-    console.log('Items grouped by FGSTYLE_ID:', itemsByStyle);
-
-    // Process each style group
-    for (const [fgstyleId, styleData] of Object.entries(itemsByStyle)) {
-      if (processedStyles.has(fgstyleId)) continue;
-      
-      processedStyles.add(fgstyleId);
-      
-      // Take first item from the group for GST rate calculation
-      const firstItem = styleData.items[0];
+    for (const item of formData.apiResponseData.ORDBKSTYLIST) {
+      if (item.DBFLAG === 'D') continue; // Skip deleted items
       
       const payload = {
-        "MRP": parseFloat(firstItem.MRP) || 0,
-        "WSP": parseFloat(firstItem.ITMRATE) || 0,
-        "intStyle_Id": firstItem.FGSTYLE_ID || 0,
+        "MRP": parseFloat(item.MRP) || 0,
+        "WSP": parseFloat(item.ITMRATE) || 0,
+        "intStyle_Id": item.FGSTYLE_ID || 0,
         "Byhsncode_key": 0,
-        "HSNCODE_KEY": firstItem.HSNCODE_KEY || "IG001",
+        "HSNCODE_KEY": item.HSNCODE_KEY || "IG001",
         "intGST_P_ID": 1
       };
 
-      console.log('Fetching GST rates for style group:', payload);
+      console.log('Fetching GST rates for item:', payload);
 
       const response = await axiosInstance.post('/Hsncode/GetGstRates', payload);
-      console.log('GST Rates API Response for style:', fgstyleId, response.data);
+      console.log('GST Rates API Response:', response.data);
 
       if (response.data.RESPONSESTATUSCODE === 1 && response.data.DATA && response.data.DATA.length > 0) {
         const gstData = response.data.DATA[0];
@@ -400,40 +370,37 @@ const fetchGSTRates = useCallback(async () => {
         // FIXED: Use GST type from formData (S for State, I for IGST)
         const gstType = formData.GST_TYPE; // 'S' for State GST, 'I' for IGST
         
-        // Calculate total amount for this style group
-        const styleTotalAmount = styleData.totalAmount;
-        const totalOrderAmount = orderAmount || formData.TOTAL_AMOUNT || 0;
-        
-        // Apply discount proportionally to this style group
-        const styleDiscount = totalOrderAmount > 0 ? 
-          (styleTotalAmount / totalOrderAmount) * discountFromTerms : 0;
-        const discountedStyleAmount = Math.max(0, styleTotalAmount - styleDiscount);
+        // Apply discount to item amount
+        const originalItemAmount = parseFloat(item.ITMAMT) || 0;
+        const itemDiscount = (originalItemAmount / orderAmount) * discountFromTerms;
+        const discountedItemAmount = Math.max(0, originalItemAmount - itemDiscount);
         
         let sgstAmount = 0;
         let cgstAmount = 0;
         let igstAmount = 0;
-        let styleGstAmount = 0;
+        let itemGstAmount = 0;
 
         // FIXED: Proper GST calculation based on GST_TYPE
         if (gstType === "I" || gstType === "IGST") {
           // IGST calculation
           const igstRate = parseFloat(gstData.IGST_RATE) || 0;
-          igstAmount = (discountedStyleAmount * igstRate) / 100;
-          styleGstAmount = igstAmount;
-          console.log(`IGST Calculation for style ${fgstyleId}: ${discountedStyleAmount} * ${igstRate}% = ${igstAmount}`);
+          igstAmount = (discountedItemAmount * igstRate) / 100;
+          itemGstAmount = igstAmount;
+          console.log(`IGST Calculation: ${discountedItemAmount} * ${igstRate}% = ${igstAmount}`);
         } else {
           // CGST + SGST calculation (State GST)
           const sgstRate = parseFloat(gstData.SGST_RATE) || 0;
           const cgstRate = parseFloat(gstData.CGST_RATE) || 0;
-          sgstAmount = (discountedStyleAmount * sgstRate) / 100;
-          cgstAmount = (discountedStyleAmount * cgstRate) / 100;
-          styleGstAmount = sgstAmount + cgstAmount;
-          console.log(`State GST Calculation for style ${fgstyleId}: ${discountedStyleAmount} * (${sgstRate}% + ${cgstRate}%) = ${styleGstAmount}`);
+          sgstAmount = (discountedItemAmount * sgstRate) / 100;
+          cgstAmount = (discountedItemAmount * cgstRate) / 100;
+          itemGstAmount = sgstAmount + cgstAmount;
+          console.log(`State GST Calculation: ${discountedItemAmount} * (${sgstRate}% + ${cgstRate}%) = ${itemGstAmount}`);
         }
 
         // Check if this GST item already exists to determine DBFLAG
         const existingGstItem = formData.apiResponseData?.ORDBKGSTLIST?.find(
-          gst => gst.FGSTYLE_ID === parseInt(fgstyleId)
+          gst => gst.HSN_CODE === (gstData.HSN_CODE || "64021010") && 
+                 gst.FGSTYLE_ID === item.FGSTYLE_ID
         );
 
         const dbFlag = existingGstItem ? 'U' : 'I';
@@ -448,12 +415,12 @@ const fetchGSTRates = useCallback(async () => {
           GST_TYPE: gstType === "I" || gstType === "IGST" ? "I" : "S", // FIXED: Proper GST_TYPE
           HSNCODE_KEY: gstData.HSNCODE_KEY || "IG001",
           HSN_CODE: gstData.HSN_CODE || "64021010",
-          QTY: styleData.totalQty,
+          QTY: parseFloat(item.ITMQTY) || 0,
           UNIT_KEY: "UN005",
           GST_RATE_SLAB_ID: parseInt(gstData.GST_RATE_SLAB_ID) || 39,
-          ITM_AMT: styleTotalAmount,
-          DISC_AMT: styleDiscount,
-          NET_AMT: discountedStyleAmount,
+          ITM_AMT: originalItemAmount,
+          DISC_AMT: itemDiscount,
+          NET_AMT: discountedItemAmount,
           SGST_RATE: (gstType === "I" || gstType === "IGST") ? 0 : parseFloat(gstData.SGST_RATE) || 0,
           SGST_AMT: sgstAmount,
           CGST_RATE: (gstType === "I" || gstType === "IGST") ? 0 : parseFloat(gstData.CGST_RATE) || 0,
@@ -465,17 +432,17 @@ const fetchGSTRates = useCallback(async () => {
           PARTYDTL_ID: formData.PARTYDTL_ID || 106634,
           ADD_CESS_RATE: 0,
           ADD_CESS_AMT: 0,
-          FGSTYLE_ID: parseInt(fgstyleId) // Store FGSTYLE_ID to track unique items
+          FGSTYLE_ID: item.FGSTYLE_ID // Add FGSTYLE_ID to track items
         };
 
         // Add item to GST table for display
         gstTableItems.push({
-          id: existingGstItem?.ORDBK_GST_ID || Date.now() + parseInt(fgstyleId),
+          id: existingGstItem?.ORDBK_GST_ID || Date.now(),
           hsnCode: gstData.HSN_CODE || '64021010',
-          qty: styleData.totalQty,
-          itemAmount: styleTotalAmount,
-          discAmount: styleDiscount,
-          netAmount: discountedStyleAmount,
+          qty: parseFloat(item.ITMQTY) || 0,
+          itemAmount: originalItemAmount,
+          discAmount: itemDiscount,
+          netAmount: discountedItemAmount,
           sgstRate: (gstType === "I" || gstType === "IGST") ? 0 : parseFloat(gstData.SGST_RATE) || 0,
           sgstAmount: sgstAmount,
           cgstRate: (gstType === "I" || gstType === "IGST") ? 0 : parseFloat(gstData.CGST_RATE) || 0,
@@ -485,24 +452,20 @@ const fetchGSTRates = useCallback(async () => {
           cessRate: 0.00,
           cessAmount: 0.00,
           dbFlag: dbFlag,
-          fgstyleId: parseInt(fgstyleId),
           // Store the original GST item for ORDBKGSTLIST
           originalGstData: gstItem
         });
 
         // Accumulate totals
-        totalItemAmount += styleTotalAmount;
-        totalDiscAmount += styleDiscount;
-        totalNetAmount += discountedStyleAmount;
+        totalItemAmount += originalItemAmount;
+        totalDiscAmount += itemDiscount;
+        totalNetAmount += discountedItemAmount;
         totalSgstAmount += sgstAmount;
         totalCgstAmount += cgstAmount;
         totalIgstAmount += igstAmount;
-        totalGstAmount += styleGstAmount;
+        totalGstAmount += itemGstAmount;
       }
     }
-
-    console.log('Total GST items generated:', gstTableItems.length);
-    console.log('Processed styles:', processedStyles);
 
     // Update GST table data
     setGstTableData(gstTableItems);
@@ -547,7 +510,7 @@ const fetchGSTRates = useCallback(async () => {
       }
     }));
 
-    console.log('Generated unique ORDBKGSTLIST with proper GST_TYPE:', ordbkGstList);
+    console.log('Generated ORDBKGSTLIST with proper GST_TYPE:', ordbkGstList);
     console.log('Updated top table data with GST rows:', updatedTopTableData);
     showSnackbar('GST calculated successfully with discount applied!');
   } catch (error) {
@@ -1600,133 +1563,116 @@ useEffect(() => {
         <TabPanel value={tabIndex} index={0}>
           {/* Calc Terms Content */}
           <Grid container spacing={2} alignItems="center">
-  {/* Term Grp */}
-  <Grid item xs={12} sm={2}>
-    <AutoVibe
-      id="TermGrp"
-      disabled={fieldStates.termGrpDisabled}
-      getOptionLabel={(option) => option || ''}
-      options={termGrpOptions}
-      label="Term Grp"
-      name="TERMGRP_NAME"
-      value={termFormData.TERMGRP_NAME}
-      onChange={(event, value) => handleTermGrpChange("TERMGRP_NAME", value)}
-      sx={DropInputSx}
-    />
-  </Grid>
-  
-  {/* Term */}
-  <Grid item xs={12} sm={2.5}>
-    <AutoVibe
-      id="Term"
-      disabled={fieldStates.termDisabled}
-      getOptionLabel={(option) => option || ''}
-      options={termOptions}
-      label="Term"
-      name="TERM_NAME"
-      value={termFormData.TERM_NAME}
-      onChange={(event, value) => handleTermChange("TERM_NAME", value)}
-      sx={DropInputSx}
-    />
-  </Grid>
-  
-  {/* Percent */}
-  <Grid item xs={12} sm={1.2}>
-    <TextField
-      fullWidth
-      label="Percent"
-      name="TERM_PERCENT"
-      type="number"
-      value={termFormData.TERM_PERCENT}
-      onChange={handleInputChange}
-      variant="filled"
-      sx={smallInputSx}  
-      disabled={fieldStates.percentDisabled}
-    />
-  </Grid>
-  
-  {/* Fix Amount */}
-  <Grid item xs={12} sm={1.5}>
-    <TextField
-      fullWidth
-      label="Fix Amount"
-      name="TERM_FIX_AMT"
-      type="number"
-      value={termFormData.TERM_FIX_AMT}
-      onChange={handleFixAmountChange}
-      variant="filled"
-      sx={smallInputSx}  
-      disabled={fieldStates.fixAmtDisabled}
-    />
-  </Grid>
-  
-  {/* Term Desc (Compact version) */}
-  <Grid item xs={12} sm={2.8}>
-    <TextField
-      fullWidth
-      label="Term Desc"
-      name="TERM_DESC"
-      value={termFormData.TERM_DESC}
-      onChange={handleInputChange}
-      variant="filled"
-      sx={textInputSx}
-      multiline
-      rows={1}
-      disabled={fieldStates.termDescDisabled}
-    />
-  </Grid>
-  
-  {/* Taxable Amount */}
-  <Grid item xs={12} sm={1.2}>
-    <TextField
-      fullWidth
-      label="Taxable Amt"
-      name="TAXABLE_AMT"
-      type="number"
-      value={totalNetAmount.toFixed(2)}
-      onChange={handleInputChange}
-      variant="filled"
-      sx={smallInputSx}  
-      disabled={fieldStates.taxableAmtDisabled}
-    />
-  </Grid>
-  
-  {/* Tax Amount */}
-  <Grid item xs={12} sm={1.2}>
-    <TextField
-      fullWidth
-      label="Tax Amt"
-      name="TAX_AMT"
-      type="number"
-      value={termFormData.TAX_AMT}
-      onChange={handleInputChange}
-      variant="filled"
-      sx={smallInputSx}  
-      disabled={fieldStates.taxAmtDisabled}
-    />
-  </Grid>
-  
-  {/* Button */}
-  {/* <Grid item xs={12} sm={0.8}>
-    <Button 
-      variant="contained" 
-      onClick={handleSave}
-      disabled={!(isAddingNew || isEditing)}
-      sx={{
-        backgroundColor: '#39ace2',
-        color: 'white',
-        '&:disabled': {
-          backgroundColor: '#cccccc',
-          color: '#666666'
-        },
-        minWidth: '80px'
-      }}
-      fullWidth
-    >
-      {isAddingNew ? 'Confirm' : (isEditing ? 'Save' : 'Apply')}
-    </Button>
-  </Grid> */}
-</Grid>
+            <Grid item xs={12} sm={4}>
+              <AutoVibe
+                id="TermGrp"
+                disabled={fieldStates.termGrpDisabled}
+                getOptionLabel={(option) => option || ''}
+                options={termGrpOptions}
+                label="Term Grp"
+                name="TERMGRP_NAME"
+                value={termFormData.TERMGRP_NAME}
+                onChange={(event, value) => handleTermGrpChange("TERMGRP_NAME", value)}
+                sx={DropInputSx}
+              />
+            </Grid>
+            <Grid item xs={12} sm={4}>
+              <AutoVibe
+                id="Term"
+                disabled={fieldStates.termDisabled}
+                getOptionLabel={(option) => option || ''}
+                options={termOptions}
+                label="Term"
+                name="TERM_NAME"
+                value={termFormData.TERM_NAME}
+                onChange={(event, value) => handleTermChange("TERM_NAME", value)}
+                sx={DropInputSx}
+              />
+            </Grid>
+            <Grid item xs={12} sm={2}>
+              <TextField
+                fullWidth
+                label="Percent"
+                name="TERM_PERCENT"
+                type="number"
+                value={termFormData.TERM_PERCENT}
+                onChange={handleInputChange}
+                variant="filled"
+                sx={smallInputSx}  
+                disabled={fieldStates.percentDisabled}
+              />
+            </Grid>
+            <Grid item xs={12} sm={2}>
+              <TextField
+                fullWidth
+                label="Fix Amount"
+                name="TERM_FIX_AMT"
+                type="number"
+                value={termFormData.TERM_FIX_AMT}
+                onChange={handleFixAmountChange}
+                variant="filled"
+                sx={smallInputSx}  
+                disabled={fieldStates.fixAmtDisabled}
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label="Term Desc"
+                name="TERM_DESC"
+                value={termFormData.TERM_DESC}
+                onChange={handleInputChange}
+                variant="filled"
+                sx={textInputSx}
+                multiline
+                rows={2}
+                disabled={fieldStates.termDescDisabled}
+              />
+            </Grid>
+            <Grid item xs={12} sm={3}>
+              <TextField
+                fullWidth
+                label="Taxable Amount"
+                name="TAXABLE_AMT"
+                type="number"
+                value={totalNetAmount.toFixed(2)}
+                onChange={handleInputChange}
+                variant="filled"
+                sx={smallInputSx}  
+                disabled={fieldStates.taxableAmtDisabled}
+              />
+            </Grid>
+            <Grid item xs={12} sm={3}>
+              <TextField
+                fullWidth
+                label="Tax Amount"
+                name="TAX_AMT"
+                type="number"
+                value={termFormData.TAX_AMT}
+                onChange={handleInputChange}
+                variant="filled"
+                sx={smallInputSx}  
+                disabled={fieldStates.taxAmtDisabled}
+              />
+            </Grid>
+            <Grid item xs={12}>
+              {/* <Button 
+                variant="contained" 
+                onClick={handleSave}
+                disabled={!(isAddingNew || isEditing)}
+                sx={{
+                  backgroundColor: '#39ace2',
+                  color: 'white',
+                  '&:disabled': {
+                    backgroundColor: '#cccccc',
+                    color: '#666666'
+                  }
+                }}
+              >
+                {isAddingNew ? 'Confirm' : (isEditing ? 'Save' : 'Apply')}
+              </Button> */}
+            </Grid>
+          </Grid>
         </TabPanel>
 
         <TabPanel value={tabIndex} index={1}>
@@ -1808,42 +1754,111 @@ useEffect(() => {
           </Box>
 
           {/* Summary Fields below GST Table */}
-         <Grid container spacing={1.5} alignItems="center">
-  {[
-    { label: "Itm", value: totalItemAmount.toFixed(2), bold: false },
-    { label: "Disc", value: totalDiscAmount.toFixed(2), bold: false },
-    { label: "NET", value: totalNetAmount.toFixed(2), bold: true },
-    { label: "SGST", value: totalSgstAmount.toFixed(2), bold: false },
-    { label: "CGST", value: totalCgstAmount.toFixed(2), bold: false },
-    { label: "IGST", value: totalIgstAmount.toFixed(2), bold: false },
-    { label: "Cess", value: totalCessAmount.toFixed(2), bold: false },
-    { label: "GST", value: gstSummary.totalGstAmount.toFixed(2), bold: true, color: '#1976d2' },
-    { label: "Final", value: finalAmount.toFixed(2), bold: true, color: '#2e7d32' }
-  ].map((field, index) => (
-    <Grid item xs={4} sm={1.1} key={index}>
-      <TextField
-        fullWidth
-        label={field.label}
-        value={field.value}
-        variant="filled"
-        size="small"
-        sx={{
-          ...smallInputSx,
-          '& .MuiInputBase-input': {
-            fontSize: '0.729rem',
-            padding: '6px 4px',
-            fontWeight: field.bold ? 'bold' : 'normal',
-            color: field.color || 'inherit'
-          },
-          '& .MuiInputLabel-root': {
-            fontSize: '0.729rem'
-          }
-        }}  
-        disabled
-      />
-    </Grid>
-  ))}
-</Grid>
+          <Grid container spacing={2} alignItems="center">
+            <Grid item xs={12} sm={1.5}>
+              <TextField
+                fullWidth
+                label="Itm Amt"
+                value={totalItemAmount.toFixed(2)}
+                variant="filled"
+                sx={smallInputSx}  
+                disabled
+              />
+            </Grid>
+            <Grid item xs={12} sm={1.5}>
+              <TextField
+                fullWidth
+                label="Disc Amt"
+                value={totalDiscAmount.toFixed(2)}
+                variant="filled"
+                sx={smallInputSx}  
+                disabled
+              />
+            </Grid>
+            <Grid item xs={12} sm={1.5}>
+              <TextField
+                fullWidth
+                label="NET Amt"
+                value={totalNetAmount.toFixed(2)}
+                variant="filled"
+                sx={smallInputSx}  
+                disabled
+              />
+            </Grid>
+            <Grid item xs={12} sm={1.5}>
+              <TextField
+                fullWidth
+                label="SGST Amt"
+                value={totalSgstAmount.toFixed(2)}
+                variant="filled"
+                sx={smallInputSx}  
+                disabled
+              />
+            </Grid>
+            <Grid item xs={12} sm={1.5}>
+              <TextField
+                fullWidth
+                label="CGST Amt"
+                value={totalCgstAmount.toFixed(2)}
+                variant="filled"
+                sx={smallInputSx}  
+                disabled
+              />
+            </Grid>
+            <Grid item xs={12} sm={1.5}>
+              <TextField
+                fullWidth
+                label="IGST Amt"
+                value={totalIgstAmount.toFixed(2)}
+                variant="filled"
+                sx={smallInputSx}  
+                disabled
+              />
+            </Grid>
+            <Grid item xs={12} sm={1.5}>
+              <TextField
+                fullWidth
+                label="Cess"
+                value={totalCessAmount.toFixed(2)}
+                variant="filled"
+                sx={smallInputSx}  
+                disabled
+              />
+            </Grid>
+            <Grid item xs={12} sm={1.5}>
+              <TextField
+                fullWidth
+                label="GST Amt"
+                value={gstSummary.totalGstAmount.toFixed(2)}
+                variant="filled"
+                sx={{
+                  ...smallInputSx,
+                  '& .MuiInputBase-input': {
+                    fontWeight: 'bold',
+                    color: '#1976d2'
+                  }
+                }}  
+                disabled
+              />
+            </Grid>
+            {/* NEW: Final Amount Text Field */}
+            <Grid item xs={12} sm={1.5}>
+              <TextField
+                fullWidth
+                label="Final Amount"
+                value={finalAmount.toFixed(2)}
+                variant="filled"
+                sx={{
+                  ...smallInputSx,
+                  '& .MuiInputBase-input': {
+                    fontWeight: 'bold',
+                    color: '#2e7d32'
+                  }
+                }}  
+                disabled
+              />
+            </Grid>
+          </Grid>
         </TabPanel>
 
         <TabPanel value={tabIndex} index={2}>

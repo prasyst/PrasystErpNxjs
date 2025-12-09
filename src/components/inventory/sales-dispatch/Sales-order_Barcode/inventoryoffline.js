@@ -227,6 +227,7 @@ const SalesOrderOffline = () => {
     }
   };
 
+// Function to populate form data from API response - FIXED branch selection
 // Function to populate form data from API response - FIXED branch and shipping party selection
 const populateFormData = async (orderData) => {
   try {
@@ -318,43 +319,13 @@ const populateFormData = async (orderData) => {
       FGPRD_KEY: item.FGPRD_KEY || "",
       FGSTYLE_ID: item.FGSTYLE_ID || 0,
       FGSTYLE_CODE: item.FGSTYLE_CODE || "",
-      DBFLAG: item.DBFLAG || "R"
+      DBFLAG: item.DBFLAG || "U"
     })) : [];
-
-    // FIXED: Process ORDBKGSTLIST to remove duplicates and add FGSTYLE_ID
-    let processedOrdbkGstList = [];
-    if (orderData.ORDBKGSTLIST && orderData.ORDBKGSTLIST.length > 0) {
-      const uniqueGstItems = new Map();
-      
-      orderData.ORDBKGSTLIST.forEach(gstItem => {
-        const key = `${gstItem.FGSTYLE_ID || 0}_${gstItem.HSN_CODE}`;
-        if (!uniqueGstItems.has(key)) {
-          // Add FGSTYLE_ID if missing
-          if (!gstItem.FGSTYLE_ID && processedOrdbkStyleList.length > 0) {
-            // Try to find corresponding FGSTYLE_ID from ORDBKSTYLIST
-            const matchingStyle = processedOrdbkStyleList.find(style => 
-              style.HSNCODE_KEY === gstItem.HSNCODE_KEY
-            );
-            if (matchingStyle) {
-              gstItem.FGSTYLE_ID = matchingStyle.FGSTYLE_ID;
-            }
-          }
-          uniqueGstItems.set(key, {
-            ...gstItem,
-            DBFLAG: gstItem.DBFLAG || "R" // Use "R" for retrieved items
-          });
-        }
-      });
-      
-      processedOrdbkGstList = Array.from(uniqueGstItems.values());
-      console.log('Processed ORDBKGSTLIST (duplicates removed):', processedOrdbkGstList.length, 'items');
-    }
 
     const formattedData = {
       apiResponseData: {
         ...orderData,
-        ORDBKSTYLIST: processedOrdbkStyleList,
-        ORDBKGSTLIST: processedOrdbkGstList // Use processed GST list
+        ORDBKSTYLIST: processedOrdbkStyleList
       },
       ORDER_NO: orderData.ORDBK_NO || "",
       ORDER_DATE: orderData.ORDBK_DT ? formatDateForDisplay(orderData.ORDBK_DT) : "",
@@ -639,18 +610,16 @@ const prepareSubmitPayload = () => {
   
   if (formData.GST_APPL === "Y") {
     if (formData.apiResponseData?.ORDBKGSTLIST && formData.apiResponseData.ORDBKGSTLIST.length > 0) {
-      // FIXED: Use existing GST list without creating duplicates
       ordbkGstList = formData.apiResponseData.ORDBKGSTLIST.map(gstItem => {
         let gstDbFlag;
         
         if (mode === 'add') {
           gstDbFlag = 'I';
         } else {
-          // FIXED: For edit mode, check if item exists in original response
           const hasOriginalId = gstItem.ORDBK_GST_ID && gstItem.ORDBK_GST_ID > 0;
           gstDbFlag = hasOriginalId ? 'U' : 'I';
         }
-
+        
         if (gstItem.DBFLAG === 'D') {
           gstDbFlag = 'D';
         }
@@ -680,118 +649,49 @@ const prepareSubmitPayload = () => {
           OTHER_AMT: parseFloat(gstItem.OTHER_AMT) || 0,
           PARTYDTL_ID: parseInt(branchId) || 106634,
           ADD_CESS_RATE: parseFloat(gstItem.ADD_CESS_RATE) || 0,
-          ADD_CESS_AMT: parseFloat(gstItem.ADD_CESS_AMT) || 0,
-          FGSTYLE_ID: gstItem.FGSTYLE_ID || 0  // Add FGSTYLE_ID to track items
+          ADD_CESS_AMT: parseFloat(gstItem.ADD_CESS_AMT) || 0
         };
       });
-      
-      console.log('Using existing ORDBKGSTLIST:', ordbkGstList.length, 'items');
     } else {
       // Generate GST list from items if GST is enabled but no GST data exists
-      // FIXED: Create unique GST items based on HSN_CODE and FGSTYLE_ID combination
-      const processedItems = new Set();
-      
       transformedOrdbkStyleList.forEach(item => {
         if (item.DBFLAG !== 'D') {
-          const key = `${item.FGSTYLE_ID}_${item.HSNCODE_KEY || "IG001"}`;
-          
-          // Check if we already processed this FGSTYLE_ID + HSNCODE_KEY combination
-          if (!processedItems.has(key)) {
-            processedItems.add(key);
-            
-            // Calculate item totals for this FGSTYLE_ID
-            const itemsForStyle = transformedOrdbkStyleList.filter(
-              styleItem => styleItem.FGSTYLE_ID === item.FGSTYLE_ID && 
-                          styleItem.HSNCODE_KEY === item.HSNCODE_KEY
-            );
-            
-            const totalQty = itemsForStyle.reduce((sum, styleItem) => 
-              sum + (styleItem.QTY || 0), 0
-            );
-            
-            const totalItemAmount = itemsForStyle.reduce((sum, styleItem) => 
-              sum + (styleItem.AMT || 0), 0
-            );
-            
-            // Calculate discount proportionally
-            const discountFromTerms = totalDiscountFromTerms || 0;
-            const totalOrderAmount = orderAmount || formData.TOTAL_AMOUNT || 0;
-            const itemDiscount = totalOrderAmount > 0 ? 
-              (totalItemAmount / totalOrderAmount) * discountFromTerms : 0;
-            
-            const netAmount = Math.max(0, totalItemAmount - itemDiscount);
-            
-            // Calculate GST amounts
-            const gstType = formData.GST_TYPE === "STATE" ? "S" : "I";
-            let sgstAmount = 0, cgstAmount = 0, igstAmount = 0;
-            
-            if (gstType === "I") {
-              const igstRate = 5; // Default IGST rate
-              igstAmount = (netAmount * igstRate) / 100;
-            } else {
-              const sgstRate = 2.5; // Default SGST rate
-              const cgstRate = 2.5; // Default CGST rate
-              sgstAmount = (netAmount * sgstRate) / 100;
-              cgstAmount = (netAmount * cgstRate) / 100;
-            }
-            
-            const gstItem = {
-              DBFLAG: mode === 'add' ? 'I' : 'I',
-              ORDBK_GST_ID: 0,
-              GSTTIN_NO: "URD",
-              ORDBK_KEY: correctOrdbkKey,
-              ORDBK_DT: formatDateForAPI(formData.ORDER_DATE)?.replace('T', ' ') || currentDate,
-              GST_TYPE: gstType,
-              HSNCODE_KEY: item.HSNCODE_KEY || "IG001",
-              HSN_CODE: item.HSN_CODE || "64021010",
-              QTY: totalQty,
-              UNIT_KEY: "UN005",
-              GST_RATE_SLAB_ID: 39,
-              ITM_AMT: totalItemAmount,
-              DISC_AMT: itemDiscount,
-              NET_AMT: netAmount,
-              SGST_RATE: gstType === "S" ? 2.5 : 0,
-              SGST_AMT: sgstAmount,
-              CGST_RATE: gstType === "S" ? 2.5 : 0,
-              CGST_AMT: cgstAmount,
-              IGST_RATE: gstType === "I" ? 5 : 0,
-              IGST_AMT: igstAmount,
-              ROUND_OFF: 0,
-              OTHER_AMT: 0,
-              PARTYDTL_ID: parseInt(branchId) || 106634,
-              ADD_CESS_RATE: 0,
-              ADD_CESS_AMT: 0,
-              FGSTYLE_ID: item.FGSTYLE_ID || 0
-            };
-            
-            ordbkGstList.push(gstItem);
-          }
+          const gstItem = {
+            DBFLAG: mode === 'add' ? 'I' : 'I',
+            ORDBK_GST_ID: 0,
+            GSTTIN_NO: "URD",
+            ORDBK_KEY: correctOrdbkKey,
+            ORDBK_DT: formatDateForAPI(formData.ORDER_DATE)?.replace('T', ' ') || currentDate,
+            GST_TYPE: formData.GST_TYPE === "STATE" ? "S" : "I",
+            HSNCODE_KEY: "IG001",
+            HSN_CODE: "64021010",
+            QTY: item.QTY || 0,
+            UNIT_KEY: "UN005",
+            GST_RATE_SLAB_ID: 39,
+            ITM_AMT: item.AMT || 0,
+            DISC_AMT: item.DISC_AMT || 0,
+            NET_AMT: item.NET_AMT || 0,
+            SGST_RATE: formData.GST_TYPE === "STATE" ? 2.5 : 0,
+            SGST_AMT: formData.GST_TYPE === "STATE" ? (item.NET_AMT * 0.025) : 0,
+            CGST_RATE: formData.GST_TYPE === "STATE" ? 2.5 : 0,
+            CGST_AMT: formData.GST_TYPE === "STATE" ? (item.NET_AMT * 0.025) : 0,
+            IGST_RATE: formData.GST_TYPE === "I" ? 5 : 0,
+            IGST_AMT: formData.GST_TYPE === "I" ? (item.NET_AMT * 0.05) : 0,
+            ROUND_OFF: 0,
+            OTHER_AMT: 0,
+            PARTYDTL_ID: parseInt(branchId) || 106634,
+            ADD_CESS_RATE: 0,
+            ADD_CESS_AMT: 0
+          };
+          ordbkGstList.push(gstItem);
         }
       });
-      
-      console.log('Generated new ORDBKGSTLIST with unique items:', ordbkGstList.length, 'items');
     }
   } else {
     // GST_APPL is "N" - send empty array
     ordbkGstList = [];
     console.log('GST_APPL is "N", sending empty ORDBKGSTLIST');
   }
-
-  // FIXED: Remove duplicate GST entries based on FGSTYLE_ID + HSN_CODE combination
-  const uniqueGstList = [];
-  const gstItemKeys = new Set();
-  
-  ordbkGstList.forEach(gstItem => {
-    const key = `${gstItem.FGSTYLE_ID}_${gstItem.HSN_CODE}`;
-    if (!gstItemKeys.has(key)) {
-      gstItemKeys.add(key);
-      uniqueGstList.push(gstItem);
-    } else {
-      console.log(`Removing duplicate GST entry for FGSTYLE_ID: ${gstItem.FGSTYLE_ID}, HSN_CODE: ${gstItem.HSN_CODE}`);
-    }
-  });
-
-  console.log('Final unique ORDBKGSTLIST:', uniqueGstList.length, 'items');
 
   // Base payload for both insert and update
   const basePayload = {
@@ -853,7 +753,7 @@ const prepareSubmitPayload = () => {
     ORDBK_EXTRA_AMT: 0,
     ORDBKSTYLIST: transformedOrdbkStyleList,
     ORDBKTERMLIST: ordbkTermList,
-    ORDBKGSTLIST: uniqueGstList, // Use unique GST list
+    ORDBKGSTLIST: ordbkGstList, // Will be empty array if GST_APPL = "N"
     DISTBTR_KEY: consigneeKey,
     SALEPERSON1_KEY: salesperson1Key,
     SALEPERSON2_KEY: salesperson2Key,
@@ -871,7 +771,7 @@ const prepareSubmitPayload = () => {
     basePayload.UPDATED_DT = currentDate;
   }
 
-  console.log('Final Payload with GST_APPL:', formData.GST_APPL, 'ORDBKGSTLIST length:', uniqueGstList.length);
+  console.log('Final Payload with GST_APPL:', formData.GST_APPL, 'ORDBKGSTLIST length:', ordbkGstList.length);
   console.log('Final Payload:', JSON.stringify(basePayload, null, 2));
   return basePayload;
 };
@@ -1440,8 +1340,7 @@ const handleNextClick = async () => {
     // showSnackbar('Edit mode enabled');
   };
 
-  // Function to handle delete with API call
-const handleDelete = async () => {
+  const handleDelete = async () => {
   if (!formData.ORDBK_KEY) {
     showSnackbar('No order selected for deletion', 'error');
     return;
@@ -1992,7 +1891,7 @@ if (loading || isDataLoading) {
         </Grid>
       </Grid>
 
-      <Grid xs={12} sx={{ ml: '5%', mb: '0.5%', mt: '0%' }}>
+      <Grid xs={12} sx={{ ml: '5%', mb: '0.5%', mt: '1%' }}>
         <Box sx={{ display: 'flex' }}>
           <Tabs
             value={tabIndex}

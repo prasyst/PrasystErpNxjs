@@ -1482,7 +1482,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
   };
 
   const columns = [
-    // { id: 'BarCode', label: 'BarCode', minWidth: 120 },
+    { id: 'BarCode', label: 'BarCode', minWidth: 120 },
     { id: 'product', label: 'Product', minWidth: 120 },
     { id: 'style', label: 'Style', minWidth: 80 },
     { id: 'type', label: 'Type', minWidth: 80 },
@@ -1763,7 +1763,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
           <Box sx={{ flex: '0 0 60%' }}>
             <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 1 }}>
               <TextField 
-                label="Type style code" 
+                label="Style Code" 
                 variant="filled" 
                 disabled={shouldDisableFields()}
                 name="styleCode"
@@ -1774,9 +1774,9 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
                 inputProps={{ 
                   style: { padding: '6px 8px', fontSize: '12px' }
                 }}
-                // helperText={isLoadingStyleCode ? "Loading..." : "Type style code"}
+                helperText={isLoadingStyleCode ? "Loading..." : "Type style code"}
               />
-
+              
               <AutoVibe
                 id="Product"
                 disabled={shouldDisableFields()}
@@ -1806,7 +1806,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
               
 
               {/* Barcode Text Field */}
-              {/* <TextField 
+              <TextField 
                 label="BarCode" 
                 variant="filled" 
                 disabled={shouldDisableFields()}
@@ -1819,7 +1819,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
                   style: { padding: '6px 8px', fontSize: '12px' }
                 }}
                 helperText={isLoadingBarcode ? "Loading..." : "Type barcode"}
-              /> */}
+              />
               
               <AutoVibe
                 id="Type"
@@ -2124,7 +2124,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
                       <TableCell sx={{ fontWeight: 'bold', fontSize: '0.8rem', padding: '6px 8px', backgroundColor: "#f5f5f5", borderBottom: "1px solid #ddd" }}>MRP</TableCell>
                       <TableCell sx={{ fontWeight: 'bold', fontSize: '0.8rem', padding: '6px 8px', backgroundColor: "#f5f5f5", borderBottom: "1px solid #ddd" }}>Rate</TableCell>
                       <TableCell sx={{ fontWeight: 'bold', fontSize: '0.8rem', padding: '6px 8px', backgroundColor: "#f5f5f5", borderBottom: "1px solid #ddd" }}>Amount</TableCell>
-                      {/* <TableCell sx={{ fontWeight: 'bold', fontSize: '0.8rem', padding: '6px 8px', backgroundColor: "#f5f5f5", borderBottom: "1px solid #ddd" }}>Barcode</TableCell> */}
+                      <TableCell sx={{ fontWeight: 'bold', fontSize: '0.8rem', padding: '6px 8px', backgroundColor: "#f5f5f5", borderBottom: "1px solid #ddd" }}>Barcode</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -2156,7 +2156,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
                             {size.RATE || newItemData.rate || 0}
                           </TableCell>
                           <TableCell sx={{ fontSize: '0.75rem', padding: '6px 8px' }}>{size.ITM_AMT || 0}</TableCell>
-                          {/* <TableCell sx={{ fontSize: '0.75rem', padding: '6px 8px' }}>{size.FGSTYLE_ID || "-"}</TableCell> */}
+                          <TableCell sx={{ fontSize: '0.75rem', padding: '6px 8px' }}>{size.FGSTYLE_ID || "-"}</TableCell>
                         </TableRow>
                       ))
                     ) : (

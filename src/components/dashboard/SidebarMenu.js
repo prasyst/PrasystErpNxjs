@@ -474,8 +474,9 @@ export const sidebarMenuItems =[
           icon: RiTruckLine, // ✔ delivery / dispatch
           path: '/inventorypage?activeTab=sales-dispatch',
           children: [
-            { name: 'Sales Offline', icon: RiShoppingCart2Line, path: '/inverntory/inventory-offline/' }, // ✔ offline sales
-            { name: 'Packaging/Barcode', icon: RiBarcodeLine, path: '/inverntory/packeging-barcode/' }, // ✔ barcode/packaging
+            { name: 'Sales Order Offline', icon: RiShoppingCart2Line, path: '/inverntory/inventory-offline/' }, // ✔ offline sales
+             { name: 'Sales Order Barcode', icon: RiShoppingCart2Line, path: '/inverntory/salesorderbarcode' },
+            // { name: 'Packaging/Barcode', icon: RiBarcodeLine, path: '/inverntory/packeging-barcode/' }, 
           ],
         },
         {
