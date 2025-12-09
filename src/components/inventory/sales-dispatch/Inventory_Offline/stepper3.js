@@ -40,7 +40,7 @@ function TabPanel({ children, value, index, ...other }) {
   );
 }
 
-const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCancel, showSnackbar }) => {
+const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit,onPrev, onCancel, showSnackbar }) => {
   const [tabIndex, setTabIndex] = useState(0);
   const [selectedRow, setSelectedRow] = useState(null);
   const [isAddingNew, setIsAddingNew] = useState(false);
@@ -1656,7 +1656,7 @@ useEffect(() => {
               />
             </Grid>
             <Grid item xs={12}>
-              <Button 
+              {/* <Button 
                 variant="contained" 
                 onClick={handleSave}
                 disabled={!(isAddingNew || isEditing)}
@@ -1670,7 +1670,7 @@ useEffect(() => {
                 }}
               >
                 {isAddingNew ? 'Confirm' : (isEditing ? 'Save' : 'Apply')}
-              </Button>
+              </Button> */}
             </Grid>
           </Grid>
         </TabPanel>
@@ -1951,7 +1951,24 @@ useEffect(() => {
         </TabPanel>
 
         {/* Final Action Buttons */}
-        <Stack direction="row" spacing={2} sx={{ mt: 2, justifyContent: 'flex-end' }}>
+        <Stack direction="row" spacing={2} sx={{ mt: 2,mb: 2, justifyContent: 'flex-end' }}>
+          <Button 
+            variant="outlined" 
+            color="primary" 
+            onClick={onPrev}
+            // disabled={isAddingNew || isEditing}
+            sx={{
+              backgroundColor: '#39ace2',
+              color: 'white',
+              '&:disabled': {
+                borderColor: '#cccccc',
+                color: '#666666'
+              }
+            }}
+          >
+            Previous
+          </Button>
+
           <Button 
             variant="contained" 
             color="primary" 
@@ -1966,13 +1983,13 @@ useEffect(() => {
               }
             }}
           >
-            {isAddingNew ? 'Confirm' : (isEditing ? 'Save' : 'Confirm')}
+            {isAddingNew ? 'Confirm' : (isEditing ? 'Confirm' : 'Confirm')}
           </Button>
           <Button 
             variant="outlined" 
             color="secondary" 
             onClick={handleCancel}
-            disabled={!(isAddingNew || isEditing)}
+            // disabled={!(isAddingNew || isEditing)}
             sx={{
               '&:disabled': {
                 borderColor: '#cccccc',

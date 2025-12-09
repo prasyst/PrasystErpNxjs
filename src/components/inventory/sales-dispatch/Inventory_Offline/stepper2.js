@@ -8,11 +8,6 @@ import {
   Typography,
   Button,
   Stack,
-  FormControlLabel,
-  FormLabel,
-  Radio,
-  RadioGroup,
-  Checkbox,
   Paper,
   Table,
   TableBody,
@@ -39,7 +34,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 
 const FORM_MODE = getFormMode();
 
-const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCancel, onNext, showSnackbar,showValidationErrors }) => {
+const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCancel, onNext,onPrev, showSnackbar, showValidationErrors }) => {
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [selectedStyle, setSelectedStyle] = useState(null);
   const [selectedRow, setSelectedRow] = useState(null);
@@ -56,31 +51,29 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
   const [shadeOptions, setShadeOptions] = useState([]);
   const [lotNoOptions, setLotNoOptions] = useState([]);
   
-  // State for storing product mapping (FGPRD_NAME to FGPRD_KEY)
+  // State for storing mappings
   const [productMapping, setProductMapping] = useState({});
-  // State for storing style mapping (FGSTYLE_CODE to FGSTYLE_ID)
   const [styleMapping, setStyleMapping] = useState({});
-  // State for storing type mapping (FGTYPE_NAME to FGTYPE_KEY)
   const [typeMapping, setTypeMapping] = useState({});
-  // State for storing shade mapping (FGSHADE_NAME to FGSHADE_KEY)
   const [shadeMapping, setShadeMapping] = useState({});
-  // State for storing lot no mapping (FGPTN_NAME to FGPTN_KEY)
   const [lotNoMapping, setLotNoMapping] = useState({});
   
-  // NEW: State for style code text input and debounce timer
+  // NEW: State for style code and barcode text input
   const [styleCodeInput, setStyleCodeInput] = useState('');
   const [isLoadingStyleCode, setIsLoadingStyleCode] = useState(false);
   const styleCodeTimeoutRef = useRef(null);
   
-  // NEW: State for barcode text input and debounce timer
   const [barcodeInput, setBarcodeInput] = useState('');
   const [isLoadingBarcode, setIsLoadingBarcode] = useState(false);
   const barcodeTimeoutRef = useRef(null);
 
   // NEW: Track source of data loading
-  const [dataSource, setDataSource] = useState(null); // 'barcode', 'styleCode', 'dropdown'
+  const [dataSource, setDataSource] = useState(null);
+  
+  // NEW: State for size details loading
+  const [isSizeDetailsLoaded, setIsSizeDetailsLoaded] = useState(false);
 
-  // NEW: State for table filters
+  // State for table filters
   const [tableFilters, setTableFilters] = useState({
     BarCode: '',
     product: '',
@@ -110,7 +103,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
     shade: '',
     qty: '',
     mrp: '',
-    rate: '', // NEW: Added Rate field (SSP)
+    rate: '',
     setNo: '',
     varPer: '',
     stdQty: '',
@@ -127,115 +120,115 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
   // State for updated table data
   const [updatedTableData, setUpdatedTableData] = useState([]);
 
-// Updated textInputSx with white background for disabled state
-const textInputSx = {
-  '& .MuiInputBase-root': {
-    height: 36,
-    fontSize: '14px',
-  },
-  '& .MuiInputLabel-root': {
-    fontSize: '14px',
-    top: '-8px',
-  },
-  '& .MuiFilledInput-root': {
-    backgroundColor: '#fafafa',
-    border: '1px solid #e0e0e0',
-    borderRadius: '6px',
-    overflow: 'hidden',
-    height: 36,
-    fontSize: '14px',
-  },
-  '& .MuiFilledInput-root:before': {
-    display: 'none',
-  },
-  '& .MuiFilledInput-root:after': {
-    display: 'none',
-  },
-  '& .MuiInputBase-input': {
-    padding: '10px 12px !important',
-    fontSize: '14px !important',
-    lineHeight: '1.4',
-  },
-  '& .MuiFilledInput-root.Mui-disabled': {
-    backgroundColor: '#ffffff' // White background for disabled state
-  }
-};
+  // Updated textInputSx with white background for disabled state
+  const textInputSx = {
+    '& .MuiInputBase-root': {
+      height: 36,
+      fontSize: '14px',
+    },
+    '& .MuiInputLabel-root': {
+      fontSize: '14px',
+      top: '-8px',
+    },
+    '& .MuiFilledInput-root': {
+      backgroundColor: '#fafafa',
+      border: '1px solid #e0e0e0',
+      borderRadius: '6px',
+      overflow: 'hidden',
+      height: 36,
+      fontSize: '14px',
+    },
+    '& .MuiFilledInput-root:before': {
+      display: 'none',
+    },
+    '& .MuiFilledInput-root:after': {
+      display: 'none',
+    },
+    '& .MuiInputBase-input': {
+      padding: '10px 12px !important',
+      fontSize: '14px !important',
+      lineHeight: '1.4',
+    },
+    '& .MuiFilledInput-root.Mui-disabled': {
+      backgroundColor: '#ffffff'
+    }
+  };
 
-// Updated DropInputSx with white background for disabled state
-const DropInputSx = {
-  '& .MuiInputBase-root': {
-    height: 36,
-    fontSize: '14px',
-  },
-  '& .MuiInputLabel-root': {
-    fontSize: '14px',
-    top: '-4px',
-  },
-  '& .MuiFilledInput-root': {
-    backgroundColor: '#fafafa',
-    border: '1px solid #e0e0e0',
-    borderRadius: '6px',
-    overflow: 'hidden',
-    height: 36,
-    fontSize: '14px',
-    paddingRight: '36px',
-  },
-  '& .MuiFilledInput-root:before': {
-    display: 'none',
-  },
-  '& .MuiFilledInput-root:after': {
-    display: 'none',
-  },
-  '& .MuiInputBase-input': {
-    padding: '10px 12px',
-    fontSize: '14px',
-    lineHeight: '1.4',
-  },
-  '& .MuiAutocomplete-endAdornment': {
-    top: '50%',
-    transform: 'translateY(-50%)',
-    right: '10px',
-  },
-  '& .MuiFilledInput-root.Mui-disabled': {
-    backgroundColor: '#ffffff' // White background for disabled state
-  }
-};
+  // Updated DropInputSx with white background for disabled state
+  const DropInputSx = {
+    '& .MuiInputBase-root': {
+      height: 36,
+      fontSize: '14px',
+    },
+    '& .MuiInputLabel-root': {
+      fontSize: '14px',
+      top: '-4px',
+    },
+    '& .MuiFilledInput-root': {
+      backgroundColor: '#fafafa',
+      border: '1px solid #e0e0e0',
+      borderRadius: '6px',
+      overflow: 'hidden',
+      height: 36,
+      fontSize: '14px',
+      paddingRight: '36px',
+    },
+    '& .MuiFilledInput-root:before': {
+      display: 'none',
+    },
+    '& .MuiFilledInput-root:after': {
+      display: 'none',
+    },
+    '& .MuiInputBase-input': {
+      padding: '10px 12px',
+      fontSize: '14px',
+      lineHeight: '1.4',
+    },
+    '& .MuiAutocomplete-endAdornment': {
+      top: '50%',
+      transform: 'translateY(-50%)',
+      right: '10px',
+    },
+    '& .MuiFilledInput-root.Mui-disabled': {
+      backgroundColor: '#ffffff'
+    }
+  };
 
   const datePickerSx = {
     "& .MuiInputBase-root": {
-      height: "32px", 
+      height: "32px",
     },
     "& .MuiInputBase-input": {
-      padding: "4px 8px", 
+      padding: "4px 8px",
       fontSize: "12px",
     },
     "& .MuiInputLabel-root": {
-      top: "-6px", 
+      top: "-6px",
       fontSize: "12px",
     },
     "& .MuiInputBase-root.Mui-disabled": {
-    backgroundColor: '#ffffff', // White background for disabled state
-    '& .MuiFilledInput-root': {
-      backgroundColor: '#ffffff', // White background for filled input
+      backgroundColor: '#ffffff',
+      '& .MuiFilledInput-root': {
+        backgroundColor: '#ffffff',
+      }
+    },
+    "& .MuiFilledInput-root.Mui-disabled": {
+      backgroundColor: '#ffffff',
     }
-  },
-  // Specifically for filled variant
-  "& .MuiFilledInput-root.Mui-disabled": {
-    backgroundColor: '#ffffff', // White background for disabled filled input
-  }
   };
 
-  // Parse ORDBKSTYLIST data for table - initial data
+  // Parse ORDBKSTYLIST data for table - FIXED for Type, Shade, Pattern
   const initialTableData = formData.apiResponseData?.ORDBKSTYLIST ? formData.apiResponseData.ORDBKSTYLIST.map((item, index) => ({
     id: item.ORDBKSTY_ID || index + 1,
     BarCode: item.FGITEM_KEY || "-",
     product: item.PRODUCT || "-",
     style: item.STYLE || "-",
+    // FIXED: Use TYPE, SHADE, PATTERN from API response
     type: item.TYPE || "-",
     shade: item.SHADE || "-",
-    lotNo: formData.SEASON || "-",
+    lotNo: item.PATTERN || formData.SEASON || "-", // PATTERN is Lot No
     qty: parseFloat(item.ITMQTY) || 0,
-    mrp: parseFloat(item.MRP) || 0, // NEW: Added MRP column
+    mrp: parseFloat(item.MRP) || 0,
     rate: parseFloat(item.ITMRATE) || 0,
     amount: parseFloat(item.ITMAMT) || 0,
     varPer: parseFloat(item.DLV_VAR_PERC) || 0,
@@ -248,15 +241,15 @@ const DropInputSx = {
     originalData: item,
     FGSTYLE_ID: item.FGSTYLE_ID,
     FGPRD_KEY: item.FGPRD_KEY,
-    FGTYPE_KEY: item.FGTYPE_KEY,
-    FGSHADE_KEY: item.FGSHADE_KEY,
-    FGPTN_KEY: item.FGPTN_KEY
+    FGTYPE_KEY: item.FGTYPE_KEY || "",
+    FGSHADE_KEY: item.FGSHADE_KEY || "",
+    FGPTN_KEY: item.FGPTN_KEY || ""
   })) : [];
 
   // Use updatedTableData if available, otherwise use initial data
   const tableData = updatedTableData.length > 0 ? updatedTableData : initialTableData;
 
-  // NEW: Filter table data based on filters
+  // Filter table data based on filters
   const filteredTableData = tableData.filter(row => {
     return Object.keys(tableFilters).every(key => {
       if (!tableFilters[key]) return true;
@@ -286,8 +279,8 @@ const DropInputSx = {
       TOTAL_AMOUNT: totalAmount,
       NET_AMOUNT: totalNetAmt,
       DISCOUNT: totalDiscount,
-     AMOUNT: totalAmount.toString(),
-    AMOUNT_1: totalAmount.toString() 
+      AMOUNT: totalAmount.toString(),
+      AMOUNT_1: totalAmount.toString()
     }));
   };
 
@@ -296,7 +289,48 @@ const DropInputSx = {
     calculateTotals();
   }, [tableData]);
 
-  // NEW: Handle table filter change
+  // Cleanup timeout on component unmount
+  useEffect(() => {
+    return () => {
+      if (styleCodeTimeoutRef.current) {
+        clearTimeout(styleCodeTimeoutRef.current);
+      }
+      if (barcodeTimeoutRef.current) {
+        clearTimeout(barcodeTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  // Initialize with first row's size details when component loads
+  useEffect(() => {
+    if (tableData.length > 0 && !selectedRow) {
+      const firstRow = tableData[0];
+      setSelectedRow(firstRow.id);
+      const sizeDetails = firstRow.originalData?.ORDBKSTYSZLIST || [];
+      setSizeDetailsData(sizeDetails);
+    }
+  }, [tableData, selectedRow]);
+
+  // Load product and other dropdown data when component mounts or formData changes
+  useEffect(() => {
+    fetchProductData();
+  }, []);
+
+  // Populate product and other fields when formData has data
+  useEffect(() => {
+    if (formData.apiResponseData?.ORDBKSTYLIST && formData.apiResponseData.ORDBKSTYLIST.length > 0) {
+      const firstItem = formData.apiResponseData.ORDBKSTYLIST[0];
+      
+      if (firstItem.PRODUCT) {
+        setSelectedProduct(firstItem.PRODUCT);
+      }
+      if (firstItem.STYLE) {
+        setSelectedStyle(firstItem.STYLE);
+      }
+    }
+  }, [formData.apiResponseData]);
+
+  // Handle table filter change
   const handleTableFilterChange = (columnId, value) => {
     setTableFilters(prev => ({
       ...prev,
@@ -304,7 +338,7 @@ const DropInputSx = {
     }));
   };
 
-  // NEW: Clear all filters
+  // Clear all filters
   const clearAllFilters = () => {
     setTableFilters({
       BarCode: '',
@@ -335,10 +369,7 @@ const DropInputSx = {
         "FLAG": ""
       };
 
-      console.log('Fetching product data with payload:', payload);
-
       const response = await axiosInstance.post('/Product/GetFgPrdDrp', payload);
-      console.log('Product API Response:', response.data);
 
       if (response.data.DATA && response.data.DATA.length > 0) {
         const products = response.data.DATA.map(item => item.FGPRD_NAME || '');
@@ -351,17 +382,13 @@ const DropInputSx = {
           }
         });
         setProductMapping(mapping);
-        
-        console.log('Product mapping:', mapping);
-      } else {
-        console.error('No product data found in response');
       }
     } catch (error) {
       console.error('Error fetching product data:', error);
     }
   };
 
-  // Enhanced fetchStyleData function to get FGPRD_KEY
+  // Fetch Style dropdown data
   const fetchStyleData = async (fgprdKey) => {
     if (!fgprdKey) return;
 
@@ -373,10 +400,7 @@ const DropInputSx = {
         "FLAG": ""
       };
 
-      console.log('Fetching style data with payload:', payload);
-
       const response = await axiosInstance.post('/FGSTYLE/GetFgstyleDrp', payload);
-      console.log('Style API Response:', response.data);
 
       if (response.data.DATA) {
         const styles = response.data.DATA.map(item => item.FGSTYLE_CODE || '');
@@ -399,9 +423,6 @@ const DropInputSx = {
           ...prev,
           ...productKeyMapping
         }));
-        
-        console.log('Style mapping:', styleIdMapping);
-        console.log('Product key mapping:', productKeyMapping);
       } else {
         setStyleOptions([]);
         setStyleMapping({});
@@ -413,7 +434,7 @@ const DropInputSx = {
     }
   };
 
-  // NEW: Fetch style data by style code (for case 2 - when user types in style code text field)
+  // Fetch style data by style code
   const fetchStyleDataByCode = async (styleCode) => {
     if (!styleCode) return;
 
@@ -428,15 +449,11 @@ const DropInputSx = {
         "FLAG": ""
       };
 
-      console.log('Fetching style data by code with payload:', payload);
-
       const response = await axiosInstance.post('/FGSTYLE/GetFgstyleDrp', payload);
-      console.log('Style by Code API Response:', response.data);
 
       if (response.data.DATA && response.data.DATA.length > 0) {
         const styleData = response.data.DATA[0];
         
-        // Auto-fill the fields from response data including Rate (SSP)
         if (isAddingNew || isEditingSize) {
           setNewItemData(prev => ({
             ...prev,
@@ -444,10 +461,9 @@ const DropInputSx = {
             style: styleData.FGSTYLE_CODE || styleData.FGSTYLE_NAME || '',
             type: styleData.FGTYPE_NAME || '',
             mrp: styleData.MRP ? styleData.MRP.toString() : '',
-            rate: styleData.SSP ? styleData.SSP.toString() : '' // NEW: Fetch Rate (SSP) value
+            rate: styleData.SSP ? styleData.SSP.toString() : ''
           }));
           
-          // Update product mapping if needed
           if (styleData.FGPRD_NAME && styleData.FGPRD_KEY) {
             setProductMapping(prev => ({
               ...prev,
@@ -455,7 +471,6 @@ const DropInputSx = {
             }));
           }
           
-          // Update style mapping
           if ((styleData.FGSTYLE_CODE || styleData.FGSTYLE_NAME) && styleData.FGSTYLE_ID) {
             setStyleMapping(prev => ({
               ...prev,
@@ -463,28 +478,21 @@ const DropInputSx = {
             }));
           }
           
-          // Fetch type, shade, and lot no data for the style
           if (styleData.FGSTYLE_ID) {
             await fetchTypeData(styleData.FGSTYLE_ID);
             await fetchShadeData(styleData.FGSTYLE_ID);
             await fetchLotNoData(styleData.FGSTYLE_ID);
           }
-          
-          // For style code input, DO NOT auto-load size details
-          // showSnackbar("Fields auto-filled from style code! Click 'Add Qty' to load size details.");
         }
-      } else {
-        // showSnackbar("No style data found for the entered code", 'warning');
       }
     } catch (error) {
       console.error('Error fetching style data by code:', error);
-      showSnackbar("Error fetching style data", 'error');
     } finally {
       setIsLoadingStyleCode(false);
     }
   };
 
-  // NEW: Enhanced fetchStyleDataByBarcode function with auto size details loading
+  // Fetch style data by barcode
   const fetchStyleDataByBarcode = async (barcode) => {
     if (!barcode) return;
 
@@ -500,18 +508,12 @@ const DropInputSx = {
         "FLAG": ""
       };
 
-      console.log('Fetching style data by barcode with payload:', payload);
-
       const response = await axiosInstance.post('/FGSTYLE/GetFgstyleDrp', payload);
-      console.log('Style by Barcode API Response:', response.data);
 
       if (response.data.DATA && response.data.DATA.length > 0) {
         const styleData = response.data.DATA[0];
-        
-        // Determine barcode value: ALT_BARCODE if available, otherwise STYSTKDTL_KEY
         const barcodeValue = styleData.ALT_BARCODE || styleData.STYSTKDTL_KEY || '';
         
-        // Auto-fill the fields from response data including Rate (SSP)
         if (isAddingNew || isEditingSize) {
           setNewItemData(prev => ({
             ...prev,
@@ -519,11 +521,10 @@ const DropInputSx = {
             style: styleData.FGSTYLE_CODE || styleData.FGSTYLE_NAME || '',
             type: styleData.FGTYPE_NAME || '',
             mrp: styleData.MRP ? styleData.MRP.toString() : '',
-            rate: styleData.SSP ? styleData.SSP.toString() : '', // NEW: Fetch Rate (SSP) value
-            barcode: barcodeValue // Set barcode field with the determined value
+            rate: styleData.SSP ? styleData.SSP.toString() : '',
+            barcode: barcodeValue
           }));
           
-          // Update product mapping if needed
           if (styleData.FGPRD_NAME && styleData.FGPRD_KEY) {
             setProductMapping(prev => ({
               ...prev,
@@ -531,7 +532,6 @@ const DropInputSx = {
             }));
           }
           
-          // Update style mapping
           if ((styleData.FGSTYLE_CODE || styleData.FGSTYLE_NAME) && styleData.FGSTYLE_ID) {
             setStyleMapping(prev => ({
               ...prev,
@@ -539,30 +539,23 @@ const DropInputSx = {
             }));
           }
           
-          // Fetch type, shade, and lot no data for the style
           if (styleData.FGSTYLE_ID) {
             await fetchTypeData(styleData.FGSTYLE_ID);
             await fetchShadeData(styleData.FGSTYLE_ID);
             await fetchLotNoData(styleData.FGSTYLE_ID);
           }
           
-          // NEW: Auto-load size details ONLY for barcode search
           await fetchSizeDetailsForStyle(styleData);
-          
-          // showSnackbar("Fields auto-filled from barcode search and size details loaded!");
         }
-      } else {
-        showSnackbar("No style data found for the entered barcode", 'warning');
       }
     } catch (error) {
       console.error('Error fetching style data by barcode:', error);
-      showSnackbar("Error fetching style data by barcode", 'error');
     } finally {
       setIsLoadingBarcode(false);
     }
   };
 
-  // NEW: Function to auto-load size details for style data (used ONLY for barcode)
+  // Auto-load size details for style data (used ONLY for barcode)
   const fetchSizeDetailsForStyle = async (styleData) => {
     try {
       const fgprdKey = styleData.FGPRD_KEY;
@@ -572,11 +565,9 @@ const DropInputSx = {
       const fgptnKey = styleData.FGPTN_KEY || "";
 
       if (!fgprdKey || !fgstyleId) {
-        showSnackbar("Required data not available for size details.", 'error');
         return;
       }
 
-      // Enhanced payload with MRP, Rate (SSP) and Party details
       const payload = {
         "FGSTYLE_ID": fgstyleId,
         "FGPRD_KEY": fgprdKey,
@@ -584,16 +575,13 @@ const DropInputSx = {
         "FGSHADE_KEY": fgshadeKey,
         "FGPTN_KEY": fgptnKey,
         "MRP": parseFloat(styleData.MRP) || 0,
-        "SSP": parseFloat(styleData.SSP) || 0, // NEW: Include Rate (SSP)
+        "SSP": parseFloat(styleData.SSP) || 0,
         "PARTY_KEY": formData.PARTY_KEY || "",
         "PARTYDTL_ID": formData.PARTYDTL_ID || 0,
         "FLAG": ""
       };
 
-      console.log('Auto-fetching size details with payload:', payload);
-
       const response = await axiosInstance.post('/STYSIZE/AddSizeDetail', payload);
-      console.log('Auto Size Details API Response:', response.data);
 
       if (response.data.DATA && response.data.DATA.length > 0) {
         const transformedSizeDetails = response.data.DATA.map((size, index) => ({
@@ -603,61 +591,23 @@ const DropInputSx = {
           QTY: 0,
           ITM_AMT: 0,
           ORDER_QTY: 0,
-          MRP: parseFloat(styleData.MRP) || 0, // NEW: Add MRP to size details
-          RATE: parseFloat(styleData.SSP) || 0 // NEW: Add Rate to size details
+          MRP: parseFloat(styleData.MRP) || 0,
+          RATE: parseFloat(styleData.SSP) || 0
         }));
 
         setSizeDetailsData(transformedSizeDetails);
-        console.log('Auto-transformed size details:', transformedSizeDetails);
-        
-        // showSnackbar("Size details auto-loaded successfully! Please enter quantities for each size.");
+        setIsSizeDetailsLoaded(true);
       } else {
-        showSnackbar("No size details found for the selected combination.", 'warning');
         setSizeDetailsData([]);
+        setIsSizeDetailsLoaded(false);
       }
     } catch (error) {
       console.error('Error auto-fetching size details:', error);
-      showSnackbar("Error auto-loading size details. Please try manually.", 'error');
+      setIsSizeDetailsLoaded(false);
     }
   };
 
-  // NEW: Handle style code text input change with debounce
-  const handleStyleCodeInputChange = (e) => {
-    const value = e.target.value;
-    setStyleCodeInput(value);
-    
-    // Clear existing timeout
-    if (styleCodeTimeoutRef.current) {
-      clearTimeout(styleCodeTimeoutRef.current);
-    }
-    
-    // Set new timeout for 500ms
-    if (value && value.trim() !== '') {
-      styleCodeTimeoutRef.current = setTimeout(() => {
-        fetchStyleDataByCode(value.trim());
-      }, 500);
-    }
-  };
-
-  // NEW: Handle barcode text input change with debounce
-  const handleBarcodeInputChange = (e) => {
-    const value = e.target.value;
-    setBarcodeInput(value);
-    
-    // Clear existing timeout
-    if (barcodeTimeoutRef.current) {
-      clearTimeout(barcodeTimeoutRef.current);
-    }
-    
-    // Set new timeout for 500ms
-    if (value && value.trim() !== '') {
-      barcodeTimeoutRef.current = setTimeout(() => {
-        fetchStyleDataByBarcode(value.trim());
-      }, 500);
-    }
-  };
-
-  // Fetch Type dropdown data based on FGSTYLE_ID
+  // Fetch Type dropdown data
   const fetchTypeData = async (fgstyleId) => {
     if (!fgstyleId) return;
 
@@ -667,10 +617,7 @@ const DropInputSx = {
         "FLAG": ""
       };
 
-      console.log('Fetching type data with payload:', payload);
-
       const response = await axiosInstance.post('/FgType/GetFgTypeDrp', payload);
-      console.log('Type API Response:', response.data);
 
       if (response.data.DATA) {
         const types = response.data.DATA.map(item => item.FGTYPE_NAME || '');
@@ -683,7 +630,6 @@ const DropInputSx = {
           }
         });
         setTypeMapping(mapping);
-        console.log('Type mapping:', mapping);
       } else {
         setTypeOptions([]);
         setTypeMapping({});
@@ -695,7 +641,7 @@ const DropInputSx = {
     }
   };
 
-  // Fetch Shade dropdown data based on FGSTYLE_ID
+  // Fetch Shade dropdown data
   const fetchShadeData = async (fgstyleId) => {
     if (!fgstyleId) return;
 
@@ -705,10 +651,7 @@ const DropInputSx = {
         "FLAG": ""
       };
 
-      console.log('Fetching shade data with payload:', payload);
-
       const response = await axiosInstance.post('/Fgshade/GetFgshadedrp', payload);
-      console.log('Shade API Response:', response.data);
 
       if (response.data.DATA) {
         const shades = response.data.DATA.map(item => item.FGSHADE_NAME || '');
@@ -721,7 +664,6 @@ const DropInputSx = {
           }
         });
         setShadeMapping(mapping);
-        console.log('Shade mapping:', mapping);
       } else {
         setShadeOptions([]);
         setShadeMapping({});
@@ -733,7 +675,7 @@ const DropInputSx = {
     }
   };
 
-  // Enhanced fetchLotNoData function
+  // Fetch Lot No dropdown data
   const fetchLotNoData = async (fgstyleId) => {
     if (!fgstyleId) return;
 
@@ -743,10 +685,7 @@ const DropInputSx = {
         "FLAG": ""
       };
 
-      console.log('Fetching lot no data with payload:', payload);
-
       const response = await axiosInstance.post('/Fgptn/GetFgptnDrp', payload);
-      console.log('Lot No API Response:', response.data);
 
       if (response.data.DATA) {
         const lotNos = response.data.DATA.map(item => item.FGPTN_NAME || '');
@@ -759,7 +698,6 @@ const DropInputSx = {
           }
         });
         setLotNoMapping(mapping);
-        console.log('Lot No mapping:', mapping);
       } else {
         setLotNoOptions([]);
         setLotNoMapping({});
@@ -771,7 +709,8 @@ const DropInputSx = {
     }
   };
 
- const fetchSizeDetails = async () => {
+  // Fetch Size Details
+  const fetchSizeDetails = async () => {
     if (!newItemData.product || !newItemData.style) {
       showSnackbar("Please select Product and Style first", 'error');
       return;
@@ -785,11 +724,9 @@ const DropInputSx = {
       const fgptnKey = lotNoMapping[newItemData.lotNo] || "";
 
       if (!fgprdKey || !fgstyleId) {
-        // showSnackbar("Required data not available. Please check Product and Style selection.", 'error');
         return;
       }
 
-      // Enhanced payload with MRP, Rate (SSP) and Party details
       const payload = {
         "FGSTYLE_ID": fgstyleId,
         "FGPRD_KEY": fgprdKey,
@@ -797,16 +734,13 @@ const DropInputSx = {
         "FGSHADE_KEY": fgshadeKey,
         "FGPTN_KEY": fgptnKey,
         "MRP": parseFloat(newItemData.mrp) || 0,
-        "SSP": parseFloat(newItemData.rate) || 0, // NEW: Include Rate (SSP)
+        "SSP": parseFloat(newItemData.rate) || 0,
         "PARTY_KEY": formData.PARTY_KEY || "",
         "PARTYDTL_ID": formData.PARTYDTL_ID || 0,
         "FLAG": ""
       };
 
-      console.log('Fetching size details with enhanced payload:', payload);
-
       const response = await axiosInstance.post('/STYSIZE/AddSizeDetail', payload);
-      console.log('Size Details API Response:', response.data);
 
       if (response.data.DATA && response.data.DATA.length > 0) {
         const transformedSizeDetails = response.data.DATA.map((size, index) => ({
@@ -816,21 +750,54 @@ const DropInputSx = {
           QTY: 0,
           ITM_AMT: 0,
           ORDER_QTY: 0,
-          MRP: parseFloat(newItemData.mrp) || 0, // NEW: Add MRP to size details
-          RATE: parseFloat(newItemData.rate) || 0 // NEW: Add Rate to size details
+          MRP: parseFloat(newItemData.mrp) || 0,
+          RATE: parseFloat(newItemData.rate) || 0
         }));
 
         setSizeDetailsData(transformedSizeDetails);
-        console.log('Transformed size details:', transformedSizeDetails);
-        
+        setIsSizeDetailsLoaded(true);
         // showSnackbar("Size details loaded successfully! Please enter quantities for each size.");
       } else {
         showSnackbar("No size details found for the selected combination.", 'warning');
         setSizeDetailsData([]);
+        setIsSizeDetailsLoaded(false);
       }
     } catch (error) {
       console.error('Error fetching size details:', error);
-      // showSnackbar("Error loading size details. Please try again.", 'error');
+      showSnackbar("Error loading size details. Please try again.", 'error');
+      setIsSizeDetailsLoaded(false);
+    }
+  };
+
+  // Handle style code text input change with debounce
+  const handleStyleCodeInputChange = (e) => {
+    const value = e.target.value;
+    setStyleCodeInput(value);
+    
+    if (styleCodeTimeoutRef.current) {
+      clearTimeout(styleCodeTimeoutRef.current);
+    }
+    
+    if (value && value.trim() !== '') {
+      styleCodeTimeoutRef.current = setTimeout(() => {
+        fetchStyleDataByCode(value.trim());
+      }, 500);
+    }
+  };
+
+  // Handle barcode text input change with debounce
+  const handleBarcodeInputChange = (e) => {
+    const value = e.target.value;
+    setBarcodeInput(value);
+    
+    if (barcodeTimeoutRef.current) {
+      clearTimeout(barcodeTimeoutRef.current);
+    }
+    
+    if (value && value.trim() !== '') {
+      barcodeTimeoutRef.current = setTimeout(() => {
+        fetchStyleDataByBarcode(value.trim());
+      }, 500);
     }
   };
 
@@ -844,8 +811,6 @@ const DropInputSx = {
       
       if (value && productMapping[value]) {
         const fgprdKey = productMapping[value];
-        console.log('Selected product FGPRD_KEY:', fgprdKey);
-        
         await fetchStyleData(fgprdKey);
         
         setNewItemData(prev => ({ 
@@ -859,17 +824,19 @@ const DropInputSx = {
         setShadeOptions([]);
         setLotNoOptions([]);
         setSizeDetailsData([]);
+        setIsSizeDetailsLoaded(false);
       } else {
         setStyleOptions([]);
         setTypeOptions([]);
         setShadeOptions([]);
         setLotNoOptions([]);
         setSizeDetailsData([]);
+        setIsSizeDetailsLoaded(false);
       }
     }
   };
 
-  // Handle style selection change - CASE 1: When user selects from dropdown
+  // Handle style selection change
   const handleStyleChange = async (event, value) => {
     setSelectedStyle(value);
     setDataSource('dropdown');
@@ -887,12 +854,11 @@ const DropInputSx = {
       setShadeOptions([]);
       setLotNoOptions([]);
       setSizeDetailsData([]);
+      setIsSizeDetailsLoaded(false);
       
       if (value && styleMapping[value]) {
         const fgstyleId = styleMapping[value];
-        console.log('Selected style FGSTYLE_ID:', fgstyleId);
         
-        // CASE 1: Make API call when style is selected from dropdown
         const payload = {
           "FGSTYLE_ID": fgstyleId,
           "FGPRD_KEY": "",
@@ -900,28 +866,21 @@ const DropInputSx = {
           "FLAG": ""
         };
 
-        console.log('CASE 1: Fetching style details with payload:', payload);
-
         try {
           const response = await axiosInstance.post('/FGSTYLE/GetFgstyleDrp', payload);
-          console.log('CASE 1 Style Details API Response:', response.data);
 
           if (response.data.DATA && response.data.DATA.length > 0) {
             const styleData = response.data.DATA[0];
             
-            // Auto-fill MRP, Rate (SSP) and Type fields
             setNewItemData(prev => ({
               ...prev,
               mrp: styleData.MRP ? styleData.MRP.toString() : '',
-              rate: styleData.SSP ? styleData.SSP.toString() : '', // NEW: Fetch Rate (SSP)
+              rate: styleData.SSP ? styleData.SSP.toString() : '',
               type: styleData.FGTYPE_NAME || ''
             }));
-            
-            // For dropdown selection, DO NOT auto-load size details
-            // showSnackbar("MRP and Rate auto-filled from style data! Click 'Add Qty' to load size details.");
           }
         } catch (error) {
-          console.error('Error fetching style details in CASE 1:', error);
+          console.error('Error fetching style details:', error);
         }
         
         await fetchTypeData(fgstyleId);
@@ -931,23 +890,12 @@ const DropInputSx = {
     }
   };
 
-  // Cleanup timeout on component unmount
-  useEffect(() => {
-    return () => {
-      if (styleCodeTimeoutRef.current) {
-        clearTimeout(styleCodeTimeoutRef.current);
-      }
-      if (barcodeTimeoutRef.current) {
-        clearTimeout(barcodeTimeoutRef.current);
-      }
-    };
-  }, []);
-
   // Handle type selection change
   const handleTypeChange = (event, value) => {
     if (isAddingNew || isEditingSize) {
       setNewItemData(prev => ({ ...prev, type: value }));
       setSizeDetailsData([]);
+      setIsSizeDetailsLoaded(false);
     }
   };
 
@@ -956,6 +904,7 @@ const DropInputSx = {
     if (isAddingNew || isEditingSize) {
       setNewItemData(prev => ({ ...prev, shade: value }));
       setSizeDetailsData([]);
+      setIsSizeDetailsLoaded(false);
     }
   };
 
@@ -964,6 +913,7 @@ const DropInputSx = {
     if (isAddingNew || isEditingSize) {
       setNewItemData(prev => ({ ...prev, lotNo: value }));
       setSizeDetailsData([]);
+      setIsSizeDetailsLoaded(false);
     }
   };
 
@@ -977,86 +927,41 @@ const DropInputSx = {
     if (isEditingSize) {
       populateFormFields(row);
     }
-    
-    console.log("Selected row:", row);
-    console.log("Size details:", sizeDetails);
   };
 
-  // Populate form fields with row data for editing
   const populateFormFields = (row) => {
-    setEditingRowData(row);
-    
-    const totalSizeQty = row.originalData?.ORDBKSTYSZLIST?.reduce((sum, size) => sum + (parseFloat(size.QTY) || 0), 0) || row.qty;
-    const convFact = totalSizeQty / (parseFloat(row.qty) || 1);
-    
-    setNewItemData({
-      product: row.product || '',
-      barcode: row.BarCode || '',
-      style: row.style || '',
-      type: row.type || '',
-      shade: row.shade || '',
-      qty: row.qty?.toString() || '',
-      mrp: row.mrp?.toString() || '',
-      rate: row.rate?.toString() || '', // NEW: Populate Rate
-      setNo: '',
-      varPer: row.varPer?.toString() || '',
-      stdQty: '',
-      convFact: convFact.toString() || '1',
-      lotNo: row.lotNo || '',
-      discount: row.discAmt?.toString() || '',
-      percent: '',
-      remark: '',
-      divDt: '',
-      rQty: '',
-      sets: row.set?.toString() || ''
-    });
-  };
+  setEditingRowData(row);
+  
+  const totalSizeQty = row.originalData?.ORDBKSTYSZLIST?.reduce((sum, size) => sum + (parseFloat(size.QTY) || 0), 0) || row.qty;
+  const convFact = totalSizeQty / (parseFloat(row.qty) || 1);
+  
+  setNewItemData({
+    product: row.product || '',
+    barcode: row.BarCode || '',
+    style: row.style || '',
+    type: row.type || '',
+    shade: row.shade || '',
+    qty: row.qty?.toString() || '',
+    mrp: row.mrp?.toString() || '',
+    rate: row.rate?.toString() || '',
+    setNo: '',
+    varPer: row.varPer?.toString() || '',
+    stdQty: '',
+    convFact: convFact.toString() || '1',
+    lotNo: row.lotNo || '',
+    discount: row.discAmt?.toString() || '',
+    percent: '',
+    remark: '',
+    divDt: '',
+    rQty: '',
+    sets: row.set?.toString() || ''
+  });
+  
+  // Also update style code and barcode input fields
+  setStyleCodeInput(row.style || '');
+  setBarcodeInput(row.BarCode || '');
+};
 
-  // Initialize with first row's size details when component loads
-  React.useEffect(() => {
-    if (tableData.length > 0 && !selectedRow) {
-      const firstRow = tableData[0];
-      setSelectedRow(firstRow.id);
-      const sizeDetails = firstRow.originalData?.ORDBKSTYSZLIST || [];
-      setSizeDetailsData(sizeDetails);
-    }
-  }, [tableData, selectedRow]);
-
-  // Load product and other dropdown data when component mounts or formData changes
-  useEffect(() => {
-    fetchProductData();
-  }, []);
-
-  // Populate product and other fields when formData has data
-  useEffect(() => {
-    if (formData.apiResponseData?.ORDBKSTYLIST && formData.apiResponseData.ORDBKSTYLIST.length > 0) {
-      const firstItem = formData.apiResponseData.ORDBKSTYLIST[0];
-      
-      if (firstItem.PRODUCT) {
-        setSelectedProduct(firstItem.PRODUCT);
-      }
-      if (firstItem.STYLE) {
-        setSelectedStyle(firstItem.STYLE);
-      }
-    }
-  }, [formData.apiResponseData]);
-
-  const handleDateChange = (date, fieldName) => {
-    if (date) {
-      const formattedDate = format(date, "dd/MM/yyyy");
-      setFormData(prev => ({
-        ...prev,
-        [fieldName]: formattedDate
-      }));
-    } else {
-      setFormData(prev => ({
-        ...prev,
-        [fieldName]: null
-      }));
-    }
-  };
-
- 
   const handleNewItemChange = (e) => {
     const { name, value } = e.target;
     setNewItemData(prev => ({
@@ -1065,413 +970,24 @@ const DropInputSx = {
     }));
   };
 
- const isPartySelected = () => {
-  return !!formData.Party && !!formData.PARTY_KEY;
-};
-
-// Update the handleAddItem function
-const handleAddItem = async () => {
-  // Check if party is selected
-  if (!isPartySelected()) {
-    showSnackbar("Please select a Party first before adding items", 'error');
-    return;
-  }
-
-  setIsAddingNew(true);
-  setSizeDetailsData([]);
-  setDataSource(null);
-  
-  await fetchProductData();
-  
-  setNewItemData({
-    product: '',
-    barcode: '',
-    style: '',
-    type: '',
-    shade: '',
-    qty: '',
-    mrp: '',
-    rate: '', // NEW: Added Rate field
-    setNo: '',
-    varPer: '',
-    stdQty: '',
-    convFact: '',
-    lotNo: '',
-    discount: '',
-    percent: '',
-    remark: '',
-    divDt: '',
-    rQty: '',
-    sets: ''
-  });
-  
-  setStyleCodeInput('');
-  setBarcodeInput('');
-  setStyleOptions([]);
-  setTypeOptions([]);
-  setShadeOptions([]);
-  setLotNoOptions([]);
-  
-  // showSnackbar('Add new item mode enabled');
-};
-  
-
-  // Enhanced handleConfirmAdd function with proper DBFLAG handling
-  // Enhanced handleConfirmAdd function with proper DBFLAG handling - UPDATED
-const handleConfirmAdd = () => {
-  // Validation
-  if (!newItemData.product || !newItemData.style) {
-    showSnackbar("Please fill required fields: Product and Style", 'error');
-    return;
-  }
-
-  if (sizeDetailsData.length === 0) {
-    // showSnackbar("Please load size details first", 'error');
-    return;
-  }
-
-  // CHANGED: At least one size should have quantity > 0 (sabhi compulsory nahi)
-  const sizesWithQty = sizeDetailsData.filter(size => size.QTY && size.QTY > 0);
-  if (sizesWithQty.length === 0) {
-    showSnackbar("Please enter quantity for at least one size before confirming", 'error');
-    return;
-  }
-
-  const fgprdKey = productMapping[newItemData.product] || productMapping[newItemData.style] || "";
-  const fgstyleId = styleMapping[newItemData.style] || "";
-  const fgtypeKey = typeMapping[newItemData.type] || "";
-  const fgshadeKey = shadeMapping[newItemData.shade] || "";
-  const fgptnKey = lotNoMapping[newItemData.lotNo] || "";
-
-  console.log('All Keys for new item:', {
-    product: newItemData.product,
-    fgprdKey,
-    style: newItemData.style,
-    fgstyleId,
-    type: newItemData.type,
-    fgtypeKey,
-    shade: newItemData.shade,
-    fgshadeKey,
-    lotNo: newItemData.lotNo,
-    fgptnKey
-  });
-
-  // CHANGED: Only calculate total from sizes with quantity > 0
-  const totalQty = sizesWithQty.reduce((sum, size) => sum + (parseFloat(size.QTY) || 0), 0);
-  const mrp = parseFloat(newItemData.mrp) || 0;
-  const rate = parseFloat(newItemData.rate) || 0;
-  
-  // CHANGED: Calculate amount only from sizes with quantity
-  const totalAmount = sizesWithQty.reduce((sum, size) => {
-    const sizeQty = parseFloat(size.QTY) || 0;
-    return sum + (sizeQty * rate);
-  }, 0);
-  
-  const discount = parseFloat(newItemData.discount) || 0;
-  const netAmount = totalAmount - discount;
-
-  // Generate a temporary ID for new items (long number to distinguish from real IDs)
-  const tempId = Date.now();
-
-  // CHANGED: Size details me zero quantity wale bhi include karo
-  const updatedSizeDetails = sizeDetailsData.map(size => ({
-    ...size,
-    QTY: parseFloat(size.QTY) || 0, // Zero bhi allow karo
-    ITM_AMT: (parseFloat(size.QTY) || 0) * rate
-  }));
-
-  const newItem = {
-    id: tempId,
-    BarCode: newItemData.barcode || "-",
-    product: newItemData.product,
-    style: newItemData.style || "-",
-    type: newItemData.type || "-",
-    shade: newItemData.shade || "-",
-    lotNo: newItemData.lotNo || "-",
-    qty: totalQty, // Only total of sizes with quantity > 0
-    mrp: mrp,
-    rate: rate,
-    amount: totalAmount,
-    varPer: parseFloat(newItemData.varPer) || 0,
-    varQty: 0,
-    varAmt: 0,
-    discAmt: discount,
-    netAmt: netAmount,
-    distributer: "-",
-    set: parseFloat(newItemData.sets) || 0,
-    originalData: {
-      ORDBKSTY_ID: tempId, // Temporary ID for new items
-      FGITEM_KEY: newItemData.barcode || "-",
-      PRODUCT: newItemData.product,
-      STYLE: newItemData.style,
-      TYPE: newItemData.type,
-      SHADE: newItemData.shade,
-      ITMQTY: totalQty, // Only total of sizes with quantity > 0
-      MRP: mrp,
-      ITMRATE: rate,
-      ITMAMT: totalAmount,
-      DLV_VAR_PERC: parseFloat(newItemData.varPer) || 0,
-      DLV_VAR_QTY: 0,
-      DISC_AMT: discount,
-      NET_AMT: netAmount,
-      DISTBTR: "-",
-      SETQTY: parseFloat(newItemData.sets) || 0,
-      ORDBKSTYSZLIST: updatedSizeDetails.map(size => ({
-        ...size,
-        ORDBKSTYSZ_ID: 0, // 0 for new size entries
-        QTY: size.QTY, // Zero quantity bhi include karo
-        ITM_AMT: size.ITM_AMT
-      })),
-      FGPRD_KEY: fgprdKey,
-      FGSTYLE_ID: fgstyleId,
-      FGTYPE_KEY: fgtypeKey,
-      FGSHADE_KEY: fgshadeKey,
-      FGPTN_KEY: fgptnKey,
-      // Set DBFLAG for new items
-      DBFLAG: mode === 'add' ? 'I' : 'I' // Always 'I' for new items in both modes
-    },
-    FGSTYLE_ID: fgstyleId,
-    FGPRD_KEY: fgprdKey,
-    FGTYPE_KEY: fgtypeKey,
-    FGSHADE_KEY: fgshadeKey,
-    FGPTN_KEY: fgptnKey
+  const isPartySelected = () => {
+    return !!formData.Party && !!formData.PARTY_KEY;
   };
 
-  const newTableData = [...tableData, newItem];
-  setUpdatedTableData(newTableData);
-
-  // Update formData with proper DBFLAG and all required fields
-  const newOrdbkStyleItem = {
-    ORDBKSTY_ID: tempId,
-    FGITEM_KEY: newItem.BarCode,
-    PRODUCT: newItem.product,
-    STYLE: newItem.style,
-    TYPE: newItem.type,
-    SHADE: newItem.shade,
-    ITMQTY: newItem.qty,
-    MRP: newItem.mrp,
-    ITMRATE: newItem.rate,
-    ITMAMT: newItem.amount,
-    DLV_VAR_PERC: newItem.varPer,
-    DLV_VAR_QTY: newItem.varQty,
-    DISC_AMT: newItem.discAmt,
-    NET_AMT: newItem.netAmt,
-    DISTBTR: newItem.distributer,
-    SETQTY: newItem.set,
-    ORDBKSTYSZLIST: updatedSizeDetails.map(size => ({
-      ...size,
-      ORDBKSTYSZ_ID: 0 // 0 for new size entries
-    })),
-    FGSTYLE_ID: newItem.FGSTYLE_ID,
-    FGPRD_KEY: fgprdKey,
-    FGTYPE_KEY: fgtypeKey,
-    FGSHADE_KEY: fgshadeKey,
-    FGPTN_KEY: fgptnKey,
-    DBFLAG: mode === 'add' ? 'I' : 'I' // Always 'I' for new items
-  };
-
-  setFormData(prev => ({
-    ...prev,
-    apiResponseData: {
-      ...prev.apiResponseData,
-      ORDBKSTYLIST: [...(prev.apiResponseData?.ORDBKSTYLIST || []), newOrdbkStyleItem]
-    }
-  }));
-
-  setIsAddingNew(false);
-  setNewItemData({
-    product: '',
-    barcode: '',
-    style: '',
-    type: '',
-    shade: '',
-    qty: '',
-    mrp: '',
-    rate: '',
-    setNo: '',
-    varPer: '',
-    stdQty: '',
-    convFact: '',
-    lotNo: '',
-    discount: '',
-    percent: '',
-    remark: '',
-    divDt: '',
-    rQty: '',
-    sets: ''
-  });
-  setStyleCodeInput('');
-  setBarcodeInput('');
-  setSizeDetailsData([]);
-  setDataSource(null);
-
-  // showSnackbar("Item added successfully!");
-};
-
-  // Enhanced handleEditItem function
-  const handleEditItem = () => {
-    if (!selectedRow) {
-      showSnackbar("Please select an item to edit", 'error');
+  // Handle Add Item
+  const handleAddItem = async () => {
+    if (!isPartySelected()) {
+      showSnackbar("Please select a Party first before adding items", 'error');
       return;
     }
+
+    setIsAddingNew(true);
+    setSizeDetailsData([]);
+    setIsSizeDetailsLoaded(false);
+    setDataSource(null);
     
-    if (isEditingSize) {
-      const updatedTable = tableData.map(row => {
-        if (row.id === selectedRow) {
-          const totalSizeQty = sizeDetailsData.reduce((sum, size) => sum + (parseFloat(size.QTY) || 0), 0);
-          const rate = parseFloat(newItemData.rate) || 0; // NEW: Use Rate for calculation
-          // Calculate amount using Rate instead of MRP (Qty * Rate)
-          const amount = sizeDetailsData.reduce((sum, size) => {
-            const sizeQty = parseFloat(size.QTY) || 0;
-            return sum + (sizeQty * rate);
-          }, 0);
-          const discount = row.discAmt || 0;
-          const netAmount = amount - discount;
-
-          // Preserve the original DBFLAG for existing items
-          const originalDbFlag = row.originalData?.DBFLAG || 'U';
-
-          return {
-            ...row,
-            qty: totalSizeQty,
-            mrp: parseFloat(newItemData.mrp) || 0, // NEW: Update MRP
-            rate: rate, // NEW: Use Rate
-            amount: amount,
-            netAmt: netAmount,
-            originalData: {
-              ...row.originalData,
-              ORDBKSTYSZLIST: sizeDetailsData,
-              ITMQTY: totalSizeQty,
-              MRP: parseFloat(newItemData.mrp) || 0, // NEW: Update MRP
-              ITMRATE: rate, // NEW: Use Rate
-              ITMAMT: amount,
-              NET_AMT: netAmount,
-              DBFLAG: originalDbFlag // Preserve original DBFLAG
-            }
-          };
-        }
-        return row;
-      });
-      
-      setUpdatedTableData(updatedTable);
-      
-      setFormData(prev => ({
-        ...prev,
-        apiResponseData: {
-          ...prev.apiResponseData,
-          ORDBKSTYLIST: prev.apiResponseData?.ORDBKSTYLIST?.map(item => {
-            if (item.ORDBKSTY_ID === selectedRow) {
-              const totalSizeQty = sizeDetailsData.reduce((sum, size) => sum + (parseFloat(size.QTY) || 0), 0);
-              const rate = parseFloat(newItemData.rate) || 0; // NEW: Use Rate for calculation
-              // Calculate amount using Rate instead of MRP (Qty * Rate)
-              const amount = sizeDetailsData.reduce((sum, size) => {
-                const sizeQty = parseFloat(size.QTY) || 0;
-                return sum + (sizeQty * rate);
-              }, 0);
-              const discount = item.DISC_AMT || 0;
-              const netAmount = amount - discount;
-
-              // Preserve the original DBFLAG
-              const originalDbFlag = item.DBFLAG || 'U';
-
-              return {
-                ...item,
-                ITMQTY: totalSizeQty,
-                MRP: parseFloat(newItemData.mrp) || 0, // NEW: Update MRP
-                ITMRATE: rate, // NEW: Use Rate
-                ITMAMT: amount,
-                NET_AMT: netAmount,
-                ORDBKSTYSZLIST: sizeDetailsData,
-                DBFLAG: originalDbFlag // Preserve original DBFLAG
-              };
-            }
-            return item;
-          }) || []
-        }
-      }));
-      
-      // showSnackbar("Changes saved successfully!");
-    } else {
-      if (selectedRow) {
-        const selectedRowData = tableData.find(row => row.id === selectedRow);
-        if (selectedRowData) {
-          populateFormFields(selectedRowData);
-        }
-      }
-      // showSnackbar('Edit mode enabled for selected item');
-    }
+    await fetchProductData();
     
-    setIsEditingSize(!isEditingSize);
-  };
-
-  // Enhanced handleDeleteItem function with proper DBFLAG handling
-  const handleDeleteItem = () => {
-    if (!selectedRow) {
-      showSnackbar("Please select an item to delete", 'error');
-      return;
-    }
-    
-    // Mark the item as deleted by setting DBFLAG to 'D'
-    const updatedTableData = tableData.map(row => {
-      if (row.id === selectedRow) {
-        return {
-          ...row,
-          originalData: {
-            ...row.originalData,
-            DBFLAG: 'D' // Set DBFLAG to 'D' for deletion
-          }
-        };
-      }
-      return row;
-    });
-
-    // Filter out deleted items from display but keep them in the data for API submission
-    const displayTableData = updatedTableData.filter(row => 
-      !(row.id === selectedRow && row.originalData?.DBFLAG === 'D')
-    );
-
-    setUpdatedTableData(updatedTableData);
-
-    // Update formData with deleted items marked with DBFLAG = 'D'
-    setFormData(prev => ({
-      ...prev,
-      apiResponseData: {
-        ...prev.apiResponseData,
-        ORDBKSTYLIST: (prev.apiResponseData?.ORDBKSTYLIST || []).map(item => {
-          if (item.ORDBKSTY_ID === selectedRow) {
-            return {
-              ...item,
-              DBFLAG: 'D', // Set DBFLAG to 'D' for deletion
-              ORDBKSTYSZLIST: (item.ORDBKSTYSZLIST || []).map(sizeItem => ({
-                ...sizeItem,
-                DBFLAG: 'D' // Also mark size items for deletion
-              }))
-            };
-          }
-          return item;
-        })
-      }
-    }));
-
-    // Update selected row and size details
-    if (displayTableData.length > 0) {
-      const firstRow = displayTableData[0];
-      setSelectedRow(firstRow.id);
-      setSizeDetailsData(firstRow.originalData?.ORDBKSTYSZLIST || []);
-    } else {
-      setSelectedRow(null);
-      setSizeDetailsData([]);
-      setStyleOptions([]);
-      setTypeOptions([]);
-      setShadeOptions([]);
-      setLotNoOptions([]);
-    }
-
-    // showSnackbar("Item marked for deletion! Click Submit to confirm deletion.");
-  };
-
-  const handleCancelAdd = () => {
-    setIsAddingNew(false);
     setNewItemData({
       product: '',
       barcode: '',
@@ -1480,7 +996,180 @@ const handleConfirmAdd = () => {
       shade: '',
       qty: '',
       mrp: '',
-      rate: '', // NEW: Reset Rate field
+      rate: '',
+      setNo: '',
+      varPer: '',
+      stdQty: '',
+      convFact: '',
+      lotNo: '',
+      discount: '',
+      percent: '',
+      remark: '',
+      divDt: '',
+      rQty: '',
+      sets: ''
+    });
+    
+    setStyleCodeInput('');
+    setBarcodeInput('');
+    setStyleOptions([]);
+    setTypeOptions([]);
+    setShadeOptions([]);
+    setLotNoOptions([]);
+  };
+
+  // Handle Confirm Add - FIXED with proper Type, Shade, Pattern handling
+  const handleConfirmAdd = () => {
+    // Validation
+    if (!newItemData.product || !newItemData.style) {
+      showSnackbar("Please fill required fields: Product and Style", 'error');
+      return;
+    }
+
+    if (sizeDetailsData.length === 0) {
+      showSnackbar("Please load size details first", 'error');
+      return;
+    }
+
+    // At least one size should have quantity > 0
+    const sizesWithQty = sizeDetailsData.filter(size => size.QTY && size.QTY > 0);
+    if (sizesWithQty.length === 0) {
+      showSnackbar("Please enter quantity for at least one size before confirming", 'error');
+      return;
+    }
+
+    const fgprdKey = productMapping[newItemData.product] || productMapping[newItemData.style] || "";
+    const fgstyleId = styleMapping[newItemData.style] || "";
+    const fgtypeKey = typeMapping[newItemData.type] || "";
+    const fgshadeKey = shadeMapping[newItemData.shade] || "";
+    const fgptnKey = lotNoMapping[newItemData.lotNo] || "";
+
+    const totalQty = sizesWithQty.reduce((sum, size) => sum + (parseFloat(size.QTY) || 0), 0);
+    const mrp = parseFloat(newItemData.mrp) || 0;
+    const rate = parseFloat(newItemData.rate) || 0;
+    const totalAmount = sizesWithQty.reduce((sum, size) => {
+      const sizeQty = parseFloat(size.QTY) || 0;
+      return sum + (sizeQty * rate);
+    }, 0);
+    const discount = parseFloat(newItemData.discount) || 0;
+    const netAmount = totalAmount - discount;
+
+    const tempId = Date.now();
+
+    const updatedSizeDetails = sizeDetailsData.map(size => ({
+      ...size,
+      QTY: parseFloat(size.QTY) || 0,
+      ITM_AMT: (parseFloat(size.QTY) || 0) * rate
+    }));
+
+    const newItem = {
+      id: tempId,
+      BarCode: newItemData.barcode || "-",
+      product: newItemData.product,
+      style: newItemData.style || "-",
+      type: newItemData.type || "-",
+      shade: newItemData.shade || "-",
+      lotNo: newItemData.lotNo || "-",
+      qty: totalQty,
+      mrp: mrp,
+      rate: rate,
+      amount: totalAmount,
+      varPer: parseFloat(newItemData.varPer) || 0,
+      varQty: 0,
+      varAmt: 0,
+      discAmt: discount,
+      netAmt: netAmount,
+      distributer: "-",
+      set: parseFloat(newItemData.sets) || 0,
+      originalData: {
+        ORDBKSTY_ID: tempId,
+        FGITEM_KEY: newItemData.barcode || "-",
+        PRODUCT: newItemData.product,
+        STYLE: newItemData.style,
+        TYPE: newItemData.type || "-",
+        SHADE: newItemData.shade || "-",
+        PATTERN: newItemData.lotNo || "-",
+        ITMQTY: totalQty,
+        MRP: mrp,
+        ITMRATE: rate,
+        ITMAMT: totalAmount,
+        DLV_VAR_PERC: parseFloat(newItemData.varPer) || 0,
+        DLV_VAR_QTY: 0,
+        DISC_AMT: discount,
+        NET_AMT: netAmount,
+        DISTBTR: "-",
+        SETQTY: parseFloat(newItemData.sets) || 0,
+        ORDBKSTYSZLIST: updatedSizeDetails.map(size => ({
+          ...size,
+          ORDBKSTYSZ_ID: 0
+        })),
+        FGPRD_KEY: fgprdKey,
+        FGSTYLE_ID: fgstyleId,
+        FGTYPE_KEY: fgtypeKey,
+        FGSHADE_KEY: fgshadeKey,
+        FGPTN_KEY: fgptnKey,
+        DBFLAG: mode === 'add' ? 'I' : 'I'
+      },
+      FGSTYLE_ID: fgstyleId,
+      FGPRD_KEY: fgprdKey,
+      FGTYPE_KEY: fgtypeKey,
+      FGSHADE_KEY: fgshadeKey,
+      FGPTN_KEY: fgptnKey
+    };
+
+    const newTableData = [...tableData, newItem];
+    setUpdatedTableData(newTableData);
+
+    // Update formData
+    const newOrdbkStyleItem = {
+      ORDBKSTY_ID: tempId,
+      FGITEM_KEY: newItem.BarCode,
+      PRODUCT: newItem.product,
+      STYLE: newItem.style,
+      TYPE: newItem.type,
+      SHADE: newItem.shade,
+      PATTERN: newItem.lotNo,
+      ITMQTY: newItem.qty,
+      MRP: newItem.mrp,
+      ITMRATE: newItem.rate,
+      ITMAMT: newItem.amount,
+      DLV_VAR_PERC: newItem.varPer,
+      DLV_VAR_QTY: newItem.varQty,
+      DISC_AMT: newItem.discAmt,
+      NET_AMT: newItem.netAmt,
+      DISTBTR: newItem.distributer,
+      SETQTY: newItem.set,
+      ORDBKSTYSZLIST: updatedSizeDetails.map(size => ({
+        ...size,
+        ORDBKSTYSZ_ID: 0
+      })),
+      FGSTYLE_ID: newItem.FGSTYLE_ID,
+      FGPRD_KEY: fgprdKey,
+      FGTYPE_KEY: fgtypeKey,
+      FGSHADE_KEY: fgshadeKey,
+      FGPTN_KEY: fgptnKey,
+      DBFLAG: mode === 'add' ? 'I' : 'I'
+    };
+
+    setFormData(prev => ({
+      ...prev,
+      apiResponseData: {
+        ...prev.apiResponseData,
+        ORDBKSTYLIST: [...(prev.apiResponseData?.ORDBKSTYLIST || []), newOrdbkStyleItem]
+      }
+    }));
+
+    setIsAddingNew(false);
+    setIsSizeDetailsLoaded(false);
+    setNewItemData({
+      product: '',
+      barcode: '',
+      style: '',
+      type: '',
+      shade: '',
+      qty: '',
+      mrp: '',
+      rate: '',
       setNo: '',
       varPer: '',
       stdQty: '',
@@ -1497,12 +1186,193 @@ const handleConfirmAdd = () => {
     setBarcodeInput('');
     setSizeDetailsData([]);
     setDataSource(null);
-    // showSnackbar('Add item cancelled');
+
+    showSnackbar("Item added successfully!");
   };
 
-  const handleEditCancel = () => {
-    setShowValidationErrors(false);
+  const handleEditItem = () => {
+  if (!selectedRow) {
+    showSnackbar("Please select an item to edit", 'error');
+    return;
+  }
+  
+  if (isEditingSize) {
+    // SAVE CHANGES LOGIC
+    const updatedTable = tableData.map(row => {
+      if (row.id === selectedRow) {
+        const totalSizeQty = sizeDetailsData.reduce((sum, size) => sum + (parseFloat(size.QTY) || 0), 0);
+        const rate = parseFloat(newItemData.rate) || 0;
+        const amount = sizeDetailsData.reduce((sum, size) => {
+          const sizeQty = parseFloat(size.QTY) || 0;
+          return sum + (sizeQty * rate);
+        }, 0);
+        const discount = parseFloat(newItemData.discount) || 0;
+        const netAmount = amount - discount;
+
+        const originalDbFlag = row.originalData?.DBFLAG || 'U';
+
+        return {
+          ...row,
+          qty: totalSizeQty,
+          mrp: parseFloat(newItemData.mrp) || 0,
+          rate: rate,
+          amount: amount,
+          discAmt: discount,
+          netAmt: netAmount,
+          originalData: {
+            ...row.originalData,
+            ORDBKSTYSZLIST: sizeDetailsData,
+            ITMQTY: totalSizeQty,
+            MRP: parseFloat(newItemData.mrp) || 0,
+            ITMRATE: rate,
+            ITMAMT: amount,
+            DISC_AMT: discount,
+            NET_AMT: netAmount,
+            DBFLAG: originalDbFlag
+          }
+        };
+      }
+      return row;
+    });
+    
+    setUpdatedTableData(updatedTable);
+    
+    setFormData(prev => ({
+      ...prev,
+      apiResponseData: {
+        ...prev.apiResponseData,
+        ORDBKSTYLIST: prev.apiResponseData?.ORDBKSTYLIST?.map(item => {
+          if (item.ORDBKSTY_ID === selectedRow) {
+            const totalSizeQty = sizeDetailsData.reduce((sum, size) => sum + (parseFloat(size.QTY) || 0), 0);
+            const rate = parseFloat(newItemData.rate) || 0;
+            const amount = sizeDetailsData.reduce((sum, size) => {
+              const sizeQty = parseFloat(size.QTY) || 0;
+              return sum + (sizeQty * rate);
+            }, 0);
+            const discount = parseFloat(newItemData.discount) || 0;
+            const netAmount = amount - discount;
+
+            const originalDbFlag = item.DBFLAG || 'U';
+
+            return {
+              ...item,
+              ITMQTY: totalSizeQty,
+              MRP: parseFloat(newItemData.mrp) || 0,
+              ITMRATE: rate,
+              ITMAMT: amount,
+              DISC_AMT: discount,
+              NET_AMT: netAmount,
+              ORDBKSTYSZLIST: sizeDetailsData,
+              DBFLAG: originalDbFlag
+            };
+          }
+          return item;
+        }) || []
+      }
+    }));
+    
     setIsEditingSize(false);
+    setIsSizeDetailsLoaded(false);
+    showSnackbar("Changes saved successfully!");
+  } else {
+    // ENTERING EDIT MODE: Populate form fields with selected row data
+    const selectedRowData = tableData.find(row => row.id === selectedRow);
+    if (selectedRowData) {
+      // First populate form fields
+      populateFormFields(selectedRowData);
+      
+      // Then fetch size details for the selected item
+      const sizeDetails = selectedRowData.originalData?.ORDBKSTYSZLIST || [];
+      setSizeDetailsData(sizeDetails);
+      setIsSizeDetailsLoaded(true); // Mark size details as loaded
+      
+      // Set editing mode to true
+      setIsEditingSize(true);
+      
+      // Set data source to indicate we're loading existing data
+      setDataSource('edit');
+      
+      // Fetch product and style data for dropdowns if needed
+      if (selectedRowData.FGPRD_KEY && !productOptions.includes(selectedRowData.product)) {
+        // If product not in dropdown, fetch it
+        fetchProductData();
+      }
+      
+      if (selectedRowData.FGSTYLE_ID && !styleOptions.includes(selectedRowData.style)) {
+        // If style not in dropdown, fetch styles for this product
+        if (selectedRowData.FGPRD_KEY) {
+          fetchStyleData(selectedRowData.FGPRD_KEY);
+        }
+      }
+      
+      // Fetch type, shade, lotNo data for this style
+      if (selectedRowData.FGSTYLE_ID) {
+        fetchTypeData(selectedRowData.FGSTYLE_ID);
+        fetchShadeData(selectedRowData.FGSTYLE_ID);
+        fetchLotNoData(selectedRowData.FGSTYLE_ID);
+      }
+      
+      showSnackbar('Edit mode enabled for selected item. Make changes and click Confirm.');
+    }
+  }
+};
+
+  // FIXED: Handle Delete Item (Row immediately removed from table)
+  const handleDeleteItem = () => {
+    if (!selectedRow) {
+      showSnackbar("Please select an item to delete", 'error');
+      return;
+    }
+    
+    // Immediately remove from display table
+    const updatedTableData = tableData.filter(row => row.id !== selectedRow);
+    setUpdatedTableData(updatedTableData);
+    
+    // Mark as deleted in formData for API
+    setFormData(prev => {
+      const updatedOrdbkStyleList = (prev.apiResponseData?.ORDBKSTYLIST || []).map(item => {
+        if (item.ORDBKSTY_ID === selectedRow) {
+          return {
+            ...item,
+            DBFLAG: 'D',
+            ORDBKSTYSZLIST: (item.ORDBKSTYSZLIST || []).map(sizeItem => ({
+              ...sizeItem,
+              DBFLAG: 'D'
+            }))
+          };
+        }
+        return item;
+      });
+      
+      return {
+        ...prev,
+        apiResponseData: {
+          ...prev.apiResponseData,
+          ORDBKSTYLIST: updatedOrdbkStyleList
+        }
+      };
+    });
+
+    // Update selected row
+    if (updatedTableData.length > 0) {
+      const firstRow = updatedTableData[0];
+      setSelectedRow(firstRow.id);
+      setSizeDetailsData(firstRow.originalData?.ORDBKSTYSZLIST || []);
+    } else {
+      setSelectedRow(null);
+      setSizeDetailsData([]);
+      setStyleOptions([]);
+      setTypeOptions([]);
+      setShadeOptions([]);
+      setLotNoOptions([]);
+    }
+
+    showSnackbar("Item deleted successfully!");
+  };
+
+  const handleCancelAdd = () => {
+    setIsAddingNew(false);
+    setIsSizeDetailsLoaded(false);
     setNewItemData({
       product: '',
       barcode: '',
@@ -1511,7 +1381,38 @@ const handleConfirmAdd = () => {
       shade: '',
       qty: '',
       mrp: '',
-      rate: '', // NEW: Reset Rate field
+      rate: '',
+      setNo: '',
+      varPer: '',
+      stdQty: '',
+      convFact: '',
+      lotNo: '',
+      discount: '',
+      percent: '',
+      remark: '',
+      divDt: '',
+      rQty: '',
+      sets: ''
+    });
+    setStyleCodeInput('');
+    setBarcodeInput('');
+    setSizeDetailsData([]);
+    setDataSource(null);
+  };
+
+  const handleEditCancel = () => {
+    setShowValidationErrors(false);
+    setIsEditingSize(false);
+    setIsSizeDetailsLoaded(false);
+    setNewItemData({
+      product: '',
+      barcode: '',
+      style: '',
+      type: '',
+      shade: '',
+      qty: '',
+      mrp: '',
+      rate: '',
       setNo: '',
       varPer: '',
       stdQty: '',
@@ -1532,8 +1433,8 @@ const handleConfirmAdd = () => {
   const handleSizeQtyChange = (index, newQty) => {
     const updatedSizeDetails = [...sizeDetailsData];
     const qty = parseFloat(newQty) || 0;
-    const rate = parseFloat(newItemData.rate) || 0; // NEW: Use Rate for amount calculation
-    const amount = qty * rate; // NEW: Calculate amount using Rate
+    const rate = parseFloat(newItemData.rate) || 0;
+    const amount = qty * rate;
     
     updatedSizeDetails[index] = {
       ...updatedSizeDetails[index],
@@ -1545,20 +1446,21 @@ const handleConfirmAdd = () => {
     setSizeDetailsData(updatedSizeDetails);
   };
 
-  // Helper function to format date for display
-  const formatDateForDisplay = (dateString) => {
-    if (!dateString || dateString === "1900-01-01T00:00:00") return "";
-    
-    try {
-      const date = new Date(dateString);
-      return date.toLocaleDateString('en-GB');
-    } catch (error) {
-      console.error('Error formatting date:', error);
-      return "";
+  const handleDateChange = (date, fieldName) => {
+    if (date) {
+      const formattedDate = format(date, "dd/MM/yyyy");
+      setFormData(prev => ({
+        ...prev,
+        [fieldName]: formattedDate
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [fieldName]: null
+      }));
     }
   };
 
-  // Determine if form fields should be disabled
   const shouldDisableFields = () => {
     return !(isAddingNew || isEditingSize);
   };
@@ -1566,11 +1468,7 @@ const handleConfirmAdd = () => {
   const getFieldError = (fieldName) => {
     if (!showValidationErrors) return '';
     
-    const requiredFields = {
-      // 'product': 'Product',
-      // 'style': 'Style',
-      // 'qty': 'Quantity'
-    };
+    const requiredFields = {};
 
     if (requiredFields[fieldName] && !newItemData[fieldName]) {
       return `${requiredFields[fieldName]} is required`;
@@ -1591,7 +1489,7 @@ const handleConfirmAdd = () => {
     { id: 'shade', label: 'Shade', minWidth: 100 },
     { id: 'lotNo', label: 'Lot No', minWidth: 100 },
     { id: 'qty', label: 'Qty', minWidth: 70, align: 'right' },
-    { id: 'mrp', label: 'MRP', minWidth: 70, align: 'right' }, // NEW: Added MRP column
+    { id: 'mrp', label: 'MRP', minWidth: 70, align: 'right' },
     { id: 'rate', label: 'Rate', minWidth: 70, align: 'right' },
     { id: 'amount', label: 'Amount', minWidth: 80, align: 'right' },
     { id: 'varPer', label: 'Var Per', minWidth: 80, align: 'right' },
@@ -1614,8 +1512,6 @@ const handleConfirmAdd = () => {
           marginInline: { xs: '5%', sm: '5%', md: '5%' }
         }}
       >
-       
-
         {/* Table Section */}
         <Box sx={{ mt: 2 }}>
           <Paper
@@ -1631,79 +1527,70 @@ const handleConfirmAdd = () => {
             <TableContainer sx={{ maxHeight: 400 }}>
               <Table stickyHeader size="small">
                 <TableHead>
- 
-                  
                   {/* Header Row */}
-                   <TableRow>
-    {columns.map((column) => (
-      <TableCell
-        key={column.id}
-        align={column.align || 'left'}
-        sx={{
-          backgroundColor: "#f5f5f5",
-          fontWeight: "bold",
-          fontSize: "0.8rem",
-          padding: "6px 8px",
-          borderBottom: "1px solid #ddd",
-          minWidth: column.minWidth
-        }}
-      >
-        {column.label}
-      </TableCell>
-    ))}
-  </TableRow>
+                  <TableRow>
+                    {columns.map((column) => (
+                      <TableCell
+                        key={column.id}
+                        align={column.align || 'left'}
+                        sx={{
+                          backgroundColor: "#f5f5f5",
+                          fontWeight: "bold",
+                          fontSize: "0.8rem",
+                          padding: "6px 8px",
+                          borderBottom: "1px solid #ddd",
+                          minWidth: column.minWidth
+                        }}
+                      >
+                        {column.label}
+                      </TableCell>
+                    ))}
+                  </TableRow>
 
-                   {/* Filter Row */}
-                 <TableRow>
-    {columns.map((column) => (
-      <TableCell
-        key={`filter-${column.id}`}
-        align={column.align || 'left'}
-        sx={{
-          backgroundColor: "#f4f8faff",
-          padding: "2px 4px",
-          borderBottom: "1px solid #ddd",
-          minWidth: column.minWidth
-        }}
-      >
-        <TextField
-          size="small"
-          placeholder={`Search ${column.label}`}
-          value={tableFilters[column.id] || ''}
-          onChange={(e) => handleTableFilterChange(column.id, e.target.value)}
-          variant="outlined"
-          sx={{
-            '& .MuiOutlinedInput-root': {
-              backgroundColor: 'white',
-              '& fieldset': {
-                border: 'none',
-              },
-              '&:hover fieldset': {
-                border: 'none',
-              },
-              '&.Mui-focused fieldset': {
-                border: 'none',
-              },
-              height: '28px',
-              fontSize: '0.7rem',
-              borderRadius: '4px',
-            },
-            '& .MuiInputBase-input': {
-              padding: '4px 6px',
-              fontSize: '0.7rem',
-            },
-          }}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                {/* <SearchIcon sx={{ fontSize: '16px', color: '#666' }} /> */}
-              </InputAdornment>
-            ),
-          }}
-        />
-      </TableCell>
-    ))}
-  </TableRow>
+                  {/* Filter Row */}
+                  <TableRow>
+                    {columns.map((column) => (
+                      <TableCell
+                        key={`filter-${column.id}`}
+                        align={column.align || 'left'}
+                        sx={{
+                          backgroundColor: "#f4f8faff",
+                          padding: "2px 4px",
+                          borderBottom: "1px solid #ddd",
+                          minWidth: column.minWidth
+                        }}
+                      >
+                        <TextField
+                          size="small"
+                          placeholder={`Search ${column.label}`}
+                          value={tableFilters[column.id] || ''}
+                          onChange={(e) => handleTableFilterChange(column.id, e.target.value)}
+                          variant="outlined"
+                          sx={{
+                            '& .MuiOutlinedInput-root': {
+                              backgroundColor: 'white',
+                              '& fieldset': {
+                                border: 'none',
+                              },
+                              '&:hover fieldset': {
+                                border: 'none',
+                              },
+                              '&.Mui-focused fieldset': {
+                                border: 'none',
+                              },
+                              height: '28px',
+                              fontSize: '0.7rem',
+                              borderRadius: '4px',
+                            },
+                            '& .MuiInputBase-input': {
+                              padding: '4px 6px',
+                              fontSize: '0.7rem',
+                            },
+                          }}
+                        />
+                      </TableCell>
+                    ))}
+                  </TableRow>
                 </TableHead>
 
                 <TableBody>
@@ -1768,41 +1655,38 @@ const handleConfirmAdd = () => {
 
         {/* CRUD Buttons and Totals */}
         <Stack direction="row" spacing={2} sx={{ mt: 2, alignItems: 'center' }}>
-      
-
-
-<Tooltip 
-  title={!isPartySelected() ? "Please select a Party first" : "Add new item"}
-  placement="top"
->
-  <span> {/* This span is needed for tooltip to work when button is disabled */}
-    <Button
-      variant="contained"
-      startIcon={<AddIcon />}
-      onClick={handleAddItem}
-      disabled={isFormDisabled || isEditingSize || isAddingNew}
-      sx={{
-        backgroundColor: '#39ace2',
-        color: 'white',
-        margin: { xs: '0 4px', sm: '0 6px' },
-        minWidth: { xs: 40, sm: 46, md: 60 },
-        height: { xs: 40, sm: 46, md: 30 },
-        '&:disabled': {
-          backgroundColor: '#cccccc',
-          color: '#666666'
-        }
-      }}
-    >
-      Add
-    </Button>
-  </span>
-</Tooltip>
+          <Tooltip 
+            title={!isPartySelected() ? "Please select a Party first" : "Add new item"}
+            placement="top"
+          >
+            <span>
+              <Button
+                variant="contained"
+                startIcon={<AddIcon />}
+                onClick={handleAddItem}
+                disabled={isFormDisabled || isEditingSize || isAddingNew}
+                sx={{
+                  backgroundColor: '#39ace2',
+                  color: 'white',
+                  margin: { xs: '0 4px', sm: '0 6px' },
+                  minWidth: { xs: 40, sm: 46, md: 60 },
+                  height: { xs: 40, sm: 46, md: 30 },
+                  '&:disabled': {
+                    backgroundColor: '#cccccc',
+                    color: '#666666'
+                  }
+                }}
+              >
+                Add
+              </Button>
+            </span>
+          </Tooltip>
 
           <Button
             variant="contained"
             startIcon={<EditIcon />}
             onClick={handleEditItem}
-            disabled={isFormDisabled || isAddingNew}
+             disabled={isFormDisabled || isEditingSize || isAddingNew}
             sx={{
               backgroundColor: '#39ace2',
               color: 'white',
@@ -1815,7 +1699,7 @@ const handleConfirmAdd = () => {
               }
             }}
           >
-            {isEditingSize ? 'Save' : 'Edit'}
+            {isEditingSize ? 'Edit' : 'Edit'}
           </Button>
 
           <Button
@@ -1878,49 +1762,6 @@ const handleConfirmAdd = () => {
           {/* LEFT: Text Fields Section */}
           <Box sx={{ flex: '0 0 60%' }}>
             <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 1 }}>
-              <AutoVibe
-                id="Product"
-                disabled={shouldDisableFields()}
-                getOptionLabel={(option) => option || ''}
-                options={productOptions}
-                label="Product"
-                name="product"
-                value={isAddingNew || isEditingSize ? newItemData.product : selectedProduct}
-                onChange={handleProductChange}
-                sx={{
-                  ...DropInputSx,
-                  '& .MuiFilledInput-root': {
-                    ...DropInputSx['& .MuiFilledInput-root'],
-                    // border: getFieldError('product') ? '1px solid #f44336' : '1px solid #e0e0e0',
-                  }
-                }}
-                // error={!!getFieldError('product')}
-                // helperText={getFieldError('product')}
-              />
-              
-             
-              {/* Style Dropdown - Made Smaller */}
-              <AutoVibe
-                id="Style_Cd"
-                disabled={shouldDisableFields()}
-                getOptionLabel={(option) => option || ''}
-                options={styleOptions}
-                label="Style Cd"
-                name="style"
-                value={isAddingNew || isEditingSize ? newItemData.style : selectedStyle}
-                onChange={handleStyleChange}
-                sx={{
-                  ...DropInputSx,
-                  '& .MuiFilledInput-root': {
-                    ...DropInputSx['& .MuiFilledInput-root'],
-                    // border: getFieldError('style') ? '1px solid #f44336' : '1px solid #e0e0e0',
-                  }
-                }}
-                // error={!!getFieldError('style')}
-                // helperText={getFieldError('style')}
-              />
-              
-              {/* NEW: Style Code Text Field for Case 2 */}
               <TextField 
                 label="Style Code" 
                 variant="filled" 
@@ -1935,8 +1776,36 @@ const handleConfirmAdd = () => {
                 }}
                 helperText={isLoadingStyleCode ? "Loading..." : "Type style code"}
               />
+              
+              <AutoVibe
+                id="Product"
+                disabled={shouldDisableFields()}
+                getOptionLabel={(option) => option || ''}
+                options={productOptions}
+                label="Product"
+                name="product"
+                value={isAddingNew || isEditingSize ? newItemData.product : selectedProduct}
+                onChange={handleProductChange}
+                sx={DropInputSx}
+              />
+              
+              {/* Style Dropdown */}
+              <AutoVibe
+                id="Style_Cd"
+                disabled={shouldDisableFields()}
+                getOptionLabel={(option) => option || ''}
+                options={styleOptions}
+                label="Style Cd"
+                name="style"
+                value={isAddingNew || isEditingSize ? newItemData.style : selectedStyle}
+                onChange={handleStyleChange}
+                sx={DropInputSx}
+              />
+              
+              {/* Style Code Text Field */}
+              
 
-               {/* Barcode Text Field with Debounce */}
+              {/* Barcode Text Field */}
               <TextField 
                 label="BarCode" 
                 variant="filled" 
@@ -1951,7 +1820,6 @@ const handleConfirmAdd = () => {
                 }}
                 helperText={isLoadingBarcode ? "Loading..." : "Type barcode"}
               />
-              
               
               <AutoVibe
                 id="Type"
@@ -1986,38 +1854,38 @@ const handleConfirmAdd = () => {
                 inputProps={{ style: { padding: '6px 8px', fontSize: '12px' } }} 
               />
               
-            <TextField 
-  label="MRP" 
-  variant="filled" 
-  disabled={shouldDisableFields()}
-  name="mrp"
-  value={isAddingNew || isEditingSize ? newItemData.mrp : ''}
-  onChange={handleNewItemChange}
-  sx={textInputSx} 
-  inputProps={{ 
-    style: { padding: '6px 8px', fontSize: '12px' },
-    type: 'number',
-    step: '0.01',
-    min: '0'
-  }} 
-/>
+              <TextField 
+                label="MRP" 
+                variant="filled" 
+                disabled={shouldDisableFields()}
+                name="mrp"
+                value={isAddingNew || isEditingSize ? newItemData.mrp : ''}
+                onChange={handleNewItemChange}
+                sx={textInputSx} 
+                inputProps={{ 
+                  style: { padding: '6px 8px', fontSize: '12px' },
+                  type: 'number',
+                  step: '0.01',
+                  min: '0'
+                }} 
+              />
 
-{/* NEW: Rate Field (SSP) */}
-<TextField 
-  label="Rate" 
-  variant="filled" 
-  disabled={shouldDisableFields()}
-  name="rate"
-  value={isAddingNew || isEditingSize ? newItemData.rate : ''}
-  onChange={handleNewItemChange}
-  sx={textInputSx} 
-  inputProps={{ 
-    style: { padding: '6px 8px', fontSize: '12px' },
-    type: 'number',
-    step: '0.01',
-    min: '0'
-  }} 
-/>
+              {/* Rate Field (SSP) */}
+              <TextField 
+                label="Rate" 
+                variant="filled" 
+                disabled={shouldDisableFields()}
+                name="rate"
+                value={isAddingNew || isEditingSize ? newItemData.rate : ''}
+                onChange={handleNewItemChange}
+                sx={textInputSx} 
+                inputProps={{ 
+                  style: { padding: '6px 8px', fontSize: '12px' },
+                  type: 'number',
+                  step: '0.01',
+                  min: '0'
+                }} 
+              />
               <TextField 
                 label="Set No" 
                 variant="filled" 
@@ -2028,7 +1896,6 @@ const handleConfirmAdd = () => {
                 sx={textInputSx} 
                 inputProps={{ style: { padding: '6px 8px', fontSize: '12px' } }} 
               />
-             
               
               <TextField 
                 label="Std Qty" 
@@ -2077,21 +1944,21 @@ const handleConfirmAdd = () => {
                 sx={DropInputSx}
               />
               <TextField 
-  label="Percent" 
-  variant="filled" 
-  disabled={shouldDisableFields()}
-  name="percent"
-  value={isAddingNew || isEditingSize ? newItemData.percent : ''}
-  onChange={handleNewItemChange}
-  sx={textInputSx} 
-  inputProps={{ 
-    style: { padding: '6px 8px', fontSize: '12px' },
-    type: 'number',
-    step: '0.01',
-    min: '0',
-    max: '100'
-  }} 
-/>
+                label="Percent" 
+                variant="filled" 
+                disabled={shouldDisableFields()}
+                name="percent"
+                value={isAddingNew || isEditingSize ? newItemData.percent : ''}
+                onChange={handleNewItemChange}
+                sx={textInputSx} 
+                inputProps={{ 
+                  style: { padding: '6px 8px', fontSize: '12px' },
+                  type: 'number',
+                  step: '0.01',
+                  min: '0',
+                  max: '100'
+                }} 
+              />
               <TextField 
                 label="Remark" 
                 variant="filled" 
@@ -2132,79 +1999,104 @@ const handleConfirmAdd = () => {
                 />
               </LocalizationProvider>
               <TextField 
-  label="RQty" 
-  variant="filled" 
-  disabled={shouldDisableFields()}
-  name="rQty"
-  value={isAddingNew || isEditingSize ? newItemData.rQty : ''}
-  onChange={handleNewItemChange}
-  sx={textInputSx} 
-  inputProps={{ 
-    style: { padding: '6px 8px', fontSize: '12px' },
-    type: 'number',
-    step: '1',
-    min: '0'
-  }} 
-/>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <TextField 
-                  label="Sets" 
-                  variant="filled" 
-                  disabled={shouldDisableFields()}
-                  name="sets"
-                  value={isAddingNew || isEditingSize ? newItemData.sets : ''}
-                  onChange={handleNewItemChange}
-                  sx={{ ...textInputSx, flex: 1 }} 
-                  inputProps={{ style: { padding: '6px 8px', fontSize: '12px' } }} 
-                />
-                {(isAddingNew || isEditingSize) && (
-                  <>
-                    <Button
-                      variant="contained"
-                      color="primary"
-                      onClick={fetchSizeDetails}
-                      disabled={!newItemData.product || !newItemData.style || dataSource === 'barcode'}
-                      sx={{ minWidth: '80px', height: '36px' }}
-                    >
-                      Add Qty
-                    </Button>
-                    <Button
-                      variant="outlined"
-                      color="secondary"
-                      onClick={isAddingNew ? handleCancelAdd : () => {
-                        setIsEditingSize(false);
-                        setNewItemData({
-                          product: '',
-                          barcode: '',
-                          style: '',
-                          type: '',
-                          shade: '',
-                          qty: '',
-                          mrp: '',
-                          rate: '', // NEW: Reset Rate field
-                          setNo: '',
-                          varPer: '',
-                          stdQty: '',
-                          convFact: '',
-                          lotNo: '',
-                          discount: '',
-                          percent: '',
-                          remark: '',
-                          divDt: '',
-                          rQty: '',
-                          sets: ''
-                        });
-                        setStyleCodeInput('');
-                        setBarcodeInput('');
-                        setDataSource(null);
-                      }}
-                      sx={{ minWidth: '60px', height: '36px' }}
-                    >
-                      Cancel
-                    </Button>
-                  </>
-                )}
-              </Box>
+                label="RQty" 
+                variant="filled" 
+                disabled={shouldDisableFields()}
+                name="rQty"
+                value={isAddingNew || isEditingSize ? newItemData.rQty : ''}
+                onChange={handleNewItemChange}
+                sx={textInputSx} 
+                inputProps={{ 
+                  style: { padding: '6px 8px', fontSize: '12px' },
+                  type: 'number',
+                  step: '1',
+                  min: '0'
+                }} 
+              />
+             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+  <TextField 
+    label="Sets" 
+    variant="filled" 
+    disabled={shouldDisableFields()}
+    name="sets"
+    value={isAddingNew || isEditingSize ? newItemData.sets : ''}
+    onChange={handleNewItemChange}
+    sx={{ ...textInputSx, flex: 1 }} 
+    inputProps={{ style: { padding: '6px 8px', fontSize: '12px' } }} 
+  />
+  {(isAddingNew || isEditingSize) && (
+    <>
+      {/* FIXED: Show "Add Qty" only when size details are not loaded AND we're in add mode */}
+      {!isSizeDetailsLoaded && isAddingNew && (
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={fetchSizeDetails}
+          disabled={!newItemData.product || !newItemData.style || dataSource === 'barcode'}
+          sx={{ minWidth: '80px', height: '36px' }}
+        >
+          Add Qty
+        </Button>
+      )}
+      
+      
+      {(isSizeDetailsLoaded || isEditingSize) && (
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={isAddingNew ? handleConfirmAdd : handleEditItem}
+          disabled={isAddingNew && sizeDetailsData.length === 0}
+          sx={{ minWidth: '80px', height: '36px' }}
+        >
+          {isAddingNew ? 'Confirm' : 'Confirm'}
+        </Button>
+      )}
+      
+      <Button
+        variant="outlined"
+        color="secondary"
+        onClick={isAddingNew ? handleCancelAdd : () => {
+          setIsEditingSize(false);
+          setIsSizeDetailsLoaded(false);
+          setNewItemData({
+            product: '',
+            barcode: '',
+            style: '',
+            type: '',
+            shade: '',
+            qty: '',
+            mrp: '',
+            rate: '',
+            setNo: '',
+            varPer: '',
+            stdQty: '',
+            convFact: '',
+            lotNo: '',
+            discount: '',
+            percent: '',
+            remark: '',
+            divDt: '',
+            rQty: '',
+            sets: ''
+          });
+          setStyleCodeInput('');
+          setBarcodeInput('');
+          setDataSource(null);
+          
+          // Reset size details to original row's data
+          const selectedRowData = tableData.find(row => row.id === selectedRow);
+          if (selectedRowData) {
+            const sizeDetails = selectedRowData.originalData?.ORDBKSTYSZLIST || [];
+            setSizeDetailsData(sizeDetails);
+          }
+        }}
+        sx={{ minWidth: '60px', height: '36px' }}
+      >
+        Cancel
+      </Button>
+    </>
+  )}
+</Box>
             </Box>
           </Box>
 
@@ -2289,7 +2181,7 @@ const handleConfirmAdd = () => {
 
         {/* Final Action Buttons */}
         <Stack direction="row" spacing={2} sx={{ m: 3, justifyContent: 'flex-end' }}>
-          <Button 
+          {/* <Button 
             variant="contained" 
             color="primary" 
             onClick={isAddingNew ? handleConfirmAdd : (isEditingSize ? handleEditItem : null)}
@@ -2321,12 +2213,31 @@ const handleConfirmAdd = () => {
             }}
           >
             Cancel
+          </Button> */}
+          <Button 
+            variant="outlined" 
+            color="primary" 
+            onClick={onPrev}
+            // disabled={isAddingNew || isEditingSize}
+            sx={{ 
+              minWidth: '60px', 
+              height: '36px',
+              backgroundColor: '#39ace2',
+              color: 'white',
+              '&:disabled': {
+                borderColor: '#cccccc',
+                color: '#666666'
+              }
+            }}
+          >
+            Previous
           </Button>
+
           <Button 
             variant="contained" 
             color="primary" 
             onClick={onNext}
-            disabled={!hasRecords || isAddingNew || isEditingSize}
+            // disabled={!hasRecords || isAddingNew || isEditingSize}
             sx={{ 
               minWidth: '60px', 
               height: '36px',
