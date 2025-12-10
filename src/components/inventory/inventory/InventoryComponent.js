@@ -226,7 +226,8 @@ export default function InventoryComponent() {
       children: [
         { name: 'Stock Enquiry', icon: SearchIcon, path: '/dashboard/stock-enquiry-table' },
         { name: 'Sales Order Offline', icon: ShoppingIcon, path: '/inverntory/inventory-offline' },
-        { name: 'Packaging/Barcode', icon: InventoryIcon, path: '/inverntory/packeging-barcode/' },
+          { name: 'Sales Order Barcode', icon: ShoppingIcon, path: '/inverntory/salesorderbarcode' },
+        // { name: 'Packaging/Barcode', icon: InventoryIcon, path: '/inverntory/packeging-barcode/' },
       ],
     },
     {
