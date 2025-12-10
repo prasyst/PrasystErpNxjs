@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Box, Container, Card, CardContent, Typography, Button, TextField, MenuItem, IconButton, Chip, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Stack,
-  InputAdornment, Dialog, DialogTitle, DialogContent, DialogActions, useMediaQuery, useTheme, Grid, Avatar, Divider, Tooltip, Fab
+  InputAdornment, Dialog, DialogTitle, DialogContent, DialogActions, useMediaQuery, useTheme, Grid, Avatar, Divider, Tooltip, Fab, Checkbox,
 } from '@mui/material';
 import {
   ArrowBack as ArrowBackIcon,
@@ -37,8 +37,8 @@ const AllTicketsPage = () => {
   const [ticketToDelete, setTicketToDelete] = useState(null);
   const [selectedTicketId, setSelectedTicketId] = useState(null);
   const [ticketDetailsOpen, setTicketDetailsOpen] = useState(false);
+  const [selectedRows, setSelectedRows] = useState([]);
 
-  
   useEffect(() => {
     fetchTicketDash();
   }, []);
@@ -55,7 +55,7 @@ const AllTicketsPage = () => {
 
         // Map API fields to UI-friendly names
         const mappedTickets = realTickets.map(tkt => ({
-          TKTKEY:tkt.TKTKEY,
+          TKTKEY: tkt.TKTKEY,
           id: tkt.TKTNO,
           title: tkt.REMARK || "No Title",
           description: tkt.TKTDESC || tkt.REASON || "No description",
@@ -123,11 +123,11 @@ const AllTicketsPage = () => {
   };
 
   const handleViewTicket = (ticket) => {
-    setSelectedTicketId(ticket.TKTKEY); 
+    setSelectedTicketId(ticket.TKTKEY);
     setTicketDetailsOpen(true);
   };
 
-   const handleCloseTicketDetails = () => {
+  const handleCloseTicketDetails = () => {
     setTicketDetailsOpen(false);
     setSelectedTicketId(null);
   };
@@ -160,6 +160,22 @@ const AllTicketsPage = () => {
 
   const getInitials = (name) => {
     return name.split(' ').map(n => n[0]).join('').toUpperCase();
+  };
+
+  const handleSelectAll = (event) => {
+    if (event.target.checked) {
+      setSelectedRows(filteredTickets.map(t => t.TKTKEY));
+    } else {
+      setSelectedRows([]);
+    }
+  };
+
+  const handleRowSelect = (event, id) => {
+    if (event.target.checked) {
+      setSelectedRows(prev => [...prev, id]);
+    } else {
+      setSelectedRows(prev => prev.filter(rowId => rowId !== id));
+    }
   };
 
   const MobileTicketCard = ({ ticket }) => (
@@ -254,151 +270,169 @@ const AllTicketsPage = () => {
   );
 
   const DesktopTableView = () => (
-    <TableContainer component={Paper} sx={{ boxShadow: 2 }}>
-      <Table sx={{
-        minWidth: 800,
-        '& .MuiTableCell-root': {
-          padding: '2px 10px',
-          fontSize: '0.8125rem',
-          lineHeight: 1.2,
-        },
-        '& .MuiTableCell-head': {
-          padding: '10px 16px',
-          fontSize: '0.75rem',
-          textTransform: 'uppercase',
-          letterSpacing: '0.5px',
-        },
-      }}>
+    <TableContainer component={Paper} sx={{ boxShadow: 2, height: 450, overflow: 'auto' }}>
+      <Table
+        sx={{
+          minWidth: 800,
+          '& .MuiTableCell-root': {
+            padding: '2px 10px',
+            fontSize: '0.8125rem',
+            lineHeight: 1.2,
+          },
+          '& .MuiTableCell-head': {
+            padding: '5px 16px',
+            fontSize: '0.75rem',
+            textTransform: 'uppercase',
+            letterSpacing: '0.5px',
+            backgroundColor: 'primary.main',
+            color: 'white',
+          },
+        }}
+        stickyHeader
+      >
         <TableHead>
-          <TableRow sx={{ backgroundColor: 'primary.light' }}>
-            <TableCell sx={{ fontWeight: 'bold', color: 'white', fontSize: '0.875rem' }}>
+          <TableRow>
+            <TableCell padding="checkbox" sx={{ backgroundColor: 'primary.main' }}>
+              <Checkbox
+                size="small"
+                color="default"
+                indeterminate={selectedRows.length > 0 && selectedRows.length < filteredTickets.length}
+                checked={filteredTickets.length > 0 && selectedRows.length === filteredTickets.length}
+                onChange={handleSelectAll}
+                sx={{
+                  color: 'white',
+                  p: 0.5,
+                  '&.Mui-checked': { color: 'white' },
+                  '&.MuiCheckbox-indeterminate': { color: 'white' },
+                }}
+              />
+            </TableCell>
+
+            <TableCell sx={{ fontWeight: 'bold', fontSize: '0.875rem', color: 'white' }}>
               Ticket No
             </TableCell>
-            <TableCell sx={{ fontWeight: 'bold', color: 'white', fontSize: '0.875rem' }}>
+            <TableCell sx={{ fontWeight: 'bold', fontSize: '0.875rem', color: 'white' }}>
               Title
             </TableCell>
-            <TableCell sx={{ fontWeight: 'bold', color: 'white', fontSize: '0.875rem' }}>
+            <TableCell sx={{ fontWeight: 'bold', fontSize: '0.875rem', color: 'white' }}>
               Category
             </TableCell>
-            <TableCell sx={{ fontWeight: 'bold', color: 'white', fontSize: '0.875rem' }}>
+            <TableCell sx={{ fontWeight: 'bold', fontSize: '0.875rem', color: 'white' }}>
               Mobile No
             </TableCell>
-            <TableCell sx={{ fontWeight: 'bold', color: 'white', fontSize: '0.875rem' }}>
+            <TableCell sx={{ fontWeight: 'bold', fontSize: '0.875rem', color: 'white' }}>
               Priority
             </TableCell>
-            <TableCell sx={{ fontWeight: 'bold', color: 'white', fontSize: '0.875rem' }}>
+            <TableCell sx={{ fontWeight: 'bold', fontSize: '0.875rem', color: 'white' }}>
               Status
             </TableCell>
-            <TableCell sx={{ fontWeight: 'bold', color: 'white', fontSize: '0.875rem' }}>
+            <TableCell sx={{ fontWeight: 'bold', fontSize: '0.875rem', color: 'white' }}>
               TKTFOR
             </TableCell>
-            <TableCell sx={{ fontWeight: 'bold', color: 'white', fontSize: '0.875rem' }}>
+            <TableCell sx={{ fontWeight: 'bold', fontSize: '0.875rem', color: 'white' }}>
               Raised At
             </TableCell>
-            <TableCell sx={{ fontWeight: 'bold', color: 'white', fontSize: '0.875rem', textAlign: 'center' }}>
+            <TableCell sx={{ fontWeight: 'bold', fontSize: '0.875rem', color: 'white', textAlign: 'center' }}>
               Actions
             </TableCell>
           </TableRow>
         </TableHead>
-        <TableBody>
-          {filteredTickets.map((ticket) => (
-             <TableRow
-              key={ticket.TKTKEY}
-              hover
-              sx={{
-                cursor: 'pointer',
-                '&:last-child td, &:last-child th': { border: 0 },
-              }}
-              onClick={() => handleViewTicket(ticket)}
-            >
-              {/* Ticket No */}
-              <TableCell>
-                <Typography variant="body2" fontWeight="600" color="primary">
-                  {ticket.id}
-                </Typography>
-              </TableCell>
 
-              {/* Title & Description */}
-              <TableCell sx={{ maxWidth: 300 }}>
-                <Box>
+        <TableBody>
+          {filteredTickets.map((ticket) => {
+            const isSelected = selectedRows.includes(ticket.TKTKEY);
+            return (
+              <TableRow
+                key={ticket.TKTKEY}
+                hover
+                selected={isSelected}
+                sx={{
+                  cursor: 'pointer',
+                  backgroundColor: isSelected ? 'action.selected' : 'inherit',
+                }}
+              >
+                {/* Row Checkbox - Small & Clean */}
+                <TableCell padding="checkbox" onClick={(e) => e.stopPropagation()}>
+                  <Checkbox
+                    size="small"
+                    color="primary"
+                    checked={isSelected}
+                    onChange={(e) => handleRowSelect(e, ticket.TKTKEY)}
+                    sx={{ p: 0.5 }}
+                  />
+                </TableCell>
+
+                {/* Rest of your columns */}
+                <TableCell onClick={() => handleViewTicket(ticket)}>
+                  <Typography variant="body2" fontWeight="600" color="primary">
+                    {ticket.id}
+                  </Typography>
+                </TableCell>
+
+                <TableCell sx={{ maxWidth: 300 }} onClick={() => handleViewTicket(ticket)}>
                   <Typography variant="subtitle2" fontWeight="600" noWrap>
                     {ticket.title}
                   </Typography>
-                </Box>
-              </TableCell>
+                </TableCell>
 
-              {/* Category (Service) */}
-              <TableCell>
-                <Chip
-                  label={ticket.category}
-                  size="small"
-                  variant="outlined"
-                  color="primary"
-                />
-              </TableCell>
+                <TableCell onClick={() => handleViewTicket(ticket)}>
+                  <Chip label={ticket.category} size="small" variant="outlined" color="primary" />
+                </TableCell>
 
-              <TableCell>{ticket.MOBILENO} </TableCell>
+                <TableCell onClick={() => handleViewTicket(ticket)}>
+                  {ticket.MOBILENO || '-'}
+                </TableCell>
 
-              {/* Priority */}
-              <TableCell>
-                <Chip
-                  label={ticket.priority}
-                  size="small"
-                  color={getPriorityColor(ticket.priority)}
-                />
-              </TableCell>
+                <TableCell onClick={() => handleViewTicket(ticket)}>
+                  <Chip label={ticket.priority} size="small" color={getPriorityColor(ticket.priority)} />
+                </TableCell>
 
-              {/* Status */}
-              <TableCell>
-                <Chip
-                  label={
-                    ticket.status === 'open' ? 'Open' :
-                      ticket.status === 'in-progress' ? 'In Progress' :
-                        ticket.status === 'resolved' ? 'Resolved' : 'Closed'
-                  }
-                  size="small"
-                  color={getStatusColor(ticket.status)}
-                  variant="filled"
-                />
-              </TableCell>
+                <TableCell onClick={() => handleViewTicket(ticket)}>
+                  <Chip
+                    label={
+                      ticket.status === 'open' ? 'Open' :
+                        ticket.status === 'in-progress' ? 'In Progress' :
+                          ticket.status === 'resolved' ? 'Resolved' : 'Closed'
+                    }
+                    size="small"
+                    color={getStatusColor(ticket.status)}
+                    variant="filled"
+                  />
+                </TableCell>
 
-              {/* TKTFOR - Machine or Department */}
-              <TableCell>
-                <Typography variant="body2">
-                  {ticket.tktFor}
-                </Typography>
-              </TableCell>
+                <TableCell onClick={() => handleViewTicket(ticket)}>
+                  <Typography variant="body2">{ticket.tktFor}</Typography>
+                </TableCell>
 
-              {/* Created Date */}
-              <TableCell>
-                <Typography variant="body2" color="text.secondary">
-                  {formatDate(ticket.createdAt)}
-                </Typography>
-              </TableCell>
+                <TableCell onClick={() => handleViewTicket(ticket)}>
+                  <Typography variant="body2" color="text.secondary">
+                    {formatDate(ticket.createdAt)}
+                  </Typography>
+                </TableCell>
 
-              {/* Actions */}
-              <TableCell onClick={(e) => e.stopPropagation()}>
-                <Box display="flex" justifyContent="center" gap={1}>
-                  <Tooltip title="View" arrow>
-                    <IconButton size="small" color="primary" onClick={() => handleViewTicket(ticket)}>
-                      <VisibilityIcon fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
-                  <Tooltip title="Edit" arrow>
-                    <IconButton size="small" color="secondary" onClick={() => handleEditTicket(ticket)}>
-                   
-                      <EditIcon fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
-                  <Tooltip title="Delete" arrow>
-                    <IconButton size="small" color="error" onClick={() => handleDeleteClick(ticket)}>
-                      <DeleteIcon fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
-                </Box>
-              </TableCell>
-            </TableRow>
-          ))}
+                <TableCell onClick={(e) => e.stopPropagation()}>
+                  <Box display="flex" justifyContent="center" gap={1}>
+                    <Tooltip title="View" arrow>
+                      <IconButton size="small" color="primary" onClick={() => handleViewTicket(ticket)}>
+                        <VisibilityIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Edit" arrow>
+                      <IconButton size="small" color="secondary" onClick={() => handleEditTicket(ticket)}>
+                        <EditIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Delete" arrow>
+                      <IconButton size="small" color="error" onClick={() => handleDeleteClick(ticket)}>
+                        <DeleteIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                  </Box>
+                </TableCell>
+              </TableRow>
+            );
+          })}
+
         </TableBody>
       </Table>
     </TableContainer>
@@ -528,6 +562,18 @@ const AllTicketsPage = () => {
                   {filteredTickets.length} tickets found
                 </Typography>
               </Grid>
+
+              <Typography>Selected Rows: {selectedRows.length}</Typography>
+
+              <Tooltip title='Update Bulk Record' arrow>
+                <Button
+                  variant="contained"
+                  size={isSmallMobile ? "small" : "medium"}
+                  sx={{ textTransform: 'none', borderRadius: '20px', backgroundColor: '#615ec9ff' }}
+                >
+                  {isSmallMobile ? 'Bulk' : 'Bulk Update'}
+                </Button>
+              </Tooltip>
             </Grid>
           </CardContent>
         </Card>
@@ -618,7 +664,7 @@ const AllTicketsPage = () => {
           </DialogActions>
         </Dialog>
 
-         <TicketDetailsDialog
+        <TicketDetailsDialog
           open={ticketDetailsOpen}
           onClose={handleCloseTicketDetails}
           ticketId={selectedTicketId}

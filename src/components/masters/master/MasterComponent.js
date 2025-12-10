@@ -58,6 +58,8 @@ import {
 } from '@mui/icons-material';
 import AnnouncementIcon from '@mui/icons-material/Announcement';
 import CreateIcon from '@mui/icons-material/Create';
+import LocalActivityIcon from '@mui/icons-material/LocalActivity';
+import ConfirmationNumberIcon from '@mui/icons-material/ConfirmationNumber';
 
 function TabPanel(props) {
   const { children, value, index, ...other } = props;
@@ -291,6 +293,8 @@ export default function MasterPage() {
         { name: 'Ticket SubCategory', icon: AssignmentIcon, path: '/masters/ticketing/ticketSubCat' },
         { name: 'Service/Complaint', icon: AnnouncementIcon, path: '/masters/ticketing/serviceComplaint' },
         { name: 'Raise Ticket', icon: CreateIcon, path: '/tickets/create-tickets' },
+        { name: 'Ticket Escalation', icon: ConfirmationNumberIcon, path: '/tickets/create-tickets' },
+        { name: 'Ticket Status', icon: LocalActivityIcon, path: '/tickets/all-tickets' },
       ],
     }
   ];
