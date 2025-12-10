@@ -27,6 +27,7 @@ import {
   LocalShipping as ShippingIcon,
   Construction as ConstructionIcon
 } from '@mui/icons-material';
+import { useRecentPaths } from '../../../app/context/RecentPathsContext'; // Add this import
 
 function TabPanel(props) {
   const { children, value, index, ...other } = props;
@@ -50,32 +51,41 @@ function TabPanel(props) {
 
 export default function InventoryComponent() {
   const [activeTab, setActiveTab] = useState(0);
-   const [isClient, setIsClient] = useState(false);
-   const searchParams = useSearchParams();
-   const router = useRouter();
- 
-   // Ensure that `useSearchParams` is only called on the client side
-   useEffect(() => {
-     setIsClient(true);
-   }, []);
- 
-   const handleTabChange = (event, newValue) => {
-     const tabId = inventoryData[newValue]?.id;
-     if (tabId) {
-       router.push(`/inventorypage?activeTab=${tabId}`, { scroll: false });
-     }
-   };
- 
-   useEffect(() => {
-     if (!isClient) return; // Only run on the client-side
- 
-     const tabParam = searchParams.get('activeTab') || 'inventory';
-     const index = inventoryData.findIndex(tab => tab.id === tabParam);
-     if (index !== -1 && index !== activeTab) {
-       setActiveTab(index >= 0 ? index : 0);
-     }
-   }, [searchParams, isClient, activeTab]);
- 
+  const [isClient, setIsClient] = useState(false);
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const { addRecentPath } = useRecentPaths(); // Add this hook
+
+  // Ensure that `useSearchParams` is only called on the client side
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  const handleCardClick = (path, name) => {
+    if (path && path !== '#') {
+      // Track this path in recent paths
+      addRecentPath(path, name);
+      // Navigate to the path
+      window.location.href = path;
+    }
+  };
+
+  const handleTabChange = (event, newValue) => {
+    const tabId = inventoryData[newValue]?.id;
+    if (tabId) {
+      router.push(`/inventorypage?activeTab=${tabId}`, { scroll: false });
+    }
+  };
+
+  useEffect(() => {
+    if (!isClient) return; // Only run on the client-side
+
+    const tabParam = searchParams.get('activeTab') || 'inventory';
+    const index = inventoryData.findIndex(tab => tab.id === tabParam);
+    if (index !== -1 && index !== activeTab) {
+      setActiveTab(index >= 0 ? index : 0);
+    }
+  }, [searchParams, isClient, activeTab]);
 
   const StyledTabs = styled(Tabs)({
     backgroundColor: '#e1e7ef',
@@ -226,7 +236,7 @@ export default function InventoryComponent() {
       children: [
         { name: 'Stock Enquiry', icon: SearchIcon, path: '/dashboard/stock-enquiry-table' },
         { name: 'Sales Order Offline', icon: ShoppingIcon, path: '/inverntory/inventory-offline' },
-          { name: 'Sales Order Barcode', icon: ShoppingIcon, path: '/inverntory/salesorderbarcode' },
+        { name: 'Sales Order Barcode', icon: ShoppingIcon, path: '/inverntory/salesorderbarcode' },
         // { name: 'Packaging/Barcode', icon: InventoryIcon, path: '/inverntory/packeging-barcode/' },
       ],
     },
@@ -252,22 +262,17 @@ export default function InventoryComponent() {
           },
         }}
       >
-        {/* <StyledTabs value={activeTab} onChange={handleTabChange} variant="scrollable" scrollButtons="auto">
-          {inventoryData.map((tab, index) => (
-            <StyledTab key={tab.id} label={tab.name} />
-          ))}
-        </StyledTabs> */}
         <StyledTabs
           value={activeTab}
           onChange={handleTabChange}
           variant="scrollable"
-          //scrollButtons={false}                    // Hide arrows
+          //scrollButtons={false}
           TabIndicatorProps={{ style: { display: 'none' } }}
           sx={{
             '& .MuiTabs-flexContainer': {
               flexWrap: 'wrap',
               gap: '4px',
-              paddingInline: '2px'                       // Optional: nice spacing between wrapped rows
+              paddingInline: '2px'
             },
             '& .MuiTabs-scroller': {
               overflow: 'visible !important',
@@ -305,7 +310,7 @@ export default function InventoryComponent() {
                         color: 'white',
                       } : {},
                     }}
-                    onClick={() => item.path !== '#' && (window.location.href = item.path)}
+                    onClick={() => item.path !== '#' && handleCardClick(item.path, item.name)}
                   >
                     <CardContent sx={{
                       textAlign: 'center',

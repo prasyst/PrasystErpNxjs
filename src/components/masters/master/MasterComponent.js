@@ -7,7 +7,9 @@ import {
   Card,
   CardContent,
   Grid,
-  styled
+  styled,
+  Chip,
+  IconButton
 } from '@mui/material';
 import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
@@ -54,12 +56,18 @@ import {
   Gavel as GavelIcon,
   AttachMoney as MoneyIcon,
   Event as EventIcon,
-  CheckCircle as CheckCircleIcon, Assignment as AssignmentIcon, PlaylistAddCheck as PlaylistAddCheckIcon, TrendingUp as TrendingUpIcon
+  CheckCircle as CheckCircleIcon, 
+  Assignment as AssignmentIcon, 
+  PlaylistAddCheck as PlaylistAddCheckIcon, 
+  TrendingUp as TrendingUpIcon,
+  History as HistoryIcon,
+  Close as CloseIcon
 } from '@mui/icons-material';
 import AnnouncementIcon from '@mui/icons-material/Announcement';
 import CreateIcon from '@mui/icons-material/Create';
 import LocalActivityIcon from '@mui/icons-material/LocalActivity';
 import ConfirmationNumberIcon from '@mui/icons-material/ConfirmationNumber';
+import { useRecentPaths } from '../../../app/context/RecentPathsContext';
 
 function TabPanel(props) {
   const { children, value, index, ...other } = props;
@@ -85,6 +93,7 @@ export default function MasterPage() {
   const [isClient, setIsClient] = useState(false);
   const searchParams = useSearchParams();
   const router = useRouter();
+  const { recentPaths, addRecentPath, removeRecentPath, clearRecentPaths } = useRecentPaths(); // Use the context
 
   useEffect(() => {
     setIsClient(true);
@@ -94,6 +103,15 @@ export default function MasterPage() {
     const tabId = menuData[newValue]?.id;
     if (tabId) {
       router.push(`/masterpage?activeTab=${tabId}`, { scroll: false });
+    }
+  };
+
+  const handleCardClick = (path, name) => {
+    if (path && path !== '#') {
+      // Add to recent paths
+      addRecentPath(path, name);
+      // Navigate to the path
+      window.location.href = path;
     }
   };
 
@@ -199,7 +217,6 @@ export default function MasterPage() {
         { name: 'Process Group(Instruction)', icon: RiBook2Line, path: '#' },
         { name: 'PartyWise Process', icon: RiUserSettingsLine, path: '#' },
         { name: 'Approval Stage', icon: RiCheckboxCircleLine, path: '#' },
-
       ],
     },
     {
@@ -244,7 +261,6 @@ export default function MasterPage() {
         { name: 'Season Master', icon: EventIcon, path: '/masters/season/season' },
       ],
     },
-
     {
       id: 'Approval',
       name: 'Approval',
@@ -252,7 +268,6 @@ export default function MasterPage() {
         { name: 'Location Master', icon: MapIcon, path: '#' },
       ],
     },
-
     {
       id: 'gst',
       name: 'GST/SAC Code',
@@ -299,10 +314,22 @@ export default function MasterPage() {
     }
   ];
 
+  // Create a map of all paths for easy lookup
+  const allPathsMap = menuData.reduce((acc, tab) => {
+    tab.children.forEach(child => {
+      if (child.path && child.path !== '#') {
+        acc[child.path] = child;
+      }
+    });
+    return acc;
+  }, {});
+
   return (
     <Suspense fallback={<div>Loading...</div>}>
       {isClient && (
         <Box sx={{ width: '100%' }}>
+         
+
           <Box
             sx={{
               width: '100%',
@@ -312,31 +339,26 @@ export default function MasterPage() {
               },
             }}
           >
-            {/* <StyledTabs value={activeTab} onChange={handleTabChange} variant="scrollable" scrollButtons="false">
+            <StyledTabs
+              value={activeTab}
+              onChange={handleTabChange}
+              variant="scrollable"                  
+              TabIndicatorProps={{ style: { display: 'none' } }}
+              sx={{
+                '& .MuiTabs-flexContainer': {
+                  flexWrap: 'wrap',
+                  gap: '2px',
+                  paddingInline: '2px'                      
+                },
+                '& .MuiTabs-scroller': {
+                  overflow: 'visible !important',
+                },
+              }}
+            >
               {menuData.map((tab, index) => (
                 <StyledTab key={tab.id} label={tab.name} />
               ))}
-            </StyledTabs> */}
-              <StyledTabs
-          value={activeTab}
-          onChange={handleTabChange}
-          variant="scrollable"                  
-          TabIndicatorProps={{ style: { display: 'none' } }}
-          sx={{
-            '& .MuiTabs-flexContainer': {
-              flexWrap: 'wrap',
-              gap: '2px',
-              paddingInline: '2px'                      
-            },
-            '& .MuiTabs-scroller': {
-              overflow: 'visible !important',
-            },
-          }}
-        >
-          {menuData.map((tab, index) => (
-            <StyledTab key={tab.id} label={tab.name} />
-          ))}
-        </StyledTabs>
+            </StyledTabs>
           </Box>
 
           {menuData.map((tab, index) => (
@@ -362,7 +384,7 @@ export default function MasterPage() {
                             color: 'white',
                           } : {},
                         }}
-                        onClick={() => item.path !== '#' && router.push(item.path)}
+                        onClick={() => item.path !== '#' && handleCardClick(item.path, item.name)}
                       >
                         <CardContent sx={{
                           textAlign: 'center',
