@@ -25,7 +25,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
   const [activeGrandchild, setActiveGrandchild] = useState(null);
 
   const handleNavigationWithTracking = (path, name) => {
-    console.log('path',path)
+    console.log('path', path)
     if (path && path !== '#') {
       addRecentPath(path, name);
       router.push(path);
@@ -118,8 +118,8 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
   }, [isMobile, isOpen]);
 
   const handleChildClick = (child) => {
-    setActiveChild(child.name); 
-    setActiveGrandchild(null); 
+    setActiveChild(child.name);
+    setActiveGrandchild(null);
   };
 
   const handleGrandchildClick = (grandchild) => {
@@ -190,7 +190,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
       setShowPinConfirm(item);
     }
   };
-  
+
   // Confirm pin
   const confirmPin = (item) => {
     pinModule({
@@ -242,7 +242,12 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
             onClick={(e) => {
               e.stopPropagation();
               if (hasChildren) toggleSection(item.name);
-              if (hasValidPath) handleNavigation(item.path, item.name);
+              // if (hasValidPath) handleNavigation(item.path, item.name);
+              if (item.name === 'Masters') {
+                handleNavigation('/masterpage?activeTab=company', 'Masters');
+              } else if (hasValidPath) {
+                handleNavigation(item.path, item.name);
+              }
               if (item.name !== 'Masters' && item.name !== 'Inventory') {
                 setActiveChild(null);
                 setActiveGrandchild(null);
@@ -304,7 +309,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
                       <div
                         onClick={(e) => {
                           e.stopPropagation();
-                            if (child.path === '#') return;
+                          if (child.path === '#') return;
                           handleChildClick(child);
                           let targetPath = child.path;
 
@@ -345,10 +350,10 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
                               targetPath = `/masterpage?activeTab=${tab}`;
                             }
                           }
-                          
+
                           // Add to recent paths and navigate
                           handleNavigationWithTracking(targetPath, child.name);
-                          
+
                           toggleSection(child.name);
                           // Ensure parent stays open
                           if (item.name === 'Masters' || item.name === 'Inventory') {
@@ -390,7 +395,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
                         )}
                       </div>
 
-                      {/* Grandchildren (only shown when this group is open) */}
+                      {/* Grandchildren */}
                       {hasGrandChildren && childIsOpen && (
                         <div style={{ marginLeft: '20px', paddingLeft: '8px' }}>
                           {child.children.map((grandchild) => {
@@ -465,7 +470,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
         </div>
       );
     });
-  },[openSections, activeChild, activeGrandchild, isCollapsed])
+  }, [openSections, activeChild, activeGrandchild, isCollapsed])
 
   return (
     <>
@@ -478,7 +483,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
         }}
         onMouseLeave={() => {
           if (!isMobile) {
-            const isMastersRoute = pathname === '/masterpage'; 
+            const isMastersRoute = pathname === '/masterpage';
             if (!isMastersRoute) {
               setIsCollapsed(true);
               setOpenSections({});

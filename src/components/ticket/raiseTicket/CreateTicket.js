@@ -3,8 +3,9 @@ import React, { useState, useRef, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useSearchParams } from "next/navigation";
 import {
-  Box, Button, TextField, FormControl, Typography, Paper, Divider,  Container,
+  Box, Button, TextField, FormControl, Typography, Paper, Divider, Container,
   Grid, Stack, IconButton, Autocomplete, FormLabel, RadioGroup, FormControlLabel, Radio, Link,
+  Tooltip,
 } from "@mui/material";
 import {
   ArrowBack as MdArrowBack,
@@ -18,7 +19,13 @@ import dayjs from 'dayjs';
 import axiosInstance from "@/lib/axios";
 import { toast, ToastContainer } from "react-toastify";
 import ItemRequisitionDialog from "./ItemRequisitiondlog";
-import { inputStyle } from "../../../public/styles/inputStyles";
+import { inputStyle } from "../../../../public/styles/inputStyles";
+
+import CloseIcon from "@mui/icons-material/Close";
+import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
+import ZoomInIcon from '@mui/icons-material/ZoomIn';
+import { Dialog, IconButton as MuiIconButton } from '@mui/material';
+import ZoomDialog from "./ZoomDialog";
 
 const CreateTicketPage = () => {
   const router = useRouter();
@@ -40,6 +47,8 @@ const CreateTicketPage = () => {
     depGrp: "",
     department: "",
     dueDate: "",
+    TktImage: "",
+    ImgName: "",
     tags: [],
     trnTktDtlEntities: [
       {
@@ -83,13 +92,16 @@ const CreateTicketPage = () => {
   const [fcyrKey, setFcyrKey] = useState(null);
   const [openConfirmDialog, setOpenConfirmDialog] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [rows, setRows] = useState([]);
-  const [selectedRows, setSelectedRows] = useState([]);
+  // const [rows, setRows] = useState([]);
+  // const [selectedRows, setSelectedRows] = useState([]);
   const [rowsSecondTable, setRowsSecondTable] = useState([]);
   const fileInputRef = useRef(null);
   const [isItemRequisitionEnabled, setIsItemRequisitionEnabled] = useState(false);
   const USER_NAME = localStorage.getItem("USER_NAME");
   const USER_ID = localStorage.getItem("USER_ID");
+  const [selectedImage, setselectedImage] = useState("");
+  const [zoomOpen, setZoomOpen] = useState(false);
+  const [zoomSrc, setZoomSrc] = useState('');
 
   useEffect(() => {
     setIsItemRequisitionEnabled(validateForm());
@@ -112,15 +124,15 @@ const CreateTicketPage = () => {
     getSeriesKey();
     getSeriesData();
   }, [cobrId, fcyrKey])
-  const handleSelectionChanged = useCallback((event) => {
-    const selectedNodes = event.api.getSelectedNodes();
-    const selectedData = selectedNodes.map(node => node.data);
-    setSelectedRows(selectedData);
+  // const handleSelectionChanged = useCallback((event) => {
+  //   const selectedNodes = event.api.getSelectedNodes();
+  //   const selectedData = selectedNodes.map(node => node.data);
+  //   setSelectedRows(selectedData);
 
-  }, []);
-  const handleConfirmButton = () => {
-    setRowsSecondTable((prevData) => [...prevData, ...selectedRows]);
-  };
+  // }, []);
+  // const handleConfirmButton = () => {
+  //   setRowsSecondTable((prevData) => [...prevData, ...selectedRows]);
+  // };
   const handleSaveButton = () => {
     handleSubmit();
     setOpenConfirmDialog(false);
@@ -144,32 +156,33 @@ const CreateTicketPage = () => {
         },
       );
       if (response.data.STATUS === 0 && response.data.DATA) {
-        const ticket = response.data.DATA.trnTktDtlList[0]; 
+        const ticket = response.data.DATA.trnTktDtlList[0];
+        const ticketImage = ticket.TktImage || '';
         setFormData(prevState => ({
           ...prevState,
           title: ticket.TktDesc,
           description: ticket.Remark,
           category: {
-            TKTCATID: ticket.TktCatId, 
-            TKTCATNAME: ticket.TktCatName 
+            TKTCATID: ticket.TktCatId,
+            TKTCATNAME: ticket.TktCatName
           },
           subCategory: {
-            TKTSUBCATID: ticket.TktSubCatId,  
-            TKTSUBCATNAME: ticket.TktSubCatName  
+            TKTSUBCATID: ticket.TktSubCatId,
+            TKTSUBCATNAME: ticket.TktSubCatName
           },
           priority: ticket.TktSvrtyName,
           machGrp: ticket.MachineryGroup_Name || "",
           machineryKey: ticket.Machinery_Key || "",
           machine: ticket.Machinery_Name || "",
           service: {
-            TKTSERVICEID: ticket.TktServiceId,  
-            TKTSERVICENAME: ticket.TktServiceName  
+            TKTSERVICEID: ticket.TktServiceId,
+            TKTSERVICENAME: ticket.TktServiceName
           },
           depGrp: ticket.CCGrp_Name || "",
           department: ticket.CCN_Key || "",
           dueDate: dayjs(ticket.TktDate).format("YYYY-MM-DD"),
           tags: [],
-          tags: [],
+          TktImage: ticketImage,
           trnTktDtlEntities: ticket.trnTktDtlEntities || []
         }));
         // Set machine group key for dropdown
@@ -183,7 +196,7 @@ const CreateTicketPage = () => {
 
         setMode('retrieve');
         setTicketFor(ticket.TktFor);
-        setTktKey(ticket.TktKey);  
+        setTktKey(ticket.TktKey);
         setTktNo(ticket.TktNo);
         setSelectedMachGrpKey(ticket.MachineryGroup_Key);
       } else {
@@ -199,40 +212,40 @@ const CreateTicketPage = () => {
     }
   }, [TKTKEY]);
 
-  const handleCancel = () => {
-    setSelectedRows([]);
-    setRowsSecondTable([]);
-    setFormData({
-      title: "",
-      description: "",
-      category: "",
-      subCategory: "",
-      priority: "Medium",
-      machGrp: "",
-      machine: "",
-      machineryKey: "",
-      service: "",
-      depGrp: "",
-      department: "",
-      dueDate: "",
-      tags: [],
-      trnTktDtlEntities: [
-        {
-          TktDtlId: "",
-          TktKey: "",
-          ITM_KEY: "",
-          UNIT_KEY: "",
-          ITM_QTY: "",
-          BARCODE: "",
-          RATE: "",
-          REMARK: "",
-          TktdtlImage: "",
-          ImgName: "",
-          DBFLAG: ""
-        }
-      ]
-    });
-  };
+  // const handleCancel = () => {
+  //   setSelectedRows([]);
+  //   setRowsSecondTable([]);
+  //   setFormData({
+  //     title: "",
+  //     description: "",
+  //     category: "",
+  //     subCategory: "",
+  //     priority: "Medium",
+  //     machGrp: "",
+  //     machine: "",
+  //     machineryKey: "",
+  //     service: "",
+  //     depGrp: "",
+  //     department: "",
+  //     dueDate: "",
+  //     tags: [],
+  //     trnTktDtlEntities: [
+  //       {
+  //         TktDtlId: "",
+  //         TktKey: "",
+  //         ITM_KEY: "",
+  //         UNIT_KEY: "",
+  //         ITM_QTY: "",
+  //         BARCODE: "",
+  //         RATE: "",
+  //         REMARK: "",
+  //         TktdtlImage: "",
+  //         ImgName: "",
+  //         DBFLAG: ""
+  //       }
+  //     ]
+  //   });
+  // };
 
   const getSeriesKey = async () => {
     try {
@@ -294,12 +307,12 @@ const CreateTicketPage = () => {
   };
 
   useEffect(() => {
-    if (formData.category?.TKTCATID) { 
+    if (formData.category?.TKTCATID) {
       const categoryId = formData.category.TKTCATID;
       const fetchSubCategories = async () => {
         try {
           const response = await axiosInstance.post('TktsubCat/GetTktCatWiseSubCatDrp', {
-            "TktCatId": categoryId,  
+            "TktCatId": categoryId,
           });
           if (response.data.STATUS === 0 && Array.isArray(response.data.DATA)) {
             setSubCat(response.data.DATA);
@@ -333,7 +346,7 @@ const CreateTicketPage = () => {
     } else {
       console.log("No subCategoryId found in formData.subCategory.");
     }
-  }, [formData.subCategory]);  
+  }, [formData.subCategory]);
   const fetchMachineGroup = async () => {
     try {
       const response = await axiosInstance.post("Machinery/GetMachineryGrpDrp", {
@@ -364,8 +377,8 @@ const CreateTicketPage = () => {
         toast.info("No machines found in this group.");
       }
     } catch (error) {
-      toast.error("Failed to load machines.");
-      setMachine([]);
+      console.error("Failed to load machines.");
+      setMachineDrp([]);
     }
   };
   const fetchDeptGroup = async () => {
@@ -486,8 +499,8 @@ const CreateTicketPage = () => {
         Status: "1",
         RslvRmrk: "testing Rslv",
         Remark: formData.title,
-        TktImage: attachmentData.TktImage,
-        ImgName: attachmentData.ImgName,
+        TktImage: formData.TktImage,
+        ImgName: formData.ImgName,
         trnTktDtlEntities: rowsSecondTable
       };
       if (isUpdate) {
@@ -517,25 +530,52 @@ const CreateTicketPage = () => {
       setLoading(false);
     }
   };
-  const handleFileUpload = (event) => {
+  const handleFileChange = (event) => {
     const file = event.target.files[0];
-    if (!file) {
-      toast.info("No file selected. Please choose a file.");
+    if (!file) return;
+
+    const validTypes = ["image/jpeg", "image/jpg", "image/png", "image/gif"];
+    if (!validTypes.includes(file.type)) {
+      toast.error("Please upload a valid image (JPEG, PNG, GIF)");
       return;
     }
+
     const reader = new FileReader();
-    reader.onload = () => {
-      const base64File = reader.result;
-      setAttachments((prev) => [...prev, { fileName: file.name, fileData: base64File }]);
+    reader.onloadend = () => {
+      const base64String = reader.result;
+      const fileName = file.name;
+
+      setFormData((prev) => ({
+        ...prev,
+        TktImage: base64String,
+        ImgName: fileName,
+      }));
+      setselectedImage(base64String); // For preview
     };
     reader.onerror = () => {
-      toast.error("Error reading the file. Please try again.");
+      toast.error("Failed to read file.");
     };
     reader.readAsDataURL(file);
   };
-  const handleRemoveAttachment = (index) => {
-    setAttachments((prev) => prev.filter((_, i) => i !== index));
-  };
+  // const handleFileUpload = (event) => {
+  //   const file = event.target.files[0];
+  //   if (!file) {
+  //     toast.info("No file selected. Please choose a file.");
+  //     return;
+  //   }
+  //   const reader = new FileReader();
+  //   reader.onload = () => {
+  //     const base64File = reader.result;
+  //     setAttachments((prev) => [...prev, { fileName: file.name, fileData: base64File }]);
+  //   };
+  //   reader.onerror = () => {
+  //     toast.error("Error reading the file. Please try again.");
+  //   };
+  //   reader.readAsDataURL(file);
+  // };
+  // const handleRemoveAttachment = (index) => {
+  //   setAttachments((prev) => prev.filter((_, i) => i !== index));
+  // };
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: "#f9fafb" }}>
       <ToastContainer />
@@ -573,7 +613,10 @@ const CreateTicketPage = () => {
         <Paper elevation={2} sx={{ border: "1px solid #e5e7eb", borderRadius: 3 }}>
           <Box component="form">
             <Box p={{ xs: 2, md: 3 }}>
-              <Box display="flex" alignItems="center" sx={{ mb: 1 }}>
+              <Box display="flex" alignItems="center" sx={{
+                mb: 1,
+                flexDirection: { xs: 'column', md: 'row' }, // Stack vertically on small screens
+              }}>
                 <FormLabel id="demo-row-radio-buttons-group-label" sx={{ marginRight: 2, fontSize: '1rem', color: '#000' }}>
                   Ticket For →
                 </FormLabel>
@@ -629,8 +672,8 @@ const CreateTicketPage = () => {
                         setFormData(prev => ({
                           ...prev,
                           machGrp: value?.MACHINERYGROUP_NAME || "",
-                          machine: "", 
-                          machineryKey: "", 
+                          machine: "",
+                          machineryKey: "",
                         }));
                         fetchMachine(key);
                       }}
@@ -693,7 +736,7 @@ const CreateTicketPage = () => {
                       value={dept.find(m => m.CCN_KEY === formData.department) || null}
                       onChange={(_, value) => {
                         setFormData(prev => ({ ...prev, department: value?.CCN_KEY || "" }))
-                      } }
+                      }}
                       renderInput={(params) => <TextField {...params} label={<><span>Cost Center/Dept</span><span style={{ color: 'red' }}>*</span></>} sx={inputStyle} />}
                     />
                   </Grid>
@@ -723,7 +766,7 @@ const CreateTicketPage = () => {
 
                       setFormData(prev => ({
                         ...prev,
-                        subCategory: value || {} 
+                        subCategory: value || {}
                       }));
                     }}
                     renderInput={(params) => (
@@ -769,86 +812,153 @@ const CreateTicketPage = () => {
                 sx={{ mb: 2 }}
               />
               {/* Attachments */}
-              <Box>
-                <Typography fontWeight={500} color="#374151" mb={1}>
-                  Attachments
-                </Typography>
-                <Box
-                  sx={{
-                    border: "2px dashed #d1d5db",
-                    borderRadius: 2,
-                    p: 6,
-                    textAlign: "center",
-                    cursor: "pointer",
-                    bgcolor: "#fafafa",
-                    "&:hover": { bgcolor: "#f1f5f9" },
-                  }}
-                  onClick={() => fileInputRef.current?.click()}
-                >
+
+              <Grid
+                container
+                spacing={1}
+                sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', flexDirection: { xs: 'column', md: 'row' } }}
+              >
+                {/* Image Box (6 out of 12 grid columns) */}
+                <Grid item xs={12} md={6} sx={{
+                  position: 'relative',
+                  width: { xs: '100%', md: '50%' },
+                  height: 130,
+                  borderRadius: 2,
+                  border: formData.TktImage ? '2px solid #635bff' : '2px dashed #635bff',
+                  bgcolor: '#fafafa',
+                  overflow: 'hidden',
+                  cursor: 'pointer',
+                  transition: 'all .2s',
+                  '&:hover': { borderColor: '#ccc' },
+                }}>
+                  {/* Image Preview or Placeholder */}
+                  {formData.TktImage ? (
+                    <img
+                      src={formData.TktImage}
+                      alt="Preview"
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover',
+                        transition: 'all .2s',
+                      }}
+                      onClick={() => {
+                        setZoomSrc(formData.TktImage);
+                        setZoomOpen(true);
+                      }}
+                    />
+                  ) : (
+                    <Box sx={{ textAlign: 'center', padding: 2 }}>
+                      <MdAttachFile sx={{ fontSize: 28, color: "#9ca3af" }} />
+                      <Typography fontWeight={500} color="#6b7280">
+                        Click to upload or drag and drop
+                      </Typography>
+                    </Box>
+                  )}
+
                   <input
                     ref={fileInputRef}
                     type="file"
-                    multiple
-                    style={{ display: "none" }}
-                    onChange={handleFileUpload}
+                    accept="image/*"
+                    onChange={handleFileChange}
+                    style={{
+                      position: 'absolute',
+                      inset: 0,
+                      opacity: 0,
+                      cursor: 'pointer',
+                    }}
                   />
-                  <MdAttachFile sx={{ fontSize: 48, color: "#9ca3af" }} />
-                  <Typography fontWeight={500} color="#6b7280">
-                    Click to upload or drag and drop
-                  </Typography>
-                  <Typography variant="body2" color="#9ca3af">
-                    Maximum file size: 10MB
-                  </Typography>
-                </Box>
 
-                {attachments.length > 0 && (
-                  <Box mt={3}>
-                    <Typography variant="subtitle2" fontWeight={500} mb={1}>
-                      Attached Files:
-                    </Typography>
-                    {attachments.map((file, index) => (
-                      <Paper
-                        key={index}
+                  {/* ----- DELETE ICON (only when image exists) ----- */}
+                  {formData.TktImage && (
+                    <Tooltip title="Remove Image" arrow>
+                      <IconButton
+                        size="small"
+                        color="error"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setFormData((p) => ({ ...p, TktImage: '', ImgName: '' }));
+                          setselectedImage('');
+                          if (fileInputRef.current) {
+                            fileInputRef.current.value = '';
+                          }
+                        }}
                         sx={{
-                          p: 2,
-                          mb: 1,
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "space-between",
-                          bgcolor: "#f9fafb",
-                          border: "1px solid #e5e7eb",
+                          position: 'absolute',
+                          top: -4,
+                          right: -4,
+                          bgcolor: 'background.paper',
+                          boxShadow: 2,
+                          '&:hover': { bgcolor: 'error.light', color: '#fff' },
                         }}
                       >
-                        <Stack direction="row" alignItems="center" spacing={1}>
-                          <MdAttachFile fontSize="small" sx={{ color: "#6b7280" }} />
-                          <Typography variant="body2">{file.fileName}</Typography>
-                        </Stack>
-                        <IconButton
-                          size="small"
-                          onClick={() => handleRemoveAttachment(index)}
-                          color="error"
-                        >
-                          <MdClose />
-                        </IconButton>
-                      </Paper>
-                    ))}
-                  </Box>
-                )}
-              </Box>
+                        <DeleteForeverIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                  )}
+
+                  {/* ----- ZOOM ICON (only when image exists) ----- */}
+                  {formData.TktImage && (
+                    <Tooltip title="Zoom Image" arrow>
+                      <IconButton
+                        size="small"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setZoomSrc(formData.TktImage);
+                          setZoomOpen(true);
+                        }}
+                        sx={{
+                          position: 'absolute',
+                          bottom: 1,
+                          right: -1,
+                          bgcolor: 'rgba(0,0,0,0.7)',
+                          color: '#fff',
+                          '&:hover': { bgcolor: 'primary.main' },
+                        }}
+                      >
+                        <ZoomInIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                  )}
+                </Grid>
+
+                {/* Image Path (6 out of 12 grid columns) */}
+                <Grid item xs={12} md={6} sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'flex-start',
+                  paddingLeft: '8px',
+                }}>
+                  {formData.TktImage && (
+                    <Typography
+                      variant="body2"
+                      color="textSecondary"
+                      sx={{
+                        wordBreak: 'break-word',
+                        textAlign: 'left',
+                        margin: 0, // Remove any margin to avoid unwanted space
+                        width: '100%', // Make sure it takes full width
+                      }}
+                    >
+                      {formData.ImgName || 'Image path not available'}
+                    </Typography>
+                  )}
+                </Grid>
+              </Grid>
             </Box>
             <Divider />
-            <Box sx={{ bgcolor: "#f9fafb", p: 3, display: "flex", justifyContent: "flex-end", gap: 2 }}>
-              <Button variant="outlined" color="error" onClick={() => router.push("/tickets/all-tickets/")}>
-                Cancel
-              </Button>
+            <Box sx={{ bgcolor: "#f9fafb", p: 1, display: "flex", justifyContent: "flex-end", gap: 1 }}>
               <Button
                 variant="contained"
                 disabled={loading}
                 startIcon={<MdSend />}
                 onClick={handleSubmit}
-                sx={{ minWidth: 160, bgcolor: "#2563eb", "&:hover": { bgcolor: "#1d4ed8" } }}
+                sx={{ minWidth: 110, bgcolor: "#2563eb", "&:hover": { bgcolor: "#1d4ed8" } }}
               >
-                {loading ? "Creating Ticket..." : "Create Ticket"}
+                {loading ? "Submitting..." : "Submit"}
+              </Button>
+              <Button variant="outlined" color="error" onClick={() => router.push("/tickets/all-tickets/")}>
+                Cancel
               </Button>
             </Box>
           </Box>
@@ -870,16 +980,21 @@ const CreateTicketPage = () => {
         userId={USER_ID}
         userName={USER_NAME}
         attachments={attachments}
-        rowsSecondTable={rowsSecondTable} 
+        rowsSecondTable={rowsSecondTable}
         trnTktDtlEntities={formData.trnTktDtlEntities}
         onTicketCreated={() => {
           router.push("/tickets/all-tickets");
         }}
         onTicketUpdated={() => {
           if (TKTKEY) {
-            fetchRetriveData(TKTKEY); 
+            fetchRetriveData(TKTKEY);
           }
         }}
+      />
+      <ZoomDialog
+        zoomOpen={zoomOpen}
+        setZoomOpen={setZoomOpen}
+        zoomSrc={zoomSrc}
       />
     </Box>
   );
