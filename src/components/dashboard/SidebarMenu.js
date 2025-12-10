@@ -474,8 +474,9 @@ export const sidebarMenuItems =[
           icon: RiTruckLine, // ✔ delivery / dispatch
           path: '/inventorypage?activeTab=sales-dispatch',
           children: [
-            { name: 'Sales Offline', icon: RiShoppingCart2Line, path: '/inverntory/inventory-offline/' }, // ✔ offline sales
-            { name: 'Packaging/Barcode', icon: RiBarcodeLine, path: '/inverntory/packeging-barcode/' }, // ✔ barcode/packaging
+            { name: 'Sales Order Offline', icon: RiShoppingCart2Line, path: '/inverntory/inventory-offline/' }, // ✔ offline sales
+             { name: 'Sales Order Barcode', icon: RiShoppingCart2Line, path: '/inverntory/salesorderbarcode' },
+            // { name: 'Packaging/Barcode', icon: RiBarcodeLine, path: '/inverntory/packeging-barcode/' }, 
           ],
         },
         {
@@ -591,7 +592,8 @@ export const sidebarMenuItems =[
       name: 'Help',
       icon: IoIosConstruct,
       children: [
-        { name: 'User Info', icon: MdPeople, path: '#' },
+        { name: 'User Info', icon: MdPeople, path: '#'},
+
         { name: 'Customer Care', icon: MdPayments, path: '#' },
         // { name: 'Cascade', icon: MdEvent, path: '#' },
         // { name: 'Tile Horizontal', icon: MdSummarize, path: '#' },

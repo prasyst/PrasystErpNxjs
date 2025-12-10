@@ -135,7 +135,7 @@ const CoBrModal = ({ open, onClose }) => {
     >
       <Box
         sx={{
-          width: { xs: '70%', sm: 400 },
+          width: { xs: '90%', sm: 400 },
           bgcolor: 'background.paper',
           borderRadius: 3,
           boxShadow: 24,

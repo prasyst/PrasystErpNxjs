@@ -134,7 +134,7 @@ const AllTicketsPage = () => {
 
 
   const handleEditTicket = (ticket) => {
-    // router.push(`/tickets/edit-ticket?id=${ticket.id}`);
+    router.push(`/tickets/create-tickets/?TKTKEY=${ticket.TKTKEY}`);
   };
 
   const handleDeleteClick = (ticket) => {
@@ -432,6 +432,7 @@ const AllTicketsPage = () => {
               </TableRow>
             );
           })}
+
         </TableBody>
       </Table>
     </TableContainer>

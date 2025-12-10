@@ -1,5 +1,4 @@
 'use client';
-
 import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import {
@@ -51,11 +50,11 @@ import {
   ShoppingBag as ShoppingBagIcon,
   CollectionsBookmark as CollectionsBookmarkIcon,
   Straighten as StraightenIcon,
-  Assignment as AssignmentIcon,
   Receipt as ReceiptIcon,
   Gavel as GavelIcon,
   AttachMoney as MoneyIcon,
-  Event as EventIcon
+  Event as EventIcon,
+  CheckCircle as CheckCircleIcon, Assignment as AssignmentIcon, PlaylistAddCheck as PlaylistAddCheckIcon, TrendingUp as TrendingUpIcon
 } from '@mui/icons-material';
 import AnnouncementIcon from '@mui/icons-material/Announcement';
 import CreateIcon from '@mui/icons-material/Create';
@@ -87,7 +86,6 @@ export default function MasterPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  // Ensure that `useSearchParams` is only called on the client side
   useEffect(() => {
     setIsClient(true);
   }, []);
@@ -96,22 +94,18 @@ export default function MasterPage() {
     const tabId = menuData[newValue]?.id;
     if (tabId) {
       router.push(`/masterpage?activeTab=${tabId}`, { scroll: false });
-      setActiveTab(newValue);
     }
   };
 
   useEffect(() => {
-    if (!isClient) return; // Only run on the client-side
+    if (!isClient) return;
 
     const tabParam = searchParams.get('activeTab') || '';
     const index = menuData.findIndex(tab => tab.id === tabParam);
-    // if (index !== -1 && index !== activeTab) {
-    //   setActiveTab(index >= 0 ? index : 0);
-    // }
-    if (tabParam && index !== -1 && index !== activeTab) {  // If tabParam is valid, set it
+    if (tabParam && index !== -1 && index !== activeTab) {
       setActiveTab(index);
     } else if (!tabParam) {
-      setActiveTab(-1);  // Optionally set to 0 if no activeTab query exists
+      setActiveTab(-1);
     }
   }, [searchParams, isClient, activeTab]);
 
@@ -284,7 +278,11 @@ export default function MasterPage() {
       id: 'qc',
       name: 'QC Master',
       children: [
-        { name: 'QC Master', icon: BuildIcon, path: '#' },
+        { name: 'QC Group', icon: AssignmentIcon , path: '#' },
+        { name: 'QC SubGroup', icon: PlaylistAddCheckIcon , path: '#' },
+        { name: 'QC Parameter', icon: CheckCircleIcon , path: '#' },
+        { name: 'QC Product Process', icon: TrendingUpIcon , path: '#' },
+        { name: 'QC Test', icon: BuildIcon, path: '#' },
       ],
     },
     {
@@ -314,11 +312,31 @@ export default function MasterPage() {
               },
             }}
           >
-            <StyledTabs value={activeTab} onChange={handleTabChange} variant="scrollable" scrollButtons="auto">
+            {/* <StyledTabs value={activeTab} onChange={handleTabChange} variant="scrollable" scrollButtons="false">
               {menuData.map((tab, index) => (
                 <StyledTab key={tab.id} label={tab.name} />
               ))}
-            </StyledTabs>
+            </StyledTabs> */}
+              <StyledTabs
+          value={activeTab}
+          onChange={handleTabChange}
+          variant="scrollable"                  
+          TabIndicatorProps={{ style: { display: 'none' } }}
+          sx={{
+            '& .MuiTabs-flexContainer': {
+              flexWrap: 'wrap',
+              gap: '2px',
+              paddingInline: '2px'                      
+            },
+            '& .MuiTabs-scroller': {
+              overflow: 'visible !important',
+            },
+          }}
+        >
+          {menuData.map((tab, index) => (
+            <StyledTab key={tab.id} label={tab.name} />
+          ))}
+        </StyledTabs>
           </Box>
 
           {menuData.map((tab, index) => (

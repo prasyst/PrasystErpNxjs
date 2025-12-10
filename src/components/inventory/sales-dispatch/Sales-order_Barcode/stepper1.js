@@ -1170,20 +1170,19 @@ const fetchShippingPartyDetails = async (partyKey) => {
             />
           </Box>
           <Box sx={{ width: { xs: '100%', sm: '20%', md: '20%' } }}>
-             <AutoVibe
-              id="SEASON"
+            <TextField
+              label="Party Ord No"
+              variant="filled"
+              fullWidth
+              onChange={handleInputChange}
+              value={formData.PARTY_ORD_NO || ""}
               disabled={isFormDisabled}
-              getOptionLabel={(option) => option || ''}
-              options={seasonOptions}
-              label="Season"
-              name="SEASON"
-              value={formData.SEASON || ""}
-              onChange={(event, value) => handleAutoCompleteChange("SEASON", value)}
-              sx={DropInputSx}
+              name="PARTY_ORD_NO"
+              sx={textInputSx}
               inputProps={{
                 style: {
                   padding: '6px 8px',
-                  fontSize: '12px',
+                  fontSize: '12px'
                 },
               }}
             />
@@ -1228,20 +1227,20 @@ const fetchShippingPartyDetails = async (partyKey) => {
         }}>
           
           <Box sx={{ width: { xs: '100%', sm: '20%', md: '20%' } }}>
-           
-             <TextField
-              label="Party Ord No"
-              variant="filled"
-              fullWidth
-              onChange={handleInputChange}
-              value={formData.PARTY_ORD_NO || ""}
+            <AutoVibe
+              id="SEASON"
               disabled={isFormDisabled}
-              name="PARTY_ORD_NO"
-              sx={textInputSx}
+              getOptionLabel={(option) => option || ''}
+              options={seasonOptions}
+              label="Season"
+              name="SEASON"
+              value={formData.SEASON || ""}
+              onChange={(event, value) => handleAutoCompleteChange("SEASON", value)}
+              sx={DropInputSx}
               inputProps={{
                 style: {
                   padding: '6px 8px',
-                  fontSize: '12px'
+                  fontSize: '12px',
                 },
               }}
             />
@@ -1694,6 +1693,25 @@ const fetchShippingPartyDetails = async (partyKey) => {
               />
             </LocalizationProvider>
           </Box>
+         <Box sx={{ width: { xs: '100%', sm: '20%', md: '20%' } }}>
+            <AutoVibe
+              id="Consignee"
+              disabled={isFormDisabled}
+              getOptionLabel={(option) => option || ''}
+              options={consigneeOptions}
+              label="Consignee"
+              name="CONSIGNEE"
+              value={formData.CONSIGNEE || ""}
+              onChange={(event, value) => handleAutoCompleteChange("CONSIGNEE", value)}
+              sx={DropInputSx}
+              inputProps={{
+                style: {
+                  padding: '6px 8px',
+                  fontSize: '12px',
+                },
+              }}
+            />
+          </Box>
           <Box sx={{ width: { xs: "100%", sm: "20%", md: "20%" } }}>
             <LocalizationProvider dateAdapter={AdapterDateFns}>
               <DatePicker
@@ -1717,26 +1735,6 @@ const fetchShippingPartyDetails = async (partyKey) => {
               />
             </LocalizationProvider>
           </Box>
-         <Box sx={{ width: { xs: '100%', sm: '20%', md: '20%' } }}>
-            <AutoVibe
-              id="Consignee"
-              disabled={isFormDisabled}
-              getOptionLabel={(option) => option || ''}
-              options={consigneeOptions}
-              label="Consignee"
-              name="CONSIGNEE"
-              value={formData.CONSIGNEE || ""}
-              onChange={(event, value) => handleAutoCompleteChange("CONSIGNEE", value)}
-              sx={DropInputSx}
-              inputProps={{
-                style: {
-                  padding: '6px 8px',
-                  fontSize: '12px',
-                },
-              }}
-            />
-          </Box>
-          
 
            <Box sx={{ width: { xs: '100%', sm: '20%', md: '15%' } }}>
             <AutoVibe
@@ -1889,7 +1887,7 @@ const fetchShippingPartyDetails = async (partyKey) => {
               }}
             />
           </Box>
-          <Box sx={{ width: { xs: '100%', sm: '20%', md: '80%' } }}>
+          <Box sx={{ width: { xs: '100%', sm: '20%', md: '20%' } }}>
             <TextField
               label="Remark"
               variant="filled"
@@ -1908,15 +1906,7 @@ const fetchShippingPartyDetails = async (partyKey) => {
             />
           </Box>
 
-     
-        </Box>
-
-         <Box sx={{
-          display: 'flex',
-          flexDirection: { xs: 'column', sm: 'row', md: 'row' },
-          gap: { xs: 1, sm: 1.5, md: 2 }
-        }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', width: { xs: '100%', sm: '48%', md: '21%' } }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', width: { xs: '100%', sm: '48%', md: '21%' } }}>
             <FormLabel sx={{ margin: '7px 7px 0px 0px', fontSize: '14px', fontWeight: 'bold', color: 'black' }} component="legend">Delivery Shedule</FormLabel>
             <RadioGroup
               row
@@ -1965,6 +1955,14 @@ const fetchShippingPartyDetails = async (partyKey) => {
               />
             </RadioGroup>
           </Box>
+        </Box>
+
+         <Box sx={{
+          display: 'flex',
+          flexDirection: { xs: 'column', sm: 'row', md: 'row' },
+          gap: { xs: 1, sm: 1.5, md: 2 }
+        }}>
+         
         
 <Box sx={{ display: 'flex', alignItems: 'center', width: { xs: '100%', sm: '48%', md: '25%' } }}>
   <FormLabel sx={{ margin: '7px 14px 0px 0px', fontSize: '14px', fontWeight: 'bold', color: 'black' }} component="legend">Status</FormLabel>

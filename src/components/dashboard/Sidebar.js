@@ -5,9 +5,10 @@ import { usePathname } from 'next/navigation';
 import { RiSubtractLine } from "react-icons/ri";
 import { sidebarMenuItems } from './SidebarMenu';
 import {
-  MdPushPin, MdOutlinePushPin,MdChevronRight
+  MdPushPin, MdOutlinePushPin, MdChevronRight
 } from 'react-icons/md';
 import { usePin } from '../../app/hooks/usePin';
+import { useRecentPaths } from '../../app/context/RecentPathsContext';
 
 const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => {
   const sidebarRef = useRef(null);
@@ -16,35 +17,24 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
   const [activeItem, setActiveItem] = useState('');
   const [openSections, setOpenSections] = useState({});
   const { pinnedModules, pinModule, unpinModule, isPinned } = usePin();
+  const { addRecentPath } = useRecentPaths();
   const [showPinConfirm, setShowPinConfirm] = useState(null);
   const [showUnpinConfirm, setShowUnpinConfirm] = useState(null);
   const [hasOpenSubmenu, setHasOpenSubmenu] = useState(false);
   const [activeChild, setActiveChild] = useState(null);
   const [activeGrandchild, setActiveGrandchild] = useState(null);
 
-  useEffect(() => {
-    const protectedRoutes = [
-      '/masterpage',
-      '/inventorypage',
-      '/tickets'
-    ];
-
-    const isProtected = protectedRoutes.some(route =>
-      pathname.startsWith(route) || pathname.includes(route)
-    );
-
-    if (isProtected) {
-      setIsCollapsed(false);
-      setOpenSections(prev => ({
-        ...prev,
-        Masters: pathname.includes('masterpage'),
-        // Inventory: pathname === '/inventorypage'
-        Inventory: pathname.includes('inventorypage')
-      }));
-      setHasOpenSubmenu(true);
+  const handleNavigationWithTracking = (path, name) => {
+    console.log('path', path)
+    if (path && path !== '#') {
+      addRecentPath(path, name);
+      router.push(path);
+      if (isMobile) {
+        onClose();
+      }
     }
-  }, [pathname]);
-  // Add this function
+  };
+
   const toggleSection = (name) => {
     setOpenSections(prev => {
       const newState = { ...prev };
@@ -54,13 +44,6 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
       } else {
         newState[name] = true;
       }
-
-      // NEVER auto-close Masters or Inventory if we're on their pages
-      // const isOnMasters = pathname === '/masterpage';
-      // const isOnInventory = pathname === '/inventorypage';
-
-      // if (isOnMasters) newState['Masters'] = true;
-      // if (isOnInventory) newState['Inventory'] = true;
 
       setHasOpenSubmenu(Object.keys(newState).length > 0);
       return newState;
@@ -72,10 +55,8 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
       setOpenSections(prev => ({
         ...prev,
         Masters: true,
-        // Optionally open child tab too
-        ...(pathname.includes('?activeTab=') && { [getActiveTabName()]: true })
       }));
-      setIsCollapsed(false);
+      setIsCollapsed(true);    //addnew
       setHasOpenSubmenu(true);
 
       // Determine activeChild based on activeTab
@@ -94,13 +75,13 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
         process: 'Process',
       };
       setActiveChild(mastersTabToChildMap[activeTab] || null);
-      setActiveGrandchild(null); // Reset grandchild
+      setActiveGrandchild(null);
     } else if (pathname.startsWith('/inventorypage')) {
       setOpenSections(prev => ({
         ...prev,
         Inventory: true,
       }));
-      setIsCollapsed(false);
+      setIsCollapsed(true);  //addnew
       setHasOpenSubmenu(true);
 
       // Determine activeChild based on activeTab
@@ -123,7 +104,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
         'sampling-production': 'Sampling & Production',
       };
       setActiveChild(inventoryTabToChildMap[activeTab] || null);
-      setActiveGrandchild(null); // Reset grandchild
+      setActiveGrandchild(null);
     } else {
       // Reset active states if not on masters or inventory
       setActiveChild(null);
@@ -137,8 +118,8 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
   }, [isMobile, isOpen]);
 
   const handleChildClick = (child) => {
-    setActiveChild(child.name); 
-    setActiveGrandchild(null); 
+    setActiveChild(child.name);
+    setActiveGrandchild(null);
   };
 
   const handleGrandchildClick = (grandchild) => {
@@ -146,7 +127,6 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
   };
 
   const menuItems = sidebarMenuItems;
-
 
   // Find menu item by path
   const findMenuItemByPath = (items, path) => {
@@ -161,13 +141,8 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
   };
 
   // Handle navigation
-  const handleNavigation = (path) => {
-    if (path && path !== '#') {
-      router.push(path);
-      if (isMobile) {
-        onClose();
-      }
-    }
+  const handleNavigation = (path, name) => {
+    handleNavigationWithTracking(path, name);
   };
 
   const findAllItemsWithPaths = (items) => {
@@ -215,6 +190,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
       setShowPinConfirm(item);
     }
   };
+
   // Confirm pin
   const confirmPin = (item) => {
     pinModule({
@@ -234,299 +210,6 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
     });
     setShowUnpinConfirm(null);
   };
-
-  // const renderMainMenu = (items) => {
-  //   return items.map((item, index) => {
-  //     // DIVIDER RENDERING — MUST BE AT THE TOP LEVEL
-  //     if (item.divider) {
-  //       return (
-  //         <div
-  //           key={`divider-${index}`}
-  //           style={{
-  //             height: '1px',
-  //             backgroundColor: '#c8d6e5',
-  //             margin: '18px 24px',
-  //             borderRadius: '2px',
-  //             boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
-  //           }}
-  //         />
-  //       );
-  //     }
-
-  //     const IconComponent = item.icon;
-  //     const hasChildren = item.children && item.children.length > 0;
-  //     const isOpen = openSections[item.name];
-  //     const isActive = false;
-
-  //     const hasValidPath = item.path && item.path !== '#';
-
-  //     return (
-  //       <div key={item.name}>
-  //         <div
-  //           onClick={(e) => {
-  //             e.stopPropagation();
-  //             if (hasChildren) toggleSection(item.name);
-  //             if (hasValidPath) handleNavigation(item.path);
-  //           }}
-  //           style={{
-  //             display: 'flex',
-  //             alignItems: 'center',
-  //             padding: '0.45rem 0.2rem',
-  //             cursor: 'pointer',
-  //             backgroundColor: isActive ? '#5ba8ffff' : 'transparent',
-  //             color: isActive ? 'white' : '#333',
-  //             transition: 'all 0.2s ease',
-  //             margin: '0.10rem 0.4rem',
-  //           }}
-  //         >
-  //           {IconComponent && (
-  //             <IconComponent
-  //               size={20}
-  //               style={{
-  //                 marginRight: isCollapsed ? 0 : '12px',
-  //                 minWidth: '24px',
-  //                 color: isActive ? 'white' : '#635bff',
-  //               }}
-  //             />
-  //           )}
-  //           {!isCollapsed && (
-  //             <>
-  //               <span style={{ flex: 1, fontWeight: isActive ? 600 : 500 }}>
-  //                 {item.name}
-  //               </span>
-  //               {hasChildren && (
-  //                 <MdChevronRight
-  //                   size={18}
-  //                   style={{
-  //                     transform: isOpen ? 'rotate(90deg)' : 'rotate(0)',
-  //                     transition: 'transform 0.25s ease',
-  //                     color: isActive ? 'white' : '#777',
-  //                   }}
-  //                 />
-  //               )}
-  //             </>
-  //           )}
-  //         </div>
-
-  //         {/* Inline Collapsible Children */}
-  //         {hasChildren && isOpen && !isCollapsed && (
-  //           <div style={{ marginLeft: '10px', borderLeft: '2px solid #e0e0e0', paddingLeft: '12px' }}>
-  //             {item.children
-  //               .filter(child => child)
-  //               .map((child) => {
-  //                 const ChildIcon = child.icon;
-  //                 const childIsOpen = openSections[child.name];
-  //                 const hasGrandChildren = child.children && child.children.length > 0;
-
-  //                 return (
-  //                   <div key={child.name}>
-  //                     <div
-  //                       onClick={(e) => {
-  //                         e.stopPropagation();
-  //                         handleChildClick(child);
-  //                         let targetPath = child.path;
-
-  //                         if (!targetPath || targetPath === '#') {
-  //                           if (item.name === 'Inventory') {
-  //                             const inventoryMap = {
-  //                               'Inventory': 'inventory',
-  //                               'Sampling & Development': 'sampling',
-  //                               'Opening Stock': 'opening-stock',
-  //                               'Purchase Order': 'purchase-order',
-  //                               'Inward Approval': 'inward-approval',
-  //                               'Provisonal GRN': 'provisinal-grn',
-  //                               'Purchase Inward': 'purchase-inward',
-  //                               'RM/Acc Issue': 'rm-acc-issue',
-  //                               'Manufacturing': 'manufacturing',
-  //                               'Other Transaction': 'other-transactions',
-  //                               'Sample Packing': 'sample-packaging',
-  //                               'Make to Order': 'make-to-order',
-  //                               'Sales/Dispatch': 'sales-dispatch',
-  //                               'Sampling & Production': 'sampling-production',
-  //                             };
-  //                             const tab = inventoryMap[child.name] || 'inventory';
-  //                             targetPath = `/inventorypage?activeTab=${tab}`;
-  //                           } else {
-  //                             const mastersMap = {
-  //                               Company: 'company',
-  //                               Location: 'location',
-  //                               Vendors: 'vendors',
-  //                               Customers: 'customers',
-  //                               Products: 'products',
-  //                               'Tax/Terms': 'tax',
-  //                               Season: 'season',
-  //                               Ticketing: 'ticketing',
-  //                               'GST/SAC Code': 'gst',
-  //                               Process: 'process',
-  //                             };
-  //                             const tab = mastersMap[child.name] || 'company';
-  //                             targetPath = `/masterpage?activeTab=${tab}`;
-  //                           }
-  //                         }
-  //                         router.push(targetPath);
-  //                         toggleSection(child.name);
-  //                         // Ensure parent stays open
-  //                         if (item.name === 'Masters' || item.name === 'Inventory') {
-  //                           setOpenSections(prev => ({ ...prev, [item.name]: true }));
-  //                         }
-  //                         if (isMobile) onClose();
-  //                       }}
-  //                       style={{
-  //                         display: 'flex',
-  //                         alignItems: 'center',
-  //                         padding: '0.5rem 0.2rem',
-  //                         cursor: 'pointer',
-  //                         borderRadius: '6px',
-  //                         margin: '2px 0',
-  //                         backgroundColor: childIsOpen ? '#f0f2ff' : 'transparent',
-  //                         color: childIsOpen ? '#635bff' : '#444',
-  //                         fontWeight: childIsOpen ? 600 : 500,
-  //                       }}
-  //                     >
-  //                       {ChildIcon && <ChildIcon size={18} style={{ marginRight: '5px' }} />}
-  //                       <span
-  //                         style={{
-  //                           flex: 1,
-  //                           fontSize: '0.9rem',
-  //                           display: child.hideName ? 'none' : 'inline',
-  //                         }}
-  //                       >
-  //                         {child.name}
-  //                       </span>
-
-  //                       {hasGrandChildren && (
-  //                         <MdChevronRight
-  //                           size={16}
-  //                           style={{
-  //                             transform: childIsOpen ? 'rotate(90deg)' : 'rotate(0)',
-  //                             transition: 'transform 0.2s',
-  //                           }}
-  //                         />
-  //                       )}
-  //                     </div>
-
-  //                     {/* Grandchildren (only shown when this group is open) */}
-  //                     {hasGrandChildren && childIsOpen && (
-  //                       <div style={{ marginLeft: '20px', paddingLeft: '8px' }}>
-  //                         {child.children.map((grandchild) => {
-  //                           const GrandIcon = grandchild.icon;
-  //                           const isGrandActive = activeItem === grandchild.path;
-  //                           const hasPath = grandchild.path && grandchild.path !== '#';
-  //                           // // Decide where we should navigate
-  //                           return (
-  //                             <div
-  //                               key={grandchild.name}
-  //                               onClick={(e) => {
-  //                                 e.stopPropagation();
-  //                                 handleGrandchildClick(grandchild);
-  //                                 const hasPath = grandchild.path && grandchild.path !== '#';
-
-  //                                 // Case 1: Direct path (e.g., /masters/products/category) → use it
-  //                                 if (hasPath) {
-  //                                   router.push(grandchild.path);
-  //                                 }
-  //                                 // Case 2: No direct path → determine correct parent page
-  //                                 else {
-  //                                   // Detect which top-level section we are in
-  //                                   const isInventorySection = item.name === 'Inventory';
-
-  //                                   if (isInventorySection) {
-  //                                     // Map Inventory tabs correctly
-  //                                     const inventoryTabMap = {
-  //                                       'Inventory': 'inventory',
-  //                                       'Sampling & Development': 'sampling',
-  //                                       'Opening Stock': 'opening-stock',
-  //                                       'Purchase Order': 'purchase-order',
-  //                                       'Inward Approval': 'inward-approval',
-  //                                       'Provisonal GRN': 'provisinal-grn',
-  //                                       'Purchase Inward': 'purchase-inward',
-  //                                       'RM/Acc Issue': 'rm-acc-issue',
-  //                                       'Manufacturing': 'manufacturing',
-  //                                       'Other Transaction': 'other-transactions',
-  //                                       'Sample Packing': 'sample-packaging',
-  //                                       'Make to Order': 'make-to-order',
-  //                                       'Sales/Dispatch': 'sales-dispatch',
-  //                                       'Sampling & Production': 'sampling-production',
-  //                                     };
-
-  //                                     const tabId = inventoryTabMap[child.name] || 'inventory';
-  //                                     router.push(`/inventorypage?activeTab=${tabId}`);
-  //                                   } else {
-  //                                     // Default: Masters section
-  //                                     const mastersTabMap = {
-  //                                       Company: 'company',
-  //                                       Location: 'location',
-  //                                       Vendors: 'vendors',
-  //                                       Customers: 'customers',
-  //                                       Products: 'products',
-  //                                       'Tax/Terms': 'tax',
-  //                                       Season: 'season',
-  //                                       Ticketing: 'ticketing',
-  //                                       'GST/SAC Code': 'gst',
-  //                                       Process: 'process',
-  //                                     };
-
-  //                                     const tabId = mastersTabMap[child.name] || 'company';
-  //                                     router.push(`/masterpage?activeTab=${tabId}`);
-  //                                   }
-  //                                 }
-  //                                 // Keep sidebar open state correct
-  //                                 if (item.name === 'Masters') {
-  //                                   toggleSection('Masters');
-  //                                 } else if (item.name === 'Inventory') {
-  //                                   toggleSection('Inventory');
-  //                                 }
-  //                                 toggleSection(child.name);
-  //                                 if (isMobile) onClose();
-  //                               }}
-  //                               style={{
-  //                                 display: 'flex',
-  //                                 alignItems: 'center',
-  //                                 padding: '0.35rem 0.1rem',
-  //                                 cursor: hasPath ? 'pointer' : 'default',
-  //                                 backgroundColor: isGrandActive ? '#635bff' : 'transparent',
-  //                                 color: isGrandActive ? 'white' : '#333',
-  //                                 borderRadius: '6px',
-  //                                 margin: '1px 1px',
-  //                                 fontSize: '0.85rem',
-  //                               }}
-  //                             >
-  //                               {GrandIcon && (
-  //                                 <GrandIcon
-  //                                   size={16}
-  //                                   style={{ marginRight: '2px', color: isGrandActive ? 'white' : '#635bff' }}
-  //                                 />
-  //                               )}
-  //                               <span style={{ display: grandchild.hideName ? 'none' : 'inline' }}>
-  //                                 {grandchild.name}
-  //                               </span>
-
-  //                               {/* Pin icon for leaf nodes */}
-  //                               {hasPath && (
-  //                                 <div
-  //                                   onClick={(e) => handlePinClick(grandchild, e)}
-  //                                   style={{ marginLeft: 'auto', color: isPinned(grandchild.path) ? '#635bff' : '#aaa' }}
-  //                                 >
-  //                                   {isPinned(grandchild.path) ? <MdPushPin size={15} /> : <MdOutlinePushPin size={15} />}
-  //                                 </div>
-  //                               )}
-  //                             </div>
-  //                           );
-  //                         })}
-  //                       </div>
-  //                     )}
-  //                   </div>
-  //                 );
-  //               })}
-  //           </div>
-  //         )}
-
-
-
-  //       </div>
-  //     );
-  //   });
-  // };
 
   const renderMainMenu = useCallback((items) => {
     return items.map((item, index) => {
@@ -549,7 +232,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
       const IconComponent = item.icon;
       const hasChildren = item.children && item.children.length > 0;
       const isOpen = openSections[item.name];
-      const isActive = false; // Assuming you have logic to set whether this is active or not
+      const isActive = false;
 
       const hasValidPath = item.path && item.path !== '#';
 
@@ -559,7 +242,12 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
             onClick={(e) => {
               e.stopPropagation();
               if (hasChildren) toggleSection(item.name);
-              if (hasValidPath) handleNavigation(item.path);
+              // if (hasValidPath) handleNavigation(item.path, item.name);
+              if (item.name === 'Masters') {
+                handleNavigation('/masterpage?activeTab=company', 'Masters');
+              } else if (hasValidPath) {
+                handleNavigation(item.path, item.name);
+              }
               if (item.name !== 'Masters' && item.name !== 'Inventory') {
                 setActiveChild(null);
                 setActiveGrandchild(null);
@@ -614,14 +302,14 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
                   const ChildIcon = child.icon;
                   const childIsOpen = openSections[child.name];
                   const hasGrandChildren = child.children && child.children.length > 0;
-
-                  const isChildActive = activeChild === child.name;  // Track active child
+                  const isChildActive = activeChild === child.name;
 
                   return (
                     <div key={child.name}>
                       <div
                         onClick={(e) => {
                           e.stopPropagation();
+                          if (child.path === '#') return;
                           handleChildClick(child);
                           let targetPath = child.path;
 
@@ -662,7 +350,10 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
                               targetPath = `/masterpage?activeTab=${tab}`;
                             }
                           }
-                          router.push(targetPath);
+
+                          // Add to recent paths and navigate
+                          handleNavigationWithTracking(targetPath, child.name);
+
                           toggleSection(child.name);
                           // Ensure parent stays open
                           if (item.name === 'Masters' || item.name === 'Inventory') {
@@ -677,7 +368,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
                           cursor: 'pointer',
                           borderRadius: '6px',
                           margin: '2px 0',
-                          backgroundColor: isChildActive ? '#f0f2ff' : 'transparent', // Active child color
+                          backgroundColor: isChildActive ? '#f0f2ff' : 'transparent',
                           color: isChildActive ? '#635bff' : '#444',
                           fontWeight: isChildActive ? 600 : 500,
                         }}
@@ -704,14 +395,12 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
                         )}
                       </div>
 
-                      {/* Grandchildren (only shown when this group is open) */}
+                      {/* Grandchildren */}
                       {hasGrandChildren && childIsOpen && (
                         <div style={{ marginLeft: '20px', paddingLeft: '8px' }}>
                           {child.children.map((grandchild) => {
                             const GrandIcon = grandchild.icon;
                             const hasPath = grandchild.path && grandchild.path !== '#';
-
-                            // Only change color if the child is active
                             const isGrandchildActive = isChildActive && activeGrandchild === grandchild.name;
 
                             return (
@@ -721,7 +410,8 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
                                   e.stopPropagation();
                                   handleGrandchildClick(grandchild);
                                   if (hasPath) {
-                                    router.push(grandchild.path);
+                                    // Add to recent paths and navigate
+                                    handleNavigationWithTracking(grandchild.path, grandchild.name);
                                   }
                                   toggleSection(grandchild.name);
                                   if (isMobile) onClose();
@@ -731,7 +421,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
                                   alignItems: 'center',
                                   padding: '0.35rem 0.1rem',
                                   cursor: hasPath ? 'pointer' : 'default',
-                                  backgroundColor: isGrandchildActive ? '#635bff' : 'transparent', // Active grandchild color
+                                  backgroundColor: isGrandchildActive ? '#635bff' : 'transparent',
                                   color: '#333',
                                   borderRadius: '6px',
                                   margin: '1px 1px',
@@ -780,8 +470,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
         </div>
       );
     });
-  },[openSections, activeChild, activeGrandchild, isCollapsed])
-
+  }, [openSections, activeChild, activeGrandchild, isCollapsed])
 
   return (
     <>
@@ -794,7 +483,6 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
         }}
         onMouseLeave={() => {
           if (!isMobile) {
-            // ONLY collapse if we're NOT on masters routes
             const isMastersRoute = pathname === '/masterpage';
             if (!isMastersRoute) {
               setIsCollapsed(true);
@@ -846,46 +534,6 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
               Prasyst
             </h2>
           )}
-          {/* <button
-            onClick={() => {
-              if (isMobile) {
-                onClose();
-              } else {
-                setIsCollapsed(true);
-                setOpenSections({});
-                setHasOpenSubmenu(false);
-              }
-            }}
-            style={{
-              background: 'none',
-              border: 'none',
-              color: '#555',
-              fontSize: '1.5rem',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: '36px',
-              height: '36px',
-              borderRadius: '50%',
-              marginLeft: (!isCollapsed || isMobile) ? 'auto' : 0,
-              transition: 'all 0.2s ease',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = '#f3f4f6';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = 'transparent';
-            }}
-          >
-            {isMobile ? (
-              <MdClose size={22} color={'#635bff'} />
-            ) : isCollapsed ? (
-              <MdMenu color={'#635bff'} size={22} />
-            ) : (
-              <MdClose size={22} />
-            )}
-          </button> */}
         </div>
 
         <div style={{
@@ -905,8 +553,6 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
           </ul>
         </div>
       </div>
-
-
 
       {/* Pin Confirmation Modal */}
       {showPinConfirm && (

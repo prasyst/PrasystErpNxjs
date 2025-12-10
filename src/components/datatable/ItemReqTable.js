@@ -1,4 +1,5 @@
 import React, { useRef, useState, useMemo, useCallback, useEffect } from 'react';
+import { forwardRef, useImperativeHandle } from 'react';
 import {
   AllCommunityModule,
   ClientSideRowModelModule,
@@ -92,7 +93,7 @@ const DateFilterComponent = ({ model, onModelChange, filterParams }) => {
   ];
 
   return (
-    <div style={{ padding: '10px', width: '250px' }}>
+    <div style={{ padding: '10px', width: '300px' }}>
       <div style={{ marginBottom: '10px' }}>
         <select
           value={filterType}
@@ -226,7 +227,7 @@ const getCustomDateFilter = () => {
   };
 };
 
-const ItemReqTable = ({
+const ItemReqTable = forwardRef(({
   columnDefs = [],
   rowData = [],
   height = "400px",
@@ -252,7 +253,7 @@ const ItemReqTable = ({
   compactMode = false,
   exportParams = {},
   ...otherProps
-}) => {
+},ref) => {
   const gridRef = useRef(null);
   const [quickFilterText, setQuickFilterText] = useState("");
   const [showExportDropdown, setShowExportDropdown] = useState(false);
@@ -274,8 +275,16 @@ const ItemReqTable = ({
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, []);
-
-  // Default column definition
+const onGridReady = (params) => {
+    gridRef.current = params.api;
+    if (selectedRows?.length > 0) {
+        params.api.forEachNode((node) => {
+            if (selectedRows.includes(node.data.ITM_KEY)) {
+                node.setSelected(true);
+            }
+        });
+    }
+};
   const defaultColDefMemo = useMemo(() => ({
     resizable: true,
     sortable: true,
@@ -284,40 +293,26 @@ const ItemReqTable = ({
     minWidth: 100,
     ...defaultColDef
   }), [defaultColDef]);
-
-  // Auto size strategy
   const autoSizeStrategyMemo = useMemo(() =>
     autoSizeStrategy || {
-      // type: "fitGridWidth",
     }, [autoSizeStrategy]);
-
-  // Theme class with compact mode support
   const themeClass = `${isDarkMode ? `${theme}-dark` : theme}${compactMode ? ' compact-mode' : ''}`;
-
-  // Quick filter handler
   const onFilterTextBoxChanged = useCallback((e) => {
     setQuickFilterText(e.target.value);
   }, []);
-
-  // Language menu handlers
   const handleLanguageMenuOpen = (event) => {
     setLanguageAnchorEl(event.currentTarget);
   };
-
   const handleLanguageMenuClose = () => {
     setLanguageAnchorEl(null);
   };
-
   const handleLanguageChange = (lang) => {
     changeLanguage(lang);
     handleLanguageMenuClose();
   };
-
-  // Export Current Page
   const onExportCurrentPage = useCallback(() => {
     if (gridRef.current?.api) {
       const fileName = exportParams.fileName || `current_page_export_${new Date().toISOString().split('T')[0]}.xlsx`;
-
       const displayedRows = [];
       gridRef.current.api.forEachNodeAfterFilterAndSort((node, index) => {
         const startIndex = gridRef.current.api.paginationGetCurrentPage() * gridRef.current.api.paginationGetPageSize();
@@ -326,7 +321,6 @@ const ItemReqTable = ({
           displayedRows.push(node.data);
         }
       });
-
       if (displayedRows.length > 0) {
         gridRef.current.api.exportDataAsExcel({
           fileName: fileName,
@@ -360,7 +354,6 @@ const ItemReqTable = ({
   const onExportAllRecords = useCallback(() => {
     if (gridRef.current?.api) {
       const fileName = `all_records_export_${new Date().toISOString().split('T')[0]}.xlsx`;
-
       gridRef.current.api.exportDataAsExcel({
         fileName: fileName,
         onlySelected: false,
@@ -445,24 +438,15 @@ const ItemReqTable = ({
     ...customGridOptions
   }), [onRowClick, onRowDoubleClick, onSelectionChanged, customGridOptions, enableCheckbox, t]);
 
-  const handleReset = useCallback(() => {
-    if (gridRef.current?.api) {
-      gridRef.current.api.setFilterModel(null);
-      setQuickFilterText("");
-      gridRef.current.api.resetColumnState();
-      if (pagination) {
-        gridRef.current.api.paginationGoToPage(0);
-      }
-    }
-  }, [pagination]);
 
-  const handleBack = () => {
-    window.history.back();
-  };
 
   const handleExit = () => {
     router.push('/dashboard');
   };
+  useImperativeHandle(ref, () => ({
+        api: gridRef.current?.api,
+        columnApi: gridRef.current?.columnApi,
+    }));
 
   return (
     <div style={{
@@ -470,7 +454,7 @@ const ItemReqTable = ({
       height,
       display: 'flex',
       flexDirection: 'column',
-      gap: '12px'
+      // gap: '12px'
     }}>
       {/* Header with search and export */}
       <div style={{
@@ -478,7 +462,7 @@ const ItemReqTable = ({
         justifyContent: 'space-between',
         alignItems: 'center',
         margin: '0 16px',
-        gap: '12px'
+        // gap: '12px'
       }}>
         {quickFilter && (
           <div style={{
@@ -551,11 +535,11 @@ const ItemReqTable = ({
             {selectedRows.length} {t('rowsSelected')}
           </div>
         )}
-        
-        
+
+
         <div style={{ display: 'flex', marginRight: 'auto', gap: '4px' }}>
 
-          
+
           {enableExport && (
             <div style={{ position: 'relative' }} ref={exportDropdownRef}>
               <button
@@ -689,94 +673,48 @@ const ItemReqTable = ({
                 </div>
               )}
             </div>
-          )}           
-              <Menu
-                anchorEl={languageAnchorEl}
-                open={Boolean(languageAnchorEl)}
-                onClose={handleLanguageMenuClose}
-                PaperProps={{
-                  style: {
-                    maxHeight: 200,
-                    width: '120px',
-                  },
-                }}
-              >
-                {Object.entries(languages).map(([code, name]) => (
-                  <MenuItem
-                    key={code}
-                    selected={code === language}
-                    onClick={() => handleLanguageChange(code)}
-                    style={{
-                      fontSize: '14px',
-                      padding: '6px 12px'
-                    }}
-                  >
-                    {name}
-                  </MenuItem>
-                ))}
-              </Menu>
-            </div>
-        
-        </div>
-
-        {/* {enableExitBackButton && (
-        <div className="flex flex-wrap gap-4 items-center">
-          <Box width="100%" display="flex" justifyContent="flex-end">
-            <Stack direction="row" spacing={2} alignItems="center"> */}
-              {/* Back Button */}
-              {/* <Button
-                onClick={handleBack}
-                variant="outlined"
-                size="small"
-                color="primary"
-                startIcon={<ArrowBackIcon />}
+          )}
+          <Menu
+            anchorEl={languageAnchorEl}
+            open={Boolean(languageAnchorEl)}
+            onClose={handleLanguageMenuClose}
+            PaperProps={{
+              style: {
+                maxHeight: 200,
+                width: '120px',
+              },
+            }}
+          >
+            {Object.entries(languages).map(([code, name]) => (
+              <MenuItem
+                key={code}
+                selected={code === language}
+                onClick={() => handleLanguageChange(code)}
                 style={{
-                  height: '29.5px'
+                  fontSize: '14px',
+                  padding: '6px 12px'
                 }}
-                sx={{ backgroundColor: '#635bff', color: '#fff', '&:hover': { backgroundColor: '#635bff' } }}
               >
-                {t('back')}
-              </Button> */}
-
-              {/* Exit Button */}
-              {/* <Button
-                onClick={handleExit}
-                variant="outlined"
-                size="small"
-                style={{
-                  height: '29.5px'
-                }}
-                sx={{
-                  backgroundColor: 'red',
-                  color: '#fff',
-                  borderColor: 'red',
-                  '&:hover': {
-                    backgroundColor: '#cc0000',
-                    borderColor: '#cc0000',
-                  },
-                }}
-                startIcon={<LogoutIcon />}
-              >
-                {t('exit')}
-              </Button> */}
-            {/* </Stack>
-          </Box>
+                {name}
+              </MenuItem>
+            ))}
+          </Menu>
         </div>
-        )}
-      </div> */}
-
+      </div>
       {/* AG Grid */}
       <div
         className={themeClass}
         style={{
           flex: 1,
-          width: 'calc(100% - 32px)',
-          margin: '0 16px',
+          width: '100% ',
+          margin: '0',
+          paddingTop: 0,
           overflow: 'hidden'
         }}
       >
         <AgGridReact
           ref={gridRef}
+    onGridReady={onGridReady}
           columnDefs={processedColumnDefs}
           rowData={rowData}
           defaultColDef={defaultColDefMemo}
@@ -819,7 +757,7 @@ const ItemReqTable = ({
       )}
     </div>
   );
-};
+});
 
 export { DateFilterComponent, getCustomDateFilter };
 export default ItemReqTable;
