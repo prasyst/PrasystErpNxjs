@@ -1,5 +1,5 @@
 "use client"
-import CreateTicket from '@/components/ticket/CreateTicket';
+import CreateTicket from '@/components/ticket/raiseTicket/CreateTicket';
 import { Suspense } from 'react';
 
 export default function TicketDashboardPage() {

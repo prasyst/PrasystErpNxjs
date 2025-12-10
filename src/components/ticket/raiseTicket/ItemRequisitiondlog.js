@@ -46,30 +46,11 @@ const ItemRequisitionDialog = ({
     const [tableRows, setTableRows] = useState([]);
     const [tableLoading, setTableLoading] = useState(false);
     const [searchText, setSearchText] = useState("");
-    // useEffect(() => {
-    //     if (open && trnTktDtlEntities) {
-    //         // Always reflect the latest server state + keep local additions
-    //         const serverItems = trnTktDtlEntities.map(item => ({
-    //             ...item,
-    //             ITM_QTY: item.ITM_QTY,
-    //         }));
-
-    //         setRowsSecondTable(prev => {
-    //             const localNewItems = prev.filter(p => !p.TktDtlId); // newly added, not in DB
-    //             const serverKeys = new Set(serverItems.map(s => s.ITM_KEY));
-
-    //             // Remove any local new items that somehow got deleted (edge case)
-    //             const filteredNew = localNewItems.filter(n => !serverKeys.has(n.ITM_KEY));
-
-    //             return [...serverItems, ...filteredNew];
-    //         });
-    //     }
-    // }, [open, trnTktDtlEntities]);
+  
     useEffect(() => {
         if (open && trnTktDtlEntities) {
-            // Always reflect the latest server state + keep local additions
             const serverItems = trnTktDtlEntities
-                .filter(item => item.ITM_KEY) // Filter out empty/default items
+                .filter(item => item.ITM_KEY) 
                 .map(item => ({
                     ...item,
                     ITM_QTY: item.ITM_QTY,
@@ -334,8 +315,8 @@ const ItemRequisitionDialog = ({
                 Status: "1",
                 RslvRmrk: "Created via Item Requisition",
                 Remark: formData.title || "Item Requisition",
-                TktImage: attachmentData.TktImage,
-                ImgName: attachmentData.ImgName,
+                TktImage: formData.TktImage,
+                ImgName: formData.ImgName,
                 ...(isUpdate
                     ? { UpdatedBy: parseInt(userId) }
                     : { CreatedBy: parseInt(userId) }

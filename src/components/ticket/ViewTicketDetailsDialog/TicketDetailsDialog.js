@@ -1,22 +1,15 @@
-import { useState, useEffect } from 'react';
+'use client';
+
+import { useState, useEffect, useRef } from 'react';
 import {
-    Dialog,
-    DialogTitle,
-    DialogContent,
-    DialogActions,
-    Typography,
-    Box,
-    IconButton,
-    Button,
-    Chip,
-    Grid,
-    Avatar,
-    Stack,
-    CircularProgress,
-    Alert,
-    Divider,
-    Card,
-    CardContent
+    Dialog, DialogTitle, DialogContent, DialogActions, Typography, Box, IconButton, Button, Chip, Grid, Avatar, Stack, CircularProgress,
+    Alert, Divider, Card, CardContent, Paper,
+    FormLabel,
+    FormControl,
+    RadioGroup,
+    FormControlLabel,
+    Radio,
+    TextField
 } from '@mui/material';
 import {
     Close as CloseIcon,
@@ -31,16 +24,56 @@ import {
     Phone as PhoneIcon
 } from '@mui/icons-material';
 import axiosInstance from '@/lib/axios';
+import { toast, ToastContainer } from 'react-toastify';
+import { MdAttachFile, MdClose } from 'react-icons/md';
+
+const inputStyle = {
+    '& .MuiInputBase-root': {
+        height: 44,
+        fontSize: '0.875rem',
+        borderRadius: '8px',
+        backgroundColor: '#ffffff',
+        '&:hover': {
+            backgroundColor: '#f8fafc',
+        },
+        '&.Mui-focused': {
+            backgroundColor: '#ffffff',
+            boxShadow: '0 0 0 2px rgba(37, 99, 235, 0.15)',
+        },
+    },
+    '& .MuiInputLabel-root': {
+        fontSize: '0.875rem',
+        color: '#4b5563',
+        '&.Mui-focused': {
+            color: '#2563eb',
+        },
+    },
+    '& .MuiOutlinedInput-notchedOutline': {
+        borderColor: '#d1d5db',
+    },
+    '&:hover .MuiOutlinedInput-notchedOutline': {
+        borderColor: '#9ca3af',
+    },
+    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+        borderColor: '#2563eb',
+        borderWidth: 2,
+    },
+};
 
 const TicketDetailsDialog = ({
     open,
     onClose,
     ticketId,
-    onEdit
+    onEdit,
 }) => {
     const [ticketDetails, setTicketDetails] = useState(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
+    const [updating, setUpdating] = useState(false);
+    const [attachments, setAttachments] = useState([]);
+    const [resolveRemark, setResolveRemark] = useState('');
+    const [ticketSt, setTicketSt] = useState("R");
+    const fileInputRef = useRef(null);
 
     useEffect(() => {
         if (open && ticketId) {
@@ -105,11 +138,103 @@ const TicketDetailsDialog = ({
                 setError("No ticket data found");
             }
         } catch (err) {
-            console.error('Error fetching ticket details:', err);
             setError("Failed to load ticket details. Please try again.");
         } finally {
             setLoading(false);
         }
+    };
+
+    const updateTicketStatus = async () => {
+        if (!ticketDetails?.TKTKEY) {
+            toast.error("Ticket not loaded properly");
+            return;
+        }
+
+        setUpdating(true);
+
+        try {
+            const imageList = attachments.map((att) => {
+                if (att.fileData) {
+                    const base64Data = att.fileData.split(',')[1];
+                    return {
+                        ImgName: att.fileName,
+                        RslvTktImg: base64Data
+                    };
+                } else {
+                    throw new Error(`File data for ${att.fileName} is missing or invalid.`);
+                }
+            });
+
+            const payload = {
+                TktKey: ticketDetails.TKTKEY,
+                TktStatus: ticketSt,
+                FLAG: "",
+                RslvRmrk: resolveRemark,
+                UpdatedBy: 1,
+                RslvTktImgList: imageList
+            };
+
+            // Sending the request to update the ticket status
+            const response = await axiosInstance.post("TrnTkt/UpdateTrnRslvTkt?UserName=PC0001&strCobrid=02", payload);
+
+            if (response.data.STATUS === 0) {
+                toast.success("Ticket resolved successfully!");
+                setAttachments([]);
+                setResolveRemark("");
+                fetchTicketDetails();
+            } else {
+                toast.error(response.data.MESSAGE || "Failed to resolve ticket");
+            }
+        } catch (error) {
+            console.error("Error during update:", error);
+            toast.error("Error updating ticket");
+        } finally {
+            setUpdating(false);
+        }
+    };
+
+    const handleTicketChange = (event) => {
+        setTicketSt(event.target.value);
+    };
+
+    const handleFileUpload = (event) => {
+        const files = event.target.files;  // Multiple files selected
+
+        if (files.length === 0) {
+            toast.info("No file selected. Please choose a file.");
+            return;
+        }
+
+        const newAttachments = Array.from(files).map((file) => {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+
+                reader.onload = () => {
+                    const base64File = reader.result; // base64 encoded file data
+                    resolve({ fileName: file.name, fileData: base64File });
+                };
+
+                reader.onerror = (error) => reject(error);
+
+                reader.readAsDataURL(file);  // Convert to base64
+            });
+        });
+
+        // Wait for all files to be processed and then update the state
+        Promise.all(newAttachments)
+            .then((attachmentsData) => {
+                setAttachments((prev) => [...prev, ...attachmentsData]);
+            })
+            .catch(() => {
+                toast.error("Error reading the file(s). Please try again.");
+            });
+    };
+
+    // Handle remove attachment
+    const handleRemoveAttachment = (index) => {
+        const newAttachments = [...attachments];
+        newAttachments.splice(index, 1);
+        setAttachments(newAttachments);
     };
 
     const getStatusColor = (status) => {
@@ -196,16 +321,44 @@ const TicketDetailsDialog = ({
                 sx: { borderRadius: 2 }
             }}
         >
-            <DialogTitle sx={{
-                backgroundColor: 'primary.50',
-                borderBottom: 1,
-                borderColor: 'divider',
-                py: 2
-            }}>
+            <ToastContainer />
+            <DialogTitle
+                sx={{
+                    backgroundColor: 'primary.50',
+                    borderBottom: 1,
+                    borderColor: 'divider',
+                    py: 1,
+                }}
+            >
                 <Box display="flex" justifyContent="space-between" alignItems="center">
                     <Typography variant="h6" fontWeight="600">
                         Ticket Details
                     </Typography>
+                    <Box display="flex" alignItems="center" >
+                        <FormLabel id="demo-row-radio-buttons-group-label" sx={{ marginRight: 2, fontSize: '1rem', color: '#000' }}>
+                            Ticket Status →
+                        </FormLabel>
+                        <FormControl>
+                            <RadioGroup
+                                row
+                                aria-labelledby="demo-row-radio-buttons-group-label"
+                                name="row-radio-buttons-group"
+                                value={ticketSt}
+                                onChange={handleTicketChange}
+                            >
+                                <FormControlLabel
+                                    value="R"
+                                    control={<Radio size="small" />}
+                                    label="Resolve"
+                                />
+                                <FormControlLabel
+                                    value="C"
+                                    control={<Radio size="small" />}
+                                    label="Close"
+                                />
+                            </RadioGroup>
+                        </FormControl>
+                    </Box>
                     <IconButton
                         onClick={onClose}
                         size="small"
@@ -244,7 +397,7 @@ const TicketDetailsDialog = ({
                 )}
 
                 {ticketDetails && !loading && (
-                    <Stack spacing={4}>
+                    <Stack spacing={2} sx={{ pt: 2 }}>
                         <Card variant="outlined" sx={{ p: 2 }}>
                             <Box display="flex" alignItems="flex-start" gap={3}>
                                 <Box flex={1}>
@@ -283,54 +436,59 @@ const TicketDetailsDialog = ({
                             </Box>
                         </Card>
 
-                        <Grid container spacing={3}>
-                            <Grid item xs={12} md={6}>
-                                <Card variant="outlined">
-                                    <CardContent>
-                                        <Typography variant="h6" gutterBottom fontWeight="600" color="primary.main">
-                                            Basic Information
-                                        </Typography>
-                                        <Stack spacing={1}>
-                                            <InfoRow
-                                                icon={<PersonIcon />}
-                                                label="Ticket ID"
-                                                value={ticketDetails.id}
-                                            />
-                                            <Divider />
-                                            <InfoRow
-                                                icon={<CategoryIcon />}
-                                                label="Type"
-                                                value={ticketDetails.tktType}
-                                            />
-                                            <Divider />
-                                            <InfoRow
-                                                icon={<BuildIcon />}
-                                                label="Tag"
-                                                value={ticketDetails.tktTag}
-                                            />
-                                            <Divider />
-                                            <InfoRow
-                                                icon={<CalendarIcon />}
-                                                label="Created Date"
-                                                value={formatDateTime(ticketDetails.createdAt)}
-                                            />
-                                            <Divider />
-                                            <InfoRow
-                                                icon={<CalendarIcon />}
-                                                label="Due Date"
-                                                value={formatDate(ticketDetails.dueDate)}
-                                            />
-                                        </Stack>
-                                    </CardContent>
-                                </Card>
+                        <Grid container spacing={2}>
+                            <Grid container spacing={2}>
+                                <Grid size={{ xs: 12, md: 12, lg: 12 }}>
+                                    <Card variant="outlined">
+                                        <CardContent>
+                                            <Typography variant="h6" gutterBottom fontWeight="600" color="primary.main">
+                                                Basic Information
+                                            </Typography>
+
+                                            {/* Stack to arrange InfoRows horizontally */}
+                                            <Stack direction="row" spacing={4} flexWrap="wrap">
+                                                <InfoRow
+                                                    icon={<PersonIcon />}
+                                                    label="Ticket ID"
+                                                    value={ticketDetails.id}
+                                                />
+                                                <Divider orientation="vertical" flexItem sx={{ mx: 2 }} />
+                                                <InfoRow
+                                                    icon={<CategoryIcon />}
+                                                    label="Type"
+                                                    value={ticketDetails.tktType}
+                                                />
+                                                <Divider orientation="vertical" flexItem sx={{ mx: 2 }} />
+                                                <InfoRow
+                                                    icon={<BuildIcon />}
+                                                    label="Tag"
+                                                    value={ticketDetails.tktTag}
+                                                />
+                                                <Divider orientation="vertical" flexItem sx={{ mx: 2 }} />
+                                                <InfoRow
+                                                    icon={<CalendarIcon />}
+                                                    label="Created Date"
+                                                    value={formatDateTime(ticketDetails.createdAt)}
+                                                />
+                                                <Divider orientation="vertical" flexItem sx={{ mx: 2 }} />
+                                                <InfoRow
+                                                    icon={<CalendarIcon />}
+                                                    label="Due Date"
+                                                    value={formatDate(ticketDetails.dueDate)}
+                                                />
+                                            </Stack>
+                                        </CardContent>
+                                    </Card>
+                                </Grid>
                             </Grid>
-                            <Grid item xs={12} md={6}>
+
+                            <Grid item xs={12} md={6} lg={12}>
                                 <Card variant="outlined">
                                     <CardContent>
                                         <Typography variant="h6" gutterBottom fontWeight="600" color="primary.main">
                                             People & Location
                                         </Typography>
-                                        <Stack spacing={1}>
+                                        <Stack direction="row" spacing={4}>
                                             <InfoRow
                                                 icon={<Avatar sx={{ width: 24, height: 24, fontSize: '0.75rem' }}>
                                                     {getInitials(ticketDetails.assignee)}
@@ -338,13 +496,15 @@ const TicketDetailsDialog = ({
                                                 label="Assignee"
                                                 value={ticketDetails.assignee}
                                             />
-                                            <Divider />
+                                            <Divider orientation="vertical" flexItem />
+
                                             <InfoRow
                                                 icon={<PersonIcon />}
                                                 label="Reporter"
                                                 value={ticketDetails.reporter}
                                             />
-                                            <Divider />
+                                            <Divider orientation="vertical" flexItem />
+
                                             {ticketDetails.mobileNo && (
                                                 <>
                                                     <InfoRow
@@ -352,15 +512,17 @@ const TicketDetailsDialog = ({
                                                         label="Mobile No"
                                                         value={ticketDetails.mobileNo}
                                                     />
-                                                    <Divider />
+                                                    <Divider orientation="vertical" flexItem />
                                                 </>
                                             )}
+
                                             <InfoRow
                                                 icon={<LocationIcon />}
                                                 label="CCN"
                                                 value={ticketDetails.ccnName}
                                             />
-                                            <Divider />
+                                            <Divider orientation="vertical" flexItem />
+
                                             <InfoRow
                                                 icon={<BuildIcon />}
                                                 label="Machinery"
@@ -371,8 +533,19 @@ const TicketDetailsDialog = ({
                                 </Card>
                             </Grid>
 
+                            <Grid size={{ xs: 12, md: 6, lg: 12 }}>
+                                <TextField
+                                    label="Remark"
+                                    fullWidth
+                                    value={resolveRemark}
+                                    onChange={(e) => setResolveRemark(e.target.value)}
+                                    placeholder="Write your ticket remark..."
+                                    sx={{ ...inputStyle }}
+                                />
+                            </Grid>
+
                             {ticketDetails.resolveRemark && (
-                                <Grid item xs={12}>
+                                <Grid size={{ xs: 12, md: 6, lg: 4 }}>
                                     <Card variant="outlined" sx={{ backgroundColor: 'success.50' }}>
                                         <CardContent>
                                             <Typography variant="h6" gutterBottom fontWeight="600" color="success.main">
@@ -385,31 +558,100 @@ const TicketDetailsDialog = ({
                                     </Card>
                                 </Grid>
                             )}
+
+                            <Grid size={{ xs: 12, md: 4, lg: 4 }}>
+                                <Card variant="outlined">
+                                    <CardContent sx={{ pt: 1, pb: 1 }}>
+                                        <Typography variant="h6" gutterBottom fontWeight="600" color="primary.main">
+                                            Attach Images
+                                        </Typography>
+
+                                        <Box
+                                            sx={{
+                                                border: "2px dashed #d1d5db",
+                                                borderRadius: 2,
+                                                p: 3,
+                                                textAlign: "center",
+                                                cursor: "pointer",
+                                                bgcolor: "#fafafa",
+                                                "&:hover": { bgcolor: "#f1f5f9" },
+                                            }}
+                                            onClick={() => fileInputRef.current?.click()}
+                                        >
+                                            <input
+                                                ref={fileInputRef}
+                                                type="file"
+                                                multiple
+                                                style={{ display: "none" }}
+                                                onChange={handleFileUpload}
+                                            />
+                                            <MdAttachFile sx={{ fontSize: 48, color: "#9ca3af" }} />
+                                            <Typography fontWeight={500} color="#6b7280">
+                                                Click to upload or drag and drop
+                                            </Typography>
+                                        </Box>
+
+                                        {/* Attached Files */}
+                                        {attachments.length > 0 && (
+                                            <Box mt={3}>
+                                                <Typography variant="subtitle2" fontWeight={500} mb={1}>
+                                                    Attached Files:
+                                                </Typography>
+                                                {attachments.map((file, index) => (
+                                                    <Paper
+                                                        key={index}
+                                                        sx={{
+                                                            p: 2,
+                                                            mb: 1,
+                                                            display: "flex",
+                                                            alignItems: "center",
+                                                            justifyContent: "space-between",
+                                                            bgcolor: "#f9fafb",
+                                                            border: "1px solid #e5e7eb",
+                                                        }}
+                                                    >
+                                                        <Stack direction="row" alignItems="center" spacing={1}>
+                                                            <MdAttachFile fontSize="small" sx={{ color: "#6b7280" }} />
+                                                            <Typography variant="body2">{file.fileName}</Typography>
+                                                        </Stack>
+                                                        <IconButton
+                                                            size="small"
+                                                            onClick={() => handleRemoveAttachment(index)}
+                                                            color="error"
+                                                        >
+                                                            <MdClose />
+                                                        </IconButton>
+                                                    </Paper>
+                                                ))}
+                                            </Box>
+                                        )}
+                                    </CardContent>
+                                </Card>
+                            </Grid>
                         </Grid>
                     </Stack>
                 )}
             </DialogContent>
 
-            <DialogActions sx={{
-                px: 3,
-                py: 2,
-                borderTop: 1,
-                borderColor: 'divider',
-                gap: 1
-            }}>
+            <DialogActions sx={{ px: 3, py: 2, borderTop: 1, borderColor: 'divider', gap: 1 }}>
+                <Button
+                    onClick={updateTicketStatus}
+                    variant="contained"
+                >
+                    Update Status
+                </Button>
                 <Button
                     onClick={onClose}
                     variant="outlined"
-                    sx={{ minWidth: 100 }}
+                    color='error'
                 >
-                    Close
+                    Cancel
                 </Button>
                 {ticketDetails && (
                     <Button
                         variant="contained"
                         startIcon={<EditIcon />}
                         onClick={handleEdit}
-                        sx={{ minWidth: 120 }}
                     >
                         Edit Ticket
                     </Button>

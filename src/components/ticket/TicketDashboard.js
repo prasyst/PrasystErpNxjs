@@ -35,7 +35,7 @@ import { FaExclamationTriangle, FaUsers, FaChartPie } from 'react-icons/fa';
 import { TiTicket } from "react-icons/ti";
 
 
-import CreateTicket from './CreateTicket';
+import CreateTicket from './raiseTicket/CreateTicket';
 import TicketList from './TicketList';
 import TicketDetail from './TicketDetail';
 import TicketCategories from './TicketCategories';

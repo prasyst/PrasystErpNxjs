@@ -50,14 +50,16 @@ import {
   ShoppingBag as ShoppingBagIcon,
   CollectionsBookmark as CollectionsBookmarkIcon,
   Straighten as StraightenIcon,
-  Assignment as AssignmentIcon,
   Receipt as ReceiptIcon,
   Gavel as GavelIcon,
   AttachMoney as MoneyIcon,
-  Event as EventIcon
+  Event as EventIcon,
+  CheckCircle as CheckCircleIcon, Assignment as AssignmentIcon, PlaylistAddCheck as PlaylistAddCheckIcon, TrendingUp as TrendingUpIcon
 } from '@mui/icons-material';
 import AnnouncementIcon from '@mui/icons-material/Announcement';
 import CreateIcon from '@mui/icons-material/Create';
+import LocalActivityIcon from '@mui/icons-material/LocalActivity';
+import ConfirmationNumberIcon from '@mui/icons-material/ConfirmationNumber';
 
 function TabPanel(props) {
   const { children, value, index, ...other } = props;
@@ -96,14 +98,14 @@ export default function MasterPage() {
   };
 
   useEffect(() => {
-    if (!isClient) return; 
+    if (!isClient) return;
 
     const tabParam = searchParams.get('activeTab') || '';
     const index = menuData.findIndex(tab => tab.id === tabParam);
-    if (tabParam && index !== -1 && index !== activeTab) {  
+    if (tabParam && index !== -1 && index !== activeTab) {
       setActiveTab(index);
     } else if (!tabParam) {
-      setActiveTab(-1);  
+      setActiveTab(-1);
     }
   }, [searchParams, isClient, activeTab]);
 
@@ -276,7 +278,11 @@ export default function MasterPage() {
       id: 'qc',
       name: 'QC Master',
       children: [
-        { name: 'QC Master', icon: BuildIcon, path: '#' },
+        { name: 'QC Group', icon: AssignmentIcon , path: '#' },
+        { name: 'QC SubGroup', icon: PlaylistAddCheckIcon , path: '#' },
+        { name: 'QC Parameter', icon: CheckCircleIcon , path: '#' },
+        { name: 'QC Product Process', icon: TrendingUpIcon , path: '#' },
+        { name: 'QC Test', icon: BuildIcon, path: '#' },
       ],
     },
     {
@@ -287,6 +293,8 @@ export default function MasterPage() {
         { name: 'Ticket SubCategory', icon: AssignmentIcon, path: '/masters/ticketing/ticketSubCat' },
         { name: 'Service/Complaint', icon: AnnouncementIcon, path: '/masters/ticketing/serviceComplaint' },
         { name: 'Raise Ticket', icon: CreateIcon, path: '/tickets/create-tickets' },
+        { name: 'Ticket Escalation', icon: ConfirmationNumberIcon, path: '/tickets/create-tickets' },
+        { name: 'Ticket Status', icon: LocalActivityIcon, path: '/tickets/all-tickets' },
       ],
     }
   ];
@@ -304,11 +312,31 @@ export default function MasterPage() {
               },
             }}
           >
-            <StyledTabs value={activeTab} onChange={handleTabChange} variant="scrollable" scrollButtons="auto">
+            {/* <StyledTabs value={activeTab} onChange={handleTabChange} variant="scrollable" scrollButtons="false">
               {menuData.map((tab, index) => (
                 <StyledTab key={tab.id} label={tab.name} />
               ))}
-            </StyledTabs>
+            </StyledTabs> */}
+              <StyledTabs
+          value={activeTab}
+          onChange={handleTabChange}
+          variant="scrollable"                  
+          TabIndicatorProps={{ style: { display: 'none' } }}
+          sx={{
+            '& .MuiTabs-flexContainer': {
+              flexWrap: 'wrap',
+              gap: '2px',
+              paddingInline: '2px'                      
+            },
+            '& .MuiTabs-scroller': {
+              overflow: 'visible !important',
+            },
+          }}
+        >
+          {menuData.map((tab, index) => (
+            <StyledTab key={tab.id} label={tab.name} />
+          ))}
+        </StyledTabs>
           </Box>
 
           {menuData.map((tab, index) => (
