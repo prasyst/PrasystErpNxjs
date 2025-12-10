@@ -1,5 +1,4 @@
 // styles/inputStyles.js
-
 export const inputStyle = {
   '& .MuiInputBase-root': {
     height: 44,

@@ -11,6 +11,7 @@ import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import BusinessIcon from '@mui/icons-material/Business';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
+import WorkIcon from '@mui/icons-material/Work';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import PhoneIphoneIcon from '@mui/icons-material/PhoneIphone';
 import HailIcon from '@mui/icons-material/Hail';
@@ -54,6 +55,18 @@ const Login = () => {
   const [colorIndex, setColorIndex] = useState(0);
   const [loading, setLoading] = useState(false);
   const colors = ['#3A7BD5', '#FF5733', '#28B463', '#8E44AD', '#F39C12', '#1ce6a9ff'];
+  const [loginMode, setLoginMode] = useState('username');
+
+  useEffect(() => {
+    if (role === 'user') {
+      setLoginMode('username');
+    } else {
+      setLoginMode('mobile');
+    }
+    setForm({ username: '', password: '', mobile: '' });
+    setOtpSent(false);
+    setOtp('');
+  }, [role]);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -70,7 +83,7 @@ const Login = () => {
     fontSize: '1rem',
     fontWeight: 600,
     textTransform: 'none',
-    py: 1.5,
+    py: 1,
     boxShadow: '0 4px 12px rgba(58, 123, 213, 0.3)',
     '&:hover': {
       bgcolor: '#2A5DA8',
@@ -81,11 +94,6 @@ const Login = () => {
   };
 
   useEffect(() => {
-    // const isAuthenticated = localStorage.getItem('authenticated') === 'true';
-    // if (isAuthenticated) {
-    //   router.push('/dashboard', { replace: true });
-    // }
-
     const expireTime = localStorage.getItem('authExpire');
     if (!expireTime || Date.now() > Number(expireTime) || localStorage.getItem('authenticated') !== 'true') {
       localStorage.removeItem('authenticated');
@@ -114,9 +122,12 @@ const Login = () => {
     }
   };
 
+  // const handleRoleSelect = (value) => {
+  //   setRole(value);
+  //   setForm({ username: '', password: '', mobile: '' });
+  // };
   const handleRoleSelect = (value) => {
     setRole(value);
-    setForm({ username: '', password: '', mobile: '' });
   };
 
   const canSendOtp = (mobile) => {
@@ -214,12 +225,13 @@ const Login = () => {
 
       if (loginResponse.data.STATUS === 0) {
         const loginDetails = loginResponse.data.DATA[0];
+        console.log("logindetails",loginDetails);
         const USER_NAME = loginDetails.USER_NAME;
-            const USER_ID = loginDetails.USER_ID; 
+        const USER_ID = loginDetails.USER_ID;
         const currentYear = new Date().getFullYear();
         const lastTwoDigits = currentYear.toString().slice(-2);
         localStorage.setItem('USER_NAME', USER_NAME);
-         localStorage.setItem('USER_ID', USER_ID); 
+        localStorage.setItem('USER_ID', USER_ID);
         localStorage.setItem('USER_NAME', USER_NAME);
         localStorage.setItem('FCYR_KEY', lastTwoDigits);
         localStorage.setItem('authenticated', 'true');
@@ -389,7 +401,7 @@ const Login = () => {
                 </Box>
 
                 {/* Role Selection */}
-                <Box sx={{ p: 2, bgcolor: '#ffffff', borderBottom: '1px solid #e0e0e0' }}>
+                <Box sx={{ p: 1, bgcolor: '#ffffff', borderBottom: '1px solid #e0e0e0' }}>
                   <FormControl component="fieldset" fullWidth>
                     <FormLabel
                       component="legend"
@@ -423,60 +435,202 @@ const Login = () => {
                 </Box>
 
                 {/* Form Fields */}
-                {['user', 'salesman', 'broker'].includes(role) && (
+                {/* {['user', 'salesman', 'broker'].includes(role) && ( */}
+
+                {role === 'user' && (
                   <>
-                    <TextField
-                      label="Username"
-                      variant="outlined"
-                      name="username"
-                      value={form.username}
-                      onChange={handleChange}
-                      fullWidth
-                      size="medium"
-                      className='loginInput'
-                      sx={{
-                        mb: 2,
-                        '& .MuiOutlinedInput-root': {
-                          borderRadius: 2,
-                          backgroundColor: '#f9f9f9',
+                    <Box sx={{
+                      display: 'flex', gap: 0.1,  justifyContent: 'center', alignItems: 'center',   height: '18px', 
+                      bgcolor: '#f5f5f5', p: 0, border: '1px solid #ddd', width: '75%', maxWidth: '300px',    margin: '0 auto', 
+                       height: '10%', boxShadow: '0 1px 2px rgba(0,0,0,0.1)', display: 'flex', borderRadius: 2,
+                    }}>
+                      <FormControlLabel
+                        control={
+                          <Radio
+                            checked={loginMode === 'username'}
+                            onChange={() => setLoginMode('username')}
+                            value="username"
+                            color="primary"
+                          />
                         }
-                      }}
-                    />
-                    <TextField
-                      label="Password"
-                      type={showPwd ? 'text' : 'password'}
-                      variant="outlined"
-                      name="password"
-                      value={form.password}
-                      onChange={handleChange}
-                      fullWidth
-                      size="medium"
-                      InputProps={{
-                        endAdornment: (
-                          <InputAdornment position="end">
-                            <IconButton
-                              aria-label={showPwd ? "Hide password" : "Show password"}
-                              onClick={handleClickShowPassword}
-                              edge="end"
-                              sx={{ color: '#777' }}
+                        label="Username"
+                        sx={{
+                          '& .MuiFormControlLabel-label': {
+                            fontSize: '0.8rem', // Match font size of role selection
+                          },
+                        }}
+                      />
+                      <FormControlLabel
+                        control={
+                          <Radio
+                            checked={loginMode === 'mobile'}
+                            onChange={() => setLoginMode('mobile')}
+                            value="mobile"
+                            color="primary"
+                          />
+                        }
+                        label="Mobile"
+                        sx={{
+                          '& .MuiFormControlLabel-label': {
+                            fontSize: '0.8rem', // Match font size of role selection
+                          },
+                        }}
+                      />
+                    </Box>
+
+                    {loginMode === 'username' && (
+                      <>
+                        <TextField
+                          label="Username"
+                          variant="outlined"
+                          name="username"
+                          value={form.username}
+                          onChange={handleChange}
+                          fullWidth
+                          size="medium"
+                          className='loginInput'
+                          sx={{
+                            mb: 1,mt:1,
+                            '& .MuiOutlinedInput-root': {
+                              borderRadius: 2,
+                              backgroundColor: '#f9f9f9',
+                            }
+                          }}
+                        />
+                        <TextField
+                          label="Password"
+                          type={showPwd ? 'text' : 'password'}
+                          variant="outlined"
+                          name="password"
+                          value={form.password}
+                          onChange={handleChange}
+                          fullWidth
+                          size="medium"
+                          InputProps={{
+                            endAdornment: (
+                              <InputAdornment position="end">
+                                <IconButton
+                                  aria-label={showPwd ? "Hide password" : "Show password"}
+                                  onClick={handleClickShowPassword}
+                                  edge="end"
+                                  sx={{ color: '#777' }}
+                                >
+                                  {showPwd ? <Visibility /> : <VisibilityOff />}
+                                </IconButton>
+                              </InputAdornment>
+                            ),
+                          }}
+                          sx={{
+                            mb: 1,
+                            '& .MuiOutlinedInput-root': {
+                              borderRadius: 2,
+                              backgroundColor: '#f9f9f9',
+                            }
+                          }}
+                        />
+                      </>
+                    )}
+                    {loginMode === 'mobile' && (
+                      <>
+                        <TextField
+                          label="Mobile Number"
+                          variant="outlined"
+                          name="mobile"
+                          value={form.mobile}
+                          onChange={handleChange}
+                          fullWidth
+                          size="medium"
+                          InputProps={{
+                            startAdornment: (
+                              <InputAdornment position="start">
+                                <PhoneIphoneIcon sx={{ color: '#777' }} />
+                              </InputAdornment>
+                            ),
+                          }}
+                          sx={{
+                            mb: 1,mt:1,
+                            '& .MuiOutlinedInput-root': {
+                              borderRadius: 2,
+                              backgroundColor: '#f9f9f9',
+                            },
+                          }}
+                        />
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2, flexDirection: isMobile ? 'column' : 'row' }}>
+                          {form.mobile.length === 10 && !otpSent && (
+                            <Button
+                              variant="contained"
+                              // onClick={handleGenerateOtpforUser}
+                              fullWidth={isMobile}
+                              sx={{
+                                bgcolor: '#3A7BD5',
+                                color: '#fff',
+                                borderRadius: 2,
+                                fontWeight: 600,
+                                textTransform: 'none',
+                                py: 1,
+                                boxShadow: '0 4px 8px rgba(58, 123, 213, 0.3)',
+                                '&:hover': {
+                                  bgcolor: '#2A5DA8',
+                                  boxShadow: '0 6px 12px rgba(58, 123, 213, 0.4)',
+                                },
+                                transition: 'all 0.3s ease',
+                              }}
                             >
-                              {showPwd ? <Visibility /> : <VisibilityOff />}
-                            </IconButton>
-                          </InputAdornment>
-                        ),
-                      }}
-                      sx={{
-                        mb: 2,
-                        '& .MuiOutlinedInput-root': {
-                          borderRadius: 2,
-                          backgroundColor: '#f9f9f9',
-                        }
-                      }}
-                    />
+                              Send OTP
+                            </Button>
+                          )}
+
+                          {otpSent && (
+                            <>
+                              <TextField
+                                label="Enter OTP"
+                                variant="outlined"
+                                name="otp"
+                                value={otp}
+                                // onChange={handleChange}
+                                size="medium"
+                                type="tel"
+                                sx={{
+                                  flex: 1,
+                                  '& .MuiOutlinedInput-root': {
+                                    borderRadius: 2,
+                                    backgroundColor: '#f9f9f9',
+                                  },
+                                }}
+                              />
+                              <Button
+                                variant="contained"
+                                // onClick={handleVerifyOtp}
+                                sx={{
+                                  bgcolor: '#00B761',
+                                  color: '#fff',
+                                  fontWeight: 600,
+                                  borderRadius: 2,
+                                  textTransform: 'none',
+                                  py: 1,
+                                  px: 2,
+                                  boxShadow: '0 4px 8px rgba(0, 183, 97, 0.3)',
+                                  '&:hover': {
+                                    bgcolor: '#009650',
+                                    boxShadow: '0 6px 12px rgba(0, 183, 97, 0.4)',
+                                  },
+                                  transition: 'all 0.3s ease',
+                                }}
+                              >
+                                Verify
+                              </Button>
+                            </>
+                          )}
+                        </Box>
+
+                      </>
+                    )}
                   </>
                 )}
 
-                {role === 'customer' && (
+                {/* ===================== */}
+                {/* {role === 'customer' && ( */}
+                {['customer', 'salesman', 'broker'].includes(role) && (
                   <>
                     <TextField
                       label="Mobile Number"
@@ -494,7 +648,7 @@ const Login = () => {
                         ),
                       }}
                       sx={{
-                        mb: 2,
+                        mb: 1,
                         '& .MuiOutlinedInput-root': {
                           borderRadius: 2,
                           backgroundColor: '#f9f9f9',
@@ -514,7 +668,7 @@ const Login = () => {
                             borderRadius: 2,
                             fontWeight: 600,
                             textTransform: 'none',
-                            py: 1.2,
+                            py: 1,
                             boxShadow: '0 4px 8px rgba(58, 123, 213, 0.3)',
                             '&:hover': {
                               bgcolor: '#2A5DA8',
@@ -554,7 +708,7 @@ const Login = () => {
                               fontWeight: 600,
                               borderRadius: 2,
                               textTransform: 'none',
-                              py: 1.2,
+                              py: 1,
                               px: 2,
                               boxShadow: '0 4px 8px rgba(0, 183, 97, 0.3)',
                               '&:hover': {
@@ -580,7 +734,7 @@ const Login = () => {
                   fullWidth
                   size="medium"
                   sx={{
-                    mb: 2,
+                    mb: 1,
                     '& .MuiOutlinedInput-root': {
                       borderRadius: 2,
                       backgroundColor: '#f9f9f9',
@@ -628,7 +782,7 @@ const Login = () => {
                       fontSize: '1rem',
                       fontWeight: 600,
                       textTransform: 'none',
-                      py: 1.5,
+                      py: 1,
                       '&:hover': {
                         borderColor: '#999',
                         color: '#a00303ff',
@@ -675,11 +829,11 @@ const Login = () => {
 
                     <Divider sx={{ bgcolor: 'rgba(255,255,255,0.2)', my: 1 }} />
 
-                    <Typography variant="body2" fontWeight="600" sx={{ mb: 1 }}>
+                    <Typography variant="body2" fontWeight="600" sx={{ mb: 1.5 }}>
                       Select Your Role:
                     </Typography>
 
-                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                       {roles.map((r) => (
                         <Card
                           key={r.value}
@@ -732,7 +886,7 @@ const Login = () => {
                     justifyContent: 'center',
                   }}
                 >
-                  <Box textAlign="center" sx={{ mb: 1.5 }}>
+                  <Box textAlign="center" sx={{ mb: 1 }}>
                     <Image
                       src="/images/logo.jpg"
                       alt="Profile"
@@ -798,7 +952,8 @@ const Login = () => {
                     </Box>
                   </Box>
 
-                  {['user', 'salesman', 'broker'].includes(role) && (
+                  {/* {['user', 'salesman', 'broker'].includes(role) && ( */}
+                  {/* {role === 'user' && (
                     <>
                       <TextField
                         label="Username"
@@ -854,9 +1009,193 @@ const Login = () => {
                         }}
                       />
                     </>
+                  )} */}
+                  {role === 'user' && (
+                    <>
+                      <Box sx={{ display: 'flex', gap: 0.1, mb: 0.3 }}>
+                        <FormControlLabel
+                          control={
+                            <Radio
+                              checked={loginMode === 'username'}
+                              onChange={() => setLoginMode('username')}
+                              value="username"
+                              color="primary"
+                            />
+                          }
+                          label="Username"
+                        />
+                        <FormControlLabel
+                          control={
+                            <Radio
+                              checked={loginMode === 'mobile'}
+                              onChange={() => setLoginMode('mobile')}
+                              value="mobile"
+                              color="primary"
+                            />
+                          }
+                          label="Mobile"
+                        />
+                      </Box>
+
+                      {loginMode === 'username' && (
+                        <>
+                          <TextField
+                            label="Username"
+                            variant="outlined"
+                            name="username"
+                            value={form.username}
+                            onChange={handleChange}
+                            fullWidth
+                            size="medium"
+                            className="loginInput"
+                            sx={{
+                              mb: 1,
+                              '& .MuiOutlinedInput-root': {
+                                borderRadius: 2,
+                                backgroundColor: '#f9f9f9',
+                              },
+                            }}
+                          />
+                          <TextField
+                            label="Password"
+                            type={showPwd ? 'text' : 'password'}
+                            variant="outlined"
+                            name="password"
+                            value={form.password}
+                            onChange={handleChange}
+                            fullWidth
+                            size="medium"
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                handleLogin();
+                              }
+                            }}
+                            InputProps={{
+                              endAdornment: (
+                                <InputAdornment position="end">
+                                  <IconButton
+                                    aria-label={showPwd ? "Hide password" : "Show password"}
+                                    onClick={handleClickShowPassword}
+                                    edge="end"
+                                    sx={{ color: '#777' }}
+                                  >
+                                    {showPwd ? <Visibility /> : <VisibilityOff />}
+                                  </IconButton>
+                                </InputAdornment>
+                              ),
+                            }}
+                            sx={{
+                              mb: 1,
+                              '& .MuiOutlinedInput-root': {
+                                borderRadius: 2,
+                                backgroundColor: '#f9f9f9',
+                              },
+                            }}
+                          />
+                        </>
+                      )}
+
+                      {loginMode === 'mobile' && (
+                        <>
+                          <TextField
+                            label="Mobile Number"
+                            variant="outlined"
+                            name="mobile"
+                            value={form.mobile}
+                            onChange={handleChange}
+                            fullWidth
+                            size="medium"
+                            InputProps={{
+                              startAdornment: (
+                                <InputAdornment position="start">
+                                  <PhoneIphoneIcon sx={{ color: '#777' }} />
+                                </InputAdornment>
+                              ),
+                            }}
+                            sx={{
+                              mb: 2,
+                              '& .MuiOutlinedInput-root': {
+                                borderRadius: 2,
+                                backgroundColor: '#f9f9f9',
+                              },
+                            }}
+                          />
+
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2, flexDirection: isMobile ? 'column' : 'row' }}>
+                            {form.mobile.length === 10 && !otpSent && (
+                              <Button
+                                variant="contained"
+                                // onClick={handleGenerateOtpforUser}
+                                fullWidth={isMobile}
+                                sx={{
+                                  bgcolor: '#3A7BD5',
+                                  color: '#fff',
+                                  borderRadius: 2,
+                                  fontWeight: 600,
+                                  textTransform: 'none',
+                                  py: 1,
+                                  boxShadow: '0 4px 8px rgba(58, 123, 213, 0.3)',
+                                  '&:hover': {
+                                    bgcolor: '#2A5DA8',
+                                    boxShadow: '0 6px 12px rgba(58, 123, 213, 0.4)',
+                                  },
+                                  transition: 'all 0.3s ease',
+                                }}
+                              >
+                                Send OTP
+                              </Button>
+                            )}
+
+                            {otpSent && (
+                              <>
+                                <TextField
+                                  label="Enter OTP"
+                                  variant="outlined"
+                                  name="otp"
+                                  value={otp}
+                                  // onChange={handleChange}
+                                  size="medium"
+                                  type="tel"
+                                  sx={{
+                                    flex: 1,
+                                    '& .MuiOutlinedInput-root': {
+                                      borderRadius: 2,
+                                      backgroundColor: '#f9f9f9',
+                                    },
+                                  }}
+                                />
+                                <Button
+                                  variant="contained"
+                                  // onClick={handleVerifyOtp}
+                                  sx={{
+                                    bgcolor: '#00B761',
+                                    color: '#fff',
+                                    fontWeight: 600,
+                                    borderRadius: 2,
+                                    textTransform: 'none',
+                                    py: 1,
+                                    px: 2,
+                                    boxShadow: '0 4px 8px rgba(0, 183, 97, 0.3)',
+                                    '&:hover': {
+                                      bgcolor: '#009650',
+                                      boxShadow: '0 6px 12px rgba(0, 183, 97, 0.4)',
+                                    },
+                                    transition: 'all 0.3s ease',
+                                  }}
+                                >
+                                  Verify
+                                </Button>
+                              </>
+                            )}
+                          </Box>
+                        </>
+                      )}
+                    </>
                   )}
 
-                  {role === 'customer' && (
+
+                  {/* {role === 'customer' && ( */}
+                  {['customer', 'salesman', 'broker'].includes(role) && (
                     <>
                       <TextField
                         label="Mobile Number"
@@ -874,7 +1213,7 @@ const Login = () => {
                           ),
                         }}
                         sx={{
-                          mb: 2,
+                          mb: 1,
                           '& .MuiOutlinedInput-root': {
                             borderRadius: 2,
                             backgroundColor: '#f9f9f9',
@@ -882,7 +1221,7 @@ const Login = () => {
                         }}
                       />
 
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2, flexDirection: isMobile ? 'column' : 'row' }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1, flexDirection: isMobile ? 'column' : 'row' }}>
                         {form.mobile.length === 10 && !otpSent && (
                           <Button
                             variant="contained"
@@ -894,7 +1233,7 @@ const Login = () => {
                               borderRadius: 2,
                               fontWeight: 600,
                               textTransform: 'none',
-                              py: 1.2,
+                              py: 1,
                               boxShadow: '0 4px 8px rgba(58, 123, 213, 0.3)',
                               '&:hover': {
                                 bgcolor: '#2A5DA8',
@@ -934,7 +1273,7 @@ const Login = () => {
                                 fontWeight: 600,
                                 borderRadius: 2,
                                 textTransform: 'none',
-                                py: 1.2,
+                                py: 1,
                                 px: 2,
                                 boxShadow: '0 4px 8px rgba(0, 183, 97, 0.3)',
                                 '&:hover': {
@@ -961,7 +1300,7 @@ const Login = () => {
                     fullWidth
                     size="medium"
                     sx={{
-                      mb: 2,
+                      mb: 1,
                       '& .MuiOutlinedInput-root': {
                         borderRadius: 2,
                         backgroundColor: '#f9f9f9',
@@ -1010,7 +1349,7 @@ const Login = () => {
                         fontSize: '1rem',
                         fontWeight: 600,
                         textTransform: 'none',
-                        py: 1.5,
+                        py: 1,
                         '&:hover': {
                           borderColor: '#999',
                           color: '#a00303ff',
@@ -1030,7 +1369,6 @@ const Login = () => {
       ) : (
         <CoBrModal open={modalOpen} onClose={resetToLogin} />
       )}
-
       <Snackbar
         open={error}
         onClose={handleCloseSnackbar}
