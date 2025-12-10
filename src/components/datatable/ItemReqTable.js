@@ -758,6 +758,7 @@ const onGridReady = (params) => {
     </div>
   );
 });
+ItemReqTable.displayName = 'ItemReqTable';
 
 export { DateFilterComponent, getCustomDateFilter };
 export default ItemReqTable;
