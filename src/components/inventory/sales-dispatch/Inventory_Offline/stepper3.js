@@ -549,7 +549,7 @@ const fetchGSTRates = useCallback(async () => {
 
     console.log('Generated unique ORDBKGSTLIST with proper GST_TYPE:', ordbkGstList);
     console.log('Updated top table data with GST rows:', updatedTopTableData);
-    showSnackbar('GST calculated successfully with discount applied!');
+    // showSnackbar('GST calculated successfully with discount applied!');
   } catch (error) {
     console.error('Error fetching GST rates:', error);
     showSnackbar('Error calculating GST', 'error');

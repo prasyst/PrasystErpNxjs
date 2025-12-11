@@ -1187,7 +1187,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
     setSizeDetailsData([]);
     setDataSource(null);
 
-    showSnackbar("Item added successfully!");
+    // showSnackbar("Item added successfully!");
   };
 
   const handleEditItem = () => {
@@ -1273,7 +1273,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
     
     setIsEditingSize(false);
     setIsSizeDetailsLoaded(false);
-    showSnackbar("Changes saved successfully!");
+    // showSnackbar("Changes saved successfully!");
   } else {
     // ENTERING EDIT MODE: Populate form fields with selected row data
     const selectedRowData = tableData.find(row => row.id === selectedRow);
@@ -1312,7 +1312,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
         fetchLotNoData(selectedRowData.FGSTYLE_ID);
       }
       
-      showSnackbar('Edit mode enabled for selected item. Make changes and click Confirm.');
+      // showSnackbar('Edit mode enabled for selected item. Make changes and click Confirm.');
     }
   }
 };
@@ -2215,21 +2215,21 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
             Cancel
           </Button> */}
           <Button 
-            variant="outlined" 
+            variant="contained" 
             color="primary" 
             onClick={onPrev}
-            // disabled={isAddingNew || isEditingSize}
-            sx={{ 
+            disabled={!hasRecords || isAddingNew || isEditingSize}
+             sx={{ 
               minWidth: '60px', 
               height: '36px',
               backgroundColor: '#39ace2',
-              color: 'white',
               '&:disabled': {
-                borderColor: '#cccccc',
+                backgroundColor: '#cccccc',
                 color: '#666666'
               }
             }}
           >
+          
             Previous
           </Button>
 
@@ -2237,7 +2237,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
             variant="contained" 
             color="primary" 
             onClick={onNext}
-            // disabled={!hasRecords || isAddingNew || isEditingSize}
+            disabled={!hasRecords || isAddingNew || isEditingSize}
             sx={{ 
               minWidth: '60px', 
               height: '36px',

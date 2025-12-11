@@ -1,43 +1,12 @@
-// 'use client'
-// import { useState } from 'react';
-// import Sidebar from './Sidebar';
-// import Header from './Header';
-
-// export default function DashboardLayout({ children }) {
-//   const [isCollapsed, setIsCollapsed] = useState(true);
-
-//   return (
-//     <div className="flex flex-col h-screen">
-//       <Header isSidebarCollapsed={isCollapsed} />
-//       <div className="flex flex-1 overflow-hidden">
-//         <Sidebar isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
-//         <main 
-//           className="flex-1 overflow-auto p-4 transition-all duration-300"
-//           style={{
-//             marginLeft: isCollapsed ? '80px' : '250px',
-//             marginTop: '60px',
-//             width: isCollapsed ? 'calc(100vw - 80px)' : 'calc(100vw - 250px)',
-//             maxWidth: isCollapsed ? 'calc(100vw - 80px)' : 'calc(100vw - 250px)'
-//           }}
-//         >
-//           {children}
-//         </main>
-//       </div>
-//     </div>
-//   );
-// }
-
-
 'use client'
 import { useState, useEffect } from 'react';
 import Sidebar from './Sidebar';
 import Header from './Header';
 
 export default function DashboardLayout({ children }) {
-  const [isCollapsed, setIsCollapsed] = useState(true);
+  const [isCollapsed, setIsCollapsed] = useState(false); // Changed from true to false
   const [isMobile, setIsMobile] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-
 
   useEffect(() => {
     const checkDevice = () => {
@@ -46,6 +15,8 @@ export default function DashboardLayout({ children }) {
       if (mobile) {
         setIsCollapsed(true);
         setIsSidebarOpen(false);
+      } else {
+        setIsCollapsed(false); // Desktop pe expanded rahega
       }
     };
 
