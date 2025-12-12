@@ -26,8 +26,8 @@ const ItemRequisitionDialog = ({
     cobrId,
     fcyrKey,
     tktNo,
-    userId,
-    userName,
+    userId,empKey,
+    userName,empName,
     attachments,
     // rowsSecondTable: initialRows,
     onTicketUpdated, seriesData
@@ -289,9 +289,9 @@ const ItemRequisitionDialog = ({
                 COBR_ID: cobrId,
                 TktKey: isUpdate ? existingTktKey : generatedTktKey,
                 TktNo: isUpdate ? existingTktKey.substring(4) : newTktNo,
-                RaiseBy_ID: parseInt(userId),
+                RaiseBy_ID: parseInt(userId) || empKey,
                 MobileNo: "",
-                RaiseByNm: userName,
+                RaiseByNm: userName || empName,
                 TktDate: dayjs().format("YYYY-MM-DDTHH:mm:ss"),
                 TktTime: dayjs().format("HH:mm"),
                 TktFor: ticketFor === "M" ? "M" : "C", // M or C
@@ -318,8 +318,8 @@ const ItemRequisitionDialog = ({
                 TktImage: formData.TktImage,
                 ImgName: formData.ImgName,
                 ...(isUpdate
-                    ? { UpdatedBy: parseInt(userId) }
-                    : { CreatedBy: parseInt(userId) }
+                    ? { UpdatedBy: parseInt(userId) || empKey }
+                    : { CreatedBy: parseInt(userId) || empKey}
                 ),
                 trnTktDtlEntities: detailPayload,
 

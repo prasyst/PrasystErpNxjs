@@ -2,14 +2,15 @@
 import React, { useEffect, useState } from 'react';
 import {
   Box, Paper, Typography, TextField, Button, Avatar, useTheme, Card, MenuItem, Grow, Snackbar, InputAdornment, IconButton, useMediaQuery,
-  Modal, Fade, Divider, Radio, RadioGroup, FormControlLabel, FormControl, FormLabel,
-  Grid,
+  Modal, Fade, Divider, Radio, RadioGroup, FormControlLabel, FormControl, FormLabel, Grid, Dialog, DialogTitle, DialogContent, DialogActions,
+  CircularProgress,
 } from '@mui/material';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import ErrorIcon from '@mui/icons-material/Error';
 import PersonIcon from '@mui/icons-material/Person';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import BusinessIcon from '@mui/icons-material/Business';
-import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
 import WorkIcon from '@mui/icons-material/Work';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
@@ -20,9 +21,10 @@ import { toast, ToastContainer } from 'react-toastify';
 import axiosInstance from '@/lib/axios';
 import CoBrModal from './CoBrModal';
 import Image from 'next/image';
-import logo from '../../../public/images/logo.jpg'
-import logo2 from '../../../public/images/download.png'
+// import logo from '../../../public/images/logo.jpg'
+// import logo2 from '../../../public/images/download.png'
 import WhatsAppIcon from '@mui/icons-material/WhatsApp';
+import { buttonStyles } from '../../../public/styles/buttonStyles';
 
 const roles = [
   { label: 'User', value: 'user', icon: <PersonIcon /> },
@@ -35,8 +37,9 @@ const Login = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [role, setRole] = useState('user');
-  const [form, setForm] = useState({ username: '', password: '', mobile: '' });
+  const [form, setForm] = useState({ username: '', password: '', mobile: '', });
   const [showPwd, setShowPwd] = useState(false);
+  const [showNewPwd, setShowNewPwd] = useState(false);
   const router = useRouter();
   const [error, setError] = useState(false);
   const [generatedOtp, setGeneratedOtp] = useState('');
@@ -56,7 +59,56 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const colors = ['#3A7BD5', '#FF5733', '#28B463', '#8E44AD', '#F39C12', '#1ce6a9ff'];
   const [loginMode, setLoginMode] = useState('username');
-
+  const [mobileValid, setMobileValid] = useState(null);
+  const [mobileChecking, setMobileChecking] = useState(false);
+  const [mobileMessage, setMobileMessage] = useState('');
+  const [empKey, setEmpKey] = useState('');
+  const [isNewUser, setIsNewUser] = useState(false);
+  const [createPwdOpen, setCreatePwdOpen] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showCreatePwdLink, setShowCreatePwdLink] = useState(false);
+  const [empNameForModal, setEmpNameForModal] = useState('');
+  const [mobilePassword, setMobilePassword] = useState('');
+  useEffect(() => {
+    const checkMobile = async () => {
+      if (form.mobile.length === 10 && role === 'user' && loginMode === 'mobile') {
+        setMobileChecking(true);
+        setMobileMessage('');
+        setShowCreatePwdLink(false);
+        try {
+          const res = await axiosInstance.post('Employee/EmployeeLogin', {
+            MOBILE_NO: form.mobile,
+            EmpPswd: "",
+            FLAG: "",
+            EMP_KEY: ""
+          });
+          if (res.data.STATUS === 0) {
+            setMobileValid('valid');
+            setEmpKey(res.data.DATA[0].EMP_KEY || '');
+            setIsNewUser(res.data.FLAG === 'NewRe');
+            setMobileMessage(res.data.FLAG === 'NewRe' ? 'New user detected' : '');
+          } else {
+            setMobileValid('invalid');
+            setMobileMessage('Mobile not registered');
+            setIsNewUser(false);
+          }
+        } catch (err) {
+          setMobileValid('invalid');
+          setMobileMessage('Server error');
+          setIsNewUser(false);
+        } finally {
+          setMobileChecking(false);
+        }
+      } else if (form.mobile.length < 10 && form.mobile.length > 0) {
+        setMobileValid(null);
+        setMobileMessage('');
+        setShowCreatePwdLink(false);
+      }
+    };
+    const timer = setTimeout(checkMobile, 800);
+    return () => clearTimeout(timer);
+  }, [form.mobile, role, loginMode]);
   useEffect(() => {
     if (role === 'user') {
       setLoginMode('username');
@@ -64,35 +116,19 @@ const Login = () => {
       setLoginMode('mobile');
     }
     setForm({ username: '', password: '', mobile: '' });
+    setMobilePassword('');
     setOtpSent(false);
     setOtp('');
+    setShowCreatePwdLink(false);
+    // Optional: log the states to verify clearing
+    console.log("Form reset:", form);
   }, [role]);
-
   useEffect(() => {
     const interval = setInterval(() => {
       setColorIndex((prevIndex) => (prevIndex + 1) % colors.length);
     }, 1000);
-
     return () => clearInterval(interval);
   }, []);
-
-  const buttonStyles = {
-    bgcolor: '#3A7BD5',
-    color: '#fff',
-    borderRadius: '12px',
-    fontSize: '1rem',
-    fontWeight: 600,
-    textTransform: 'none',
-    py: 1,
-    boxShadow: '0 4px 12px rgba(58, 123, 213, 0.3)',
-    '&:hover': {
-      bgcolor: '#2A5DA8',
-      boxShadow: '0 6px 16px rgba(58, 123, 213, 0.4)',
-      transform: 'translateY(-2px)',
-    },
-    transition: 'all 0.3s ease',
-  };
-
   useEffect(() => {
     const expireTime = localStorage.getItem('authExpire');
     if (!expireTime || Date.now() > Number(expireTime) || localStorage.getItem('authenticated') !== 'true') {
@@ -102,7 +138,6 @@ const Login = () => {
       router.push('/dashboard', { replace: true });
     }
   }, [router]);
-
   const handleChange = (e) => {
     const { name, value } = e.target;
     if (name === 'mobile') {
@@ -112,24 +147,22 @@ const Login = () => {
         if (numericValue !== form.mobile) {
           setOtpSent(false);
           setOtp('');
+          setShowCreatePwdLink(false);
         }
       }
     } else if (name === 'otp') {
       const numericValue = value.replace(/[^0-9]/g, '');
       setOtp(numericValue);
-    } else {
+    } else if (name === 'password' && loginMode === 'mobile' && role === 'user') {
+      setMobilePassword(value);
+    }
+    else {
       setForm((prev) => ({ ...prev, [name]: value }));
     }
   };
-
-  // const handleRoleSelect = (value) => {
-  //   setRole(value);
-  //   setForm({ username: '', password: '', mobile: '' });
-  // };
   const handleRoleSelect = (value) => {
     setRole(value);
   };
-
   const canSendOtp = (mobile) => {
     if (!otpRequests[mobile]) return true;
     const lastRequestTime = otpRequests[mobile];
@@ -137,14 +170,17 @@ const Login = () => {
     const currentTime = new Date().getTime();
     return (currentTime - lastRequestTime) > fiveMinutes;
   };
-
+  const getOTPFlag = () => {
+    if (role === "salesman") return "S";
+    if (role === "broker") return "B";
+    return "C";
+  };
   const handleGenerateOtp = async () => {
     if (form.mobile.length !== 10) {
       setOtpError(true);
       toast.error('Please enter a 10-digit mobile number');
       return;
     }
-
     if (!canSendOtp(form.mobile)) {
       const lastRequestTime = otpRequests[form.mobile];
       const fiveMinutes = 5 * 60 * 1000;
@@ -156,7 +192,7 @@ const Login = () => {
     try {
       const response = await axiosInstance.post('USERS/SendSMSOTP', {
         SMS_MOBILENO: form.mobile,
-        FLAG: 'C',
+        FLAG: getOTPFlag(),
       });
       if (response.data.STATUS === 0) {
         const otpCode = response.data.DATA.OTP;
@@ -174,24 +210,21 @@ const Login = () => {
           ...prev,
           [form.mobile]: new Date().getTime()
         }));
-        toast.success('OTP sent successfully', { autoClose: 1000 });
+        toast.success(response.data.MESSAGE || 'OTP sent successfully', { autoClose: 1000 });
       } else {
         setOtpError(true);
-        toast.error('Mobile number is not registered', { autoClose: 1000 });
+        toast.error(response.data.MESSAGE || 'Mobile number is not registered', { autoClose: 1000 });
       }
     } catch (error) {
       setOtpError(true);
       toast.error('Error sending OTP. Please try again.', { autoClose: 1000 });
     }
   };
-
   const handleVerifyOtp = () => {
-    if (!otp || otp.length !== 4) {
-      toast.info("Please enter a valid 4-digit otp.");
+    if (!otp || otp.length !== 6) {
+      toast.info("Please enter a valid 6-digit otp.");
     }
-
     if (otp.trim() === generatedOtp) {
-      toast.success('OTP is verified. Login successfully.');
       const currentYear = new Date().getFullYear();
       const lastTwoDigits = currentYear.toString().slice(-2);
       localStorage.setItem('FCYR_KEY', lastTwoDigits);
@@ -203,7 +236,113 @@ const Login = () => {
       toast.error('Invalid OTP. Please try again.');
     }
   };
+  const openCreatePasswordModal = async () => {
+    try {
+      const res1 = await axiosInstance.post('Employee/EmployeeLogin', {
+        MOBILE_NO: form.mobile,
+        EmpPswd: "",
+        FLAG: "",
+        EMP_KEY: ""
+      });
+      if (res1.data.STATUS !== 0) {
+        toast.error("Could not fetch employee details");
+        return;
+      }
+      const fetchedEmpKey = res1.data.DATA[0].EMP_KEY || '';
+      setEmpKey(fetchedEmpKey);
 
+      // Step 2: Get employee name with FLAG = "NewRe"
+      const res2 = await axiosInstance.post('Employee/EmployeeLogin', {
+        MOBILE_NO: form.mobile,
+        EmpPswd: "",
+        FLAG: "NewRe",
+        EMP_KEY: fetchedEmpKey
+      });
+
+      if (res2.data.STATUS === 0 && res2.data.DATA && res2.data.DATA.length > 0) {
+        setEmpNameForModal(res2.data.DATA[0].EMP_NAME || 'Employee');
+      } else {
+        setEmpNameForModal('Employee');
+      }
+
+      setCreatePwdOpen(true);
+    } catch (err) {
+      console.error("Error loading employee data", err);
+      setCreatePwdOpen(false);
+    }
+  };
+  // Create new password
+  const handleCreatePassword = async () => {
+    if (newPassword !== confirmPassword) {
+      toast.error('Passwords do not match');
+      return;
+    }
+    if (newPassword.length < 4) {
+      toast.error('Password must be at least 4 characters');
+      return;
+    }
+
+    try {
+      const res = await axiosInstance.post('Employee/InsertEmployeeLogin', {
+        MOBILE_NO: form.mobile,
+        EmpPswd: newPassword,
+        FLAG: "",
+        EMP_KEY: empKey
+      });
+
+      if (res.data.STATUS === 0) {
+        toast.success('Password created successfully! You can now login.');
+        setCreatePwdOpen(false);
+        setNewPassword('');
+        setConfirmPassword('');
+        setShowCreatePwdLink(false);
+        setIsNewUser(false);
+      } else {
+        toast.error(res.data.MESSAGE || 'Failed to create password');
+      }
+    } catch (err) {
+      toast.error('Error creating password');
+    }
+  };
+  //  Login for User (Employee) with Mobile + Password
+  const handleEmployeeLogin = async () => {
+    if (!mobilePassword) return toast.error('Enter password');
+    try {
+      const encRes = await axiosInstance.post('USERS/Getpwdencryption', {
+        USER_PWD: mobilePassword
+      });
+      const encryptedPwd = encRes.data.DATA;
+      const loginRes = await axiosInstance.post('Employee/EmployeeLogin', {
+        MOBILE_NO: form.mobile,
+        EmpPswd: encryptedPwd,
+        FLAG: "Auth",
+        EMP_KEY: empKey
+      });
+      if (loginRes.data.STATUS === 0) {
+        const employeeData = loginRes.data.DATA[0];
+        localStorage.setItem('authenticated', 'true');
+        localStorage.setItem('userRole', 'employee');
+        localStorage.setItem('FCYR_KEY', currentYear.toString().slice(-2));
+        localStorage.setItem('EMP_KEY', employeeData.EMP_KEY);
+        localStorage.setItem('EMP_NAME', employeeData.EMP_NAME);
+        if (employeeData.EMP_KEY) {
+          localStorage.setItem('EMP_KEY', employeeData.EMP_KEY);
+        }
+        if (employeeData.EMP_NAME) {
+          localStorage.setItem('EMP_NAME', employeeData.EMP_NAME);
+        }
+        localStorage.removeItem('USER_ID');
+        setShowLogin(false);
+        setModalOpen(true);
+      } else if (loginRes.data.STATUS === 1 && loginRes.data.MESSAGE === "No Record Found") {
+        setShowCreatePwdLink(true);
+      } else {
+        toast.error(loginRes.data.MESSAGE || 'Invalid credentials');
+      }
+    } catch (err) {
+      toast.error('Login failed');
+    }
+  };
   const handleLogin = async () => {
     if (role !== 'customer') {
       if (!form.username.trim() || !form.password.trim()) {
@@ -212,7 +351,6 @@ const Login = () => {
       }
     }
     setLoading(true);
-
     try {
       const encryptionResponse = await axiosInstance.post('USERS/Getpwdencryption', {
         USER_PWD: form.password,
@@ -222,10 +360,9 @@ const Login = () => {
         USER_NAME: form.username,
         USER_PWD: encryptedPassword,
       });
-
       if (loginResponse.data.STATUS === 0) {
         const loginDetails = loginResponse.data.DATA[0];
-        console.log("logindetails",loginDetails);
+        console.log("logindetails", loginDetails);
         const USER_NAME = loginDetails.USER_NAME;
         const USER_ID = loginDetails.USER_ID;
         const currentYear = new Date().getFullYear();
@@ -235,7 +372,10 @@ const Login = () => {
         localStorage.setItem('USER_NAME', USER_NAME);
         localStorage.setItem('FCYR_KEY', lastTwoDigits);
         localStorage.setItem('authenticated', 'true');
-        localStorage.setItem('userRole', role);
+        // localStorage.setItem('userRole', role);
+        localStorage.setItem('userRole', 'user');
+        localStorage.removeItem('EMP_KEY');
+        localStorage.removeItem('EMP_NAME');
         setShowLogin(false);
         setModalOpen(true);
       } else {
@@ -247,15 +387,15 @@ const Login = () => {
       setLoading(false);
     }
   };
-
   const handleCloseSnackbar = () => {
     setError(false);
   };
-
   const handleClickShowPassword = () => {
     setShowPwd(!showPwd);
   };
-
+  const handleClickShowNewPassword = () => {
+    setShowNewPwd(!showNewPwd);
+  };
   const resetToLogin = () => {
     setShowLogin(true);
     setModalOpen(false);
@@ -263,8 +403,8 @@ const Login = () => {
     setRole('user');
     setOtpSent(false);
     setGeneratedOtp('');
+    setMobilePassword('');
   };
-
   return (
     <Box
       sx={{
@@ -313,7 +453,6 @@ const Login = () => {
         pauseOnHover
         theme="colored"
       />
-
       {showLogin ? (
         <Fade in={showLogin} timeout={800}>
           <Paper
@@ -399,7 +538,6 @@ const Login = () => {
                     </Box>
                   </Box>
                 </Box>
-
                 {/* Role Selection */}
                 <Box sx={{ p: 1, bgcolor: '#ffffff', borderBottom: '1px solid #e0e0e0' }}>
                   <FormControl component="fieldset" fullWidth>
@@ -433,16 +571,13 @@ const Login = () => {
                     </RadioGroup>
                   </FormControl>
                 </Box>
-
                 {/* Form Fields */}
-                {/* {['user', 'salesman', 'broker'].includes(role) && ( */}
-
                 {role === 'user' && (
                   <>
                     <Box sx={{
-                      display: 'flex', gap: 0.1,  justifyContent: 'center', alignItems: 'center',   height: '18px', 
-                      bgcolor: '#f5f5f5', p: 0, border: '1px solid #ddd', width: '75%', maxWidth: '300px',    margin: '0 auto', 
-                       height: '10%', boxShadow: '0 1px 2px rgba(0,0,0,0.1)', display: 'flex', borderRadius: 2,
+                      display: 'flex', gap: 0.1, justifyContent: 'center', alignItems: 'center', height: '18px',
+                      bgcolor: '#f5f5f5', p: 0, border: '1px solid #ddd', width: '75%', maxWidth: '300px', margin: '0 auto',
+                      height: '10%', boxShadow: '0 1px 2px rgba(0,0,0,0.1)', display: 'flex', borderRadius: 2,
                     }}>
                       <FormControlLabel
                         control={
@@ -485,12 +620,18 @@ const Login = () => {
                           variant="outlined"
                           name="username"
                           value={form.username}
-                          onChange={handleChange}
+                          // onChange={handleChange}
+                          onChange={(e) => {
+                            const input = e.target.value;
+                            if (/^[a-zA-Z]+$/.test(input) || input === '') {
+                              handleChange(e);
+                            }
+                          }}
                           fullWidth
                           size="medium"
                           className='loginInput'
                           sx={{
-                            mb: 1,mt:1,
+                            mb: 1, mt: 1,
                             '& .MuiOutlinedInput-root': {
                               borderRadius: 2,
                               backgroundColor: '#f9f9f9',
@@ -541,95 +682,84 @@ const Login = () => {
                           fullWidth
                           size="medium"
                           InputProps={{
-                            startAdornment: (
-                              <InputAdornment position="start">
-                                <PhoneIphoneIcon sx={{ color: '#777' }} />
+                            startAdornment: <PhoneIphoneIcon sx={{ color: '#777' }} />,
+                            endAdornment: (
+                              <InputAdornment position="end">
+                                {mobileChecking && <CircularProgress size={20} />}
+                                {form.mobile && mobileValid === 'valid' && <CheckCircleIcon color="success" />}
+                                {form.mobile && mobileValid === 'invalid' && <ErrorIcon color="error" />}
                               </InputAdornment>
-                            ),
+                            )
                           }}
+                          helperText={mobileMessage}
+                          error={mobileValid === 'invalid'}
                           sx={{
-                            mb: 1,mt:1,
+                            my: 1,
                             '& .MuiOutlinedInput-root': {
                               borderRadius: 2,
                               backgroundColor: '#f9f9f9',
                             },
                           }}
                         />
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2, flexDirection: isMobile ? 'column' : 'row' }}>
-                          {form.mobile.length === 10 && !otpSent && (
-                            <Button
-                              variant="contained"
-                              // onClick={handleGenerateOtpforUser}
-                              fullWidth={isMobile}
-                              sx={{
-                                bgcolor: '#3A7BD5',
-                                color: '#fff',
-                                borderRadius: 2,
-                                fontWeight: 600,
-                                textTransform: 'none',
-                                py: 1,
-                                boxShadow: '0 4px 8px rgba(58, 123, 213, 0.3)',
-                                '&:hover': {
-                                  bgcolor: '#2A5DA8',
-                                  boxShadow: '0 6px 12px rgba(58, 123, 213, 0.4)',
-                                },
-                                transition: 'all 0.3s ease',
-                              }}
-                            >
-                              Send OTP
-                            </Button>
-                          )}
-
-                          {otpSent && (
-                            <>
-                              <TextField
-                                label="Enter OTP"
-                                variant="outlined"
-                                name="otp"
-                                value={otp}
-                                // onChange={handleChange}
-                                size="medium"
-                                type="tel"
-                                sx={{
-                                  flex: 1,
-                                  '& .MuiOutlinedInput-root': {
-                                    borderRadius: 2,
-                                    backgroundColor: '#f9f9f9',
-                                  },
-                                }}
-                              />
-                              <Button
-                                variant="contained"
-                                // onClick={handleVerifyOtp}
-                                sx={{
-                                  bgcolor: '#00B761',
-                                  color: '#fff',
-                                  fontWeight: 600,
-                                  borderRadius: 2,
-                                  textTransform: 'none',
-                                  py: 1,
-                                  px: 2,
-                                  boxShadow: '0 4px 8px rgba(0, 183, 97, 0.3)',
-                                  '&:hover': {
-                                    bgcolor: '#009650',
-                                    boxShadow: '0 6px 12px rgba(0, 183, 97, 0.4)',
-                                  },
-                                  transition: 'all 0.3s ease',
-                                }}
-                              >
-                                Verify
-                              </Button>
-                            </>
-                          )}
-                        </Box>
-
+                        {/* {mobileValid === 'valid' && !isNewUser && ( */}
+                        <TextField
+                          label="Password"
+                          type={showPwd ? 'text' : 'password'}
+                          variant="outlined"
+                          name="password"
+                          // value={form.password}
+                          value={loginMode === 'mobile' && role === 'user' ? mobilePassword : form.password}
+                          onChange={handleChange}
+                          fullWidth
+                          size="medium"
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              handleLogin();
+                            }
+                          }}
+                          InputProps={{
+                            endAdornment: (
+                              <InputAdornment position="end">
+                                <IconButton
+                                  aria-label={showPwd ? "Hide password" : "Show password"}
+                                  onClick={handleClickShowPassword}
+                                  edge="end"
+                                  sx={{ color: '#777' }}
+                                >
+                                  {showPwd ? <Visibility /> : <VisibilityOff />}
+                                </IconButton>
+                              </InputAdornment>
+                            ),
+                          }}
+                          sx={{
+                            mb: 1,
+                            '& .MuiOutlinedInput-root': {
+                              borderRadius: 2,
+                              backgroundColor: '#f9f9f9',
+                            },
+                          }}
+                        />
+                        {/* )} */}
+                        {showCreatePwdLink && (
+                          <Typography
+                            variant="body2"
+                            color="primary"
+                            sx={{
+                              cursor: 'pointer',
+                              textDecoration: 'underline',
+                              mb: 2,
+                              fontWeight: 500,
+                            }}
+                            onClick={openCreatePasswordModal}
+                          >
+                            New User? Click here to create password.
+                          </Typography>
+                        )}
                       </>
                     )}
                   </>
                 )}
-
                 {/* ===================== */}
-                {/* {role === 'customer' && ( */}
                 {['customer', 'salesman', 'broker'].includes(role) && (
                   <>
                     <TextField
@@ -655,7 +785,6 @@ const Login = () => {
                         }
                       }}
                     />
-
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2, flexDirection: isMobile ? 'column' : 'row' }}>
                       {form.mobile.length === 10 && !otpSent && (
                         <Button
@@ -758,11 +887,31 @@ const Login = () => {
                 >
                   <Button
                     variant="contained"
-                    onClick={handleLogin}
-                    disabled={
-                      (role === 'customer' && (!form.mobile || !otpSent || !otp)) ||
-                      (role !== 'customer' && (!form.username.trim() || !form.password.trim()))
-                    }
+                   
+                     onClick={() => {
+                        if (role === 'user' && loginMode === 'mobile') {
+                          if (isNewUser) {
+                            toast.info("Please create a password first");
+                          } else if (mobileValid === 'valid') {
+                            handleEmployeeLogin();
+                          }
+                        } else if (['customer', 'salesman', 'broker'].includes(role)) {
+                          if (otpSent && otp.length === 4) handleVerifyOtp();
+                          else toast.info("Please verify OTP");
+                        } else {
+                          handleLogin(); // username/password flow
+                        }
+                      }}
+                    // disabled={
+                    //   (role === 'customer' && (!form.mobile || !otpSent || !otp)) ||
+                    //   (role !== 'customer' && (!form.username.trim() || !form.password.trim()))
+                    // }
+                     disabled={
+                        loading ||
+                        (role === 'user' && loginMode === 'mobile' && mobileValid !== 'valid') ||
+                        (['customer', 'salesman', 'broker'].includes(role) && !otpSent)
+                      }
+                    
                     sx={buttonStyles}
                     fullWidth
                   >
@@ -774,6 +923,9 @@ const Login = () => {
                       setForm({ username: '', password: '', mobile: '' });
                       setRole('user');
                       setOtpSent(false);
+                      setMobilePassword('');
+                      setMobileValid('');
+                      setMobileMessage('');
                     }}
                     sx={{
                       borderColor: '#ccc',
@@ -818,21 +970,16 @@ const Login = () => {
                         Secure Login
                       </Typography>
                     </Box>
-
                     <Typography variant="h6" fontWeight="600" sx={{ mb: 1 }}>
                       Welcome Back!
                     </Typography>
-
                     <Typography variant="body2" sx={{ opacity: 0.9, mb: 1 }}>
                       Sign in to access your account and manage your business operations efficiently.
                     </Typography>
-
                     <Divider sx={{ bgcolor: 'rgba(255,255,255,0.2)', my: 1 }} />
-
                     <Typography variant="body2" fontWeight="600" sx={{ mb: 1.5 }}>
                       Select Your Role:
                     </Typography>
-
                     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                       {roles.map((r) => (
                         <Card
@@ -871,12 +1018,10 @@ const Login = () => {
                       ))}
                     </Box>
                   </Box>
-
                   <Typography variant="caption" sx={{ opacity: 0.7, display: 'block', mt: 2 }}>
                     © {currentYear} prasyst. All rights reserved.
                   </Typography>
                 </Box>
-
                 <Box
                   sx={{
                     width: { xs: '100%', sm: '60%' },
@@ -893,7 +1038,6 @@ const Login = () => {
                       width={250}
                       height={100}
                     />
-
                     <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mt: 1 }}>
                       <Image
                         src="/images/download.png"
@@ -902,7 +1046,6 @@ const Login = () => {
                         height={50}
                         style={{ marginRight: '0px' }}
                       />
-
                       <Box sx={{ textAlign: 'left' }}>
                         <Typography variant="body2" sx={{
                           color: '#333',
@@ -951,65 +1094,6 @@ const Login = () => {
                       </Box>
                     </Box>
                   </Box>
-
-                  {/* {['user', 'salesman', 'broker'].includes(role) && ( */}
-                  {/* {role === 'user' && (
-                    <>
-                      <TextField
-                        label="Username"
-                        variant="outlined"
-                        name="username"
-                        value={form.username}
-                        onChange={handleChange}
-                        fullWidth
-                        size="medium"
-                        className='loginInput'
-                        sx={{
-                          mb: 2,
-                          '& .MuiOutlinedInput-root': {
-                            borderRadius: 2,
-                            backgroundColor: '#f9f9f9',
-                          }
-                        }}
-                      />
-                      <TextField
-                        label="Password"
-                        type={showPwd ? 'text' : 'password'}
-                        variant="outlined"
-                        name="password"
-                        value={form.password}
-                        onChange={handleChange}
-                        fullWidth
-                        size="medium"
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') {
-                            handleLogin();
-                          }
-                        }}
-                        InputProps={{
-                          endAdornment: (
-                            <InputAdornment position="end">
-                              <IconButton
-                                aria-label={showPwd ? "Hide password" : "Show password"}
-                                onClick={handleClickShowPassword}
-                                edge="end"
-                                sx={{ color: '#777' }}
-                              >
-                                {showPwd ? <Visibility /> : <VisibilityOff />}
-                              </IconButton>
-                            </InputAdornment>
-                          ),
-                        }}
-                        sx={{
-                          mb: 2,
-                          '& .MuiOutlinedInput-root': {
-                            borderRadius: 2,
-                            backgroundColor: '#f9f9f9',
-                          }
-                        }}
-                      />
-                    </>
-                  )} */}
                   {role === 'user' && (
                     <>
                       <Box sx={{ display: 'flex', gap: 0.1, mb: 0.3 }}>
@@ -1036,7 +1120,6 @@ const Login = () => {
                           label="Mobile"
                         />
                       </Box>
-
                       {loginMode === 'username' && (
                         <>
                           <TextField
@@ -1044,7 +1127,13 @@ const Login = () => {
                             variant="outlined"
                             name="username"
                             value={form.username}
-                            onChange={handleChange}
+                            // onChange={handleChange}
+                            onChange={(e) => {
+                              const input = e.target.value;
+                              if (/^[a-zA-Z]+$/.test(input) || input === '') {
+                                handleChange(e);
+                              }
+                            }}
                             fullWidth
                             size="medium"
                             className="loginInput"
@@ -1094,7 +1183,6 @@ const Login = () => {
                           />
                         </>
                       )}
-
                       {loginMode === 'mobile' && (
                         <>
                           <TextField
@@ -1106,95 +1194,77 @@ const Login = () => {
                             fullWidth
                             size="medium"
                             InputProps={{
-                              startAdornment: (
-                                <InputAdornment position="start">
-                                  <PhoneIphoneIcon sx={{ color: '#777' }} />
+                              startAdornment: <PhoneIphoneIcon sx={{ color: '#777', marginRight: 1 }} />,
+                              endAdornment: (
+                                <InputAdornment position="end">
+                                  {mobileChecking && <CircularProgress size={20} />}
+                                  {form.mobile && mobileValid === 'valid' && <CheckCircleIcon color="success" />}
+                                  {form.mobile && mobileValid === 'invalid' && <ErrorIcon color="error" />}
+                                </InputAdornment>
+                              )
+                            }}
+                            helperText={mobileMessage}
+                            error={mobileValid === 'invalid'}
+                            sx={{ mb: 0.5 }}
+                          />
+                          {/* {mobileValid === 'valid' && !isNewUser && ( */}
+                          <TextField
+                            label="Password"
+                            type={showPwd ? 'text' : 'password'}
+                            variant="outlined"
+                            name="password"
+                            // value={form.password}
+                            value={loginMode === 'mobile' && role === 'user' ? mobilePassword : form.password}
+                            onChange={handleChange}
+                            fullWidth
+                            size="medium"
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                handleLogin();
+                              }
+                            }}
+                            InputProps={{
+                              endAdornment: (
+                                <InputAdornment position="end">
+                                  <IconButton
+                                    aria-label={showPwd ? "Hide password" : "Show password"}
+                                    onClick={handleClickShowPassword}
+                                    edge="end"
+                                    sx={{ color: '#777' }}
+                                  >
+                                    {showPwd ? <Visibility /> : <VisibilityOff />}
+                                  </IconButton>
                                 </InputAdornment>
                               ),
                             }}
                             sx={{
-                              mb: 2,
+                              mb: 1,
                               '& .MuiOutlinedInput-root': {
                                 borderRadius: 2,
                                 backgroundColor: '#f9f9f9',
                               },
                             }}
                           />
-
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2, flexDirection: isMobile ? 'column' : 'row' }}>
-                            {form.mobile.length === 10 && !otpSent && (
-                              <Button
-                                variant="contained"
-                                // onClick={handleGenerateOtpforUser}
-                                fullWidth={isMobile}
-                                sx={{
-                                  bgcolor: '#3A7BD5',
-                                  color: '#fff',
-                                  borderRadius: 2,
-                                  fontWeight: 600,
-                                  textTransform: 'none',
-                                  py: 1,
-                                  boxShadow: '0 4px 8px rgba(58, 123, 213, 0.3)',
-                                  '&:hover': {
-                                    bgcolor: '#2A5DA8',
-                                    boxShadow: '0 6px 12px rgba(58, 123, 213, 0.4)',
-                                  },
-                                  transition: 'all 0.3s ease',
-                                }}
-                              >
-                                Send OTP
-                              </Button>
-                            )}
-
-                            {otpSent && (
-                              <>
-                                <TextField
-                                  label="Enter OTP"
-                                  variant="outlined"
-                                  name="otp"
-                                  value={otp}
-                                  // onChange={handleChange}
-                                  size="medium"
-                                  type="tel"
-                                  sx={{
-                                    flex: 1,
-                                    '& .MuiOutlinedInput-root': {
-                                      borderRadius: 2,
-                                      backgroundColor: '#f9f9f9',
-                                    },
-                                  }}
-                                />
-                                <Button
-                                  variant="contained"
-                                  // onClick={handleVerifyOtp}
-                                  sx={{
-                                    bgcolor: '#00B761',
-                                    color: '#fff',
-                                    fontWeight: 600,
-                                    borderRadius: 2,
-                                    textTransform: 'none',
-                                    py: 1,
-                                    px: 2,
-                                    boxShadow: '0 4px 8px rgba(0, 183, 97, 0.3)',
-                                    '&:hover': {
-                                      bgcolor: '#009650',
-                                      boxShadow: '0 6px 12px rgba(0, 183, 97, 0.4)',
-                                    },
-                                    transition: 'all 0.3s ease',
-                                  }}
-                                >
-                                  Verify
-                                </Button>
-                              </>
-                            )}
-                          </Box>
+                          {/* )} */}
+                          {showCreatePwdLink && (
+                            <Typography
+                              variant="body2"
+                              color="primary"
+                              sx={{
+                                cursor: 'pointer',
+                                textDecoration: 'underline',
+                                mb: 1.5, ml: 1,
+                                fontWeight: 500,
+                              }}
+                              onClick={openCreatePasswordModal}
+                            >
+                              New User? Click here to create password.
+                            </Typography>
+                          )}
                         </>
                       )}
                     </>
                   )}
-
-
-                  {/* {role === 'customer' && ( */}
                   {['customer', 'salesman', 'broker'].includes(role) && (
                     <>
                       <TextField
@@ -1220,7 +1290,6 @@ const Login = () => {
                           }
                         }}
                       />
-
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1, flexDirection: isMobile ? 'column' : 'row' }}>
                         {form.mobile.length === 10 && !otpSent && (
                           <Button
@@ -1245,7 +1314,6 @@ const Login = () => {
                             Send OTP
                           </Button>
                         )}
-
                         {otpSent && (
                           <>
                             <TextField
@@ -1290,7 +1358,6 @@ const Login = () => {
                       </Box>
                     </>
                   )}
-
                   <TextField
                     select
                     label="Financial Year"
@@ -1313,7 +1380,6 @@ const Login = () => {
                       </MenuItem>
                     ))}
                   </TextField>
-
                   <Box
                     sx={{
                       display: 'flex',
@@ -1322,14 +1388,35 @@ const Login = () => {
                       flexDirection: isMobile ? 'column' : 'row',
                     }}
                   >
-                    <Button
+                    {/* <Button
                       variant="contained"
                       onClick={handleLogin}
                       disabled={role === 'customer' && !otpSent}
-                      // disabled={
-                      //   (role === 'customer' && (!form.mobile || !otpSent || !otp)) ||
-                      //   (role !== 'customer' && (!form.username.trim() || !form.password.trim()))
-                      // }
+                      sx={buttonStyles}
+                      fullWidth
+                    >
+                      {loading ? 'Signing in...' : 'Sign In'}
+                    </Button> */}<Button
+                      variant="contained"
+                      onClick={() => {
+                        if (role === 'user' && loginMode === 'mobile') {
+                          if (isNewUser) {
+                            toast.info("Please create a password first");
+                          } else if (mobileValid === 'valid') {
+                            handleEmployeeLogin();
+                          }
+                        } else if (['customer', 'salesman', 'broker'].includes(role)) {
+                          if (otpSent && otp.length === 4) handleVerifyOtp();
+                          else toast.info("Please verify OTP");
+                        } else {
+                          handleLogin(); // username/password flow
+                        }
+                      }}
+                      disabled={
+                        loading ||
+                        (role === 'user' && loginMode === 'mobile' && mobileValid !== 'valid') ||
+                        (['customer', 'salesman', 'broker'].includes(role) && !otpSent)
+                      }
                       sx={buttonStyles}
                       fullWidth
                     >
@@ -1341,6 +1428,9 @@ const Login = () => {
                         setForm({ username: '', password: '', mobile: '' });
                         setRole('user');
                         setOtpSent(false);
+                        setMobilePassword('');
+                        setMobileValid('');
+                        setMobileMessage('');
                       }}
                       sx={{
                         borderColor: '#ccc',
@@ -1383,8 +1473,68 @@ const Login = () => {
         autoHideDuration={3000}
         sx={{ zIndex: 9999 }}
       />
+      {/* Create Password Modal */}
+      <Dialog open={createPwdOpen} onClose={() => setCreatePwdOpen(false)}>
+        <DialogTitle sx={{ textAlign: 'center' }}>Create Password for {empNameForModal}</DialogTitle>
+        <DialogContent>
+          <TextField
+            autoFocus
+            margin="dense"
+            label="New Password"
+            type={showNewPwd ? 'text' : 'password'}
+            fullWidth
+            variant="outlined"
+            value={newPassword}
+            onChange={(e) => setNewPassword(e.target.value)}
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton
+                    aria-label={showNewPwd ? "Hide password" : "Show password"}
+                    onClick={handleClickShowNewPassword}
+                    edge="end"
+                    sx={{ color: '#777' }}
+                  >
+                    {showNewPwd ? <Visibility /> : <VisibilityOff />}
+                  </IconButton>
+                </InputAdornment>
+              ),
+            }}
+            sx={{ mt: 1 }}
+          />
+          <TextField
+            margin="dense"
+            label="Confirm Password"
+            type={showPwd ? 'text' : 'password'}
+            fullWidth
+            variant="outlined"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton
+                    aria-label={showPwd ? "Hide password" : "Show password"}
+                    onClick={handleClickShowPassword}
+                    edge="end"
+                    sx={{ color: '#777' }}
+                  >
+                    {showPwd ? <Visibility /> : <VisibilityOff />}
+                  </IconButton>
+                </InputAdornment>
+              ),
+            }}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCreatePassword} variant="contained" color="primary">
+            Create Password
+          </Button>
+          <Button onClick={() => setCreatePwdOpen(false)}>Cancel</Button>
+        </DialogActions>
+      </Dialog>
+
     </Box>
   );
 };
-
 export default Login;
