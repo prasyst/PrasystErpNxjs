@@ -1,15 +1,15 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import dynamic from "next/dynamic";
 import {
-    Box, Typography, Grid, Paper, IconButton, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Avatar, Button,
-    styled, useTheme, TextField, DialogTitle, DialogActions, Dialog
+    Box, Typography, Grid, Paper, IconButton, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Button,
+    styled, useTheme, TextField, DialogTitle, DialogActions, Dialog, LinearProgress, Chip,
+    TableFooter,
+    CircularProgress
 } from "@mui/material";
-import { LinearProgress, Chip } from '@mui/material';
-import CurrencyRupeeIcon from '@mui/icons-material/CurrencyRupee';
 import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
-import PeopleIcon from "@mui/icons-material/People";
+import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import dayjs from 'dayjs';
@@ -28,6 +28,8 @@ import { PieChart } from '@mui/x-charts/PieChart';
 import OrderDocument from "./OrderDocument";
 import { PDFViewer } from "@react-pdf/renderer";
 import CloseIcon from '@mui/icons-material/Close';
+import ReceiptLongIcon from '@mui/icons-material/ReceiptLong';
+import CancelIcon from '@mui/icons-material/Cancel';
 
 // Dynamic import for Gauge
 const GaugeComponent = dynamic(
@@ -93,6 +95,15 @@ const StyledCard2 = styled(Paper)(({ theme }) => ({
     color: '#fff',
 }));
 
+const headerCellStyle = {
+    fontWeight: 'bold',
+    color: '#fff',
+    backgroundColor: '#69816bff',
+    position: 'sticky',
+    top: 0,
+    zIndex: 10,
+};
+
 const data = [
     { month: 'Jan-25', sales: 4000, profit: 2400 },
     { month: 'Feb-25', sales: 3000, profit: 1398 },
@@ -131,9 +142,14 @@ const lineChartData2 = [
 
 const SalesDashboard = () => {
     const theme = useTheme();
-    const [dateFrom, setDateFrom] = useState(dayjs().startOf('month'));
-    const [dateTo, setDateTo] = useState(dayjs().endOf('month'));
+    // const [dateFrom, setDateFrom] = useState(dayjs().startOf('month'));
+    // const [dateTo, setDateTo] = useState(dayjs().endOf('month'));
+    const currentYear = dayjs().year();
+    const [dateFrom, setDateFrom] = useState(dayjs(`${currentYear}-04-01`));
+    const [dateTo, setDateTo] = useState(dayjs(`${currentYear + 1}-03-31`));
     const [tableData, setTableData] = useState([]);
+    const [partywise, setPartyWise] = useState([]);
+    const [stateWise, setStateWise] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedOrder, setSelectedOrder] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -144,30 +160,43 @@ const SalesDashboard = () => {
         TOT_AMT: 0,
         TOT_BALAMT: 0,
         TOT_SALAMT: 0,
+        ROWNUM: 0,
     });
+
+    const [searchTermParty, setSearchTermParty] = useState('');
+    const [searchTermState, setSearchTermState] = useState('');
+    const [selectedState, setSelectedState] = useState(null);
+    const [selectedParty, setSelectedParty] = useState(null);
+    const [isLoading, setIsLoading] = useState(false);
+    const [fcyr, setFcyr] = useState(null);
+    const [cobrId, setCobrId] = useState(null);
 
     const totalSales = data.reduce((acc, cur) => acc + cur.sales, 0);
 
     const totalConversion = (
         isNaN(parseFloat(summaryData.TOT_SALQTY)) || isNaN(parseFloat(summaryData.TOT_QTY)) || parseFloat(summaryData.TOT_QTY) === 0
     )
-        ? 0
-        : (parseFloat(summaryData.TOT_SALQTY) / parseFloat(summaryData.TOT_QTY)) * 100;
+        ? 0 : (parseFloat(summaryData.TOT_SALQTY) / parseFloat(summaryData.TOT_QTY)) * 100;
 
     useEffect(() => {
-        showTableData();
-    }, [])
+        const fcyrFromStorage = localStorage.getItem("FCYR_KEY");
+        const cobrIdFromStorage = localStorage.getItem("COBR_ID");
+        setFcyr(fcyrFromStorage);
+        setCobrId(cobrIdFromStorage);
+    }, []);
 
     useEffect(() => {
         showTableData();
         totalCoutData();
+        fetchPartyWise();
+        stateWiseParty();
     }, []);
 
     const showTableData = async () => {
         try {
             const response = await axiosInstance.post('OrderDash/GetOrderDashBoard', {
-                COBR_ID: "02",
-                FCYR_KEY: "25",
+                COBR_ID: cobrId,
+                FCYR_KEY: fcyr,
                 FROM_DT: dayjs(dateFrom).format('YYYY-MM-DD'),
                 To_DT: dayjs(dateTo).format('YYYY-MM-DD'),
                 Flag: "",
@@ -189,8 +218,8 @@ const SalesDashboard = () => {
     const totalCoutData = async () => {
         try {
             const response = await axiosInstance.post("OrderDash/GetOrderDashBoard", {
-                COBR_ID: "02",
-                FCYR_KEY: "25",
+                COBR_ID: cobrId,
+                FCYR_KEY: fcyr,
                 FROM_DT: dayjs(dateFrom).format('YYYY-MM-DD'),
                 To_DT: dayjs(dateTo).format('YYYY-MM-DD'),
                 Flag: "OrdTotSum",
@@ -207,6 +236,7 @@ const SalesDashboard = () => {
                     TOT_AMT: summary.TOT_AMT || 0,
                     TOT_BALAMT: summary.TOT_BALAMT || 0,
                     TOT_SALAMT: summary.TOT_SALAMT || 0,
+                    ROWNUM: summary.ROWNUM || 0,
                 });
             } else {
                 toast.info("No record found.");
@@ -216,9 +246,54 @@ const SalesDashboard = () => {
         }
     };
 
+    const fetchPartyWise = async () => {
+        setIsLoading(true);
+        try {
+            const response = await axiosInstance.post("OrderDash/GetOrderDashBoard", {
+                COBR_ID: cobrId,
+                FCYR_KEY: fcyr,
+                FROM_DT: dayjs(dateFrom).format('YYYY-MM-DD'),
+                To_DT: dayjs(dateTo).format('YYYY-MM-DD'),
+                Flag: "PartyWise",
+                PageNumber: 1,
+                PageSize: 10,
+                SearchText: ""
+            });
+            if (response.data.STATUS === 0 && Array.isArray(response.data.DATA)) {
+                setPartyWise(response.data.DATA);
+            }
+        } catch (error) {
+            toast.error("Error while loading party data.");
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const stateWiseParty = async () => {
+        try {
+            const response = await axiosInstance.post("OrderDash/GetOrderDashBoard", {
+                COBR_ID: cobrId,
+                FCYR_KEY: fcyr,
+                FROM_DT: dayjs(dateFrom).format('YYYY-MM-DD'),
+                To_DT: dayjs(dateTo).format('YYYY-MM-DD'),
+                Flag: "StateWiseOrdSum",
+                PageNumber: 1,
+                PageSize: 10,
+                SearchText: ""
+            });
+            if (response.data.STATUS === 0 && Array.isArray(response.data.DATA)) {
+                setStateWise(response.data.DATA);
+            }
+        } catch (error) {
+            toast.error("Error while fetching the state data.");
+        }
+    };
+
     const handleFetchedData = () => {
         showTableData();
         totalCoutData();
+        fetchPartyWise();
+        stateWiseParty();
     };
 
     const handleViewDocument = (order) => {
@@ -250,9 +325,56 @@ const SalesDashboard = () => {
         );
     });
 
+    // Filtered Party Wise
+    const filteredPartyWise = useMemo(() => {
+        if (!searchTermParty.trim()) return partywise;
+
+        const term = searchTermParty.toLowerCase().trim();
+        return partywise.filter((item) =>
+            Object.values(item).some((value) =>
+                value?.toString().toLowerCase().includes(term)
+            )
+        );
+    }, [partywise, searchTermParty]);
+
+    // Filtered State Wise
+    const filteredStateWise = useMemo(() => {
+        if (!searchTermState.trim()) return stateWise;
+
+        const term = searchTermState.toLocaleLowerCase().trim();
+        return stateWise.filter((item) =>
+            Object.values(item).some((value) =>
+                value?.toString().toLowerCase().includes(term)
+            )
+        );
+    }, [stateWise, searchTermState]);
+
     const handleRowDoubleClick = (order) => {
         // router.push(`/inverntory/stock-enquiry-table/${order.ORDBK_KEY}`);
     };
+
+    // Top 10 Parties by Amount for Pie Chart
+    const top10PartiesByAmount = [...partywise]
+        .sort((a, b) => parseFloat(b.AMOUNT || 0) - parseFloat(a.AMOUNT || 0))
+        .slice(0, 10)
+        .map((item, index) => ({
+            id: index,
+            label: item.PARTY_NAME?.slice(0, 15) + (item.PARTY_NAME?.length > 15 ? '...' : ''),
+            value: parseFloat(item.AMOUNT || 0),
+            color: `hsl(${index * 40}, 70%, 50%)`,
+            fullPartyName: item.PARTY_NAME || "Unknown",
+        }));
+
+    // Top 10 State for Pie Chart
+    const top10State = [...partywise]
+        .sort((a, b) => parseFloat(b.AMOUNT || 0) - parseFloat(a.AMOUNT || 0))
+        .slice(0, 10)
+        .map((item, index) => ({
+            id: index,
+            label: item.PARTY_NAME?.slice(0, 15) + (item.PARTY_NAME?.length > 15 ? '...' : ''),
+            value: parseFloat(item.AMOUNT || 0),
+            color: `hsl(${index * 40}, 70%, 50%)`,
+        }));
 
     return (
         <Box sx={{ p: 2, pt: 1, bgcolor: "#f5f7fa", minHeight: "70vh" }}>
@@ -262,8 +384,10 @@ const SalesDashboard = () => {
                     mb: 2,
                     display: "flex",
                     justifyContent: "space-between",
-                    alignItems: "center",
+                    alignItems: { xs: "flex-start", sm: "center" },
+                    flexDirection: { xs: "column", sm: "row" },
                     flexWrap: "wrap",
+                    gap: { xs: 2, sm: 1 },
                 }}
             >
                 <Typography
@@ -278,9 +402,8 @@ const SalesDashboard = () => {
                 >
                     Order Dashboard
                 </Typography>
-
-                <LocalizationProvider dateAdapter={AdapterDayjs} >
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <LocalizationProvider dateAdapter={AdapterDayjs}>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap" }}>
                         <DatePicker
                             label="From-Date"
                             value={dateFrom}
@@ -296,14 +419,16 @@ const SalesDashboard = () => {
                             onChange={(newValue) => setDateTo(newValue)}
                             format="DD/MM/YYYY"
                             views={['day', 'month', 'year']}
-                            sx={{ width: 150, }}
+                            sx={{ width: 150 }}
                             className="custom-datepicker"
                         />
                         <Button
-                            variant='contained'
+                            variant="contained"
                             onClick={handleFetchedData}
                             sx={{
-                                borderRadius: '20px', backgroundColor: '#635bff', '&:hover': {
+                                borderRadius: '20px',
+                                backgroundColor: '#635bff',
+                                '&:hover': {
                                     backgroundColor: '#635bff'
                                 },
                             }}
@@ -316,43 +441,43 @@ const SalesDashboard = () => {
 
             {/* Cards Data */}
             <Grid container spacing={1} mb={2} gap={1}>
-                <Grid size={{ xs: 12, md: 3 }}>
+                <Grid size={{ xs: 12, md: 2.4 }}>
                     <StyledCard>
                         <IconButton
                             sx={{
                                 bgcolor: "#4caf5022",
                                 color: "#4caf50",
-                                width: 60,
-                                height: 60,
+                                width: 40,
+                                height: 40,
                                 boxShadow: "0 0 20px #4caf5066",
                                 "&:hover": { bgcolor: "#4caf5044" },
                             }}
                             aria-label="Total Orders"
                         >
-                            <CurrencyRupeeIcon fontSize="large" />
+                            <ReceiptLongIcon fontSize="large" />
                         </IconButton>
                         <Box>
                             <Typography variant="subtitle1" fontWeight="bold" sx={{ mb: 1 }}>
-                                Total Orders
+                                Total Orders - {summaryData.ROWNUM}
                             </Typography>
-                            <Typography variant="h5" fontWeight="bold" letterSpacing={1}>
-                                ₹ {summaryData.TOT_AMT}
+                            <Typography variant="h6" fontWeight="bold" letterSpacing={1}>
+                                ₹ {(summaryData.TOT_AMT / 100000).toFixed(2)} L
                             </Typography>
-                            <Typography variant="subtitle1" sx={{ mt: 1 }}>
+                            <Typography variant="subtitle1">
                                 Qty: {summaryData.TOT_QTY}
                             </Typography>
                         </Box>
                     </StyledCard>
                 </Grid>
 
-                <Grid size={{ xs: 12, md: 3 }}>
+                <Grid size={{ xs: 12, md: 2.4 }}>
                     <StyledCard>
                         <IconButton
                             sx={{
                                 bgcolor: "#2196f322",
                                 color: "#2196f3",
-                                width: 60,
-                                height: 60,
+                                width: 40,
+                                height: 40,
                                 boxShadow: "0 0 20px #2196f366",
                                 "&:hover": { bgcolor: "#2196f344" },
                             }}
@@ -364,53 +489,82 @@ const SalesDashboard = () => {
                             <Typography variant="subtitle1" fontWeight="bold" sx={{ mb: 1 }}>
                                 Dispatch
                             </Typography>
-                            <Typography variant="h5" fontWeight="bold" letterSpacing={1}>
-                                ₹ {summaryData.TOT_SALAMT}
+                            <Typography variant="h6" fontWeight="bold" letterSpacing={1}>
+                                ₹ {(summaryData.TOT_SALAMT / 100000).toFixed(2)} L
                             </Typography>
-                            <Typography variant="subtitle1" sx={{ mt: 1 }}>
+                            <Typography variant="subtitle1">
                                 Qty: {summaryData.TOT_SALQTY}
                             </Typography>
                         </Box>
                     </StyledCard>
                 </Grid>
 
-                <Grid size={{ xs: 12, md: 3 }}>
+                <Grid size={{ xs: 12, md: 2.4 }}>
                     <StyledCard>
                         <IconButton
                             sx={{
                                 bgcolor: "#ff980022",
                                 color: "#ff9800",
-                                width: 60,
-                                height: 60,
+                                width: 40,
+                                height: 40,
                                 boxShadow: "0 0 20px #ff980066",
                                 "&:hover": { bgcolor: "#ff980044" },
                             }}
                             aria-label="Order Balance"
                         >
-                            <PeopleIcon fontSize="large" />
+                            <AccountBalanceIcon fontSize="large" />
                         </IconButton>
                         <Box>
                             <Typography variant="subtitle1" fontWeight="bold" sx={{ mb: 1 }}>
                                 Order Balance
                             </Typography>
-                            <Typography variant="h5" fontWeight="bold" letterSpacing={1}>
-                                ₹ {summaryData.TOT_BALAMT}
+                            <Typography variant="h6" fontWeight="bold" letterSpacing={1}>
+                                ₹ {(summaryData.TOT_BALAMT / 100000).toFixed(2)} L
                             </Typography>
-                            <Typography variant="subtitle1" sx={{ mt: 1 }}>
+                            <Typography variant="subtitle1">
                                 Qty: {summaryData.TOT_BALQTY}
                             </Typography>
                         </Box>
                     </StyledCard>
                 </Grid>
 
-                <Grid size={{ xs: 12, md: 3 }}>
+                <Grid size={{ xs: 12, md: 2.4 }}>
+                    <StyledCard>
+                        <IconButton
+                            sx={{
+                                bgcolor: "#c46b6b22",
+                                color: "#ff3300ff",
+                                width: 40,
+                                height: 40,
+                                boxShadow: "0 0 20px #c9686866",
+                                "&:hover": { bgcolor: "#aa444444" },
+                            }}
+                            aria-label="Canceled Order"
+                        >
+                            <CancelIcon fontSize="large" />
+                        </IconButton>
+                        <Box>
+                            <Typography variant="subtitle1" fontWeight="bold" sx={{ mb: 1 }}>
+                                Canceled Order
+                            </Typography>
+                            <Typography variant="h6" fontWeight="bold" letterSpacing={1}>
+                                ₹ Working
+                            </Typography>
+                            <Typography variant="subtitle1">
+                                Qty: 0000
+                            </Typography>
+                        </Box>
+                    </StyledCard>
+                </Grid>
+
+                <Grid size={{ xs: 12, md: 2.4 }}>
                     <StyledCard>
                         <IconButton
                             sx={{
                                 bgcolor: "#9c27b022",
                                 color: "#9c27b0",
-                                width: 60,
-                                height: 60,
+                                width: 40,
+                                height: 40,
                                 boxShadow: "0 0 20px #9c27b066",
                                 "&:hover": { bgcolor: "#9c27b044" },
                             }}
@@ -422,7 +576,7 @@ const SalesDashboard = () => {
                             <Typography variant="subtitle1" fontWeight="bold" sx={{ mb: 1 }}>
                                 Conversion Rate
                             </Typography>
-                            <Typography variant="h5" fontWeight="bold" letterSpacing={1}>
+                            <Typography variant="h6" fontWeight="bold" letterSpacing={1}>
                                 {totalConversion.toFixed(2)}%
                             </Typography>
                             <Box display="flex" alignItems="center" gap={0.5}>
@@ -435,7 +589,7 @@ const SalesDashboard = () => {
                                     {totalConversion.toFixed(0)}%
                                 </Typography>
                             </Box>
-                            <Box sx={{ mt: 1 }}>
+                            <Box>
                                 <LinearProgress
                                     variant="determinate"
                                     value={totalConversion}
@@ -448,6 +602,7 @@ const SalesDashboard = () => {
                 </Grid>
             </Grid>
 
+            {/* Party Wise Orders Summary */}
             <Grid container spacing={2} sx={{ height: '100%' }}>
                 <Grid size={{ xs: 12, md: 9 }} sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
                     <Paper
@@ -462,12 +617,385 @@ const SalesDashboard = () => {
                             height: '100%',
                         }}
                     >
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                            <Typography variant="h6" fontWeight="bold">
+                                Party Wise Orders Summary
+                            </Typography>
+
+                            {/* Search Box */}
+                            <TextField
+                                label="Search Orders"
+                                variant="outlined"
+                                size="small"
+                                sx={{
+                                    width: 250,
+                                    borderRadius: '9px',
+                                    '& .MuiOutlinedInput-root': {
+                                        borderRadius: '9px',
+                                    },
+                                    '& .MuiInputLabel-root': {
+                                        borderRadius: '9px',
+                                    }
+                                }}
+                                value={searchTermParty}
+                                onChange={(e) => setSearchTermParty(e.target.value)}
+                                placeholder="Search by Party, City, Amount, etc."
+                            />
+                        </Box>
+
+                        {/* Table Container with fixed height */}
+                        <TableContainer sx={{ flexGrow: 1, maxHeight: 400, overflowY: 'auto', overflowX: 'auto' }}>
+                            <Table stickyHeader size="small" aria-label="recent orders">
+                                <TableHead>
+                                    <TableRow>
+                                        <TableCell sx={headerCellStyle}>Party</TableCell>
+                                        <TableCell sx={headerCellStyle}>City</TableCell>
+                                        <TableCell sx={headerCellStyle}>State</TableCell>
+                                        <TableCell sx={headerCellStyle}>Amount</TableCell>
+                                        <TableCell sx={headerCellStyle}>Qty</TableCell>
+                                        <TableCell sx={headerCellStyle}>Broker</TableCell>
+                                        <TableCell sx={headerCellStyle}> SalesMan</TableCell>
+                                    </TableRow>
+                                </TableHead>
+
+                                {/* Body */}
+                                <TableBody>
+                                    {isLoading ? (
+                                        <TableRow>
+                                            <TableCell colSpan={7} align="center" sx={{ py: 4 }}>
+                                                <CircularProgress size='3rem' />
+                                                <Typography variant="body2" sx={{ marginTop: 2 }}>
+                                                    Loading party data...
+                                                </Typography>
+                                            </TableCell>
+                                        </TableRow>
+                                    ) : filteredPartyWise.length > 0 ? (
+                                        filteredPartyWise.map((item, index) => (
+                                            <TableRow
+                                                key={index}
+                                                hover
+                                                onDoubleClick={() => handleRowDoubleClick(item)}
+                                                sx={{
+                                                    cursor: 'pointer',
+                                                    backgroundColor: item.PARTY_NAME === selectedParty
+                                                        ? '#dce4daff'
+                                                        : 'inherit',
+                                                    transition: 'background-color 0.3s ease',
+                                                    '&:hover': {
+                                                        backgroundColor: item.PARTY_NAME === selectedParty
+                                                            ? '#d4dad3ff'
+                                                            : 'rgba(0, 0 0 / 0.04)',
+                                                    },
+                                                }}
+                                            >
+                                                <TableCell>{item.PARTY_NAME || '-'}</TableCell>
+                                                <TableCell>{item.CITY_NAME || '-'}</TableCell>
+                                                <TableCell>{item.STATE_NAME || '-'}</TableCell>
+                                                <TableCell>
+                                                    {parseFloat(item.AMOUNT || 0).toLocaleString('en-IN', { maximumFractionDigits: 2 })}
+                                                </TableCell>
+                                                <TableCell>{parseFloat(item.QTY || 0).toLocaleString('en-IN')}</TableCell>
+                                                <TableCell>{item.BROKER_NAME || '-'}</TableCell>
+                                                <TableCell>{item.SALEPERSON_NAME || '-'}</TableCell>
+                                            </TableRow>
+                                        ))
+                                    ) : (
+                                        <TableRow>
+                                            <TableCell colSpan={7} align="center" sx={{ py: 4 }}>
+                                                <Typography variant="body2" color="text.secondary">
+                                                    {searchTermParty ? 'No matching parties found.' : 'No party data available.'}
+                                                </Typography>
+                                            </TableCell>
+                                        </TableRow>
+                                    )}
+                                </TableBody>
+
+                                {/* Sticky Footer with Totals */}
+                                <TableFooter>
+                                    <TableRow
+                                        sx={{
+                                            position: 'sticky',
+                                            bottom: 0,
+                                            zIndex: 9,
+                                            '& > td': {
+                                                fontWeight: 'bold',
+                                                borderTop: '1px solid #4caf50',
+                                                py: 0.5,
+                                            },
+                                        }}
+                                    >
+                                        <TableCell colSpan={3} align="left" sx={{ fontWeight: 'bold', color: '#000' }}>
+                                            Total
+                                        </TableCell>
+                                        <TableCell sx={{ fontWeight: 'bold', color: '#000' }}>
+                                            {filteredPartyWise
+                                                .reduce((sum, item) => sum + parseFloat(item.AMOUNT || 0), 0)
+                                                .toLocaleString('en-IN', { maximumFractionDigits: 2 })}
+                                        </TableCell>
+                                        <TableCell sx={{ fontWeight: 'bold', color: '#000' }}>
+                                            {filteredPartyWise
+                                                .reduce((sum, item) => sum + parseFloat(item.QTY || 0), 0)
+                                                .toLocaleString('en-IN')}
+                                        </TableCell>
+                                        <TableCell colSpan={2} />
+                                    </TableRow>
+                                </TableFooter>
+                            </Table>
+                        </TableContainer>
+                    </Paper>
+                </Grid>
+
+                {/* Right Column with Cards */}
+                <Grid size={{ xs: 12, md: 3 }} sx={{ display: 'flex', flexDirection: 'column', gap: 1, height: '100%' }}>
+                    <StyledCard2 sx={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%', p: 2 }}>
+                        <Typography variant="subtitle1" fontWeight="bold" align="center" gutterBottom>
+                            Top 10 Parties by Order Amount
+                        </Typography>
+                        <PieChart
+                            series={[
+                                {
+                                    data: top10PartiesByAmount,
+                                    innerRadius: 30,
+                                    outerRadius: 90,
+                                    paddingAngle: 3,
+                                    cornerRadius: 8,
+                                    highlightScope: { faded: 'global', highlighted: 'item' },
+                                    faded: { innerRadius: 30, additionalRadius: -30, color: 'gray' },
+                                },
+                            ]}
+                            height={215}
+                            slotProps={{
+                                legend: {
+                                    direction: 'column',
+                                    position: { vertical: 'middle', horizontal: 'right' },
+                                    padding: { left: 10 },
+                                    labelStyle: { fontSize: 11 },
+                                },
+                            }}
+                            onItemClick={(event, { dataIndex }) => {
+                                const clicked = top10PartiesByAmount[dataIndex];
+                                setSelectedParty(clicked?.fullPartyName || null);
+                            }}
+                        >
+                            {/* Optional: Show total in center */}
+                            <Typography
+                                variant="h6"
+                                sx={{
+                                    position: 'absolute',
+                                    top: '50%',
+                                    left: '50%',
+                                    transform: 'translate(-50%, -50%)',
+                                    fontWeight: 'bold',
+                                    color: '#333',
+                                }}
+                            >
+                                ₹{(summaryData.TOT_AMT / 100000).toFixed(2)}
+                            </Typography>
+                        </PieChart>
+                    </StyledCard2>
+                </Grid>
+            </Grid>
+
+            {/* State wise order summary */}
+            <Grid container spacing={2} sx={{ height: '100%', mt: 2 }}>
+                <Grid size={{ xs: 12, md: 9 }} sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+                    <Paper
+                        elevation={5}
+                        sx={{
+                            p: 1.5,
+                            borderRadius: 4,
+                            bgcolor: 'white',
+                            boxShadow: '0 10px 30px rgb(0 0 0 / 0.12)',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            height: '100%',
+                        }}
+                    >
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                            <Typography variant="h6" fontWeight="bold">
+                                State Wise Orders Summary
+                            </Typography>
+
+                            <TextField
+                                label="Search Orders"
+                                variant="outlined"
+                                size="small"
+                                sx={{
+                                    width: 250,
+                                    borderRadius: '9px',
+                                    '& .MuiOutlinedInput-root': { borderRadius: '9px' },
+                                }}
+                                value={searchTermState}
+                                onChange={(e) => setSearchTermState(e.target.value)}
+                                placeholder="Search by State, Amount, Qty, etc."
+                            />
+                        </Box>
+
+                        <TableContainer sx={{ flexGrow: 1, maxHeight: 400, overflow: 'auto' }}>
+                            <Table stickyHeader size="small" aria-label="state wise orders">
+                                <TableHead>
+                                    <TableRow>
+                                        <TableCell sx={{ fontWeight: 'bold', color: '#fff', backgroundColor: '#66a6afff' }}>State</TableCell>
+                                        <TableCell sx={{ fontWeight: 'bold', color: '#fff', backgroundColor: '#66a6afff' }}>Amount</TableCell>
+                                        <TableCell sx={{ fontWeight: 'bold', color: '#fff', backgroundColor: '#66a6afff' }}>Qty</TableCell>
+                                        <TableCell sx={{ fontWeight: 'bold', color: '#fff', backgroundColor: '#66a6afff' }}>BalQty</TableCell>
+                                        <TableCell sx={{ fontWeight: 'bold', color: '#fff', backgroundColor: '#66a6afff' }}>SaleQty</TableCell>
+                                        <TableCell sx={{ fontWeight: 'bold', color: '#fff', backgroundColor: '#66a6afff' }}>Qty%</TableCell>
+                                    </TableRow>
+                                </TableHead>
+                                <TableBody>
+                                    {filteredStateWise.length > 0 ? (
+                                        filteredStateWise.map((item) => {
+                                            const totalQty = filteredStateWise.reduce((sum, i) => sum + parseFloat(i.QTY || 0), 0);
+                                            const qtyPercentage = totalQty > 0
+                                                ? ((parseFloat(item.QTY || 0) / totalQty) * 100).toFixed(2)
+                                                : "0.00";
+
+                                            return (
+                                                <TableRow
+                                                    key={item.ORDBK_NO}
+                                                    hover
+                                                    onDoubleClick={() => handleRowDoubleClick(item)}
+                                                    sx={{
+                                                        backgroundColor: item.STATE_NAME === selectedState
+                                                            ? '#bbdefb'
+                                                            : 'inherit',
+                                                        transition: 'background-color 0.3s ease',
+                                                        '&:hover': {
+                                                            backgroundColor: item.STATE_NAME === selectedState
+                                                                ? '#90caf9'
+                                                                : 'rgba(0, 0, 0, 0.04)',
+                                                        },
+                                                    }}
+                                                >
+                                                    <TableCell>{item.STATE_NAME}</TableCell>
+                                                    <TableCell>{item.AMOUNT}</TableCell>
+                                                    <TableCell>{item.QTY}</TableCell>
+                                                    <TableCell>{item.BAL_QTY}</TableCell>
+                                                    <TableCell>{item.SALE_QTY}</TableCell>
+                                                    <TableCell>{qtyPercentage + "%"}</TableCell>
+                                                </TableRow>
+                                            );
+                                        })
+                                    ) : (
+                                        <TableRow>
+                                            <TableCell colSpan={6} align="center">No records found.</TableCell>
+                                        </TableRow>
+                                    )}
+                                </TableBody>
+                                <TableFooter>
+                                    <TableRow sx={{ position: 'sticky', bottom: 0, zIndex: 9, '& > td': { fontWeight: 'bold', borderTop: '1px solid #8e90a8', py: 0.5, color: '#000' } }}>
+                                        <TableCell colSpan={1} align="left" sx={{ fontWeight: 'bold' }}>Total</TableCell>
+                                        <TableCell align="left">
+                                            {filteredStateWise.reduce((sum, item) => sum + parseFloat(item.AMOUNT || 0), 0).toLocaleString('en-IN', { maximumFractionDigits: 2 })}
+                                        </TableCell>
+                                        <TableCell align="left">
+                                            {filteredStateWise.reduce((sum, item) => sum + parseFloat(item.QTY || 0), 0).toLocaleString('en-IN')}
+                                        </TableCell>
+                                        <TableCell align="left">
+                                            {filteredStateWise.reduce((sum, item) => sum + parseFloat(item.BAL_QTY || 0), 0).toLocaleString('en-IN')}
+                                        </TableCell>
+                                        <TableCell align="left">
+                                            {filteredStateWise.reduce((sum, item) => sum + parseFloat(item.SALE_QTY || 0), 0).toLocaleString('en-IN')}
+                                        </TableCell>
+                                        <TableCell align="left">100.00%</TableCell>
+                                    </TableRow>
+                                </TableFooter>
+                            </Table>
+                        </TableContainer>
+                    </Paper>
+                </Grid>
+
+                {/* Right Column - Pie Chart */}
+                <Grid size={{ xs: 12, md: 3 }} sx={{ display: 'flex', flexDirection: 'column', gap: 1, height: '100%' }}>
+                    <StyledCard2 sx={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%', p: 2 }}>
+                        <Typography variant="subtitle1" fontWeight="bold" align="center" gutterBottom>
+                            Top 10 States by Order Amount
+                        </Typography>
+
+                        {stateWise.length > 0 ? (
+                            <PieChart
+                                series={[
+                                    {
+                                        data: stateWise
+                                            .sort((a, b) => parseFloat(b.AMOUNT || 0) - parseFloat(a.AMOUNT || 0))
+                                            .slice(0, 10)
+                                            .map((item, index) => ({
+                                                id: index,
+                                                label: (item.STATE_NAME || "Unknown").slice(0, 18) + (item.STATE_NAME?.length > 18 ? '...' : ''),
+                                                value: parseFloat(item.AMOUNT || 0),
+                                                color: `hsl(${index * 36}, 70%, 50%)`,
+                                                fullStateName: item.STATE_NAME || "Unknown",
+                                            })),
+                                        innerRadius: 25,
+                                        outerRadius: 90,
+                                        paddingAngle: 3,
+                                        cornerRadius: 8,
+                                        highlightScope: { faded: 'global', highlighted: 'item' },
+                                        faded: { innerRadius: 30, additionalRadius: -30, color: 'gray' },
+                                    },
+                                ]}
+                                height={215}
+                                slotProps={{
+                                    legend: {
+                                        direction: 'column',
+                                        position: { vertical: 'middle', horizontal: 'right' },
+                                        padding: { left: 10 },
+                                        labelStyle: { fontSize: 11 },
+                                    },
+                                }}
+                                onItemClick={(event, { dataIndex }) => {
+                                    const clickedItem = stateWise
+                                        .sort((a, b) => parseFloat(b.AMOUNT || 0) - parseFloat(a.AMOUNT || 0))
+                                        .slice(0, 10)[dataIndex];
+
+                                    const stateName = clickedItem?.STATE_NAME || null;
+                                    setSelectedState(stateName);
+                                }}
+                            >
+                                <Typography
+                                    variant="h6"
+                                    sx={{
+                                        position: 'absolute',
+                                        top: '50%',
+                                        left: '50%',
+                                        transform: 'translate(-50%, -50%)',
+                                        fontWeight: 'bold',
+                                        color: '#333',
+                                    }}
+                                >
+                                    ₹{(summaryData.TOT_AMT / 100000).toFixed(1)}L
+                                </Typography>
+                            </PieChart>
+                        ) : (
+                            <Box display="flex" justifyContent="center" alignItems="center" height="100%">
+                                <Typography color="text.secondary">No state data available</Typography>
+                            </Box>
+                        )}
+                    </StyledCard2>
+                </Grid>
+            </Grid>
+
+            {/* Recent Orders Table */}
+            <Grid container spacing={2} sx={{ height: '100%', mt: 2 }}>
+                <Grid size={{ xs: 12, md: 9 }} sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+                    <Paper
+                        elevation={5}
+                        sx={{
+                            p: 1.5,
+                            borderRadius: 4,
+                            bgcolor: 'white',
+                            boxShadow: '0 10px 30px rgb(0 0 0 / 0.12)',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            height: '100%',
+                        }}
+                    >
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
                             <Typography variant="h6" fontWeight="bold">
                                 Recent Orders
                             </Typography>
 
-                            {/* Search Box */}
                             <TextField
                                 label="Search Orders"
                                 variant="outlined"
@@ -488,7 +1016,6 @@ const SalesDashboard = () => {
                             />
                         </Box>
 
-                        {/* Table Container with fixed height */}
                         <TableContainer sx={{ flexGrow: 1, maxHeight: 400, overflowY: 'auto', overflowX: 'auto' }}>
                             <Table stickyHeader size="small" aria-label="recent orders">
                                 <TableHead>
@@ -574,7 +1101,6 @@ const SalesDashboard = () => {
                         />
                     </StyledCard2>
 
-                    {/* Second Card */}
                     <StyledCard2 sx={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%' }}>
                         <PieChart
                             series={[
@@ -620,7 +1146,7 @@ const SalesDashboard = () => {
                 </PDFViewer>
             </Dialog>
 
-            <Grid container spacing={2} mt={3}>
+            <Grid container spacing={2} mt={2}>
                 <Grid size={{ xs: 12, md: 6 }}>
                     <Paper
                         elevation={5}
@@ -696,7 +1222,7 @@ const SalesDashboard = () => {
                 </Grid>
             </Grid>
 
-            <Grid container spacing={2} mt={3}>
+            <Grid container spacing={2} mt={2}>
                 <Grid size={{ xs: 12, md: 4 }}>
                     <Paper
                         elevation={5}
@@ -974,6 +1500,6 @@ const SalesDashboard = () => {
             </Grid>
         </Box>
     );
-}
+};
 
 export default SalesDashboard;
