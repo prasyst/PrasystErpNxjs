@@ -20,11 +20,8 @@ import axiosInstance from "@/lib/axios";
 import { toast, ToastContainer } from "react-toastify";
 import ItemRequisitionDialog from "./ItemRequisitiondlog";
 import { inputStyle } from "../../../../public/styles/inputStyles";
-
-import CloseIcon from "@mui/icons-material/Close";
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import ZoomInIcon from '@mui/icons-material/ZoomIn';
-import { Dialog, IconButton as MuiIconButton } from '@mui/material';
 import ZoomDialog from "./ZoomDialog";
 
 const CreateTicketPage = () => {
@@ -92,17 +89,16 @@ const CreateTicketPage = () => {
   const [fcyrKey, setFcyrKey] = useState(null);
   const [openConfirmDialog, setOpenConfirmDialog] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  // const [rows, setRows] = useState([]);
-  // const [selectedRows, setSelectedRows] = useState([]);
   const [rowsSecondTable, setRowsSecondTable] = useState([]);
   const fileInputRef = useRef(null);
   const [isItemRequisitionEnabled, setIsItemRequisitionEnabled] = useState(false);
   const USER_NAME = localStorage.getItem("USER_NAME");
   const USER_ID = localStorage.getItem("USER_ID");
+  const EMP_KEY = localStorage.getItem("EMP_KEY");
+  const EMP_NAME = localStorage.getItem("EMP_NAME");
   const [selectedImage, setselectedImage] = useState("");
   const [zoomOpen, setZoomOpen] = useState(false);
   const [zoomSrc, setZoomSrc] = useState('');
-
   useEffect(() => {
     setIsItemRequisitionEnabled(validateForm());
   }, [formData, ticketFor]);
@@ -114,7 +110,6 @@ const CreateTicketPage = () => {
       setFcyrKey(key);
     }
   }, []);
-
   useEffect(() => {
     fetchCategory();
     fetchMachineGroup();
@@ -124,15 +119,6 @@ const CreateTicketPage = () => {
     getSeriesKey();
     getSeriesData();
   }, [cobrId, fcyrKey])
-  // const handleSelectionChanged = useCallback((event) => {
-  //   const selectedNodes = event.api.getSelectedNodes();
-  //   const selectedData = selectedNodes.map(node => node.data);
-  //   setSelectedRows(selectedData);
-
-  // }, []);
-  // const handleConfirmButton = () => {
-  //   setRowsSecondTable((prevData) => [...prevData, ...selectedRows]);
-  // };
   const handleSaveButton = () => {
     handleSubmit();
     setOpenConfirmDialog(false);
@@ -211,42 +197,6 @@ const CreateTicketPage = () => {
       fetchRetriveData(TKTKEY);
     }
   }, [TKTKEY]);
-
-  // const handleCancel = () => {
-  //   setSelectedRows([]);
-  //   setRowsSecondTable([]);
-  //   setFormData({
-  //     title: "",
-  //     description: "",
-  //     category: "",
-  //     subCategory: "",
-  //     priority: "Medium",
-  //     machGrp: "",
-  //     machine: "",
-  //     machineryKey: "",
-  //     service: "",
-  //     depGrp: "",
-  //     department: "",
-  //     dueDate: "",
-  //     tags: [],
-  //     trnTktDtlEntities: [
-  //       {
-  //         TktDtlId: "",
-  //         TktKey: "",
-  //         ITM_KEY: "",
-  //         UNIT_KEY: "",
-  //         ITM_QTY: "",
-  //         BARCODE: "",
-  //         RATE: "",
-  //         REMARK: "",
-  //         TktdtlImage: "",
-  //         ImgName: "",
-  //         DBFLAG: ""
-  //       }
-  //     ]
-  //   });
-  // };
-
   const getSeriesKey = async () => {
     try {
       const response = await axiosInstance.post("GetSeriesSettings/GetSeriesLastNewKey", {
@@ -272,7 +222,6 @@ const CreateTicketPage = () => {
       toast.error("Error while fetching.")
     }
   };
-
   const getSeriesData = async (prefix) => {
     try {
       const response = await axiosInstance.post('GetSeriesSettings/GetSeriesLastNewKey', {
@@ -294,7 +243,6 @@ const CreateTicketPage = () => {
       toast.error("Error while loading series.");
     }
   };
-
   const fetchCategory = async () => {
     try {
       const response = await axiosInstance.post('TktCat/GetTktCatDrp', {});
@@ -305,7 +253,6 @@ const CreateTicketPage = () => {
       toast.error("Error while fetching category.");
     }
   };
-
   useEffect(() => {
     if (formData.category?.TKTCATID) {
       const categoryId = formData.category.TKTCATID;
@@ -473,9 +420,9 @@ const CreateTicketPage = () => {
         COBR_ID: cobrId,
         TktKey: generatedTktKey,
         TktNo: newTktNo,
-        RaiseBy_ID: USER_ID,
+        RaiseBy_ID: USER_ID || EMP_KEY,
         MobileNo: "",
-        RaiseByNm: USER_NAME,
+        RaiseByNm: USER_NAME || EMP_NAME,
         TktDate: dayjs().format("YYYY-MM-DDTHH:mm:ss"),
         TktTime: dayjs().format("HH:mm:ss"),
         TktFor: ticketFor,
@@ -504,9 +451,9 @@ const CreateTicketPage = () => {
         trnTktDtlEntities: rowsSecondTable
       };
       if (isUpdate) {
-        ticketData.UpdatedBy = USER_ID;
+        ticketData.UpdatedBy = USER_ID || EMP_KEY;
       } else {
-        ticketData.CreatedBy = USER_ID;
+        ticketData.CreatedBy = USER_ID || EMP_KEY;
       }
       const apiUrl = isUpdate
         ? `TrnTkt/UpdateTrnTkt?UserName=${USER_NAME}&strCobrid=${cobrId}`
@@ -533,13 +480,11 @@ const CreateTicketPage = () => {
   const handleFileChange = (event) => {
     const file = event.target.files[0];
     if (!file) return;
-
     const validTypes = ["image/jpeg", "image/jpg", "image/png", "image/gif"];
     if (!validTypes.includes(file.type)) {
       toast.error("Please upload a valid image (JPEG, PNG, GIF)");
       return;
     }
-
     const reader = new FileReader();
     reader.onloadend = () => {
       const base64String = reader.result;
@@ -550,32 +495,14 @@ const CreateTicketPage = () => {
         TktImage: base64String,
         ImgName: fileName,
       }));
-      setselectedImage(base64String); // For preview
+      setselectedImage(base64String);
     };
     reader.onerror = () => {
       toast.error("Failed to read file.");
     };
     reader.readAsDataURL(file);
   };
-  // const handleFileUpload = (event) => {
-  //   const file = event.target.files[0];
-  //   if (!file) {
-  //     toast.info("No file selected. Please choose a file.");
-  //     return;
-  //   }
-  //   const reader = new FileReader();
-  //   reader.onload = () => {
-  //     const base64File = reader.result;
-  //     setAttachments((prev) => [...prev, { fileName: file.name, fileData: base64File }]);
-  //   };
-  //   reader.onerror = () => {
-  //     toast.error("Error reading the file. Please try again.");
-  //   };
-  //   reader.readAsDataURL(file);
-  // };
-  // const handleRemoveAttachment = (index) => {
-  //   setAttachments((prev) => prev.filter((_, i) => i !== index));
-  // };
+
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: "#f9fafb" }}>
       <ToastContainer />
@@ -608,14 +535,13 @@ const CreateTicketPage = () => {
           </Stack>
         </Container>
       </Box>
-      {/* Main Form */}
       <Container maxWidth="md" sx={{ py: 3 }}>
         <Paper elevation={2} sx={{ border: "1px solid #e5e7eb", borderRadius: 3 }}>
           <Box component="form">
             <Box p={{ xs: 2, md: 3 }}>
               <Box display="flex" alignItems="center" sx={{
                 mb: 1,
-                flexDirection: { xs: 'column', md: 'row' }, // Stack vertically on small screens
+                flexDirection: { xs: 'column', md: 'row' },
               }}>
                 <FormLabel id="demo-row-radio-buttons-group-label" sx={{ marginRight: 2, fontSize: '1rem', color: '#000' }}>
                   Ticket For →
@@ -690,7 +616,6 @@ const CreateTicketPage = () => {
                     <Autocomplete
                       options={machineDrp}
                       getOptionLabel={(option) => option.MACHINERY_NAME || ""}
-                      // This is the fix → show selected machine even if not in machineDrp
                       value={
                         machineDrp.find(m => m.MACHINERY_KEY === formData.machineryKey) ||
                         (formData.machineryKey
@@ -756,7 +681,6 @@ const CreateTicketPage = () => {
                     )}
                   />
                 </Grid>
-
                 <Grid size={{ xs: 12, sm: 6 }}>
                   <Autocomplete
                     options={subCat}
@@ -777,7 +701,6 @@ const CreateTicketPage = () => {
                       />
                     )}
                   />
-
                 </Grid>
               </Grid>
               <Grid container spacing={1} sx={{ mb: 1 }}>
@@ -811,8 +734,6 @@ const CreateTicketPage = () => {
                 placeholder="Describe the issue or request..."
                 sx={{ mb: 2 }}
               />
-              {/* Attachments */}
-
               <Grid
                 container
                 spacing={1}
@@ -979,6 +900,8 @@ const CreateTicketPage = () => {
         tktNo={TktNo}
         userId={USER_ID}
         userName={USER_NAME}
+        empKey={EMP_KEY}
+        empName={EMP_NAME}
         attachments={attachments}
         rowsSecondTable={rowsSecondTable}
         trnTktDtlEntities={formData.trnTktDtlEntities}
@@ -999,5 +922,4 @@ const CreateTicketPage = () => {
     </Box>
   );
 };
-
 export default CreateTicketPage;
