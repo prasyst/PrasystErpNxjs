@@ -9,6 +9,7 @@ import {
     CircularProgress
 } from "@mui/material";
 import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
+import CurrencyRupeeIcon from '@mui/icons-material/CurrencyRupee';
 import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -17,6 +18,7 @@ import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
+import PercentIcon from '@mui/icons-material/Percent';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import {
     ResponsiveContainer, ComposedChart, Area, AreaChart, BarChart, Bar, XAxis, YAxis, Tooltip, LineChart,
@@ -70,11 +72,11 @@ const desktopOS2 = [
 const StyledCard = styled(Paper)(({ theme }) => ({
     display: 'flex',
     alignItems: 'center',
-    padding: theme.spacing(2),
+    padding: theme.spacing(1.5),
     borderRadius: '12px',
     background: 'linear-gradient(135deg, #28357cff 0%, #706161ff 100%)',
     color: '#fff',
-    gap: theme.spacing(5),
+    gap: theme.spacing(3),
     boxShadow: '0 6px 20px rgba(0, 0, 0, 0.3)',
     transition: 'transform 0.3s ease, box-shadow 0.3s ease',
     '&:hover': {
@@ -142,8 +144,6 @@ const lineChartData2 = [
 
 const SalesDashboard = () => {
     const theme = useTheme();
-    // const [dateFrom, setDateFrom] = useState(dayjs().startOf('month'));
-    // const [dateTo, setDateTo] = useState(dayjs().endOf('month'));
     const currentYear = dayjs().year();
     const [dateFrom, setDateFrom] = useState(dayjs(`${currentYear}-04-01`));
     const [dateTo, setDateTo] = useState(dayjs(`${currentYear + 1}-03-31`));
@@ -154,12 +154,42 @@ const SalesDashboard = () => {
     const [selectedOrder, setSelectedOrder] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [summaryData, setSummaryData] = useState({
-        TOT_QTY: 0,
-        TOT_BALQTY: 0,
-        TOT_SALQTY: 0,
-        TOT_AMT: 0,
-        TOT_BALAMT: 0,
-        TOT_SALAMT: 0,
+        QTY: 0,
+        BAL_QTY: 0,
+        INIT_QTY: 0,
+        AMOUNT: 0,
+        ROWNUM: 0,
+    });
+
+    const [canOrd, setCanOrd] = useState({
+        QTY: 0,
+        BAL_QTY: 0,
+        INIT_QTY: 0,
+        AMOUNT: 0,
+        ROWNUM: 0,
+    });
+
+    const [balOrd, setBalOrd] = useState({
+        QTY: 0,
+        BAL_QTY: 0,
+        INIT_QTY: 0,
+        AMOUNT: 0,
+        ROWNUM: 0,
+    });
+
+    const [dispOrd, setDispOrd] = useState({
+        QTY: 0,
+        BAL_QTY: 0,
+        INIT_QTY: 0,
+        AMOUNT: 0,
+        ROWNUM: 0,
+    });
+
+    const [shortOrd, setShortOrd] = useState({
+        QTY: 0,
+        BAL_QTY: 0,
+        INIT_QTY: 0,
+        AMOUNT: 0,
         ROWNUM: 0,
     });
 
@@ -189,6 +219,10 @@ const SalesDashboard = () => {
         showTableData();
         totalCoutData();
         fetchPartyWise();
+        fetchCancelOrder();
+        fetchOderBalance();
+        fetchOderDispatch();
+        fetchOderShortClose();
         stateWiseParty();
     }, []);
 
@@ -222,20 +256,21 @@ const SalesDashboard = () => {
                 FCYR_KEY: fcyr,
                 FROM_DT: dayjs(dateFrom).format('YYYY-MM-DD'),
                 To_DT: dayjs(dateTo).format('YYYY-MM-DD'),
-                Flag: "OrdTotSum",
+                Flag: "OpenOrd",
                 PageNumber: 1,
                 PageSize: 10,
                 SearchText: "",
             });
+
             if (response.data.STATUS === 0 && Array.isArray(response.data.DATA)) {
                 const summary = response.data.DATA[0];
+
+                // Update the state with new fields
                 setSummaryData({
-                    TOT_QTY: summary.TOT_QTY || 0,
-                    TOT_BALQTY: summary.TOT_BALQTY || 0,
-                    TOT_SALQTY: summary.TOT_SALQTY || 0,
-                    TOT_AMT: summary.TOT_AMT || 0,
-                    TOT_BALAMT: summary.TOT_BALAMT || 0,
-                    TOT_SALAMT: summary.TOT_SALAMT || 0,
+                    AMOUNT: summary.AMOUNT || 0,
+                    QTY: summary.QTY || 0,
+                    BAL_QTY: summary.BAL_QTY || 0,
+                    INIT_QTY: summary.INIT_QTY || 0,
                     ROWNUM: summary.ROWNUM || 0,
                 });
             } else {
@@ -243,6 +278,134 @@ const SalesDashboard = () => {
             }
         } catch (error) {
             toast.error("Error from API response.");
+        }
+    };
+
+    const fetchCancelOrder = async () => {
+        setIsLoading(true);
+        try {
+            const response = await axiosInstance.post("OrderDash/GetOrderDashBoard", {
+                COBR_ID: cobrId,
+                FCYR_KEY: fcyr,
+                FROM_DT: dayjs(dateFrom).format('YYYY-MM-DD'),
+                To_DT: dayjs(dateTo).format('YYYY-MM-DD'),
+                Flag: "CancelOrd",
+                PageNumber: 1,
+                PageSize: 10,
+                SearchText: "",
+            });
+
+            if (response.data.STATUS === 0 && Array.isArray(response.data.DATA)) {
+                const cancel = response.data.DATA[0];
+
+                setCanOrd({
+                    AMOUNT: cancel.AMOUNT || 0,
+                    QTY: cancel.QTY || 0,
+                    BAL_QTY: cancel.BAL_QTY || 0,
+                    INIT_QTY: cancel.INIT_QTY || 0,
+                    ROWNUM: cancel.ROWNUM || 0,
+                });
+            }
+        } catch (error) {
+            toast.error("Error from API response.");
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const fetchOderBalance = async () => {
+        setIsLoading(true);
+        try {
+            const response = await axiosInstance.post("OrderDash/GetOrderDashBoard", {
+                COBR_ID: cobrId,
+                FCYR_KEY: fcyr,
+                FROM_DT: dayjs(dateFrom).format('YYYY-MM-DD'),
+                To_DT: dayjs(dateTo).format('YYYY-MM-DD'),
+                Flag: "BalOrd",
+                PageNumber: 1,
+                PageSize: 10,
+                SearchText: "",
+            });
+
+            if (response.data.STATUS === 0 && Array.isArray(response.data.DATA)) {
+                const balance = response.data.DATA[0];
+
+                setBalOrd({
+                    AMOUNT: balance.AMOUNT || 0,
+                    QTY: balance.QTY || 0,
+                    BAL_QTY: balance.BAL_QTY || 0,
+                    INIT_QTY: balance.INIT_QTY || 0,
+                    ROWNUM: balance.ROWNUM || 0,
+                });
+            }
+        } catch (error) {
+            toast.error("Error from API response.");
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const fetchOderDispatch = async () => {
+        setIsLoading(true);
+        try {
+            const response = await axiosInstance.post("OrderDash/GetOrderDashBoard", {
+                COBR_ID: cobrId,
+                FCYR_KEY: fcyr,
+                FROM_DT: dayjs(dateFrom).format('YYYY-MM-DD'),
+                To_DT: dayjs(dateTo).format('YYYY-MM-DD'),
+                Flag: "DisOrd",
+                PageNumber: 1,
+                PageSize: 10,
+                SearchText: "",
+            });
+
+            if (response.data.STATUS === 0 && Array.isArray(response.data.DATA)) {
+                const disp = response.data.DATA[0];
+
+                setDispOrd({
+                    AMOUNT: disp.AMOUNT || 0,
+                    QTY: disp.QTY || 0,
+                    BAL_QTY: disp.BAL_QTY || 0,
+                    INIT_QTY: disp.INIT_QTY || 0,
+                    ROWNUM: disp.ROWNUM || 0,
+                });
+            }
+        } catch (error) {
+            toast.error("Error from API response.");
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const fetchOderShortClose = async () => {
+        setIsLoading(true);
+        try {
+            const response = await axiosInstance.post("OrderDash/GetOrderDashBoard", {
+                COBR_ID: cobrId,
+                FCYR_KEY: fcyr,
+                FROM_DT: dayjs(dateFrom).format('YYYY-MM-DD'),
+                To_DT: dayjs(dateTo).format('YYYY-MM-DD'),
+                Flag: "ShortOrd",
+                PageNumber: 1,
+                PageSize: 10,
+                SearchText: "",
+            });
+
+            if (response.data.STATUS === 0 && Array.isArray(response.data.DATA)) {
+                const disp = response.data.DATA[0];
+
+                setShortOrd({
+                    AMOUNT: disp.AMOUNT || 0,
+                    QTY: disp.QTY || 0,
+                    BAL_QTY: disp.BAL_QTY || 0,
+                    INIT_QTY: disp.INIT_QTY || 0,
+                    ROWNUM: disp.ROWNUM || 0,
+                });
+            }
+        } catch (error) {
+            toast.error("Error from API response.");
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -293,6 +456,10 @@ const SalesDashboard = () => {
         showTableData();
         totalCoutData();
         fetchPartyWise();
+        fetchCancelOrder();
+        fetchOderBalance();
+        fetchOderDispatch();
+        fetchOderShortClose();
         stateWiseParty();
     };
 
@@ -365,17 +532,6 @@ const SalesDashboard = () => {
             fullPartyName: item.PARTY_NAME || "Unknown",
         }));
 
-    // Top 10 State for Pie Chart
-    const top10State = [...partywise]
-        .sort((a, b) => parseFloat(b.AMOUNT || 0) - parseFloat(a.AMOUNT || 0))
-        .slice(0, 10)
-        .map((item, index) => ({
-            id: index,
-            label: item.PARTY_NAME?.slice(0, 15) + (item.PARTY_NAME?.length > 15 ? '...' : ''),
-            value: parseFloat(item.AMOUNT || 0),
-            color: `hsl(${index * 40}, 70%, 50%)`,
-        }));
-
     return (
         <Box sx={{ p: 2, pt: 1, bgcolor: "#f5f7fa", minHeight: "70vh" }}>
             <ToastContainer />
@@ -410,8 +566,12 @@ const SalesDashboard = () => {
                             onChange={(newValue) => setDateFrom(newValue)}
                             format="DD/MM/YYYY"
                             views={['day', 'month', 'year']}
-                            sx={{ width: 150 }}
-                            className="custom-datepicker"
+                            sx={{
+                                width: 150,
+                                '& .MuiPickersSectionList-root': {
+                                    padding: '9.5px 0',
+                                },
+                            }}
                         />
                         <DatePicker
                             label="To-Date"
@@ -419,7 +579,12 @@ const SalesDashboard = () => {
                             onChange={(newValue) => setDateTo(newValue)}
                             format="DD/MM/YYYY"
                             views={['day', 'month', 'year']}
-                            sx={{ width: 150 }}
+                            sx={{
+                                width: 150,
+                                '& .MuiPickersSectionList-root': {
+                                    padding: '9.5px 0',
+                                },
+                            }}
                             className="custom-datepicker"
                         />
                         <Button
@@ -441,14 +606,14 @@ const SalesDashboard = () => {
 
             {/* Cards Data */}
             <Grid container spacing={1} mb={2} gap={1}>
-                <Grid size={{ xs: 12, md: 2.4 }}>
-                    <StyledCard>
+                <Grid size={{ xs: 12, md: 3 }} sx={{ display: "flex" }}>
+                    <StyledCard sx={{ width: "100%" }}>
                         <IconButton
                             sx={{
                                 bgcolor: "#4caf5022",
                                 color: "#4caf50",
-                                width: 40,
-                                height: 40,
+                                width: 60,
+                                height: 60,
                                 boxShadow: "0 0 20px #4caf5066",
                                 "&:hover": { bgcolor: "#4caf5044" },
                             }}
@@ -460,18 +625,19 @@ const SalesDashboard = () => {
                             <Typography variant="subtitle1" fontWeight="bold" sx={{ mb: 1 }}>
                                 Total Orders - {summaryData.ROWNUM}
                             </Typography>
-                            <Typography variant="h6" fontWeight="bold" letterSpacing={1}>
-                                ₹ {(summaryData.TOT_AMT / 100000).toFixed(2)} L
+                            <Typography variant="h6" fontWeight="bold">
+                                Value: ₹ {(summaryData.AMOUNT / 100000).toFixed(2)} L
                             </Typography>
-                            <Typography variant="subtitle1">
-                                Qty: {summaryData.TOT_QTY}
+                            <Typography variant="h6" sx={{ mt: 0.5 }}>
+                                Qty: {summaryData.QTY}
+                                {/* Qty: {summaryData.QTY >= 1000 ? (summaryData.QTY / 1000).toFixed(2) + " K" : summaryData.QTY} */}
                             </Typography>
                         </Box>
                     </StyledCard>
                 </Grid>
 
-                <Grid size={{ xs: 12, md: 2.4 }}>
-                    <StyledCard>
+                <Grid size={{ xs: 12, md: 3 }} sx={{ display: "flex" }}>
+                    <StyledCard sx={{ width: "100%" }}>
                         <IconButton
                             sx={{
                                 bgcolor: "#2196f322",
@@ -489,18 +655,62 @@ const SalesDashboard = () => {
                             <Typography variant="subtitle1" fontWeight="bold" sx={{ mb: 1 }}>
                                 Dispatch
                             </Typography>
-                            <Typography variant="h6" fontWeight="bold" letterSpacing={1}>
-                                ₹ {(summaryData.TOT_SALAMT / 100000).toFixed(2)} L
+                            <Typography variant="h6" fontWeight="bold">
+                                ₹ {(dispOrd.AMOUNT / 100000).toFixed(2)} L
                             </Typography>
-                            <Typography variant="subtitle1">
-                                Qty: {summaryData.TOT_SALQTY}
+                            <Typography variant="h6">
+                                Qty: {dispOrd.QTY}
                             </Typography>
                         </Box>
                     </StyledCard>
                 </Grid>
 
-                <Grid size={{ xs: 12, md: 2.4 }}>
-                    <StyledCard>
+                <Grid size={{ xs: 12, md: 3 }} sx={{ display: "flex" }}>
+                    <StyledCard sx={{ width: "100%" }}>
+                        <IconButton
+                            sx={{
+                                bgcolor: "#9c27b022",
+                                color: "#9bb027ff",
+                                width: 40,
+                                height: 40,
+                                boxShadow: "0 0 20px #9c27b066",
+                                "&:hover": { bgcolor: "#9c27b044" },
+                            }}
+                            aria-label="Conversion %"
+                        >
+                            <PercentIcon fontSize="large" />
+                        </IconButton>
+                        <Box>
+                            <Typography variant="subtitle1" fontWeight="bold" sx={{ mb: 1 }}>
+                                Conversion Ratio
+                            </Typography>
+                            <Typography variant="h6" fontWeight="bold" letterSpacing={1}>
+                                {totalConversion.toFixed(2)}%
+                            </Typography>
+                            <Box display="flex" alignItems="center" gap={0.5}>
+                                {totalConversion > 50 ? (
+                                    <ArrowUpwardIcon sx={{ color: '#4caf50' }} fontSize="small" />
+                                ) : (
+                                    <ArrowDownwardIcon sx={{ color: '#f44336' }} fontSize="small" />
+                                )}
+                                <Typography variant="body2" color={totalConversion > 50 ? "success.main" : "error.main"} fontWeight={600}>
+                                    {totalConversion.toFixed(0) ?? '0.00'}%
+                                </Typography>
+                            </Box>
+                            <Box>
+                                <LinearProgress
+                                    variant="determinate"
+                                    value={totalConversion}
+                                    sx={{ height: 10, borderRadius: 5, bgcolor: '#fff3e0' }}
+                                    color="success"
+                                />
+                            </Box>
+                        </Box>
+                    </StyledCard>
+                </Grid>
+
+                <Grid size={{ xs: 12, md: 3 }} sx={{ display: "flex" }}>
+                    <StyledCard sx={{ width: "100%" }}>
                         <IconButton
                             sx={{
                                 bgcolor: "#ff980022",
@@ -516,87 +726,14 @@ const SalesDashboard = () => {
                         </IconButton>
                         <Box>
                             <Typography variant="subtitle1" fontWeight="bold" sx={{ mb: 1 }}>
-                                Order Balance
+                                Pending Order
                             </Typography>
-                            <Typography variant="h6" fontWeight="bold" letterSpacing={1}>
-                                ₹ {(summaryData.TOT_BALAMT / 100000).toFixed(2)} L
-                            </Typography>
-                            <Typography variant="subtitle1">
-                                Qty: {summaryData.TOT_BALQTY}
-                            </Typography>
-                        </Box>
-                    </StyledCard>
-                </Grid>
-
-                <Grid size={{ xs: 12, md: 2.4 }}>
-                    <StyledCard>
-                        <IconButton
-                            sx={{
-                                bgcolor: "#c46b6b22",
-                                color: "#ff3300ff",
-                                width: 40,
-                                height: 40,
-                                boxShadow: "0 0 20px #c9686866",
-                                "&:hover": { bgcolor: "#aa444444" },
-                            }}
-                            aria-label="Canceled Order"
-                        >
-                            <CancelIcon fontSize="large" />
-                        </IconButton>
-                        <Box>
-                            <Typography variant="subtitle1" fontWeight="bold" sx={{ mb: 1 }}>
-                                Canceled Order
-                            </Typography>
-                            <Typography variant="h6" fontWeight="bold" letterSpacing={1}>
-                                ₹ Working
+                            <Typography variant="h6" fontWeight="bold">
+                                ₹ {(balOrd.AMOUNT / 100000).toFixed(2)} L
                             </Typography>
                             <Typography variant="subtitle1">
-                                Qty: 0000
+                                Qty: {balOrd.QTY} |  Cancel Qty: {canOrd.QTY}
                             </Typography>
-                        </Box>
-                    </StyledCard>
-                </Grid>
-
-                <Grid size={{ xs: 12, md: 2.4 }}>
-                    <StyledCard>
-                        <IconButton
-                            sx={{
-                                bgcolor: "#9c27b022",
-                                color: "#9c27b0",
-                                width: 40,
-                                height: 40,
-                                boxShadow: "0 0 20px #9c27b066",
-                                "&:hover": { bgcolor: "#9c27b044" },
-                            }}
-                            aria-label="Conversion %"
-                        >
-                            <TrendingUpIcon fontSize="large" />
-                        </IconButton>
-                        <Box>
-                            <Typography variant="subtitle1" fontWeight="bold" sx={{ mb: 1 }}>
-                                Conversion Rate
-                            </Typography>
-                            <Typography variant="h6" fontWeight="bold" letterSpacing={1}>
-                                {totalConversion.toFixed(2)}%
-                            </Typography>
-                            <Box display="flex" alignItems="center" gap={0.5}>
-                                {totalConversion > 50 ? (
-                                    <ArrowUpwardIcon sx={{ color: '#4caf50' }} fontSize="small" />
-                                ) : (
-                                    <ArrowDownwardIcon sx={{ color: '#f44336' }} fontSize="small" />
-                                )}
-                                <Typography variant="body2" color={totalConversion > 50 ? "success.main" : "error.main"} fontWeight={600}>
-                                    {totalConversion.toFixed(0)}%
-                                </Typography>
-                            </Box>
-                            <Box>
-                                <LinearProgress
-                                    variant="determinate"
-                                    value={totalConversion}
-                                    sx={{ height: 10, borderRadius: 5, bgcolor: '#fff3e0' }}
-                                    color="success"
-                                />
-                            </Box>
                         </Box>
                     </StyledCard>
                 </Grid>

@@ -6,10 +6,9 @@ import Charts from '@/components/dashboard/Charts';
 
 const OverviewTab = () => {
   return (
-    <Box sx={{ p: 2 }}>
-      <h3>Overview Dashboard</h3>
-      <Cards/>
-    <Charts/>
+    <Box sx={{ px: 2, py: 1 }}>
+      <Cards />
+      <Charts />
     </Box>
   );
 };
