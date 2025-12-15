@@ -269,174 +269,347 @@ const AllTicketsPage = () => {
     </Card>
   );
 
-  const DesktopTableView = () => (
-    <TableContainer component={Paper} sx={{ boxShadow: 2, height: 450, overflow: 'auto' }}>
-      <Table
-        sx={{
-          minWidth: 800,
-          '& .MuiTableCell-root': {
-            padding: '2px 10px',
-            fontSize: '0.8125rem',
-            lineHeight: 1.2,
+ const DesktopTableView = () => (
+  <TableContainer 
+    component={Paper} 
+    sx={{ 
+      boxShadow: 2, 
+      maxHeight: 500, 
+      overflow: 'auto',
+      '&::-webkit-scrollbar': {
+        width: '6px',
+        height: '6px'
+      },
+      '&::-webkit-scrollbar-thumb': {
+        backgroundColor: '#c1c1c1',
+        borderRadius: '3px'
+      }
+    }}
+  >
+    <Table
+      sx={{
+        minWidth: 1000,
+        '& .MuiTableCell-root': {
+          padding: '4px 8px',
+          fontSize: '0.75rem',
+          lineHeight: 1.1,
+          whiteSpace: 'nowrap',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+        },
+        '& .MuiTableCell-head': {
+          padding: '6px 8px',
+          fontSize: '0.7rem',
+          textTransform: 'uppercase',
+          letterSpacing: '0.3px',
+          backgroundColor: 'primary.main',
+          color: 'white',
+          fontWeight: 600,
+          position: 'sticky',
+          top: 0,
+          zIndex: 10,
+          '&:first-of-type': {
+            borderTopLeftRadius: '4px',
           },
-          '& .MuiTableCell-head': {
-            padding: '5px 16px',
-            fontSize: '0.75rem',
-            textTransform: 'uppercase',
-            letterSpacing: '0.5px',
-            backgroundColor: 'primary.main',
-            color: 'white',
+          '&:last-of-type': {
+            borderTopRightRadius: '4px',
+          }
+        },
+        '& .MuiTableRow-root': {
+          height: '42px',
+          '&:hover': {
+            backgroundColor: 'action.hover',
           },
-        }}
-        stickyHeader
-      >
-        <TableHead>
-          <TableRow>
-            <TableCell padding="checkbox" sx={{ backgroundColor: 'primary.main' }}>
-              <Checkbox
-                size="small"
-                color="default"
-                indeterminate={selectedRows.length > 0 && selectedRows.length < filteredTickets.length}
-                checked={filteredTickets.length > 0 && selectedRows.length === filteredTickets.length}
-                onChange={handleSelectAll}
-                sx={{
-                  color: 'white',
-                  p: 0.5,
-                  '&.Mui-checked': { color: 'white' },
-                  '&.MuiCheckbox-indeterminate': { color: 'white' },
-                }}
-              />
-            </TableCell>
+          '&.Mui-selected': {
+            backgroundColor: 'primary.lighter',
+          },
+          '&.Mui-selected:hover': {
+            backgroundColor: 'primary.light',
+          }
+        },
+      }}
+      stickyHeader
+    >
+      <TableHead>
+        <TableRow>
+          <TableCell 
+            padding="checkbox" 
+            sx={{ 
+              backgroundColor: 'primary.main',
+              width: '40px',
+              minWidth: '40px',
+              maxWidth: '40px'
+            }}
+          >
+            <Checkbox
+              size="small"
+              color="default"
+              indeterminate={selectedRows.length > 0 && selectedRows.length < filteredTickets.length}
+              checked={filteredTickets.length > 0 && selectedRows.length === filteredTickets.length}
+              onChange={handleSelectAll}
+              sx={{
+                color: 'white',
+                padding: '2px',
+                '&.Mui-checked': { color: 'white' },
+                '&.MuiCheckbox-indeterminate': { color: 'white' },
+              }}
+            />
+          </TableCell>
 
-            <TableCell sx={{ fontWeight: 'bold', fontSize: '0.875rem', color: 'white' }}>
-              Ticket No
-            </TableCell>
-            <TableCell sx={{ fontWeight: 'bold', fontSize: '0.875rem', color: 'white' }}>
-              Title
-            </TableCell>
-            <TableCell sx={{ fontWeight: 'bold', fontSize: '0.875rem', color: 'white' }}>
-              Category
-            </TableCell>
-            <TableCell sx={{ fontWeight: 'bold', fontSize: '0.875rem', color: 'white' }}>
-              Mobile No
-            </TableCell>
-            <TableCell sx={{ fontWeight: 'bold', fontSize: '0.875rem', color: 'white' }}>
-              Priority
-            </TableCell>
-            <TableCell sx={{ fontWeight: 'bold', fontSize: '0.875rem', color: 'white' }}>
-              Status
-            </TableCell>
-            <TableCell sx={{ fontWeight: 'bold', fontSize: '0.875rem', color: 'white' }}>
-              TKTFOR
-            </TableCell>
-            <TableCell sx={{ fontWeight: 'bold', fontSize: '0.875rem', color: 'white' }}>
-              Raised At
-            </TableCell>
-            <TableCell sx={{ fontWeight: 'bold', fontSize: '0.875rem', color: 'white', textAlign: 'center' }}>
-              Actions
+          <TableCell sx={{ width: '100px', minWidth: '100px' }}>Ticket No</TableCell>
+          <TableCell sx={{ width: '180px', minWidth: '180px' }}>Title</TableCell>
+          <TableCell sx={{ width: '120px', minWidth: '120px' }}>Category</TableCell>
+          <TableCell sx={{ width: '100px', minWidth: '100px' }}>Mobile No</TableCell>
+          <TableCell sx={{ width: '90px', minWidth: '90px' }}>Priority</TableCell>
+          <TableCell sx={{ width: '100px', minWidth: '100px' }}>Status</TableCell>
+          <TableCell sx={{ width: '80px', minWidth: '80px' }}>TKTFOR</TableCell>
+          <TableCell sx={{ width: '100px', minWidth: '100px' }}>Raised At</TableCell>
+          <TableCell sx={{ width: '90px', minWidth: '90px', textAlign: 'center' }}>Actions</TableCell>
+        </TableRow>
+      </TableHead>
+
+      <TableBody>
+        {filteredTickets.map((ticket) => {
+          const isSelected = selectedRows.includes(ticket.TKTKEY);
+          return (
+            <TableRow
+              key={ticket.TKTKEY}
+              hover
+              selected={isSelected}
+              sx={{
+                cursor: 'pointer',
+                backgroundColor: isSelected ? 'action.selected' : 'inherit',
+                '&:last-child td': {
+                  borderBottom: 0
+                }
+              }}
+              onClick={(e) => {
+                if (e.target.type !== 'checkbox') {
+                  handleViewTicket(ticket);
+                }
+              }}
+            >
+              {/* Row Checkbox */}
+              <TableCell 
+                padding="checkbox" 
+                sx={{ 
+                  width: '40px',
+                  minWidth: '40px',
+                  maxWidth: '40px'
+                }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <Checkbox
+                  size="small"
+                  color="primary"
+                  checked={isSelected}
+                  onChange={(e) => handleRowSelect(e, ticket.TKTKEY)}
+                  sx={{ 
+                    padding: '2px',
+                    '& .MuiSvgIcon-root': {
+                      fontSize: '1rem'
+                    }
+                  }}
+                />
+              </TableCell>
+
+              {/* Ticket No */}
+              <TableCell>
+                <Typography 
+                  variant="body2" 
+                  fontWeight="600" 
+                  color="primary"
+                  sx={{ 
+                    fontSize: '0.75rem',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis'
+                  }}
+                >
+                  {ticket.id}
+                </Typography>
+              </TableCell>
+
+              {/* Title */}
+              <TableCell sx={{ maxWidth: '180px' }}>
+                <Typography 
+                  variant="subtitle2" 
+                  fontWeight="600" 
+                  sx={{ 
+                    fontSize: '0.75rem',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap'
+                  }}
+                >
+                  {ticket.title}
+                </Typography>
+              </TableCell>
+
+              {/* Category */}
+              <TableCell>
+                <Chip 
+                  label={ticket.category} 
+                  size="small" 
+                  variant="outlined" 
+                  color="primary" 
+                  sx={{ 
+                    fontSize: '0.7rem',
+                    height: '22px',
+                    '& .MuiChip-label': {
+                      px: 1,
+                      py: 0.5
+                    }
+                  }} 
+                />
+              </TableCell>
+
+              {/* Mobile No */}
+              <TableCell>
+                <Typography 
+                  variant="body2" 
+                  sx={{ 
+                    fontSize: '0.75rem',
+                    color: 'text.secondary'
+                  }}
+                >
+                  {ticket.MOBILENO || '-'}
+                </Typography>
+              </TableCell>
+
+              {/* Priority */}
+              <TableCell>
+                <Chip 
+                  label={ticket.priority} 
+                  size="small" 
+                  color={getPriorityColor(ticket.priority)} 
+                  sx={{ 
+                    fontSize: '0.7rem',
+                    height: '22px',
+                    minWidth: '60px',
+                    '& .MuiChip-label': {
+                      px: 1,
+                      py: 0.5
+                    }
+                  }} 
+                />
+              </TableCell>
+
+              {/* Status */}
+              <TableCell>
+                <Chip
+                  label={
+                    ticket.status === 'open' ? 'Open' :
+                    ticket.status === 'in-progress' ? 'In Progress' :
+                    ticket.status === 'resolved' ? 'Resolved' : 'Closed'
+                  }
+                  size="small"
+                  color={getStatusColor(ticket.status)}
+                  variant="filled"
+                  sx={{ 
+                    fontSize: '0.7rem',
+                    height: '22px',
+                    minWidth: '70px',
+                    '& .MuiChip-label': {
+                      px: 1,
+                      py: 0.5
+                    }
+                  }}
+                />
+              </TableCell>
+
+              {/* TKTFOR */}
+              <TableCell>
+                <Typography 
+                  variant="body2" 
+                  sx={{ 
+                    fontSize: '0.75rem',
+                    fontWeight: 500
+                  }}
+                >
+                  {ticket.tktFor}
+                </Typography>
+              </TableCell>
+
+              {/* Raised At */}
+              <TableCell>
+                <Typography 
+                  variant="body2" 
+                  color="text.secondary"
+                  sx={{ 
+                    fontSize: '0.7rem'
+                  }}
+                >
+                  {formatDate(ticket.createdAt)}
+                </Typography>
+              </TableCell>
+
+              {/* Actions */}
+              <TableCell onClick={(e) => e.stopPropagation()}>
+                <Box display="flex" justifyContent="center" gap={0.5}>
+                  <Tooltip title="View" arrow>
+                    <IconButton 
+                      size="small" 
+                      color="primary" 
+                      onClick={() => handleViewTicket(ticket)}
+                      sx={{ 
+                        padding: '3px',
+                        '& .MuiSvgIcon-root': {
+                          fontSize: '1rem'
+                        }
+                      }}
+                    >
+                      <VisibilityIcon />
+                    </IconButton>
+                  </Tooltip>
+                  <Tooltip title="Edit" arrow>
+                    <IconButton 
+                      size="small" 
+                      color="secondary" 
+                      onClick={() => handleEditTicket(ticket)}
+                      sx={{ 
+                        padding: '3px',
+                        '& .MuiSvgIcon-root': {
+                          fontSize: '1rem'
+                        }
+                      }}
+                    >
+                      <EditIcon />
+                    </IconButton>
+                  </Tooltip>
+                  <Tooltip title="Delete" arrow>
+                    <IconButton 
+                      size="small" 
+                      color="error" 
+                      onClick={() => handleDeleteClick(ticket)}
+                      sx={{ 
+                        padding: '3px',
+                        '& .MuiSvgIcon-root': {
+                          fontSize: '1rem'
+                        }
+                      }}
+                    >
+                      <DeleteIcon />
+                    </IconButton>
+                  </Tooltip>
+                </Box>
+              </TableCell>
+            </TableRow>
+          );
+        })}
+
+        {filteredTickets.length === 0 && (
+          <TableRow>
+            <TableCell colSpan={10} align="center" sx={{ py: 3 }}>
+              <Typography variant="body2" color="text.secondary">
+                No tickets found
+              </Typography>
             </TableCell>
           </TableRow>
-        </TableHead>
-
-        <TableBody>
-          {filteredTickets.map((ticket) => {
-            const isSelected = selectedRows.includes(ticket.TKTKEY);
-            return (
-              <TableRow
-                key={ticket.TKTKEY}
-                hover
-                selected={isSelected}
-                sx={{
-                  cursor: 'pointer',
-                  backgroundColor: isSelected ? 'action.selected' : 'inherit',
-                }}
-              >
-                {/* Row Checkbox - Small & Clean */}
-                <TableCell padding="checkbox" onClick={(e) => e.stopPropagation()}>
-                  <Checkbox
-                    size="small"
-                    color="primary"
-                    checked={isSelected}
-                    onChange={(e) => handleRowSelect(e, ticket.TKTKEY)}
-                    sx={{ p: 0.5 }}
-                  />
-                </TableCell>
-
-                {/* Rest of your columns */}
-                <TableCell onClick={() => handleViewTicket(ticket)}>
-                  <Typography variant="body2" fontWeight="600" color="primary">
-                    {ticket.id}
-                  </Typography>
-                </TableCell>
-
-                <TableCell sx={{ maxWidth: 300 }} onClick={() => handleViewTicket(ticket)}>
-                  <Typography variant="subtitle2" fontWeight="600" noWrap>
-                    {ticket.title}
-                  </Typography>
-                </TableCell>
-
-                <TableCell onClick={() => handleViewTicket(ticket)}>
-                  <Chip label={ticket.category} size="small" variant="outlined" color="primary" />
-                </TableCell>
-
-                <TableCell onClick={() => handleViewTicket(ticket)}>
-                  {ticket.MOBILENO || '-'}
-                </TableCell>
-
-                <TableCell onClick={() => handleViewTicket(ticket)}>
-                  <Chip label={ticket.priority} size="small" color={getPriorityColor(ticket.priority)} />
-                </TableCell>
-
-                <TableCell onClick={() => handleViewTicket(ticket)}>
-                  <Chip
-                    label={
-                      ticket.status === 'open' ? 'Open' :
-                        ticket.status === 'in-progress' ? 'In Progress' :
-                          ticket.status === 'resolved' ? 'Resolved' : 'Closed'
-                    }
-                    size="small"
-                    color={getStatusColor(ticket.status)}
-                    variant="filled"
-                  />
-                </TableCell>
-
-                <TableCell onClick={() => handleViewTicket(ticket)}>
-                  <Typography variant="body2">{ticket.tktFor}</Typography>
-                </TableCell>
-
-                <TableCell onClick={() => handleViewTicket(ticket)}>
-                  <Typography variant="body2" color="text.secondary">
-                    {formatDate(ticket.createdAt)}
-                  </Typography>
-                </TableCell>
-
-                <TableCell onClick={(e) => e.stopPropagation()}>
-                  <Box display="flex" justifyContent="center" gap={1}>
-                    <Tooltip title="View" arrow>
-                      <IconButton size="small" color="primary" onClick={() => handleViewTicket(ticket)}>
-                        <VisibilityIcon fontSize="small" />
-                      </IconButton>
-                    </Tooltip>
-                    <Tooltip title="Edit" arrow>
-                      <IconButton size="small" color="secondary" onClick={() => handleEditTicket(ticket)}>
-                        <EditIcon fontSize="small" />
-                      </IconButton>
-                    </Tooltip>
-                    <Tooltip title="Delete" arrow>
-                      <IconButton size="small" color="error" onClick={() => handleDeleteClick(ticket)}>
-                        <DeleteIcon fontSize="small" />
-                      </IconButton>
-                    </Tooltip>
-                  </Box>
-                </TableCell>
-              </TableRow>
-            );
-          })}
-
-        </TableBody>
-      </Table>
-    </TableContainer>
-  );
+        )}
+      </TableBody>
+    </Table>
+  </TableContainer>
+);
 
   return (
     <Box sx={{
