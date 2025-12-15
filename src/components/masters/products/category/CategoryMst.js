@@ -673,7 +673,7 @@ const CategoryMst = () => {
 
                     <Grid sx={{ display: "flex", justifyContent: "end", marginRight: '-6px' }}>
                         <CrudButton
-                            moduleName=""
+                            moduleName="QC Group"
                             mode={mode}
                             onAdd={handleAdd}
                             onEdit={handleEdit}

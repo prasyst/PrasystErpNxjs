@@ -293,8 +293,8 @@ export default function MasterPage() {
       id: 'qc',
       name: 'QC Master',
       children: [
-        { name: 'QC Group', icon: AssignmentIcon , path: '#' },
-        { name: 'QC SubGroup', icon: PlaylistAddCheckIcon , path: '#' },
+        { name: 'QC Group', icon: AssignmentIcon , path: '/masters/qc/qcgrp/qcgroup' },
+        { name: 'QC SubGroup', icon: PlaylistAddCheckIcon , path: '/masters/qc/qcsubgrp/qcsubgroup/' },
         { name: 'QC Parameter', icon: CheckCircleIcon , path: '#' },
         { name: 'QC Product Process', icon: TrendingUpIcon , path: '#' },
         { name: 'QC Test', icon: BuildIcon, path: '#' },
