@@ -308,7 +308,7 @@ export default function MasterPage() {
         { name: 'Ticket SubCategory', icon: AssignmentIcon, path: '/masters/ticketing/ticketSubCat' },
         { name: 'Service/Complaint', icon: AnnouncementIcon, path: '/masters/ticketing/serviceComplaint' },
         { name: 'Raise Ticket', icon: CreateIcon, path: '/tickets/create-tickets' },
-        { name: 'Ticket Escalation', icon: ConfirmationNumberIcon, path: '/tickets/create-tickets' },
+        { name: 'Ticket Escalation', icon: ConfirmationNumberIcon, path: '/tickets/ticket-esclation' },
         { name: 'Ticket Status', icon: LocalActivityIcon, path: '/tickets/all-tickets' },
       ],
     }

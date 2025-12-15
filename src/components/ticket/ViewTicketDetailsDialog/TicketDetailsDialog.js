@@ -9,7 +9,8 @@ import {
     RadioGroup,
     FormControlLabel,
     Radio,
-    TextField
+    TextField,
+    TextareaAutosize
 } from '@mui/material';
 import {
     Close as CloseIcon,
@@ -21,15 +22,15 @@ import {
     Build as BuildIcon,
     LocationOn as LocationIcon,
     Email as EmailIcon,
-    Phone as PhoneIcon
+    Phone as PhoneIcon,
+    AttachFile as AttachFileIcon,
+    Delete as DeleteIcon
 } from '@mui/icons-material';
 import axiosInstance from '@/lib/axios';
 import { toast, ToastContainer } from 'react-toastify';
-import { MdAttachFile, MdClose } from 'react-icons/md';
 
 const inputStyle = {
     '& .MuiInputBase-root': {
-        height: 44,
         fontSize: '0.875rem',
         borderRadius: '8px',
         backgroundColor: '#ffffff',
@@ -126,7 +127,7 @@ const TicketDetailsDialog = ({
                     ccnName: ticketData.CCN_Key || "",
                     machineryName: ticketData.Machinery_Name || "",
                     mobileNo: ticketData.MobileNo || "",
-                    email: "", // Email field not present in response
+                    email: "",
                     location: ticketData.CCN_Key || "",
                     tktType: ticketData.TktTypeName || "",
                     tktTag: ticketData.TktTagName || "",
@@ -147,6 +148,11 @@ const TicketDetailsDialog = ({
     const updateTicketStatus = async () => {
         if (!ticketDetails?.TKTKEY) {
             toast.error("Ticket not loaded properly");
+            return;
+        }
+
+        if (!resolveRemark.trim()) {
+            toast.error("Please add a remark before updating status");
             return;
         }
 
@@ -174,16 +180,15 @@ const TicketDetailsDialog = ({
                 RslvTktImgList: imageList
             };
 
-            // Sending the request to update the ticket status
             const response = await axiosInstance.post("TrnTkt/UpdateTrnRslvTkt?UserName=PC0001&strCobrid=02", payload);
 
             if (response.data.STATUS === 0) {
-                toast.success("Ticket resolved successfully!");
+                toast.success("Ticket updated successfully!");
                 setAttachments([]);
                 setResolveRemark("");
                 fetchTicketDetails();
             } else {
-                toast.error(response.data.MESSAGE || "Failed to resolve ticket");
+                toast.error(response.data.MESSAGE || "Failed to update ticket");
             }
         } catch (error) {
             console.error("Error during update:", error);
@@ -198,7 +203,7 @@ const TicketDetailsDialog = ({
     };
 
     const handleFileUpload = (event) => {
-        const files = event.target.files;  // Multiple files selected
+        const files = event.target.files;
 
         if (files.length === 0) {
             toast.info("No file selected. Please choose a file.");
@@ -210,31 +215,35 @@ const TicketDetailsDialog = ({
                 const reader = new FileReader();
 
                 reader.onload = () => {
-                    const base64File = reader.result; // base64 encoded file data
-                    resolve({ fileName: file.name, fileData: base64File });
+                    const base64File = reader.result;
+                    resolve({ 
+                        fileName: file.name, 
+                        fileData: base64File,
+                        size: file.size,
+                        type: file.type 
+                    });
                 };
 
                 reader.onerror = (error) => reject(error);
-
-                reader.readAsDataURL(file);  // Convert to base64
+                reader.readAsDataURL(file);
             });
         });
 
-        // Wait for all files to be processed and then update the state
         Promise.all(newAttachments)
             .then((attachmentsData) => {
                 setAttachments((prev) => [...prev, ...attachmentsData]);
+                toast.success(`${attachmentsData.length} file(s) added successfully`);
             })
             .catch(() => {
                 toast.error("Error reading the file(s). Please try again.");
             });
     };
 
-    // Handle remove attachment
     const handleRemoveAttachment = (index) => {
         const newAttachments = [...attachments];
         newAttachments.splice(index, 1);
         setAttachments(newAttachments);
+        toast.info("File removed");
     };
 
     const getStatusColor = (status) => {
@@ -315,10 +324,13 @@ const TicketDetailsDialog = ({
         <Dialog
             open={open}
             onClose={onClose}
-            maxWidth="md"
+            maxWidth="lg"
             fullWidth
             PaperProps={{
-                sx: { borderRadius: 2 }
+                sx: { 
+                    borderRadius: 2,
+                    maxHeight: '90vh'
+                }
             }}
         >
             <ToastContainer />
@@ -327,38 +339,13 @@ const TicketDetailsDialog = ({
                     backgroundColor: 'primary.50',
                     borderBottom: 1,
                     borderColor: 'divider',
-                    py: 1,
+                    py: 1.5,
                 }}
             >
                 <Box display="flex" justifyContent="space-between" alignItems="center">
                     <Typography variant="h6" fontWeight="600">
                         Ticket Details
                     </Typography>
-                    <Box display="flex" alignItems="center" >
-                        <FormLabel id="demo-row-radio-buttons-group-label" sx={{ marginRight: 2, fontSize: '1rem', color: '#000' }}>
-                            Ticket Status →
-                        </FormLabel>
-                        <FormControl>
-                            <RadioGroup
-                                row
-                                aria-labelledby="demo-row-radio-buttons-group-label"
-                                name="row-radio-buttons-group"
-                                value={ticketSt}
-                                onChange={handleTicketChange}
-                            >
-                                <FormControlLabel
-                                    value="R"
-                                    control={<Radio size="small" />}
-                                    label="Resolve"
-                                />
-                                <FormControlLabel
-                                    value="C"
-                                    control={<Radio size="small" />}
-                                    label="Close"
-                                />
-                            </RadioGroup>
-                        </FormControl>
-                    </Box>
                     <IconButton
                         onClick={onClose}
                         size="small"
@@ -397,239 +384,334 @@ const TicketDetailsDialog = ({
                 )}
 
                 {ticketDetails && !loading && (
-                    <Stack spacing={2} sx={{ pt: 2 }}>
-                        <Card variant="outlined" sx={{ p: 2 }}>
-                            <Box display="flex" alignItems="flex-start" gap={3}>
-                                <Box flex={1}>
-                                    <Typography variant="h5" fontWeight="700" gutterBottom color="primary.main">
-                                        {ticketDetails.title}
-                                    </Typography>
-                                    <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.4 }}>
-                                        {ticketDetails.description}
-                                    </Typography>
-                                </Box>
-
-                                <Box display="flex" flexDirection="column" gap={1} minWidth="140px">
-                                    <Chip
-                                        icon={<PriorityIcon />}
-                                        label={ticketDetails.priority}
-                                        color={getPriorityColor(ticketDetails.priority)}
-                                        variant="filled"
-                                        size="small"
-                                        sx={{ justifyContent: 'flex-start' }}
-                                    />
-                                    <Chip
-                                        label={ticketDetails.status.replace('-', ' ')}
-                                        color={getStatusColor(ticketDetails.status)}
-                                        variant="filled"
-                                        size="small"
-                                        sx={{ justifyContent: 'flex-start' }}
-                                    />
-                                    <Chip
-                                        icon={<CategoryIcon />}
-                                        label={ticketDetails.category}
-                                        variant="outlined"
-                                        size="small"
-                                        sx={{ justifyContent: 'flex-start' }}
-                                    />
-                                </Box>
-                            </Box>
-                        </Card>
-
-                        <Grid container spacing={2}>
-                            <Grid container spacing={2}>
-                                <Grid size={{ xs: 12, md: 12, lg: 12 }}>
-                                    <Card variant="outlined">
-                                        <CardContent>
-                                            <Typography variant="h6" gutterBottom fontWeight="600" color="primary.main">
-                                                Basic Information
+                    <Grid container spacing={3}>
+                        <Grid item xs={12} md={7}>
+                            <Stack spacing={3}>
+                                <Card variant="outlined" sx={{ p: 2 }}>
+                                    <Box display="flex" alignItems="flex-start" gap={3}>
+                                        <Box flex={1}>
+                                            <Typography variant="h5" fontWeight="700" gutterBottom color="primary.main">
+                                                {ticketDetails.title}
                                             </Typography>
+                                            <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.4 }}>
+                                                {ticketDetails.description}
+                                            </Typography>
+                                        </Box>
 
-                                            {/* Stack to arrange InfoRows horizontally */}
-                                            <Stack direction="row" spacing={4} flexWrap="wrap">
+                                        <Box display="flex" flexDirection="column" gap={1} minWidth="140px">
+                                            <Chip
+                                                icon={<PriorityIcon />}
+                                                label={ticketDetails.priority}
+                                                color={getPriorityColor(ticketDetails.priority)}
+                                                variant="filled"
+                                                size="small"
+                                                sx={{ justifyContent: 'flex-start' }}
+                                            />
+                                            <Chip
+                                                label={ticketDetails.status.replace('-', ' ')}
+                                                color={getStatusColor(ticketDetails.status)}
+                                                variant="filled"
+                                                size="small"
+                                                sx={{ justifyContent: 'flex-start' }}
+                                            />
+                                            <Chip
+                                                icon={<CategoryIcon />}
+                                                label={ticketDetails.category}
+                                                variant="outlined"
+                                                size="small"
+                                                sx={{ justifyContent: 'flex-start' }}
+                                            />
+                                        </Box>
+                                    </Box>
+                                </Card>
+
+                                <Card variant="outlined">
+                                    <CardContent>
+                                        <Typography variant="h6" gutterBottom fontWeight="600" color="primary.main">
+                                            Basic Information
+                                        </Typography>
+                                        <Grid container spacing={2}>
+                                            <Grid item xs={6}>
                                                 <InfoRow
-                                                    icon={<PersonIcon />}
+                                                    icon={<PersonIcon fontSize="small" />}
                                                     label="Ticket ID"
                                                     value={ticketDetails.id}
                                                 />
-                                                <Divider orientation="vertical" flexItem sx={{ mx: 2 }} />
+                                            </Grid>
+                                            <Grid item xs={6}>
                                                 <InfoRow
-                                                    icon={<CategoryIcon />}
+                                                    icon={<CategoryIcon fontSize="small" />}
                                                     label="Type"
                                                     value={ticketDetails.tktType}
                                                 />
-                                                <Divider orientation="vertical" flexItem sx={{ mx: 2 }} />
+                                            </Grid>
+                                            <Grid item xs={6}>
                                                 <InfoRow
-                                                    icon={<BuildIcon />}
+                                                    icon={<BuildIcon fontSize="small" />}
                                                     label="Tag"
                                                     value={ticketDetails.tktTag}
                                                 />
-                                                <Divider orientation="vertical" flexItem sx={{ mx: 2 }} />
+                                            </Grid>
+                                            <Grid item xs={6}>
                                                 <InfoRow
-                                                    icon={<CalendarIcon />}
+                                                    icon={<CalendarIcon fontSize="small" />}
                                                     label="Created Date"
                                                     value={formatDateTime(ticketDetails.createdAt)}
                                                 />
-                                                <Divider orientation="vertical" flexItem sx={{ mx: 2 }} />
+                                            </Grid>
+                                            <Grid item xs={6}>
                                                 <InfoRow
-                                                    icon={<CalendarIcon />}
+                                                    icon={<CalendarIcon fontSize="small" />}
                                                     label="Due Date"
                                                     value={formatDate(ticketDetails.dueDate)}
                                                 />
-                                            </Stack>
-                                        </CardContent>
-                                    </Card>
-                                </Grid>
-                            </Grid>
+                                            </Grid>
+                                            <Grid item xs={6}>
+                                                <InfoRow
+                                                    icon={<PersonIcon fontSize="small" />}
+                                                    label="Reporter"
+                                                    value={ticketDetails.reporter}
+                                                />
+                                            </Grid>
+                                        </Grid>
+                                    </CardContent>
+                                </Card>
 
-                            <Grid item xs={12} md={6} lg={12}>
                                 <Card variant="outlined">
                                     <CardContent>
                                         <Typography variant="h6" gutterBottom fontWeight="600" color="primary.main">
                                             People & Location
                                         </Typography>
-                                        <Stack direction="row" spacing={4}>
-                                            <InfoRow
-                                                icon={<Avatar sx={{ width: 24, height: 24, fontSize: '0.75rem' }}>
-                                                    {getInitials(ticketDetails.assignee)}
-                                                </Avatar>}
-                                                label="Assignee"
-                                                value={ticketDetails.assignee}
-                                            />
-                                            <Divider orientation="vertical" flexItem />
-
-                                            <InfoRow
-                                                icon={<PersonIcon />}
-                                                label="Reporter"
-                                                value={ticketDetails.reporter}
-                                            />
-                                            <Divider orientation="vertical" flexItem />
-
-                                            {ticketDetails.mobileNo && (
-                                                <>
+                                        <Grid container spacing={2}>
+                                            <Grid item xs={6}>
+                                                <InfoRow
+                                                    icon={<Avatar sx={{ width: 24, height: 24, fontSize: '0.75rem' }}>
+                                                        {getInitials(ticketDetails.assignee)}
+                                                    </Avatar>}
+                                                    label="Assignee"
+                                                    value={ticketDetails.assignee}
+                                                />
+                                            </Grid>
+                                            <Grid item xs={6}>
+                                                {ticketDetails.mobileNo && (
                                                     <InfoRow
-                                                        icon={<PhoneIcon />}
+                                                        icon={<PhoneIcon fontSize="small" />}
                                                         label="Mobile No"
                                                         value={ticketDetails.mobileNo}
                                                     />
-                                                    <Divider orientation="vertical" flexItem />
-                                                </>
-                                            )}
-
-                                            <InfoRow
-                                                icon={<LocationIcon />}
-                                                label="CCN"
-                                                value={ticketDetails.ccnName}
-                                            />
-                                            <Divider orientation="vertical" flexItem />
-
-                                            <InfoRow
-                                                icon={<BuildIcon />}
-                                                label="Machinery"
-                                                value={ticketDetails.machineryName}
-                                            />
-                                        </Stack>
+                                                )}
+                                            </Grid>
+                                            <Grid item xs={6}>
+                                                <InfoRow
+                                                    icon={<LocationIcon fontSize="small" />}
+                                                    label="CCN"
+                                                    value={ticketDetails.ccnName}
+                                                />
+                                            </Grid>
+                                            <Grid item xs={6}>
+                                                <InfoRow
+                                                    icon={<BuildIcon fontSize="small" />}
+                                                    label="Machinery"
+                                                    value={ticketDetails.machineryName}
+                                                />
+                                            </Grid>
+                                        </Grid>
                                     </CardContent>
                                 </Card>
-                            </Grid>
+                            </Stack>
+                        </Grid>
 
-                            <Grid size={{ xs: 12, md: 6, lg: 12 }}>
-                                <TextField
-                                    label="Remark"
-                                    fullWidth
-                                    value={resolveRemark}
-                                    onChange={(e) => setResolveRemark(e.target.value)}
-                                    placeholder="Write your ticket remark..."
-                                    sx={{ ...inputStyle }}
-                                />
-                            </Grid>
-
-                            {ticketDetails.resolveRemark && (
-                                <Grid size={{ xs: 12, md: 6, lg: 4 }}>
-                                    <Card variant="outlined" sx={{ backgroundColor: 'success.50' }}>
-                                        <CardContent>
-                                            <Typography variant="h6" gutterBottom fontWeight="600" color="success.main">
-                                                Resolution Remarks
-                                            </Typography>
-                                            <Typography variant="body1">
-                                                {ticketDetails.resolveRemark}
-                                            </Typography>
-                                        </CardContent>
-                                    </Card>
-                                </Grid>
-                            )}
-
-                            <Grid size={{ xs: 12, md: 4, lg: 4 }}>
+                        <Grid item xs={12} md={5}>
+                            <Stack spacing={3}>
                                 <Card variant="outlined">
-                                    <CardContent sx={{ pt: 1, pb: 1 }}>
+                                    <CardContent>
                                         <Typography variant="h6" gutterBottom fontWeight="600" color="primary.main">
-                                            Attach Images
+                                            Update Ticket Status
                                         </Typography>
+                                        
+                                        <FormControl fullWidth sx={{ mb: 2 }}>
+                                            <FormLabel id="ticket-status-label" sx={{ mb: 1, fontSize: '0.875rem', fontWeight: 500 }}>
+                                                Select Status
+                                            </FormLabel>
+                                            <RadioGroup
+                                                row
+                                                aria-labelledby="ticket-status-label"
+                                                name="ticket-status-group"
+                                                value={ticketSt}
+                                                onChange={handleTicketChange}
+                                            >
+                                                <FormControlLabel
+                                                    value="R"
+                                                    control={<Radio />}
+                                                    label={
+                                                        <Box display="flex" alignItems="center" gap={1}>
+                                                           
+                                                            <Typography variant="body2">Resolve</Typography>
+                                                        </Box>
+                                                    }
+                                                />
+                                                 <FormControlLabel
+                                                    value="H"
+                                                    control={<Radio />}
+                                                    label={
+                                                        <Box display="flex" alignItems="center" gap={1}>
+                                                            
+                                                            <Typography variant="body2">Hold</Typography>
+                                                        </Box>
+                                                    }
+                                                />
+                                                <FormControlLabel
+                                                    value="C"
+                                                    control={<Radio />}
+                                                    label={
+                                                        <Box display="flex" alignItems="center" gap={1}>
+                                                           
+                                                            <Typography variant="body2">Close</Typography>
+                                                        </Box>
+                                                    }
+                                                />
+                                            </RadioGroup>
+                                        </FormControl>
 
-                                        <Box
-                                            sx={{
-                                                border: "2px dashed #d1d5db",
-                                                borderRadius: 2,
-                                                p: 3,
-                                                textAlign: "center",
-                                                cursor: "pointer",
-                                                bgcolor: "#fafafa",
-                                                "&:hover": { bgcolor: "#f1f5f9" },
-                                            }}
-                                            onClick={() => fileInputRef.current?.click()}
-                                        >
-                                            <input
-                                                ref={fileInputRef}
-                                                type="file"
-                                                multiple
-                                                style={{ display: "none" }}
-                                                onChange={handleFileUpload}
-                                            />
-                                            <MdAttachFile sx={{ fontSize: 48, color: "#9ca3af" }} />
-                                            <Typography fontWeight={500} color="#6b7280">
-                                                Click to upload or drag and drop
+                                        {/* Resolution Remarks */}
+                                        <Box sx={{ mb: 1 }}>
+                                            <Typography variant="subtitle2" fontWeight={500} gutterBottom>
+                                                Resolution Remarks *
                                             </Typography>
+                                            <TextField
+                                                fullWidth
+                                                multiline
+                                                rows={4}
+                                                value={resolveRemark}
+                                                onChange={(e) => setResolveRemark(e.target.value)}
+                                                placeholder="Enter resolution remarks here..."
+                                                variant="outlined"
+                                                size="small"
+                                                sx={{
+                                                    '& .MuiOutlinedInput-root': {
+                                                        fontSize: '0.875rem',
+                                                    }
+                                                }}
+                                            />
                                         </Box>
 
-                                        {/* Attached Files */}
-                                        {attachments.length > 0 && (
-                                            <Box mt={3}>
-                                                <Typography variant="subtitle2" fontWeight={500} mb={1}>
-                                                    Attached Files:
+                                        {/* Attachments Section */}
+                                        <Box>
+                                            <Typography variant="subtitle2" fontWeight={500} gutterBottom>
+                                                Attach Images
+                                            </Typography>
+                                            
+                                            <Box
+                                                sx={{
+                                                    border: '2px dashed #d1d5db',
+                                                    borderRadius: 2,
+                                                    p: 3,
+                                                    textAlign: 'center',
+                                                    cursor: 'pointer',
+                                                    bgcolor: '#fafafa',
+                                                    '&:hover': {
+                                                        bgcolor: '#f1f5f9',
+                                                        borderColor: '#9ca3af'
+                                                    },
+                                                    mb: 1
+                                                }}
+                                                onClick={() => fileInputRef.current?.click()}
+                                            >
+                                                <input
+                                                    ref={fileInputRef}
+                                                    type="file"
+                                                    multiple
+                                                    accept="image/*"
+                                                    style={{ display: 'none' }}
+                                                    onChange={handleFileUpload}
+                                                />
+                                                <AttachFileIcon 
+                                                    sx={{ 
+                                                        fontSize: 48, 
+                                                        color: '#9ca3af',
+                                                        mb: 1 
+                                                    }} 
+                                                />
+                                                <Typography fontWeight={500} color="#6b7280" gutterBottom>
+                                                    Click to upload images
                                                 </Typography>
-                                                {attachments.map((file, index) => (
-                                                    <Paper
-                                                        key={index}
-                                                        sx={{
-                                                            p: 2,
-                                                            mb: 1,
-                                                            display: "flex",
-                                                            alignItems: "center",
-                                                            justifyContent: "space-between",
-                                                            bgcolor: "#f9fafb",
-                                                            border: "1px solid #e5e7eb",
-                                                        }}
-                                                    >
-                                                        <Stack direction="row" alignItems="center" spacing={1}>
-                                                            <MdAttachFile fontSize="small" sx={{ color: "#6b7280" }} />
-                                                            <Typography variant="body2">{file.fileName}</Typography>
-                                                        </Stack>
-                                                        <IconButton
-                                                            size="small"
-                                                            onClick={() => handleRemoveAttachment(index)}
-                                                            color="error"
-                                                        >
-                                                            <MdClose />
-                                                        </IconButton>
-                                                    </Paper>
-                                                ))}
+                                                <Typography variant="caption" color="#9ca3af">
+                                                    Supports JPG, PNG, GIF up to 5MB
+                                                </Typography>
                                             </Box>
-                                        )}
+
+                                            {attachments.length > 0 && (
+                                                <Box>
+                                                    <Typography variant="subtitle2" fontWeight={500} mb={1}>
+                                                        Selected Files ({attachments.length})
+                                                    </Typography>
+                                                    <Stack spacing={1}>
+                                                        {attachments.map((file, index) => (
+                                                            <Paper
+                                                                key={index}
+                                                                variant="outlined"
+                                                                sx={{
+                                                                    p: 1.5,
+                                                                    display: 'flex',
+                                                                    alignItems: 'center',
+                                                                    justifyContent: 'space-between',
+                                                                    bgcolor: '#f9fafb'
+                                                                }}
+                                                            >
+                                                                <Box display="flex" alignItems="center" gap={1.5}>
+                                                                    <AttachFileIcon 
+                                                                        fontSize="small" 
+                                                                        sx={{ color: '#6b7280' }} 
+                                                                    />
+                                                                    <Box>
+                                                                        <Typography variant="body2" fontWeight={500}>
+                                                                            {file.fileName}
+                                                                        </Typography>
+                                                                        <Typography variant="caption" color="text.secondary">
+                                                                            {(file.size / 1024).toFixed(2)} KB
+                                                                        </Typography>
+                                                                    </Box>
+                                                                </Box>
+                                                                <IconButton
+                                                                    size="small"
+                                                                    onClick={() => handleRemoveAttachment(index)}
+                                                                    color="error"
+                                                                >
+                                                                    <DeleteIcon fontSize="small" />
+                                                                </IconButton>
+                                                            </Paper>
+                                                        ))}
+                                                    </Stack>
+                                                </Box>
+                                            )}
+                                        </Box>
                                     </CardContent>
                                 </Card>
-                            </Grid>
+
+                                {ticketDetails.resolveRemark && (
+                                    <Card variant="outlined" sx={{ bgcolor: 'success.50' }}>
+                                        <CardContent>
+                                            <Typography variant="h6" gutterBottom fontWeight={600} color="success.main">
+                                                Previous Resolution Remarks
+                                            </Typography>
+                                            <Paper 
+                                                variant="outlined" 
+                                                sx={{ 
+                                                    p: 1, 
+                                                    bgcolor: 'white',
+                                                    borderRadius: 1 
+                                                }}
+                                            >
+                                                <Typography variant="body2">
+                                                    {ticketDetails.resolveRemark}
+                                                </Typography>
+                                            </Paper>
+                                        </CardContent>
+                                    </Card>
+                                )}
+                            </Stack>
                         </Grid>
-                    </Stack>
+                    </Grid>
                 )}
             </DialogContent>
 
@@ -637,25 +719,27 @@ const TicketDetailsDialog = ({
                 <Button
                     onClick={updateTicketStatus}
                     variant="contained"
+                    disabled={updating || !resolveRemark.trim()}
+                    startIcon={updating && <CircularProgress size={16} />}
                 >
-                    Update Status
-                </Button>
-                <Button
-                    onClick={onClose}
-                    variant="outlined"
-                    color='error'
-                >
-                    Cancel
+                    {updating ? 'Updating...' : 'Update Status'}
                 </Button>
                 {ticketDetails && (
                     <Button
-                        variant="contained"
+                        variant="outlined"
                         startIcon={<EditIcon />}
                         onClick={handleEdit}
                     >
                         Edit Ticket
                     </Button>
                 )}
+                <Button
+                    onClick={onClose}
+                    variant="outlined"
+                    color="inherit"
+                >
+                    Cancel
+                </Button>
             </DialogActions>
         </Dialog>
     );
