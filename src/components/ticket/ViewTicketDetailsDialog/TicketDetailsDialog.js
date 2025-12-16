@@ -522,7 +522,7 @@ const TicketDetailsDialog = ({
                         </Grid>
 
                         <Grid item xs={12} md={5}>
-                            <Stack spacing={3}>
+                            <Stack spacing={1}>
                                 <Card variant="outlined">
                                     <CardContent>
                                         <Typography variant="h6" gutterBottom fontWeight="600" color="primary.main">
@@ -550,16 +550,7 @@ const TicketDetailsDialog = ({
                                                         </Box>
                                                     }
                                                 />
-                                                 <FormControlLabel
-                                                    value="H"
-                                                    control={<Radio />}
-                                                    label={
-                                                        <Box display="flex" alignItems="center" gap={1}>
-                                                            
-                                                            <Typography variant="body2">Hold</Typography>
-                                                        </Box>
-                                                    }
-                                                />
+                                                 
                                                 <FormControlLabel
                                                     value="C"
                                                     control={<Radio />}
@@ -570,10 +561,20 @@ const TicketDetailsDialog = ({
                                                         </Box>
                                                     }
                                                 />
+                                                <FormControlLabel
+                                                    value="H"
+                                                    control={<Radio />}
+                                                    label={
+                                                        <Box display="flex" alignItems="center" gap={1}>
+                                                            
+                                                            <Typography variant="body2">Hold</Typography>
+                                                        </Box>
+                                                    }
+                                                />
+                                               
                                             </RadioGroup>
                                         </FormControl>
 
-                                        {/* Resolution Remarks */}
                                         <Box sx={{ mb: 1 }}>
                                             <Typography variant="subtitle2" fontWeight={500} gutterBottom>
                                                 Resolution Remarks *
