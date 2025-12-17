@@ -5,10 +5,12 @@ import { useRouter } from 'next/navigation';
 import { usePathname } from 'next/navigation';
 import { sidebarMenuItems } from './SidebarMenu';
 import {
-  MdPushPin, MdOutlinePushPin, MdChevronRight, MdSearch, MdClear, MdMenu
+  MdPushPin, MdOutlinePushPin, MdChevronRight, MdSearch, MdClear, MdMenu,
+  MdClose
 } from 'react-icons/md';
 import { usePin } from '../../app/hooks/usePin';
 import { useRecentPaths } from '../../app/context/RecentPathsContext';
+import axiosInstance from '@/lib/axios';
 
 const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => {
   const sidebarRef = useRef(null);
@@ -26,13 +28,41 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
   const [activeParent, setActiveParent] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const searchInputRef = useRef(null);
-  
-  // Track if user has manually interacted with sidebar
   const [isUserInteracted, setIsUserInteracted] = useState(false);
+  
+  // Add state for company name
+  const [companyName, setCompanyName] = useState('');
+
+  // Fetch company name from API
+  useEffect(() => {
+    const fetchCompanyName = async () => {
+      try {
+        const coId = localStorage.getItem('CO_ID');
+        
+        if (coId) {
+          const companyResponse = await axiosInstance.post('COMPANY/Getdrpcofill', {
+            CO_ID: "",
+            Flag: ""
+          });
+
+          if (companyResponse.data?.STATUS === 0 && Array.isArray(companyResponse.data.DATA)) {
+            const company = companyResponse.data.DATA.find(c => c.CO_ID === coId);
+            if (company) {
+              setCompanyName(company.CO_NAME);
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching company name:', error);
+      }
+    };
+
+    fetchCompanyName();
+  }, []);
 
   // Main navigation function with recent path tracking
-  const handleNavigationWithTracking = (path, name, isGrandchild = false) => {
-    console.log('Navigating to:', path, 'name:', name, 'isGrandchild:', isGrandchild);
+  const handleNavigationWithTracking = (path, name, isGrandchild = false, shouldCloseSidebar = true) => {
+    console.log('Navigating to:', path, 'name:', name, 'isGrandchild:', isGrandchild, 'shouldCloseSidebar:', shouldCloseSidebar);
     
     if (path && path !== '#') {
       // Track only grandchild paths in recent paths
@@ -47,7 +77,8 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
       // Mark that user has interacted
       setIsUserInteracted(true);
       
-      if (isMobile) {
+      // Only close sidebar if it's a leaf node (grandchild) and shouldCloseSidebar is true
+      if (isMobile && shouldCloseSidebar) {
         onClose();
       }
     }
@@ -82,11 +113,13 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
     // If it has children, toggle section
     if (item.children && item.children.length > 0) {
       toggleSection(item.name);
+      // Don't close sidebar when clicking parent with children (just toggle section)
+      return;
     }
     
-    // If it has a valid path, navigate
+    // If it has a valid path and no children, navigate
     if (item.path && item.path !== '#') {
-      handleNavigationWithTracking(item.path, item.name, false);
+      handleNavigationWithTracking(item.path, item.name, false, true);
     }
   };
 
@@ -103,6 +136,8 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
     // Toggle child section if it has grandchildren
     if (child.children && child.children.length > 0) {
       toggleSection(child.name);
+      // Don't close sidebar when clicking child with grandchildren (just toggle section)
+      return;
     }
     
     let targetPath = child.path;
@@ -149,15 +184,13 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
     // Navigate (not tracking as recent since it's a child, not grandchild)
     if (targetPath && targetPath !== '#') {
       console.log('Navigating to child:', child.name, targetPath);
-      handleNavigationWithTracking(targetPath, child.name, false);
+      handleNavigationWithTracking(targetPath, child.name, false, true);
     }
     
     // Ensure parent stays open
     if (parentName === 'Masters' || parentName === 'Inventory') {
       setOpenSections(prev => ({ ...prev, [parentName]: true }));
     }
-    
-    if (isMobile) onClose();
   };
 
   // Handle grandchild click
@@ -180,10 +213,8 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
     // Navigate and track as recent (since it's a grandchild)
     if (grandchild.path && grandchild.path !== '#') {
       console.log('Navigating to grandchild:', grandchild.name, grandchild.path);
-      handleNavigationWithTracking(grandchild.path, grandchild.name, true);
+      handleNavigationWithTracking(grandchild.path, grandchild.name, true, true);
     }
-    
-    if (isMobile) onClose();
   };
 
   // Item matches search
@@ -451,6 +482,12 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
     setShowUnpinConfirm(null);
   };
 
+  // Mobile close button click handler
+  const handleMobileCloseClick = () => {
+    console.log('Mobile close button clicked');
+    onClose();
+  };
+
   const renderMainMenu = useCallback((items) => {
     return items
       .filter(item => item)
@@ -693,17 +730,71 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
           minHeight: '40px',
         }}>
           {(!isCollapsed || isMobile) && (
-            <h2 style={{
-              fontSize: '1.3rem',
-              fontWeight: '700',
-              margin: 0,
-              whiteSpace: 'nowrap',
-              color: '#1b69e7',
-              letterSpacing: '0.5px',
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'flex-start',
+              maxWidth: isMobile ? '180px' : '200px',
             }}>
-              Prasyst
-            </h2>
+              <h2 style={{
+                fontSize: '1.3rem',
+                fontWeight: '700',
+                margin: 0,
+                whiteSpace: 'nowrap',
+                color: '#1b69e7',
+                letterSpacing: '0.5px',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                width: '100%',
+              }}>
+                {/* Mobile view में company name, Desktop view में Prasyst */}
+                {isMobile && companyName ? companyName : 'Prasyst'}
+              </h2>
+              {/* Mobile view में Powered by Prasyst text */}
+              {isMobile && companyName && (
+                <span style={{
+                  fontSize: '0.75rem',
+                  color: '#666',
+                  marginTop: '2px',
+                  fontStyle: 'italic',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                  width: '100%',
+                }}>
+                  Powered by Prasyst
+                </span>
+              )}
+            </div>
           )}
+          
+          {/* Hamburger menu for mobile when sidebar is open */}
+          {isMobile && isOpen && (
+            <button
+              onClick={handleMobileCloseClick}
+              style={{
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                color: '#635bff',
+                padding: '0.25rem',
+                borderRadius: '4px',
+                transition: 'background-color 0.2s',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: '40px',
+                height: '40px',
+              }}
+              title="Close sidebar"
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f0f2ff'}
+              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+            >
+              <MdClose size={24} />
+            </button>
+          )}
+          
+          {/* Collapse/Expand button for desktop */}
           {!isMobile && (
             <button
               onClick={() => {
@@ -812,7 +903,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
               color: '#666',
               fontStyle: 'italic',
             }}>
-              No menu items found for "{searchQuery}"
+              No menu items found for `{searchQuery}`
             </div>
           )}
           
@@ -849,7 +940,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
             textAlign: 'center',
           }}>
             <h3 style={{ marginTop: 0 }}>Pin Module</h3>
-            <p>Are you sure you want to pin "{showPinConfirm.name}" to your quick access?</p>
+            <p>Are you sure you want to pin `{showPinConfirm.name}` to your quick access?</p>
             <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', marginTop: '1.5rem' }}>
               <button
                 onClick={() => setShowPinConfirm(null)}
@@ -904,7 +995,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
             textAlign: 'center',
           }}>
             <h3 style={{ marginTop: 0 }}>Unpin Module</h3>
-            <p>Are you sure you want to unpin "{showUnpinConfirm.name}" from your quick access?</p>
+            <p>Are you sure you want to unpin `{showUnpinConfirm.name}` from your quick access?</p>
             <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', marginTop: '1.5rem' }}>
               <button
                 onClick={() => setShowUnpinConfirm(null)}
