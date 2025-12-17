@@ -56,9 +56,9 @@ import {
   Gavel as GavelIcon,
   AttachMoney as MoneyIcon,
   Event as EventIcon,
-  CheckCircle as CheckCircleIcon, 
-  Assignment as AssignmentIcon, 
-  PlaylistAddCheck as PlaylistAddCheckIcon, 
+  CheckCircle as CheckCircleIcon,
+  Assignment as AssignmentIcon,
+  PlaylistAddCheck as PlaylistAddCheckIcon,
   TrendingUp as TrendingUpIcon,
   History as HistoryIcon,
   Close as CloseIcon
@@ -293,11 +293,11 @@ export default function MasterPage() {
       id: 'qc',
       name: 'QC Master',
       children: [
-        { name: 'QC Group', icon: AssignmentIcon , path: '/masters/qc/qcgrp/qcgroup' },
-        { name: 'QC SubGroup', icon: PlaylistAddCheckIcon , path: '/masters/qc/qcsubgrp/qcsubgroup/' },
-        { name: 'QC Parameter', icon: CheckCircleIcon , path: '#' },
-        { name: 'QC Product Process', icon: TrendingUpIcon , path: '#' },
-        { name: 'QC Test', icon: BuildIcon, path: '#' },
+        { name: 'QC Group', icon: AssignmentIcon, path: '/masters/qc/qcgrp/qcgroup' },
+        { name: 'QC SubGroup', icon: PlaylistAddCheckIcon, path: '/masters/qc/qcsubgrp/qcsubgroup/' },
+        { name: 'QC Parameter', icon: CheckCircleIcon, path: '/masters/qc/qcparameter/qcparamtr' },
+        { name: 'QC Product Process', icon: TrendingUpIcon, path: '/masters/qc/qcprdprocess/qcprdpro' },
+        { name: 'QC Test', icon: BuildIcon, path: '/masters/qc/qctest/qctest' },
       ],
     },
     {
@@ -328,7 +328,7 @@ export default function MasterPage() {
     <Suspense fallback={<div>Loading...</div>}>
       {isClient && (
         <Box sx={{ width: '100%' }}>
-         
+
 
           <Box
             sx={{
@@ -342,13 +342,13 @@ export default function MasterPage() {
             <StyledTabs
               value={activeTab}
               onChange={handleTabChange}
-              variant="scrollable"                  
+              variant="scrollable"
               TabIndicatorProps={{ style: { display: 'none' } }}
               sx={{
                 '& .MuiTabs-flexContainer': {
                   flexWrap: 'wrap',
                   gap: '2px',
-                  paddingInline: '2px'                      
+                  paddingInline: '2px'
                 },
                 '& .MuiTabs-scroller': {
                   overflow: 'visible !important',
