@@ -1,4 +1,5 @@
-'use client'
+'use client';
+
 import { useState, useEffect } from 'react';
 import Sidebar from './Sidebar';
 import Header from './Header';
@@ -68,7 +69,8 @@ export default function DashboardLayout({ children }) {
             marginLeft: isMobile ? '0' : (isCollapsed ? '80px' : '250px'),
             marginTop: '60px',
             width: isMobile ? '100vw' : (isCollapsed ? 'calc(100vw - 80px)' : 'calc(100vw - 250px)'),
-            maxWidth: isMobile ? '100vw' : (isCollapsed ? 'calc(100vw - 80px)' : 'calc(100vw - 250px)')
+            maxWidth: isMobile ? '100vw' : (isCollapsed ? 'calc(100vw - 80px)' : 'calc(100vw - 250px)'),
+            minHeight: 'calc(100vh - 60px)',
           }}
         >
           {children}
