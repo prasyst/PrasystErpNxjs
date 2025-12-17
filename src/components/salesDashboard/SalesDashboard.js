@@ -4,14 +4,11 @@ import React, { useState, useEffect, useMemo } from "react";
 import dynamic from "next/dynamic";
 import {
     Box, Typography, Grid, Paper, IconButton, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Button,
-    styled, useTheme, TextField, DialogTitle, DialogActions, Dialog, LinearProgress, Chip,
-    TableFooter,
-    CircularProgress
+    styled, useTheme, TextField, DialogTitle, DialogActions, Dialog, LinearProgress, Chip, TableFooter, CircularProgress,
+    DialogContent, FormControlLabel, Checkbox, Badge,
 } from "@mui/material";
 import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
-import CurrencyRupeeIcon from '@mui/icons-material/CurrencyRupee';
 import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
-import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import dayjs from 'dayjs';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
@@ -31,9 +28,16 @@ import OrderDocument from "./OrderDocument";
 import { PDFViewer } from "@react-pdf/renderer";
 import CloseIcon from '@mui/icons-material/Close';
 import ReceiptLongIcon from '@mui/icons-material/ReceiptLong';
-import CancelIcon from '@mui/icons-material/Cancel';
+import SpeedDial from '@mui/material/SpeedDial';
+import SpeedDialIcon from '@mui/material/SpeedDialIcon';
+import SpeedDialAction from '@mui/material/SpeedDialAction';
+import GroupIcon from '@mui/icons-material/Group';
+import StorefrontIcon from '@mui/icons-material/Storefront';
+import AccountCircleIcon from '@mui/icons-material/AccountCircle';
+import LocationOnIcon from '@mui/icons-material/LocationOn';
+import SearchIcon from '@mui/icons-material/Search';
+import ClearIcon from '@mui/icons-material/Clear';
 
-// Dynamic import for Gauge
 const GaugeComponent = dynamic(
     async () => {
         const mod = await import("react-gauge-component");
@@ -42,7 +46,6 @@ const GaugeComponent = dynamic(
     { ssr: false }
 );
 
-// Dynamic import for CountUp
 const CountUp = dynamic(
     async () => {
         const mod = await import("react-countup");
@@ -72,19 +75,20 @@ const desktopOS2 = [
 const StyledCard = styled(Paper)(({ theme }) => ({
     display: 'flex',
     alignItems: 'center',
-    padding: theme.spacing(1.5),
+    padding: theme.spacing(2),
     borderRadius: '12px',
-    background: 'linear-gradient(135deg, #28357cff 0%, #706161ff 100%)',
+    background: 'linear-gradient(135deg, #2f3b52, #3d4a65)',
     color: '#fff',
     gap: theme.spacing(3),
-    boxShadow: '0 6px 20px rgba(0, 0, 0, 0.3)',
-    transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+    boxShadow: '0 6px 20px rgba(0, 0, 0, 0.15)',
+    transition: 'transform 0.3s ease, box-shadow 0.3s ease, background 0.3s ease',
     '&:hover': {
-        transform: 'translateY(-2px)',
-        boxShadow: '0 12px 30px rgba(0, 0, 0, 0.4)',
+        transform: 'translateY(-4px)',
+        boxShadow: '0 12px 30px rgba(0, 0, 0, 0.25)',
+        background: 'linear-gradient(135deg, #3d4a65, #2f3b52)',
     },
     [theme.breakpoints.down('sm')]: {
-        padding: theme.spacing(2),
+        padding: theme.spacing(2.5),
     },
 }));
 
@@ -142,6 +146,25 @@ const lineChartData2 = [
     { name: 'Dec-25', value: 300 },
 ];
 
+const StyledSpeedDial = styled(SpeedDial)(({ theme }) => ({
+    position: 'absolute',
+    '&.MuiSpeedDial-directionUp, &.MuiSpeedDial-directionLeft': {
+        bottom: theme.spacing(2),
+        right: theme.spacing(2),
+    },
+    '&.MuiSpeedDial-directionDown, &.MuiSpeedDial-directionRight': {
+        top: theme.spacing(2),
+        left: theme.spacing(2),
+    },
+}));
+
+const actions = [
+    { icon: <StorefrontIcon />, name: 'Brand' },
+    { icon: <GroupIcon />, name: 'Party' },
+    { icon: <AccountCircleIcon />, name: 'Broker' },
+    { icon: <LocationOnIcon />, name: 'State' },
+];
+
 const SalesDashboard = () => {
     const theme = useTheme();
     const currentYear = dayjs().year();
@@ -179,10 +202,7 @@ const SalesDashboard = () => {
 
     const [dispOrd, setDispOrd] = useState({
         QTY: 0,
-        BAL_QTY: 0,
-        INIT_QTY: 0,
         AMOUNT: 0,
-        ROWNUM: 0,
     });
 
     const [shortOrd, setShortOrd] = useState({
@@ -200,6 +220,49 @@ const SalesDashboard = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [fcyr, setFcyr] = useState(null);
     const [cobrId, setCobrId] = useState(null);
+    const [hidden, setHidden] = useState(false);
+    const [openDialog, setOpenDialog] = useState(false);
+    const [currentFilter, setCurrentFilter] = useState(null);
+    const [selectedOptions, setSelectedOptions] = useState({
+        Brand: [],
+        Party: [],
+        Broker: [],
+        State: [],
+    });
+    const [searchBrand, setSearchBrand] = useState('');
+    const [searchParty, setSearchParty] = useState('');
+    const [searchBroker, setSearchBroker] = useState('');
+    const [searchState, setSearchState] = useState('');
+
+    const filterOptions = {
+        Brand: ['All', 'Brand A', 'Brand B', 'Brand C', 'Brand D', 'Brand E'],
+        Party: ['All', 'Party X', 'Party Y', 'Party Z', 'Party P1', 'Party P2'],
+        Broker: ['All', 'Broker 1', 'Broker 2', 'Broker 3', 'Broker 4', 'Broker 5'],
+        State: ['All', 'Maharashtra', 'Gujarat', 'Delhi', 'Karnataka', 'Tamil Nadu'],
+    };
+
+    const handleDialogOpen = (filterName) => {
+        setCurrentFilter(filterName);
+        setOpenDialog(true);
+    };
+
+    const handleDialogClose = () => {
+        setOpenDialog(false);
+    };
+
+    const handleCheckboxChange = (event, actionName) => {
+        const { value, checked } = event.target;
+        setSelectedOptions((prevState) => {
+            const updatedOptions = checked
+                ? [...prevState[actionName], value]
+                : prevState[actionName].filter((option) => option !== value);
+            return { ...prevState, [actionName]: updatedOptions };
+        });
+    };
+
+    const handleSubmit = () => {
+        setOpenDialog(false);
+    };
 
     const totalSales = data.reduce((acc, cur) => acc + cur.sales, 0);
 
@@ -600,6 +663,394 @@ const SalesDashboard = () => {
                         >
                             Get Data
                         </Button>
+                        <StyledSpeedDial ariaLabel="Filters" icon={<SpeedDialIcon />}>
+                            {actions.map((action) => {
+                                const count = selectedOptions[action.name]?.length || 0;
+                                return (
+                                    <SpeedDialAction
+                                        key={action.name}
+                                        icon={
+                                            <Badge badgeContent={count} color="primary" invisible={count === 0}>
+                                                {action.icon}
+                                            </Badge>
+                                        }
+                                        tooltipTitle={`${action.name} (${count} selected)`}
+                                        onClick={() => setOpenDialog(true)}
+                                    />
+                                );
+                            })}
+                        </StyledSpeedDial>
+
+                        {/* Dialog to show checkboxes */}
+                        <Dialog
+                            open={openDialog}
+                            onClose={handleDialogClose}
+                            // maxWidth='md'
+                            fullWidth
+                            PaperProps={{
+                                sx: {
+                                    borderRadius: 4,
+                                    boxShadow: '0 20px 60px rgba(0,0,0,0.2)',
+                                    overflow: 'hidden',
+                                    maxWidth: 'none',
+                                    width: 700,
+                                }
+                            }}
+                        >
+                            <DialogTitle
+                                sx={{
+                                    background: 'linear-gradient(135deg, #635bff 0%, #8a7fff 100%)',
+                                    color: 'white',
+                                    py: 1,
+                                    textAlign: 'center',
+                                    fontWeight: 'bold',
+                                    fontSize: '1.6rem',
+                                }}
+                            >
+                                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                    <Typography variant="h5">Selected Filters</Typography>
+
+                                    {Object.values(selectedOptions).flat().length > 0 && (
+                                        <Chip
+                                            label={`${Object.values(selectedOptions).flat().length} selected`}
+                                            size="medium"
+                                            sx={{
+                                                backgroundColor: 'rgba(255, 0, 119, 0.7)',
+                                                color: 'white',
+                                                fontWeight: 'bold',
+                                                backdropFilter: 'blur(6px)',
+                                            }}
+                                        />
+                                    )}
+                                </Box>
+                            </DialogTitle>
+
+                            <DialogContent sx={{ p: 4, backgroundColor: '#fafbff' }}>
+                                <Grid container spacing={1}>
+                                    <Grid item xs={12} sm={6} md={3}>
+                                        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', mb: 1 }}>
+                                            <Typography variant="h6" fontWeight="bold" color="primary" sx={{ mr: 1 }}>
+                                                Brand
+                                            </Typography>
+                                            <Chip
+                                                label={selectedOptions.Brand.length}
+                                                size="small"
+                                                color="primary"
+                                                sx={{ mt: 0.5 }}
+                                            />
+                                        </Box>
+
+                                        <TextField
+                                            fullWidth
+                                            size="small"
+                                            placeholder="Brands..."
+                                            value={searchBrand}
+                                            onChange={(e) => setSearchBrand(e.target.value)}
+                                            InputProps={{
+                                                startAdornment: <SearchIcon fontSize="small" sx={{ color: 'action.active', mr: 1 }} />,
+                                                endAdornment: searchBrand && (
+                                                    <IconButton size="small" onClick={() => setSearchBrand('')}>
+                                                        <ClearIcon fontSize="small" />
+                                                    </IconButton>
+                                                ),
+                                            }}
+                                            sx={{
+                                                mb: 3,
+                                                borderRadius: '50px',
+                                                maxWidth: 150,
+                                                height: 20,
+                                                '& .MuiInputBase-input': {
+                                                    padding: '4.5px 0px',
+                                                },
+                                                '& .MuiOutlinedInput-notchedOutline': {
+                                                    borderRadius: '50px',
+                                                },
+                                            }}
+                                        />
+
+                                        <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+                                            {filterOptions.Brand
+                                                .filter(opt => opt.toLowerCase().includes(searchBrand.toLowerCase()))
+                                                .map((option) => (
+                                                    <FormControlLabel
+                                                        key={option}
+                                                        control={
+                                                            <Checkbox
+                                                                checked={selectedOptions.Brand.includes(option)}
+                                                                onChange={(e) => handleCheckboxChange(e, 'Brand')}
+                                                                value={option}
+                                                                size="small"
+                                                                sx={{
+                                                                    color: '#635bff',
+                                                                    '&.Mui-checked': { color: '#635bff' },
+                                                                    p: 0.3
+                                                                }}
+                                                            />
+                                                        }
+                                                        label={<Typography variant="body2">{option}</Typography>}
+                                                        sx={{
+                                                            mx: 0,
+                                                            my: 0.2,
+                                                            '&:hover': {
+                                                                backgroundColor: 'rgba(99, 91, 255, 0.12)',
+                                                                borderRadius: 1
+                                                            }
+                                                        }}
+                                                    />
+                                                ))}
+                                        </Box>
+                                    </Grid>
+
+                                    {/* Party */}
+                                    <Grid item xs={12} sm={6} md={3}>
+                                        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', mb: 1 }}>
+                                            <Typography variant="h6" fontWeight="bold" color="primary" sx={{ mr: 1 }}>
+                                                Party
+                                            </Typography>
+                                            <Chip label={selectedOptions.Party.length} size="small" color="primary" sx={{ mt: 0.5 }} />
+                                        </Box>
+
+                                        <TextField
+                                            fullWidth
+                                            size="small"
+                                            placeholder="Parties..."
+                                            value={searchParty}
+                                            onChange={(e) => setSearchParty(e.target.value)}
+                                            InputProps={{
+                                                startAdornment: <SearchIcon fontSize="small" sx={{ color: 'action.active', mr: 1 }} />,
+                                                endAdornment: searchParty && (
+                                                    <IconButton size="small" onClick={() => setSearchParty('')}>
+                                                        <ClearIcon fontSize="small" />
+                                                    </IconButton>
+                                                ),
+                                            }}
+                                            sx={{
+                                                mb: 3,
+                                                borderRadius: '50px',
+                                                maxWidth: 150,
+                                                height: 20,
+                                                '& .MuiInputBase-input': {
+                                                    padding: '4.5px 0px',
+                                                },
+                                                '& .MuiOutlinedInput-notchedOutline': {
+                                                    borderRadius: '50px',
+                                                },
+                                            }}
+                                        />
+
+                                        <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+                                            {filterOptions.Party
+                                                .filter(opt => opt.toLowerCase().includes(searchParty.toLowerCase()))
+                                                .map((option) => (
+                                                    <FormControlLabel
+                                                        key={option}
+                                                        control={
+                                                            <Checkbox
+                                                                checked={selectedOptions.Party.includes(option)}
+                                                                onChange={(e) => handleCheckboxChange(e, 'Party')}
+                                                                value={option}
+                                                                size="small"
+                                                                sx={{ color: '#635bff', '&.Mui-checked': { color: '#635bff' }, p: 0.3 }}
+                                                            />
+                                                        }
+                                                        label={<Typography variant="body2">{option}</Typography>}
+                                                        sx={{
+                                                            mx: 0,
+                                                            my: 0.2,
+                                                            '&:hover': {
+                                                                backgroundColor: 'rgba(99, 91, 255, 0.12)',
+                                                                borderRadius: 1
+                                                            }
+                                                        }}
+                                                    />
+                                                ))}
+                                        </Box>
+                                    </Grid>
+
+                                    {/* Broker */}
+                                    <Grid item xs={12} sm={6} md={3}>
+                                        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', mb: 1 }}>
+                                            <Typography variant="h6" fontWeight="bold" color="primary" sx={{ mr: 1 }}>
+                                                Broker
+                                            </Typography>
+                                            <Chip label={selectedOptions.Broker.length} size="small" color="primary" sx={{ mt: 0.5 }} />
+                                        </Box>
+
+                                        <TextField
+                                            fullWidth
+                                            size="small"
+                                            placeholder="Brokers..."
+                                            value={searchBroker}
+                                            onChange={(e) => setSearchBroker(e.target.value)}
+                                            InputProps={{
+                                                startAdornment: <SearchIcon fontSize="small" sx={{ color: 'action.active', mr: 1 }} />,
+                                                endAdornment: searchBroker && (
+                                                    <IconButton size="small" onClick={() => setSearchBroker('')}>
+                                                        <ClearIcon fontSize="small" />
+                                                    </IconButton>
+                                                ),
+                                            }}
+                                            sx={{
+                                                mb: 3,
+                                                borderRadius: '50px',
+                                                maxWidth: 150,
+                                                height: 20,
+                                                '& .MuiInputBase-input': {
+                                                    padding: '4.5px 0px',
+                                                },
+                                                '& .MuiOutlinedInput-notchedOutline': {
+                                                    borderRadius: '50px',
+                                                },
+                                            }}
+                                        />
+
+                                        <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+                                            {filterOptions.Broker
+                                                .filter(opt => opt.toLowerCase().includes(searchBroker.toLowerCase()))
+                                                .map((option) => (
+                                                    <FormControlLabel
+                                                        key={option}
+                                                        control={
+                                                            <Checkbox
+                                                                checked={selectedOptions.Broker.includes(option)}
+                                                                onChange={(e) => handleCheckboxChange(e, 'Broker')}
+                                                                value={option}
+                                                                size="small"
+                                                                sx={{ color: '#635bff', '&.Mui-checked': { color: '#635bff' }, p: 0.3 }}
+                                                            />
+                                                        }
+                                                        label={<Typography variant="body2">{option}</Typography>}
+                                                        sx={{
+                                                            mx: 0,
+                                                            my: 0.2,
+                                                            '&:hover': {
+                                                                backgroundColor: 'rgba(99, 91, 255, 0.12)',
+                                                                borderRadius: 1
+                                                            }
+                                                        }}
+                                                    />
+                                                ))}
+                                        </Box>
+                                    </Grid>
+
+                                    {/* State */}
+                                    <Grid item xs={12} sm={6} md={3}>
+                                        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', mb: 1 }}>
+                                            <Typography variant="h6" fontWeight="bold" color="primary" sx={{ mr: 1 }}>
+                                                State
+                                            </Typography>
+
+                                            <Chip
+                                                label={`${selectedOptions.State.length}`}
+                                                size="small"
+                                                color="primary"
+                                                sx={{ fontWeight: 'bold' }}
+                                            />
+                                        </Box>
+
+                                        <TextField
+                                            fullWidth
+                                            size="small"
+                                            placeholder="States..."
+                                            value={searchState}
+                                            onChange={(e) => setSearchState(e.target.value)}
+                                            InputProps={{
+                                                startAdornment: <SearchIcon fontSize="small" sx={{ color: 'action.active', mr: 1 }} />,
+                                                endAdornment: searchState && (
+                                                    <IconButton size="small" onClick={() => setSearchState('')}>
+                                                        <ClearIcon fontSize="small" />
+                                                    </IconButton>
+                                                ),
+                                            }}
+                                            sx={{
+                                                mb: 3,
+                                                borderRadius: '50px',
+                                                maxWidth: 150,
+                                                height: 20,
+                                                '& .MuiInputBase-input': {
+                                                    padding: '4.5px 0px',
+                                                },
+                                                '& .MuiOutlinedInput-notchedOutline': {
+                                                    borderRadius: '50px',
+                                                },
+                                            }}
+                                        />
+
+                                        <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+                                            {filterOptions.State
+                                                .filter(opt => opt.toLowerCase().includes(searchState.toLowerCase()))
+                                                .map((option) => (
+                                                    <FormControlLabel
+                                                        key={option}
+                                                        control={
+                                                            <Checkbox
+                                                                checked={selectedOptions.State.includes(option)}
+                                                                onChange={(e) => handleCheckboxChange(e, 'State')}
+                                                                value={option}
+                                                                size="small"
+                                                                sx={{ color: '#635bff', '&.Mui-checked': { color: '#635bff' }, p: 0.3 }}
+                                                            />
+                                                        }
+                                                        label={<Typography variant="body2">{option}</Typography>}
+                                                        sx={{
+                                                            mx: 0,
+                                                            my: 0.2,
+                                                            '&:hover': {
+                                                                backgroundColor: 'rgba(99, 91, 255, 0.12)',
+                                                                borderRadius: 1
+                                                            }
+                                                        }}
+                                                    />
+                                                ))}
+                                        </Box>
+                                    </Grid>
+                                </Grid>
+                            </DialogContent>
+
+                            {/* Footer */}
+                            <DialogActions sx={{
+                                p: 1,
+                                backgroundColor: '#f0f2ff',
+                                justifyContent: 'space-between',
+                                borderTop: '1px solid #ddd'
+                            }}>
+                                <Button size="small"
+                                    onClick={() => {
+                                        setSelectedOptions({ Brand: [], Party: [], Broker: [], State: [] });
+                                        setSearchBrand('');
+                                        setSearchParty('');
+                                        setSearchBroker('');
+                                        setSearchState('');
+                                    }}
+                                    startIcon={<ClearIcon />}
+                                    color="error"
+                                >
+                                    Clear All
+                                </Button>
+
+                                <Box>
+                                    <Button color="error" size="small" onClick={handleDialogClose} sx={{ mr: 2 }}>
+                                        Cancel
+                                    </Button>
+                                    <Button
+                                        variant="contained"
+                                        size="small"
+                                        onClick={() => {
+                                            handleSubmit();
+                                            handleDialogClose();
+                                            toast.success("Filters applied!");
+                                        }}
+                                        sx={{
+                                            backgroundColor: '#635bff',
+                                            '&:hover': { backgroundColor: '#5548d9' },
+                                            boxShadow: '0 6px 20px rgba(99,91,255,0.3)'
+                                        }}
+                                    >
+                                        Apply Filters
+                                    </Button>
+                                </Box>
+                            </DialogActions>
+                        </Dialog>
                     </Box>
                 </LocalizationProvider>
             </Box>
@@ -607,10 +1058,13 @@ const SalesDashboard = () => {
             {/* Cards Data */}
             <Grid container spacing={1} mb={2} gap={1}>
                 <Grid size={{ xs: 12, md: 3 }} sx={{ display: "flex" }}>
-                    <StyledCard sx={{ width: "100%" }}>
+                    <StyledCard sx={{ width: "100%", position: "relative" }}>
                         <IconButton
                             sx={{
-                                bgcolor: "#4caf5022",
+                                position: "absolute",
+                                top: 8,
+                                right: 8,
+                                bgcolor: "#02020222",
                                 color: "#4caf50",
                                 width: 60,
                                 height: 60,
@@ -630,20 +1084,22 @@ const SalesDashboard = () => {
                             </Typography>
                             <Typography variant="h6" sx={{ mt: 0.5 }}>
                                 Qty: {summaryData.QTY}
-                                {/* Qty: {summaryData.QTY >= 1000 ? (summaryData.QTY / 1000).toFixed(2) + " K" : summaryData.QTY} */}
                             </Typography>
                         </Box>
                     </StyledCard>
                 </Grid>
 
                 <Grid size={{ xs: 12, md: 3 }} sx={{ display: "flex" }}>
-                    <StyledCard sx={{ width: "100%" }}>
+                    <StyledCard sx={{ width: "100%", position: 'relative' }}>
                         <IconButton
                             sx={{
+                                position: "absolute",
+                                top: 8,
+                                right: 8,
                                 bgcolor: "#2196f322",
                                 color: "#2196f3",
-                                width: 40,
-                                height: 40,
+                                width: 60,
+                                height: 60,
                                 boxShadow: "0 0 20px #2196f366",
                                 "&:hover": { bgcolor: "#2196f344" },
                             }}
@@ -656,7 +1112,7 @@ const SalesDashboard = () => {
                                 Dispatch
                             </Typography>
                             <Typography variant="h6" fontWeight="bold">
-                                ₹ {(dispOrd.AMOUNT / 100000).toFixed(2)} L
+                                Value: ₹{(dispOrd.AMOUNT / 100000).toFixed(2)} L
                             </Typography>
                             <Typography variant="h6">
                                 Qty: {dispOrd.QTY}
@@ -666,15 +1122,18 @@ const SalesDashboard = () => {
                 </Grid>
 
                 <Grid size={{ xs: 12, md: 3 }} sx={{ display: "flex" }}>
-                    <StyledCard sx={{ width: "100%" }}>
+                    <StyledCard sx={{ width: "100%", position: 'relative' }}>
                         <IconButton
                             sx={{
+                                position: "absolute",
+                                top: 8,
+                                right: 8,
                                 bgcolor: "#9c27b022",
                                 color: "#9bb027ff",
-                                width: 40,
-                                height: 40,
-                                boxShadow: "0 0 20px #9c27b066",
-                                "&:hover": { bgcolor: "#9c27b044" },
+                                width: 60,
+                                height: 60,
+                                boxShadow: "0 0 20px #2752b066",
+                                "&:hover": { bgcolor: "#2789b044" },
                             }}
                             aria-label="Conversion %"
                         >
@@ -710,13 +1169,16 @@ const SalesDashboard = () => {
                 </Grid>
 
                 <Grid size={{ xs: 12, md: 3 }} sx={{ display: "flex" }}>
-                    <StyledCard sx={{ width: "100%" }}>
+                    <StyledCard sx={{ width: "100%", position: 'relative' }}>
                         <IconButton
                             sx={{
+                                position: "absolute",
+                                top: 8,
+                                right: 8,
                                 bgcolor: "#ff980022",
                                 color: "#ff9800",
-                                width: 40,
-                                height: 40,
+                                width: 60,
+                                height: 60,
                                 boxShadow: "0 0 20px #ff980066",
                                 "&:hover": { bgcolor: "#ff980044" },
                             }}
@@ -729,9 +1191,9 @@ const SalesDashboard = () => {
                                 Pending Order
                             </Typography>
                             <Typography variant="h6" fontWeight="bold">
-                                ₹ {(balOrd.AMOUNT / 100000).toFixed(2)} L
+                                Value: ₹ {(balOrd.AMOUNT / 100000).toFixed(2)} L
                             </Typography>
-                            <Typography variant="subtitle1">
+                            <Typography variant="h6">
                                 Qty: {balOrd.QTY} |  Cancel Qty: {canOrd.QTY}
                             </Typography>
                         </Box>

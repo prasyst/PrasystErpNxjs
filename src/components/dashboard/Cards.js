@@ -7,8 +7,8 @@ import { useTheme } from '@mui/material/styles';
 import { toast } from 'react-toastify';
 import CurrencyRupeeIcon from '@mui/icons-material/CurrencyRupee';
 import AddShoppingCartIcon from '@mui/icons-material/AddShoppingCart';
-import PeopleIcon from '@mui/icons-material/People';
-import CreditCardIcon from '@mui/icons-material/CreditCard';
+import PendingIcon from '@mui/icons-material/Pending';
+import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import dayjs from 'dayjs';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
@@ -23,6 +23,8 @@ const Cards = () => {
   const [dateTo, setDateTo] = useState(dayjs(`${currentYear + 1}-03-31`));
   const [totalRev, setTotalRev] = useState([]);
   const [totalColl, setTotalColl] = useState([]);
+  const [totalOut, setTotalOut] = useState([]);
+  const [totalExp, setTotalExp] = useState([]);
 
   useEffect(() => {
     const fcyrFromStorage = localStorage.getItem("FCYR_KEY");
@@ -34,6 +36,8 @@ const Cards = () => {
   useEffect(() => {
     totalRevenue();
     totalCollections();
+    totalOutStanding();
+    totalExpense();
   }, [])
 
   const totalRevenue = async () => {
@@ -51,7 +55,7 @@ const Cards = () => {
 
       if (response.data.STATUS === 0 && Array.isArray(response.data.DATA)) {
         setTotalRev(response.data.DATA);
-      }
+      };
     } catch (error) {
       toast.error("Error while fetching record.");
     }
@@ -69,18 +73,59 @@ const Cards = () => {
         PageSize: 10,
         SearchText: ""
       });
-      console.log("Response collection", response)
       if (response.data.STATUS === 0 && Array.isArray(response.data.DATA)) {
         setTotalColl(response.data.DATA);
-      }
+      };
     } catch (error) {
       toast.error("Error while fetching record.");
+    }
+  };
+
+  const totalOutStanding = async () => {
+    try {
+      const response = await axiosInstance.post("MainDashBoard/GetMainDashBoard", {
+        COBR_ID: cobrId,
+        FCYR_KEY: fcyr,
+        FROM_DT: dayjs(dateFrom).format('YYYY-MM-DD'),
+        To_DT: dayjs(dateTo).format('YYYY-MM-DD'),
+        Flag: "TotOs",
+        PageNumber: 1,
+        PageSize: 10,
+        SearchText: ""
+      });
+      if (response.data.STATUS === 0 && Array.isArray(response.data.DATA)) {
+        setTotalOut(response.data.DATA);
+      };
+    } catch (error) {
+      toast.error("Error while fetching record");
+    }
+  };
+
+  const totalExpense = async () => {
+    try {
+      const response = await axiosInstance.post("MainDashBoard/GetMainDashBoard", {
+        COBR_ID: cobrId,
+        FCYR_KEY: fcyr,
+        FROM_DT: dayjs(dateFrom).format('YYYY-MM-DD'),
+        To_DT: dayjs(dateTo).format('YYYY-MM-DD'),
+        Flag: "TotPur",
+        PageNumber: 1,
+        PageSize: 10,
+        SearchText: ""
+      });
+      if (response.data.STATUS === 0 && Array.isArray(response.data.DATA)) {
+        setTotalExp(response.data.DATA);
+      };
+    } catch (error) {
+      toast.error("Error while fetching data.");
     }
   };
 
   const handleGetData = () => {
     totalRevenue();
     totalCollections();
+    totalOutStanding();
+    totalExpense();
   };
 
   return (
@@ -156,14 +201,14 @@ const Cards = () => {
 
       <Grid container spacing={2} sx={{ mb: 2, mt: 1 }}>
         <Grid size={{ xs: 12, md: 3 }}>
-          <Paper sx={{ padding: '1rem', borderRadius: '0.5rem', boxShadow: 3 }}>
+          <Paper sx={{ padding: '1rem', borderRadius: '0.5rem', boxShadow: 3, bgcolor: '#bbdefb' }}>
             <Box display="flex" justifyContent="space-between" alignItems="flex-start">
               <Box>
                 <Typography variant="h7" fontWeight="bold">
                   Total Revenue
                 </Typography>
                 <Typography variant="h5" sx={{ fontWeight: 'bold', margin: '0.5rem 0' }}>
-                  {totalRev.length > 0 ? `₹ ${totalRev[0].TOT_AMT}` : '0.00'}
+                  {totalRev.length > 0 ? `₹ ${(totalRev[0].TOT_AMT / 100000).toFixed(2) + " L"}` : '0.00'}
                 </Typography>
               </Box>
               <Box sx={{ width: 50, height: 50, borderRadius: '50%', backgroundColor: `${theme.palette.primary.main}20`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -174,16 +219,15 @@ const Cards = () => {
           </Paper>
         </Grid>
 
-        {/* Total Collection */}
         <Grid size={{ xs: 12, md: 3 }}>
-          <Paper sx={{ padding: '1rem', borderRadius: '0.5rem', boxShadow: 3 }}>
+          <Paper sx={{ padding: '1rem', borderRadius: '0.5rem', boxShadow: 3, bgcolor: '#c5cae9' }}>
             <Box display="flex" justifyContent="space-between" alignItems="flex-start">
               <Box>
                 <Typography variant="h7" fontWeight="bold">
                   Total Collections
                 </Typography>
                 <Typography variant="h5" sx={{ fontWeight: 'bold', margin: '0.5rem 0' }}>
-                  {totalColl.length > 0 ? `₹ ${totalColl[0].TOT_AMT}` : '₹0.00'}
+                  {totalColl.length > 0 ? `₹ ${(totalColl[0].TOT_AMT / 100000).toFixed(2) + " L"}` : '₹0.00'}
                 </Typography>
               </Box>
               <Box sx={{ width: 50, height: 50, borderRadius: '50%', backgroundColor: `${theme.palette.secondary.main}20`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -194,41 +238,41 @@ const Cards = () => {
           </Paper>
         </Grid>
 
-        {/* Total Customers Card */}
         <Grid size={{ xs: 12, md: 3 }}>
-          <Paper sx={{ padding: '1rem', borderRadius: '0.5rem', boxShadow: 3 }}>
+          <Paper sx={{ padding: '1rem', borderRadius: '0.5rem', boxShadow: 3, bgcolor: '#d1c4e9' }}>
             <Box display="flex" justifyContent="space-between" alignItems="flex-start">
               <Box>
-                <Typography variant="body2" sx={{ color: 'text.secondary', opacity: 0.8 }}>
-                  Total Customers
+                <Typography variant="h7" fontWeight="bold">
+                  OutStanding
                 </Typography>
                 <Typography variant="h5" sx={{ fontWeight: 'bold', margin: '0.5rem 0' }}>
-                  {totalColl.length > 0 ? `₹ ${totalColl[0].TOT_AMT}` : '0.00'}
+                  {totalOut.length > 0 ? `₹ ${(totalOut[0].TOT_AMT / 100000).toFixed(2) + " L"}` : '₹0.00'}
                 </Typography>
               </Box>
               <Box sx={{ width: 50, height: 50, borderRadius: '50%', backgroundColor: `${theme.palette.success.main}20`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <PeopleIcon />
+                <PendingIcon color='warn' />
               </Box>
             </Box>
+            <Typography sx={{ color: 'red' }}> -9% from last month</Typography>
           </Paper>
         </Grid>
 
-        {/* Transactions Card */}
         <Grid size={{ xs: 12, md: 3 }}>
-          <Paper sx={{ padding: '1rem', borderRadius: '0.5rem', boxShadow: 3 }}>
+          <Paper sx={{ padding: '1rem', borderRadius: '0.5rem', boxShadow: 3, bgcolor: '#b3e5fc' }}>
             <Box display="flex" justifyContent="space-between" alignItems="flex-start">
               <Box>
-                <Typography variant="body2" sx={{ color: 'text.secondary', opacity: 0.8 }}>
-                  Transactions
+                <Typography variant="h7" fontWeight="bold">
+                  Total Expense
                 </Typography>
                 <Typography variant="h5" sx={{ fontWeight: 'bold', margin: '0.5rem 0' }}>
-                  {/* {transactions ?? 'Loading...'} */}
+                  {totalExp.length > 0 ? `₹ ${(totalExp[0].TOT_AMT / 100000).toFixed(2) + " L"}` : '₹0.00'}
                 </Typography>
               </Box>
               <Box sx={{ width: 50, height: 50, borderRadius: '50%', backgroundColor: `${theme.palette.warning.main}20`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <CreditCardIcon />
+                <AttachMoneyIcon />
               </Box>
             </Box>
+            <Typography sx={{ color: 'green' }}> +18% from last month</Typography>
           </Paper>
         </Grid>
       </Grid>
