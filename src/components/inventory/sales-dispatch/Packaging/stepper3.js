@@ -1,9 +1,9 @@
-import React from 'react'
+import React from 'react';
 
-const Stepper3 = () => {
+const stepper3 = () => {
   return (
-    <div>Stepper3</div>
+    <div>stepper3</div>
   )
 }
 
-export default Stepper3
+export default stepper3;
