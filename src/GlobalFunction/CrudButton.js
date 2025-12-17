@@ -6,7 +6,6 @@ import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import PrintIcon from '@mui/icons-material/Print';
 import ExitToAppIcon from '@mui/icons-material/ExitToApp';
-
 const CrudButton = ({
     onAdd,
     onEdit,
@@ -18,7 +17,9 @@ const CrudButton = ({
     hideEdit = false,
     hideDelete = false,
     hideView = false,
-    hideExit = false
+    hideExit = false,
+      disableEdit = false,     
+    disableDelete = false  
 }) => {
     const buttonSx = {
         // backgroundColor: '#39ace2',
@@ -32,7 +33,6 @@ const CrudButton = ({
             boxShadow: "none",
         }
     };
-
     return (
         <Box
             sx={{
@@ -45,51 +45,49 @@ const CrudButton = ({
             }}
         >
             {!hideAdd && (
-                <Tooltip title="Add" arrow>
+                <Tooltip title="Add" arrow>  <span>
                     <Button size="small" variant="contained" sx={buttonSx}
                         onClick={onAdd}
                         disabled={!readOnlyMode}
                     >
                         <AddIcon />
-                    </Button>
+                    </Button>     </span>
                 </Tooltip>
             )}
             {!hideEdit && (
                 <Tooltip title="Edit" arrow>
-                    <Button size="small" variant="contained"
+                <span>     <Button size="small" variant="contained"
                         sx={buttonSx} onClick={onEdit}
-                        disabled={!readOnlyMode}
+                         disabled={!readOnlyMode || disableEdit}
                     >
                         <EditIcon />
-                    </Button>
+                    </Button>     </span>
                 </Tooltip>
             )}
             {!hideDelete && (
-                <Tooltip title="Delete" arrow>
-                    <Button size="small" variant="contained" disabled={!readOnlyMode} sx={buttonSx} onClick={onDelete}>
+                <Tooltip title="Delete" arrow> <span>
+                    <Button size="small" variant="contained" disabled={!readOnlyMode || disableEdit} sx={buttonSx} onClick={onDelete}>
                         <DeleteIcon />
-                    </Button>
+                    </Button>    </span>
                 </Tooltip>
             )}
             {!hideView && (
-                <Tooltip title="Print" arrow>
+                <Tooltip title="Print" arrow> <span>
                     <Button size="small" variant="contained" sx={buttonSx} disabled={!readOnlyMode} onClick={onView}>
                         <PrintIcon />
-                    </Button>
+                    </Button>    </span>
                 </Tooltip>
             )}
             {!hideExit && (
-                <Tooltip title="Exit" arrow>
+                <Tooltip title="Exit" arrow> <span>
                     <Button size="small" variant="contained" disabled={!readOnlyMode} sx={buttonSx} onClick={onExit}>
                         <ExitToAppIcon />
-                    </Button>
+                    </Button>    </span>
                 </Tooltip>
             )}
-
         </Box>
     );
 };
-
 export default CrudButton;
 
 

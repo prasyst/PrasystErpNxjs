@@ -523,7 +523,7 @@ const Login = () => {
                       <Typography variant="body2" sx={{
                         color: '#333',
                         fontWeight: 600,
-                        lineHeight: 1.2,
+                        lineHeight: 1.1,
                         fontSize: '0.75rem',
                         display: 'flex',
                         alignItems: 'center'
@@ -539,7 +539,7 @@ const Login = () => {
                   </Box>
                 </Box>
                 {/* Role Selection */}
-                <Box sx={{ p: 1, bgcolor: '#ffffff', borderBottom: '1px solid #e0e0e0' }}>
+                <Box sx={{ p: 0, bgcolor: '#ffffff', borderBottom: '1px solid #e0e0e0' }}>
                   <FormControl component="fieldset" fullWidth>
                     <FormLabel
                       component="legend"
@@ -575,9 +575,9 @@ const Login = () => {
                 {role === 'user' && (
                   <>
                     <Box sx={{
-                      display: 'flex', gap: 0.1, justifyContent: 'center', alignItems: 'center', height: '18px',
-                      bgcolor: '#f5f5f5', p: 0, border: '1px solid #ddd', width: '75%', maxWidth: '300px', margin: '0 auto',
-                      height: '10%', boxShadow: '0 1px 2px rgba(0,0,0,0.1)', display: 'flex', borderRadius: 2,
+                      display: 'flex', gap: 1, justifyContent: 'center', alignItems: 'center', 
+                      bgcolor: '#f5f5f5', p: 0, border: '1px solid #ddd', width: '100%', maxWidth: '300px', margin: '0 auto',
+                       boxShadow: '0 1px 2px rgba(0,0,0,0.1)', display: 'flex', borderRadius: 2,
                     }}>
                       <FormControlLabel
                         control={
@@ -591,7 +591,7 @@ const Login = () => {
                         label="Username"
                         sx={{
                           '& .MuiFormControlLabel-label': {
-                            fontSize: '0.8rem', // Match font size of role selection
+                            fontSize: '0.8rem', 
                           },
                         }}
                       />
@@ -607,7 +607,7 @@ const Login = () => {
                         label="Mobile"
                         sx={{
                           '& .MuiFormControlLabel-label': {
-                            fontSize: '0.8rem', // Match font size of role selection
+                            fontSize: '0.8rem', 
                           },
                         }}
                       />
@@ -620,7 +620,6 @@ const Login = () => {
                           variant="outlined"
                           name="username"
                           value={form.username}
-                          // onChange={handleChange}
                           onChange={(e) => {
                             const input = e.target.value;
                             if (/^[a-zA-Z]+$/.test(input) || input === '') {
@@ -707,7 +706,6 @@ const Login = () => {
                           type={showPwd ? 'text' : 'password'}
                           variant="outlined"
                           name="password"
-                          // value={form.password}
                           value={loginMode === 'mobile' && role === 'user' ? mobilePassword : form.password}
                           onChange={handleChange}
                           fullWidth
@@ -882,7 +880,7 @@ const Login = () => {
                     display: 'flex',
                     gap: 2,
                     justifyContent: 'center',
-                    flexDirection: isMobile ? 'column' : 'row',
+                    flexDirection: 'row',
                   }}
                 >
                   <Button
@@ -899,13 +897,9 @@ const Login = () => {
                           if (otpSent && otp.length === 4) handleVerifyOtp();
                           else toast.info("Please verify OTP");
                         } else {
-                          handleLogin(); // username/password flow
+                          handleLogin(); 
                         }
                       }}
-                    // disabled={
-                    //   (role === 'customer' && (!form.mobile || !otpSent || !otp)) ||
-                    //   (role !== 'customer' && (!form.username.trim() || !form.password.trim()))
-                    // }
                      disabled={
                         loading ||
                         (role === 'user' && loginMode === 'mobile' && mobileValid !== 'valid') ||
@@ -1127,7 +1121,6 @@ const Login = () => {
                             variant="outlined"
                             name="username"
                             value={form.username}
-                            // onChange={handleChange}
                             onChange={(e) => {
                               const input = e.target.value;
                               if (/^[a-zA-Z]+$/.test(input) || input === '') {
@@ -1213,7 +1206,6 @@ const Login = () => {
                             type={showPwd ? 'text' : 'password'}
                             variant="outlined"
                             name="password"
-                            // value={form.password}
                             value={loginMode === 'mobile' && role === 'user' ? mobilePassword : form.password}
                             onChange={handleChange}
                             fullWidth
@@ -1388,15 +1380,7 @@ const Login = () => {
                       flexDirection: isMobile ? 'column' : 'row',
                     }}
                   >
-                    {/* <Button
-                      variant="contained"
-                      onClick={handleLogin}
-                      disabled={role === 'customer' && !otpSent}
-                      sx={buttonStyles}
-                      fullWidth
-                    >
-                      {loading ? 'Signing in...' : 'Sign In'}
-                    </Button> */}<Button
+                    <Button
                       variant="contained"
                       onClick={() => {
                         if (role === 'user' && loginMode === 'mobile') {
@@ -1409,7 +1393,7 @@ const Login = () => {
                           if (otpSent && otp.length === 4) handleVerifyOtp();
                           else toast.info("Please verify OTP");
                         } else {
-                          handleLogin(); // username/password flow
+                          handleLogin(); 
                         }
                       }}
                       disabled={
@@ -1473,7 +1457,6 @@ const Login = () => {
         autoHideDuration={3000}
         sx={{ zIndex: 9999 }}
       />
-      {/* Create Password Modal */}
       <Dialog open={createPwdOpen} onClose={() => setCreatePwdOpen(false)}>
         <DialogTitle sx={{ textAlign: 'center' }}>Create Password for {empNameForModal}</DialogTitle>
         <DialogContent>

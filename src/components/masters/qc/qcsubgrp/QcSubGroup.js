@@ -35,8 +35,13 @@ const qcSubGrpFormSchema = z.object({
 const QcSubGroup = () => {
     const router = useRouter();
     const searchParams = useSearchParams();
-    const USER_ID = localStorage.getItem('USER_ID');
-    const USER_NAME = localStorage.getItem('USER_NAME');
+    const [USER_ID, setUSER_ID] = useState(null);
+    const [USER_NAME, setUSER_NAME] = useState(null);
+    const [FCYR_KEY, setFCYR_KEY] = useState(null);
+    const [COBR_ID, setCOBR_ID] = useState(null);
+    const [CO_ID, setCO_ID] = useState(null);
+    const [userRole, setUserRole] = useState(null);
+    const [PARTY_KEY, setPARTY_KEY] = useState(null);
     const QC_SUBGROUP_KEY = searchParams.get('QC_SUBGROUP_KEY');
     const [currentQC_SUBGROUP_KEY, setCurrentQC_SUBGROUP_KEY] = useState(null);
     const [form, setForm] = useState({
@@ -63,10 +68,16 @@ const QcSubGroup = () => {
     const [Status, setStatus] = useState("1");
     const [rows, setRows] = useState([]);
     const [dataForPrint, setDataForPrint] = useState({});
-    const FCYR_KEY = localStorage.getItem('FCYR_KEY');
-    const COBR_ID = localStorage.getItem('COBR_ID');
-    const CO_ID = localStorage.getItem('CO_ID');
     const [qcGroups, setQcGroups] = useState([]);
+    useEffect(() => {
+        setUSER_ID(localStorage.getItem('USER_ID'));
+        setUSER_NAME(localStorage.getItem('USER_NAME'));
+        setFCYR_KEY(localStorage.getItem('FCYR_KEY'));
+        setCOBR_ID(localStorage.getItem('COBR_ID'));
+        setCO_ID(localStorage.getItem('CO_ID'));
+        setUserRole(localStorage.getItem('userRole'));
+        setPARTY_KEY(localStorage.getItem('PARTY_KEY'));
+    }, []);
     useEffect(() => {
         const getRow = async () => {
             const params = {
@@ -110,7 +121,7 @@ const QcSubGroup = () => {
     const handleChangeStatus = (event) => {
         const updatedStatus = event.target.checked ? "1" : "0";
         setStatus(updatedStatus);
-        setFormData((prevData) => ({
+        setForm((prevData) => ({
             ...prevData,
             Status: updatedStatus
         }))
@@ -144,7 +155,8 @@ const QcSubGroup = () => {
             } else {
                 if (isManualSearch) {
                     toast.error(`${MESSAGE} FOR ${currentQC_SUBGROUP_KEY}`);
-                    setForm({
+                    setForm((prev) => ({
+                        ...prev,
                         QC_SUBGROUP_KEY: '',
                         QC_GROUP_KEY: '',
                         REMARK: '',
@@ -152,8 +164,8 @@ const QcSubGroup = () => {
                         QC_SUBGROUP_NAME: '',
                         SERIES: '',
                         QC_SUBGROUP_LST_CODE: '',
-                        Status: 0,
-                    });
+                        Status: '0',
+                    }));
                 }
             }
         } catch (err) {
@@ -166,7 +178,8 @@ const QcSubGroup = () => {
             fetchRetriveData(QC_SUBGROUP_KEY);
             setMode(FORM_MODE.read);
         } else {
-            setForm({
+            setForm((prev) => ({
+                ...prev,
                 SearchByCd: '',
                 QC_SUBGROUP_KEY: '',
                 QC_GROUP_KEY: '',
@@ -176,7 +189,7 @@ const QcSubGroup = () => {
                 QC_SUBGROUP_LST_CODE: '',
                 SERIES: '',
                 Status: '1',
-            })
+            }))
             setMode(FORM_MODE.add);
         }
     }, [QC_SUBGROUP_KEY, fetchRetriveData]);
@@ -189,11 +202,11 @@ const QcSubGroup = () => {
         }
         const { data } = result;
         try {
-            const userRole = localStorage.getItem('userRole');
-            const username = localStorage.getItem('USER_NAME');
-            const PARTY_KEY = localStorage.getItem('PARTY_KEY');
-            const COBR_ID = localStorage.getItem('COBR_ID');
-            const UserName = userRole === 'user' ? username : PARTY_KEY;
+            if (!USER_NAME || !COBR_ID || !userRole || !PARTY_KEY) {
+                toast.error("User data not loaded yet. Please try again.");
+                return;
+            }
+            const UserName = userRole === 'user' ? USER_NAME : PARTY_KEY;
             let url;
             if (mode === FORM_MODE.edit && currentQC_SUBGROUP_KEY) {
                 url = `QC_SUBGROUP/UpdateQC_SUBGROUP?UserName=${(UserName)}&strCobrid=${COBR_ID}`;
@@ -441,7 +454,7 @@ const QcSubGroup = () => {
                     ...row,
                     STATUS: row.STATUS === "1" ? "Active" : "Inactive"
                 }));
-                const asPdf = pdf(<PrintQcSubGrp rows={formattedData}/>);
+                const asPdf = pdf(<PrintQcSubGrp rows={formattedData} />);
                 const blob = await asPdf.toBlob();
                 const url = URL.createObjectURL(blob);
                 const newTab = window.open(url, '_blank');
@@ -597,7 +610,7 @@ const QcSubGroup = () => {
                         </Grid>
                         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                             <TextField
-                                   label={
+                                label={
                                     <span>
                                         Code <span style={{ color: 'red' }}>*</span>
                                     </span>
@@ -679,8 +692,8 @@ const QcSubGroup = () => {
                                     setForm((prevForm) => {
                                         const updatedForm = {
                                             ...prevForm,
-                                            FGCAT_NAME: selectedName,
-                                            FGCAT_KEY: selectedId
+                                            QC_GROUP_NAME: selectedName,
+                                            QC_GROUP_KEY: selectedId
                                         };
                                         //   if (selectedName && prevForm.FGPRD_ABRV) {
                                         //     updatedForm.QC_GROUP_NAME = selectedName + prevForm.FGPRD_ABRV;
@@ -753,7 +766,7 @@ const QcSubGroup = () => {
                                         minWidth: { xs: 40, sm: 46, md: 60 },
                                         height: { xs: 40, sm: 46, md: 30 },
                                     }}
-                                    onClick={handleAdd} disabled>
+                                    onClick={handleAdd} >
                                     Submit
                                 </Button>
                                 <Button variant="contained"

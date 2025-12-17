@@ -2641,7 +2641,7 @@ const Header = ({ isSidebarCollapsed, onMenuToggle, isMobile }) => {
                 <button
                   onClick={handleProfile}
                   style={{
-                    width: '90%',
+                    width: '100%',
                     padding: '0.3rem 1rem',
                     background: 'none',
                     border: 'none',

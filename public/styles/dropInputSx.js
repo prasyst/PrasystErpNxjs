@@ -12,9 +12,10 @@
       border: '1px solid #e0e0e0',
       borderRadius: '6px',
       overflow: 'hidden',
-      height: 36,
+      height: 38,
       fontSize: '14px',
       paddingRight: '36px',
+     
     },
     '& .MuiFilledInput-root:before': {
       display: 'none',

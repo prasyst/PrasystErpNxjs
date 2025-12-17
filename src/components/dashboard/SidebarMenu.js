@@ -31,7 +31,7 @@ import {
   RiUserSearchLine, RiShoppingCart2Line,
   RiTaskLine, RiTruckLine,
   RiTimer2Line, RiBuilding4Line,
-  RiDraftLine,RiTestTubeLine,
+  RiDraftLine, RiTestTubeLine,
   RiCheckboxCircleLine,
   RiArchiveStackLine
 } from 'react-icons/ri';
@@ -177,7 +177,9 @@ export const sidebarMenuItems = [
         children: [
           { name: 'QC Group', icon: MdFactCheck, path: '/masters/qc/qcgrp/qcgroup' },
           { name: 'QC SubGroup', icon: MdPlaylistAddCheck, path: '/masters/qc/qcsubgrp/qcsubgroup/' },
-          { name: 'QC Parameter', icon: MdTune, path: '#' },
+          { name: 'QC Parameter', icon: MdTune, path: '/masters/qc/qcparameter/qcparamtr' },
+          // { name: 'QC Product Process', icon: MdScience, path: '/masters/qc/qcprdprocess/qcprdpro' },
+          // { name: 'QC Test', icon: RiTestTubeLine, path: '/masters/qc/qctest/qctest' },
           { name: 'QC Product Process', icon: MdScience, path: '#' },
           { name: 'QC Test', icon: RiTestTubeLine, path: '#' },
         ],
