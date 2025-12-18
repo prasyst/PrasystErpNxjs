@@ -9,26 +9,8 @@ import axiosInstance from "@/lib/axios";
 
 const columnDefs = [
   {
-    field: "FGPRD_KEY",
-    headerName: "Product Key",
-    filter: 'agSetColumnFilter',
-    filterParams: {
-      defaultToNothingSelected: true,
-    },
-    sortable: true
-  },
-  {
-    field: "PROSTG_KEY",
-    headerName: "ProcessKey",
-    filter: 'agSetColumnFilter',
-    filterParams: {
-      defaultToNothingSelected: true,
-    },
-    sortable: true
-  },
-  {
     field: "QC_SUBGROUP_KEY",
-    headerName: "subGrp key",
+    headerName: "QC SubGrp Key",
     filter: 'agSetColumnFilter',
     filterParams: {
       defaultToNothingSelected: true,
@@ -36,15 +18,51 @@ const columnDefs = [
     sortable: true
   },
   {
-    field: "QC_REQ",
-    headerName: "QC_REQ",
+    field: "QC_SUBGROUP_NAME",
+    headerName: "QC SubGrp_Name",
     filter: 'agSetColumnFilter',
     filterParams: {
       defaultToNothingSelected: true,
     },
     sortable: true
   },
-    {
+  {
+    field: "TEST_NAME",
+    headerName: "Test Name",
+    filter: 'agSetColumnFilter',
+    filterParams: {
+      defaultToNothingSelected: true,
+    },
+    sortable: true
+  },
+  {
+    field: "VALUE_TEST",
+    headerName: "Value Test",
+    filter: 'agSetColumnFilter',
+    filterParams: {
+      defaultToNothingSelected: true,
+    },
+    sortable: true
+  },
+  {
+    field: "RANGE_FROM",
+    headerName: "Range From",
+    filter: 'agSetColumnFilter',
+    filterParams: {
+      defaultToNothingSelected: true,
+    },
+    sortable: true
+  },
+  {
+    field: "RANGE_TO",
+    headerName: "Range To",
+    filter: 'agSetColumnFilter',
+    filterParams: {
+      defaultToNothingSelected: true,
+    },
+    sortable: true
+  },
+  {
     field: "REMARK",
     headerName: "Remark",
     filter: 'agSetColumnFilter',
@@ -59,7 +77,6 @@ const columnDefs = [
     width: 130,
     filter: 'agDateColumnFilter',
     filterParams: {
-      // Use our custom date filter
       browserDatePicker: true,
       filterOptions: [
         'equals',
@@ -70,13 +87,12 @@ const columnDefs = [
         'empty',
         'notEmpty'
       ],
-      // Add custom options to the filter
       customOptionLabel: 'Custom Dates',
       customFilter: getCustomDateFilter()
     },
     sortable: true
   },
-      {
+  {
     field: "STATUS",
     headerName: "Status",
     filter: 'agSetColumnFilter',
@@ -87,7 +103,7 @@ const columnDefs = [
   },
 ];
 
-export default function QcPrdPrTable() {
+export default function RawMatTable() {
   const [isLoading, setIsLoading] = useState(true);
   const [rows, setRows] = useState([]);
   const router = useRouter();
@@ -100,7 +116,7 @@ export default function QcPrdPrTable() {
   const fetchTableData = async () => {
     setIsLoading(true);
     try {
-      const response = await axiosInstance.post(`QC_PRODUCT_PROCESS/GetQC_PRODUCT_PROCESSDashBoard?currentPage=1&limit=500`, {
+      const response = await axiosInstance.post(`QC_PARAM/GetQC_PARAMDashBoard?currentPage=1&limit=5000`, {
         "SearchText": ""
       });
       const { data: { STATUS, DATA } } = response;
@@ -120,23 +136,21 @@ export default function QcPrdPrTable() {
 
   const handleRowDoubleClick = (row) => {
     const params = new URLSearchParams({
-      QC_ID: row.QC_ID,
+      QC_SUBGROUP_KEY: row.QC_SUBGROUP_KEY,
       mode: "view"
     }).toString();
-     router.push(`/masters/qc/qcprdprocess/qcprdpro/?${params}`);
+      router.push(`/masters/qc/qcparameter/qcparamtr/?${params}`);
   };
 
   const handleSelectionChanged = useCallback((event) => {
     const selectedNodes = event.api.getSelectedNodes();
     const selectedData = selectedNodes.map(node => node.data);
     setSelectedRows(selectedData);
-
   }, []);
 
   return (
     <div className="p-2 w-full">
       <div className="w-full mx-auto" style={{ maxWidth: '100%' }}>
-
         <div style={{ height: 'calc(100vh - 80px)', width: '100%' }}>
           {isLoading ? (
             <div style={{

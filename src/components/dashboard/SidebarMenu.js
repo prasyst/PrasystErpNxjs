@@ -178,10 +178,18 @@ export const sidebarMenuItems = [
           { name: 'QC Group', icon: MdFactCheck, path: '/masters/qc/qcgrp/qcgroup' },
           { name: 'QC SubGroup', icon: MdPlaylistAddCheck, path: '/masters/qc/qcsubgrp/qcsubgroup/' },
           { name: 'QC Parameter', icon: MdTune, path: '/masters/qc/qcparameter/qcparamtr' },
-          // { name: 'QC Product Process', icon: MdScience, path: '/masters/qc/qcprdprocess/qcprdpro' },
-          // { name: 'QC Test', icon: RiTestTubeLine, path: '/masters/qc/qctest/qctest' },
-          { name: 'QC Product Process', icon: MdScience, path: '#' },
-          { name: 'QC Test', icon: RiTestTubeLine, path: '#' },
+          { name: 'QC Product Process', icon: MdScience, path: '/masters/qc/qcprdprocess/qcprdpro' },
+          {
+            name: 'QC Test',
+            icon: RiTestTubeLine,
+            children: [
+              { name: 'Raw Material', icon: MdGavel, path: '/masters/qc/qctest/rawmaterial/rawmaterial' },
+              { name: 'Finished Goods', icon: MdTune, path: '/masters/qc/qctest/finishedgoods/finishedgoods' },
+              { name: 'Stores', icon: FaHandshake, path: '/masters/qc/qctest/stores/stores' },
+              { name: 'Semi Finished', icon: MdBuild, path: '/masters/qc/qctest/semifinished/semifinish' },
+            ]
+          },
+
         ],
       },
       {

@@ -29,7 +29,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
   const [searchQuery, setSearchQuery] = useState('');
   const searchInputRef = useRef(null);
   const [isUserInteracted, setIsUserInteracted] = useState(false);
-  
+
   // Add state for company name
   const [companyName, setCompanyName] = useState('');
 
@@ -38,7 +38,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
     const fetchCompanyName = async () => {
       try {
         const coId = localStorage.getItem('CO_ID');
-        
+
         if (coId) {
           const companyResponse = await axiosInstance.post('COMPANY/Getdrpcofill', {
             CO_ID: "",
@@ -63,20 +63,20 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
   // Main navigation function with recent path tracking
   const handleNavigationWithTracking = (path, name, isGrandchild = false, shouldCloseSidebar = true) => {
     console.log('Navigating to:', path, 'name:', name, 'isGrandchild:', isGrandchild, 'shouldCloseSidebar:', shouldCloseSidebar);
-    
+
     if (path && path !== '#') {
       // Track only grandchild paths in recent paths
       if (isGrandchild) {
         console.log('Adding to recent paths:', name, path);
         addRecentPath(path, name);
       }
-      
+
       // Navigate to the path
       router.push(path);
-      
+
       // Mark that user has interacted
       setIsUserInteracted(true);
-      
+
       // Only close sidebar if it's a leaf node (grandchild) and shouldCloseSidebar is true
       if (isMobile && shouldCloseSidebar) {
         onClose();
@@ -104,19 +104,19 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
   const handleParentClick = (item, e) => {
     e.stopPropagation();
     setIsUserInteracted(true);
-    
+
     // Set active parent
     setActiveParent(item.name);
     setActiveChild(null);
     setActiveGrandchild(null);
-    
+
     // If it has children, toggle section
     if (item.children && item.children.length > 0) {
       toggleSection(item.name);
       // Don't close sidebar when clicking parent with children (just toggle section)
       return;
     }
-    
+
     // If it has a valid path and no children, navigate
     if (item.path && item.path !== '#') {
       handleNavigationWithTracking(item.path, item.name, false, true);
@@ -127,19 +127,19 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
   const handleChildClick = (child, parentName, e) => {
     e.stopPropagation();
     setIsUserInteracted(true);
-    
+
     // Set active states
     setActiveParent(parentName);
     setActiveChild(child.name);
     setActiveGrandchild(null);
-    
+
     // Toggle child section if it has grandchildren
     if (child.children && child.children.length > 0) {
       toggleSection(child.name);
       // Don't close sidebar when clicking child with grandchildren (just toggle section)
       return;
     }
-    
+
     let targetPath = child.path;
 
     // Handle special cases for Masters and Inventory
@@ -180,13 +180,13 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
         targetPath = `/masterpage?activeTab=${tab}`;
       }
     }
-    
+
     // Navigate (not tracking as recent since it's a child, not grandchild)
     if (targetPath && targetPath !== '#') {
       console.log('Navigating to child:', child.name, targetPath);
       handleNavigationWithTracking(targetPath, child.name, false, true);
     }
-    
+
     // Ensure parent stays open
     if (parentName === 'Masters' || parentName === 'Inventory') {
       setOpenSections(prev => ({ ...prev, [parentName]: true }));
@@ -197,20 +197,26 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
   const handleGrandchildClick = (grandchild, parentName, childName, e) => {
     e.stopPropagation();
     setIsUserInteracted(true);
-    
-    // Set active states
     setActiveParent(parentName);
     setActiveChild(childName);
     setActiveGrandchild(grandchild.name);
-    
-    // Ensure parent and child sections are open
+
+    if (grandchild.children && grandchild.children.length > 0) {
+      toggleSection(grandchild.name);
+      setOpenSections(prev => ({
+        ...prev,
+        [parentName]: true,
+        [childName]: true
+      }));
+      return;
+    }
+
     setOpenSections(prev => ({
       ...prev,
       [parentName]: true,
       [childName]: true
     }));
-    
-    // Navigate and track as recent (since it's a grandchild)
+
     if (grandchild.path && grandchild.path !== '#') {
       console.log('Navigating to grandchild:', grandchild.name, grandchild.path);
       handleNavigationWithTracking(grandchild.path, grandchild.name, true, true);
@@ -220,23 +226,23 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
   // Item matches search
   const itemMatchesSearch = (item, query) => {
     if (!query.trim()) return true;
-    
+
     const searchLower = query.toLowerCase().trim();
     const itemNameLower = item.name.toLowerCase();
-    
+
     if (itemNameLower.includes(searchLower)) return true;
-    
+
     if (item.children) {
       return item.children.some(child => itemMatchesSearch(child, query));
     }
-    
+
     return false;
   };
 
   // Filter menu tree
   const filterMenuTree = (items, query) => {
     if (!query.trim()) return items.filter(item => item);
-    
+
     return items
       .filter(item => {
         if (!item) return false;
@@ -245,16 +251,16 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
       })
       .map(item => {
         if (!item.children || item.children.length === 0) return item;
-        
+
         const filteredChildren = filterMenuTree(item.children, query);
-        
+
         if (filteredChildren.length > 0 || itemMatchesSearch(item, query)) {
           return {
             ...item,
             children: filteredChildren
           };
         }
-        
+
         return item;
       });
   };
@@ -266,17 +272,17 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
 
   const highlightText = (text, query) => {
     if (!query || !text) return text;
-    
+
     const lowerText = text.toLowerCase();
     const lowerQuery = query.toLowerCase();
     const index = lowerText.indexOf(lowerQuery);
-    
+
     if (index === -1) return text;
-    
+
     const before = text.substring(0, index);
     const match = text.substring(index, index + query.length);
     const after = text.substring(index + query.length);
-    
+
     return (
       <>
         {before}
@@ -289,25 +295,25 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
   const handleSearchChange = (e) => {
     const value = e.target.value;
     setSearchQuery(value);
-    
+
     if (value.trim()) {
       const filteredItems = filterMenuTree(sidebarMenuItems, value);
       const sectionsToOpen = {};
-      
+
       const collectParents = (items, parent = null) => {
         items.forEach(item => {
           if (!item || item.divider) return;
-          
+
           if (parent && itemMatchesSearch(item, value)) {
             sectionsToOpen[parent.name] = true;
           }
-          
+
           if (item.children) {
             collectParents(item.children, item);
           }
         });
       };
-      
+
       collectParents(filteredItems);
       setOpenSections(prev => ({ ...prev, ...sectionsToOpen }));
     }
@@ -332,12 +338,12 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
   // Set active states based on current path
   useEffect(() => {
     console.log('Path changed to:', pathname);
-    
+
     // Helper function to find active items
     const findActiveItems = (items) => {
       for (const item of items) {
         if (!item) continue;
-        
+
         // Check if this item matches the path
         if (item.path === pathname) {
           setActiveParent(item.name);
@@ -345,12 +351,12 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
           setActiveGrandchild(null);
           return true;
         }
-        
+
         // Check children
         if (item.children) {
           for (const child of item.children) {
             if (!child) continue;
-            
+
             if (child.path === pathname) {
               setActiveParent(item.name);
               setActiveChild(child.name);
@@ -358,12 +364,12 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
               setOpenSections(prev => ({ ...prev, [item.name]: true }));
               return true;
             }
-            
+
             // Check grandchildren
             if (child.children) {
               for (const grandchild of child.children) {
                 if (!grandchild) continue;
-                
+
                 if (grandchild.path === pathname) {
                   setActiveParent(item.name);
                   setActiveChild(child.name);
@@ -382,7 +388,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
       }
       return false;
     };
-    
+
     // Special handling for Masterpage and Inventorypage
     if (pathname.startsWith('/masterpage')) {
       setActiveParent('Masters');
@@ -447,7 +453,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
     const timer = setTimeout(() => {
       setIsUserInteracted(false);
     }, 100);
-    
+
     return () => clearTimeout(timer);
   }, [pathname]);
 
@@ -463,7 +469,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
       setShowPinConfirm(item);
     }
   };
-  
+
   const confirmPin = (item) => {
     pinModule({
       name: item.name,
@@ -544,8 +550,8 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
               )}
               {!isCollapsed && (
                 <>
-                  <span style={{ 
-                    flex: 1, 
+                  <span style={{
+                    flex: 1,
                     fontWeight: isActive ? 600 : 500,
                   }}>
                     {searchQuery.trim() ? highlightText(item.name, searchQuery) : item.name}
@@ -593,12 +599,12 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
                           }}
                         >
                           {ChildIcon && (
-                            <ChildIcon 
-                              size={18} 
-                              style={{ 
-                                marginRight: '5px', 
-                                color: isChildActive ? 'white' : '#635bff' 
-                              }} 
+                            <ChildIcon
+                              size={18}
+                              style={{
+                                marginRight: '5px',
+                                color: isChildActive ? 'white' : '#635bff'
+                              }}
                             />
                           )}
                           <span
@@ -632,50 +638,123 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
                                 const GrandIcon = grandchild.icon;
                                 const hasPath = grandchild.path && grandchild.path !== '#';
                                 const isGrandchildActive = activeGrandchild === grandchild.name;
+                                // NEW: Check if this grandchild has children (great-grandchildren)
+                                const hasGreatGrandChildren = grandchild.children && grandchild.children.length > 0;
+                                const grandchildIsOpen = openSections[grandchild.name] || (searchQuery.trim() && hasGreatGrandChildren);
 
                                 return (
-                                  <div
-                                    key={grandchild.name}
-                                    onClick={(e) => handleGrandchildClick(grandchild, item.name, child.name, e)}
-                                    style={{
-                                      display: 'flex',
-                                      alignItems: 'center',
-                                      padding: '0.35rem 0.1rem',
-                                      cursor: hasPath ? 'pointer' : 'default',
-                                      backgroundColor: isGrandchildActive ? '#635bff' : 'transparent',
-                                      color: isGrandchildActive ? 'white' : '#333',
-                                      borderRadius: '6px',
-                                      margin: '1px 1px',
-                                      fontSize: '0.85rem',
-                                    }}
-                                  >
-                                    {GrandIcon && (
-                                      <GrandIcon
-                                        size={16}
-                                        style={{
-                                          marginRight: '2px',
-                                          color: isGrandchildActive ? 'white' : '#444',
-                                        }}
-                                      />
-                                    )}
-                                    <span style={{ display: grandchild.hideName ? 'none' : 'inline' }}>
-                                      {searchQuery.trim() ? highlightText(grandchild.name, searchQuery) : grandchild.name}
-                                    </span>
+                                  <div key={grandchild.name}>
+                                    {/* GRANDCHILD ITEM */}
+                                    <div
+                                      onClick={(e) => handleGrandchildClick(grandchild, item.name, child.name, e)}
+                                      style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        padding: '0.35rem 0.1rem',
+                                        cursor: hasPath || hasGreatGrandChildren ? 'pointer' : 'default',
+                                        backgroundColor: isGrandchildActive ? '#635bff' : 'transparent',
+                                        color: isGrandchildActive ? 'white' : '#333',
+                                        borderRadius: '6px',
+                                        margin: '1px 1px',
+                                        fontSize: '0.85rem',
+                                      }}
+                                    >
+                                      {GrandIcon && (
+                                        <GrandIcon
+                                          size={16}
+                                          style={{
+                                            marginRight: '2px',
+                                            color: isGrandchildActive ? 'white' : '#444',
+                                          }}
+                                        />
+                                      )}
+                                      <span style={{ display: grandchild.hideName ? 'none' : 'inline' }}>
+                                        {searchQuery.trim() ? highlightText(grandchild.name, searchQuery) : grandchild.name}
+                                      </span>
+                                      {/* NEW: Show chevron if has great-grandchildren */}
+                                      {hasGreatGrandChildren && (
+                                        <MdChevronRight
+                                          size={14}
+                                          style={{
+                                            marginLeft: 'auto',
+                                            transform: grandchildIsOpen ? 'rotate(90deg)' : 'rotate(0)',
+                                            transition: 'transform 0.2s',
+                                            color: isGrandchildActive ? 'white' : '#777',
+                                          }}
+                                        />
+                                      )}
+                                      {/* Pin icon for leaf nodes (only if no great-grandchildren) */}
+                                      {hasPath && !hasGreatGrandChildren && (
+                                        <div
+                                          onClick={(e) => handlePinClick(grandchild, e)}
+                                          style={{
+                                            marginLeft: 'auto',
+                                            color: isPinned(grandchild.path) ? '#635bff' : '#aaa',
+                                          }}
+                                        >
+                                          {isPinned(grandchild.path) ? (
+                                            <MdPushPin size={15} />
+                                          ) : (
+                                            <MdOutlinePushPin size={15} />
+                                          )}
+                                        </div>
+                                      )}
+                                    </div>
 
-                                    {/* Pin icon for leaf nodes */}
-                                    {hasPath && (
-                                      <div
-                                        onClick={(e) => handlePinClick(grandchild, e)}
-                                        style={{
-                                          marginLeft: 'auto',
-                                          color: isPinned(grandchild.path) ? '#635bff' : '#aaa',
-                                        }}
-                                      >
-                                        {isPinned(grandchild.path) ? (
-                                          <MdPushPin size={15} />
-                                        ) : (
-                                          <MdOutlinePushPin size={15} />
-                                        )}
+                                    {/* NEW: GREAT-GRANDCHILDREN (shown when grandchild is open and has children) */}
+                                    {hasGreatGrandChildren && grandchildIsOpen && (
+                                      <div style={{ marginLeft: '20px', paddingLeft: '8px' }}>
+                                        {grandchild.children
+                                          .filter(ggchild => ggchild)
+                                          .map((ggchild) => {
+                                            const GGIcon = ggchild.icon;
+                                            const hasGGPath = ggchild.path && ggchild.path !== '#';
+                                            const isGGActive = activeGrandchild === ggchild.name; // Reuse for simplicity; can add new state if needed
+                                            return (
+                                              <div
+                                                key={ggchild.name}
+                                                onClick={(e) => handleGrandchildClick(ggchild, item.name, child.name, e)} // Reuse handler for navigation
+                                                style={{
+                                                  display: 'flex',
+                                                  alignItems: 'center',
+                                                  padding: '0.3rem 0.1rem',
+                                                  cursor: hasGGPath ? 'pointer' : 'default',
+                                                  backgroundColor: isGGActive ? '#635bff' : 'transparent',
+                                                  color: isGGActive ? 'white' : '#333',
+                                                  borderRadius: '6px',
+                                                  margin: '1px 1px',
+                                                  fontSize: '0.8rem',
+                                                }}
+                                              >
+                                                {GGIcon && (
+                                                  <GGIcon
+                                                    size={14}
+                                                    style={{
+                                                      marginRight: '2px',
+                                                      color: isGGActive ? 'white' : '#444',
+                                                    }}
+                                                  />
+                                                )}
+                                                <span>{searchQuery.trim() ? highlightText(ggchild.name, searchQuery) : ggchild.name}</span>
+                                                {/* Pin icon for great-grandchildren */}
+                                                {hasGGPath && (
+                                                  <div
+                                                    onClick={(e) => handlePinClick(ggchild, e)}
+                                                    style={{
+                                                      marginLeft: 'auto',
+                                                      color: isPinned(ggchild.path) ? '#635bff' : '#aaa',
+                                                    }}
+                                                  >
+                                                    {isPinned(ggchild.path) ? (
+                                                      <MdPushPin size={13} />
+                                                    ) : (
+                                                      <MdOutlinePushPin size={13} />
+                                                    )}
+                                                  </div>
+                                                )}
+                                              </div>
+                                            );
+                                          })}
                                       </div>
                                     )}
                                   </div>
@@ -767,7 +846,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
               )}
             </div>
           )}
-          
+
           {/* Hamburger menu for mobile when sidebar is open */}
           {isMobile && isOpen && (
             <button
@@ -793,7 +872,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
               <MdClose size={24} />
             </button>
           )}
-          
+
           {/* Collapse/Expand button for desktop */}
           {!isMobile && (
             <button
@@ -835,8 +914,8 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
               display: 'flex',
               alignItems: 'center',
             }}>
-              <MdSearch 
-                size={20} 
+              <MdSearch
+                size={20}
                 style={{
                   position: 'absolute',
                   left: '10px',
@@ -870,7 +949,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
                 }}
               />
               {searchQuery && (
-                <MdClear 
+                <MdClear
                   size={18}
                   onClick={clearSearch}
                   style={{
@@ -906,7 +985,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
               No menu items found for `{searchQuery}`
             </div>
           )}
-          
+
           <ul style={{
             listStyle: 'none',
             padding: 0,

@@ -8,9 +8,9 @@ import {
   CardContent,
   Grid,
   styled,
-  Chip,
-  IconButton
 } from '@mui/material';
+import { MdGavel, MdTune, MdBuild } from 'react-icons/md';
+import { FaHandshake } from 'react-icons/fa';
 import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
 import {
@@ -108,9 +108,7 @@ export default function MasterPage() {
 
   const handleCardClick = (path, name) => {
     if (path && path !== '#') {
-      // Add to recent paths
       addRecentPath(path, name);
-      // Navigate to the path
       window.location.href = path;
     }
   };
@@ -123,7 +121,7 @@ export default function MasterPage() {
     if (tabParam && index !== -1 && index !== activeTab) {
       setActiveTab(index);
     } else if (!tabParam) {
-      setActiveTab(-1);
+      setActiveTab(0);
     }
   }, [searchParams, isClient, activeTab]);
 
@@ -150,6 +148,8 @@ export default function MasterPage() {
       backgroundColor: '#635bff',
     }
   }));
+
+
 
   const menuData = [
     {
@@ -297,7 +297,15 @@ export default function MasterPage() {
         { name: 'QC SubGroup', icon: PlaylistAddCheckIcon, path: '/masters/qc/qcsubgrp/qcsubgroup/' },
         { name: 'QC Parameter', icon: CheckCircleIcon, path: '/masters/qc/qcparameter/qcparamtr' },
         { name: 'QC Product Process', icon: TrendingUpIcon, path: '/masters/qc/qcprdprocess/qcprdpro' },
-        { name: 'QC Test', icon: BuildIcon, path: '/masters/qc/qctest/qctest' },
+        // { name: 'QC Test',  }, here add qc test 
+        // QC Test Section Header (not clickable)
+        { name: 'QC Test', isHeader: true },
+
+        { name: 'Raw Material', icon: MdGavel, path: '/masters/qc/qctest/rawmaterial/rawmaterial' },
+        { name: 'Finished Goods', icon: MdTune, path: '/masters/qc/qctest/finishedgoods/finishedgoods' },
+        { name: 'Stores', icon: FaHandshake, path: '/masters/qc/qctest/stores/stores' },
+        { name: 'Semi Finished', icon: MdBuild, path: '/masters/qc/qctest/semifinished/semifinish' },
+
       ],
     },
     {
@@ -314,31 +322,11 @@ export default function MasterPage() {
     }
   ];
 
-  // Create a map of all paths for easy lookup
-  const allPathsMap = menuData.reduce((acc, tab) => {
-    tab.children.forEach(child => {
-      if (child.path && child.path !== '#') {
-        acc[child.path] = child;
-      }
-    });
-    return acc;
-  }, {});
-
   return (
     <Suspense fallback={<div>Loading...</div>}>
       {isClient && (
         <Box sx={{ width: '100%' }}>
-
-
-          <Box
-            sx={{
-              width: '100%',
-              pb: 1,
-              '& .MuiTabs-root': {
-                padding: '4px 3px 4px 4px !important',
-              },
-            }}
-          >
+          <Box sx={{ width: '100%', pb: 1 }}>
             <StyledTabs
               value={activeTab}
               onChange={handleTabChange}
@@ -365,6 +353,35 @@ export default function MasterPage() {
             <TabPanel key={tab.id} value={activeTab} index={index}>
               <Grid container spacing={2}>
                 {tab.children?.map((item, itemIndex) => {
+                  // Special handling ONLY for QC Test header
+                  if (item.isHeader) {
+                    return (
+                      <Grid item xs={12} key={`header-${itemIndex}`} sx={{ mt: 1, mb: 2 }}>
+                        <Typography
+                          variant="h6"
+                          sx={{
+                            fontWeight: 700,
+                            color: '#635bff',
+                            fontSize: '1.1rem',
+                            display: 'block', 
+                            marginTop: '1px', 
+                            marginBottom: '10px',
+                          }}
+                        >
+                          {item.name}
+                        </Typography>
+                        <Box
+                          sx={{
+                            height: 2,
+                            width: 15000,
+                            backgroundColor: '#635bff',
+                            borderRadius: 2,
+                            mt: 1, mr: 5
+                          }}
+                        />
+                      </Grid>
+                    );
+                  }
                   const ItemIcon = item.icon;
                   return (
                     <Grid item xs={6} sm={6} md={4} lg={3} key={itemIndex}>
@@ -391,13 +408,12 @@ export default function MasterPage() {
                           p: 2,
                           '&:last-child': { pb: 2 }
                         }}>
-                          <ItemIcon
-                            sx={{
-                              fontSize: 25,
-                              mb: 1,
-                              color: 'inherit'
-                            }} />
-                          <Typography variant="body1" component="div" sx={{
+                          <ItemIcon sx={{
+                            fontSize: 25,
+                            mb: 1,
+                            color: 'inherit'
+                          }} />
+                          <Typography variant="body1" sx={{
                             fontWeight: '500',
                             fontSize: '0.8rem',
                           }}>
