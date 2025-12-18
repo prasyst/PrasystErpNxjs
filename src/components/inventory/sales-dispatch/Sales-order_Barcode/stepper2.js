@@ -18,6 +18,8 @@ import {
   InputAdornment,
   Divider,
   Snackbar,
+  FormControlLabel,
+  Checkbox,
   Alert
 } from '@mui/material';
 import AutoVibe from '../../../../GlobalFunction/CustomAutoComplete/AutoVibe';
@@ -72,6 +74,11 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
   
   // NEW: State for size details loading
   const [isSizeDetailsLoaded, setIsSizeDetailsLoaded] = useState(false);
+  const [checkboxes, setCheckboxes] = useState({
+  changeQty: false,
+  multiShade: false,
+  selectSet: false
+});
 
   // State for table filters
   const [tableFilters, setTableFilters] = useState({
@@ -1762,52 +1769,10 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
           {/* LEFT: Text Fields Section */}
           <Box sx={{ flex: '0 0 60%' }}>
             <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 1 }}>
-              <TextField 
-                label="Style Code" 
-                variant="filled" 
-                disabled={shouldDisableFields()}
-                name="styleCode"
-                value={styleCodeInput}
-                onChange={handleStyleCodeInputChange}
-                placeholder="Type style code"
-                sx={textInputSx} 
-                inputProps={{ 
-                  style: { padding: '6px 8px', fontSize: '12px' }
-                }}
-                helperText={isLoadingStyleCode ? "Loading..." : "Type style code"}
-              />
-              
-              <AutoVibe
-                id="Product"
-                disabled={shouldDisableFields()}
-                getOptionLabel={(option) => option || ''}
-                options={productOptions}
-                label="Product"
-                name="product"
-                value={isAddingNew || isEditingSize ? newItemData.product : selectedProduct}
-                onChange={handleProductChange}
-                sx={DropInputSx}
-              />
-              
-              {/* Style Dropdown */}
-              <AutoVibe
-                id="Style_Cd"
-                disabled={shouldDisableFields()}
-                getOptionLabel={(option) => option || ''}
-                options={styleOptions}
-                label="Style Cd"
-                name="style"
-                value={isAddingNew || isEditingSize ? newItemData.style : selectedStyle}
-                onChange={handleStyleChange}
-                sx={DropInputSx}
-              />
-              
-              {/* Style Code Text Field */}
               
 
-              {/* Barcode Text Field */}
-              <TextField 
-                label="BarCode" 
+               <TextField 
+                label="Type barcode Here" 
                 variant="filled" 
                 disabled={shouldDisableFields()}
                 name="barcode"
@@ -1818,9 +1783,141 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
                 inputProps={{ 
                   style: { padding: '6px 8px', fontSize: '12px' }
                 }}
-                helperText={isLoadingBarcode ? "Loading..." : "Type barcode"}
+                // helperText={isLoadingBarcode ? "Loading..." : "Type barcode"}
               />
+              <Box sx={{ 
+    display: 'flex', 
+    flexDirection: 'row', 
+    gap: 0.5,
+    ml: 1 
+  }}>
+    <FormControlLabel
+      control={
+        <Checkbox
+          size="small"
+          checked={formData.CHANGE_QTY || false}
+          onChange={(e) => setFormData(prev => ({
+            ...prev,
+            CHANGE_QTY: e.target.checked
+          }))}
+          disabled={shouldDisableFields()}
+          sx={{ 
+            padding: '4px',
+            '& .MuiSvgIcon-root': {
+              fontSize: 20
+            }
+          }}
+        />
+      }
+      label="Change Qty"
+      sx={{
+        margin: 0,
+        '& .MuiFormControlLabel-label': {
+          fontSize: '13px'
+        }
+      }}
+    />
+    
+    <FormControlLabel
+      control={
+        <Checkbox
+          size="small"
+          checked={formData.MULTI_SHADE || false}
+          onChange={(e) => setFormData(prev => ({
+            ...prev,
+            MULTI_SHADE: e.target.checked
+          }))}
+          disabled={shouldDisableFields()}
+          sx={{ 
+            padding: '4px',
+            '& .MuiSvgIcon-root': {
+              fontSize: 20
+            }
+          }}
+        />
+      }
+      label="Multi Shade"
+      sx={{
+        margin: 0,
+        '& .MuiFormControlLabel-label': {
+          fontSize: '13px'
+        }
+      }}
+    />
+    
+    <FormControlLabel
+      control={
+        <Checkbox
+          size="small"
+          checked={formData.SELECT_SET || false}
+          onChange={(e) => setFormData(prev => ({
+            ...prev,
+            SELECT_SET: e.target.checked
+          }))}
+          disabled={shouldDisableFields()}
+          sx={{ 
+            padding: '4px',
+            '& .MuiSvgIcon-root': {
+              fontSize: 20
+            }
+          }}
+        />
+      }
+      label="Select Set"
+      sx={{
+        margin: 0,
+        '& .MuiFormControlLabel-label': {
+          fontSize: '13px'
+        }
+      }}
+    />
+  </Box>
               
+              {/* <AutoVibe
+                id="Product"
+                disabled={shouldDisableFields()}
+                getOptionLabel={(option) => option || ''}
+                options={productOptions}
+                label="Product"
+                name="product"
+                value={isAddingNew || isEditingSize ? newItemData.product : selectedProduct}
+                onChange={handleProductChange}
+                sx={DropInputSx}
+              /> */}
+              
+              {/* Style Dropdown */}
+              {/* <AutoVibe
+                id="Style_Cd"
+                disabled={shouldDisableFields()}
+                getOptionLabel={(option) => option || ''}
+                options={styleOptions}
+                label="Style Cd"
+                name="style"
+                value={isAddingNew || isEditingSize ? newItemData.style : selectedStyle}
+                onChange={handleStyleChange}
+                sx={DropInputSx}
+              /> */}
+              
+              {/* Style Code Text Field */}
+              
+
+              {/* Barcode Text Field */}
+             
+              <TextField 
+                label="Type style code Here" 
+                variant="filled" 
+                disabled={shouldDisableFields()}
+                name="styleCode"
+                value={styleCodeInput}
+                onChange={handleStyleCodeInputChange}
+                placeholder="Type style code"
+                sx={textInputSx} 
+                inputProps={{ 
+                  style: { padding: '6px 8px', fontSize: '12px' }
+                }}
+                // helperText={isLoadingStyleCode ? "Loading..." : "Type style code"}
+              />
+
               <AutoVibe
                 id="Type"
                 disabled={shouldDisableFields()}
