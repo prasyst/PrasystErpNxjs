@@ -7,6 +7,10 @@ import {
     Button,
     FormControlLabel,
     Checkbox,
+    FormControl,
+    FormLabel,
+    RadioGroup,
+    Radio,
 } from '@mui/material';
 import KeyboardArrowLeftIcon from "@mui/icons-material/KeyboardArrowLeft";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
@@ -25,11 +29,13 @@ import ConfirmationDialog from '@/GlobalFunction/DeleteDialog/ConfirmationDialog
 import AutoVibe from '@/GlobalFunction/CustomAutoComplete/AutoVibe';
 import { DropInputSx } from '../../../../../public/styles/dropInputSx';
 import PrintPrdPr from './printprdpr';
+import AutoVibeWithoutAR from '@/GlobalFunction/CustomAutoComplete/AutoVibeWithoutAR';
 
 const FORM_MODE = getFormMode();
 const qcSubGrpFormSchema = z.object({
     QC_SUBGROUP_NAME: z.string().min(1, "QC Sub Group Name is required"),
-    QC_GROUP_KEY: z.string().min(1, "QC Group Key is required"),
+    FGPRD_KEY: z.string().min(1, "QC Group Key is required"),
+    PROSTG_KEY: z.string().min(1, "Process Key is required"),
 });
 
 const QcPrdPro = () => {
@@ -43,32 +49,25 @@ const QcPrdPro = () => {
     const [userRole, setUserRole] = useState(null);
     const [PARTY_KEY, setPARTY_KEY] = useState(null);
     const QC_SUBGROUP_KEY = searchParams.get('QC_SUBGROUP_KEY');
-    const [currentQC_SUBGROUP_KEY, setCurrentQC_SUBGROUP_KEY] = useState(null);
+    const [currentQC_ID, setCurrentQC_ID] = useState(null);
     const [form, setForm] = useState({
         QC_SUBGROUP_KEY: '',
-        QC_GROUP_KEY: '',
+        FGPRD_KEY: '',
+        PROSTG_KEY: '',
+        QC_REQ: 'Y',
         REMARK: '',
         SearchByCd: '',
-        QC_SUBGROUP_ABRV: '',
-        QC_SUBGROUP_NAME: '',
-        QC_SUBGROUP_LST_CODE: '',
-        SERIES: '',
         Status: FORM_MODE.add ? "1" : "0",
     });
     const [openConfirmDialog, setOpenConfirmDialog] = useState(false);
-    const QC_SUBGROUP_KEYRef = useRef(null);
-    const QC_GROUP_KEYRef = useRef(null);
     const REMARKRef = useRef(null);
-    const QC_SUBGROUP_NAMERef = useRef(null);
-    const SERIESRef = useRef(null);
-    const QC_SUBGROUP_ABRVRef = useRef(null);
     const [mode, setMode] = useState(() => {
-        currentQC_SUBGROUP_KEY ? FORM_MODE.read : FORM_MODE.add
+        currentQC_ID ? FORM_MODE.read : FORM_MODE.add
     });
     const [Status, setStatus] = useState("1");
-    const [rows, setRows] = useState([]);
-    const [dataForPrint, setDataForPrint] = useState({});
-    const [qcGroups, setQcGroups] = useState([]);
+    const [products, setProducts] = useState([]);
+    const [process, setProcess] = useState([]);
+    const [qcSubGroups, setQcSubGroups] = useState([]);
     useEffect(() => {
         setUSER_ID(localStorage.getItem('USER_ID'));
         setUSER_NAME(localStorage.getItem('USER_NAME'));
@@ -79,44 +78,75 @@ const QcPrdPro = () => {
         setPARTY_KEY(localStorage.getItem('PARTY_KEY'));
     }, []);
     useEffect(() => {
-        const getRow = async () => {
-            const params = {
-                SearchText: "",
-            };
+        const fetchProducts = async () => {
             try {
-                const res = await axiosInstance.post('QC_GROUP/GetQC_GROUPDashBoard?currentPage=1&limit=5000', params);
-                const { data: { STATUS, DATA } } = res;
-                if (STATUS === 0 && Array.isArray(DATA)) {
-                    setRows(DATA);
-                    setDataForPrint(DATA);
-                } else {
-                    console.error('No data found in response');
-                }
-            } catch (err) {
-                console.error('Error fetching data:', err);
-            }
-        };
-        getRow();
-    }, []);
-    useEffect(() => {
-        const fetchQcGroups = async () => {
-            try {
-                const response = await axiosInstance.post("QC_GROUP/GetQC_GROUPDrp", {});
+                const response = await axiosInstance.post("/Product/GetFgPrdDrp", {
+                    "FLAG": ""
+                });
                 const { STATUS, DATA } = response.data;
                 if (STATUS === 0 && Array.isArray(DATA)) {
-                    const validQcGroups = DATA.filter((cat) => cat.QC_GROUP_KEY && cat.QC_GROUP_NAME);
-                    setQcGroups(validQcGroups);
-                    if (validQcGroups.length > 0) {
-                        setForm((prev) => ({ ...prev, CategoryId: validQcGroups[0].QC_GROUP_KEY }));
+                    const validProducts = DATA.filter((cat) => cat.FGPRD_KEY && cat.FGPRD_KEY);
+                    setProducts(validProducts);
+                    if (validProducts.length > 0) {
+                        setForm((prev) => ({ ...prev, FGPRD_KEY: validProducts[0].FGPRD_KEY }));
                     }
                 } else {
-                    setQcGroups([]);
+                    setProducts([]);
                 }
             } catch (error) {
-                console.error("Error fetching qcgroups:", error);
+                console.error("Error fetching Products:", error);
             }
         };
-        fetchQcGroups();
+        fetchProducts();
+    }, []);
+    useEffect(() => {
+        const fetchProcess = async () => {
+            try {
+                const response = await axiosInstance.post("/Product/GetFgPrdDrp", {
+                    "FLAG": ""
+                });
+                const { STATUS, DATA } = response.data;
+                if (STATUS === 0 && Array.isArray(DATA)) {
+                    const validProcess = DATA.filter((cat) => cat.PROSTG_KEY && cat.PROSTG_KEY);
+                    setProducts(validProcess);
+                    if (validProcess.length > 0) {
+                        setForm((prev) => ({ ...prev, PROSTG_KEY: validProcess[0].PROSTG_KEYY }));
+                    }
+                } else {
+                    setProcess([]);
+                }
+            } catch (error) {
+                console.error("Error fetching Products:", error);
+            }
+        };
+        fetchProcess();
+    }, []);
+    useEffect(() => {
+        const fetchQcSubGroups = async () => {
+            try {
+                const response = await axiosInstance.post("QC_SUBGROUP/GetQC_SUBGROUPDrp", {
+                    "QC_GROUP_KEY": "FC004", "FLAG": ""
+                });
+                const { STATUS, DATA } = response.data;
+                if (STATUS === 0 && Array.isArray(DATA)) {
+                    setQcSubGroups(DATA);
+                    console.log("QC SubGroups:", qcSubGroups);
+                    console.log("Form QC_SUBGROUP_KEY:", form.QC_SUBGROUP_KEY);
+                    if (DATA.length > 0 && !form.QC_SUBGROUP_KEY) {
+                        setForm((prev) => ({ ...prev, QC_SUBGROUP_KEY: DATA[0].QC_SUBGROUP_KEY }));
+                    }
+                } else {
+                    setQcSubGroups([]);
+                }
+            } catch (error) {
+                console.error("Error fetching QC SubGroups:", error);
+            }
+        };
+        if (form.QC_GROUP_KEY) {
+            fetchQcSubGroups();
+        } else {
+            setQcSubGroups([]);
+        }
     }, []);
     const handleChangeStatus = (event) => {
         const updatedStatus = event.target.checked ? "1" : "0";
@@ -126,13 +156,13 @@ const QcPrdPro = () => {
             Status: updatedStatus
         }))
     };
-    const fetchRetriveData = useCallback(async (currentQC_SUBGROUP_KEY, flag = "R", isManualSearch = false) => {
+    const fetchRetriveData = useCallback(async (currentQC_ID, flag = "R", isManualSearch = false) => {
         try {
-            const response = await axiosInstance.post('QC_SUBGROUP/RetriveQC_SUBGROUP', {
+            const response = await axiosInstance.post('QC_PRODUCT_PROCESS/RetriveQC_PRODUCT_PROCESS', {
                 "FLAG": flag,
-                "TBLNAME": "QC_SUBGROUP",
-                "FLDNAME": "QC_SUBGROUP_KEY",
-                "ID": currentQC_SUBGROUP_KEY,
+                "TBLNAME": "QC_PRODUCT_PROCESS",
+                "FLDNAME": "QC_ID",
+                "ID": currentQC_ID,
                 "ORDERBYFLD": "",
                 "CWHAER": "",
                 "CO_ID": CO_ID
@@ -141,29 +171,29 @@ const QcPrdPro = () => {
             if (STATUS === 0 && Array.isArray(DATA) && RESPONSESTATUSCODE == 1) {
                 const qcData = DATA[0];
                 setForm({
+                    FGPRD_KEY: qcData.FGPRD_KEY,
+                    FGPRD_NAME: qcData.FGPRD_NAME,
+                    PROSTG_KEY: qcData.PROSTG_KEY,
+                    PROSTG_NAME: qcData.PROSTG_NAME,
                     QC_SUBGROUP_KEY: qcData.QC_SUBGROUP_KEY,
-                    QC_GROUP_KEY: qcData.QC_GROUP_KEY,
+                    QC_SUBGROUP_NAME: qcData.QC_SUBGROUP_NAME,
+                    QC_REQ: qcData.QC_REQ,
                     REMARK: qcData.REMARK || '',
-                    QC_SUBGROUP_ABRV: qcData.QC_SUBGROUP_ABRV || '',
-                    QC_SUBGROUP_NAME: qcData.QC_SUBGROUP_NAME || '',
-                    SERIES: qcData.SERIES || '',
-                    QC_SUBGROUP_LST_CODE: qcData.QC_SUBGROUP_LST_CODE || '',
                     Status: qcData.STATUS,
                 });
                 setStatus(DATA[0].STATUS);
-                setCurrentQC_SUBGROUP_KEY(qcData.QC_SUBGROUP_KEY);
+                setCurrentQC_ID(qcData.QC_ID);
             } else {
                 if (isManualSearch) {
-                    toast.error(`${MESSAGE} FOR ${currentQC_SUBGROUP_KEY}`);
+                    toast.error(`${MESSAGE} FOR ${currentQC_ID}`);
                     setForm((prev) => ({
                         ...prev,
+                        FGPRD_KEY: '',
+                        PROSTG_KEY: '',
                         QC_SUBGROUP_KEY: '',
-                        QC_GROUP_KEY: '',
+                        QC_REQ: 'Y',
                         REMARK: '',
-                        QC_SUBGROUP_ABRV: '',
-                        QC_SUBGROUP_NAME: '',
-                        SERIES: '',
-                        QC_SUBGROUP_LST_CODE: '',
+                        SearchByCd: '',
                         Status: '0',
                     }));
                 }
@@ -174,21 +204,20 @@ const QcPrdPro = () => {
     }, [CO_ID]);
     useEffect(() => {
         if (QC_SUBGROUP_KEY) {
-            setCurrentQC_SUBGROUP_KEY(QC_SUBGROUP_KEY);
+            setCurrentQC_ID(QC_SUBGROUP_KEY);
             fetchRetriveData(QC_SUBGROUP_KEY);
             setMode(FORM_MODE.read);
         } else {
             setForm((prev) => ({
                 ...prev,
-                SearchByCd: '',
+                FGPRD_KEY: '',
+                PROSTG_KEY: '',
                 QC_SUBGROUP_KEY: '',
-                QC_GROUP_KEY: '',
+                QC_REQ: 'Y',
                 REMARK: '',
-                QC_SUBGROUP_ABRV: '',
-                QC_SUBGROUP_NAME: '',
-                QC_SUBGROUP_LST_CODE: '',
-                SERIES: '',
+                SearchByCd: '',
                 Status: '1',
+
             }))
             setMode(FORM_MODE.add);
         }
@@ -208,21 +237,22 @@ const QcPrdPro = () => {
             }
             const UserName = userRole === 'user' ? USER_NAME : PARTY_KEY;
             let url;
-            if (mode === FORM_MODE.edit && currentQC_SUBGROUP_KEY) {
-                url = `QC_SUBGROUP/UpdateQC_SUBGROUP?UserName=${(UserName)}&strCobrid=${COBR_ID}`;
+            if (mode === FORM_MODE.edit && currentQC_ID) {
+                url = `QC_PRODUCT_PROCESS/UpdateQC_PRODUCT_PROCESS?UserName=${(UserName)}&strCobrid=${COBR_ID}`;
             } else {
-                url = `QC_SUBGROUP/InsertQC_SUBGROUP?UserName=${(UserName)}&strCobrid=${COBR_ID}`;
+                url = `QC_PRODUCT_PROCESS/InsertQC_PRODUCT_PROCESS?UserName=${(UserName)}&strCobrid=${COBR_ID}`;
             }
             const payload = {
+                FGPRD_KEY: data.FGPRD_KEY,
+                PROSTG_KEY: data.PROSTG_KEY,
                 QC_SUBGROUP_KEY: form.QC_SUBGROUP_KEY,
-                QC_SUBGROUP_NAME: form.QC_SUBGROUP_NAME,
-                QC_SUBGROUP_ABRV: form.QC_SUBGROUP_ABRV,
-                QC_GROUP_KEY: data.QC_GROUP_KEY,
+                QC_REQ: form.QC_REQ,
                 REMARK: form.REMARK,
                 STATUS: form.Status ? "1" : "0",
             };
             let response;
-            if (mode == FORM_MODE.edit && currentQC_SUBGROUP_KEY) {
+            if (mode == FORM_MODE.edit && currentQC_ID) {
+                payload.QC_ID = currentQC_ID;
                 payload.UPDATED_BY = USER_ID;
                 response = await axiosInstance.post(url, payload);
                 const { STATUS, MESSAGE } = response.data;
@@ -239,11 +269,11 @@ const QcPrdPro = () => {
                 const { STATUS, MESSAGE, DATA: newKey } = response.data;
                 if (STATUS === 0) {
                     if (newKey) {
-                        setCurrentQC_SUBGROUP_KEY(newKey);
+                        setCurrentQC_ID(newKey);
                         await fetchRetriveData(newKey, "R");
                         const newParams = new URLSearchParams();
-                        newParams.set("QC_SUBGROUP_KEY", newKey);
-                        router.replace(`/masters/qc/qcsubgrp/qcsubgroup?${newParams.toString()}`);
+                        newParams.set("QC_ID", newKey);
+                        router.replace(`/masters/qc/qcprdprocess/qcprdpro?${newParams.toString()}`);
                     }
                     setMode(FORM_MODE.read);
                     toast.success(MESSAGE, { autoClose: 1000 });
@@ -259,7 +289,7 @@ const QcPrdPro = () => {
         if (mode === FORM_MODE.add) {
             await fetchRetriveData(1, "L");
         } else {
-            await fetchRetriveData(currentQC_SUBGROUP_KEY, "R");
+            await fetchRetriveData(currentQC_ID, "R");
         }
         setMode(FORM_MODE.read);
         setForm((prev) => ({
@@ -267,133 +297,32 @@ const QcPrdPro = () => {
             SearchByCd: ''
         }));
     };
-    const debouncedApiCall = debounce(async (newSeries) => {
-        try {
-            const response = await axiosInstance.post('GetSeriesSettings/GetSeriesLastNewKey', {
-                "MODULENAME": "QC_SUBGROUP",
-                "TBLNAME": "QC_SUBGROUP",
-                "FLDNAME": "QC_SUBGROUP_KEY",
-                "NCOLLEN": 5,
-                "CPREFIX": newSeries,
-                "COBR_ID": COBR_ID,
-                "FCYR_KEY": FCYR_KEY,
-                "TRNSTYPE": "M",
-                "SERIESID": 0,
-                "FLAG": ""
-            });
-            const { STATUS, DATA, MESSAGE } = response.data;
-            if (STATUS === 0 && DATA.length > 0) {
-                const id = DATA[0].ID;
-                const lastId = DATA[0].LASTID;
-                setForm((prevForm) => ({
-                    ...prevForm,
-                    QC_SUBGROUP_KEY: id,
-                    QC_SUBGROUP_LST_CODE: lastId
-                }));
-            } else {
-                toast.error(`${MESSAGE} for ${newSeries}`);
 
-                setForm((prevForm) => ({
-                    ...prevForm,
-                    QC_SUBGROUP_KEY: '',
-                    QC_SUBGROUP_LST_CODE: ''
-                }));
-            }
-        } catch (error) {
-            console.error("Error fetching series data:", error);
-        }
-    }, 300);
-    const handleManualSeriesChange = (newSeries) => {
-        setForm((prevForm) => ({
-            ...prevForm,
-            SERIES: newSeries,
-        }));
-        if (newSeries.trim() === '') {
-            setForm((prevForm) => ({
-                ...prevForm,
-                QC_SUBGROUP_KEY: '',
-                QC_SUBGROUP_LST_CODE: ''
-            }));
-            return;
-        };
-        debouncedApiCall(newSeries);
-    }
     const handleAdd = async () => {
         setMode(FORM_MODE.add);
-        setCurrentQC_SUBGROUP_KEY(null);
+        setCurrentQC_ID(null);
         setForm((prevForm) => ({
             ...prevForm,
-            QC_GROUP_KEY: '',
+            FGPRD_KEY: '',
+            PROSTG_KEY: '',
+            QC_SUBGROUP_KEY: '',
+            QC_REQ: 'Y',
             REMARK: '',
             SearchByCd: '',
-            QC_SUBGROUP_ABRV: '',
-            QC_SUBGROUP_NAME: '',
             Status: '1',
         }));
-        // Step 1: Fetch CPREFIX value from the first API
-        let cprefix = '';
-        try {
-            const response = await axiosInstance.post('GetSeriesSettings/GetSeriesLastNewKey', {
-                MODULENAME: "QC_SUBGROUP",
-                TBLNAME: "QC_SUBGROUP",
-                FLDNAME: "QC_SUBGROUP_KEY",
-                NCOLLEN: 0,
-                CPREFIX: "", // Initially empty
-                COBR_ID: COBR_ID,
-                FCYR_KEY: FCYR_KEY,
-                TRNSTYPE: "M",
-                SERIESID: 27,
-                FLAG: "Series"
-            });
-            const { STATUS, DATA } = response.data;
-            if (STATUS === 0 && DATA.length > 0) {
-                cprefix = DATA[0].CPREFIX;
-                setForm((prevForm) => ({
-                    ...prevForm,
-                    SERIES: cprefix
-                }));
-            }
-        } catch (error) {
-            console.error("Error fetching CPREFIX:", error);
-            return;
-        }
-        try {
-            const response = await axiosInstance.post('GetSeriesSettings/GetSeriesLastNewKey', {
-                MODULENAME: "QC_SUBGROUP",
-                TBLNAME: "QC_SUBGROUP",
-                FLDNAME: "QC_SUBGROUP_KEY",
-                NCOLLEN: 5,
-                CPREFIX: cprefix,
-                COBR_ID: COBR_ID,
-                FCYR_KEY: FCYR_KEY,
-                TRNSTYPE: "M",
-                SERIESID: 0,
-                FLAG: ""
-            });
-            const { STATUS, DATA } = response.data;
-            if (STATUS === 0 && DATA.length > 0) {
-                const id = DATA[0].ID;
-                const lastId = DATA[0].LASTID;
-                setForm((prevForm) => ({
-                    ...prevForm,
-                    QC_SUBGROUP_KEY: id,
-                    QC_SUBGROUP_LST_CODE: lastId
-                }));
-            }
-        } catch (error) {
-            console.error("Error fetching ID and LASTID:", error);
-        }
+
     };
     const handlePrevious = async () => {
-        await fetchRetriveData(currentQC_SUBGROUP_KEY, "P");
+        await fetchRetriveData(currentQC_ID, "P");
         setForm((prev) => ({
             ...prev,
             SearchByCd: ''
         }));
     };
     const handleNext = async () => {
-        if (currentQC_SUBGROUP_KEY) {
-            await fetchRetriveData(currentQC_SUBGROUP_KEY, "N");
+        if (currentQC_ID) {
+            await fetchRetriveData(currentQC_ID, "N");
         }
         setForm((prev) => ({
             ...prev,
@@ -409,13 +338,13 @@ const QcPrdPro = () => {
     const handleConfirmDelete = async () => {
         setOpenConfirmDialog(false);
         try {
-            const response = await axiosInstance.post(`QC_SUBGROUP/DeleteQC_SUBGROUP?UserName=${(USER_NAME)}&strCobrid=${COBR_ID}`, {
-                QC_SUBGROUP_KEY: currentQC_SUBGROUP_KEY
+            const response = await axiosInstance.post(`QC_PRODUCT_PROCESS/DeleteQC_PRODUCT_PROCESS?UserName=${(USER_NAME)}&strCobrid=${COBR_ID}`, {
+                QC_ID: currentQC_ID
             });
             const { data: { STATUS, MESSAGE, DATA } } = response;
             if (STATUS === 0) {
                 toast.success(MESSAGE, { autoClose: 500 });
-                await fetchRetriveData(currentQC_SUBGROUP_KEY, 'P');
+                await fetchRetriveData(currentQC_ID, 'P');
             } else {
                 if (DATA && DATA.length > 1) {
                     const firstMsg = DATA[0]?.MSG || "";
@@ -439,13 +368,10 @@ const QcPrdPro = () => {
     const handleEdit = () => {
         setMode(FORM_MODE.edit);
     };
-    const handleAddClick = () => {
-        const url = '/masters/qc/qcgrp/qcgroup/';
-        window.open(url, '_blank');
-    };
+
     const handlePrint = async () => {
         try {
-            const response = await axiosInstance.post(`/QC_SUBGROUP/GetQC_SUBGROUPDashBoard?currentPage=1&limit=5000`, {
+            const response = await axiosInstance.post(`/QC_PRODUCT_PROCESS/GetQC_PRODUCT_PROCESSDashBoard?currentPage=1&limit=5000`, {
                 "SearchText": ""
             });
             const { data: { STATUS, DATA } } = response;
@@ -470,7 +396,7 @@ const QcPrdPro = () => {
         }
     };
     const handleTable = () => {
-        router.push("/masters/qc/qcsubgrp/qcsubgrptable/");
+        router.push("/masters/qc/qcprdprocess/qcprdprtable/");
     };
     const handleExit = async () => {
         router.push("/masterpage/?activeTab=qc");
@@ -508,7 +434,7 @@ const QcPrdPro = () => {
                 >
                     <Grid>
                         <Typography align="center" variant="h6">
-                            QC Sub Group
+                            QC Product Process
                         </Typography>
                     </Grid>
                     <Grid container justifyContent="space-between"
@@ -570,134 +496,29 @@ const QcPrdPro = () => {
                             />
                         </Grid>
                     </Grid>
-                    <Grid container spacing={0.5}>
-                        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                            <TextField
-                                label="Series"
-                                inputRef={SERIESRef}
-                                variant="filled"
-                                fullWidth
-                                onChange={(e) => handleManualSeriesChange(e.target.value)}
-                                value={form.SERIES}
-                                name="SERIES"
+                    <Grid container spacing={1}>
+                        <Grid size={{ xs: 12, sm: 6, md: 6 }}>
+                            <AutoVibeWithoutAR
+                                id="FGPRD_KEY"
                                 disabled={mode === FORM_MODE.read}
-                                sx={textInputSx}
-                                inputProps={{
-                                    style: {
-                                        padding: '6px 8px',
-                                        fontSize: '12px',
-                                    },
-                                }}
-                            />
-                        </Grid>
-                        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                            <TextField
-                                label="Last Cd"
-                                variant="filled"
-                                fullWidth
-                                onChange={handleInputChange}
-                                value={form.QC_SUBGROUP_LST_CODE}
-                                name="QC_SUBGROUP_LST_CODE"
-                                disabled={true}
-                                sx={textInputSx}
-                                inputProps={{
-                                    style: {
-                                        padding: '6px 8px',
-                                        fontSize: '12px',
-                                    },
-                                }}
-                            />
-                        </Grid>
-                        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                            <TextField
+                                options={products}
+                                getOptionLabel={(option) => option.FGPRD_NAME || ""}
                                 label={
                                     <span>
-                                        Code <span style={{ color: 'red' }}>*</span>
+                                        Product <span style={{ color: 'red' }}>*</span>
                                     </span>
                                 }
-                                inputRef={QC_SUBGROUP_KEYRef}
-                                variant="filled"
-                                fullWidth
-                                onChange={handleInputChange}
-                                value={form.QC_SUBGROUP_KEY}
-                                name="QC_SUBGROUP_KEY"
-                                disabled={mode === FORM_MODE.read}
-                                sx={textInputSx}
-                                inputProps={{
-                                    style: {
-                                        padding: '6px 8px',
-                                        fontSize: '12px',
-                                    },
-                                }}
-                            />
-                        </Grid>
-                        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                            <TextField
-                                label={
-                                    <span>
-                                        QC SubGroup Name<span style={{ color: "red" }}>*</span>
-                                    </span>
-                                }
-                                inputRef={QC_SUBGROUP_NAMERef}
-                                variant="filled"
-                                fullWidth
-                                onChange={handleInputChange}
-                                value={form.QC_SUBGROUP_NAME}
-                                name="QC_SUBGROUP_NAME"
-                                disabled={mode === FORM_MODE.read}
-                                sx={textInputSx}
-                                inputProps={{
-                                    style: {
-                                        padding: '6px 8px',
-                                        fontSize: '12px',
-                                    },
-                                }}
-                            />
-                        </Grid>
-                        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                            <TextField
-                                label="QC SubGroup Abrv"
-                                inputRef={QC_SUBGROUP_ABRVRef}
-                                variant="filled"
-                                fullWidth
-                                onChange={handleInputChange}
-                                value={form.QC_SUBGROUP_ABRV}
-                                name="QC_SUBGROUP_ABRV"
-                                disabled={mode === FORM_MODE.read}
-                                sx={textInputSx}
-                                inputProps={{
-                                    style: {
-                                        padding: '6px 8px',
-                                        fontSize: '12px',
-                                    },
-                                }}
-                            />
-                        </Grid>
-                        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                            <AutoVibe
-                                id="QC_GROUP_KEY"
-                                disabled={mode === FORM_MODE.read}
-                                options={qcGroups}
-                                getOptionLabel={(option) => option.QC_GROUP_NAME || ""}
-                                label={
-                                    <span>
-                                        QC Group Name <span style={{ color: 'red' }}>*</span>
-                                    </span>
-                                }
-                                name="QC_GROUP_KEY"
-                                value={qcGroups.find(option => String(option.QC_GROUP_NAME) === String(form.QC_GROUP_KEY)) || null || ""}
+                                name="FGPRD_KEY"
+                                value={products.find(option => String(option.FGPRD_KEY) === String(form.FGPRD_KEY)) || null || ""}
                                 onChange={(e, newValue) => {
-                                    const selectedName = newValue ? newValue.QC_GROUP_NAME : '';
-                                    const selectedId = newValue ? newValue.QC_GROUP_KEY : '';
+                                    const selectedName = newValue ? newValue.FGPRD_NAME : '';
+                                    const selectedId = newValue ? newValue.FGPRD_KEY : '';
                                     setForm((prevForm) => {
                                         const updatedForm = {
                                             ...prevForm,
-                                            QC_GROUP_NAME: selectedName,
-                                            QC_GROUP_KEY: selectedId
+                                            FGPRD__NAME: selectedName,
+                                            FGPRD_KEY: selectedId
                                         };
-                                        //   if (selectedName && prevForm.FGPRD_ABRV) {
-                                        //     updatedForm.QC_GROUP_NAME = selectedName + prevForm.FGPRD_ABRV;
-                                        //   }
                                         return updatedForm;
                                     });
                                 }}
@@ -708,10 +529,85 @@ const QcPrdPro = () => {
                                         fontSize: '12px',
                                     },
                                 }}
-                                onAddClick={handleAddClick}
+
                             />
                         </Grid>
-                        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                        <Grid size={{ xs: 12, sm: 6, md: 6 }}>
+                            <AutoVibeWithoutAR
+                                id="PROSTG_KEY"
+                                disabled={mode === FORM_MODE.read}
+                                options={products}
+                                getOptionLabel={(option) => option.PROSTG_NAME || ""}
+                                label={
+                                    <span>
+                                        Process <span style={{ color: 'red' }}>*</span>
+                                    </span>
+                                }
+                                name="PROSTG_KEY"
+                                value={products.find(option => String(option.PROSTG_NAME) === String(form.PROSTG_KEY)) || null || ""}
+                                onChange={(e, newValue) => {
+                                    const selectedName = newValue ? newValue.PROSTG_NAME : '';
+                                    const selectedId = newValue ? newValue.PROSTG_KEY : '';
+                                    setForm((prevForm) => {
+                                        const updatedForm = {
+                                            ...prevForm,
+                                            PROSTG_NAME: selectedName,
+                                            PROSTG_KEY: selectedId
+                                        };
+                                        return updatedForm;
+                                    });
+                                }}
+                                sx={DropInputSx}
+                                inputProps={{
+                                    style: {
+                                        padding: '6px 8px',
+                                        fontSize: '12px',
+                                    },
+                                }}
+
+                            />
+                        </Grid>
+                        <Grid size={{ xs: 12, sm: 6, md: 6 }}>
+                            <AutoVibeWithoutAR
+                                id="QC_SUBGROUP_KEY"
+                                options={qcSubGroups}
+                                getOptionLabel={(option) => option.QC_SUBGROUP_NAME || ''}
+                                label="QC SubGroup Name"
+                                value={qcSubGroups.find((option) => option.QC_SUBGROUP_KEY === form.QC_SUBGROUP_KEY) || null}
+                                //   onChange={handleQcSubGroupChange}
+                                onChange={(e, newValue) => {
+                                    const selectedName = newValue ? newValue.QC_SUBGROUP_NAME : '';
+                                    const selectedId = newValue ? newValue.QC_SUBGROUP_KEY : '';
+                                    setForm((prevForm) => {
+                                        const updatedForm = {
+                                            ...prevForm,
+                                            QC_SUBGROUP_NAME: selectedName,
+                                            QC_SUBGROUP_KEY: selectedId
+                                        };
+                                        return updatedForm;
+                                    });
+                                }}
+                                fullWidth
+                                sx={{ ...DropInputSx, minWidth: 350 }}
+                                disabled={mode == FORM_MODE.read}
+                            />
+                        </Grid>
+                        <Grid item xs={12} sm={6} md={6} container sx={{ display: 'flex', flexDirection: 'row' }}>
+                            <FormControl component="fieldset" disabled={mode === FORM_MODE.read} sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
+                                <FormLabel required sx={{ marginRight: 2 }}>QC Required</FormLabel>
+                                <RadioGroup
+                                    aria-label="QC Required"
+                                    name="QC_REQ"
+                                    value={form.QC_REQ}
+                                    onChange={(e) => setForm({ ...form, QC_REQ: e.target.value })}
+                                    row
+                                >
+                                    <FormControlLabel value="Y" control={<Radio />} label="Yes" />
+                                    <FormControlLabel value="N" control={<Radio />} label="No" />
+                                </RadioGroup>
+                            </FormControl>
+                        </Grid>
+                        <Grid size={{ xs: 12, sm: 6, md: 10 }}>
                             <TextField
                                 label="Remark"
                                 inputRef={REMARKRef}
