@@ -1475,6 +1475,7 @@ const handleNextClick = async () => {
   }
 };
 
+
   const handleTabChange = (event, newValue) => {
     setTabIndex(newValue);
   };
@@ -1849,7 +1850,7 @@ if (loading || isDataLoading) {
         </Grid>
         <Grid>
           <Typography align="center" variant="h6">
-            {tabIndex === 0 ? "Sales Order " : tabIndex === 1 ? "Item Details" : "Terms Details"}
+            {tabIndex === 0 ? "Sales Order Barcode " : tabIndex === 1 ? "Item Details" : "Terms Details"}
           </Typography>
         </Grid>
 
