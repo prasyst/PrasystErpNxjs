@@ -10,7 +10,7 @@ import {
 } from 'react-icons/md';
 import { usePin } from '../../app/hooks/usePin';
 import { useRecentPaths } from '../../app/context/RecentPathsContext';
-
+//
 const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => {
   const sidebarRef = useRef(null);
   const router = useRouter();
