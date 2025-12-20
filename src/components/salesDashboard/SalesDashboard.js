@@ -83,7 +83,7 @@ const StyledCard = styled(Paper)(({ theme }) => ({
     boxShadow: '0 6px 20px rgba(0, 0, 0, 0.15)',
     transition: 'transform 0.3s ease, box-shadow 0.3s ease, background 0.3s ease',
     '&:hover': {
-        transform: 'translateY(-4px)',
+        transform: 'translateY(-2px)',
         boxShadow: '0 12px 30px rgba(0, 0, 0, 0.25)',
         background: 'linear-gradient(135deg, #3d4a65, #2f3b52)',
     },
@@ -220,7 +220,6 @@ const SalesDashboard = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [fcyr, setFcyr] = useState(null);
     const [cobrId, setCobrId] = useState(null);
-    const [hidden, setHidden] = useState(false);
     const [openDialog, setOpenDialog] = useState(false);
     const [currentFilter, setCurrentFilter] = useState(null);
     const [selectedOptions, setSelectedOptions] = useState({
@@ -233,13 +232,10 @@ const SalesDashboard = () => {
     const [searchParty, setSearchParty] = useState('');
     const [searchBroker, setSearchBroker] = useState('');
     const [searchState, setSearchState] = useState('');
-
-    const filterOptions = {
-        Brand: ['All', 'Brand A', 'Brand B', 'Brand C', 'Brand D', 'Brand E'],
-        Party: ['All', 'Party X', 'Party Y', 'Party Z', 'Party P1', 'Party P2'],
-        Broker: ['All', 'Broker 1', 'Broker 2', 'Broker 3', 'Broker 4', 'Broker 5'],
-        State: ['All', 'Maharashtra', 'Gujarat', 'Delhi', 'Karnataka', 'Tamil Nadu'],
-    };
+    const [brandDrp, setBrandDrp] = useState([]);
+    const [partyDrp, setPartyDrp] = useState([]);
+    const [brokerDrp, setBrokerDrp] = useState([]);
+    const [stateDrp, setStateDrp] = useState([]);
 
     const handleDialogOpen = (filterName) => {
         setCurrentFilter(filterName);
@@ -266,10 +262,7 @@ const SalesDashboard = () => {
 
     const totalSales = data.reduce((acc, cur) => acc + cur.sales, 0);
 
-    const totalConversion = (
-        isNaN(parseFloat(summaryData.TOT_SALQTY)) || isNaN(parseFloat(summaryData.TOT_QTY)) || parseFloat(summaryData.TOT_QTY) === 0
-    )
-        ? 0 : (parseFloat(summaryData.TOT_SALQTY) / parseFloat(summaryData.TOT_QTY)) * 100;
+    const totalConversion = ((parseFloat(dispOrd.QTY) / parseFloat(summaryData.QTY))) * 100;
 
     useEffect(() => {
         const fcyrFromStorage = localStorage.getItem("FCYR_KEY");
@@ -279,15 +272,21 @@ const SalesDashboard = () => {
     }, []);
 
     useEffect(() => {
-        showTableData();
-        totalCoutData();
-        fetchPartyWise();
-        fetchCancelOrder();
-        fetchOderBalance();
-        fetchOderDispatch();
-        fetchOderShortClose();
-        stateWiseParty();
-    }, []);
+        if (fcyr && cobrId) {
+            showTableData();
+            totalCoutData();
+            fetchPartyWise();
+            fetchCancelOrder();
+            fetchOderBalance();
+            fetchOderDispatch();
+            fetchOderShortClose();
+            stateWiseParty();
+            fetchBrandDrp();
+            fetchPartyDrp();
+            fetchBrokerDrp();
+            fetchStateDrp();
+        }
+    }, [fcyr, cobrId]);
 
     const showTableData = async () => {
         try {
@@ -312,8 +311,16 @@ const SalesDashboard = () => {
         }
     };
 
+    const buildFilterPayload = () => ({
+        Brandfilter: selectedOptions.Brand.join(','),
+        Partyfilter: selectedOptions.Party.join(','),
+        statefilter: selectedOptions.State.join(','),
+        Brokerfilter: selectedOptions.Broker.join(','),
+    });
+
     const totalCoutData = async () => {
         try {
+            const filters = buildFilterPayload();
             const response = await axiosInstance.post("OrderDash/GetOrderDashBoard", {
                 COBR_ID: cobrId,
                 FCYR_KEY: fcyr,
@@ -323,6 +330,7 @@ const SalesDashboard = () => {
                 PageNumber: 1,
                 PageSize: 10,
                 SearchText: "",
+                ...filters,
             });
 
             if (response.data.STATUS === 0 && Array.isArray(response.data.DATA)) {
@@ -347,6 +355,7 @@ const SalesDashboard = () => {
     const fetchCancelOrder = async () => {
         setIsLoading(true);
         try {
+            const filters = buildFilterPayload();
             const response = await axiosInstance.post("OrderDash/GetOrderDashBoard", {
                 COBR_ID: cobrId,
                 FCYR_KEY: fcyr,
@@ -356,6 +365,7 @@ const SalesDashboard = () => {
                 PageNumber: 1,
                 PageSize: 10,
                 SearchText: "",
+                ...filters
             });
 
             if (response.data.STATUS === 0 && Array.isArray(response.data.DATA)) {
@@ -379,6 +389,7 @@ const SalesDashboard = () => {
     const fetchOderBalance = async () => {
         setIsLoading(true);
         try {
+            const filters = buildFilterPayload();
             const response = await axiosInstance.post("OrderDash/GetOrderDashBoard", {
                 COBR_ID: cobrId,
                 FCYR_KEY: fcyr,
@@ -388,6 +399,7 @@ const SalesDashboard = () => {
                 PageNumber: 1,
                 PageSize: 10,
                 SearchText: "",
+                ...filters
             });
 
             if (response.data.STATUS === 0 && Array.isArray(response.data.DATA)) {
@@ -411,6 +423,7 @@ const SalesDashboard = () => {
     const fetchOderDispatch = async () => {
         setIsLoading(true);
         try {
+            const filters = buildFilterPayload();
             const response = await axiosInstance.post("OrderDash/GetOrderDashBoard", {
                 COBR_ID: cobrId,
                 FCYR_KEY: fcyr,
@@ -420,6 +433,7 @@ const SalesDashboard = () => {
                 PageNumber: 1,
                 PageSize: 10,
                 SearchText: "",
+                ...filters
             });
 
             if (response.data.STATUS === 0 && Array.isArray(response.data.DATA)) {
@@ -443,6 +457,7 @@ const SalesDashboard = () => {
     const fetchOderShortClose = async () => {
         setIsLoading(true);
         try {
+            const filters = buildFilterPayload();
             const response = await axiosInstance.post("OrderDash/GetOrderDashBoard", {
                 COBR_ID: cobrId,
                 FCYR_KEY: fcyr,
@@ -452,6 +467,7 @@ const SalesDashboard = () => {
                 PageNumber: 1,
                 PageSize: 10,
                 SearchText: "",
+                ...filters,
             });
 
             if (response.data.STATUS === 0 && Array.isArray(response.data.DATA)) {
@@ -475,6 +491,7 @@ const SalesDashboard = () => {
     const fetchPartyWise = async () => {
         setIsLoading(true);
         try {
+            const filters = buildFilterPayload();
             const response = await axiosInstance.post("OrderDash/GetOrderDashBoard", {
                 COBR_ID: cobrId,
                 FCYR_KEY: fcyr,
@@ -483,7 +500,8 @@ const SalesDashboard = () => {
                 Flag: "PartyWise",
                 PageNumber: 1,
                 PageSize: 10,
-                SearchText: ""
+                SearchText: "",
+                filters
             });
             if (response.data.STATUS === 0 && Array.isArray(response.data.DATA)) {
                 setPartyWise(response.data.DATA);
@@ -497,6 +515,7 @@ const SalesDashboard = () => {
 
     const stateWiseParty = async () => {
         try {
+            const filters = buildFilterPayload();
             const response = await axiosInstance.post("OrderDash/GetOrderDashBoard", {
                 COBR_ID: cobrId,
                 FCYR_KEY: fcyr,
@@ -505,13 +524,70 @@ const SalesDashboard = () => {
                 Flag: "StateWiseOrdSum",
                 PageNumber: 1,
                 PageSize: 10,
-                SearchText: ""
+                SearchText: "",
+                ...filters
             });
             if (response.data.STATUS === 0 && Array.isArray(response.data.DATA)) {
                 setStateWise(response.data.DATA);
             }
         } catch (error) {
-            toast.error("Error while fetching the state data.");
+            toast.error("Error while fetching the state.");
+        }
+    };
+
+    const fetchBrandDrp = async () => {
+        try {
+            const response = await axiosInstance.post('Brand/GetBrandDrp', {})
+            if (response.data.STATUS === 0 && Array.isArray(response.data.DATA)) {
+                setBrandDrp(response.data.DATA);
+            };
+        } catch (error) {
+            toast.error("Error while fetching the brand.");
+        }
+    };
+
+    const fetchPartyDrp = async () => {
+        try {
+            const response = await axiosInstance.post("Party/GetParty_By_Name", {
+                PARTY_NAME: ""
+            });
+            if (response.data.STATUS === 0 && Array.isArray(response.data.DATA)) {
+                setPartyDrp(response.data.DATA);
+            };
+        } catch (error) {
+            toast.error("Error while fetching party.");
+        }
+    };
+
+    const fetchBrokerDrp = async () => {
+        try {
+            const response = await axiosInstance.post('BROKER/GetBrokerDrp', {
+                PARTY_KEY: "",
+                FLAG: "Drp",
+                BROKER_KEY: "",
+                PageNumber: 1,
+                PageSize: 10,
+                SearchText: ""
+            });
+            if (response.data.STATUS === 0 && Array.isArray(response.data.DATA)) {
+                setBrokerDrp(response.data.DATA);
+            };
+        } catch (error) {
+            toast.error("Error while fetching the broker.");
+        }
+    };
+
+    const fetchStateDrp = async () => {
+        try {
+            const response = await axiosInstance.post("PinCode/GetPinCodeDrp", {
+                FLAG: "State",
+                STATE_KEY: ""
+            });
+            if (response.data.STATUS === 0 && Array.isArray(response.data.DATA)) {
+                setStateDrp(response.data.DATA);
+            };
+        } catch (error) {
+            toast.error("Error while fetching the State.");
         }
     };
 
@@ -693,7 +769,8 @@ const SalesDashboard = () => {
                                     boxShadow: '0 20px 60px rgba(0,0,0,0.2)',
                                     overflow: 'hidden',
                                     maxWidth: 'none',
-                                    width: 700,
+                                    width: 1000,
+                                    height: 500,
                                 }
                             }}
                         >
@@ -727,8 +804,21 @@ const SalesDashboard = () => {
 
                             <DialogContent sx={{ p: 4, backgroundColor: '#fafbff' }}>
                                 <Grid container spacing={1}>
-                                    <Grid item xs={12} sm={6} md={3}>
-                                        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', mb: 1 }}>
+                                    <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                                        <Box
+                                            sx={{
+                                                display: 'flex',
+                                                justifyContent: 'flex-start',
+                                                alignItems: 'center',
+                                                mb: 1,
+                                                position: 'sticky',
+                                                top: 0,
+                                                backgroundColor: '#fafbff',
+                                                zIndex: 10,
+                                                py: 1,
+                                                borderBottom: '1px solid #e0e0e0',
+                                            }}
+                                        >
                                             <Typography variant="h6" fontWeight="bold" color="primary" sx={{ mr: 1 }}>
                                                 Brand
                                             </Typography>
@@ -769,32 +859,40 @@ const SalesDashboard = () => {
                                         />
 
                                         <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-                                            {filterOptions.Brand
-                                                .filter(opt => opt.toLowerCase().includes(searchBrand.toLowerCase()))
+                                            {brandDrp
+                                                .filter(option => option.BRAND_NAME.toLowerCase().includes(searchBrand.toLowerCase()))
+                                                .sort((a, b) => {
+                                                    const aChecked = selectedOptions.Brand.includes(a.BRAND_KEY);
+                                                    const bChecked = selectedOptions.Brand.includes(b.BRAND_KEY);
+
+                                                    if (aChecked && !bChecked) return -1;
+                                                    if (!aChecked && bChecked) return 1;
+                                                    return 0;
+                                                })
                                                 .map((option) => (
                                                     <FormControlLabel
-                                                        key={option}
+                                                        key={option.BRAND_KEY}
                                                         control={
                                                             <Checkbox
-                                                                checked={selectedOptions.Brand.includes(option)}
+                                                                checked={selectedOptions.Brand.includes(option.BRAND_KEY)}
                                                                 onChange={(e) => handleCheckboxChange(e, 'Brand')}
-                                                                value={option}
+                                                                value={option.BRAND_KEY}
                                                                 size="small"
                                                                 sx={{
                                                                     color: '#635bff',
                                                                     '&.Mui-checked': { color: '#635bff' },
-                                                                    p: 0.3
+                                                                    p: 0.3,
                                                                 }}
                                                             />
                                                         }
-                                                        label={<Typography variant="body2">{option}</Typography>}
+                                                        label={<Typography variant="body2">{option.BRAND_NAME}</Typography>}
                                                         sx={{
                                                             mx: 0,
                                                             my: 0.2,
                                                             '&:hover': {
                                                                 backgroundColor: 'rgba(99, 91, 255, 0.12)',
-                                                                borderRadius: 1
-                                                            }
+                                                                borderRadius: 1,
+                                                            },
                                                         }}
                                                     />
                                                 ))}
@@ -802,8 +900,19 @@ const SalesDashboard = () => {
                                     </Grid>
 
                                     {/* Party */}
-                                    <Grid item xs={12} sm={6} md={3}>
-                                        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', mb: 1 }}>
+                                    <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                                        <Box sx={{
+                                            display: 'flex',
+                                            justifyContent: 'flex-start',
+                                            alignItems: 'center',
+                                            mb: 1,
+                                            position: 'sticky',
+                                            top: 0,
+                                            py: 1,
+                                            zIndex: 10,
+                                            bgcolor: '#fafbff',
+                                            borderBottom: '1px solid #e0e0e0',
+                                        }}>
                                             <Typography variant="h6" fontWeight="bold" color="primary" sx={{ mr: 1 }}>
                                                 Party
                                             </Typography>
@@ -827,7 +936,7 @@ const SalesDashboard = () => {
                                             sx={{
                                                 mb: 3,
                                                 borderRadius: '50px',
-                                                maxWidth: 150,
+                                                maxWidth: 200,
                                                 height: 20,
                                                 '& .MuiInputBase-input': {
                                                     padding: '4.5px 0px',
@@ -839,21 +948,29 @@ const SalesDashboard = () => {
                                         />
 
                                         <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-                                            {filterOptions.Party
-                                                .filter(opt => opt.toLowerCase().includes(searchParty.toLowerCase()))
+                                            {partyDrp
+                                                .filter(option => option.PARTY_NAME.toLowerCase().includes(searchParty.toLowerCase()))
+                                                .sort((a, b) => {
+                                                    const aChecked = selectedOptions.Party.includes(a.PARTY_KEY);
+                                                    const bChecked = selectedOptions.Party.includes(b.PARTY_KEY);
+
+                                                    if (aChecked && !bChecked) return -1;
+                                                    if (!aChecked && bChecked) return 1;
+                                                    return 0;
+                                                })
                                                 .map((option) => (
                                                     <FormControlLabel
-                                                        key={option}
+                                                        key={option.PARTY_KEY}
                                                         control={
                                                             <Checkbox
-                                                                checked={selectedOptions.Party.includes(option)}
+                                                                checked={selectedOptions.Party.includes(option.PARTY_KEY)}
                                                                 onChange={(e) => handleCheckboxChange(e, 'Party')}
-                                                                value={option}
+                                                                value={option.PARTY_KEY}
                                                                 size="small"
                                                                 sx={{ color: '#635bff', '&.Mui-checked': { color: '#635bff' }, p: 0.3 }}
                                                             />
                                                         }
-                                                        label={<Typography variant="body2">{option}</Typography>}
+                                                        label={<Typography variant="body2">{option.PARTY_NAME}</Typography>}
                                                         sx={{
                                                             mx: 0,
                                                             my: 0.2,
@@ -868,8 +985,19 @@ const SalesDashboard = () => {
                                     </Grid>
 
                                     {/* Broker */}
-                                    <Grid item xs={12} sm={6} md={3}>
-                                        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', mb: 1 }}>
+                                    <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                                        <Box sx={{
+                                            display: 'flex',
+                                            justifyContent: 'flex-start',
+                                            alignItems: 'center',
+                                            mb: 1,
+                                            position: 'sticky',
+                                            top: 0,
+                                            py: 1,
+                                            zIndex: 10,
+                                            bgcolor: '#fafbff',
+                                            borderBottom: '1px solid #e0e0e0',
+                                        }}>
                                             <Typography variant="h6" fontWeight="bold" color="primary" sx={{ mr: 1 }}>
                                                 Broker
                                             </Typography>
@@ -905,21 +1033,29 @@ const SalesDashboard = () => {
                                         />
 
                                         <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-                                            {filterOptions.Broker
-                                                .filter(opt => opt.toLowerCase().includes(searchBroker.toLowerCase()))
+                                            {brokerDrp
+                                                .filter(option => option.BROKER_NAME.toLowerCase().includes(searchBroker.toLowerCase()))
+                                                .sort((a, b) => {
+                                                    const aChecked = selectedOptions.Broker.includes(a.BROKER_KEY);
+                                                    const bChecked = selectedOptions.Broker.includes(b.BROKER_KEY);
+
+                                                    if (aChecked && !bChecked) return -1;
+                                                    if (!aChecked && bChecked) return 1;
+                                                    return 0
+                                                })
                                                 .map((option) => (
                                                     <FormControlLabel
-                                                        key={option}
+                                                        key={option.BROKER_KEY}
                                                         control={
                                                             <Checkbox
-                                                                checked={selectedOptions.Broker.includes(option)}
+                                                                checked={selectedOptions.Broker.includes(option.BROKER_KEY)}
                                                                 onChange={(e) => handleCheckboxChange(e, 'Broker')}
-                                                                value={option}
+                                                                value={option.BROKER_KEY}
                                                                 size="small"
                                                                 sx={{ color: '#635bff', '&.Mui-checked': { color: '#635bff' }, p: 0.3 }}
                                                             />
                                                         }
-                                                        label={<Typography variant="body2">{option}</Typography>}
+                                                        label={<Typography variant="body2">{option.BROKER_NAME}</Typography>}
                                                         sx={{
                                                             mx: 0,
                                                             my: 0.2,
@@ -934,8 +1070,19 @@ const SalesDashboard = () => {
                                     </Grid>
 
                                     {/* State */}
-                                    <Grid item xs={12} sm={6} md={3}>
-                                        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', mb: 1 }}>
+                                    <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                                        <Box sx={{
+                                            display: 'flex',
+                                            justifyContent: 'flex-start',
+                                            alignItems: 'center',
+                                            mb: 1,
+                                            position: 'sticky',
+                                            top: 0,
+                                            py: 1,
+                                            zIndex: 10,
+                                            bgcolor: '#fafbff',
+                                            borderBottom: '1px solid #e0e0e0',
+                                        }}>
                                             <Typography variant="h6" fontWeight="bold" color="primary" sx={{ mr: 1 }}>
                                                 State
                                             </Typography>
@@ -977,21 +1124,29 @@ const SalesDashboard = () => {
                                         />
 
                                         <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-                                            {filterOptions.State
-                                                .filter(opt => opt.toLowerCase().includes(searchState.toLowerCase()))
+                                            {stateDrp
+                                                .filter(option => option.STATE_NAME.toLowerCase().includes(searchState.toLowerCase()))
+                                                .sort((a, b) => {
+                                                    const aChecked = selectedOptions.State.includes(a.STATE_KEY);
+                                                    const bChecked = selectedOptions.State.includes(b.STATE_KEY);
+
+                                                    if (aChecked && !bChecked) return -1;
+                                                    if (!aChecked && bChecked) return 1;
+                                                    return 0;
+                                                })
                                                 .map((option) => (
                                                     <FormControlLabel
-                                                        key={option}
+                                                        key={option.STATE_KEY}
                                                         control={
                                                             <Checkbox
-                                                                checked={selectedOptions.State.includes(option)}
+                                                                checked={selectedOptions.State.includes(option.STATE_KEY)}
                                                                 onChange={(e) => handleCheckboxChange(e, 'State')}
-                                                                value={option}
+                                                                value={option.STATE_KEY}
                                                                 size="small"
                                                                 sx={{ color: '#635bff', '&.Mui-checked': { color: '#635bff' }, p: 0.3 }}
                                                             />
                                                         }
-                                                        label={<Typography variant="body2">{option}</Typography>}
+                                                        label={<Typography variant="body2">{option.STATE_NAME}</Typography>}
                                                         sx={{
                                                             mx: 0,
                                                             my: 0.2,
@@ -1036,9 +1191,9 @@ const SalesDashboard = () => {
                                         variant="contained"
                                         size="small"
                                         onClick={() => {
-                                            handleSubmit();
                                             handleDialogClose();
-                                            toast.success("Filters applied!");
+                                            totalCoutData();
+                                            toast.success("Filters applied to summary cards!");
                                         }}
                                         sx={{
                                             backgroundColor: '#635bff',
@@ -1076,7 +1231,7 @@ const SalesDashboard = () => {
                             <ReceiptLongIcon fontSize="large" />
                         </IconButton>
                         <Box>
-                            <Typography variant="subtitle1" fontWeight="bold" sx={{ mb: 1 }}>
+                            <Typography variant="h6" fontWeight="bold" sx={{ mb: 1 }}>
                                 Total Orders - {summaryData.ROWNUM}
                             </Typography>
                             <Typography variant="h6" fontWeight="bold">
@@ -1108,7 +1263,7 @@ const SalesDashboard = () => {
                             <ShoppingCartIcon fontSize="large" />
                         </IconButton>
                         <Box>
-                            <Typography variant="subtitle1" fontWeight="bold" sx={{ mb: 1 }}>
+                            <Typography variant="h6" fontWeight="bold" sx={{ mb: 1 }}>
                                 Dispatch
                             </Typography>
                             <Typography variant="h6" fontWeight="bold">
@@ -1140,7 +1295,7 @@ const SalesDashboard = () => {
                             <PercentIcon fontSize="large" />
                         </IconButton>
                         <Box>
-                            <Typography variant="subtitle1" fontWeight="bold" sx={{ mb: 1 }}>
+                            <Typography variant="h6" fontWeight="bold" sx={{ mb: 1 }}>
                                 Conversion Ratio
                             </Typography>
                             <Typography variant="h6" fontWeight="bold" letterSpacing={1}>
@@ -1187,7 +1342,7 @@ const SalesDashboard = () => {
                             <AccountBalanceIcon fontSize="large" />
                         </IconButton>
                         <Box>
-                            <Typography variant="subtitle1" fontWeight="bold" sx={{ mb: 1 }}>
+                            <Typography variant="h6" fontWeight="bold" sx={{ mb: 1 }}>
                                 Pending Order
                             </Typography>
                             <Typography variant="h6" fontWeight="bold">
@@ -1271,7 +1426,7 @@ const SalesDashboard = () => {
                                     ) : filteredPartyWise.length > 0 ? (
                                         filteredPartyWise.map((item, index) => (
                                             <TableRow
-                                                key={index}
+                                                key={item.PARTY_KEY || `${item.PARTY_NAME}-${index}`}
                                                 hover
                                                 onDoubleClick={() => handleRowDoubleClick(item)}
                                                 sx={{
@@ -1316,6 +1471,7 @@ const SalesDashboard = () => {
                                             position: 'sticky',
                                             bottom: 0,
                                             zIndex: 9,
+                                            backgroundColor: 'rgba(200, 202, 204, 1)',
                                             '& > td': {
                                                 fontWeight: 'bold',
                                                 borderTop: '1px solid #4caf50',
@@ -1452,7 +1608,8 @@ const SalesDashboard = () => {
 
                                             return (
                                                 <TableRow
-                                                    key={item.ORDBK_NO}
+                                                    // key={item.ORDBK_NO}
+                                                    key={item.STATE_NAME || index}
                                                     hover
                                                     onDoubleClick={() => handleRowDoubleClick(item)}
                                                     sx={{
@@ -1638,20 +1795,20 @@ const SalesDashboard = () => {
                                                 hover
                                                 onDoubleClick={() => handleRowDoubleClick(item)}
                                             >
-                                                <TableCell>
+                                                <TableCell sx={{ padding: '2px 16px' }}>
                                                     <VisibilityIcon
                                                         sx={{ cursor: 'pointer', color: '#1976d2' }}
                                                         onClick={() => handleViewDocument(item)}
                                                     />
                                                 </TableCell>
-                                                <TableCell>{item.ORDBK_NO}</TableCell>
-                                                <TableCell>{dayjs(item.ORDBK_DT).format('DD/MM/YYYY')}</TableCell>
-                                                <TableCell>{item.PARTY_NAME}</TableCell>
-                                                <TableCell>{item.CITY_NAME}</TableCell>
-                                                <TableCell>{item.STATE_NAME}</TableCell>
-                                                <TableCell>{item.QTY}</TableCell>
-                                                <TableCell>{item.BROKER_NAME}</TableCell>
-                                                <TableCell>{item.SALEPERSON_NAME}</TableCell>
+                                                <TableCell sx={{ padding: '2px 16px' }}>{item.ORDBK_NO}</TableCell>
+                                                <TableCell sx={{ padding: '2px 16px' }}>{dayjs(item.ORDBK_DT).format('DD/MM/YYYY')}</TableCell>
+                                                <TableCell sx={{ padding: '2px 16px' }}>{item.PARTY_NAME}</TableCell>
+                                                <TableCell sx={{ padding: '2px 16px' }}>{item.CITY_NAME}</TableCell>
+                                                <TableCell sx={{ padding: '2px 16px' }}>{item.STATE_NAME}</TableCell>
+                                                <TableCell sx={{ padding: '2px 16px' }}>{item.QTY}</TableCell>
+                                                <TableCell sx={{ padding: '2px 16px' }}>{item.BROKER_NAME}</TableCell>
+                                                <TableCell sx={{ padding: '2px 16px' }}>{item.SALEPERSON_NAME}</TableCell>
                                             </TableRow>
                                         ))
                                     ) : (
@@ -1689,10 +1846,12 @@ const SalesDashboard = () => {
                                     horizontal: 'right',
                                 },
                                 padding: 10,
+                                labelStyle: { fontSize: 12 },
+                                itemMarkWidth: 22,
+                                itemGap: 6,
                             }}
                             slotProps={{
                                 legend: {
-                                    labelStyle: { fontSize: 12 },
                                     itemMarkWidth: 22,
                                     itemGap: 6,
                                 },
@@ -1720,13 +1879,9 @@ const SalesDashboard = () => {
                                     horizontal: 'right',
                                 },
                                 padding: 10,
-                            }}
-                            slotProps={{
-                                legend: {
-                                    labelStyle: { fontSize: 12 },
-                                    itemMarkWidth: 22,
-                                    itemGap: 6,
-                                },
+                                labelStyle: { fontSize: 12 },
+                                itemMarkWidth: 22,
+                                itemGap: 6,
                             }}
                         />
                     </StyledCard2>
@@ -2059,7 +2214,6 @@ const SalesDashboard = () => {
                                             color: '#444',
                                         }}
                                     />
-
                                     <Area
                                         type="monotone"
                                         dataKey="sales"
