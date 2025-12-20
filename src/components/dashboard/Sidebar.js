@@ -10,7 +10,6 @@ import {
 } from 'react-icons/md';
 import { usePin } from '../../app/hooks/usePin';
 import { useRecentPaths } from '../../app/context/RecentPathsContext';
-import axiosInstance from '@/lib/axios';
 
 const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => {
   const sidebarRef = useRef(null);
@@ -28,41 +27,39 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
   const [activeParent, setActiveParent] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const searchInputRef = useRef(null);
-  const [isUserInteracted, setIsUserInteracted] = useState(false);
   
-  // Add state for company name
-  const [companyName, setCompanyName] = useState('');
+  // State for company name
+  const [companyName, setCompanyName] = useState('Prasyst');
+  
+  // Track if user has manually interacted with sidebar
+  const [isUserInteracted, setIsUserInteracted] = useState(false);
 
   // Fetch company name from API
   useEffect(() => {
     const fetchCompanyName = async () => {
       try {
-        const coId = localStorage.getItem('CO_ID');
-        
-        if (coId) {
-          const companyResponse = await axiosInstance.post('COMPANY/Getdrpcofill', {
-            CO_ID: "",
-            Flag: ""
-          });
-
-          if (companyResponse.data?.STATUS === 0 && Array.isArray(companyResponse.data.DATA)) {
-            const company = companyResponse.data.DATA.find(c => c.CO_ID === coId);
-            if (company) {
-              setCompanyName(company.CO_NAME);
-            }
-          }
+        // Replace with your actual API endpoint
+        const response = await fetch('/api/company/name');
+        if (response.ok) {
+          const data = await response.json();
+          setCompanyName(data.companyName || 'Prasyst');
         }
       } catch (error) {
-        console.error('Error fetching company name:', error);
+        console.error('Failed to fetch company name:', error);
+        // Fallback to localStorage if available
+        const storedName = localStorage.getItem('companyName');
+        if (storedName) {
+          setCompanyName(storedName);
+        }
       }
     };
-
+    
     fetchCompanyName();
   }, []);
 
   // Main navigation function with recent path tracking
-  const handleNavigationWithTracking = (path, name, isGrandchild = false, shouldCloseSidebar = true) => {
-    console.log('Navigating to:', path, 'name:', name, 'isGrandchild:', isGrandchild, 'shouldCloseSidebar:', shouldCloseSidebar);
+  const handleNavigationWithTracking = (path, name, isGrandchild = false) => {
+    console.log('Navigating to:', path, 'name:', name, 'isGrandchild:', isGrandchild);
     
     if (path && path !== '#') {
       // Track only grandchild paths in recent paths
@@ -77,8 +74,8 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
       // Mark that user has interacted
       setIsUserInteracted(true);
       
-      // Close sidebar only on mobile and only for leaf nodes (grandchildren)
-      if (isMobile && shouldCloseSidebar) {
+      // Only close sidebar on mobile if it's a leaf node (grandchild)
+      if (isMobile && isGrandchild) {
         onClose();
       }
     }
@@ -113,13 +110,11 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
     // If it has children, toggle section
     if (item.children && item.children.length > 0) {
       toggleSection(item.name);
-      // Don't close sidebar when clicking parent with children (just toggle section)
-      return;
     }
     
-    // If it has a valid path and no children, navigate
+    // If it has a valid path, navigate
     if (item.path && item.path !== '#') {
-      handleNavigationWithTracking(item.path, item.name, false, false);
+      handleNavigationWithTracking(item.path, item.name, false);
     }
   };
 
@@ -136,8 +131,6 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
     // Toggle child section if it has grandchildren
     if (child.children && child.children.length > 0) {
       toggleSection(child.name);
-      // Don't close sidebar when clicking child with grandchildren (just toggle section)
-      return;
     }
     
     let targetPath = child.path;
@@ -184,14 +177,16 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
     // Navigate (not tracking as recent since it's a child, not grandchild)
     if (targetPath && targetPath !== '#') {
       console.log('Navigating to child:', child.name, targetPath);
-      // For child nodes, don't close sidebar automatically
-      handleNavigationWithTracking(targetPath, child.name, false, false);
+      handleNavigationWithTracking(targetPath, child.name, false);
     }
     
     // Ensure parent stays open
     if (parentName === 'Masters' || parentName === 'Inventory') {
       setOpenSections(prev => ({ ...prev, [parentName]: true }));
     }
+    
+    // Don't close sidebar on mobile for child clicks
+    // Only close for leaf nodes
   };
 
   // Handle grandchild click
@@ -214,8 +209,11 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
     // Navigate and track as recent (since it's a grandchild)
     if (grandchild.path && grandchild.path !== '#') {
       console.log('Navigating to grandchild:', grandchild.name, grandchild.path);
-      handleNavigationWithTracking(grandchild.path, grandchild.name, true, true);
+      handleNavigationWithTracking(grandchild.path, grandchild.name, true);
     }
+    
+    // Close sidebar on mobile for leaf nodes
+    if (isMobile) onClose();
   };
 
   // Item matches search
@@ -483,10 +481,16 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
     setShowUnpinConfirm(null);
   };
 
-  // Mobile close button click handler
-  const handleMobileCloseClick = () => {
-    console.log('Mobile close button clicked');
-    onClose();
+  // Handle mobile menu toggle
+  const handleMobileMenuToggle = () => {
+    if (isMobile) {
+      if (isOpen) {
+        onClose();
+      } else {
+        // This should be handled by parent component
+        // The onClose function should toggle the state
+      }
+    }
   };
 
   const renderMainMenu = useCallback((items) => {
@@ -514,12 +518,21 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
         const isOpen = openSections[item.name] || (searchQuery.trim() && hasChildren);
         const isActive = activeParent === item.name;
         const hasValidPath = item.path && item.path !== '#';
+        
+        // Check if any child is active for hover effect
+        const isHovered = false; // This can be enhanced with mouse events
 
         return (
           <div key={item.name}>
             {/* PARENT ITEM */}
             <div
               onClick={(e) => handleParentClick(item, e)}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = isActive ? '#5ba8ffff' : '#f0f2ff';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = isActive ? '#5ba8ffff' : 'transparent';
+              }}
               style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -581,6 +594,12 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
                         {/* CHILD ITEM */}
                         <div
                           onClick={(e) => handleChildClick(child, item.name, e)}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.backgroundColor = isChildActive ? '#5ba8ffff' : '#f0f2ff';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.backgroundColor = isChildActive ? '#5ba8ffff' : 'transparent';
+                          }}
                           style={{
                             display: 'flex',
                             alignItems: 'center',
@@ -591,6 +610,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
                             backgroundColor: isChildActive ? '#5ba8ffff' : 'transparent',
                             color: isChildActive ? 'white' : '#444',
                             fontWeight: isChildActive ? 600 : 500,
+                            transition: 'all 0.2s ease',
                           }}
                         >
                           {ChildIcon && (
@@ -598,7 +618,8 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
                               size={18} 
                               style={{ 
                                 marginRight: '5px', 
-                                color: isChildActive ? 'white' : '#635bff' 
+                                color: isChildActive ? 'white' : '#635bff',
+                                transition: 'color 0.2s ease',
                               }} 
                             />
                           )}
@@ -638,6 +659,16 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
                                   <div
                                     key={grandchild.name}
                                     onClick={(e) => handleGrandchildClick(grandchild, item.name, child.name, e)}
+                                    onMouseEnter={(e) => {
+                                      if (hasPath) {
+                                        e.currentTarget.style.backgroundColor = isGrandchildActive ? '#635bff' : '#f0f2ff';
+                                      }
+                                    }}
+                                    onMouseLeave={(e) => {
+                                      if (hasPath) {
+                                        e.currentTarget.style.backgroundColor = isGrandchildActive ? '#635bff' : 'transparent';
+                                      }
+                                    }}
                                     style={{
                                       display: 'flex',
                                       alignItems: 'center',
@@ -648,6 +679,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
                                       borderRadius: '6px',
                                       margin: '1px 1px',
                                       fontSize: '0.85rem',
+                                      transition: 'all 0.2s ease',
                                     }}
                                   >
                                     {GrandIcon && (
@@ -656,6 +688,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
                                         style={{
                                           marginRight: '2px',
                                           color: isGrandchildActive ? 'white' : '#444',
+                                          transition: 'color 0.2s ease',
                                         }}
                                       />
                                     )}
@@ -670,6 +703,15 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
                                         style={{
                                           marginLeft: 'auto',
                                           color: isPinned(grandchild.path) ? '#635bff' : '#aaa',
+                                          padding: '2px',
+                                          borderRadius: '4px',
+                                          transition: 'all 0.2s ease',
+                                        }}
+                                        onMouseEnter={(e) => {
+                                          e.currentTarget.style.backgroundColor = '#f0f2ff';
+                                        }}
+                                        onMouseLeave={(e) => {
+                                          e.currentTarget.style.backgroundColor = 'transparent';
                                         }}
                                       >
                                         {isPinned(grandchild.path) ? (
@@ -731,48 +773,22 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
           minHeight: '40px',
         }}>
           {(!isCollapsed || isMobile) && (
-            <div style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'flex-start',
-              maxWidth: isMobile ? '180px' : '200px',
+            <h2 style={{
+              fontSize: '1.3rem',
+              fontWeight: '700',
+              margin: 0,
+              whiteSpace: 'nowrap',
+              color: '#1b69e7',
+              letterSpacing: '0.5px',
             }}>
-              <h2 style={{
-                fontSize: '1.3rem',
-                fontWeight: '700',
-                margin: 0,
-                whiteSpace: 'nowrap',
-                color: '#1b69e7',
-                letterSpacing: '0.5px',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                width: '100%',
-              }}>
-                {/* Mobile view में company name, Desktop view में Prasyst */}
-                {isMobile && companyName ? companyName : 'Prasyst'}
-              </h2>
-              {/* Mobile view में Powered by Prasyst text */}
-              {isMobile && companyName && (
-                <span style={{
-                  fontSize: '0.75rem',
-                  color: '#666',
-                  marginTop: '2px',
-                  fontStyle: 'italic',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
-                  width: '100%',
-                }}>
-                  Powered by Prasyst
-                </span>
-              )}
-            </div>
+              {companyName}
+            </h2>
           )}
           
           {/* Hamburger menu for mobile when sidebar is open */}
           {isMobile && isOpen && (
             <button
-              onClick={handleMobileCloseClick}
+              onClick={handleMobileMenuToggle}
               style={{
                 background: 'none',
                 border: 'none',
@@ -801,8 +817,8 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
               onClick={() => {
                 setIsUserInteracted(true);
                 setIsCollapsed(!isCollapsed);
-                if (!isCollapsed) {
-                  // Only close sections when manually collapsing
+                // Only close sections when manually collapsing AND no active child/grandchild
+                if (!isCollapsed && !activeChild && !activeGrandchild) {
                   setOpenSections({});
                   setHasOpenSubmenu(false);
                 }
