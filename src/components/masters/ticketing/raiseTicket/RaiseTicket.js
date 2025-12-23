@@ -258,7 +258,7 @@ const RaiseTicketMst = () => {
                             onChange={''}
                             sx={DropInputSx}
                             inputProps={{
-                                style: {
+                                style: {  
                                     padding: '6px 8px',
                                     fontSize: '12px',
                                 },

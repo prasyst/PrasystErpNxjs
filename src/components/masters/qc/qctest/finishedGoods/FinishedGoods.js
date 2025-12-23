@@ -1,215 +1,328 @@
 'use client'
-import React, { useEffect, useState, useCallback } from 'react';
-import { Grid, Button, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Select, MenuItem, TextField } from '@mui/material';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import { Grid, Button, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Select, MenuItem, TextField, Autocomplete } from '@mui/material';
 import { useRouter } from 'next/navigation';
 import { pdf } from '@react-pdf/renderer';
-import DeleteIcon from '@mui/icons-material/Delete';
 import KeyboardArrowLeftIcon from "@mui/icons-material/KeyboardArrowLeft";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import { getFormMode } from '@/lib/helpers';
 import { TbListSearch } from "react-icons/tb";
-import IconButton from '@mui/material/IconButton';
 import { toast, ToastContainer } from 'react-toastify';
 import axiosInstance from '@/lib/axios';
-import { useSearchParams, usePathname } from 'next/navigation';
-import AutoVibeWithoutAR from '@/GlobalFunction/CustomAutoComplete/AutoVibeWithoutAR';
 import CrudButton from '@/GlobalFunction/CrudButton';
+
 import { textInputSx } from '../../../../../../public/styles/textInputSx';
-import { DropInputSx } from '../../../../../../public/styles/dropInputSx';
+import { inputStyle } from '../../../../../../public/styles/inputStyleDrp';
+import PrintFinish from './PrintFinish';
 const FORM_MODE = getFormMode();
 const FinishedGoods = () => {
     const router = useRouter();
-    const searchParams = useSearchParams();
-    const pathname = usePathname();
-    const QC_SUBGROUP_KEY = searchParams.get('QC_SUBGROUP_KEY');
-    const [USER_ID, setUSER_ID] = useState(null);
-    const [USER_NAME, setUSER_NAME] = useState(null);
-    const [FCYR_KEY, setFCYR_KEY] = useState(null);
-    const [COBR_ID, setCOBR_ID] = useState(null);
-    const [CO_ID, setCO_ID] = useState(null);
-    const [userRole, setUserRole] = useState(null);
-    const [PARTY_KEY, setPARTY_KEY] = useState(null);
     const [form, setForm] = useState({
-        QC_SUBGROUP_KEY: QC_SUBGROUP_KEY || '',
-        QC_GROUP_KEY: '',
+        PARTY_KEY: '',
+        DOC_KEY: '',
+        DOC_DTL_ID: '',
+        QC_SUBGROUP_KEY: '',
         SearchByCd: '',
+        QC_TEST_ID: 0,
+        PASS_PARTIAL_REMARK: '',
+        REMARK: '',
     });
-    const [qcGroups, setQcGroups] = useState([]);
+    const [partyDrp, setPartyDrp] = useState([]);
+    const [docNoDrp, setDocNoDrp] = useState([]);
+    const [dtlItems, setDtlItems] = useState([]);
     const [qcSubGroups, setQcSubGroups] = useState([]);
     const [editableRow, setEditableRow] = useState(null);
-    const [currentQC_SUBGROUP_KEY, setCurrentQC_SUBGROUP_KEY] = useState(null)
     const [mode, setMode] = useState(() => FORM_MODE.read);
-    const createBlankRow = () => {
-        const id = `NEW_${Date.now()}`;
-        return {
-            QC_PM_ID: id,
-            TEST_NAME: '',
-            VALUE_TEST: '',
-            RANGE_FROM: '',
-            RANGE_TO: '',
-            REMARK: ''
-        };
-    };
     const [tableData, setTableData] = useState([]);
+    const [decision, setDecision] = useState([]);    //PARTY DRP
     useEffect(() => {
-        setUSER_ID(localStorage.getItem('USER_ID'));
-        setUSER_NAME(localStorage.getItem('USER_NAME'));
-        setFCYR_KEY(localStorage.getItem('FCYR_KEY'));
-        setCOBR_ID(localStorage.getItem('COBR_ID'));
-        setCO_ID(localStorage.getItem('CO_ID'));
-        setUserRole(localStorage.getItem('userRole'));
-        setPARTY_KEY(localStorage.getItem('PARTY_KEY'));
-    }, []);
-    useEffect(() => {
-        const fetchQcGroups = async () => {
+        const fetchPartyDrp = async () => {
             try {
-                const response = await axiosInstance.post("QC_GROUP/GetQC_GROUPDrp", {});
-                const { STATUS, DATA } = response.data;
-                if (STATUS === 0 && Array.isArray(DATA)) {
-                    const validQcGroups = DATA.filter((cat) => cat.QC_GROUP_KEY && cat.QC_GROUP_NAME);
-                    setQcGroups(validQcGroups);
-                    if (validQcGroups.length > 0 && !form.QC_GROUP_KEY) {
-                        setForm((prev) => ({ ...prev, QC_GROUP_KEY: validQcGroups[0].QC_GROUP_KEY }));
-                    }
-                }
-            } catch (error) { console.error("Error fetching QC Groups:", error); }
-        };
-     //   fetchQcGroups();
-    }, []);
-    useEffect(() => {
-        const fetchQcSubGroups = async () => {
-            try {
-                const response = await axiosInstance.post("QC_SUBGROUP/GetQC_SUBGROUPDrp", {
-                    "QC_GROUP_KEY": form.QC_GROUP_KEY, "FLAG": ""
+                const response = await axiosInstance.post("/Party/GetPartyDashBoard?currentPage=1&limit=25", {
+                    "SearchText": "",
+                    "PARTY_CAT": "ps,pj,pr,pa",
+                    "FLAG": ""
                 });
                 const { STATUS, DATA } = response.data;
                 if (STATUS === 0 && Array.isArray(DATA)) {
-                    setQcSubGroups(DATA);
-                    console.log("QC SubGroups:", qcSubGroups);
-                    console.log("Form QC_SUBGROUP_KEY:", form.QC_SUBGROUP_KEY);
-                    if (DATA.length > 0 && !form.QC_SUBGROUP_KEY) {
-                        setForm((prev) => ({ ...prev, QC_SUBGROUP_KEY: DATA[0].QC_SUBGROUP_KEY }));
-                    }
+                    const validParty = DATA.filter((p) => p.PARTY_KEY);
+                    setPartyDrp(validParty);
+                    setForm((prev) => ({
+                        ...prev, PARTY_KEY: validParty[0]?.PARTY_KEY
+                    }));
                 } else {
-                    setQcSubGroups([]);
+                    setPartyDrp([]);
                 }
-            } catch (error) {
-                console.error("Error fetching QC SubGroups:", error);
-            }
+            } catch (error) { console.error("Error fetching partydrp:", error); }
         };
-        if (form.QC_GROUP_KEY) {
-           // fetchQcSubGroups();
-        } else {
-            setQcSubGroups([]);
-        }
-    }, [form.QC_GROUP_KEY]);
-    const fetchRetriveData = useCallback(async (currentQC_SUBGROUP_KEY, flag = "R", isManualSearch = true) => {
-        try {
-            const response = await axiosInstance.post('QC_SUBGROUP/RetriveQC_SUBGROUP', {
-                "FLAG": flag,
-                "TBLNAME": "QC_PARAM",
-                "FLDNAME": "QC_SUBGROUP_KEY",
-                "ID": currentQC_SUBGROUP_KEY,
-                "ORDERBYFLD": "",
-                "CWHAER": "",
-                "CO_ID": CO_ID
-            });
-            const { data: { STATUS, DATA, RESPONSESTATUSCODE, MESSAGE } } = response;
-            if (STATUS === 0 && Array.isArray(DATA) && RESPONSESTATUSCODE == 1) {
-                const qcData = DATA[0];
-                console.log("Retrieved QC Data:", qcData);
-                setForm({
-                    QC_GROUP_KEY: qcData.QC_GROUP_KEY,
-                    QC_GROUP_NAME: qcData.QC_GROUP_NAME || '',
-                    QC_SUBGROUP_KEY: qcData.QC_SUBGROUP_KEY,
-                    QC_SUBGROUP_NAME: qcData.QC_SUBGROUP_NAME || '',
-                });
-                setCurrentQC_SUBGROUP_KEY(qcData.QC_SUBGROUP_KEY);
-            }
-            else {
-                setForm(prev => ({
-                    ...prev,
-                    QC_GROUP_KEY: '',
-                    QC_GROUP_NAME: '',
-                    QC_SUBGROUP_KEY: '',
-                    QC_SUBGROUP_NAME: '',
-                }));
-                setQcSubGroups([]);
-                setTableData([createBlankRow()]);
-                if (isManualSearch) {
-                    //  toast.info(MESSAGE || 'No record found');
-                }
-            }
-        } catch (err) { console.error(err); }
-    }, [CO_ID]);
-    useEffect(() => {
-        if (QC_SUBGROUP_KEY) {
-            setCurrentQC_SUBGROUP_KEY(QC_SUBGROUP_KEY);
-          //  fetchRetriveData(QC_SUBGROUP_KEY);
-            setMode(FORM_MODE.add);
-        } else {
-            setForm((prev) => ({
+        fetchPartyDrp();
+    }, []);
+    //DOC NO DRP
+    const handlePartyChange = (e, newValue) => {
+        const selectedPartyKey = newValue ? newValue.PARTY_KEY : '';
+        // Reset dependent fields when PARTY_KEY is cleared
+        if (!selectedPartyKey) {
+            setForm(prev => ({
                 ...prev,
-                SearchByCd: '',
-            }))
-            setMode(FORM_MODE.read);
-        }
-    }, [QC_SUBGROUP_KEY, fetchRetriveData]);
-    const clearQueryParams = () => {
-        router.replace(pathname, { scroll: false });
-    };
-    const fetchQcParams = useCallback(async () => {
-        if (!form.QC_SUBGROUP_KEY) {
+                PARTY_KEY: '',
+                DOC_KEY: '',
+                DOC_DTL_ID: '',
+                QC_SUBGROUP_KEY: '',
+            }));
+            setDocNoDrp([]);
+            setDtlItems([]);
+            setQcSubGroups([]);
             setTableData([]);
+        } else {
+            // If PARTY_KEY is selected, fetch and populate the DOC_KEY, DOC_DTL_ID, and QC_SUBGROUP_KEY
+            setForm(prev => ({
+                ...prev,
+                PARTY_KEY: selectedPartyKey,
+            }));
+            const fetchDocNoDrp = async () => {
+                try {
+                    const FCYR_KEY = localStorage.getItem('FCYR_KEY');
+                    const COBR_ID = localStorage.getItem('COBR_ID');
+                    const response = await axiosInstance.post("QC_TEST/GetQC_DocTypeDrp", {
+                        QC_TYPE: "FG",
+                        PARTY_KEY: selectedPartyKey,
+                        PARTYDTL_ID: 0,
+                        DOC_KEY: "", 
+                        DOC_DTL_ID: 0,
+                        FLAG: "FG",
+                        DBFLAG: "PartySelection",
+                        QC_SUBGROUP_KEY: "",
+                        FCYR_KEY,
+                        COBR_ID
+                    });
+                    const { STATUS, DATA } = response.data;
+                    if (STATUS === 0 && Array.isArray(DATA)) {
+                        const validDocNo = DATA.filter(p => p.DOC_KEY);
+                        setDocNoDrp(validDocNo);
+                        setForm(prev => ({
+                            ...prev,
+                            DOC_KEY: validDocNo[0]?.DOC_KEY || '',
+                            DOC_DTL_ID: '',
+                            QC_SUBGROUP_KEY: '',
+                        }));
+                        setTableData([]);
+                    } else {
+                        setDocNoDrp([]);
+                        setForm(prev => ({
+                            ...prev,
+                            DOC_KEY: '',
+                            DOC_DTL_ID: '',
+                            QC_SUBGROUP_KEY: '',
+                        }));
+                        setTableData([]);
+                    }
+                } catch (error) {
+                    console.error("Error fetching DOC_NO dropdown:", error);
+                }
+            };
+            fetchDocNoDrp();
+        }
+    };
+    //ITM DRP
+    useEffect(() => {
+        const FCYR_KEY = localStorage.getItem('FCYR_KEY');
+        const COBR_ID = localStorage.getItem('COBR_ID');
+        if (!form.DOC_KEY) {
+            setDtlItems([]);
+            setForm((prev) => ({ ...prev, DOC_DTL_ID: '' }));
             return;
         }
-        try {
-            const response = await axiosInstance.post('QC_PARAM/GetQC_PARAMDrp', {
-                QC_SUBGROUP_KEY: form.QC_SUBGROUP_KEY,
-                FLAG: ''
-            });
-            const { STATUS, MESSAGE, DATA } = response.data;
-            if (STATUS === 0 && Array.isArray(DATA)) {
-                const transformedData = DATA.map(item => ({
-                    ...item,
-                    VALUE_TEST:
-                        item.VALUE_TEST === 'Y'
-                            ? 'Yes'
-                            : item.VALUE_TEST === 'N'
-                                ? 'No'
-                                : item.VALUE_TEST || ''
-                }));
-                if (transformedData.length === 0) {
-                    setTableData([createBlankRow()]);
-                } else {
-                    setTableData([...transformedData, createBlankRow()]);
+        if (FCYR_KEY && COBR_ID && form.DOC_KEY) {
+            const fetchItemDrp = async () => {
+                try {
+                    const response = await axiosInstance.post("QC_TEST/GetQC_DocTypeDrp", {
+                        QC_TYPE: "FG",
+                        PARTY_KEY: form.PARTY_KEY,
+                        PARTYDTL_ID: 0,
+                        DOC_KEY: form.DOC_KEY,
+                        DOC_DTL_ID: 0,
+                        FLAG: "FG",
+                        DBFLAG: "DocKeySelection",
+                        QC_SUBGROUP_KEY: "",
+                        FCYR_KEY,
+                        COBR_ID
+                    });
+                    const { STATUS, DATA } = response.data;
+                    if (STATUS === 0 && Array.isArray(DATA) && DATA.length > 0) {
+                        const validDtlItems = DATA.filter((p) => p.DOC_DTL_ID);
+                        setDtlItems(validDtlItems);
+                        setForm(prev => ({ ...prev, DOC_DTL_ID: validDtlItems[0]?.DOC_DTL_ID }));
+                    } else {
+                        setDtlItems([]);
+                        setForm(prev => ({ ...prev, DOC_DTL_ID: '' }));
+                    }
+                } catch (error) {
+                    console.error("Error fetching DOC_DTL_ID:", error);
                 }
-            } else {
-                setTableData([createBlankRow()]);
+            };
+            fetchItemDrp();
+        }
+    }, [form.DOC_KEY, form.PARTY_KEY]);
+    //SUBGRP DRP
+    useEffect(() => {
+        const FCYR_KEY = localStorage.getItem('FCYR_KEY');
+        const COBR_ID = localStorage.getItem('COBR_ID');
+        if (!form.DOC_DTL_ID) {
+            setQcSubGroups([]);
+            setForm((prev) => ({ ...prev, QC_SUBGROUP_KEY: '' }));
+            return;
+        }
+        if (FCYR_KEY && COBR_ID && form.DOC_DTL_ID) {
+            const fetchQcSubGroups = async () => {
+                try {
+                    const response = await axiosInstance.post("QC_TEST/GetQC_DocTypeDrp", {
+                        QC_TYPE: "FG",
+                        PARTY_KEY: form.PARTY_KEY,
+                        PARTYDTL_ID: 0,
+                        DOC_KEY: form.DOC_KEY,
+                        DOC_DTL_ID: form.DOC_DTL_ID,
+                        // DOC_DTL_ID: "33656",
+                        FLAG: "FG",
+                        DBFLAG: "DocDtlIdSelection",
+                        QC_SUBGROUP_KEY: "",
+                        FCYR_KEY,
+                        COBR_ID
+                    });
+                    const { STATUS, DATA } = response.data;
+                    if (STATUS === 0 && Array.isArray(DATA) && DATA.length > 0) {
+                        const firstValid = DATA.filter(item => item.QC_SUBGROUP_KEY);
+                        setQcSubGroups(firstValid);
+                        setForm(prev => ({ ...prev, QC_SUBGROUP_KEY: firstValid[0]?.QC_SUBGROUP_KEY }));
+                    } else {
+                        setQcSubGroups([]);
+                        setForm(prev => ({ ...prev, QC_SUBGROUP_KEY: '' }));
+                        setTableData([])
+                    }
+                } catch (error) {
+                    console.error("Error fetching QC SubGroups:", error);
+                    setQcSubGroups([]);
+                    setForm(prev => ({ ...prev, QC_SUBGROUP_KEY: '' }));
+                }
+            };
+            fetchQcSubGroups();
+        }
+    }, [form.DOC_DTL_ID, form.DOC_KEY, form.PARTY_KEY, form.QC_SUBGROUP_KEY]);
+    useEffect(() => {
+        const fetchDecisionDrp = async () => {
+            try {
+                const response = await axiosInstance.post("QC_TEST/GetQC_TESTDrp", {
+                    "FLAG": "DECISION_STATUS",
+                    "QC_SUBGROUP_KEY": ""
+                });
+                const validDecision = response.data.DATA || [];
+                if (validDecision.length > 0) {
+                    setDecision(validDecision);
+                    const currentDocStillValid = validDecision.some(item => item.DECISION_STATUS === form.DECISION_STATUS);
+                    if (!currentDocStillValid) {
+                        setForm(prev => ({
+                            ...prev,
+                            DECISION_STATUS: validDecision[0].DECISION_STATUS,
+                        }));
+                    }
+                } else {
+                    setDocNoDrp([]);
+                    setForm(prev => ({
+                        ...prev,
+                        DECISION_STATUS: ''
+                    }));
+                }
+            } catch (error) {
+                console.error("Error fetching decision:", error);
             }
-        } catch (error) {
-            console.error('Error fetching QC parameters:', error);
-            toast.error('Error fetching QC parameters');
+        };
+        fetchDecisionDrp();
+    }, []);
+    const fetchTableData = useCallback(async () => {
+        const FCYR_KEY = localStorage.getItem('FCYR_KEY');
+        const COBR_ID = localStorage.getItem('COBR_ID');
+        if (FCYR_KEY && COBR_ID) {
+            try {
+                const response = await axiosInstance.post('QC_TEST/GetQC_DocTypeDrp', {
+                    "QC_TYPE": "Finished Goods",
+                    "PARTY_KEY": form.PARTY_KEY,
+                    "PARTYDTL_ID": 0,
+                    "DOC_KEY": form.DOC_KEY,
+                    "DOC_DTL_ID": form.DOC_DTL_ID,
+                    "FLAG": "FG",
+                    "DBFLAG": "QC_SUBGROUPSelection",
+                    "QC_SUBGROUP_KEY": form.QC_SUBGROUP_KEY,
+                    "FCYR_KEY": FCYR_KEY,
+                    "COBR_ID": COBR_ID
+                });
+                const { data: { STATUS, DATA, RESPONSESTATUSCODE } } = response;
+                if (STATUS === 0 && RESPONSESTATUSCODE === 1) {
+                    const qcData = DATA.QC_TESTList[0]; // Assuming the first item
+                    // const qcSubGroupData = DATA.QC_TESTList.map((item) => ({
+                    //     QC_SUBGROUP_KEY: item.QC_SUBGROUP_KEY,
+                    //     QC_SUBGROUP_NAME: item.QC_SUBGROUP_NAME,
+                    // }));
+                    setForm((prev) => ({
+                        ...prev,
+                        PARTY_KEY: qcData.PARTY_KEY,
+                        DOC_KEY: qcData.DOC_KEY,
+                        DOC_DTL_ID: qcData.DOC_DTL_ID,
+                        QC_SUBGROUP_KEY: qcData.QC_SUBGROUP_KEY,
+                        QC_TEST_ID: qcData.QC_TEST_ID || 0,
+                        PASS_PARTIAL_REMARK: qcData.PASS_PARTIAL_REMARK || '',
+                        REMARK: qcData.REMARK || ''
+                    }));
+                    setTableData(qcData.QC_TESTDTLEntities.map(item => ({
+                        ...item, // Retain existing data
+                        USER_VALUE: item.USER_VALUE || '',
+                        RESULT: item.RESULT,
+                        FINAL_RESULT: item.FINAL_RESULT,
+                        REMARK: item.TEST_REMARK
+                    })));
+                }
+                else {
+                    setTableData([]);
+                }
+            } catch (err) { console.error(err); }
+        }
+    }, [form.PARTY_KEY, form.DOC_KEY, form.DOC_DTL_ID, form.QC_SUBGROUP_KEY]);
+    useEffect(() => {
+        if (form.QC_SUBGROUP_KEY) {
+            fetchTableData();
+        } else {
             setTableData([]);
         }
-    }, [form.QC_SUBGROUP_KEY]);
-    useEffect(() => {
-       // fetchQcParams();
-    }, [fetchQcParams]);
-    const handleQcGroupChange = (e, newValue) => {
-        clearQueryParams();
+    }, [form.QC_SUBGROUP_KEY, fetchTableData]);
+    // const handlePartyChange = (e, newValue) => {
+    //     const selectedPartyKey = newValue ? newValue.PARTY_KEY : '';
+    //     setForm((prev) => ({
+    //         ...prev,
+    //         PARTY_KEY: selectedPartyKey,
+    //     }));
+    //     setTableData([]);
+    // };
+    const handleDocNoChange = (e, newValue) => {
+        const selectedDocKey = newValue ? newValue.DOC_KEY : '';
         setForm((prev) => ({
             ...prev,
-            QC_GROUP_KEY: newValue ? newValue.QC_GROUP_KEY : '',
+            DOC_KEY: selectedDocKey,
+            DOC_DTL_ID: '',
             QC_SUBGROUP_KEY: '',
         }));
+        setDtlItems([]);
+        setQcSubGroups([]);
+        setTableData([]);
     };
     const handleQcSubGroupChange = (e, newValue) => {
-        clearQueryParams();
+        selectedSubGroupKey = newValue ? newValue.QC_SUBGROUP_KEY : '';
         setForm((prev) => ({
             ...prev,
-            QC_SUBGROUP_KEY: newValue ? newValue.QC_SUBGROUP_KEY : '',
+            QC_SUBGROUP_KEY: selectedSubGroupKey,
         }));
+        if (!selectedSubGroupKey) {
+            fetchTableData();  // Call the function to fetch table data based on the selected QC_SUBGROUP_KEY
+        } else {
+            setTableData([]);  // Clear table data if no subgroup is selected
+        }
     };
     const handleCellChange = (rowId, field, value) => {
         setTableData(prev => {
@@ -227,44 +340,9 @@ const FinishedGoods = () => {
             });
             const lastRow = updated[updated.length - 1];
             if (lastRow.TEST_NAME?.trim() && lastRow.VALUE_TEST?.trim()) {
-                updated.push(createBlankRow());
             }
             return updated;
         });
-    };
-    const handleDeleteRow = async (rowId) => {
-        setTableData(prev => {
-            const rowToDelete = prev.find(row => row.QC_PM_ID.toString() === rowId.toString());
-            if (
-                rowToDelete &&
-                !rowToDelete.TEST_NAME?.trim() &&
-                !rowToDelete.VALUE_TEST?.trim() &&
-                !rowToDelete.RANGE_FROM &&
-                !rowToDelete.RANGE_TO &&
-                !rowToDelete.REMARK?.trim()
-            ) {
-                toast.info('Cannot delete blank row without data');
-                return prev;
-            }
-            let filtered = prev.filter(row => row.QC_PM_ID.toString() !== rowId.toString());
-            if (!filtered.some(row => !row.TEST_NAME?.trim() && !row.VALUE_TEST?.trim())) {
-                filtered.push(createBlankRow());
-            }
-            return filtered;
-        });
-        if (editableRow?.toString() === rowId.toString()) setEditableRow(null);
-        if (!rowId.toString().startsWith('NEW_')) {
-            try {
-                const UserName = userRole === 'user' ? USER_NAME : PARTY_KEY;
-                const response = await axiosInstance.post(
-                    `QC_PARAM/DeleteQC_PARAMDtl?UserName=${UserName}&strCobrid=${COBR_ID}`,
-                    { QC_PM_ID: rowId }
-                );
-                toast.info(response.data.MESSAGE || 'Row deleted from server');
-            } catch (error) {
-                console.error('Error deleting row:', error);
-            }
-        }
     };
     const commonCellSx = {
         border: '1px solid #ddd',
@@ -294,115 +372,101 @@ const FinishedGoods = () => {
             padding: '0 6px'
         }
     };
-    const buildPayload = (rows) => {
-        return rows.map(row => ({
-            QC_PM_ID: typeof row.QC_PM_ID === 'number' ? row.QC_PM_ID : "0",
-            TEST_NAME: row.TEST_NAME,
-            QC_SUBGROUP_KEY: form.QC_SUBGROUP_KEY,
-            VALUE_TEST: row.VALUE_TEST === 'Yes' ? 'Y' : 'N',
-            RANGE_FROM: row.VALUE_TEST === 'Yes' ? Number(row.RANGE_FROM || 0) : 0,
-            RANGE_TO: row.VALUE_TEST === 'Yes' ? Number(row.RANGE_TO || 0) : 0,
-            REMARK: row.REMARK || '',
-            STATUS: '1',
-            CREATED_BY: 1
-        }));
-    };
     const handleSubmit = async () => {
+        const USER_ID = localStorage.getItem('USER_ID');
+        const apiUrl = form.QC_TEST_ID === 0 ? 'QC_TEST/InsertQC_TEST' : 'QC_TEST/UpdateQC_TEST';
+        const mainData = {
+            QC_TEST_ID: form.QC_TEST_ID || 0, // 0 for Insert, >0 for Update
+            DOC_KEY: form.DOC_KEY,
+            DOC_DTL_ID: form.DOC_DTL_ID,
+            QC_TYPE: 'Finished Goods',
+            QC_SUBGROUP_KEY: form.QC_SUBGROUP_KEY,
+            DECISION_STATUS: 'P',     // Example: Passed
+            PASS_PARTIAL_REMARK: form.PASS_PARTIAL_REMARK,
+            REMARK: form.REMARK,
+            CHECKED_BY: 1,
+            PASSED_BY: 1,
+            CREATED_BY: USER_ID,
+            DBFLAG: mode === FORM_MODE.add ? 'I' : 'U', // 'I' for Insert, 'U' for Update
+            QC_TESTDTLEntities: tableData.map(item => ({
+                QC_TEST_DTL_ID: item.QC_TEST_DTL_ID || 0,
+                QC_TEST_ID: form.QC_TEST_ID || 0,
+                QC_PM_ID: item.QC_PM_ID,
+                USER_VALUE: item.USER_VALUE || 0,
+                REMARK: item.REMARK,
+                FINAL_RESULT: item.FINAL_RESULT || 'P',
+                DBFLAG: item.QC_TEST_DTL_ID === 0 ? 'I' : 'U',
+                RESULT: item.RESULT,
+                CREATED_BY: USER_ID,
+            }))
+        };
         try {
-            const payloadRows = tableData.filter(
-                row => row.TEST_NAME?.trim() || row.VALUE_TEST?.trim()
-            );
-
-            let response;
-
-            if (payloadRows.length === 0) {
-                response = await axiosInstance.post(
-                    `QC_PARAM/InsertQC_PARAM?UserName=${USER_NAME}&strCobrid=${COBR_ID}`,
-                    buildPayload(tableData)
-                );
+            const response = await axiosInstance.post(apiUrl, mainData);
+            const { data } = response;
+            if (data.STATUS === 0) {
+                toast.success(data.MESSAGE || 'Data saved successfully!', { autoClose: 2000 });
+                fetchTableData();
             } else {
-                response = await axiosInstance.post(
-                    `QC_PARAM/UpdateQC_PARAM?UserName=${USER_NAME}&strCobrid=${COBR_ID}`,
-                    buildPayload(payloadRows)
-                );
+                toast.error(data.MESSAGE || 'Something went wrong!', { autoClose: 3000 });
+                if (data.MESSAGE.includes('Duplicate Data')) {
+                    console.log("Duplicate Error Detected:", data.MESSAGE);
+                    fetchTableData();
+                }
             }
-
-            const { STATUS, MESSAGE } = response.data;
-
-            // ✅ ALWAYS show API message
-            if (STATUS === 0) {
-                toast.success(MESSAGE || 'Operation successful');
-            } else {
-                toast.warning(MESSAGE || 'Operation failed');
-                return; // stop further execution
-            }
-
-            setEditableRow(null);
-
-            // 🔥 IMPORTANT: isolate refresh call
-            try {
-                await fetchQcParams();
-            } catch (err) {
-                console.error('Fetch QC Params failed:', err);
-            }
-
         } catch (error) {
-            console.error('Submit error:', error);
-            toast.error('Failed to save QC Parameters');
+            console.error('Error submitting data:', error);
         }
     };
-
     const handleCancel = () => {
         setEditableRow(null)
         setMode(FORM_MODE.read)
     };
     const handlePrevious = async () => {
-      //  await fetchRetriveData(currentQC_SUBGROUP_KEY, "P");
+        // await fetchTableData();
         setForm((prev) => ({ ...prev, SearchByCd: '' }));
     };
     const handleNext = async () => {
-        // if (currentQC_SUBGROUP_KEY) {
-        //     await fetchRetriveData(currentQC_SUBGROUP_KEY, "N");
-        // }
         setForm((prev) => ({ ...prev, SearchByCd: '' }));
     };
     const handleTable = () => {
-       // router.push("/masters/qc/qcparameter/qcparatable/");
+        router.push("/masters/qc/qctest/finishedgoods/finishtable");
     };
     const handleExit = async () => {
-      //  router.push("/masterpage/?activeTab=qc");
+        router.push("/masterpage/?activeTab=qc");
     };
-    const handleEdit = () => { }
+    const handleEdit = () => {
+        setMode(FORM_MODE.edit);
+    };
     const handlePrint = async () => {
-        // try {
-        //     const response = await axiosInstance.post(`/QC_PARAM/GetQC_PARAMDashBoard?currentPage=1&limit=5000`, {
-        //         "SearchText": ""
-        //     });
-        //     const { data: { STATUS, DATA } } = response;
-        //     if (STATUS === 0 && Array.isArray(DATA)) {
-        //         const formattedData = DATA.map(row => ({
-        //             ...row,
-        //             STATUS: row.STATUS === "1" ? "Active" : "Inactive"
-        //         }));
-        //         const asPdf = pdf(<PrintFinish rows={formattedData} />);
-        //         const blob = await asPdf.toBlob();
-        //         const url = URL.createObjectURL(blob);
-        //         const newTab = window.open(url, '_blank');
-        //         if (newTab) {
-        //             newTab.focus();
-        //         }
-        //         setTimeout(() => {
-        //             URL.revokeObjectURL(url);
-        //         }, 100);
-        //     }
-        // } catch (error) {
-        //     console.error("Print Error:", error);
-        // }
+        try {
+            const response = await axiosInstance.post(`/QC_TEST/GetQC_TESTDashBoard?currentPage=1&limit=5000`, {
+                "SearchText": ""
+            });
+            const { data: { STATUS, DATA } } = response;
+            if (STATUS === 0 && Array.isArray(DATA)) {
+                const formattedData = DATA.map(row => ({
+                    ...row,
+                    STATUS: row.STATUS === "1" ? "Active" : "Inactive"
+                }));
+                const asPdf = pdf(<PrintFinish rows={formattedData} />);
+                const blob = await asPdf.toBlob();
+                const url = URL.createObjectURL(blob);
+                const newTab = window.open(url, '_blank');
+                if (newTab) {
+                    newTab.focus();
+                }
+                setTimeout(() => {
+                    URL.revokeObjectURL(url);
+                }, 100);
+            }
+        } catch (error) {
+            console.error("Print Error:", error);
+        }
     };
     const handleDeleteAll = () => { }
     const handleAdd = async () => {
         setMode(FORM_MODE.add);
-        setCurrentQC_SUBGROUP_KEY(null);
+        setCurrentQC_TEST_ID(null);
         setForm((prevForm) => ({
             ...prevForm,
             SearchByCd: '',
@@ -412,14 +476,13 @@ const FinishedGoods = () => {
         if (e.key !== 'Enter') return;
         e.preventDefault();
         setTableData(prev => {
-            const currentRow = prev.find(r => r.QC_PM_ID === currentRowId);
+            const currentRow = prev.find(r => QC_PM_ID === currentRowId);
             if (
                 !currentRow ||
                 !currentRow.TEST_NAME?.trim()
             ) {
                 return prev;
             }
-            const newRow = createBlankRow();
             setEditableRow(newRow.QC_PM_ID);
             return [...prev, newRow];
         });
@@ -427,9 +490,9 @@ const FinishedGoods = () => {
     return (
         <Grid container sx={{ bgcolor: '#f5f5f5', py: 4 }}>
             <ToastContainer />
-            <Grid item xs={12} sx={{ mx: 'auto', px: { xs: 4, sm: 6, md: 8, lg: 12 }, width: '100%' }}>
+            <Grid item xs={12} sx={{ mx: 'auto', px: { xs: 4, sm: 6, md: 6,lg:8}, width: '100%' }}>
                 <Typography variant="h6" align="center">
-                    QC Test (Finish Goods)
+                    QC Test (Finished Goods)
                 </Typography>
                 <Grid container justifyContent="space-between"
                     sx={{ marginInline: { xs: '5%', sm: '5%', md: '5%', lg: '0%', xl: '0%' } }}
@@ -487,73 +550,80 @@ const FinishedGoods = () => {
                             onView={handlePrint}
                             onExit={handleExit}
                             readOnlyMode={mode === FORM_MODE.read}
+                            disableDelete
                         />
                     </Grid>
                 </Grid>
                 <Grid container spacing={1} sx={{ mt: 2 }}>
-                    <Grid item xs={12} sm={6} md={4}>
-                        <AutoVibeWithoutAR
-                            id="QC_GROUP_KEY"
-                            options={qcGroups}
-                            getOptionLabel={(option) => option.QC_GROUP_NAME || ''}
+                    <Grid item xs={12} sm={6} md={4} sx={{width:"30%"}}>
+                        <TextField
                             label="Doc Type"
-                            value={qcGroups.find((option) => option.QC_GROUP_KEY === form.QC_GROUP_KEY) || null}
-                            onChange={handleQcGroupChange}
-                            disabled={mode == FORM_MODE.read}
+                            variant="filled"
                             fullWidth
-                            sx={{ ...DropInputSx, minWidth: 350 }}
+                            value="Finished Goods"
+                            disabled={true}
+                            sx={textInputSx}
+                            inputProps={{
+                                style: {
+                                    padding: '6px 8px',
+                                    fontSize: '12px',
+                                },
+                            }}
                         />
                     </Grid>
-                    <Grid item xs={12} sm={6} md={4}>
-                        <AutoVibeWithoutAR
-                            id="QC_SUBGROUP_KEY"
-                            options={qcSubGroups}
-                            getOptionLabel={(option) => option.QC_SUBGROUP_NAME || ''}
-                            label="Party Name"
-                            value={qcSubGroups.find((option) => option.QC_SUBGROUP_KEY === form.QC_SUBGROUP_KEY) || null}
-                            onChange={handleQcSubGroupChange}
-                            fullWidth
-                            sx={{ ...DropInputSx, minWidth: 350 }}
-                            disabled={mode == FORM_MODE.read}
+                    <Grid item xs={12} sm={6} md={4} sx={{width:"34%"}} >
+                        <Autocomplete
+                            options={partyDrp}
+                            getOptionLabel={(option) => option.PARTY_NAME || ""}
+                            value={partyDrp.find(c => c.PARTY_KEY === form.PARTY_KEY) || null}
+                            onChange={handlePartyChange}
+                            disabled={mode === FORM_MODE.read}
+                            renderInput={(params) => (
+                                <TextField {...params} label={<><span>Party Name</span><span style={{ color: 'red' }}>*</span></>} sx={inputStyle} />
+                            )}
                         />
                     </Grid>
-                    <Grid item xs={12} sm={6} md={4}>
-                        <AutoVibeWithoutAR
-                            id="QC_SUBGROUP_KEY"
-                            options={qcSubGroups}
-                            getOptionLabel={(option) => option.QC_SUBGROUP_NAME || ''}
-                            label="Doc No."
-                            value={qcSubGroups.find((option) => option.QC_SUBGROUP_KEY === form.QC_SUBGROUP_KEY) || null}
-                            onChange={handleQcSubGroupChange}
-                            fullWidth
-                            sx={{ ...DropInputSx, minWidth: 350 }}
-                            disabled={mode == FORM_MODE.read}
+                    <Grid item xs={12} sm={6} md={4} sx={{width:"34%"}}>
+                        <Autocomplete
+                            options={docNoDrp}
+                            getOptionLabel={(option) => option.DOC_NO || ""}
+                            value={docNoDrp.find(c => c.DOC_KEY === form.DOC_KEY) || null}
+                            onChange={handleDocNoChange}
+                            disabled={mode === FORM_MODE.read}
+                            renderInput={(params) => (
+                                <TextField {...params} label={<><span>Doc No</span></>} sx={inputStyle} />
+                            )}
                         />
                     </Grid>
-                    <Grid item xs={12} sm={6} md={6}>
-                        <AutoVibeWithoutAR
-                            id="QC_SUBGROUP_KEY"
+                    <Grid item xs={12} sm={6} md={4} sx={{width:"30%"}}>
+                        <Autocomplete
                             options={qcSubGroups}
-                            getOptionLabel={(option) => option.QC_SUBGROUP_NAME || ''}
-                            label="SubGroup name"
-                            value={qcSubGroups.find((option) => option.QC_SUBGROUP_KEY === form.QC_SUBGROUP_KEY) || null}
+                            getOptionLabel={(option) => option.QC_SUBGROUP_NAME || ""}
+                            value={qcSubGroups.find(c => c.QC_SUBGROUP_KEY === form.QC_SUBGROUP_KEY) || null}
                             onChange={handleQcSubGroupChange}
-                            fullWidth
-                            sx={{ ...DropInputSx, minWidth: 350 }}
-                            disabled={mode == FORM_MODE.read}
+                            disabled={mode === FORM_MODE.read}
+                            renderInput={(params) => (
+                                <TextField {...params} label={<><span>SubGroup Name</span></>} sx={inputStyle} />
+                            )}
                         />
                     </Grid>
-                    <Grid item xs={12} sm={6} md={6}>
-                        <AutoVibeWithoutAR
-                            id="QC_SUBGROUP_KEY"
-                            options={qcSubGroups}
-                            getOptionLabel={(option) => option.QC_SUBGROUP_NAME || ''}
-                            label="Item"
-                            value={qcSubGroups.find((option) => option.QC_SUBGROUP_KEY === form.QC_SUBGROUP_KEY) || null}
-                            onChange={handleQcSubGroupChange}
-                            fullWidth
-                            sx={{ ...DropInputSx, minWidth: 350 }}
-                            disabled={mode == FORM_MODE.read}
+                    <Grid item xs={12} sm={6} md={4} sx={{width:"34%"}}>
+                        <Autocomplete
+                            options={dtlItems}
+                            getOptionLabel={(option) => option.DTL_NAME || ""}
+                            value={dtlItems.find(c => c.DOC_DTL_ID === form.DOC_DTL_ID) || null}
+                            onChange={(e, newValue) => {
+                                const selectedId = newValue ? newValue.DOC_DTL_ID : '';
+                                setForm(prev => ({
+                                    ...prev,
+                                    DOC_DTL_ID: selectedId,
+                                    QC_SUBGROUP_KEY: ''
+                                }));
+                            }}
+                            disabled={mode === FORM_MODE.read}
+                            renderInput={(params) => (
+                                <TextField {...params} label="Item" sx={inputStyle} />
+                            )}
                         />
                     </Grid>
                 </Grid>
@@ -561,204 +631,149 @@ const FinishedGoods = () => {
                     <Table stickyHeader size="medium" sx={{ width: '100%', border: '1px solid #ddd', borderRadius: 2 }}>
                         <TableHead>
                             <TableRow sx={{ backgroundColor: '#f0f0f0' }}>
-                                <TableCell sx={{ ...commonCellSx, fontWeight: 'bold' }}>Test Name</TableCell>
+                                <TableCell sx={{ ...commonCellSx, fontWeight: 'bold', width: '30%' }}>Test Name</TableCell>
                                 <TableCell sx={{ ...commonCellSx, fontWeight: 'bold', width: '10%' }}>Value Test</TableCell>
-                                <TableCell sx={{ ...commonCellSx, fontWeight: 'bold', width: '10%' }}>Range From</TableCell>
-                                <TableCell sx={{ ...commonCellSx, fontWeight: 'bold', width: '10%' }}>Range To</TableCell>
-                                <TableCell sx={{ ...commonCellSx, fontWeight: 'bold', width: '30%' }}>Uservalue</TableCell>
-                                <TableCell sx={{ ...commonCellSx, fontWeight: 'bold', width: '30%' }}>Result</TableCell>
-                                <TableCell sx={{ ...commonCellSx, fontWeight: 'bold', width: '30%' }}>TestRemark</TableCell>
-                                <TableCell sx={{ ...commonCellSx, fontWeight: 'bold', width: '30%' }}>Final Result</TableCell>
-                                <TableCell sx={{ ...commonCellSx, fontWeight: 'bold', width: '7%' }}>Actions</TableCell>
+                                <TableCell sx={{ ...commonCellSx, fontWeight: 'bold', width: '9%' }}>RangeFrom</TableCell>
+                                <TableCell sx={{ ...commonCellSx, fontWeight: 'bold', width: '7%' }}>RangeTo</TableCell>
+                                <TableCell sx={{ ...commonCellSx, fontWeight: 'bold', width: '8%' }}>Uservalue</TableCell>
+                                <TableCell sx={{ ...commonCellSx, fontWeight: 'bold', width: '10%' }}>Result</TableCell>
+                                <TableCell sx={{ ...commonCellSx, fontWeight: 'bold', width: '16%' }}>TestRemark</TableCell>
+                                <TableCell sx={{ ...commonCellSx, fontWeight: 'bold', width: '10%' }}>FinalResult</TableCell>
                             </TableRow>
                         </TableHead>
                         <TableBody>
-                            {tableData.map((row) => {
-                                const isEditable = editableRow === row.QC_PM_ID && mode !== FORM_MODE.read;
-                                return (
-                                    <TableRow
-                                        key={row.QC_PM_ID}
-                                        hover
-                                        onClick={() => setEditableRow(row.QC_PM_ID)}
-                                        sx={{
-                                            cursor: 'pointer',
-                                            '&:nth-of-type(odd)': { backgroundColor: '#f9f9f9' }
-                                        }}
-                                    >
-                                        <TableCell sx={commonCellSx}>
-                                            {isEditable ? (
-                                                <TextField
-                                                    value={row.TEST_NAME || ''}
-                                                    onChange={(e) =>
-                                                        handleCellChange(row.QC_PM_ID, 'TEST_NAME', e.target.value)
-                                                    }
-                                                    onKeyDown={(e) => handleEnterKeyAddRow(e, row.QC_PM_ID)}
-                                                    variant="standard"
-                                                    fullWidth
-                                                    sx={inputSx}
-                                                />
-                                            ) : (
-                                                row.TEST_NAME || '-'
-                                            )}
-                                        </TableCell>
-                                        <TableCell sx={commonCellSx}>
-                                            {isEditable ? (
-                                                <Select
-                                                    value={row.VALUE_TEST || ''}
-                                                    onChange={(e) =>
-                                                        handleCellChange(row.QC_PM_ID, 'VALUE_TEST', e.target.value)
-                                                    }
-                                                    variant="standard"
-                                                    fullWidth
-                                                    sx={selectSx}
-                                                >
-                                                    <MenuItem value="Yes">Yes</MenuItem>
-                                                    <MenuItem value="No">No</MenuItem>
-                                                </Select>
-                                            ) : (
-                                                row.VALUE_TEST || '-'
-                                            )}
-                                        </TableCell>
-                                        <TableCell sx={commonCellSx}>
-                                            {isEditable ? (
-                                                <TextField
-                                                    type="number"
-                                                    value={row.RANGE_FROM ?? ''}
-                                                    onChange={(e) =>
-                                                        handleCellChange(row.QC_PM_ID, 'RANGE_FROM', e.target.value)
-                                                    }
-                                                    variant="standard"
-                                                    fullWidth
-                                                    sx={inputSx} disabled={row.VALUE_TEST !== 'Yes'}
-                                                />
-                                            ) : (
-                                                row.RANGE_FROM ?? '-'
-                                            )}
-                                        </TableCell>
-                                        <TableCell sx={commonCellSx}>
-                                            {isEditable ? (
-                                                <TextField
-                                                    type="number"
-                                                    value={row.RANGE_TO ?? ''}
-                                                    onChange={(e) =>
-                                                        handleCellChange(row.QC_PM_ID, 'RANGE_TO', e.target.value)
-                                                    }
-                                                    variant="standard"
-                                                    fullWidth
-                                                    sx={inputSx} disabled={row.VALUE_TEST !== 'Yes'}
-                                                />
-                                            ) : (
-                                                row.RANGE_TO ?? '-'
-                                            )}
-                                        </TableCell>
-                                        <TableCell sx={commonCellSx}>
-                                            {isEditable ? (
-                                                <TextField
-                                                    value={row.USER_VALUE || ''}
-                                                    onChange={(e) =>
-                                                        handleCellChange(row.QC_PM_ID, 'USER_VALUE', e.target.value)
-                                                    }
-                                                    onKeyDown={(e) => handleEnterKeyAddRow(e, row.QC_PM_ID)}
-                                                    variant="standard"
-                                                    fullWidth
-                                                    sx={inputSx}
-                                                />
-                                            ) : (
-                                                row.USER_VALUE || '-'
-                                            )}
-                                        </TableCell>
-                                        <TableCell sx={commonCellSx}>
-                                            {isEditable ? (
-                                                <TextField
-                                                    value={row.RESULT || ''}
-                                                    onChange={(e) =>
-                                                        handleCellChange(row.QC_PM_ID, 'RESULT', e.target.value)
-                                                    }
-                                                    onKeyDown={(e) => handleEnterKeyAddRow(e, row.QC_PM_ID)}
-                                                    variant="standard"
-                                                    fullWidth
-                                                    sx={inputSx}
-                                                />
-                                            ) : (
-                                                row.RESULT || '-'
-                                            )}
-                                        </TableCell>
-                                        <TableCell sx={commonCellSx}>
-                                            {isEditable ? (
-                                                <TextField
-                                                    value={row.REMARK || ''}
-                                                    onChange={(e) =>
-                                                        handleCellChange(row.QC_PM_ID, 'REMARK', e.target.value)
-                                                    }
-                                                    onKeyDown={(e) => handleEnterKeyAddRow(e, row.QC_PM_ID)}
-                                                    variant="standard"
-                                                    fullWidth
-                                                    sx={inputSx}
-                                                />
-                                            ) : (
-                                                row.REMARK || '-'
-                                            )}
-                                        </TableCell>
-                                        <TableCell sx={commonCellSx}>
-                                            {isEditable ? (
-                                                <Select
-                                                    value={row.FINAL_RESULT || ''}
-                                                    onChange={(e) =>
-                                                        handleCellChange(row.QC_PM_ID, 'FINAL_RESULT', e.target.value)
-                                                    }
-                                                    variant="standard"
-                                                    fullWidth
-                                                    sx={selectSx}
-                                                >
-                                                    <MenuItem value="Yes">Pass</MenuItem>
-                                                    <MenuItem value="No">Fail</MenuItem>
-                                                </Select>
-                                            ) : (
-                                                row.FINAL_RESULT || '-'
-                                            )}
-                                        </TableCell>
-                                        <TableCell
-                                            sx={{ ...commonCellSx, alignItems: 'center', }}
-                                            onClick={(e) => e.stopPropagation()}
+                            {tableData.length === 0 ? (
+                                <TableRow>
+                                    <TableCell colSpan={8} sx={{ textAlign: 'center', padding: '16px', border: '1px solid #ddd' }}>
+                                        No data available
+                                    </TableCell>
+                                </TableRow>
+                            ) : (
+                                tableData.map((row) => {
+                                    const isEditable = editableRow === row.QC_PM_ID && mode !== FORM_MODE.read;
+                                    return (
+                                        <TableRow
+                                            key={row.QC_PM_ID}
+                                            hover
+                                            onClick={() => setEditableRow(row.QC_PM_ID)}
+                                            sx={{
+                                                cursor: mode === FORM_MODE.read ? 'default' : 'pointer',
+                                                '&:nth-of-type(odd)': { backgroundColor: '#f9f9f9' }
+                                            }}
                                         >
-                                            <IconButton size="small"
-                                                color="error"
-                                                onClick={() => handleDeleteRow(row.QC_PM_ID)}
-                                                sx={{ padding: '2px' }}
-                                                disabled={mode === FORM_MODE.read}
-                                            >
-                                                <DeleteIcon sx={{ fontSize: 20, color: 'error.main' }} />
-                                            </IconButton>
-                                        </TableCell>
-                                    </TableRow>
-                                );
-                            })}
+                                            <TableCell sx={commonCellSx}>
+                                                {row.TEST_NAME || '-'}
+                                            </TableCell>
+                                            <TableCell sx={commonCellSx}>
+                                                {row.VALUE_TEST || '-'}
+                                            </TableCell>
+                                            <TableCell sx={commonCellSx}>
+                                                {row.RANGE_FROM ?? '-'}
+                                            </TableCell>
+                                            <TableCell sx={commonCellSx}>
+                                                {row.RANGE_TO ?? '-'}
+                                            </TableCell>
+                                            <TableCell sx={commonCellSx}>
+                                                {isEditable ? (
+                                                    <TextField
+                                                        value={row.USER_VALUE || ''}
+                                                        onChange={(e) =>
+                                                            handleCellChange(row.QC_PM_ID, 'USER_VALUE', e.target.value)
+                                                        }
+                                                        onKeyDown={(e) => handleEnterKeyAddRow(e, row.QC_PM_ID)}
+                                                        variant="standard"
+                                                        fullWidth
+                                                        sx={inputSx}
+                                                    />
+                                                ) : (
+                                                    row.USER_VALUE || '0'
+                                                )}
+                                            </TableCell>
+                                            <TableCell sx={commonCellSx}>
+                                                {isEditable ? (
+                                                    <TextField
+                                                        value={row.RESULT || ''}
+                                                        onChange={(e) =>
+                                                            handleCellChange(row.QC_PM_ID, 'RESULT', e.target.value)
+                                                        }
+                                                        onKeyDown={(e) => handleEnterKeyAddRow(e, row.QC_PM_ID)}
+                                                        variant="standard"
+                                                        fullWidth
+                                                        sx={inputSx}
+                                                    />
+                                                ) : (
+                                                    row.RESULT || ''
+                                                )}
+                                            </TableCell>
+                                            <TableCell sx={commonCellSx}>
+                                                {isEditable ? (
+                                                    <TextField
+                                                        value={row.REMARK || ''}
+                                                        onChange={(e) =>
+                                                            handleCellChange(row.QC_PM_ID, 'REMARK', e.target.value)
+                                                        }
+                                                        onKeyDown={(e) => handleEnterKeyAddRow(e, row.QC_PM_ID)}
+                                                        variant="standard"
+                                                        fullWidth
+                                                        sx={inputSx}
+                                                    />
+                                                ) : (
+                                                    row.REMARK || ''
+                                                )}
+                                            </TableCell>
+                                            <TableCell sx={commonCellSx}>
+                                                {isEditable ? (
+                                                    <Select
+                                                        value={row.FINAL_RESULT || 'P'}
+                                                        onChange={(e) =>
+                                                            handleCellChange(row.QC_PM_ID, 'FINAL_RESULT', e.target.value)
+                                                        }
+                                                        variant="standard"
+                                                        fullWidth
+                                                        sx={selectSx}
+                                                    >
+                                                        <MenuItem value="P">Pass</MenuItem>
+                                                        <MenuItem value="F">Fail</MenuItem>
+                                                    </Select>
+                                                ) : (
+                                                    row.FINAL_RESULT === 'P' ? 'Pass' : row.FINAL_RESULT === 'F' ? 'Fail' : 'Pass'
+                                                )}
+                                            </TableCell>
+                                        </TableRow>
+                                    );
+                                })
+                            )}
                         </TableBody>
                     </Table>
                 </TableContainer>
                 <Grid container spacing={1} sx={{ mt: 2 }}>
-                    <Grid item xs={12} sm={6} md={4}>
-                        <AutoVibeWithoutAR
-                            id="QC_GROUP_KEY"
-                            options={qcGroups}
-                            getOptionLabel={(option) => option.QC_GROUP_NAME || ''}
-                            label="Decision"
-                            value={qcGroups.find((option) => option.QC_GROUP_KEY === form.QC_GROUP_KEY) || null}
-                            onChange={handleQcGroupChange}
-                            disabled={mode == FORM_MODE.read}
-                            fullWidth
-                            sx={{ ...DropInputSx, minWidth: 350 }}
+                    <Grid item xs={12} sm={6} md={4} sx={{width:"18%"}}>
+                        <Autocomplete
+                            options={decision}
+                            getOptionLabel={(option) => option.DECISION_STATUSNM || ""}
+                            value={decision.find(c => c.DECISION_STATUS === form.DECISION_STATUS) || null}
+                            onChange={(e, newValue) => {
+                                const selectedId = newValue ? newValue.DECISION_STATUS : '';
+                                setForm(prev => ({
+                                    ...prev,
+                                    DECISION_STATUS: selectedId,
+
+                                }));
+                            }}
+                            disabled={mode === FORM_MODE.read}
+                            renderInput={(params) => (
+                                <TextField {...params} label="Decision" sx={inputStyle} />
+                            )}
                         />
                     </Grid>
-                    <Grid item xs={12} sm={6} md={4}>
+                    <Grid item xs={12} sm={6} md={4} sx={{width:"40%"}}>
                         <TextField
                             label="Decision Remark"
                             variant="filled"
                             fullWidth
-                            //    onChange={handleInputChange}
-                            //    value={form.D}
-                            //    name="QC_GROUP_LST_CODE"
-                            //    disabled={true}
+                            name="PASS_PARTIAL_REMARK"
+                            value={form.PASS_PARTIAL_REMARK}
+                            onChange={(e) => setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }))}
                             sx={textInputSx}
                             inputProps={{
                                 style: {
@@ -768,15 +783,14 @@ const FinishedGoods = () => {
                             }}
                         />
                     </Grid>
-                    <Grid item xs={12} sm={6} md={4}>
+                    <Grid item xs={12} sm={6} md={4} sx={{width:"40%"}}>
                         <TextField
                             label="Remark/Instructions"
                             variant="filled"
                             fullWidth
-                            //    onChange={handleInputChange}
-                            //    value={form.D}
-                            //    name="QC_GROUP_LST_CODE"
-                            //    disabled={true}
+                            name="REMARK"
+                            value={form.REMARK}
+                            onChange={(e) => setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }))}
                             sx={textInputSx}
                             inputProps={{
                                 style: {
@@ -786,11 +800,7 @@ const FinishedGoods = () => {
                             }}
                         />
                     </Grid>
-
-
-
                 </Grid>
-
                 <Grid sx={{
                     display: "flex",
                     justifyContent: "end",
@@ -834,8 +844,8 @@ const FinishedGoods = () => {
                                     minWidth: { xs: 40, sm: 46, md: 60 },
                                     height: { xs: 40, sm: 46, md: 30 },
                                 }}
-                                // onClick={handleSubmit}
-                                >
+                                onClick={handleSubmit}
+                            >
                                 Submit
                             </Button>
                             <Button variant="contained"

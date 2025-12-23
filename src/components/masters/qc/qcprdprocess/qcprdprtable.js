@@ -9,8 +9,8 @@ import axiosInstance from "@/lib/axios";
 
 const columnDefs = [
   {
-    field: "FGPRD_KEY",
-    headerName: "Product Key",
+    field: "FGPRD_NAME",
+    headerName: "Product",
     filter: 'agSetColumnFilter',
     filterParams: {
       defaultToNothingSelected: true,
@@ -18,8 +18,8 @@ const columnDefs = [
     sortable: true
   },
   {
-    field: "PROSTG_KEY",
-    headerName: "ProcessKey",
+    field: "PROSTG_NAME",
+    headerName: "Process",
     filter: 'agSetColumnFilter',
     filterParams: {
       defaultToNothingSelected: true,
@@ -27,8 +27,8 @@ const columnDefs = [
     sortable: true
   },
   {
-    field: "QC_SUBGROUP_KEY",
-    headerName: "subGrp key",
+    field: "QC_SUBGROUP_NAME",
+    headerName: "subGrp",
     filter: 'agSetColumnFilter',
     filterParams: {
       defaultToNothingSelected: true,
@@ -100,7 +100,7 @@ export default function QcPrdPrTable() {
   const fetchTableData = async () => {
     setIsLoading(true);
     try {
-      const response = await axiosInstance.post(`QC_PRODUCT_PROCESS/GetQC_PRODUCT_PROCESSDashBoard?currentPage=1&limit=500`, {
+      const response = await axiosInstance.post(`QC_PRODUCT_PROCESS/GetQC_PRODUCT_PROCESSDashBoard?currentPage=1&limit=5000`, {
         "SearchText": ""
       });
       const { data: { STATUS, DATA } } = response;

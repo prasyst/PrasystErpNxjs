@@ -18,8 +18,8 @@ const CrudButton = ({
     hideDelete = false,
     hideView = false,
     hideExit = false,
-      disableEdit = false,     
-    disableDelete = false  
+    disableEdit = false,
+    disableDelete = false
 }) => {
     const buttonSx = {
         // backgroundColor: '#39ace2',
@@ -56,9 +56,9 @@ const CrudButton = ({
             )}
             {!hideEdit && (
                 <Tooltip title="Edit" arrow>
-                <span>     <Button size="small" variant="contained"
+                    <span>     <Button size="small" variant="contained"
                         sx={buttonSx} onClick={onEdit}
-                         disabled={!readOnlyMode || disableEdit}
+                        disabled={!readOnlyMode || disableEdit}
                     >
                         <EditIcon />
                     </Button>     </span>
@@ -66,7 +66,7 @@ const CrudButton = ({
             )}
             {!hideDelete && (
                 <Tooltip title="Delete" arrow> <span>
-                    <Button size="small" variant="contained" disabled={!readOnlyMode || disableEdit} sx={buttonSx} onClick={onDelete}>
+                    <Button size="small" variant="contained" disabled={!readOnlyMode || disableDelete} sx={buttonSx} onClick={onDelete}>
                         <DeleteIcon />
                     </Button>    </span>
                 </Tooltip>

@@ -215,6 +215,7 @@ const QcParamtr = () => {
         setTableData(prev => {
             let updated = prev.map(row => {
                 if (row.QC_PM_ID !== rowId) return row;
+                
                 if (field === 'VALUE_TEST' && value === 'No') {
                     return {
                         ...row,
@@ -243,7 +244,7 @@ const QcParamtr = () => {
                 !rowToDelete.RANGE_TO &&
                 !rowToDelete.REMARK?.trim()
             ) {
-                toast.info('Cannot delete blank row without data');
+                // toast.info('Cannot delete blank row without data');
                 return prev;
             }
             let filtered = prev.filter(row => row.QC_PM_ID.toString() !== rowId.toString());
@@ -312,9 +313,29 @@ const QcParamtr = () => {
         const payloadRows = tableData.filter(
             row => row.TEST_NAME?.trim() || row.VALUE_TEST?.trim()
         );
+       for (let row of payloadRows) {
+            if (row.VALUE_TEST === 'Yes') {
+                // Strong validation: RANGE_FROM should never be 0 or '0.0000'
+                if (row.RANGE_FROM === 0 || row.RANGE_FROM === '0.0000') {
+                    toast.error('Range From cannot be 0. This is a critical mistake.');
+                    return; // Prevent further execution
+                }
+
+                // If RANGE_FROM is not 0, we continue with other checks
+                if (!row.RANGE_TO || row.RANGE_TO === '' || row.RANGE_TO === '0.0000') {
+                    toast.error('Range To cannot be empty or 0 when Range From is provided.');
+                    return; // Prevent further execution
+                }
+
+                // Check if RANGE_TO is greater than RANGE_FROM
+                if (parseFloat(row.RANGE_TO) <= parseFloat(row.RANGE_FROM)) {
+                    toast.error('Range To should be greater than Range From');
+                    return;
+                }
+            }
+        }
 
         let response;
-
         if (payloadRows.length === 0) {
             response = await axiosInstance.post(
                 `QC_PARAM/InsertQC_PARAM?UserName=${USER_NAME}&strCobrid=${COBR_ID}`,
@@ -326,9 +347,7 @@ const QcParamtr = () => {
                 buildPayload(payloadRows)
             );
         }
-
         const { STATUS, MESSAGE } = response.data;
-
         // ✅ ALWAYS show API message
         if (STATUS === 0) {
             toast.success(MESSAGE || 'Operation successful');
@@ -336,22 +355,17 @@ const QcParamtr = () => {
             toast.warning(MESSAGE || 'Operation failed');
             return; // stop further execution
         }
-
         setEditableRow(null);
-
-        // 🔥 IMPORTANT: isolate refresh call
         try {
             await fetchQcParams();
         } catch (err) {
             console.error('Fetch QC Params failed:', err);
         }
-
     } catch (error) {
         console.error('Submit error:', error);
         toast.error('Failed to save QC Parameters');
     }
 };
-
     const handleCancel = () => {
         setEditableRow(null)
         setMode(FORM_MODE.read)
@@ -440,7 +454,7 @@ const QcParamtr = () => {
                             variant="contained"
                             size="small"
                             sx={{ background: 'linear-gradient(290deg, #d4d4d4, #d4d4d4) !important' }}
-                            disabled={mode !== FORM_MODE.read}
+                            disabled={true}
                             onClick={handlePrevious}
                         >
                             <KeyboardArrowLeftIcon />
@@ -449,7 +463,7 @@ const QcParamtr = () => {
                             variant="contained"
                             size="small"
                             sx={{ background: 'linear-gradient(290deg, #b9d0e9, #e9f2fa) !important', ml: 1 }}
-                            disabled={mode !== FORM_MODE.read}
+                            disabled={true}
                             onClick={handleNext}
                         >
                             <NavigateNextIcon />
@@ -646,32 +660,6 @@ const QcParamtr = () => {
                         </TableBody>
                     </Table>
                 </TableContainer>
-                {/* <Grid sx={{ display: "flex", justifyContent: "flex-end", position: 'relative', top: 10, ml: 'auto', mr: 4 }}>
-                    <>
-                        <Button variant="contained"
-                            sx={{
-                                backgroundColor: '#635bff',
-                                '&:hover': { backgroundColor: '#4e50e0' },
-                                margin: { xs: '0 4px', sm: '0 6px' },
-                                minWidth: { xs: 40, sm: 46, md: 60 },
-                                height: { xs: 40, sm: 46, md: 30 },
-                            }}
-                            onClick={handleSubmit}>
-                            Submit
-                        </Button>
-                        <Button variant="contained"
-                            sx={{
-                                backgroundColor: '#635bff',
-                                '&:hover': { backgroundColor: '#4e50e0' },
-                                margin: { xs: '0 4px', sm: '0 6px' },
-                                minWidth: { xs: 40, sm: 46, md: 60 },
-                                height: { xs: 40, sm: 46, md: 30 },
-                            }}
-                            onClick={handleCancel} >
-                            Cancel
-                        </Button>
-                    </>
-                </Grid> */}
                 <Grid sx={{
                     display: "flex",
                     justifyContent: "end",

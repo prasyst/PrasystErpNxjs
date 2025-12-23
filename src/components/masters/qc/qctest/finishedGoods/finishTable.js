@@ -1,16 +1,13 @@
 'use client';
 import React, { useState, useEffect, useCallback } from "react";
-import {
-  Button, Stack, Box
-} from '@mui/material';
 import ReusableTable, { getCustomDateFilter } from '@/components/datatable/ReusableTable';
 import { useRouter } from 'next/navigation';
 import axiosInstance from "@/lib/axios";
 
 const columnDefs = [
   {
-    field: "QC_SUBGROUP_KEY",
-    headerName: "QC SubGrp Key",
+    field: "PARTY_NAME",
+    headerName: " Party Name",
     filter: 'agSetColumnFilter',
     filterParams: {
       defaultToNothingSelected: true,
@@ -18,53 +15,26 @@ const columnDefs = [
     sortable: true
   },
   {
+    field: "DOC_NO",
+    headerName: "DOC_NO",
+    filter: 'agSetColumnFilter',
+    filterParams: {
+      defaultToNothingSelected: true,
+    },
+    sortable: true
+  },
+    {
+    field: "DTL_NAME",
+    headerName: "Item",
+    filter: 'agSetColumnFilter',
+    filterParams: {
+      defaultToNothingSelected: true,
+    },
+    sortable: true
+  },
+    {
     field: "QC_SUBGROUP_NAME",
     headerName: "QC SubGrp_Name",
-    filter: 'agSetColumnFilter',
-    filterParams: {
-      defaultToNothingSelected: true,
-    },
-    sortable: true
-  },
-  {
-    field: "TEST_NAME",
-    headerName: "Test Name",
-    filter: 'agSetColumnFilter',
-    filterParams: {
-      defaultToNothingSelected: true,
-    },
-    sortable: true
-  },
-  {
-    field: "VALUE_TEST",
-    headerName: "Value Test",
-    filter: 'agSetColumnFilter',
-    filterParams: {
-      defaultToNothingSelected: true,
-    },
-    sortable: true
-  },
-  {
-    field: "RANGE_FROM",
-    headerName: "Range From",
-    filter: 'agSetColumnFilter',
-    filterParams: {
-      defaultToNothingSelected: true,
-    },
-    sortable: true
-  },
-  {
-    field: "RANGE_TO",
-    headerName: "Range To",
-    filter: 'agSetColumnFilter',
-    filterParams: {
-      defaultToNothingSelected: true,
-    },
-    sortable: true
-  },
-  {
-    field: "REMARK",
-    headerName: "Remark",
     filter: 'agSetColumnFilter',
     filterParams: {
       defaultToNothingSelected: true,
@@ -92,18 +62,9 @@ const columnDefs = [
     },
     sortable: true
   },
-  {
-    field: "STATUS",
-    headerName: "Status",
-    filter: 'agSetColumnFilter',
-    filterParams: {
-      defaultToNothingSelected: true,
-    },
-    sortable: true
-  },
 ];
 
-export default function FinishTable() {
+export default function finishTable() {
   const [isLoading, setIsLoading] = useState(true);
   const [rows, setRows] = useState([]);
   const router = useRouter();
@@ -112,11 +73,10 @@ export default function FinishTable() {
   useEffect(() => {
     fetchTableData();
   }, []);
-
   const fetchTableData = async () => {
     setIsLoading(true);
     try {
-      const response = await axiosInstance.post(`QC_PARAM/GetQC_PARAMDashBoard?currentPage=1&limit=5000`, {
+      const response = await axiosInstance.post(`/QC_TEST/GetQC_TESTDashBoard?currentPage=1&limit=5000`, {
         "SearchText": ""
       });
       const { data: { STATUS, DATA } } = response;
@@ -133,21 +93,21 @@ export default function FinishTable() {
       setIsLoading(false);
     }
   };
-
   const handleRowDoubleClick = (row) => {
     const params = new URLSearchParams({
-      QC_SUBGROUP_KEY: row.QC_SUBGROUP_KEY,
-      mode: "view"
+      QC_TEST_ID: row.QC_TEST_ID,
+      DOC_KEY: row.DOC_KEY || "", 
+      PARTY_KEY: row.PARTY_KEY || "", 
+      DOC_DTL_ID: row.DOC_DTL_ID || "", 
+      QC_SUBGROUP_KEY: row.QC_SUBGROUP_KEY
     }).toString();
-      router.push(`/masters/qc/qcparameter/qcparamtr/?${params}`);
+    router.push(`/masters/qc/qctest/finishedgoods/finishedgoods/?${params}`);
   };
-
   const handleSelectionChanged = useCallback((event) => {
     const selectedNodes = event.api.getSelectedNodes();
     const selectedData = selectedNodes.map(node => node.data);
     setSelectedRows(selectedData);
   }, []);
-
   return (
     <div className="p-2 w-full">
       <div className="w-full mx-auto" style={{ maxWidth: '100%' }}>

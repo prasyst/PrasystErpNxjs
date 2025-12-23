@@ -3,6 +3,7 @@ import { Autocomplete, TextField, InputAdornment, FormControl } from '@mui/mater
 import SearchIcon from '@mui/icons-material/Search';
 import AddIcon from '@mui/icons-material/Add';
 import RefreshIcon from '@mui/icons-material/Refresh';
+import { FixedSizeList as List } from 'react-window';
 
 const AutoVibeWithoutAR = React.forwardRef(
   ({
@@ -28,6 +29,7 @@ const AutoVibeWithoutAR = React.forwardRef(
   }, ref) => {
 
     const [focused, setFocused] = React.useState(false);
+    
     const shouldShrink = !!value || focused;
     return (
     <FormControl fullWidth>

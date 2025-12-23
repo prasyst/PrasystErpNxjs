@@ -1,16 +1,8 @@
 'use client'
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import {
-    Grid,
-    TextField,
-    Typography,
-    Button,
-    FormControlLabel,
-    Checkbox,
-    FormControl,
-    FormLabel,
-    RadioGroup,
-    Radio,
+    Grid, TextField, Typography, Button, FormControlLabel, Checkbox, FormControl, FormLabel, RadioGroup, Radio,
+    Autocomplete,
 } from '@mui/material';
 import KeyboardArrowLeftIcon from "@mui/icons-material/KeyboardArrowLeft";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
@@ -19,36 +11,25 @@ import z from 'zod';
 import { getFormMode } from '@/lib/helpers';
 import { useRouter } from 'next/navigation';
 import CrudButton from '@/GlobalFunction/CrudButton';
-import debounce from 'lodash.debounce';
 import axiosInstance from '@/lib/axios';
 import { useSearchParams } from 'next/navigation';
 import { pdf } from '@react-pdf/renderer';
 import { TbListSearch } from "react-icons/tb";
 import { textInputSx } from '../../../../../public/styles/textInputSx';
 import ConfirmationDialog from '@/GlobalFunction/DeleteDialog/ConfirmationDialog';
-import AutoVibe from '@/GlobalFunction/CustomAutoComplete/AutoVibe';
-import { DropInputSx } from '../../../../../public/styles/dropInputSx';
 import PrintPrdPr from './printprdpr';
-import AutoVibeWithoutAR from '@/GlobalFunction/CustomAutoComplete/AutoVibeWithoutAR';
-
+import { inputStyle } from '../../../../../public/styles/inputStyleDrp';
 const FORM_MODE = getFormMode();
 const qcSubGrpFormSchema = z.object({
-    QC_SUBGROUP_NAME: z.string().min(1, "QC Sub Group Name is required"),
-    FGPRD_KEY: z.string().min(1, "QC Group Key is required"),
-    PROSTG_KEY: z.string().min(1, "Process Key is required"),
+    QC_SUBGROUP_KEY: z.string().min(1, "QC Sub Group Name is required"),
+    FGPRD_KEY: z.string().min(1, "QC Group is required"),
+    PROSTG_KEY: z.string().min(1, "Process  is required"),
+    QC_REQ: z.string().min(1, "Qc Req. is required"),
 });
-
 const QcPrdPro = () => {
     const router = useRouter();
     const searchParams = useSearchParams();
-    const [USER_ID, setUSER_ID] = useState(null);
-    const [USER_NAME, setUSER_NAME] = useState(null);
-    const [FCYR_KEY, setFCYR_KEY] = useState(null);
-    const [COBR_ID, setCOBR_ID] = useState(null);
-    const [CO_ID, setCO_ID] = useState(null);
-    const [userRole, setUserRole] = useState(null);
-    const [PARTY_KEY, setPARTY_KEY] = useState(null);
-    const QC_SUBGROUP_KEY = searchParams.get('QC_SUBGROUP_KEY');
+    const QC_ID = searchParams.get('QC_ID');
     const [currentQC_ID, setCurrentQC_ID] = useState(null);
     const [form, setForm] = useState({
         QC_SUBGROUP_KEY: '',
@@ -69,15 +50,6 @@ const QcPrdPro = () => {
     const [process, setProcess] = useState([]);
     const [qcSubGroups, setQcSubGroups] = useState([]);
     useEffect(() => {
-        setUSER_ID(localStorage.getItem('USER_ID'));
-        setUSER_NAME(localStorage.getItem('USER_NAME'));
-        setFCYR_KEY(localStorage.getItem('FCYR_KEY'));
-        setCOBR_ID(localStorage.getItem('COBR_ID'));
-        setCO_ID(localStorage.getItem('CO_ID'));
-        setUserRole(localStorage.getItem('userRole'));
-        setPARTY_KEY(localStorage.getItem('PARTY_KEY'));
-    }, []);
-    useEffect(() => {
         const fetchProducts = async () => {
             try {
                 const response = await axiosInstance.post("/Product/GetFgPrdDrp", {
@@ -85,10 +57,12 @@ const QcPrdPro = () => {
                 });
                 const { STATUS, DATA } = response.data;
                 if (STATUS === 0 && Array.isArray(DATA)) {
-                    const validProducts = DATA.filter((cat) => cat.FGPRD_KEY && cat.FGPRD_KEY);
+                    const validProducts = DATA.filter((p) => p.FGPRD_KEY);
                     setProducts(validProducts);
-                    if (validProducts.length > 0) {
-                        setForm((prev) => ({ ...prev, FGPRD_KEY: validProducts[0].FGPRD_KEY }));
+                    if (!QC_ID && !form.FGPRD_KEY) {
+                        setForm((prev) => ({
+                            ...prev, FGPRD_KEY: validProducts[0]?.FGPRD_KEY || ""
+                        }));
                     }
                 } else {
                     setProducts([]);
@@ -102,16 +76,20 @@ const QcPrdPro = () => {
     useEffect(() => {
         const fetchProcess = async () => {
             try {
-                const response = await axiosInstance.post("/Product/GetFgPrdDrp", {
+                const response = await axiosInstance.post("QC_PRODUCT_PROCESS/Get_PROCESSDrp", {
+                    "FGPRD_KEY": "",
+                    "PROSTG_KEY": "",
+                    "QC_SUBGROUP_KEY": "",
                     "FLAG": ""
                 });
                 const { STATUS, DATA } = response.data;
                 if (STATUS === 0 && Array.isArray(DATA)) {
-                    const validProcess = DATA.filter((cat) => cat.PROSTG_KEY && cat.PROSTG_KEY);
-                    setProducts(validProcess);
-                    if (validProcess.length > 0) {
-                        setForm((prev) => ({ ...prev, PROSTG_KEY: validProcess[0].PROSTG_KEYY }));
-                    }
+                    const validProcess = DATA.filter(p => p.PROSTG_KEY);
+                    setProcess(validProcess);
+                    setForm(prev => ({
+                        ...prev,
+                        PROSTG_KEY: validProcess[0]?.PROSTG_KEY || ""
+                    }));
                 } else {
                     setProcess([]);
                 }
@@ -125,16 +103,16 @@ const QcPrdPro = () => {
         const fetchQcSubGroups = async () => {
             try {
                 const response = await axiosInstance.post("QC_SUBGROUP/GetQC_SUBGROUPDrp", {
-                    "QC_GROUP_KEY": "FC004", "FLAG": ""
+                    "QC_GROUP_KEY": "", "FLAG": ""
                 });
                 const { STATUS, DATA } = response.data;
                 if (STATUS === 0 && Array.isArray(DATA)) {
-                    setQcSubGroups(DATA);
-                    console.log("QC SubGroups:", qcSubGroups);
-                    console.log("Form QC_SUBGROUP_KEY:", form.QC_SUBGROUP_KEY);
-                    if (DATA.length > 0 && !form.QC_SUBGROUP_KEY) {
-                        setForm((prev) => ({ ...prev, QC_SUBGROUP_KEY: DATA[0].QC_SUBGROUP_KEY }));
-                    }
+                    const validsubGroups = DATA.filter(p => p.QC_SUBGROUP_KEY)
+                    setQcSubGroups(validsubGroups);
+                    setForm(prev => ({
+                        ...prev,
+                        QC_SUBGROUP_KEY: validsubGroups[0]?.QC_SUBGROUP_KEY || ""
+                    }));
                 } else {
                     setQcSubGroups([]);
                 }
@@ -142,12 +120,14 @@ const QcPrdPro = () => {
                 console.error("Error fetching QC SubGroups:", error);
             }
         };
-        if (form.QC_GROUP_KEY) {
-            fetchQcSubGroups();
-        } else {
-            setQcSubGroups([]);
-        }
+        fetchQcSubGroups();
     }, []);
+    const updateQCIDInUrl = (qcId) => {
+        const url = new URL(window.location.href);
+        url.searchParams.set("QC_ID", qcId);
+        window.history.replaceState({}, "", url.toString());
+    };
+
     const handleChangeStatus = (event) => {
         const updatedStatus = event.target.checked ? "1" : "0";
         setStatus(updatedStatus);
@@ -157,6 +137,7 @@ const QcPrdPro = () => {
         }))
     };
     const fetchRetriveData = useCallback(async (currentQC_ID, flag = "R", isManualSearch = false) => {
+        const CO_ID = localStorage.getItem('CO_ID');
         try {
             const response = await axiosInstance.post('QC_PRODUCT_PROCESS/RetriveQC_PRODUCT_PROCESS', {
                 "FLAG": flag,
@@ -183,6 +164,7 @@ const QcPrdPro = () => {
                 });
                 setStatus(DATA[0].STATUS);
                 setCurrentQC_ID(qcData.QC_ID);
+                return qcData;
             } else {
                 if (isManualSearch) {
                     toast.error(`${MESSAGE} FOR ${currentQC_ID}`);
@@ -201,11 +183,11 @@ const QcPrdPro = () => {
         } catch (err) {
             console.error(err);
         }
-    }, [CO_ID]);
+    }, []);
     useEffect(() => {
-        if (QC_SUBGROUP_KEY) {
-            setCurrentQC_ID(QC_SUBGROUP_KEY);
-            fetchRetriveData(QC_SUBGROUP_KEY);
+        if (QC_ID) {
+            setCurrentQC_ID(QC_ID);
+            fetchRetriveData(QC_ID);
             setMode(FORM_MODE.read);
         } else {
             setForm((prev) => ({
@@ -217,11 +199,10 @@ const QcPrdPro = () => {
                 REMARK: '',
                 SearchByCd: '',
                 Status: '1',
-
             }))
             setMode(FORM_MODE.add);
         }
-    }, [QC_SUBGROUP_KEY, fetchRetriveData]);
+    }, [QC_ID, fetchRetriveData]);
     const handleSubmit = async () => {
         const result = qcSubGrpFormSchema.safeParse(form);
         if (!result.success) {
@@ -229,13 +210,14 @@ const QcPrdPro = () => {
                 autoClose: 1000,
             });
         }
+        const USER_NAME = localStorage.getItem('USER_NAME');
+        const PARTY_KEY = localStorage.getItem('PARTY_KEY');
+        const UserRole = localStorage.getItem('userRole');
+        const USER_ID = localStorage.getItem('USER_ID');
+        const COBR_ID = localStorage.getItem('COBR_ID');
         const { data } = result;
         try {
-            if (!USER_NAME || !COBR_ID || !userRole || !PARTY_KEY) {
-                toast.error("User data not loaded yet. Please try again.");
-                return;
-            }
-            const UserName = userRole === 'user' ? USER_NAME : PARTY_KEY;
+            const UserName = UserRole === 'user' ? USER_NAME : PARTY_KEY;
             let url;
             if (mode === FORM_MODE.edit && currentQC_ID) {
                 url = `QC_PRODUCT_PROCESS/UpdateQC_PRODUCT_PROCESS?UserName=${(UserName)}&strCobrid=${COBR_ID}`;
@@ -243,6 +225,7 @@ const QcPrdPro = () => {
                 url = `QC_PRODUCT_PROCESS/InsertQC_PRODUCT_PROCESS?UserName=${(UserName)}&strCobrid=${COBR_ID}`;
             }
             const payload = {
+                QC_ID: 0,
                 FGPRD_KEY: data.FGPRD_KEY,
                 PROSTG_KEY: data.PROSTG_KEY,
                 QC_SUBGROUP_KEY: form.QC_SUBGROUP_KEY,
@@ -297,7 +280,6 @@ const QcPrdPro = () => {
             SearchByCd: ''
         }));
     };
-
     const handleAdd = async () => {
         setMode(FORM_MODE.add);
         setCurrentQC_ID(null);
@@ -314,20 +296,16 @@ const QcPrdPro = () => {
 
     };
     const handlePrevious = async () => {
-        await fetchRetriveData(currentQC_ID, "P");
-        setForm((prev) => ({
-            ...prev,
-            SearchByCd: ''
-        }));
+        if (!currentQC_ID) return;
+        const data = await fetchRetriveData(currentQC_ID, "P");
+        setForm((prev) => ({ ...prev, SearchByCd: '' }));
+        if (data?.QC_ID) updateQCIDInUrl(data.QC_ID);
     };
     const handleNext = async () => {
-        if (currentQC_ID) {
-            await fetchRetriveData(currentQC_ID, "N");
-        }
-        setForm((prev) => ({
-            ...prev,
-            SearchByCd: ''
-        }));
+        if (!currentQC_ID) return;
+        const data = await fetchRetriveData(currentQC_ID, "N");
+        setForm((prev) => ({ ...prev, SearchByCd: '' }));
+        if (data?.QC_ID) updateQCIDInUrl(data.QC_ID);
     };
     const handleDelete = () => {
         setOpenConfirmDialog(true);
@@ -337,6 +315,8 @@ const QcPrdPro = () => {
     };
     const handleConfirmDelete = async () => {
         setOpenConfirmDialog(false);
+        const USER_NAME = localStorage.getItem('USER_NAME');
+        const COBR_ID = localStorage.getItem('COBR_ID');
         try {
             const response = await axiosInstance.post(`QC_PRODUCT_PROCESS/DeleteQC_PRODUCT_PROCESS?UserName=${(USER_NAME)}&strCobrid=${COBR_ID}`, {
                 QC_ID: currentQC_ID
@@ -344,7 +324,10 @@ const QcPrdPro = () => {
             const { data: { STATUS, MESSAGE, DATA } } = response;
             if (STATUS === 0) {
                 toast.success(MESSAGE, { autoClose: 500 });
-                await fetchRetriveData(currentQC_ID, 'P');
+                const prevData = await fetchRetriveData(currentQC_ID, 'P');
+                if (prevData?.QC_ID) {
+                    updateQCIDInUrl(prevData.QC_ID);
+                }
             } else {
                 if (DATA && DATA.length > 1) {
                     const firstMsg = DATA[0]?.MSG || "";
@@ -368,7 +351,6 @@ const QcPrdPro = () => {
     const handleEdit = () => {
         setMode(FORM_MODE.edit);
     };
-
     const handlePrint = async () => {
         try {
             const response = await axiosInstance.post(`/QC_PRODUCT_PROCESS/GetQC_PRODUCT_PROCESSDashBoard?currentPage=1&limit=5000`, {
@@ -498,98 +480,99 @@ const QcPrdPro = () => {
                     </Grid>
                     <Grid container spacing={1}>
                         <Grid size={{ xs: 12, sm: 6, md: 6 }}>
-                            <AutoVibeWithoutAR
+                            <Autocomplete
                                 id="FGPRD_KEY"
-                                disabled={mode === FORM_MODE.read}
                                 options={products}
-                                getOptionLabel={(option) => option.FGPRD_NAME || ""}
-                                label={
-                                    <span>
-                                        Product <span style={{ color: 'red' }}>*</span>
-                                    </span>
+                                disabled={mode === FORM_MODE.read}
+                                getOptionLabel={(option) => option?.FGPRD_NAME || ""}
+                                isOptionEqualToValue={(option, value) =>
+                                    option.FGPRD_KEY === value.FGPRD_KEY
                                 }
-                                name="FGPRD_KEY"
-                                value={products.find(option => String(option.FGPRD_KEY) === String(form.FGPRD_KEY)) || null || ""}
+                                value={
+                                    products.find(
+                                        option => option.FGPRD_KEY === form.FGPRD_KEY
+                                    ) || null
+                                }
                                 onChange={(e, newValue) => {
-                                    const selectedName = newValue ? newValue.FGPRD_NAME : '';
-                                    const selectedId = newValue ? newValue.FGPRD_KEY : '';
-                                    setForm((prevForm) => {
-                                        const updatedForm = {
-                                            ...prevForm,
-                                            FGPRD__NAME: selectedName,
-                                            FGPRD_KEY: selectedId
-                                        };
-                                        return updatedForm;
-                                    });
-                                }}
-                                sx={DropInputSx}
-                                inputProps={{
-                                    style: {
-                                        padding: '6px 8px',
-                                        fontSize: '12px',
-                                    },
-                                }}
 
+                                    setForm(prev => ({
+                                        ...prev,
+                                        FGPRD_KEY: newValue ? newValue.FGPRD_KEY : "",
+                                        FGPRD_NAME: newValue ? newValue.FGPRD_NAME : ""
+                                    }));
+                                }}
+                                renderInput={(params) => (
+                                    <TextField
+                                        {...params}
+                                        label={
+                                            <span>
+                                                Product <span style={{ color: "red" }}>*</span>
+                                            </span>
+                                        }
+                                        sx={inputStyle}
+                                    />
+                                )}
                             />
                         </Grid>
                         <Grid size={{ xs: 12, sm: 6, md: 6 }}>
-                            <AutoVibeWithoutAR
+                            <Autocomplete
                                 id="PROSTG_KEY"
+                                options={process}
                                 disabled={mode === FORM_MODE.read}
-                                options={products}
-                                getOptionLabel={(option) => option.PROSTG_NAME || ""}
-                                label={
-                                    <span>
-                                        Process <span style={{ color: 'red' }}>*</span>
-                                    </span>
+                                getOptionLabel={(option) => option?.PROSTG_NAME || ""}
+                                isOptionEqualToValue={(option, value) =>
+                                    option.PROSTG_KEY === value.PROSTG_KEY
                                 }
-                                name="PROSTG_KEY"
-                                value={products.find(option => String(option.PROSTG_NAME) === String(form.PROSTG_KEY)) || null || ""}
+                                value={
+                                    process.find(
+                                        option => option.PROSTG_KEY === form.PROSTG_KEY
+                                    ) || null
+                                }
                                 onChange={(e, newValue) => {
-                                    const selectedName = newValue ? newValue.PROSTG_NAME : '';
-                                    const selectedId = newValue ? newValue.PROSTG_KEY : '';
-                                    setForm((prevForm) => {
-                                        const updatedForm = {
-                                            ...prevForm,
-                                            PROSTG_NAME: selectedName,
-                                            PROSTG_KEY: selectedId
-                                        };
-                                        return updatedForm;
-                                    });
+                                    setForm(prev => ({
+                                        ...prev,
+                                        PROSTG_KEY: newValue ? newValue.PROSTG_KEY : "",
+                                        PROSTG_NAME: newValue ? newValue.PROSTG_NAME : ""
+                                    }));
                                 }}
-                                sx={DropInputSx}
-                                inputProps={{
-                                    style: {
-                                        padding: '6px 8px',
-                                        fontSize: '12px',
-                                    },
-                                }}
-
+                                renderInput={(params) => (
+                                    <TextField
+                                        {...params}
+                                        label="Process"
+                                        sx={inputStyle}
+                                    />
+                                )}
                             />
                         </Grid>
                         <Grid size={{ xs: 12, sm: 6, md: 6 }}>
-                            <AutoVibeWithoutAR
+                            <Autocomplete
                                 id="QC_SUBGROUP_KEY"
                                 options={qcSubGroups}
-                                getOptionLabel={(option) => option.QC_SUBGROUP_NAME || ''}
-                                label="QC SubGroup Name"
-                                value={qcSubGroups.find((option) => option.QC_SUBGROUP_KEY === form.QC_SUBGROUP_KEY) || null}
-                                //   onChange={handleQcSubGroupChange}
-                                onChange={(e, newValue) => {
-                                    const selectedName = newValue ? newValue.QC_SUBGROUP_NAME : '';
-                                    const selectedId = newValue ? newValue.QC_SUBGROUP_KEY : '';
-                                    setForm((prevForm) => {
-                                        const updatedForm = {
-                                            ...prevForm,
-                                            QC_SUBGROUP_NAME: selectedName,
-                                            QC_SUBGROUP_KEY: selectedId
-                                        };
-                                        return updatedForm;
-                                    });
-                                }}
                                 fullWidth
-                                sx={{ ...DropInputSx, minWidth: 350 }}
-                                disabled={mode == FORM_MODE.read}
+                                disabled={mode === FORM_MODE.read}
+                                getOptionLabel={(option) => option?.QC_SUBGROUP_NAME || ""}
+                                isOptionEqualToValue={(option, value) =>
+                                    option.QC_SUBGROUP_KEY === value.QC_SUBGROUP_KEY
+                                }
+                                value={
+                                    qcSubGroups.find(
+                                        option => option.QC_SUBGROUP_KEY === form.QC_SUBGROUP_KEY
+                                    ) || null
+                                }
+                                onChange={(e, newValue) => {
+                                    setForm(prev => ({
+                                        ...prev,
+                                        QC_SUBGROUP_KEY: newValue ? newValue.QC_SUBGROUP_KEY : "",
+                                        QC_SUBGROUP_NAME: newValue ? newValue.QC_SUBGROUP_NAME : ""
+                                    }));
+                                }}
+                                renderInput={(params) => (
+                                    <TextField
+                                        {...params}
+                                        label="QC SubGroup Name"
+                                        sx={inputStyle}
+                                    />
+                                )}
                             />
                         </Grid>
                         <Grid item xs={12} sm={6} md={6} container sx={{ display: 'flex', flexDirection: 'row' }}>
