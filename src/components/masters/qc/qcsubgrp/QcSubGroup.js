@@ -7,6 +7,7 @@ import {
     Button,
     FormControlLabel,
     Checkbox,
+    Autocomplete,
 } from '@mui/material';
 import KeyboardArrowLeftIcon from "@mui/icons-material/KeyboardArrowLeft";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
@@ -25,28 +26,22 @@ import PrintQcSubGrp from './PrintQcSubGrp';
 import ConfirmationDialog from '@/GlobalFunction/DeleteDialog/ConfirmationDialog';
 import AutoVibe from '@/GlobalFunction/CustomAutoComplete/AutoVibe';
 import { DropInputSx } from '../../../../../public/styles/dropInputSx';
+import { inputStyle } from '../../../../../public/styles/inputStyleDrp';
 
 const FORM_MODE = getFormMode();
 const qcSubGrpFormSchema = z.object({
     QC_SUBGROUP_NAME: z.string().min(1, "QC Sub Group Name is required"),
     QC_GROUP_KEY: z.string().min(1, "QC Group Key is required"),
 });
-
 const QcSubGroup = () => {
     const router = useRouter();
     const searchParams = useSearchParams();
-    const [USER_ID, setUSER_ID] = useState(null);
-    const [USER_NAME, setUSER_NAME] = useState(null);
-    const [FCYR_KEY, setFCYR_KEY] = useState(null);
-    const [COBR_ID, setCOBR_ID] = useState(null);
-    const [CO_ID, setCO_ID] = useState(null);
-    const [userRole, setUserRole] = useState(null);
-    const [PARTY_KEY, setPARTY_KEY] = useState(null);
     const QC_SUBGROUP_KEY = searchParams.get('QC_SUBGROUP_KEY');
     const [currentQC_SUBGROUP_KEY, setCurrentQC_SUBGROUP_KEY] = useState(null);
     const [form, setForm] = useState({
         QC_SUBGROUP_KEY: '',
         QC_GROUP_KEY: '',
+        QC_GROUP_NAME: '',
         REMARK: '',
         SearchByCd: '',
         QC_SUBGROUP_ABRV: '',
@@ -66,38 +61,8 @@ const QcSubGroup = () => {
         currentQC_SUBGROUP_KEY ? FORM_MODE.read : FORM_MODE.add
     });
     const [Status, setStatus] = useState("1");
-    const [rows, setRows] = useState([]);
-    const [dataForPrint, setDataForPrint] = useState({});
     const [qcGroups, setQcGroups] = useState([]);
-    useEffect(() => {
-        setUSER_ID(localStorage.getItem('USER_ID'));
-        setUSER_NAME(localStorage.getItem('USER_NAME'));
-        setFCYR_KEY(localStorage.getItem('FCYR_KEY'));
-        setCOBR_ID(localStorage.getItem('COBR_ID'));
-        setCO_ID(localStorage.getItem('CO_ID'));
-        setUserRole(localStorage.getItem('userRole'));
-        setPARTY_KEY(localStorage.getItem('PARTY_KEY'));
-    }, []);
-    useEffect(() => {
-        const getRow = async () => {
-            const params = {
-                SearchText: "",
-            };
-            try {
-                const res = await axiosInstance.post('QC_GROUP/GetQC_GROUPDashBoard?currentPage=1&limit=5000', params);
-                const { data: { STATUS, DATA } } = res;
-                if (STATUS === 0 && Array.isArray(DATA)) {
-                    setRows(DATA);
-                    setDataForPrint(DATA);
-                } else {
-                    console.error('No data found in response');
-                }
-            } catch (err) {
-                console.error('Error fetching data:', err);
-            }
-        };
-        getRow();
-    }, []);
+
     useEffect(() => {
         const fetchQcGroups = async () => {
             try {
@@ -106,9 +71,7 @@ const QcSubGroup = () => {
                 if (STATUS === 0 && Array.isArray(DATA)) {
                     const validQcGroups = DATA.filter((cat) => cat.QC_GROUP_KEY && cat.QC_GROUP_NAME);
                     setQcGroups(validQcGroups);
-                    if (validQcGroups.length > 0) {
-                        setForm((prev) => ({ ...prev, CategoryId: validQcGroups[0].QC_GROUP_KEY }));
-                    }
+                    setForm((prev) => ({ ...prev, QC_GROUP_KEY: validQcGroups[0]?.QC_GROUP_KEY }));
                 } else {
                     setQcGroups([]);
                 }
@@ -127,6 +90,7 @@ const QcSubGroup = () => {
         }))
     };
     const fetchRetriveData = useCallback(async (currentQC_SUBGROUP_KEY, flag = "R", isManualSearch = false) => {
+        const CO_ID = localStorage.getItem('CO_ID');
         try {
             const response = await axiosInstance.post('QC_SUBGROUP/RetriveQC_SUBGROUP', {
                 "FLAG": flag,
@@ -159,6 +123,7 @@ const QcSubGroup = () => {
                         ...prev,
                         QC_SUBGROUP_KEY: '',
                         QC_GROUP_KEY: '',
+                        QC_GROUP_NAME: '',
                         REMARK: '',
                         QC_SUBGROUP_ABRV: '',
                         QC_SUBGROUP_NAME: '',
@@ -171,7 +136,7 @@ const QcSubGroup = () => {
         } catch (err) {
             console.error(err);
         }
-    }, [CO_ID]);
+    }, []);
     useEffect(() => {
         if (QC_SUBGROUP_KEY) {
             setCurrentQC_SUBGROUP_KEY(QC_SUBGROUP_KEY);
@@ -183,6 +148,7 @@ const QcSubGroup = () => {
                 SearchByCd: '',
                 QC_SUBGROUP_KEY: '',
                 QC_GROUP_KEY: '',
+                QC_GROUP_NAME: '',
                 REMARK: '',
                 QC_SUBGROUP_ABRV: '',
                 QC_SUBGROUP_NAME: '',
@@ -190,8 +156,9 @@ const QcSubGroup = () => {
                 SERIES: '',
                 Status: '1',
             }))
-            setMode(FORM_MODE.add);
+            setMode(FORM_MODE.read);
         }
+        setMode(FORM_MODE.read);
     }, [QC_SUBGROUP_KEY, fetchRetriveData]);
     const handleSubmit = async () => {
         const result = qcSubGrpFormSchema.safeParse(form);
@@ -201,12 +168,14 @@ const QcSubGroup = () => {
             });
         }
         const { data } = result;
+        const USER_NAME = localStorage.getItem('USER_NAME');
+        const PARTY_KEY = localStorage.getItem('PARTY_KEY');
+        const UserRole = localStorage.getItem('userRole');
+        const USER_ID = localStorage.getItem('USER_ID');
+        const COBR_ID = localStorage.getItem('COBR_ID');
         try {
-            if (!USER_NAME || !COBR_ID || !userRole || !PARTY_KEY) {
-                toast.error("User data not loaded yet. Please try again.");
-                return;
-            }
-            const UserName = userRole === 'user' ? USER_NAME : PARTY_KEY;
+
+            const UserName = UserRole === 'user' ? USER_NAME : PARTY_KEY;
             let url;
             if (mode === FORM_MODE.edit && currentQC_SUBGROUP_KEY) {
                 url = `QC_SUBGROUP/UpdateQC_SUBGROUP?UserName=${(UserName)}&strCobrid=${COBR_ID}`;
@@ -268,6 +237,8 @@ const QcSubGroup = () => {
         }));
     };
     const debouncedApiCall = debounce(async (newSeries) => {
+        const FCYR_KEY = localStorage.getItem('FCYR_KEY');
+        const COBR_ID = localStorage.getItem('COBR_ID');
         try {
             const response = await axiosInstance.post('GetSeriesSettings/GetSeriesLastNewKey', {
                 "MODULENAME": "QC_SUBGROUP",
@@ -324,6 +295,7 @@ const QcSubGroup = () => {
         setForm((prevForm) => ({
             ...prevForm,
             QC_GROUP_KEY: '',
+            QC_GROUP_NAME: '',
             REMARK: '',
             SearchByCd: '',
             QC_SUBGROUP_ABRV: '',
@@ -332,6 +304,8 @@ const QcSubGroup = () => {
         }));
         // Step 1: Fetch CPREFIX value from the first API
         let cprefix = '';
+        const FCYR_KEY = localStorage.getItem('FCYR_KEY');
+        const COBR_ID = localStorage.getItem('COBR_ID');
         try {
             const response = await axiosInstance.post('GetSeriesSettings/GetSeriesLastNewKey', {
                 MODULENAME: "QC_SUBGROUP",
@@ -408,6 +382,8 @@ const QcSubGroup = () => {
     };
     const handleConfirmDelete = async () => {
         setOpenConfirmDialog(false);
+        const USER_NAME = localStorage.getItem('USER_NAME');
+        const COBR_ID = localStorage.getItem('COBR_ID');
         try {
             const response = await axiosInstance.post(`QC_SUBGROUP/DeleteQC_SUBGROUP?UserName=${(USER_NAME)}&strCobrid=${COBR_ID}`, {
                 QC_SUBGROUP_KEY: currentQC_SUBGROUP_KEY
@@ -674,41 +650,34 @@ const QcSubGroup = () => {
                             />
                         </Grid>
                         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                            <AutoVibe
+                            <Autocomplete
                                 id="QC_GROUP_KEY"
-                                disabled={mode === FORM_MODE.read}
                                 options={qcGroups}
-                                getOptionLabel={(option) => option.QC_GROUP_NAME || ""}
-                                label={
-                                    <span>
-                                        QC Group Name <span style={{ color: 'red' }}>*</span>
-                                    </span>
+                                fullWidth
+                                disabled={mode === FORM_MODE.read}
+                                getOptionLabel={(option) => option?.QC_GROUP_NAME || ""}
+                                isOptionEqualToValue={(option, value) =>
+                                    option.QC_GROUP_KEY === value.QC_GROUP_KEY
                                 }
-                                name="QC_GROUP_KEY"
-                                value={qcGroups.find(option => String(option.QC_GROUP_NAME) === String(form.QC_GROUP_KEY)) || null || ""}
+                                value={
+                                    qcGroups.find(
+                                        option => option.QC_GROUP_KEY === form.QC_GROUP_KEY
+                                    ) || null
+                                }
                                 onChange={(e, newValue) => {
-                                    const selectedName = newValue ? newValue.QC_GROUP_NAME : '';
-                                    const selectedId = newValue ? newValue.QC_GROUP_KEY : '';
-                                    setForm((prevForm) => {
-                                        const updatedForm = {
-                                            ...prevForm,
-                                            QC_GROUP_NAME: selectedName,
-                                            QC_GROUP_KEY: selectedId
-                                        };
-                                        //   if (selectedName && prevForm.FGPRD_ABRV) {
-                                        //     updatedForm.QC_GROUP_NAME = selectedName + prevForm.FGPRD_ABRV;
-                                        //   }
-                                        return updatedForm;
-                                    });
+                                    setForm(prev => ({
+                                        ...prev,
+                                        QC_GROUP_KEY: newValue ? newValue.QC_GROUP_KEY : "",
+                                        QC_GROUP_NAME: newValue ? newValue.QC_GROUP_NAME : ""
+                                    }));
                                 }}
-                                sx={DropInputSx}
-                                inputProps={{
-                                    style: {
-                                        padding: '6px 8px',
-                                        fontSize: '12px',
-                                    },
-                                }}
-                                onAddClick={handleAddClick}
+                                renderInput={(params) => (
+                                    <TextField
+                                        {...params}
+                                        label="QC Group Name"
+                                        sx={inputStyle}
+                                    />
+                                )}
                             />
                         </Grid>
                         <Grid size={{ xs: 12, sm: 6, md: 3 }}>

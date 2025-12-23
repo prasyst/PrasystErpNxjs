@@ -19,13 +19,13 @@ const PrintParamtr = ({ rows, currentCatData }) => {
                         </Text>
                         <View style={{ border: '1px solid #000', borderRadius: 3, marginBottom: 10 }}>
                             <View style={{ flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: '#000', borderBottomStyle: 'solid', borderTopWidth: 1, borderTopColor: '#000', borderTopStyle: 'solid', backgroundColor: '#f5f5f5', fontWeight: 'bold' }}>
-                                <Text style={{ width: '7%', borderRight: '1px solid #ddd', padding: 5, textAlign: 'center' }}>SrNo.</Text>
-                                <Text style={{ width: '15%', borderRight: '1px solid #ddd', padding: 5 }}>SubGrp Key</Text>
-                                <Text style={{ width: '50%', borderRight: '1px solid #ddd', padding: 5 }}>SubGrp Name</Text>
-                                <Text style={{ width: '15%', borderRight: '1px solid #ddd', padding: 5 }}>TEST_NAME</Text>
-                                <Text style={{ width: '15%', borderRight: '1px solid #ddd', padding: 5 }}>VALUE_TEST</Text>
-                                <Text style={{ width: '15%', borderRight: '1px solid #ddd', padding: 5 }}>Range From</Text>
-                                <Text style={{ width: '15%', borderRight: '1px solid #ddd', padding: 5 }}>Range To</Text>
+                                <Text style={{ width: '7%', borderRight: '1px solid #ddd', padding: 5, textAlign: 'center' }}>SNo.</Text>
+                                <Text style={{ width: '15%', borderRight: '1px solid #ddd', padding: 5 }}>SubGrp</Text>
+                                <Text style={{ width: '50%', borderRight: '1px solid #ddd', padding: 5 }}>SubGrpName</Text>
+                                <Text style={{ width: '15%', borderRight: '1px solid #ddd', padding: 5 }}>TestName</Text>
+                                <Text style={{ width: '15%', borderRight: '1px solid #ddd', padding: 5 }}>ValTest</Text>
+                                <Text style={{ width: '15%', borderRight: '1px solid #ddd', padding: 5 }}>RgFm</Text>
+                                <Text style={{ width: '15%', borderRight: '1px solid #ddd', padding: 5 }}>RgTo</Text>
                                 <Text style={{ width: '12%', padding: 5 }}>Status</Text>
                             </View>
                             {rows.slice(pageIndex * 30, (pageIndex + 1) * 30).map((row, index) => (

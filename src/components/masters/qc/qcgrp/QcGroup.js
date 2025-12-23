@@ -22,23 +22,10 @@ const qcGrpFormSchema = z.object({
     QC_GROUP_NAME: z.string().min(1, "QC Group Name is required"),
     QC_TYPE: z.string().min(1, "QC Type is required"),
 });
-const columns = [
-    { id: "ROWNUM", label: "SrNo.", minWidth: 40 },
-    { id: "QC_GROUP_KEY", label: "Code", minWidth: 40 },
-    { id: "QC_GROUP_NAME", label: "AltCode", minWidth: 40 },
-    { id: "QC_TYPE", label: "CatName", minWidth: 40 },
-    { id: "QC_GROUP_ABRV", label: "Segment", minWidth: 40 },
-];
+
 const QcGroup = () => {
     const router = useRouter();
     const searchParams = useSearchParams();
-    const [USER_ID, setUSER_ID] = useState(null);
-    const [USER_NAME, setUSER_NAME] = useState(null);
-    const [FCYR_KEY, setFCYR_KEY] = useState(null);
-    const [COBR_ID, setCOBR_ID] = useState(null);
-    const [CO_ID, setCO_ID] = useState(null);
-    const [userRole, setUserRole] = useState(null);
-    const [PARTY_KEY, setPARTY_KEY] = useState(null);
     const QC_GROUP_KEY = searchParams.get('QC_GROUP_KEY');
     const [currentQC_GROUP_KEY, setCurrentQC_GROUP_KEY] = useState(null);
     const [form, setForm] = useState({
@@ -62,39 +49,7 @@ const QcGroup = () => {
     const [mode, setMode] = useState(() => {
         currentQC_GROUP_KEY ? FORM_MODE.read : FORM_MODE.add
     });
-    // const [mode, setMode] = useState(FORM_MODE.add);
     const [Status, setStatus] = useState("1");
-    const [rows, setRows] = useState([]);
-    const [dataForPrint, setDataForPrint] = useState({});
-    useEffect(() => {
-        setUSER_ID(localStorage.getItem('USER_ID'));
-        setUSER_NAME(localStorage.getItem('USER_NAME'));
-        setFCYR_KEY(localStorage.getItem('FCYR_KEY'));
-        setCOBR_ID(localStorage.getItem('COBR_ID'));
-        setCO_ID(localStorage.getItem('CO_ID'));
-        setUserRole(localStorage.getItem('userRole'));
-        setPARTY_KEY(localStorage.getItem('PARTY_KEY'));
-    }, []);
-    useEffect(() => {
-        const getRow = async () => {
-            const params = {
-                SearchText: "",
-            };
-            try {
-                const res = await axiosInstance.post('QC_GROUP/GetQC_GROUPDashBoard?currentPage=1&limit=5000', params);
-                const { data: { STATUS, DATA } } = res;
-                if (STATUS === 0 && Array.isArray(DATA)) {
-                    setRows(DATA);
-                    setDataForPrint(DATA);
-                } else {
-                    console.error('No data found in response');
-                }
-            } catch (err) {
-                console.error('Error fetching data:', err);
-            }
-        };
-        getRow();
-    }, []);
     const handleChangeStatus = (event) => {
         const updatedStatus = event.target.checked ? "1" : "0";
         setStatus(updatedStatus);
@@ -104,6 +59,7 @@ const QcGroup = () => {
         }))
     };
     const fetchRetriveData = useCallback(async (currentQC_GROUP_KEY, flag = "R", isManualSearch = false) => {
+        const CO_ID = localStorage.getItem('CO_ID');
         try {
             const response = await axiosInstance.post('QC_GROUP/RetriveQC_GROUP', {
                 "FLAG": flag,
@@ -151,9 +107,9 @@ const QcGroup = () => {
         } catch (err) {
             console.error(err);
         }
-    }, [CO_ID]);
+    }, []);
     useEffect(() => {
-        if (QC_GROUP_KEY) {
+            if (QC_GROUP_KEY) {
             setCurrentQC_GROUP_KEY(QC_GROUP_KEY);
             fetchRetriveData(QC_GROUP_KEY);
             setMode(FORM_MODE.read);
@@ -170,8 +126,9 @@ const QcGroup = () => {
                 SERIES: '',
                 Status: '1',
             }));
-            setMode(FORM_MODE.add);
+            setMode(FORM_MODE.read);
         }
+         setMode(FORM_MODE.read);
     }, [QC_GROUP_KEY, fetchRetriveData]);
     const handleSubmit = async () => {
         const result = qcGrpFormSchema.safeParse(form);
@@ -181,12 +138,14 @@ const QcGroup = () => {
             });
         }
         const { data } = result;
+        const USER_NAME = localStorage.getItem('USER_NAME');
+        const PARTY_KEY = localStorage.getItem('PARTY_KEY');
+        const UserRole = localStorage.getItem('userRole');
+        const USER_ID = localStorage.getItem('USER_ID');
+        const COBR_ID = localStorage.getItem('COBR_ID');
         try {
-            if (!USER_NAME || !COBR_ID || !userRole || !PARTY_KEY) {
-                toast.error("User data not loaded yet. Please try again.");
-                return;
-            }
-            const UserName = userRole === 'user' ? USER_NAME : PARTY_KEY
+
+            const UserName = UserRole === 'user' ? USER_NAME : PARTY_KEY
             let url;
             if (mode === FORM_MODE.edit && currentQC_GROUP_KEY) {
                 url = `QC_GROUP/UpdateQC_GROUP?UserName=${(UserName)}&strCobrid=${COBR_ID}`;
@@ -238,6 +197,7 @@ const QcGroup = () => {
     const handleCancel = async () => {
         if (mode === FORM_MODE.add) {
             await fetchRetriveData(1, "L");
+
         } else {
             await fetchRetriveData(currentQC_GROUP_KEY, "R");
         }
@@ -312,6 +272,9 @@ const QcGroup = () => {
         }));
         // Step 1: Fetch CPREFIX value from the first API
         let cprefix = '';
+
+        const COBR_ID = localStorage.getItem('COBR_ID');
+        const FCYR_KEY = localStorage.getItem('FCYR_KEY');
         try {
             const response = await axiosInstance.post('GetSeriesSettings/GetSeriesLastNewKey', {
                 MODULENAME: "QC_GROUP",
@@ -387,6 +350,8 @@ const QcGroup = () => {
         setOpenConfirmDialog(false);
     };
     const handleConfirmDelete = async () => {
+        const COBR_ID = localStorage.getItem('COBR_ID');
+        const USER_NAME = localStorage.getItem('USER_NAME');
         setOpenConfirmDialog(false);
         try {
             const response = await axiosInstance.post(`QC_GROUP/DeleteQC_GROUP?UserName=${(USER_NAME)}&strCobrid=${COBR_ID}`, {
@@ -635,7 +600,11 @@ const QcGroup = () => {
                         </Grid>
                         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                             <TextField
-                                label="QC TYPE"
+                                label={
+                                    <span>
+                                        QC TYPE<span style={{ color: "red" }}>*</span>
+                                    </span>
+                                }
                                 inputRef={QC_TYPERef}
                                 variant="filled"
                                 fullWidth
