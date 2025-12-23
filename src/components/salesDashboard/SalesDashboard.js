@@ -158,6 +158,13 @@ const StyledSpeedDial = styled(SpeedDial)(({ theme }) => ({
     },
 }));
 
+// const StyledSpeedDial = styled(SpeedDial)(({ theme }) => ({
+//     position: 'fixed',
+//     top: theme.spacing(7),
+//     right: theme.spacing(2),
+//     zIndex: 1000,
+// }));
+
 const actions = [
     { icon: <StorefrontIcon />, name: 'Brand' },
     { icon: <GroupIcon />, name: 'Party' },
@@ -262,7 +269,9 @@ const SalesDashboard = () => {
 
     const totalSales = data.reduce((acc, cur) => acc + cur.sales, 0);
 
-    const totalConversion = ((parseFloat(dispOrd.QTY) / parseFloat(summaryData.QTY))) * 100;
+    const totalConversion = !isNaN(dispOrd.QTY) && !isNaN(summaryData.QTY) && parseFloat(summaryData.QTY) !== 0
+        ? (parseFloat(dispOrd.QTY) / parseFloat(summaryData.QTY)) * 100
+        : 0;
 
     useEffect(() => {
         const fcyrFromStorage = localStorage.getItem("FCYR_KEY");
@@ -288,8 +297,18 @@ const SalesDashboard = () => {
         }
     }, [fcyr, cobrId]);
 
+
+    // Filters payload
+    const buildFilterPayload = () => ({
+        Brandfilter: selectedOptions.Brand.join(','),
+        Partyfilter: selectedOptions.Party.join(','),
+        statefilter: selectedOptions.State.join(','),
+        Brokerfilter: selectedOptions.Broker.join(','),
+    });
+
     const showTableData = async () => {
         try {
+            const filters = buildFilterPayload();
             const response = await axiosInstance.post('OrderDash/GetOrderDashBoard', {
                 COBR_ID: cobrId,
                 FCYR_KEY: fcyr,
@@ -298,7 +317,8 @@ const SalesDashboard = () => {
                 Flag: "",
                 PageNumber: 1,
                 PageSize: 10,
-                SearchText: ""
+                SearchText: "",
+                ...filters
             });
 
             if (response.data.STATUS === 0 && Array.isArray(response.data.DATA)) {
@@ -310,13 +330,6 @@ const SalesDashboard = () => {
             toast.error('Error while fetching the table data.');
         }
     };
-
-    const buildFilterPayload = () => ({
-        Brandfilter: selectedOptions.Brand.join(','),
-        Partyfilter: selectedOptions.Party.join(','),
-        statefilter: selectedOptions.State.join(','),
-        Brokerfilter: selectedOptions.Broker.join(','),
-    });
 
     const totalCoutData = async () => {
         try {
@@ -501,7 +514,7 @@ const SalesDashboard = () => {
                 PageNumber: 1,
                 PageSize: 10,
                 SearchText: "",
-                filters
+                ...filters
             });
             if (response.data.STATUS === 0 && Array.isArray(response.data.DATA)) {
                 setPartyWise(response.data.DATA);
@@ -1192,8 +1205,8 @@ const SalesDashboard = () => {
                                         size="small"
                                         onClick={() => {
                                             handleDialogClose();
-                                            totalCoutData();
-                                            toast.success("Filters applied to summary cards!");
+                                            handleFetchedData();
+                                            toast.success("Filters applied.");
                                         }}
                                         sx={{
                                             backgroundColor: '#635bff',
@@ -1640,7 +1653,7 @@ const SalesDashboard = () => {
                                     )}
                                 </TableBody>
                                 <TableFooter>
-                                    <TableRow sx={{ position: 'sticky', bottom: 0, zIndex: 9, '& > td': { fontWeight: 'bold', borderTop: '1px solid #8e90a8', py: 0.5, color: '#000' } }}>
+                                    <TableRow sx={{ position: 'sticky', bottom: 0, zIndex: 9, '& > td': { fontWeight: 'bold', borderTop: '1px solid #8e90a8', py: 0.5, color: '#000', bgcolor: '#c0bcbcff' } }}>
                                         <TableCell colSpan={1} align="left" sx={{ fontWeight: 'bold' }}>Total</TableCell>
                                         <TableCell align="left">
                                             {filteredStateWise.reduce((sum, item) => sum + parseFloat(item.AMOUNT || 0), 0).toLocaleString('en-IN', { maximumFractionDigits: 2 })}
