@@ -28,7 +28,7 @@ import {
 import { format } from 'date-fns';
 
 const monthlyData = [
-  { name: 'Jan', value: 30000 },
+  { name: 'Jan', value: 10000 },
   { name: 'Feb', value: 45000 },
   { name: 'Mar', value: 38000 },
   { name: 'Apr', value: 52000 },
@@ -102,7 +102,7 @@ const Sales = () => {
                     <Typography variant="body2" color="#4caf50" ml={1}>+$10,250 this month</Typography>
                   </Stack>
                 </Box>
-                <AttachMoney sx={{ fontSize: 50, color: '#e3f2fd' }} />
+                <AttachMoney sx={{ fontSize: 50, color: '#8cbbddff' }} />
               </Stack>
             </Paper>
           </Grid>
@@ -115,7 +115,7 @@ const Sales = () => {
                   <Typography variant="h4" fontWeight="bold" mt={1}>1,660</Typography>
                   <Chip label="+4% from last month" color="success" size="small" sx={{ mt: 1 }} />
                 </Box>
-                <ShoppingCart sx={{ fontSize: 50, color: '#e8f5e9' }} />
+                <ShoppingCart sx={{ fontSize: 50, color: '#8bd191ff' }} />
               </Stack>
             </Paper>
           </Grid>
@@ -128,7 +128,7 @@ const Sales = () => {
                   <Typography variant="h4" fontWeight="bold" mt={1}>$92,120</Typography>
                   <Chip label="+2%" color="success" size="small" sx={{ mt: 1 }} />
                 </Box>
-                <AttachMoney sx={{ fontSize: 50, color: '#fff3e0' }} />
+                <AttachMoney sx={{ fontSize: 50, color: '#d3ae71ff' }} />
               </Stack>
             </Paper>
           </Grid>
@@ -141,7 +141,7 @@ const Sales = () => {
                   <Typography variant="h4" fontWeight="bold" mt={1}>842</Typography>
                   <Chip label="+12%" color="success" size="small" sx={{ mt: 1 }} />
                 </Box>
-                <People sx={{ fontSize: 50, color: '#f3e5f5' }} />
+                <People sx={{ fontSize: 50, color: '#d486e0ff' }} />
               </Stack>
             </Paper>
           </Grid>
