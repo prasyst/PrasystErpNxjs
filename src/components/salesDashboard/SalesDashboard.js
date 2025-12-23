@@ -2,10 +2,12 @@
 
 import React, { useState, useEffect, useMemo } from "react";
 import dynamic from "next/dynamic";
+import { useRouter } from "next/navigation";
 import {
     Box, Typography, Grid, Paper, IconButton, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Button,
     styled, useTheme, TextField, DialogTitle, DialogActions, Dialog, LinearProgress, Chip, TableFooter, CircularProgress,
     DialogContent, FormControlLabel, Checkbox, Badge,
+    InputAdornment,
 } from "@mui/material";
 import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
 import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
@@ -53,24 +55,6 @@ const CountUp = dynamic(
     },
     { ssr: false }
 );
-
-// Dummy data for the PieChart
-const desktopOS = [
-    { id: 'Windows', value: 60, color: '#4caf50' },
-    { id: 'macOS', value: 20, color: '#2196f3' },
-    { id: 'Linux', value: 10, color: '#ff9800' },
-    { id: 'Others', value: 10, color: '#f44336' },
-];
-
-const desktopOS2 = [
-    { id: 'Apple', value: 20, color: '#f32160ff' },
-    { id: 'Nokia', value: 10, color: '#36e7f4ff' },
-    { id: 'Samsung', value: 20, color: '#4c56afff' },
-    { id: 'Blueberry', value: 10, color: '#d39436ff' },
-    { id: 'Google', value: 10, color: '#59969bff' },
-    { id: 'RealMe', value: 20, color: '#2b3480ff' },
-    { id: 'Poco', value: 10, color: '#c47705ff' },
-];
 
 const StyledCard = styled(Paper)(({ theme }) => ({
     display: 'flex',
@@ -183,6 +167,7 @@ const SalesDashboard = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedOrder, setSelectedOrder] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [recentLoading, setRecentLoading] = useState(false);
     const [summaryData, setSummaryData] = useState({
         QTY: 0,
         BAL_QTY: 0,
@@ -243,6 +228,7 @@ const SalesDashboard = () => {
     const [partyDrp, setPartyDrp] = useState([]);
     const [brokerDrp, setBrokerDrp] = useState([]);
     const [stateDrp, setStateDrp] = useState([]);
+    const router = useRouter();
 
     const handleDialogOpen = (filterName) => {
         setCurrentFilter(filterName);
@@ -307,6 +293,7 @@ const SalesDashboard = () => {
     });
 
     const showTableData = async () => {
+        setRecentLoading(true);
         try {
             const filters = buildFilterPayload();
             const response = await axiosInstance.post('OrderDash/GetOrderDashBoard', {
@@ -323,11 +310,11 @@ const SalesDashboard = () => {
 
             if (response.data.STATUS === 0 && Array.isArray(response.data.DATA)) {
                 setTableData(response.data.DATA);
-            } else {
-                toast.info("No record found.");
             }
         } catch (error) {
             toast.error('Error while fetching the table data.');
+        } finally {
+            setRecentLoading(false);
         }
     };
 
@@ -357,8 +344,6 @@ const SalesDashboard = () => {
                     INIT_QTY: summary.INIT_QTY || 0,
                     ROWNUM: summary.ROWNUM || 0,
                 });
-            } else {
-                toast.info("No record found.");
             }
         } catch (error) {
             toast.error("Error from API response.");
@@ -668,8 +653,8 @@ const SalesDashboard = () => {
         );
     }, [stateWise, searchTermState]);
 
-    const handleRowDoubleClick = (order) => {
-        // router.push(`/inverntory/stock-enquiry-table/${order.ORDBK_KEY}`);
+    const handleRowDoubleClick = () => {
+        router.push(`/inverntory/stock-enquiry-table/`);
     };
 
     // Top 10 Parties by Amount for Pie Chart
@@ -1250,7 +1235,7 @@ const SalesDashboard = () => {
                             <Typography variant="h6" fontWeight="bold">
                                 Value: ₹ {(summaryData.AMOUNT / 100000).toFixed(2)} L
                             </Typography>
-                            <Typography variant="h6" sx={{ mt: 0.5 }}>
+                            <Typography variant="h6" fontWeight="bold" sx={{ mt: 0.5 }}>
                                 Qty: {summaryData.QTY}
                             </Typography>
                         </Box>
@@ -1282,7 +1267,7 @@ const SalesDashboard = () => {
                             <Typography variant="h6" fontWeight="bold">
                                 Value: ₹{(dispOrd.AMOUNT / 100000).toFixed(2)} L
                             </Typography>
-                            <Typography variant="h6">
+                            <Typography variant="h6" fontWeight="bold">
                                 Qty: {dispOrd.QTY}
                             </Typography>
                         </Box>
@@ -1361,7 +1346,7 @@ const SalesDashboard = () => {
                             <Typography variant="h6" fontWeight="bold">
                                 Value: ₹ {(balOrd.AMOUNT / 100000).toFixed(2)} L
                             </Typography>
-                            <Typography variant="h6">
+                            <Typography variant="h6" fontWeight="bold">
                                 Qty: {balOrd.QTY} |  Cancel Qty: {canOrd.QTY}
                             </Typography>
                         </Box>
@@ -1369,8 +1354,192 @@ const SalesDashboard = () => {
                 </Grid>
             </Grid>
 
+            {/* Recent Orders Table */}
+            <Grid container spacing={2} sx={{ height: '100%', mt: 2 }}>
+                <Grid size={{ xs: 12, md: 12, lg: 12 }} sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+                    <Paper
+                        elevation={5}
+                        sx={{
+                            p: 2,
+                            borderRadius: 4,
+                            bgcolor: 'white',
+                            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            height: '100%',
+                            overflow: 'hidden',
+                            position: 'relative',
+                        }}
+                    >
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                            <Typography
+                                variant="h5"
+                                fontWeight="700"
+                                sx={{
+                                    backgroundImage: 'linear-gradient(to right, #5f1504, #7e4308, #524605, #024604, #022b55)',
+                                    WebkitBackgroundClip: 'text',
+                                    color: 'transparent',
+                                    letterSpacing: '0.5px',
+                                }}
+                            >
+                                Recent Orders
+                            </Typography>
+
+                            <TextField
+                                label="Search Orders"
+                                variant="outlined"
+                                size="small"
+                                value={searchTerm}
+                                onChange={handleSearchChange}
+                                placeholder="Order No, Party, etc."
+                                InputProps={{
+                                    startAdornment: (
+                                        <InputAdornment position="start">
+                                            <SearchIcon fontSize="small" />
+                                        </InputAdornment>
+                                    ),
+                                }}
+                                sx={{
+                                    width: 250,
+                                    '& .MuiOutlinedInput-root': {
+                                        borderRadius: '10px',
+                                        bgcolor: '#f8fafc',
+                                        fontSize: '0.875rem',
+                                    },
+                                }}
+                            />
+                        </Box>
+
+                        {/* Table Container */}
+                        <TableContainer sx={{ flexGrow: 1, maxHeight: 450, overflow: 'auto', position: 'relative' }}>
+                            <Table stickyHeader size="small" sx={{ minWidth: 1100 }}>
+                                <TableHead>
+                                    <TableRow>
+                                        {['View', 'OrderNo', 'Date', 'Party', 'City', 'State', 'Qty', 'Broker', 'Salesman', 'Status'].map((header) => (
+                                            <TableCell
+                                                key={header}
+                                                sx={{
+                                                    bgcolor: '#f1f5f9',
+                                                    color: '#334155',
+                                                    fontWeight: 700,
+                                                    fontSize: '0.8125rem',
+                                                    letterSpacing: '0.8px',
+                                                    borderBottom: '2px solid #cbd5e1',
+                                                    borderRight: '1px solid #e2e8f0',
+                                                    '&:last-child': { borderRight: 'none' },
+                                                }}
+                                            >
+                                                {header}
+                                            </TableCell>
+                                        ))}
+                                    </TableRow>
+                                </TableHead>
+                                <TableBody>
+                                    {filteredData.length > 0 ? (
+                                        filteredData.map((item, index) => (
+                                            <TableRow
+                                                key={item.ORDBK_NO}
+                                                hover
+                                                onDoubleClick={() => handleRowDoubleClick(item)}
+                                                sx={{
+                                                    bgcolor: index % 2 === 0 ? '#ffffff' : '#f8fafc',
+                                                    cursor: 'pointer',
+                                                    transition: 'background-color 0.18s ease',
+                                                    '&:hover': {
+                                                        bgcolor: '#e0f2fe !important',
+                                                    },
+                                                }}
+                                            >
+                                                <TableCell sx={{ px: 2, borderRight: '1px solid #e2e8f0' }}>
+                                                    <IconButton
+                                                        size="small"
+                                                        onClick={() => handleViewDocument(item)}
+                                                        sx={{ color: '#635bff', p: 0.5 }}
+                                                    >
+                                                        <VisibilityIcon fontSize="small" />
+                                                    </IconButton>
+                                                </TableCell>
+                                                <TableCell sx={{ px: 2, borderRight: '1px solid #e2e8f0', fontSize: '0.875rem' }}>
+                                                    {item.ORDBK_NO}
+                                                </TableCell>
+                                                <TableCell sx={{ px: 2, borderRight: '1px solid #e2e8f0', fontSize: '0.875rem' }}>
+                                                    {dayjs(item.ORDBK_DT).format('DD/MM/YYYY')}
+                                                </TableCell>
+                                                <TableCell sx={{ px: 2, borderRight: '1px solid #e2e8f0', fontSize: '0.875rem' }}>
+                                                    {item.PARTY_NAME}
+                                                </TableCell>
+                                                <TableCell sx={{ px: 2, borderRight: '1px solid #e2e8f0', fontSize: '0.875rem' }}>
+                                                    {item.CITY_NAME}
+                                                </TableCell>
+                                                <TableCell sx={{ px: 2, borderRight: '1px solid #e2e8f0', fontSize: '0.875rem' }}>
+                                                    {item.STATE_NAME}
+                                                </TableCell>
+                                                <TableCell sx={{ px: 2, borderRight: '1px solid #e2e8f0', fontWeight: 700, fontSize: '0.875rem' }}>
+                                                    {item.QTY}
+                                                </TableCell>
+                                                <TableCell sx={{ px: 2, borderRight: '1px solid #e2e8f0', fontSize: '0.875rem' }}>
+                                                    {item.BROKER_NAME}
+                                                </TableCell>
+                                                <TableCell sx={{ px: 2, borderRight: '1px solid #e2e8f0', fontSize: '0.875rem' }}>
+                                                    {item.SALEPERSON_NAME}
+                                                </TableCell>
+                                                <TableCell sx={{ px: 2 }}>
+                                                    <Chip
+                                                        label={item.STATUS === 'CANL' ? 'Cancelled' : item.STATUS || 'Active'}
+                                                        size="small"
+                                                        color={item.STATUS === 'CANL' ? 'error' : 'success'}
+                                                        sx={{
+                                                            fontSize: '0.75rem',
+                                                            height: 24,
+                                                            fontWeight: 600,
+                                                            minWidth: 76,
+                                                        }}
+                                                    />
+                                                </TableCell>
+                                            </TableRow>
+                                        ))
+                                    ) : (
+                                        <TableRow>
+                                            <TableCell colSpan={10} align="center" sx={{ py: 12 }}>
+                                                <Typography variant="body2" color="#64748b" fontStyle="italic">
+                                                    No records found.
+                                                </Typography>
+                                            </TableCell>
+                                        </TableRow>
+                                    )}
+                                </TableBody>
+                            </Table>
+
+                            {recentLoading && (
+                                <Box
+                                    sx={{
+                                        position: 'absolute',
+                                        top: 0,
+                                        left: 0,
+                                        right: 0,
+                                        bottom: 0,
+                                        bgcolor: 'rgba(255, 255, 255, 0.85)',
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        zIndex: 10,
+                                        borderRadius: 4,
+                                    }}
+                                >
+                                    <CircularProgress size='3rem' thickness={4.5} color="primary" />
+                                    <Typography variant="body1" sx={{ mt: 2, color: '#334155', fontWeight: 500 }}>
+                                        Loading recent orders...
+                                    </Typography>
+                                </Box>
+                            )}
+                        </TableContainer>
+                    </Paper>
+                </Grid>
+            </Grid>
+
             {/* Party Wise Orders Summary */}
-            <Grid container spacing={2} sx={{ height: '100%' }}>
+            <Grid container spacing={2} sx={{ height: '100%', mt: 2 }}>
                 <Grid size={{ xs: 12, md: 9 }} sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
                     <Paper
                         elevation={5}
@@ -1488,7 +1657,7 @@ const SalesDashboard = () => {
                                             '& > td': {
                                                 fontWeight: 'bold',
                                                 borderTop: '1px solid #4caf50',
-                                                py: 0.5,
+                                                py: 0.2,
                                             },
                                         }}
                                     >
@@ -1531,7 +1700,7 @@ const SalesDashboard = () => {
                                     faded: { innerRadius: 30, additionalRadius: -30, color: 'gray' },
                                 },
                             ]}
-                            height={215}
+                            height={235}
                             slotProps={{
                                 legend: {
                                     direction: 'column',
@@ -1599,7 +1768,7 @@ const SalesDashboard = () => {
                             />
                         </Box>
 
-                        <TableContainer sx={{ flexGrow: 1, maxHeight: 400, overflow: 'auto' }}>
+                        <TableContainer sx={{ flexGrow: 1, maxHeight: 320, overflow: 'auto' }}>
                             <Table stickyHeader size="small" aria-label="state wise orders">
                                 <TableHead>
                                     <TableRow>
@@ -1653,7 +1822,7 @@ const SalesDashboard = () => {
                                     )}
                                 </TableBody>
                                 <TableFooter>
-                                    <TableRow sx={{ position: 'sticky', bottom: 0, zIndex: 9, '& > td': { fontWeight: 'bold', borderTop: '1px solid #8e90a8', py: 0.5, color: '#000', bgcolor: '#c0bcbcff' } }}>
+                                    <TableRow sx={{ position: 'sticky', bottom: 0, zIndex: 9, '& > td': { fontWeight: 'bold', borderTop: '1px solid #8e90a8', py: 0.2, color: '#000', bgcolor: '#c0bcbcff' } }}>
                                         <TableCell colSpan={1} align="left" sx={{ fontWeight: 'bold' }}>Total</TableCell>
                                         <TableCell align="left">
                                             {filteredStateWise.reduce((sum, item) => sum + parseFloat(item.AMOUNT || 0), 0).toLocaleString('en-IN', { maximumFractionDigits: 2 })}
@@ -1745,162 +1914,6 @@ const SalesDashboard = () => {
                 </Grid>
             </Grid>
 
-            {/* Recent Orders Table */}
-            <Grid container spacing={2} sx={{ height: '100%', mt: 2 }}>
-                <Grid size={{ xs: 12, md: 9 }} sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-                    <Paper
-                        elevation={5}
-                        sx={{
-                            p: 1.5,
-                            borderRadius: 4,
-                            bgcolor: 'white',
-                            boxShadow: '0 10px 30px rgb(0 0 0 / 0.12)',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            height: '100%',
-                        }}
-                    >
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-                            <Typography variant="h6" fontWeight="bold">
-                                Recent Orders
-                            </Typography>
-
-                            <TextField
-                                label="Search Orders"
-                                variant="outlined"
-                                size="small"
-                                sx={{
-                                    width: 250,
-                                    borderRadius: '9px',
-                                    '& .MuiOutlinedInput-root': {
-                                        borderRadius: '9px',
-                                    },
-                                    '& .MuiInputLabel-root': {
-                                        borderRadius: '9px',
-                                    }
-                                }}
-                                value={searchTerm}
-                                onChange={handleSearchChange}
-                                placeholder="Search by Order No, Party, etc."
-                            />
-                        </Box>
-
-                        <TableContainer sx={{ flexGrow: 1, maxHeight: 400, overflowY: 'auto', overflowX: 'auto' }}>
-                            <Table stickyHeader size="small" aria-label="recent orders">
-                                <TableHead>
-                                    <TableRow>
-                                        <TableCell>View</TableCell>
-                                        <TableCell>OrderNo</TableCell>
-                                        <TableCell>Date</TableCell>
-                                        <TableCell>Party</TableCell>
-                                        <TableCell>City</TableCell>
-                                        <TableCell>State</TableCell>
-                                        <TableCell>Qty</TableCell>
-                                        <TableCell>Broker</TableCell>
-                                        <TableCell>SalesMan</TableCell>
-                                    </TableRow>
-                                </TableHead>
-                                <TableBody>
-                                    {filteredData.length > 0 ? (
-                                        filteredData.map((item, index) => (
-                                            <TableRow
-                                                key={item.ORDBK_NO}
-                                                hover
-                                                onDoubleClick={() => handleRowDoubleClick(item)}
-                                            >
-                                                <TableCell sx={{ padding: '2px 16px' }}>
-                                                    <VisibilityIcon
-                                                        sx={{ cursor: 'pointer', color: '#1976d2' }}
-                                                        onClick={() => handleViewDocument(item)}
-                                                    />
-                                                </TableCell>
-                                                <TableCell sx={{ padding: '2px 16px' }}>{item.ORDBK_NO}</TableCell>
-                                                <TableCell sx={{ padding: '2px 16px' }}>{dayjs(item.ORDBK_DT).format('DD/MM/YYYY')}</TableCell>
-                                                <TableCell sx={{ padding: '2px 16px' }}>{item.PARTY_NAME}</TableCell>
-                                                <TableCell sx={{ padding: '2px 16px' }}>{item.CITY_NAME}</TableCell>
-                                                <TableCell sx={{ padding: '2px 16px' }}>{item.STATE_NAME}</TableCell>
-                                                <TableCell sx={{ padding: '2px 16px' }}>{item.QTY}</TableCell>
-                                                <TableCell sx={{ padding: '2px 16px' }}>{item.BROKER_NAME}</TableCell>
-                                                <TableCell sx={{ padding: '2px 16px' }}>{item.SALEPERSON_NAME}</TableCell>
-                                            </TableRow>
-                                        ))
-                                    ) : (
-                                        <TableRow>
-                                            <TableCell colSpan={12} align="center">
-                                                No records found.
-                                            </TableCell>
-                                        </TableRow>
-                                    )}
-                                </TableBody>
-                            </Table>
-                        </TableContainer>
-                    </Paper>
-                </Grid>
-
-                {/* Right Column with Cards */}
-                <Grid size={{ xs: 12, md: 3 }} sx={{ display: 'flex', flexDirection: 'column', gap: 1, height: '100%' }}>
-                    <StyledCard2 sx={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%' }}>
-                        <PieChart
-                            series={[
-                                {
-                                    data: desktopOS,
-                                    innerRadius: 30,
-                                    outerRadius: 100,
-                                    paddingAngle: 2,
-                                    cornerRadius: 5,
-                                },
-                            ]}
-                            width={250}
-                            height={200}
-                            legend={{
-                                hidden: false,
-                                position: {
-                                    vertical: 'middle',
-                                    horizontal: 'right',
-                                },
-                                padding: 10,
-                                labelStyle: { fontSize: 12 },
-                                itemMarkWidth: 22,
-                                itemGap: 6,
-                            }}
-                            slotProps={{
-                                legend: {
-                                    itemMarkWidth: 22,
-                                    itemGap: 6,
-                                },
-                            }}
-                        />
-                    </StyledCard2>
-
-                    <StyledCard2 sx={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%' }}>
-                        <PieChart
-                            series={[
-                                {
-                                    data: desktopOS2,
-                                    innerRadius: 30,
-                                    outerRadius: 100,
-                                    paddingAngle: 2,
-                                    cornerRadius: 5,
-                                },
-                            ]}
-                            width={250}
-                            height={200}
-                            legend={{
-                                hidden: false,
-                                position: {
-                                    vertical: 'middle',
-                                    horizontal: 'right',
-                                },
-                                padding: 10,
-                                labelStyle: { fontSize: 12 },
-                                itemMarkWidth: 22,
-                                itemGap: 6,
-                            }}
-                        />
-                    </StyledCard2>
-                </Grid>
-            </Grid>
-
             <Dialog open={isModalOpen} onClose={handleCloseModal} maxWidth='lg' fullWidth>
                 <Box display='flex' justifyContent='space-between'>
                     <DialogTitle sx={{ padding: '10px !important' }}>Order Document</DialogTitle>
@@ -1912,82 +1925,6 @@ const SalesDashboard = () => {
                     {selectedOrder && <OrderDocument orderDetails={selectedOrder} />}
                 </PDFViewer>
             </Dialog>
-
-            <Grid container spacing={2} mt={2}>
-                <Grid size={{ xs: 12, md: 6 }}>
-                    <Paper
-                        elevation={5}
-                        sx={{
-                            p: 2,
-                            borderRadius: 4,
-                            bgcolor: "white",
-                            boxShadow: "0 10px 30px rgb(0 0 0 / 0.12)",
-                            height: 300,
-                        }}
-                    >
-                        <Typography variant="h6" fontWeight="bold" mb={1}>
-                            Weekly Order
-                        </Typography>
-                        <ResponsiveContainer width="100%" height="85%">
-                            <LineChart data={lineChartData1} margin={{ top: 10, right: 30, left: 20, bottom: 5 }}>
-                                <CartesianGrid strokeDasharray="3 3" />
-                                <XAxis dataKey="name" />
-                                <YAxis />
-                                <Tooltip />
-                                <Legend />
-                                <Line
-                                    type="monotone"
-                                    dataKey="value"
-                                    stroke="#1976d2"
-                                    strokeWidth={3}
-                                    activeDot={{ r: 8 }}
-                                    dot={{ r: 5 }}
-                                />
-                            </LineChart>
-                        </ResponsiveContainer>
-                    </Paper>
-                </Grid>
-
-                <Grid size={{ xs: 12, md: 6 }}>
-                    <Paper
-                        elevation={5}
-                        sx={{
-                            p: 2,
-                            borderRadius: 4,
-                            bgcolor: "white",
-                            bgcolor: "white",
-                            boxShadow: "0 10px 30px rgb(0 0 0 / 0.12)",
-                            height: 300,
-                        }}
-                    >
-                        <Typography variant="h6" fontWeight="bold" mb={1}>
-                            Monthly Performance
-                        </Typography>
-
-                        <ResponsiveContainer width="100%" height="85%">
-                            <BarChart data={lineChartData2} margin={{ top: 10, right: 30, left: 20, bottom: 5 }}>
-                                <defs>
-                                    <linearGradient id="colorBar" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="0%" stopColor="#ff6f00" stopOpacity={0.9} />
-                                        <stop offset="100%" stopColor="#d50000" stopOpacity={0.7} />
-                                    </linearGradient>
-                                </defs>
-                                <CartesianGrid strokeDasharray="3 3" />
-                                <XAxis dataKey="name" />
-                                <YAxis />
-                                <Tooltip />
-                                <Legend />
-                                <Bar
-                                    dataKey="value"
-                                    fill="url(#colorBar)"
-                                    radius={[8, 8, 0, 0]}
-                                    barSize={30}
-                                />
-                            </BarChart>
-                        </ResponsiveContainer>
-                    </Paper>
-                </Grid>
-            </Grid>
 
             <Grid container spacing={2} mt={2}>
                 <Grid size={{ xs: 12, md: 4 }}>
@@ -2076,7 +2013,7 @@ const SalesDashboard = () => {
                 <Grid size={{ xs: 12, md: 8 }}>
                     <Paper elevation={5} sx={{ p: 2, borderRadius: 2, height: 300 }}>
                         <Typography variant="h6" gutterBottom fontWeight="bold">
-                            Sales vs Profit
+                            Order vs Sales
                         </Typography>
                         <Box sx={{ width: '100%', height: '100%' }}>
                             <ResponsiveContainer width="100%" height="90%">
@@ -2158,10 +2095,9 @@ const SalesDashboard = () => {
                                     background: 'linear-gradient(90deg, #1976d2, #42a5f5)',
                                     WebkitBackgroundClip: 'text',
                                     WebkitTextFillColor: 'transparent',
-                                    textTransform: 'uppercase',
                                 }}
                             >
-                                Monthly Sales Trend
+                                Orders Trend
                             </Typography>
 
                             {/* Animated Total Sales */}
