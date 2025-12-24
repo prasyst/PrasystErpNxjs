@@ -5,15 +5,6 @@ import { useRouter } from 'next/navigation';
 import axiosInstance from "@/lib/axios";
 
 const columnDefs = [
-  // {
-  //   field: "PARTY_NAME",
-  //   headerName: " Party Name",
-  //   filter: 'agSetColumnFilter',
-  //   filterParams: {
-  //     defaultToNothingSelected: true,
-  //   },
-  //   sortable: true
-  // },
   {
     field: "ROWNUM",
     headerName: "SNo.",
@@ -34,15 +25,6 @@ const columnDefs = [
     },
     sortable: true
   },
-  //   {
-  //   field: "DTL_NAME",
-  //   headerName: "Item",
-  //   filter: 'agSetColumnFilter',
-  //   filterParams: {
-  //     defaultToNothingSelected: true,
-  //   },
-  //   sortable: true
-  // },
   {
     field: "CREATED_DT",
     headerName: "Doc.Date",
@@ -110,61 +92,6 @@ const columnDefs = [
     width: 300,
     minWidth: 200
   },
-  // {
-  //   field: "RANGE_TO",
-  //   headerName: "Range To",
-  //   filter: 'agSetColumnFilter',
-  //   filterParams: {
-  //     defaultToNothingSelected: true,
-  //   },
-  //   sortable: true
-  // },
-  // {
-  //   field: "USER_NAME",
-  //   headerName: "UserVal",
-  //   filter: 'agSetColumnFilter',
-  //   filterParams: {
-  //     defaultToNothingSelected: true,
-  //   },
-  //   sortable: true
-  // },
-  //  {
-  //   field: "RESULT",
-  //   headerName: "Result",
-  //   filter: 'agSetColumnFilter',
-  //   filterParams: {
-  //     defaultToNothingSelected: true,
-  //   },
-  //   sortable: true
-  // },
-  //    {
-  //   field: "TESTREMARK",
-  //   headerName: "TestRemark",
-  //   filter: 'agSetColumnFilter',
-  //   filterParams: {
-  //     defaultToNothingSelected: true,
-  //   },
-  //   sortable: true
-  // },
-  //    {
-  //   field: "FINAL_RESULT",
-  //   headerName: "Final Result",
-  //   filter: 'agSetColumnFilter',
-  //   filterParams: {
-  //     defaultToNothingSelected: true,
-  //   },
-  //   sortable: true
-  // },
-
-  // {
-  //   field: "STATUS",
-  //   headerName: "Status",
-  //   filter: 'agSetColumnFilter',
-  //   filterParams: {
-  //     defaultToNothingSelected: true,
-  //   },
-  //   sortable: true
-  // },
 ];
 
 export default function RawMatTable() {
