@@ -4,14 +4,17 @@ import React, { useEffect, useState } from 'react';
 import {
   Box, Container, Typography, Grid, Paper, Stack, useTheme, useMediaQuery, Button,
   TextField,
+  CircularProgress,
+  Divider,
 } from '@mui/material';
 import {
   ShoppingCart,
   People,
-  AttachMoney,
   Search,
   NotificationsActive
 } from '@mui/icons-material';
+import InventoryIcon from '@mui/icons-material/Inventory';
+import ImportContactsIcon from '@mui/icons-material/ImportContacts';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import dayjs from 'dayjs';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
@@ -49,6 +52,10 @@ const Dispatch = () => {
   });
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredRecentPack, setFilteredRecentPack] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [partyLoading, setPartyLoading] = useState(false);
+  const [partySearchQuery, setPartySearchQuery] = useState('');
+  const [filteredPartyTable, setFilteredPartyTable] = useState([]);
 
   const handleGetData = () => {
     fetchOpenPack();
@@ -153,6 +160,7 @@ const Dispatch = () => {
   };
 
   const fetchPartyWiseTable = async () => {
+    setPartyLoading(true);
     try {
       const response = await axiosInstance.post("OrderDash/GetPackDashBoard", {
         COBR_ID: cobrId,
@@ -167,13 +175,19 @@ const Dispatch = () => {
       });
       if (response.data.STATUS === 0 && Array.isArray(response.data.DATA)) {
         setPartyTable(response.data.DATA);
-      };
+        setFilteredPartyTable(response.data.DATA);
+      } else {
+        setPartyTable([]);
+      }
     } catch (error) {
       toast.error("Error while getting data.");
+    } finally {
+      setPartyLoading(false);
     }
   };
 
   const fetchRecentPacking = async () => {
+    setLoading(true);
     try {
       const response = await axiosInstance.post("OrderDash/GetPackDashBoard", {
         COBR_ID: cobrId,
@@ -189,15 +203,24 @@ const Dispatch = () => {
       if (response.data.STATUS === 0 && Array.isArray(response.data.DATA)) {
         setRecentPack(response.data.DATA);
         setFilteredRecentPack(response.data.DATA);
+      } else {
+        setRecentPack([]);
       }
     } catch (error) {
       toast.error("Api response error.");
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleSearchChange = (event) => {
     setSearchQuery(event.target.value);
     debouncedSearch(event.target.value);
+  };
+
+  const handlePartySearchChange = (e) => {
+    setPartySearchQuery(e.target.value);
+    debouncedPartySearch(e.target.value);
   };
 
   const debouncedSearch = debounce((query) => {
@@ -210,10 +233,25 @@ const Dispatch = () => {
         row.SALEPERSON_NAME.toLowerCase().includes(query.toLowerCase()) ||
         row.BROKER_NAME.toLowerCase().includes(query.toLowerCase()) ||
         row.AMOUNT.toString().toLowerCase().includes(query.toLowerCase()) ||
-        row.PACKITMDTL_QTY.toString().toLowerCase().includes(query.toLowerCase()) 
+        row.PACKITMDTL_QTY.toString().toLowerCase().includes(query.toLowerCase())
       );
     });
     setFilteredRecentPack(filteredData);
+  }, 500);
+
+  const debouncedPartySearch = debounce((query) => {
+    const filteredData = partyTable.filter((row) => {
+      return (
+        row.PARTY_NAME.toLowerCase().includes(query.toLowerCase()) ||
+        row.PACK_NO.toLowerCase().includes(query.toLowerCase()) ||
+        row.CITY_NAME.toLowerCase().includes(query.toLowerCase()) ||
+        row.STATE_NAME.toLowerCase().includes(query.toLowerCase()) ||
+        row.SALEPERSON_NAME.toLowerCase().includes(query.toLowerCase()) ||
+        row.BROKER_NAME.toLowerCase().includes(query.toLowerCase()) ||
+        row.PACKITMDTL_QTY.toString().toLowerCase().includes(query.toLowerCase())
+      );
+    });
+    setFilteredPartyTable(filteredData);
   }, 500);
 
   return (
@@ -305,7 +343,7 @@ const Dispatch = () => {
                     Qty: {openPack[0]?.PACKITMDTL_QTY || 0}
                   </Typography>
                 </Box>
-                <AttachMoney sx={{ fontSize: 50, color: '#8cbbddff' }} />
+                <ImportContactsIcon sx={{ fontSize: 40, color: '#6741beff' }} />
               </Stack>
             </Paper>
           </Grid>
@@ -320,7 +358,7 @@ const Dispatch = () => {
                   </Typography>
                   <Typography variant="h6" mt={0.5}> Qty: {dispOrd[0]?.PACKITMDTL_QTY || 0}</Typography>
                 </Box>
-                <ShoppingCart sx={{ fontSize: 50, color: '#8bd191ff' }} />
+                <ShoppingCart sx={{ fontSize: 40, color: '#8bd191ff' }} />
               </Stack>
             </Paper>
           </Grid>
@@ -333,7 +371,7 @@ const Dispatch = () => {
                   <Typography variant="h6" fontWeight="bold" mt={0.5}>Value: {isNaN(unBilled[0]?.AMOUNT) ? "0.00" : (unBilled[0]?.AMOUNT / 100000).toFixed(2) + " L"}</Typography>
                   <Typography variant="h6" mt={0.5}>Qty: {unBilled[0]?.PACKITMDTL_QTY ?? 0}</Typography>
                 </Box>
-                <AttachMoney sx={{ fontSize: 50, color: '#d3ae71ff' }} />
+                <InventoryIcon sx={{ fontSize: 40, color: '#d3ae71ff' }} />
               </Stack>
             </Paper>
           </Grid>
@@ -346,7 +384,7 @@ const Dispatch = () => {
                   <Typography variant="h6" fontWeight="bold" mt={0.5}>Value: {isNaN(disOrd[0]?.AMOUNT) ? "0.00" : (disOrd[0]?.AMOUNT / 100000).toFixed(2) + " L"}</Typography>
                   <Typography variant="h6" mt={0.5}>Qty: {disOrd[0]?.PACKITMDTL_QTY ?? 0}</Typography>
                 </Box>
-                <People sx={{ fontSize: 50, color: '#d486e0ff' }} />
+                <People sx={{ fontSize: 40, color: '#d486e0ff' }} />
               </Stack>
             </Paper>
           </Grid>
@@ -359,7 +397,7 @@ const Dispatch = () => {
                   <Typography variant="h6" fontWeight="bold" mt={0.5}>Value: {(45600443 / 100000).toFixed(2) + ' L'}</Typography>
                   <Typography variant="h6" mt={0.5}>Qty: 43025</Typography>
                 </Box>
-                <NotificationsActive sx={{ fontSize: 50, color: '#736ebdff' }} />
+                <NotificationsActive sx={{ fontSize: 40, color: '#736ebdff' }} />
               </Stack>
             </Paper>
           </Grid>
@@ -406,41 +444,55 @@ const Dispatch = () => {
                 }}
               />
             </Stack>
-            <TableContainer component={Paper} sx={{ maxHeight: 400, overflow: 'auto' }}>
-              <Table sx={{ minWidth: 650 }} size="small" aria-label="a dense table">
-                <TableHead sx={{ position: 'sticky', top: 0, backgroundColor: 'white', zIndex: 1 }}>
-                  <TableRow>
-                    <TableCell align="left">Party</TableCell>
-                    <TableCell align="left">PackNo</TableCell>
-                    <TableCell align="left">PactDt</TableCell>
-                    <TableCell align="left">City</TableCell>
-                    <TableCell align="left">State</TableCell>
-                    <TableCell align="left">Saleperson</TableCell>
-                    <TableCell align="left">Broker</TableCell>
-                    <TableCell align="left">Qty</TableCell>
-                    <TableCell align="left">Amount</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {filteredRecentPack.map((row) => (
-                    <TableRow
-                      key={row.PACK_NO}
-                      sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
-                    >
-                      <TableCell align="left">{row.PARTY_NAME}</TableCell>
-                      <TableCell align="left">{row.PACK_NO}</TableCell>
-                      <TableCell align="left">{row.PACK_DT ? dayjs(row.PACK_DT).format('YYYY-MM-DD') : ''}</TableCell>
-                      <TableCell align="left">{row.CITY_NAME}</TableCell>
-                      <TableCell align="left">{row.STATE_NAME}</TableCell>
-                      <TableCell align="left">{row.SALEPERSON_NAME}</TableCell>
-                      <TableCell align="left">{row.BROKER_NAME}</TableCell>
-                      <TableCell align="left">{row.PACKITMDTL_QTY}</TableCell>
-                      <TableCell align="left">{row.AMOUNT}</TableCell>
+            {loading ? (
+              <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '200px', flexDirection: 'column' }}>
+                <CircularProgress size="3rem" />
+                <Typography variant="body1" sx={{ mt: 2, color: '#334155', fontWeight: 500 }}>
+                  Loading recent packings...
+                </Typography>
+              </Box>
+            ) : (
+              <TableContainer component={Paper} sx={{ maxHeight: 400, overflow: 'auto' }}>
+                <Table sx={{ minWidth: 650 }} size="small" aria-label="a dense table">
+                  <TableHead sx={{ position: 'sticky', top: 0, backgroundColor: 'white', zIndex: 1 }}>
+                    <TableRow>
+                      <TableCell align="left">Party</TableCell>
+                      <TableCell align="left">PackNo</TableCell>
+                      <TableCell align="left">PactDt</TableCell>
+                      <TableCell align="left">City</TableCell>
+                      <TableCell align="left">State</TableCell>
+                      <TableCell align="left">Saleperson</TableCell>
+                      <TableCell align="left">Broker</TableCell>
+                      <TableCell align="left">Qty</TableCell>
+                      <TableCell align="left">Amount</TableCell>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
+                  </TableHead>
+                  <TableBody>
+                    {filteredRecentPack.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={9} align="center" sx={{ color: 'gray', fontWeight: 'bold' }}>
+                          No records found
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      filteredRecentPack.map((row) => (
+                        <TableRow key={row.PACK_NO} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
+                          <TableCell align="left">{row.PARTY_NAME}</TableCell>
+                          <TableCell align="left">{row.PACK_NO}</TableCell>
+                          <TableCell align="left">{row.PACK_DT ? dayjs(row.PACK_DT).format('YYYY-MM-DD') : ''}</TableCell>
+                          <TableCell align="left">{row.CITY_NAME}</TableCell>
+                          <TableCell align="left">{row.STATE_NAME}</TableCell>
+                          <TableCell align="left">{row.SALEPERSON_NAME}</TableCell>
+                          <TableCell align="left">{row.BROKER_NAME}</TableCell>
+                          <TableCell align="left">{row.PACKITMDTL_QTY}</TableCell>
+                          <TableCell align="left">{row.AMOUNT}</TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            )}
           </Paper>
         </Grid>
 
@@ -462,8 +514,10 @@ const Dispatch = () => {
 
               <TextField
                 variant="outlined"
-                placeholder="Search..."
+                placeholder="Search Any..."
                 size="small"
+                value={partySearchQuery}
+                onChange={handlePartySearchChange}
                 sx={{
                   width: 200,
                   height: '37px',
@@ -482,39 +536,54 @@ const Dispatch = () => {
                 }}
               />
             </Stack>
-            <TableContainer component={Paper} sx={{ maxHeight: 400, overflow: 'auto' }}>
-              <Table sx={{ minWidth: 650 }} size="small" aria-label="a dense table">
-                <TableHead sx={{ position: 'sticky', top: 0, backgroundColor: 'white', zIndex: 1 }}>
-                  <TableRow>
-                    <TableCell align="left">Party</TableCell>
-                    <TableCell align="left">PackNo</TableCell>
-                    <TableCell align="left">PactDt</TableCell>
-                    <TableCell align="left">City</TableCell>
-                    <TableCell align="left">State</TableCell>
-                    <TableCell align="left">Saleperson</TableCell>
-                    <TableCell align="left">Broker</TableCell>
-                    <TableCell align="left">Qty</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {partyTable.map((row) => (
-                    <TableRow
-                      key={row.PACK_NO}
-                      sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
-                    >
-                      <TableCell align="left">{row.PARTY_NAME}</TableCell>
-                      <TableCell align="left">{row.PACK_NO}</TableCell>
-                      <TableCell align="left">{row.PACK_DT ? dayjs(row.PACK_DT).format('YYYY-MM-DD') : ''}</TableCell>
-                      <TableCell align="left">{row.CITY_NAME}</TableCell>
-                      <TableCell align="left">{row.STATE_NAME}</TableCell>
-                      <TableCell align="left">{row.SALEPERSON_NAME}</TableCell>
-                      <TableCell align="left">{row.BROKER_NAME}</TableCell>
-                      <TableCell align="left">{row.PACKITMDTL_QTY}</TableCell>
+
+            {partyLoading ? (
+              <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '200px', flexDirection: 'column' }}>
+                <CircularProgress size="3rem" />
+                <Typography variant="body1" sx={{ mt: 2, color: '#334155', fontWeight: 500 }}>
+                  Loading party...
+                </Typography>
+              </Box>
+            ) : (
+              <TableContainer component={Paper} sx={{ maxHeight: 400, overflow: 'auto' }}>
+                <Table sx={{ minWidth: 650 }} size="small" aria-label="a dense table">
+                  <TableHead sx={{ position: 'sticky', top: 0, backgroundColor: 'white', zIndex: 1 }}>
+                    <TableRow>
+                      <TableCell align="left">Party</TableCell>
+                      <TableCell align="left">PackNo</TableCell>
+                      <TableCell align="left">PactDt</TableCell>
+                      <TableCell align="left">City</TableCell>
+                      <TableCell align="left">State</TableCell>
+                      <TableCell align="left">Saleperson</TableCell>
+                      <TableCell align="left">Broker</TableCell>
+                      <TableCell align="left">Qty</TableCell>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
+                  </TableHead>
+                  <TableBody>
+                    {filteredPartyTable.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={9} align='center' sx={{ color: 'gray', fontWeight: 'bold' }}>
+                          No party data found...
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      filteredPartyTable.map((row) => (
+                        <TableRow key={row.PACK_NO} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
+                          <TableCell align="left">{row.PARTY_NAME}</TableCell>
+                          <TableCell align="left">{row.PACK_NO}</TableCell>
+                          <TableCell align="left">{row.PACK_DT ? dayjs(row.PACK_DT).format('YYYY-MM-DD') : ''}</TableCell>
+                          <TableCell align="left">{row.CITY_NAME}</TableCell>
+                          <TableCell align="left">{row.STATE_NAME}</TableCell>
+                          <TableCell align="left">{row.SALEPERSON_NAME}</TableCell>
+                          <TableCell align="left">{row.BROKER_NAME}</TableCell>
+                          <TableCell align="left">{row.PACKITMDTL_QTY}</TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            )}
           </Paper>
         </Grid>
 
