@@ -88,7 +88,7 @@ const Stores = () => {
                         QC_TYPE: "ACC",
                         PARTY_KEY: selectedPartyKey,
                         PARTYDTL_ID: 0,
-                        DOC_KEY: "", 
+                        DOC_KEY: "",
                         DOC_DTL_ID: 0,
                         FLAG: "ACC",
                         DBFLAG: "PartySelection",
@@ -491,7 +491,7 @@ const Stores = () => {
     return (
         <Grid container sx={{ bgcolor: '#f5f5f5', py: 4 }}>
             <ToastContainer />
-            <Grid item xs={12} sx={{ mx: 'auto', px: { xs: 4, sm: 6, md: 6,lg:8}, width: '100%' }}>
+            <Grid item xs={12} sx={{ mx: 'auto', px: { xs: 4, sm: 6, md: 6, lg: 8 }, width: '100%' }}>
                 <Typography variant="h6" align="center">
                     QC Test (Stores)
                 </Typography>
@@ -556,7 +556,7 @@ const Stores = () => {
                     </Grid>
                 </Grid>
                 <Grid container spacing={1} sx={{ mt: 2 }}>
-                    <Grid item xs={12} sm={6} md={4} sx={{width:"30%"}}>
+                    <Grid item xs={12} sm={6} md={4} sx={{ width: "30%" }}>
                         <TextField
                             label="Doc Type"
                             variant="filled"
@@ -572,7 +572,7 @@ const Stores = () => {
                             }}
                         />
                     </Grid>
-                    <Grid item xs={12} sm={6} md={4} sx={{width:"34%"}} >
+                    <Grid item xs={12} sm={6} md={4} sx={{ width: "34%" }} >
                         <Autocomplete
                             options={partyDrp}
                             getOptionLabel={(option) => option.PARTY_NAME || ""}
@@ -584,7 +584,7 @@ const Stores = () => {
                             )}
                         />
                     </Grid>
-                    <Grid item xs={12} sm={6} md={4} sx={{width:"34%"}}>
+                    <Grid item xs={12} sm={6} md={4} sx={{ width: "34%" }}>
                         <Autocomplete
                             options={docNoDrp}
                             getOptionLabel={(option) => option.DOC_NO || ""}
@@ -596,7 +596,7 @@ const Stores = () => {
                             )}
                         />
                     </Grid>
-                    <Grid item xs={12} sm={6} md={4} sx={{width:"30%"}}>
+                    <Grid item xs={12} sm={6} md={4} sx={{ width: "30%" }}>
                         <Autocomplete
                             options={qcSubGroups}
                             getOptionLabel={(option) => option.QC_SUBGROUP_NAME || ""}
@@ -608,7 +608,7 @@ const Stores = () => {
                             )}
                         />
                     </Grid>
-                    <Grid item xs={12} sm={6} md={4} sx={{width:"34%"}}>
+                    <Grid item xs={12} sm={6} md={4} sx={{ width: "34%" }}>
                         <Autocomplete
                             options={dtlItems}
                             getOptionLabel={(option) => option.DTL_NAME || ""}
@@ -748,7 +748,7 @@ const Stores = () => {
                     </Table>
                 </TableContainer>
                 <Grid container spacing={1} sx={{ mt: 2 }}>
-                    <Grid item xs={12} sm={6} md={4} sx={{width:"18%"}}>
+                    <Grid item xs={12} sm={6} md={4} sx={{ width: "18%" }}>
                         <Autocomplete
                             options={decision}
                             getOptionLabel={(option) => option.DECISION_STATUSNM || ""}
@@ -767,12 +767,13 @@ const Stores = () => {
                             )}
                         />
                     </Grid>
-                    <Grid item xs={12} sm={6} md={4} sx={{width:"40%"}}>
+                    <Grid item xs={12} sm={6} md={4} sx={{ width: "40%" }}>
                         <TextField
                             label="Decision Remark"
                             variant="filled"
                             fullWidth
                             name="PASS_PARTIAL_REMARK"
+                            disabled={mode === FORM_MODE.read}
                             value={form.PASS_PARTIAL_REMARK}
                             onChange={(e) => setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }))}
                             sx={textInputSx}
@@ -784,13 +785,14 @@ const Stores = () => {
                             }}
                         />
                     </Grid>
-                    <Grid item xs={12} sm={6} md={4} sx={{width:"40%"}}>
+                    <Grid item xs={12} sm={6} md={4} sx={{ width: "40%" }}>
                         <TextField
                             label="Remark/Instructions"
                             variant="filled"
                             fullWidth
                             name="REMARK"
                             value={form.REMARK}
+                            disabled={mode === FORM_MODE.read}
                             onChange={(e) => setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }))}
                             sx={textInputSx}
                             inputProps={{

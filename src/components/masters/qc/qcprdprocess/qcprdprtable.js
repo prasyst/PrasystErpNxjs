@@ -15,7 +15,9 @@ const columnDefs = [
     filterParams: {
       defaultToNothingSelected: true,
     },
-    sortable: true
+    sortable: true,
+    width: 300,
+    minWidth: 200
   },
   {
     field: "PROSTG_NAME",
@@ -24,7 +26,9 @@ const columnDefs = [
     filterParams: {
       defaultToNothingSelected: true,
     },
-    sortable: true
+    sortable: true,
+    width: 300,
+    minWidth: 200
   },
   {
     field: "QC_SUBGROUP_NAME",
@@ -33,7 +37,9 @@ const columnDefs = [
     filterParams: {
       defaultToNothingSelected: true,
     },
-    sortable: true
+    sortable: true,
+    width: 300,
+    minWidth: 200
   },
   {
     field: "QC_REQ",
@@ -42,16 +48,20 @@ const columnDefs = [
     filterParams: {
       defaultToNothingSelected: true,
     },
-    sortable: true
+    sortable: true,
+    width: 120,
+    minWidth: 100
   },
-    {
+  {
     field: "REMARK",
     headerName: "Remark",
     filter: 'agSetColumnFilter',
     filterParams: {
       defaultToNothingSelected: true,
     },
-    sortable: true
+    sortable: true,
+    width: 300,
+    minWidth: 200
   },
   {
     field: "CREATED_DT",
@@ -76,14 +86,20 @@ const columnDefs = [
     },
     sortable: true
   },
-      {
+  {
     field: "STATUS",
     headerName: "Status",
     filter: 'agSetColumnFilter',
     filterParams: {
       defaultToNothingSelected: true,
     },
-    sortable: true
+    sortable: true,
+    width: 100,
+    minWidth: 100,
+    valueFormatter: (params) => {
+      // Checking the value and returning the appropriate label
+      return params.value === "1" ? 'Active' : 'Inactive';
+    }
   },
 ];
 
@@ -123,7 +139,7 @@ export default function QcPrdPrTable() {
       QC_ID: row.QC_ID,
       mode: "view"
     }).toString();
-     router.push(`/masters/qc/qcprdprocess/qcprdpro/?${params}`);
+    router.push(`/masters/qc/qcprdprocess/qcprdpro/?${params}`);
   };
 
   const handleSelectionChanged = useCallback((event) => {
@@ -176,7 +192,7 @@ export default function QcPrdPrTable() {
                 resizable: true,
                 sortable: true,
                 filter: true,
-                flex: 1,
+                flex: 0,
                 minWidth: 100
               }}
               customGridOptions={{

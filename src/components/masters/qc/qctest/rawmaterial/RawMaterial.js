@@ -556,7 +556,7 @@ const RawMaterial = () => {
     return (
         <Grid container sx={{ bgcolor: '#f5f5f5', py: 4 }}>
             <ToastContainer />
-            <Grid item xs={12} sx={{ mx: 'auto', px: { xs: 4, sm: 6, md: 6,lg:8}, width: '100%' }}>
+            <Grid item xs={12} sx={{ mx: 'auto', px: { xs: 4, sm: 6, md: 6, lg: 8 }, width: '100%' }}>
                 <Typography variant="h6" align="center">
                     QC Test (Raw Material)
                 </Typography>
@@ -621,7 +621,7 @@ const RawMaterial = () => {
                     </Grid>
                 </Grid>
                 <Grid container spacing={1} sx={{ mt: 2 }}>
-                    <Grid item xs={12} sm={6} md={4} sx={{width:"30%"}}>
+                    <Grid item xs={12} sm={6} md={4} sx={{ width: "30%" }}>
                         <TextField
                             label="Doc Type"
                             variant="filled"
@@ -637,7 +637,7 @@ const RawMaterial = () => {
                             }}
                         />
                     </Grid>
-                    <Grid item xs={12} sm={6} md={4} sx={{width:"34%"}} >
+                    <Grid item xs={12} sm={6} md={4} sx={{ width: "34%" }} >
                         <Autocomplete
                             options={partyDrp}
                             getOptionLabel={(option) => option.PARTY_NAME || ""}
@@ -649,7 +649,7 @@ const RawMaterial = () => {
                             )}
                         />
                     </Grid>
-                    <Grid item xs={12} sm={6} md={4} sx={{width:"34%"}}>
+                    <Grid item xs={12} sm={6} md={4} sx={{ width: "34%" }}>
                         <Autocomplete
                             options={docNoDrp}
                             getOptionLabel={(option) => option.DOC_NO || ""}
@@ -661,7 +661,7 @@ const RawMaterial = () => {
                             )}
                         />
                     </Grid>
-                    <Grid item xs={12} sm={6} md={4} sx={{width:"30%"}}>
+                    <Grid item xs={12} sm={6} md={4} sx={{ width: "30%" }}>
                         <Autocomplete
                             options={qcSubGroups}
                             getOptionLabel={(option) => option.QC_SUBGROUP_NAME || ""}
@@ -673,7 +673,7 @@ const RawMaterial = () => {
                             )}
                         />
                     </Grid>
-                    <Grid item xs={12} sm={6} md={4} sx={{width:"34%"}}>
+                    <Grid item xs={12} sm={6} md={4} sx={{ width: "34%" }}>
                         <Autocomplete
                             options={dtlItems}
                             getOptionLabel={(option) => option.DTL_NAME || ""}
@@ -813,7 +813,7 @@ const RawMaterial = () => {
                     </Table>
                 </TableContainer>
                 <Grid container spacing={1} sx={{ mt: 2 }}>
-                    <Grid item xs={12} sm={6} md={4} sx={{width:"18%"}}>
+                    <Grid item xs={12} sm={6} md={4} sx={{ width: "18%" }}>
                         <Autocomplete
                             options={decision}
                             getOptionLabel={(option) => option.DECISION_STATUSNM || ""}
@@ -832,13 +832,14 @@ const RawMaterial = () => {
                             )}
                         />
                     </Grid>
-                    <Grid item xs={12} sm={6} md={4} sx={{width:"40%"}}>
+                    <Grid item xs={12} sm={6} md={4} sx={{ width: "40%" }}>
                         <TextField
                             label="Decision Remark"
                             variant="filled"
                             fullWidth
                             name="PASS_PARTIAL_REMARK"
                             value={form.PASS_PARTIAL_REMARK}
+                            disabled={mode === FORM_MODE.read}
                             onChange={(e) => setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }))}
                             sx={textInputSx}
                             inputProps={{
@@ -849,13 +850,14 @@ const RawMaterial = () => {
                             }}
                         />
                     </Grid>
-                    <Grid item xs={12} sm={6} md={4} sx={{width:"40%"}}>
+                    <Grid item xs={12} sm={6} md={4} sx={{ width: "40%" }}>
                         <TextField
                             label="Remark/Instructions"
                             variant="filled"
                             fullWidth
                             name="REMARK"
                             value={form.REMARK}
+                            disabled={mode === FORM_MODE.read}
                             onChange={(e) => setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }))}
                             sx={textInputSx}
                             inputProps={{

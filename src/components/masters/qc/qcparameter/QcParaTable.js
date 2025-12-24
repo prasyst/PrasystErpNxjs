@@ -1,8 +1,5 @@
 'use client';
 import React, { useState, useEffect, useCallback } from "react";
-import {
-  Button, Stack, Box
-} from '@mui/material';
 import ReusableTable, { getCustomDateFilter } from '@/components/datatable/ReusableTable';
 import { useRouter } from 'next/navigation';
 import axiosInstance from "@/lib/axios";
@@ -10,12 +7,14 @@ import axiosInstance from "@/lib/axios";
 const columnDefs = [
   {
     field: "QC_SUBGROUP_KEY",
-    headerName: "QC SubGrp Key",
+    headerName: "SubGrp Key",
     filter: 'agSetColumnFilter',
     filterParams: {
       defaultToNothingSelected: true,
     },
-    sortable: true
+    sortable: true,
+    width: 120, // set fixed width
+    minWidth: 100,
   },
   {
     field: "QC_SUBGROUP_NAME",
@@ -24,7 +23,9 @@ const columnDefs = [
     filterParams: {
       defaultToNothingSelected: true,
     },
-    sortable: true
+    sortable: true,
+    width: 250,
+    minWidth: 200,
   },
   {
     field: "TEST_NAME",
@@ -33,43 +34,57 @@ const columnDefs = [
     filterParams: {
       defaultToNothingSelected: true,
     },
-    sortable: true
+    sortable: true,
+    width: 250,
+    minWidth: 200
   },
   {
     field: "VALUE_TEST",
-    headerName: "Value Test",
+    headerName: "ValTest",
+    width: 30,
     filter: 'agSetColumnFilter',
     filterParams: {
       defaultToNothingSelected: true,
     },
-    sortable: true
+    sortable: true,
+    width: 100,
+    minWidth: 100
   },
   {
     field: "RANGE_FROM",
     headerName: "Range From",
+    width: 60,
     filter: 'agSetColumnFilter',
     filterParams: {
       defaultToNothingSelected: true,
     },
-    sortable: true
+    sortable: true,
+    width: 130,
+    minWidth: 100
   },
   {
     field: "RANGE_TO",
     headerName: "Range To",
+    width: 60,
     filter: 'agSetColumnFilter',
     filterParams: {
       defaultToNothingSelected: true,
     },
-    sortable: true
+    sortable: true,
+    width: 130,
+    minWidth: 100
   },
   {
     field: "REMARK",
     headerName: "Remark",
+    width: 130,
     filter: 'agSetColumnFilter',
     filterParams: {
       defaultToNothingSelected: true,
     },
-    sortable: true
+    sortable: true,
+    width: 300,
+    minWidth: 200
   },
   {
     field: "CREATED_DT",
@@ -92,15 +107,15 @@ const columnDefs = [
     },
     sortable: true
   },
-  {
-    field: "STATUS",
-    headerName: "Status",
-    filter: 'agSetColumnFilter',
-    filterParams: {
-      defaultToNothingSelected: true,
-    },
-    sortable: true
-  },
+  // {
+  //   field: "STATUS",
+  //   headerName: "Status",
+  //   filter: 'agSetColumnFilter',
+  //   filterParams: {
+  //     defaultToNothingSelected: true,
+  //   },
+  //   sortable: true
+  // },
 ];
 
 export default function QcParaTable() {
@@ -139,7 +154,7 @@ export default function QcParaTable() {
       QC_SUBGROUP_KEY: row.QC_SUBGROUP_KEY,
       mode: "view"
     }).toString();
-      router.push(`/masters/qc/qcparameter/qcparamtr/?${params}`);
+    router.push(`/masters/qc/qcparameter/qcparamtr/?${params}`);
   };
 
   const handleSelectionChanged = useCallback((event) => {
@@ -190,7 +205,7 @@ export default function QcParaTable() {
                 resizable: true,
                 sortable: true,
                 filter: true,
-                flex: 1,
+                flex: 0,
                 minWidth: 100
               }}
               customGridOptions={{
