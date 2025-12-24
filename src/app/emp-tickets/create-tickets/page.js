@@ -1,0 +1,11 @@
+"use client"
+import CreateTicket from '@/components/ticket/empTicketsComp/CreateTicket';
+import { Suspense } from 'react';
+
+export default function TicketDashboardPage() {
+    return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <CreateTicket />
+    </Suspense>
+  );
+}

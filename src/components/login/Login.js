@@ -327,6 +327,7 @@ const Login = () => {
         localStorage.setItem('EMP_NAME', employeeData.EMP_NAME);
         if (employeeData.EMP_KEY) {
           localStorage.setItem('EMP_KEY', employeeData.EMP_KEY);
+           router.push('/employeepage');
         }
         if (employeeData.EMP_NAME) {
           localStorage.setItem('EMP_NAME', employeeData.EMP_NAME);
