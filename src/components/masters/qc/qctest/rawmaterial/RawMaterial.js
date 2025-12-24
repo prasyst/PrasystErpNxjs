@@ -47,9 +47,15 @@ const RawMaterial = () => {
                     const validParty = DATA.filter((p) => p.PARTY_KEY);
                     setPartyDrp(validParty);
                     setForm((prev) => ({
-                        ...prev, PARTY_KEY: validParty[0]?.PARTY_KEY
+                        ...prev, PARTY_KEY: validParty[705]?.PARTY_KEY
                     }));
                 } else {
+                    setForm({
+                        PARTY_KEY: '',
+                        DOC_KEY: '',
+                        DOC_DTL_ID: '',
+                        QC_SUBGROUP_KEY: ''
+                    });
                     setPartyDrp([]);
                 }
             } catch (error) { console.error("Error fetching partydrp:", error); }
@@ -57,148 +63,81 @@ const RawMaterial = () => {
         fetchPartyDrp();
     }, []);
     //DOC NO DRP
-    // useEffect(() => {
-    //     const FCYR_KEY = localStorage.getItem('FCYR_KEY');
-    //     const COBR_ID = localStorage.getItem('COBR_ID');
-    //     if (!form.PARTY_KEY) {
-    //         setDocNoDrp([]);
-    //         setDtlItems([]);
-    //         setQcSubGroups([]);
-    //         setForm(prev => ({
-    //             ...prev,
-    //             DOC_KEY: '',
-    //             DOC_DTL_ID: '',
-    //             QC_SUBGROUP_KEY: ''
-    //         }));
-    //         setTableData([]);
-    //         return;
-    //     }
-    //     if (FCYR_KEY && COBR_ID && form.PARTY_KEY) {
-    //         const fetchDocNoDrp = async () => {
-    //             try {
-    //                 const response = await axiosInstance.post("QC_TEST/GetQC_DocTypeDrp", {
-    //                     QC_TYPE: "RM",
-    //                     PARTY_KEY: form.PARTY_KEY,
-    //                     PARTYDTL_ID: 0,
-    //                     DOC_KEY: "",
-    //                     DOC_DTL_ID: 0,
-    //                     FLAG: "RM",
-    //                     DBFLAG: "PartySelection",
-    //                     QC_SUBGROUP_KEY: "",
-    //                     FCYR_KEY,
-    //                     COBR_ID
-    //                 });
-    //                 const { STATUS, DATA } = response.data;
-    //                 const validDocNo = DATA.filter((p) => p.DOC_KEY);
-    //                 if (STATUS === 0 && Array.isArray(DATA)) {
-    //                     setDocNoDrp(validDocNo);
-    //                     setForm(prev => ({
-    //                         ...prev,
-    //                         DOC_KEY: validDocNo[0]?.DOC_KEY,
-    //                         DOC_DTL_ID: '',
-    //                         QC_SUBGROUP_KEY: ''
-    //                     }));
-    //                     setTableData([]);
-    //                 } else {
-    //                     setDocNoDrp([]);
-    //                     setForm(prev => ({
-    //                         ...prev,
-    //                         DOC_KEY: '',
-    //                         DOC_DTL_ID: '',
-    //                         QC_SUBGROUP_KEY: ''
-    //                     }));
-    //                     setTableData([]);
-    //                 }
 
-    //             } catch (error) {
-    //                 console.error("Error fetching doc numbers:", error);
-    //             }
-    //         };
-    //         fetchDocNoDrp();
-    //     }
-    // }, [form.PARTY_KEY]);
-    const handlePartyChange = (e, newValue) => {
-        const selectedPartyKey = newValue ? newValue.PARTY_KEY : '';
-        // Reset dependent fields when PARTY_KEY is cleared
-        if (!selectedPartyKey) {
-            setForm(prev => ({
-                ...prev,
-                PARTY_KEY: '',
-                DOC_KEY: '',
-                DOC_DTL_ID: '',
-                QC_SUBGROUP_KEY: '',
-            }));
+    useEffect(() => {
+        if (!form.PARTY_KEY) {
             setDocNoDrp([]);
             setDtlItems([]);
             setQcSubGroups([]);
-            setTableData([]);
-        } else {
-            // If PARTY_KEY is selected, fetch and populate the DOC_KEY, DOC_DTL_ID, and QC_SUBGROUP_KEY
             setForm(prev => ({
                 ...prev,
-                PARTY_KEY: selectedPartyKey,
+                DOC_KEY: '',
+                DOC_DTL_ID: '',
+                QC_SUBGROUP_KEY: '',
+                PASS_PARTIAL_REMARK: '',
+                REMARK: ''
             }));
-
-            // Call the API to fetch the DOC_KEY and other dependent data based on PARTY_KEY
-            const fetchDocNoDrp = async () => {
-                try {
-                    const FCYR_KEY = localStorage.getItem('FCYR_KEY');
-                    const COBR_ID = localStorage.getItem('COBR_ID');
-
-                    // Call the API with selected PARTY_KEY
-                    const response = await axiosInstance.post("QC_TEST/GetQC_DocTypeDrp", {
-                        QC_TYPE: "RM",
-                        PARTY_KEY: selectedPartyKey,
-                        PARTYDTL_ID: 0,
-                        DOC_KEY: "", // Initially empty DOC_KEY, will be populated by the response
-                        DOC_DTL_ID: 0,
-                        FLAG: "RM",
-                        DBFLAG: "PartySelection",
-                        QC_SUBGROUP_KEY: "",
-                        FCYR_KEY,
-                        COBR_ID
-                    });
-
-                    const { STATUS, DATA } = response.data;
-                    if (STATUS === 0 && Array.isArray(DATA)) {
-                        const validDocNo = DATA.filter(p => p.DOC_KEY);
-                        setDocNoDrp(validDocNo);
-                        setForm(prev => ({
-                            ...prev,
-                            DOC_KEY: validDocNo[0]?.DOC_KEY || '',
-                            DOC_DTL_ID: '',
-                            QC_SUBGROUP_KEY: '',
-                        }));
-                        setTableData([]);
-                    } else {
-                        setDocNoDrp([]);
-                        setForm(prev => ({
-                            ...prev,
-                            DOC_KEY: '',
-                            DOC_DTL_ID: '',
-                            QC_SUBGROUP_KEY: '',
-                        }));
-                        setTableData([]);
-                    }
-                } catch (error) {
-                    console.error("Error fetching DOC_NO dropdown:", error);
-                }
-            };
-
-            fetchDocNoDrp();
+            setTableData([]);
+            return;
         }
-    };
+
+        const fetchDocNoDrp = async () => {
+            try {
+                const FCYR_KEY = localStorage.getItem('FCYR_KEY');
+                const COBR_ID = localStorage.getItem('COBR_ID');
+                const response = await axiosInstance.post("QC_TEST/GetQC_DocTypeDrp", {
+                    QC_TYPE: "RM",
+                    PARTY_KEY: form.PARTY_KEY,
+                    PARTYDTL_ID: 0,
+                    DOC_KEY: "",
+                    DOC_DTL_ID: 0,
+                    FLAG: "RM",
+                    DBFLAG: "PartySelection",
+                    QC_SUBGROUP_KEY: "",
+                    FCYR_KEY,
+                    COBR_ID
+                });
+                const { STATUS, DATA } = response.data;
+                const validDocNo = DATA.filter(p => p.DOC_KEY);
+                if (STATUS === 0 && validDocNo.length > 0) {
+                    setDocNoDrp(validDocNo);
+                    setForm(prev => ({
+                        ...prev,
+                        DOC_KEY: validDocNo[0]?.DOC_KEY || '',
+                        DOC_DTL_ID: '',       // Reset DOC_DTL_ID
+                        QC_SUBGROUP_KEY: ''   // Reset QC_SUBGROUP_KEY
+                    }));
+                } else {
+                    setDocNoDrp([]);
+                    setForm(prev => ({
+                        ...prev,
+                        DOC_KEY: '',
+                        DOC_DTL_ID: '',
+                        QC_SUBGROUP_KEY: ''
+                    }));
+                }
+                setDtlItems([]);  // Reset items
+            } catch (error) {
+                console.error("Error fetching doc numbers:", error);
+                setDocNoDrp([]);
+                setDtlItems([]);
+            }
+        };
+
+        fetchDocNoDrp();
+    }, [form.PARTY_KEY]);
+
 
     //ITM DRP
     useEffect(() => {
         const FCYR_KEY = localStorage.getItem('FCYR_KEY');
         const COBR_ID = localStorage.getItem('COBR_ID');
-        if (!form.DOC_KEY) {
+        if (!form.DOC_KEY && !form.PARTY_KEY) {
             setDtlItems([]);
             setForm((prev) => ({ ...prev, DOC_DTL_ID: '' }));
             return;
         }
-        if (FCYR_KEY && COBR_ID && form.DOC_KEY) {
+        if (FCYR_KEY && COBR_ID && form.DOC_KEY && form.PARTY_KEY) {
             const fetchItemDrp = async () => {
                 try {
                     const response = await axiosInstance.post("QC_TEST/GetQC_DocTypeDrp", {
@@ -220,7 +159,7 @@ const RawMaterial = () => {
                         setForm(prev => ({ ...prev, DOC_DTL_ID: validDtlItems[0]?.DOC_DTL_ID }));
                     } else {
                         setDtlItems([]);
-                        setForm(prev => ({ ...prev, DOC_DTL_ID: '' }));
+                        setForm(prev => ({ ...prev, DOC_DTL_ID: '', QC_SUBGROUP_KEY: '' }));
                     }
                 } catch (error) {
                     console.error("Error fetching DOC_DTL_ID:", error);
@@ -261,7 +200,10 @@ const RawMaterial = () => {
                         setForm(prev => ({ ...prev, QC_SUBGROUP_KEY: firstValid[0]?.QC_SUBGROUP_KEY }));
                     } else {
                         setQcSubGroups([]);
-                        setForm(prev => ({ ...prev, QC_SUBGROUP_KEY: '' }));
+                        setForm(prev => ({
+                            ...prev, QC_SUBGROUP_KEY: '', PASS_PARTIAL_REMARK: '',
+                            REMARK: ''
+                        }));
                         setTableData([])
                     }
                 } catch (error) {
@@ -322,23 +264,19 @@ const RawMaterial = () => {
                 });
                 const { data: { STATUS, DATA, RESPONSESTATUSCODE } } = response;
                 if (STATUS === 0 && RESPONSESTATUSCODE === 1) {
-                    const qcData = DATA.QC_TESTList[0]; // Assuming the first item
-                    // const qcSubGroupData = DATA.QC_TESTList.map((item) => ({
-                    //     QC_SUBGROUP_KEY: item.QC_SUBGROUP_KEY,
-                    //     QC_SUBGROUP_NAME: item.QC_SUBGROUP_NAME,
-                    // }));
+                    const qcData = DATA.QC_TESTList[0];
                     setForm((prev) => ({
                         ...prev,
-                        PARTY_KEY: qcData.PARTY_KEY,
-                        DOC_KEY: qcData.DOC_KEY,
-                        DOC_DTL_ID: qcData.DOC_DTL_ID,
-                        QC_SUBGROUP_KEY: qcData.QC_SUBGROUP_KEY,
+                        // PARTY_KEY: qcData.PARTY_KEY,
+                        // DOC_KEY: qcData.DOC_KEY,
+                        // DOC_DTL_ID: qcData.DOC_DTL_ID,
+                        // QC_SUBGROUP_KEY: qcData.QC_SUBGROUP_KEY,
                         QC_TEST_ID: qcData.QC_TEST_ID || 0,
                         PASS_PARTIAL_REMARK: qcData.PASS_PARTIAL_REMARK || '',
                         REMARK: qcData.REMARK || ''
                     }));
                     setTableData(qcData.QC_TESTDTLEntities.map(item => ({
-                        ...item, // Retain existing data
+                        ...item,
                         USER_VALUE: item.USER_VALUE || '',
                         RESULT: item.RESULT,
                         FINAL_RESULT: item.FINAL_RESULT,
@@ -360,12 +298,41 @@ const RawMaterial = () => {
     }, [form.QC_SUBGROUP_KEY, fetchTableData]);
     // const handlePartyChange = (e, newValue) => {
     //     const selectedPartyKey = newValue ? newValue.PARTY_KEY : '';
-    //     setForm((prev) => ({
-    //         ...prev,
-    //         PARTY_KEY: selectedPartyKey,
-    //     }));
-    //     setTableData([]);
-    // };
+    //     if (!selectedPartyKey) {
+    //         setForm(prev => ({
+    //             ...prev,
+    //             PARTY_KEY: '',
+    //             DOC_KEY: '',
+    //             DOC_DTL_ID: '',
+    //             QC_SUBGROUP_KEY: '',
+    //         }));
+    //         setDocNoDrp([]);
+    //         setDtlItems([]);
+    //         setQcSubGroups([]);
+    //         setTableData([]);
+    //     } else {
+    //         setForm(prev => ({
+    //             ...prev,
+    //             PARTY_KEY: selectedPartyKey,
+    //         }));
+    //     }
+    // }
+    const handlePartyChange = (e, newValue) => {
+        const selectedPartyKey = newValue ? newValue.PARTY_KEY : '';
+        setForm(prev => ({
+            ...prev,
+            PARTY_KEY: selectedPartyKey,
+            DOC_KEY: '',
+            DOC_DTL_ID: '',
+            QC_SUBGROUP_KEY: '',
+            PASS_PARTIAL_REMARK: '',
+            REMARK: ''
+        }));
+        setDocNoDrp([]);
+        setDtlItems([]);
+        setQcSubGroups([]);
+        setTableData([]);
+    };
     const handleDocNoChange = (e, newValue) => {
         const selectedDocKey = newValue ? newValue.DOC_KEY : '';
         setForm((prev) => ({
@@ -373,6 +340,8 @@ const RawMaterial = () => {
             DOC_KEY: selectedDocKey,
             DOC_DTL_ID: '',
             QC_SUBGROUP_KEY: '',
+            PASS_PARTIAL_REMARK: '',
+            REMARK: ''
         }));
         setDtlItems([]);
         setQcSubGroups([]);
@@ -385,9 +354,9 @@ const RawMaterial = () => {
             QC_SUBGROUP_KEY: selectedSubGroupKey,
         }));
         if (!selectedSubGroupKey) {
-            fetchTableData();  // Call the function to fetch table data based on the selected QC_SUBGROUP_KEY
+            fetchTableData();
         } else {
-            setTableData([]);  // Clear table data if no subgroup is selected
+            setTableData([]);
         }
     };
     const handleCellChange = (rowId, field, value) => {
@@ -442,18 +411,18 @@ const RawMaterial = () => {
         const USER_ID = localStorage.getItem('USER_ID');
         const apiUrl = form.QC_TEST_ID === 0 ? 'QC_TEST/InsertQC_TEST' : 'QC_TEST/UpdateQC_TEST';
         const mainData = {
-            QC_TEST_ID: form.QC_TEST_ID || 0, // 0 for Insert, >0 for Update
+            QC_TEST_ID: form.QC_TEST_ID || 0,
             DOC_KEY: form.DOC_KEY,
             DOC_DTL_ID: form.DOC_DTL_ID,
             QC_TYPE: 'Raw Material',
             QC_SUBGROUP_KEY: form.QC_SUBGROUP_KEY,
-            DECISION_STATUS: 'P',     // Example: Passed
+            DECISION_STATUS: 'P',
             PASS_PARTIAL_REMARK: form.PASS_PARTIAL_REMARK,
             REMARK: form.REMARK,
             CHECKED_BY: 1,
             PASSED_BY: 1,
             CREATED_BY: USER_ID,
-            DBFLAG: mode === FORM_MODE.add ? 'I' : 'U', // 'I' for Insert, 'U' for Update
+            DBFLAG: mode === FORM_MODE.add ? 'I' : 'U',
             QC_TESTDTLEntities: tableData.map(item => ({
                 QC_TEST_DTL_ID: item.QC_TEST_DTL_ID || 0,
                 QC_TEST_ID: form.QC_TEST_ID || 0,
@@ -569,7 +538,7 @@ const RawMaterial = () => {
                             variant="contained"
                             size="small"
                             sx={{ background: 'linear-gradient(290deg, #d4d4d4, #d4d4d4) !important' }}
-                            disabled={mode !== FORM_MODE.read}
+                            disabled={true}
                             onClick={handlePrevious}
                         >
                             <KeyboardArrowLeftIcon />
@@ -578,7 +547,7 @@ const RawMaterial = () => {
                             variant="contained"
                             size="small"
                             sx={{ background: 'linear-gradient(290deg, #b9d0e9, #e9f2fa) !important', ml: 1 }}
-                            disabled={mode !== FORM_MODE.read}
+                            disabled={true}
                             onClick={handleNext}
                         >
                             <NavigateNextIcon />

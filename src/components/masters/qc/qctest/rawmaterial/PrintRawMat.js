@@ -2,7 +2,7 @@
 import React from "react";
 import { Page, Text, View, Document } from "@react-pdf/renderer";
 
-const PrintRawMat = ({ rows, currentCatData }) => {
+const PrintRawMat = ({ rows }) => {
     const currentDate = new Date().toLocaleDateString();
     const currentTime = new Date().toLocaleTimeString();
 
@@ -20,35 +20,19 @@ const PrintRawMat = ({ rows, currentCatData }) => {
                         <View style={{ border: '1px solid #000', borderRadius: 3, marginBottom: 10 }}>
                             <View style={{ flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: '#000', borderBottomStyle: 'solid', borderTopWidth: 1, borderTopColor: '#000', borderTopStyle: 'solid', backgroundColor: '#f5f5f5', fontWeight: 'bold' }}>
                                 <Text style={{ width: '7%', borderRight: '1px solid #ddd', padding: 5, textAlign: 'center' }}>SrNo.</Text>
-                                {/* <Text style={{ width: '15%', borderRight: '1px solid #ddd', padding: 5 }}>Party</Text> */}
                                 <Text style={{ width: '25%', borderRight: '1px solid #ddd', padding: 5 }}>DocNo</Text>
                                 <Text style={{ width: '30%', borderRight: '1px solid #ddd', padding: 5 }}>Details</Text>
                                 <Text style={{ width: '8%', borderRight: '1px solid #ddd', padding: 5 }}>DecSt</Text>
                                 <Text style={{ width: '15%', borderRight: '1px solid #ddd', padding: 5 }}>PassPartialRemark</Text>
-
-                                {/* <Text style={{ width: '15%', borderRight: '1px solid #ddd', padding: 5 }}>ValTest</Text>
-                                <Text style={{ width: '15%', borderRight: '1px solid #ddd', padding: 5 }}>Rg.Fm</Text> */}
-                                {/* <Text style={{ width: '15%', borderRight: '1px solid #ddd', padding: 5 }}>Rg.To</Text>
-                                <Text style={{ width: '15%', borderRight: '1px solid #ddd', padding: 5 }}>UserVal</Text>
-                                <Text style={{ width: '15%', borderRight: '1px solid #ddd', padding: 5 }}>Res</Text>
-                                <Text style={{ width: '15%', borderRight: '1px solid #ddd', padding: 5 }}>FRes</Text> */}
                                 <Text style={{ width: '10%', padding: 5 }}>Status</Text>
                             </View>
                             {rows.slice(pageIndex * 30, (pageIndex + 1) * 30).map((row, index) => (
                                 <View key={row.QC_GROUP_KEY} style={{ flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: '#ddd', borderBottomStyle: 'solid' }}>
                                     <Text style={{ width: '7%', borderRight: '1px solid #ddd', padding: 5, textAlign: 'center' }}>{pageIndex * 30 + index + 1}</Text>
-                                    {/* <Text style={{ width: '15%', borderRight: '1px solid #ddd', padding: 5 }}>{row.PARTY_NAME}</Text> */}
                                     <Text style={{ width: '25%', borderRight: '1px solid #ddd', padding: 5 }}>{row.DOC_NO}</Text>
                                     <Text style={{ width: '30%', borderRight: '1px solid #ddd', padding: 5 }}>{row.QC_SUBGROUP_NAME} </Text>
                                     <Text style={{ width: '8%', borderRight: '1px solid #ddd', padding: 5 }}>{row.DECISION_STATUS}</Text>
                                     <Text style={{ width: '15%', borderRight: '1px solid #ddd', padding: 5 }}>{row.PASS_PARTIAL_REMARK} </Text>
-
-                                    {/* <Text style={{ width: '15%', borderRight: '1px solid #ddd', padding: 5 }}>{row.VALUE_TEST}</Text>
-                                    <Text style={{ width: '15%', borderRight: '1px solid #ddd', padding: 5 }}>{row.RANGE_FROM}</Text> */}
-                                    {/* <Text style={{ width: '15%', borderRight: '1px solid #ddd', padding: 5 }}>{row.RANGE_TO}</Text>
-                                    <Text style={{ width: '15%', borderRight: '1px solid #ddd', padding: 5 }}>{row.RANGE_TO}</Text>
-                                    <Text style={{ width: '15%', borderRight: '1px solid #ddd', padding: 5 }}>{row.RANGE_TO}</Text>
-                                    <Text style={{ width: '15%', borderRight: '1px solid #ddd', padding: 5 }}>{row.RANGE_TO}</Text> */}
                                     <Text style={{ width: '10%', padding: 5 }}> {row.STATUS}</Text>
                                 </View>
                             ))}

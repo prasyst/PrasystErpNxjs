@@ -1,5 +1,5 @@
 'use client'
-import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { Grid, Button, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Select, MenuItem, TextField, Autocomplete } from '@mui/material';
 import { useRouter } from 'next/navigation';
 import { pdf } from '@react-pdf/renderer';
@@ -33,7 +33,7 @@ const SemiFinish = () => {
     const [editableRow, setEditableRow] = useState(null);
     const [mode, setMode] = useState(() => FORM_MODE.read);
     const [tableData, setTableData] = useState([]);
-    const [decision, setDecision] = useState([]);    //PARTY DRP
+    const [decision, setDecision] = useState([]);
     useEffect(() => {
         const fetchPartyDrp = async () => {
             try {
@@ -47,7 +47,7 @@ const SemiFinish = () => {
                     const validParty = DATA.filter((p) => p.PARTY_KEY);
                     setPartyDrp(validParty);
                     setForm((prev) => ({
-                        ...prev, PARTY_KEY: validParty[0]?.PARTY_KEY
+                        ...prev, PARTY_KEY: validParty[452]?.PARTY_KEY
                     }));
                 } else {
                     setPartyDrp([]);
@@ -57,34 +57,28 @@ const SemiFinish = () => {
         fetchPartyDrp();
     }, []);
     //DOC NO DRP
-    const handlePartyChange = (e, newValue) => {
-        const selectedPartyKey = newValue ? newValue.PARTY_KEY : '';
-        // Reset dependent fields when PARTY_KEY is cleared
-        if (!selectedPartyKey) {
-            setForm(prev => ({
-                ...prev,
-                PARTY_KEY: '',
-                DOC_KEY: '',
-                DOC_DTL_ID: '',
-                QC_SUBGROUP_KEY: '',
-            }));
+    useEffect(() => {
+        const FCYR_KEY = localStorage.getItem('FCYR_KEY');
+        const COBR_ID = localStorage.getItem('COBR_ID');
+        if (!form.PARTY_KEY) {
             setDocNoDrp([]);
             setDtlItems([]);
             setQcSubGroups([]);
-            setTableData([]);
-        } else {
-            // If PARTY_KEY is selected, fetch and populate the DOC_KEY, DOC_DTL_ID, and QC_SUBGROUP_KEY
             setForm(prev => ({
                 ...prev,
-                PARTY_KEY: selectedPartyKey,
+                DOC_KEY: '',
+                DOC_DTL_ID: '',
+                QC_SUBGROUP_KEY: ''
             }));
+            setTableData([]);
+            return;
+        }
+        if (FCYR_KEY && COBR_ID && form.PARTY_KEY) {
             const fetchDocNoDrp = async () => {
                 try {
-                    const FCYR_KEY = localStorage.getItem('FCYR_KEY');
-                    const COBR_ID = localStorage.getItem('COBR_ID');
                     const response = await axiosInstance.post("QC_TEST/GetQC_DocTypeDrp", {
                         QC_TYPE: "SEMI",
-                        PARTY_KEY: selectedPartyKey,
+                        PARTY_KEY: form.PARTY_KEY,
                         PARTYDTL_ID: 0,
                         DOC_KEY: "",
                         DOC_DTL_ID: 0,
@@ -95,14 +89,14 @@ const SemiFinish = () => {
                         COBR_ID
                     });
                     const { STATUS, DATA } = response.data;
+                    const validDocNo = DATA.filter((p) => p.DOC_KEY);
                     if (STATUS === 0 && Array.isArray(DATA)) {
-                        const validDocNo = DATA.filter(p => p.DOC_KEY);
                         setDocNoDrp(validDocNo);
                         setForm(prev => ({
                             ...prev,
-                            DOC_KEY: validDocNo[0]?.DOC_KEY || '',
+                            DOC_KEY: validDocNo[0]?.DOC_KEY,
                             DOC_DTL_ID: '',
-                            QC_SUBGROUP_KEY: '',
+                            QC_SUBGROUP_KEY: ''
                         }));
                         setTableData([]);
                     } else {
@@ -111,17 +105,17 @@ const SemiFinish = () => {
                             ...prev,
                             DOC_KEY: '',
                             DOC_DTL_ID: '',
-                            QC_SUBGROUP_KEY: '',
+                            QC_SUBGROUP_KEY: ''
                         }));
                         setTableData([]);
                     }
                 } catch (error) {
-                    console.error("Error fetching DOC_NO dropdown:", error);
+                    console.error("Error fetching doc numbers:", error);
                 }
             };
             fetchDocNoDrp();
         }
-    };
+    }, [form.PARTY_KEY]);
     //ITM DRP
     useEffect(() => {
         const FCYR_KEY = localStorage.getItem('FCYR_KEY');
@@ -180,7 +174,6 @@ const SemiFinish = () => {
                         PARTYDTL_ID: 0,
                         DOC_KEY: form.DOC_KEY,
                         DOC_DTL_ID: form.DOC_DTL_ID,
-                        // DOC_DTL_ID: "33656",
                         FLAG: "SEMI",
                         DBFLAG: "DocDtlIdSelection",
                         QC_SUBGROUP_KEY: "",
@@ -194,7 +187,7 @@ const SemiFinish = () => {
                         setForm(prev => ({ ...prev, QC_SUBGROUP_KEY: firstValid[0]?.QC_SUBGROUP_KEY }));
                     } else {
                         setQcSubGroups([]);
-                        setForm(prev => ({ ...prev, QC_SUBGROUP_KEY: '' }));
+                        setForm(prev => ({ ...prev, QC_SUBGROUP_KEY: '', PASS_PARTIAL_REMARK: '', REMARK: '' }));
                         setTableData([])
                     }
                 } catch (error) {
@@ -258,20 +251,20 @@ const SemiFinish = () => {
                     const qcData = DATA.QC_TESTList[0];
                     setForm((prev) => ({
                         ...prev,
-                        PARTY_KEY: qcData.PARTY_KEY,
-                        DOC_KEY: qcData.DOC_KEY,
-                        DOC_DTL_ID: qcData.DOC_DTL_ID,
-                        QC_SUBGROUP_KEY: qcData.QC_SUBGROUP_KEY,
+                        // PARTY_KEY: form.PARTY_KEY || qcData.PARTY_KEY,
+                        // DOC_KEY: qcData.DOC_KEY,
+                        // DOC_DTL_ID: qcData.DOC_DTL_ID,
+                        // QC_SUBGROUP_KEY: qcData.QC_SUBGROUP_KEY,
                         QC_TEST_ID: qcData.QC_TEST_ID || 0,
                         PASS_PARTIAL_REMARK: qcData.PASS_PARTIAL_REMARK || '',
                         REMARK: qcData.REMARK || ''
                     }));
                     setTableData(qcData.QC_TESTDTLEntities.map(item => ({
-                        ...item, // Retain existing data
+                        ...item,
                         USER_VALUE: item.USER_VALUE || '',
                         RESULT: item.RESULT,
                         FINAL_RESULT: item.FINAL_RESULT,
-                        REMARK: item.TEST_REMARK
+                        TEST_REMARK: item.TEST_REMARK
                     })));
                 }
                 else {
@@ -287,14 +280,23 @@ const SemiFinish = () => {
             setTableData([]);
         }
     }, [form.QC_SUBGROUP_KEY, fetchTableData]);
-    // const handlePartyChange = (e, newValue) => {
-    //     const selectedPartyKey = newValue ? newValue.PARTY_KEY : '';
-    //     setForm((prev) => ({
-    //         ...prev,
-    //         PARTY_KEY: selectedPartyKey,
-    //     }));
-    //     setTableData([]);
-    // };
+
+    const handlePartyChange = (e, newValue) => {
+        const selectedPartyKey = newValue ? newValue.PARTY_KEY : '';
+        setForm(prev => ({
+            ...prev,
+            PARTY_KEY: selectedPartyKey,
+            DOC_KEY: '',
+            DOC_DTL_ID: '',
+            QC_SUBGROUP_KEY: '',
+            PASS_PARTIAL_REMARK: '',
+            REMARK: ''
+        }));
+        setDocNoDrp([]);
+        setDtlItems([]);
+        setQcSubGroups([]);
+        setTableData([]);
+    };
     const handleDocNoChange = (e, newValue) => {
         const selectedDocKey = newValue ? newValue.DOC_KEY : '';
         setForm((prev) => ({
@@ -302,6 +304,8 @@ const SemiFinish = () => {
             DOC_KEY: selectedDocKey,
             DOC_DTL_ID: '',
             QC_SUBGROUP_KEY: '',
+            PASS_PARTIAL_REMARK: '',
+            REMARK: ''
         }));
         setDtlItems([]);
         setQcSubGroups([]);
@@ -314,9 +318,9 @@ const SemiFinish = () => {
             QC_SUBGROUP_KEY: selectedSubGroupKey,
         }));
         if (!selectedSubGroupKey) {
-            fetchTableData();  // Call the function to fetch table data based on the selected QC_SUBGROUP_KEY
+            fetchTableData();
         } else {
-            setTableData([]);  // Clear table data if no subgroup is selected
+            setTableData([]);
         }
     };
     const handleCellChange = (rowId, field, value) => {
@@ -371,24 +375,24 @@ const SemiFinish = () => {
         const USER_ID = localStorage.getItem('USER_ID');
         const apiUrl = form.QC_TEST_ID === 0 ? 'QC_TEST/InsertQC_TEST' : 'QC_TEST/UpdateQC_TEST';
         const mainData = {
-            QC_TEST_ID: form.QC_TEST_ID || 0, // 0 for Insert, >0 for Update
+            QC_TEST_ID: form.QC_TEST_ID || 0,
             DOC_KEY: form.DOC_KEY,
             DOC_DTL_ID: form.DOC_DTL_ID,
             QC_TYPE: 'Semi Finished',
             QC_SUBGROUP_KEY: form.QC_SUBGROUP_KEY,
-            DECISION_STATUS: 'P',     // Example: Passed
+            DECISION_STATUS: 'P',
             PASS_PARTIAL_REMARK: form.PASS_PARTIAL_REMARK,
             REMARK: form.REMARK,
             CHECKED_BY: 1,
             PASSED_BY: 1,
             CREATED_BY: USER_ID,
-            DBFLAG: mode === FORM_MODE.add ? 'I' : 'U', // 'I' for Insert, 'U' for Update
+            DBFLAG: mode === FORM_MODE.add ? 'I' : 'U',
             QC_TESTDTLEntities: tableData.map(item => ({
                 QC_TEST_DTL_ID: item.QC_TEST_DTL_ID || 0,
                 QC_TEST_ID: form.QC_TEST_ID || 0,
                 QC_PM_ID: item.QC_PM_ID,
                 USER_VALUE: item.USER_VALUE || 0,
-                REMARK: item.REMARK,
+                REMARK: item.TEST_REMARK,
                 FINAL_RESULT: item.FINAL_RESULT || 'P',
                 DBFLAG: item.QC_TEST_DTL_ID === 0 ? 'I' : 'U',
                 RESULT: item.RESULT,
@@ -417,7 +421,6 @@ const SemiFinish = () => {
         setMode(FORM_MODE.read)
     };
     const handlePrevious = async () => {
-        // await fetchTableData();
         setForm((prev) => ({ ...prev, SearchByCd: '' }));
     };
     const handleNext = async () => {
@@ -498,7 +501,7 @@ const SemiFinish = () => {
                             variant="contained"
                             size="small"
                             sx={{ background: 'linear-gradient(290deg, #d4d4d4, #d4d4d4) !important' }}
-                            disabled={mode !== FORM_MODE.read}
+                            disabled={true}
                             onClick={handlePrevious}
                         >
                             <KeyboardArrowLeftIcon />
@@ -507,7 +510,7 @@ const SemiFinish = () => {
                             variant="contained"
                             size="small"
                             sx={{ background: 'linear-gradient(290deg, #b9d0e9, #e9f2fa) !important', ml: 1 }}
-                            disabled={mode !== FORM_MODE.read}
+                            disabled={true}
                             onClick={handleNext}
                         >
                             <NavigateNextIcon />
@@ -703,9 +706,9 @@ const SemiFinish = () => {
                                             <TableCell sx={commonCellSx}>
                                                 {isEditable ? (
                                                     <TextField
-                                                        value={row.REMARK || ''}
+                                                        value={row.TEST_REMARK || ''}
                                                         onChange={(e) =>
-                                                            handleCellChange(row.QC_PM_ID, 'REMARK', e.target.value)
+                                                            handleCellChange(row.QC_PM_ID, 'TEST_REMARK', e.target.value)
                                                         }
                                                         onKeyDown={(e) => handleEnterKeyAddRow(e, row.QC_PM_ID)}
                                                         variant="standard"
@@ -713,7 +716,7 @@ const SemiFinish = () => {
                                                         sx={inputSx}
                                                     />
                                                 ) : (
-                                                    row.REMARK || ''
+                                                    row.TEST_REMARK || ''
                                                 )}
                                             </TableCell>
                                             <TableCell sx={commonCellSx}>

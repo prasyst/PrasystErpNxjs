@@ -10,7 +10,6 @@ import { TbListSearch } from "react-icons/tb";
 import { toast, ToastContainer } from 'react-toastify';
 import axiosInstance from '@/lib/axios';
 import CrudButton from '@/GlobalFunction/CrudButton';
-
 import { textInputSx } from '../../../../../../public/styles/textInputSx';
 import { inputStyle } from '../../../../../../public/styles/inputStyleDrp';
 import PrintFinish from './PrintFinish';
@@ -34,7 +33,8 @@ const FinishedGoods = () => {
     const [editableRow, setEditableRow] = useState(null);
     const [mode, setMode] = useState(() => FORM_MODE.read);
     const [tableData, setTableData] = useState([]);
-    const [decision, setDecision] = useState([]);    //PARTY DRP
+    const [decision, setDecision] = useState([]);
+    //PARTY DRP
     useEffect(() => {
         const fetchPartyDrp = async () => {
             try {
@@ -48,7 +48,7 @@ const FinishedGoods = () => {
                     const validParty = DATA.filter((p) => p.PARTY_KEY);
                     setPartyDrp(validParty);
                     setForm((prev) => ({
-                        ...prev, PARTY_KEY: validParty[0]?.PARTY_KEY
+                        ...prev, PARTY_KEY: validParty[346]?.PARTY_KEY
                     }));
                 } else {
                     setPartyDrp([]);
@@ -57,35 +57,21 @@ const FinishedGoods = () => {
         };
         fetchPartyDrp();
     }, []);
-    //DOC NO DRP
-    const handlePartyChange = (e, newValue) => {
-        const selectedPartyKey = newValue ? newValue.PARTY_KEY : '';
-        // Reset dependent fields when PARTY_KEY is cleared
-        if (!selectedPartyKey) {
-            setForm(prev => ({
-                ...prev,
-                PARTY_KEY: '',
-                DOC_KEY: '',
-                DOC_DTL_ID: '',
-                QC_SUBGROUP_KEY: '',
-            }));
-            setDocNoDrp([]);
-            setDtlItems([]);
-            setQcSubGroups([]);
-            setTableData([]);
-        } else {
-            // If PARTY_KEY is selected, fetch and populate the DOC_KEY, DOC_DTL_ID, and QC_SUBGROUP_KEY
-            setForm(prev => ({
-                ...prev,
-                PARTY_KEY: selectedPartyKey,
-            }));
+    // useEffect(() => {
+    //     console.log('Selected PARTY_KEY:', form.PARTY_KEY);
+    //     console.log('partyDrp options:', partyDrp);
+    // }, [form.PARTY_KEY, partyDrp]);
+    //
+    //Doc No.
+    useEffect(() => {
+        if (form.PARTY_KEY) {
             const fetchDocNoDrp = async () => {
                 try {
                     const FCYR_KEY = localStorage.getItem('FCYR_KEY');
                     const COBR_ID = localStorage.getItem('COBR_ID');
                     const response = await axiosInstance.post("QC_TEST/GetQC_DocTypeDrp", {
                         QC_TYPE: "FG",
-                        PARTY_KEY: selectedPartyKey,
+                        PARTY_KEY: form.PARTY_KEY,
                         PARTYDTL_ID: 0,
                         DOC_KEY: "",
                         DOC_DTL_ID: 0,
@@ -113,6 +99,8 @@ const FinishedGoods = () => {
                             DOC_KEY: '',
                             DOC_DTL_ID: '',
                             QC_SUBGROUP_KEY: '',
+                            PASS_PARTIAL_REMARK: '',
+                            REMARK: ''
                         }));
                         setTableData([]);
                     }
@@ -122,7 +110,25 @@ const FinishedGoods = () => {
             };
             fetchDocNoDrp();
         }
+    }, [form.PARTY_KEY]);
+
+    const handlePartyChange = (e, newValue) => {
+        const selectedPartyKey = newValue ? newValue.PARTY_KEY : '';
+        setForm(prev => ({
+            ...prev,
+            PARTY_KEY: selectedPartyKey,
+            DOC_KEY: '',
+            DOC_DTL_ID: '',
+            QC_SUBGROUP_KEY: '',
+            PASS_PARTIAL_REMARK: '',
+            REMARK: ''
+        }));
+        setDocNoDrp([]);
+        setDtlItems([]);
+        setQcSubGroups([]);
+        setTableData([]);
     };
+
     //ITM DRP
     useEffect(() => {
         const FCYR_KEY = localStorage.getItem('FCYR_KEY');
@@ -195,7 +201,7 @@ const FinishedGoods = () => {
                         setForm(prev => ({ ...prev, QC_SUBGROUP_KEY: firstValid[0]?.QC_SUBGROUP_KEY }));
                     } else {
                         setQcSubGroups([]);
-                        setForm(prev => ({ ...prev, QC_SUBGROUP_KEY: '' }));
+                        setForm(prev => ({ ...prev, QC_SUBGROUP_KEY: '', PASS_PARTIAL_REMARK: '', REMARK: '' }));
                         setTableData([])
                     }
                 } catch (error) {
@@ -256,23 +262,19 @@ const FinishedGoods = () => {
                 });
                 const { data: { STATUS, DATA, RESPONSESTATUSCODE } } = response;
                 if (STATUS === 0 && RESPONSESTATUSCODE === 1) {
-                    const qcData = DATA.QC_TESTList[0]; // Assuming the first item
-                    // const qcSubGroupData = DATA.QC_TESTList.map((item) => ({
-                    //     QC_SUBGROUP_KEY: item.QC_SUBGROUP_KEY,
-                    //     QC_SUBGROUP_NAME: item.QC_SUBGROUP_NAME,
-                    // }));
+                    const qcData = DATA.QC_TESTList[0];
                     setForm((prev) => ({
                         ...prev,
-                        PARTY_KEY: qcData.PARTY_KEY,
-                        DOC_KEY: qcData.DOC_KEY,
-                        DOC_DTL_ID: qcData.DOC_DTL_ID,
-                        QC_SUBGROUP_KEY: qcData.QC_SUBGROUP_KEY,
+                        // PARTY_KEY: form.PARTY_KEY || qcData.PARTY_KEY,
+                        // DOC_KEY: qcData.DOC_KEY,
+                        // DOC_DTL_ID: qcData.DOC_DTL_ID,
+                        // QC_SUBGROUP_KEY: qcData.QC_SUBGROUP_KEY,
                         QC_TEST_ID: qcData.QC_TEST_ID || 0,
                         PASS_PARTIAL_REMARK: qcData.PASS_PARTIAL_REMARK || '',
                         REMARK: qcData.REMARK || ''
                     }));
                     setTableData(qcData.QC_TESTDTLEntities.map(item => ({
-                        ...item, // Retain existing data
+                        ...item,
                         USER_VALUE: item.USER_VALUE || '',
                         RESULT: item.RESULT,
                         FINAL_RESULT: item.FINAL_RESULT,
@@ -292,14 +294,6 @@ const FinishedGoods = () => {
             setTableData([]);
         }
     }, [form.QC_SUBGROUP_KEY, fetchTableData]);
-    // const handlePartyChange = (e, newValue) => {
-    //     const selectedPartyKey = newValue ? newValue.PARTY_KEY : '';
-    //     setForm((prev) => ({
-    //         ...prev,
-    //         PARTY_KEY: selectedPartyKey,
-    //     }));
-    //     setTableData([]);
-    // };
     const handleDocNoChange = (e, newValue) => {
         const selectedDocKey = newValue ? newValue.DOC_KEY : '';
         setForm((prev) => ({
@@ -307,6 +301,8 @@ const FinishedGoods = () => {
             DOC_KEY: selectedDocKey,
             DOC_DTL_ID: '',
             QC_SUBGROUP_KEY: '',
+            PASS_PARTIAL_REMARK: '',
+            REMARK: ''
         }));
         setDtlItems([]);
         setQcSubGroups([]);
@@ -319,9 +315,9 @@ const FinishedGoods = () => {
             QC_SUBGROUP_KEY: selectedSubGroupKey,
         }));
         if (!selectedSubGroupKey) {
-            fetchTableData();  // Call the function to fetch table data based on the selected QC_SUBGROUP_KEY
+            fetchTableData();
         } else {
-            setTableData([]);  // Clear table data if no subgroup is selected
+            setTableData([]);
         }
     };
     const handleCellChange = (rowId, field, value) => {
@@ -376,18 +372,18 @@ const FinishedGoods = () => {
         const USER_ID = localStorage.getItem('USER_ID');
         const apiUrl = form.QC_TEST_ID === 0 ? 'QC_TEST/InsertQC_TEST' : 'QC_TEST/UpdateQC_TEST';
         const mainData = {
-            QC_TEST_ID: form.QC_TEST_ID || 0, // 0 for Insert, >0 for Update
+            QC_TEST_ID: form.QC_TEST_ID || 0,
             DOC_KEY: form.DOC_KEY,
             DOC_DTL_ID: form.DOC_DTL_ID,
             QC_TYPE: 'Finished Goods',
             QC_SUBGROUP_KEY: form.QC_SUBGROUP_KEY,
-            DECISION_STATUS: 'P',     // Example: Passed
+            DECISION_STATUS: 'P',
             PASS_PARTIAL_REMARK: form.PASS_PARTIAL_REMARK,
             REMARK: form.REMARK,
             CHECKED_BY: 1,
             PASSED_BY: 1,
             CREATED_BY: USER_ID,
-            DBFLAG: mode === FORM_MODE.add ? 'I' : 'U', // 'I' for Insert, 'U' for Update
+            DBFLAG: mode === FORM_MODE.add ? 'I' : 'U',
             QC_TESTDTLEntities: tableData.map(item => ({
                 QC_TEST_DTL_ID: item.QC_TEST_DTL_ID || 0,
                 QC_TEST_ID: form.QC_TEST_ID || 0,
@@ -422,7 +418,6 @@ const FinishedGoods = () => {
         setMode(FORM_MODE.read)
     };
     const handlePrevious = async () => {
-        // await fetchTableData();
         setForm((prev) => ({ ...prev, SearchByCd: '' }));
     };
     const handleNext = async () => {
@@ -503,7 +498,7 @@ const FinishedGoods = () => {
                             variant="contained"
                             size="small"
                             sx={{ background: 'linear-gradient(290deg, #d4d4d4, #d4d4d4) !important' }}
-                            disabled={mode !== FORM_MODE.read}
+                            disabled={true}
                             onClick={handlePrevious}
                         >
                             <KeyboardArrowLeftIcon />
@@ -512,7 +507,7 @@ const FinishedGoods = () => {
                             variant="contained"
                             size="small"
                             sx={{ background: 'linear-gradient(290deg, #b9d0e9, #e9f2fa) !important', ml: 1 }}
-                            disabled={mode !== FORM_MODE.read}
+                            disabled={true}
                             onClick={handleNext}
                         >
                             <NavigateNextIcon />
