@@ -6,13 +6,15 @@ import axiosInstance from "@/lib/axios";
 
 const columnDefs = [
   {
-    field: "PARTY_NAME",
-    headerName: " Party Name",
+    field: "ROWNUM",
+    headerName: "SNo.",
     filter: 'agSetColumnFilter',
     filterParams: {
       defaultToNothingSelected: true,
     },
-    sortable: true
+    sortable: true,
+    width: 80,
+    minWidth: 80
   },
   {
     field: "DOC_NO",
@@ -23,27 +25,9 @@ const columnDefs = [
     },
     sortable: true
   },
-    {
-    field: "DTL_NAME",
-    headerName: "Item",
-    filter: 'agSetColumnFilter',
-    filterParams: {
-      defaultToNothingSelected: true,
-    },
-    sortable: true
-  },
-    {
-    field: "QC_SUBGROUP_NAME",
-    headerName: "QC SubGrp_Name",
-    filter: 'agSetColumnFilter',
-    filterParams: {
-      defaultToNothingSelected: true,
-    },
-    sortable: true
-  },
   {
     field: "CREATED_DT",
-    headerName: "Created Date",
+    headerName: "Doc.Date",
     width: 130,
     filter: 'agDateColumnFilter',
     filterParams: {
@@ -60,10 +44,55 @@ const columnDefs = [
       customOptionLabel: 'Custom Dates',
       customFilter: getCustomDateFilter()
     },
-    sortable: true
+    sortable: true,
+    width: 120,
+    minWidth: 120
+  },
+  {
+    field: "QC_SUBGROUP_NAME",
+    headerName: "Details",
+    filter: 'agSetColumnFilter',
+    filterParams: {
+      defaultToNothingSelected: true,
+    },
+    sortable: true,
+    width: 300,
+    minWidth: 250
+  },
+  {
+    field: "DECISION_STATUS",
+    headerName: "DecSt",
+    filter: 'agSetColumnFilter',
+    filterParams: {
+      defaultToNothingSelected: true,
+    },
+    sortable: true,
+    width: 120,
+    minWidth: 120
+  },
+  {
+    field: "PASS_PARTIAL_REMARK",
+    headerName: "Pass Partial Remark",
+    filter: 'agSetColumnFilter',
+    filterParams: {
+      defaultToNothingSelected: true,
+    },
+    sortable: true,
+    width: 300,
+    minWidth: 200
+  },
+  {
+    field: "REMARK",
+    headerName: "Remark",
+    filter: 'agSetColumnFilter',
+    filterParams: {
+      defaultToNothingSelected: true,
+    },
+    sortable: true,
+    width: 300,
+    minWidth: 200
   },
 ];
-
 export default function finishTable() {
   const [isLoading, setIsLoading] = useState(true);
   const [rows, setRows] = useState([]);
@@ -150,7 +179,7 @@ export default function finishTable() {
                 resizable: true,
                 sortable: true,
                 filter: true,
-                flex: 1,
+                flex: 0,
                 minWidth: 100
               }}
               customGridOptions={{
