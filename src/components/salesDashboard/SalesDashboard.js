@@ -6,8 +6,7 @@ import { useRouter } from "next/navigation";
 import {
     Box, Typography, Grid, Paper, IconButton, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Button,
     styled, useTheme, TextField, DialogTitle, DialogActions, Dialog, LinearProgress, Chip, TableFooter, CircularProgress,
-    DialogContent, FormControlLabel, Checkbox, Badge,
-    InputAdornment,
+    DialogContent, FormControlLabel, Checkbox, Badge, InputAdornment,
 } from "@mui/material";
 import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
 import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
@@ -106,28 +105,6 @@ const data = [
     { month: 'Sep-25', sales: 4490, profit: 5300 },
     { month: 'Nov-25', sales: 5490, profit: 3300 },
     { month: 'Dec-25', sales: 3490, profit: 6300 },
-];
-
-const lineChartData1 = [
-    { name: 'Week 1', value: 400 },
-    { name: 'Week 2', value: 300 },
-    { name: 'Week 3', value: 500 },
-    { name: 'Week 4', value: 200 },
-];
-
-const lineChartData2 = [
-    { name: 'Jan-25', value: 900 },
-    { name: 'Feb-25', value: 300 },
-    { name: 'Mar-25', value: 400 },
-    { name: 'Apr-25', value: 600 },
-    { name: 'May-25', value: 500 },
-    { name: 'Jun-25', value: 300 },
-    { name: 'Jul-25', value: 700 },
-    { name: 'Aug-25', value: 400 },
-    { name: 'Sep-25', value: 900 },
-    { name: 'Oct-25', value: 500 },
-    { name: 'Nov-25', value: 800 },
-    { name: 'Dec-25', value: 300 },
 ];
 
 const StyledSpeedDial = styled(SpeedDial)(({ theme }) => ({
@@ -229,6 +206,10 @@ const SalesDashboard = () => {
     const [brokerDrp, setBrokerDrp] = useState([]);
     const [stateDrp, setStateDrp] = useState([]);
     const router = useRouter();
+    const [ordTrend, setOrdTrend] = useState([]);
+    const [chartData, setChartData] = useState([]);
+    const [totalSales, setTotalSales] = useState(0);
+    const [salesPerson, setSalesPerson] = useState([]);
 
     const handleDialogOpen = (filterName) => {
         setCurrentFilter(filterName);
@@ -252,8 +233,6 @@ const SalesDashboard = () => {
     const handleSubmit = () => {
         setOpenDialog(false);
     };
-
-    const totalSales = data.reduce((acc, cur) => acc + cur.sales, 0);
 
     const totalConversion = !isNaN(dispOrd.QTY) && !isNaN(summaryData.QTY) && parseFloat(summaryData.QTY) !== 0
         ? (parseFloat(dispOrd.QTY) / parseFloat(summaryData.QTY)) * 100
@@ -280,9 +259,35 @@ const SalesDashboard = () => {
             fetchPartyDrp();
             fetchBrokerDrp();
             fetchStateDrp();
+            fetchOrderTrends();
+            fetchSalesPerson();
         }
     }, [fcyr, cobrId]);
 
+    useEffect(() => {
+        if (ordTrend.length > 0) {
+            const grouped = ordTrend.reduce((acc, item) => {
+                const monthKey = item.MONTH || "Unknown";
+                const qty = Number(item.QTY) || 0;
+                if (!acc[monthKey]) acc[monthKey] = 0;
+                acc[monthKey] += qty;
+                return acc;
+            }, {});
+
+            const formattedData = Object.entries(grouped)
+                .map(([month, sales]) => ({ month, sales: Math.round(sales) }))
+                .sort((a, b) => {
+                    const dateA = new Date(a.month.replace(/(\w+)-(\d+)/, "$2-$1-01"));
+                    const dateB = new Date(b.month.replace(/(\w+)-(\d+)/, "$2-$1-01"));
+                    return dateA.getTime() - dateB.getTime();
+                });
+
+            setChartData(formattedData);
+
+            const total = formattedData.reduce((sum, item) => sum + item.sales, 0);
+            setTotalSales(total); // Now this is total QTY
+        }
+    }, [ordTrend]);
 
     // Filters payload
     const buildFilterPayload = () => ({
@@ -310,6 +315,8 @@ const SalesDashboard = () => {
 
             if (response.data.STATUS === 0 && Array.isArray(response.data.DATA)) {
                 setTableData(response.data.DATA);
+            } else {
+                setTableData([]);
             }
         } catch (error) {
             toast.error('Error while fetching the table data.');
@@ -503,6 +510,8 @@ const SalesDashboard = () => {
             });
             if (response.data.STATUS === 0 && Array.isArray(response.data.DATA)) {
                 setPartyWise(response.data.DATA);
+            } else {
+                setPartyWise([]);
             }
         } catch (error) {
             toast.error("Error while loading party data.");
@@ -527,6 +536,8 @@ const SalesDashboard = () => {
             });
             if (response.data.STATUS === 0 && Array.isArray(response.data.DATA)) {
                 setStateWise(response.data.DATA);
+            } else {
+                setStateWise([]);
             }
         } catch (error) {
             toast.error("Error while fetching the state.");
@@ -589,6 +600,51 @@ const SalesDashboard = () => {
         }
     };
 
+    const fetchOrderTrends = async () => {
+        try {
+            const filters = buildFilterPayload();
+            const response = await axiosInstance.post("OrderDash/GetOrderDashBoard", {
+                COBR_ID: cobrId,
+                FCYR_KEY: fcyr,
+                FROM_DT: dayjs(dateFrom).format('YYYY-MM-DD'),
+                To_DT: dayjs(dateTo).format('YYYY-MM-DD'),
+                Flag: "MonthWise",
+                PageNumber: 1,
+                PageSize: 10,
+                SearchText: "",
+                ...filters
+            });
+            console.log("Api response", response);
+            if (response.data.STATUS === 0 && Array.isArray(response.data.DATA)) {
+                setOrdTrend(response.data.DATA);
+            };
+        } catch (error) {
+            toast.error("Error while fetching monthly trends.");
+        }
+    };
+
+    const fetchSalesPerson = async () => {
+        try {
+            const filters = buildFilterPayload();
+            const response = await axiosInstance.post("OrderDash/GetOrderDashBoard", {
+                COBR_ID: cobrId,
+                FCYR_KEY: fcyr,
+                FROM_DT: dayjs(dateFrom).format('YYYY-MM-DD'),
+                To_DT: dayjs(dateTo).format('YYYY-MM-DD'),
+                Flag: "MonthWise",
+                PageNumber: 1,
+                PageSize: 10,
+                SearchText: "",
+                ...filters
+            });
+            if (response.data.STATUS === 0 && Array.isArray(response.data.DATA)) {
+                setSalesPerson(response.data.DATA);
+            }
+        } catch (error) {
+            toast.error("Error while fetching sales person.");
+        }
+    };
+
     const handleFetchedData = () => {
         showTableData();
         totalCoutData();
@@ -598,6 +654,8 @@ const SalesDashboard = () => {
         fetchOderDispatch();
         fetchOderShortClose();
         stateWiseParty();
+        fetchOrderTrends();
+        fetchSalesPerson();
     };
 
     const handleViewDocument = (order) => {
@@ -1927,90 +1985,7 @@ const SalesDashboard = () => {
             </Dialog>
 
             <Grid container spacing={2} mt={2}>
-                <Grid size={{ xs: 12, md: 4 }}>
-                    <Paper
-                        elevation={5}
-                        sx={{
-                            borderRadius: 4,
-                            boxShadow: "0 10px 30px rgb(0 0 0 / 0.12)",
-                            height: 300,
-                            backgroundColor: 'rgba(255, 255, 255, 1)',
-                            display: 'flex',
-                            justifyContent: 'center',
-                            alignItems: 'center',
-                        }}
-                    >
-                        <Box
-                            sx={{
-                                width: '100%',
-                                height: '100%',
-                                display: 'flex',
-                                justifyContent: 'center',
-                                alignItems: 'center',
-                            }}
-                        >
-                            <Box
-                                sx={{
-                                    width: '100%',
-                                    maxWidth: 600,
-                                    maxHeight: 600,
-                                    '& text[style*="font-size: 36.12px"]': {
-                                        fontSize: '16px !important',
-                                        bottom: '15px',
-                                        fill: '#031425ff !important',
-                                        textShadow: 'none !important',
-                                    },
-                                }}
-                            >
-                                <GaugeComponent
-                                    value={50}
-                                    type="grafana"
-                                    style={{ width: '100%', height: '100%' }}
-                                    labels={{
-                                        tickLabels: {
-                                            type: "inner",
-                                            ticks: [
-                                                { value: 20 },
-                                                { value: 40 },
-                                                { value: 60 },
-                                                { value: 80 },
-                                                { value: 100 },
-                                            ],
-                                            defaultTickValueConfig: {
-                                                style: {
-                                                    fill: "#031425ff",
-                                                    fontSize: "14px"
-                                                }
-                                            },
-                                            defaultTickLineConfig: {
-                                                color: "#FF00FF",
-                                                width: 2,
-                                                length: 10,
-                                                distanceFromArc: 3
-                                            },
-                                        }
-                                    }}
-                                    arc={{
-                                        colorArray: ['#5BE12C', '#EA4228'],
-                                        subArcs: [{ limit: 10 }, { limit: 30 }, {}, {}, {}],
-                                        padding: 0.02,
-                                        width: 0.3,
-                                    }}
-                                    pointer={{
-                                        elastic: true,
-                                        animationDelay: 0,
-                                        color: "#2c2a2aff",
-                                        length: 0.5,
-                                        baseLineRatio: 0.3,
-                                        width: 8,
-                                    }}
-                                />
-                            </Box>
-                        </Box>
-                    </Paper>
-                </Grid>
-
-                <Grid size={{ xs: 12, md: 8 }}>
+                <Grid size={{ xs: 12, md: 12 }}>
                     <Paper elevation={5} sx={{ p: 2, borderRadius: 2, height: 300 }}>
                         <Typography variant="h6" gutterBottom fontWeight="bold">
                             Order vs Sales
@@ -2065,6 +2040,7 @@ const SalesDashboard = () => {
                         </Box>
                     </Paper>
                 </Grid>
+
                 <Grid size={{ xs: 12, md: 12 }}>
                     <Paper
                         elevation={6}
@@ -2079,7 +2055,7 @@ const SalesDashboard = () => {
                             boxShadow: "0px 4px 30px rgba(0, 0, 0, 0.08)",
                         }}
                     >
-                        {/* Title and Total Sales */}
+                        {/* Title and Total Quantity */}
                         <Box
                             sx={{
                                 mb: 2,
@@ -2100,13 +2076,13 @@ const SalesDashboard = () => {
                                 Orders Trend
                             </Typography>
 
-                            {/* Animated Total Sales */}
+                            {/* Animated Total Quantity */}
                             <Box textAlign="right">
                                 <Typography variant="h4" fontWeight="bold" color="primary">
-                                    ₹ <CountUp end={totalSales} duration={20} separator="," />
+                                    <span style={{ fontSize: '25px' }}>📝</span> <CountUp end={totalSales} duration={2.5} separator="," />
                                 </Typography>
                                 <Typography color="text.secondary" fontSize={14}>
-                                    Total Sales This Period
+                                    Total Order Quantity This Period
                                 </Typography>
                             </Box>
                         </Box>
@@ -2114,11 +2090,14 @@ const SalesDashboard = () => {
                         {/* Chart Area */}
                         <Box sx={{ width: '100%', height: '80%' }}>
                             <ResponsiveContainer width="100%" height="100%">
-                                <AreaChart data={data} margin={{ top: 10, right: 20, left: 0, bottom: 20 }}>
+                                <AreaChart
+                                    data={chartData}
+                                    margin={{ top: 10, right: 30, left: 20, bottom: 20 }}
+                                >
                                     <defs>
-                                        <linearGradient id="salesGradient" x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="5%" stopColor="#1976d2" stopOpacity={0.5} />
-                                            <stop offset="95%" stopColor="#1976d2" stopOpacity={0.1} />
+                                        <linearGradient id="qtyGradient" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="5%" stopColor="#1976d2" stopOpacity={0.6} />
+                                            <stop offset="95%" stopColor="#1976d2" stopOpacity={0.05} />
                                         </linearGradient>
                                         <linearGradient id="lineGradient" x1="0" y1="0" x2="1" y2="0">
                                             <stop offset="0%" stopColor="#42a5f5" />
@@ -2126,71 +2105,56 @@ const SalesDashboard = () => {
                                         </linearGradient>
                                     </defs>
 
-                                    <CartesianGrid strokeDasharray="4 4" stroke="#ddd" opacity={0.4} />
+                                    <CartesianGrid strokeDasharray="4 4" stroke="#e0e0e0" opacity={0.4} />
+
                                     <XAxis
                                         dataKey="month"
-                                        tickMargin={12}
-                                        tickLine={true}
-                                        axisLine={true}
-                                        style={{ fontWeight: 500 }}
+                                        tick={{ fontSize: 13, fontWeight: 500 }}
+                                        tickMargin={10}
                                     />
+
                                     <YAxis
-                                        tickFormatter={(value) => `${(value / 1000).toFixed(0)}k`}
-                                        tickLine={true}
-                                        axisLine={true}
-                                        style={{ fontWeight: 500 }}
+                                        tick={{ fontSize: 13, fontWeight: 500 }}
+                                        tickFormatter={(value) =>
+                                            value >= 100000
+                                                ? `${(value / 100000).toFixed(1)}L`
+                                                : value >= 1000
+                                                    ? `${(value / 1000).toFixed(0)}k`
+                                                    : value
+                                        }
                                     />
+
                                     <Tooltip
-                                        formatter={(value) => `₹ ${value.toLocaleString('en-IN')}`}
+                                        formatter={(value) => `${Number(value).toLocaleString('en-IN')}`}
+                                        labelFormatter={(label) => `Month: ${label}`}
                                         contentStyle={{
-                                            borderRadius: '8px',
+                                            borderRadius: '10px',
+                                            backgroundColor: 'rgba(255, 255, 255, 0.95)',
                                             border: '1px solid #1976d2',
-                                            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
-                                            backgroundColor: '#fff',
+                                            boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
                                         }}
-                                        itemStyle={{ fontWeight: 500 }}
-                                        labelStyle={{ fontWeight: 'bold', color: '#1976d2' }}
+                                        itemStyle={{ color: '#1976d2', fontWeight: 600 }}
                                     />
+
                                     <Legend
-                                        verticalAlign="top"
-                                        align="center"
-                                        iconType="circle"
-                                        wrapperStyle={{
-                                            padding: 0,
-                                            marginBottom: -8,
-                                            fontWeight: 600,
-                                            fontSize: 13,
-                                            color: '#444',
-                                        }}
+                                        wrapperStyle={{ paddingTop: '10px' }}
+                                        iconType="line"
                                     />
+
                                     <Area
                                         type="monotone"
                                         dataKey="sales"
-                                        name="Monthly Sales"
+                                        name="Quantity"
                                         stroke="url(#lineGradient)"
                                         strokeWidth={3}
-                                        fill="url(#salesGradient)"
-                                        isAnimationActive={true}
-                                        animationDuration={1500}
-                                    />
-                                    <Line
-                                        type="monotone"
-                                        dataKey="sales"
-                                        name="Sales Line"
-                                        stroke="url(#lineGradient)"
-                                        strokeWidth={3}
+                                        fill="url(#qtyGradient)"
                                         dot={{
                                             r: 6,
+                                            fill: '#1976d2',
                                             stroke: '#fff',
                                             strokeWidth: 2,
-                                            fill: '#1976d2',
                                         }}
-                                        activeDot={{
-                                            r: 8,
-                                            stroke: '#fff',
-                                            strokeWidth: 2,
-                                            fill: '#1976d2',
-                                        }}
+                                        activeDot={{ r: 8 }}
                                         isAnimationActive={true}
                                         animationDuration={1500}
                                     />
