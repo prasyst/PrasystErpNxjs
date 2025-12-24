@@ -86,7 +86,6 @@ const EmployeeSidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClos
 
   const handleParentClick = (item, e) => {
     e.stopPropagation();
-    
     setActiveItem(item.name);
     setActiveChild(null);
     setActiveGrandchild(null);
@@ -151,22 +150,17 @@ const EmployeeSidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClos
       handleNavigationWithTracking(grandchild.path, grandchild.name, true);
     }
     
-    if (isMobile) onClose();
   };
 
-  // सक्रिय मेनू आइटम्स को सेट करने के लिए
   useEffect(() => {
     const findActiveItems = () => {
-      // सभी मेनू आइटम्स को चेक करें
       for (const item of employeeMenuItems) {
-        // पैरेंट आइटम चेक करें
         if (item.path && pathname.includes(item.path.split('?')[0])) {
           setActiveItem(item.name);
           setOpenSections(prev => ({ ...prev, [item.name]: true }));
           return true;
         }
 
-        // चाइल्ड आइटम्स चेक करें
         if (item.children) {
           for (const child of item.children) {
             if (child.path && pathname.includes(child.path.split('?')[0])) {
@@ -177,7 +171,6 @@ const EmployeeSidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClos
               return true;
             }
 
-            // ग्रैंडचाइल्ड आइटम्स चेक करें
             if (child.children) {
               for (const grandchild of child.children) {
                 if (grandchild.path && pathname.includes(grandchild.path)) {
@@ -197,7 +190,7 @@ const EmployeeSidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClos
         }
       }
       
-      // URL पैरामीटर्स के लिए चेक
+  
       if (pathname.startsWith('/employeepage') || pathname.includes('ticket')) {
         const url = new URL(window.location.href);
         const activeTab = url.searchParams.get('activeTab');
@@ -216,8 +209,7 @@ const EmployeeSidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClos
           setActiveGrandchild(null);
           return true;
         }
-        
-        // पाथनेम से ही डिटेक्ट करें
+
         if (pathname.includes('ticket-dashboard')) {
           setActiveItem('Ticketing');
           setActiveChild('Dashboard');
