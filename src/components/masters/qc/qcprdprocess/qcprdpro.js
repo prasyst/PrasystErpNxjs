@@ -200,8 +200,9 @@ const QcPrdPro = () => {
                 SearchByCd: '',
                 Status: '1',
             }))
-            setMode(FORM_MODE.add);
+            setMode(FORM_MODE.read);
         }
+        setMode(FORM_MODE.read);
     }, [QC_ID, fetchRetriveData]);
     const handleSubmit = async () => {
         const result = qcSubGrpFormSchema.safeParse(form);
@@ -645,7 +646,7 @@ const QcPrdPro = () => {
                                         minWidth: { xs: 40, sm: 46, md: 60 },
                                         height: { xs: 40, sm: 46, md: 30 },
                                     }}
-                                    onClick={handleAdd} >
+                                    disabled>
                                     Submit
                                 </Button>
                                 <Button variant="contained"

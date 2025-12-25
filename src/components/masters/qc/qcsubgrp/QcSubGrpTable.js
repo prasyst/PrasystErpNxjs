@@ -44,7 +44,7 @@ const columnDefs = [
     },
     sortable: true
   },
-    {
+  {
     field: "REMARK",
     headerName: "Remark",
     filter: 'agSetColumnFilter',
@@ -76,14 +76,17 @@ const columnDefs = [
     },
     sortable: true
   },
-      {
+  {
     field: "STATUS",
     headerName: "Status",
     filter: 'agSetColumnFilter',
     filterParams: {
       defaultToNothingSelected: true,
     },
-    sortable: true
+    sortable: true,
+    valueFormatter: (params) => {
+      return params.value === "1" ? 'Active' : 'Inactive';
+    }
   },
 ];
 
@@ -123,7 +126,7 @@ export default function QcSubGroupTable() {
       QC_SUBGROUP_KEY: row.QC_SUBGROUP_KEY,
       mode: "view"
     }).toString();
-     router.push(`/masters/qc/qcsubgrp/qcsubgroup?${params}`);
+    router.push(`/masters/qc/qcsubgrp/qcsubgroup?${params}`);
   };
 
   const handleSelectionChanged = useCallback((event) => {

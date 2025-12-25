@@ -59,7 +59,6 @@ const columnDefs = [
     width: 130,
     filter: 'agDateColumnFilter',
     filterParams: {
-      // Use our custom date filter
       browserDatePicker: true,
       filterOptions: [
         'equals',
@@ -70,7 +69,6 @@ const columnDefs = [
         'empty',
         'notEmpty'
       ],
-      // Add custom options to the filter
       customOptionLabel: 'Custom Dates',
       customFilter: getCustomDateFilter()
     },
@@ -83,7 +81,10 @@ const columnDefs = [
     filterParams: {
       defaultToNothingSelected: true,
     },
-    sortable: true
+    sortable: true,
+     valueFormatter: (params) => {
+      return params.value === "1" ? 'Active' : 'Inactive';
+    }
   },
 ];
 

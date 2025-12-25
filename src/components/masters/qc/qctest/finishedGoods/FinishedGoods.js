@@ -814,7 +814,7 @@ const FinishedGoods = () => {
                                     minWidth: { xs: 40, sm: 46, md: 60 },
                                     height: { xs: 40, sm: 46, md: 30 },
                                 }}
-                                onClick={handleAdd} >
+                                disabled >
                                 Submit
                             </Button>
                             <Button variant="contained"
