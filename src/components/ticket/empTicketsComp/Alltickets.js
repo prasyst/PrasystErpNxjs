@@ -720,16 +720,7 @@ const AllTicketsPage = () => {
                 </TextField>
               </Grid>
 
-              <Grid item xs={12} sm={4} md={2}>
-                <Button
-                  fullWidth
-                  variant="outlined"
-                  startIcon={<FilterListIcon />}
-                  size="small"
-                >
-                  More Filters
-                </Button>
-              </Grid>
+             
 
               <Grid item xs={12} md={2}>
                 <Typography variant="body2" color="text.secondary" align="center">

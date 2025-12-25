@@ -370,7 +370,6 @@ const EmployeeSidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClos
                 backgroundColor: isActive ? '#5ba8ffff' : 'transparent',
                 color: isActive ? 'white' : '#333',
                 transition: 'all 0.2s ease',
-                margin: '0.25rem 0.5rem',
                 borderRadius: '8px',
                 border: isActive ? '1px solid #5ba8ff' : '1px solid transparent',
                 borderLeft: isActive ? '4px solid #1b69e7' : '4px solid transparent',

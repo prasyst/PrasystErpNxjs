@@ -34,7 +34,9 @@ import {
   useMediaQuery,
   Avatar,
   Tooltip,
-  Fade
+  Fade,
+  LinearProgress,
+  alpha
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -42,7 +44,10 @@ import {
   ArrowForward as ArrowForwardIcon,
   Circle as CircleIcon,
   MoreVert as MoreVertIcon,
-  Visibility as VisibilityIcon
+  Visibility as VisibilityIcon,
+  OpenInNew as OpenInNewIcon,
+  AccessTime as AccessTimeIcon,
+  ErrorOutline as ErrorOutlineIcon
 } from '@mui/icons-material';
 
 const EmployeeTicketDashboard = () => {
@@ -80,7 +85,9 @@ const EmployeeTicketDashboard = () => {
               tkt.TKTSTATUS === "R" ? "resolved" : "closed",
           assignee: tkt.TECHEMP_NAME || "Unassigned",
           createdAt: tkt.TKTDATE,
-          dueDate: tkt.ASSIGNDT || tkt.TKTDATE
+          dueDate: tkt.ASSIGNDT || tkt.TKTDATE,
+          responseTime: "2h", // Mock data
+          lastUpdated: new Date().toISOString()
         }));
 
         setTickets(myTickets);
@@ -110,52 +117,63 @@ const EmployeeTicketDashboard = () => {
       value: stats.total,
       icon: TiTicket,
       color: '#3b82f6',
-      path: '/emp-tickets/all-tickets'
+      bgColor: alpha('#3b82f6', 0.08),
+      path: '/emp-tickets/all-tickets',
+      trend: '+12%'
     },
     {
       title: 'Open',
       value: stats.open,
       icon: FaExclamationTriangle,
-      color: '#f59e0b',
-      path: '/emp-tickets/all-tickets?status=open'
+      color: '#ef4444',
+      bgColor: alpha('#ef4444', 0.08),
+      path: '/emp-tickets/all-tickets?status=open',
+      trend: '+5%'
     },
     {
       title: 'In Progress',
       value: stats.inProgress,
       icon: MdSchedule,
-      color: '#8b5cf6',
-      path: '/emp-tickets/all-tickets?status=in-progress'
+      color: '#f59e0b',
+      bgColor: alpha('#f59e0b', 0.08),
+      path: '/emp-tickets/all-tickets?status=in-progress',
+      trend: '+8%'
     },
     {
       title: 'Resolved',
       value: stats.resolved,
       icon: MdCheckCircleOutline,
       color: '#10b981',
-      path: '/emp-tickets/all-tickets?status=resolved'
+      bgColor: alpha('#10b981', 0.08),
+      path: '/emp-tickets/all-tickets?status=resolved',
+      trend: '+15%'
     }
   ];
 
   const userModules = [
     {
-      title: 'Raise New Ticket',
+      title: 'New Ticket',
       description: 'Create a new support ticket',
       icon: MdAdd,
       path: '/emp-tickets/create-tickets',
-      color: '#10b981'
+      color: '#10b981',
+      bgColor: alpha('#10b981', 0.1)
     },
     {
       title: 'My Tickets',
       description: 'View all your tickets',
       icon: MdPerson,
       path: '/emp-tickets/all-tickets',
-      color: '#3b82f6'
+      color: '#3b82f6',
+      bgColor: alpha('#3b82f6', 0.1)
     },
     {
       title: 'Track Ticket',
       description: 'Track ticket status',
       icon: MdList,
-      path: '/emp-tickets/track-ticket',
-      color: '#8b5cf6'
+      // path: '/emp-tickets/track-ticket',
+      color: '#8b5cf6',
+      bgColor: alpha('#8b5cf6', 0.1)
     }
   ];
 
@@ -181,8 +199,8 @@ const EmployeeTicketDashboard = () => {
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       day: 'numeric',
-      month: isMobile ? 'numeric' : 'short',
-      year: isMobile ? '2-digit' : 'numeric'
+      month: isMobile ? 'short' : 'short',
+      year: 'numeric'
     });
   };
 
@@ -191,18 +209,18 @@ const EmployeeTicketDashboard = () => {
       sx={{
         display: 'inline-flex',
         alignItems: 'center',
-        px: isMobile ? 0.75 : 1,
+        px: 1,
         py: 0.25,
-        borderRadius: 6,
+        borderRadius: 20,
         bgcolor: `${getStatusColor(status)}15`,
         color: getStatusColor(status),
-        fontSize: isMobile ? '0.65rem' : '0.75rem',
+        fontSize: isMobile ? '0.65rem' : '0.7rem',
         fontWeight: 600,
         textTransform: 'capitalize',
-        minWidth: isMobile ? 60 : 80
+        border: `1px solid ${getStatusColor(status)}30`
       }}
     >
-      <CircleIcon sx={{ fontSize: 8, mr: 0.5 }} />
+      <CircleIcon sx={{ fontSize: 6, mr: 0.5 }} />
       {status.replace('-', ' ')}
     </Box>
   );
@@ -212,123 +230,155 @@ const EmployeeTicketDashboard = () => {
       sx={{
         display: 'inline-flex',
         alignItems: 'center',
-        px: isMobile ? 0.75 : 1,
+        px: 1,
         py: 0.25,
-        borderRadius: 6,
+        borderRadius: 20,
         bgcolor: `${getPriorityColor(priority)}15`,
         color: getPriorityColor(priority),
-        fontSize: isMobile ? '0.65rem' : '0.75rem',
-        fontWeight: 600
+        fontSize: isMobile ? '0.65rem' : '0.7rem',
+        fontWeight: 600,
+        border: `1px solid ${getPriorityColor(priority)}30`
       }}
     >
+      <CircleIcon sx={{ fontSize: 6, mr: 0.5 }} />
       {priority}
     </Box>
   );
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: 'grey.50', p: { xs: 1, sm: 2 } }}>
-      {/* Header - Compact */}
+    <Box sx={{ 
+      minHeight: '100vh', 
+      bgcolor: '#f8fafc',
+      p: { xs: 0, sm: 1, md: 2 },
+      overflowX: 'hidden'
+    }}>
       <Paper
         elevation={0}
         sx={{
-          borderRadius: 2,
+          borderRadius: { xs: 0, sm: 1 },
           bgcolor: 'white',
-          p: { xs: 2, sm: 2.5 },
-          mb: { xs: 1, sm: 1 }
+          p: { xs: 1.5, sm: 2 },
+          mb: { xs: 0.5, sm: 1 },
+          borderBottom: { xs: '1px solid', xsBorderColor: 'divider', sm: 'none' }
         }}
       >
         <Box sx={{
           display: 'flex',
           flexDirection: { xs: 'column', sm: 'row' },
           justifyContent: 'space-between',
-          alignItems: { xs: 'stretch', sm: 'center' },
-          gap: { xs: 2, sm: 0 }
+          alignItems: { xs: 'flex-start', sm: 'center' },
+          gap: { xs: 1.5, sm: 2 }
         }}>
-          <Box>
+          <Box sx={{ flex: 1 }}>
             <Typography 
               variant={isMobile ? "h6" : "h5"} 
               fontWeight="bold" 
+              color="primary.main"
               gutterBottom={!isMobile}
+              sx={{ 
+                fontSize: { xs: '1.1rem', sm: '1.5rem' },
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1
+              }}
             >
+              <TiTicket size={isMobile ? 20 : 24} />
               My Ticket Dashboard
             </Typography>
             <Typography 
-              variant="body2" 
+              variant="caption" 
               color="text.secondary"
-              sx={{ display: { xs: 'none', sm: 'block' } }}
+              sx={{ 
+                display: 'block',
+                fontSize: { xs: '0.75rem', sm: '0.8rem' }
+              }}
             >
               Manage and track your support tickets
             </Typography>
           </Box>
           
           <Stack 
-            direction={{ xs: 'column', sm: 'row' }} 
+            direction="row" 
             spacing={1}
-            sx={{ width: { xs: '100%', sm: 'auto' } }}
+            sx={{ 
+              width: { xs: '100%', sm: 'auto' },
+              justifyContent: { xs: 'space-between', sm: 'flex-end' }
+            }}
           >
-            <Button
-              variant="outlined"
+            <IconButton
               size={isMobile ? "small" : "medium"}
-              startIcon={<RefreshIcon />}
               onClick={fetchMyTickets}
               disabled={loading}
-              fullWidth={isMobile}
+              sx={{
+                bgcolor: 'grey.100',
+                '&:hover': { bgcolor: 'grey.200' }
+              }}
             >
-              {isMobile ? 'Refresh' : 'Refresh'}
-            </Button>
+              <RefreshIcon fontSize={isMobile ? "small" : "medium"} />
+            </IconButton>
             <Button
               variant="contained"
               size={isMobile ? "small" : "medium"}
               startIcon={<AddIcon />}
               onClick={() => router.push('/emp-tickets/create-tickets')}
-              fullWidth={isMobile}
+              sx={{
+                minWidth: { xs: 'auto', sm: 120 },
+                px: { xs: 1.5, sm: 2 },
+                bgcolor: 'primary.main',
+                '&:hover': { bgcolor: 'primary.dark' }
+              }}
             >
-              New Ticket
+              {isMobile ? 'New' : 'New Ticket'}
             </Button>
           </Stack>
         </Box>
       </Paper>
 
-      <Container maxWidth="xl" disableGutters sx={{ px: { xs: 0, sm: 1 } }}>
-        {/* Quick Stats - Compact Grid */}
-        <Grid container spacing={1.5} mb={2}>
+      <Container maxWidth="xl" disableGutters sx={{ px: { xs: 1, sm: 1 } }}>
+        <Grid container spacing={1} mb={2}>
           {quickStats.map((stat, index) => {
             const IconComponent = stat.icon;
             return (
               <Grid item xs={6} sm={3} key={index}>
-                <Fade in={true} timeout={500} style={{ transitionDelay: `${index * 100}ms` }}>
+                <Fade in={true} timeout={300} style={{ transitionDelay: `${index * 50}ms` }}>
                   <Card
                     elevation={0}
                     sx={{
-                      border: 1,
-                      borderColor: 'grey.200',
-                      borderRadius: 1.5,
+                      border: '1px solid',
+                      borderColor: 'divider',
+                      borderRadius: 1,
                       cursor: 'pointer',
                       transition: 'all 0.2s ease',
                       height: '100%',
-                      minHeight: 90,
+                      width:'140px',
+                      minHeight: { xs: 80, sm: 90 },
+                      bgcolor: 'white',
                       '&:hover': {
                         boxShadow: 2,
                         borderColor: stat.color,
-                        transform: 'translateY(-1px)'
+                        transform: 'translateY(-2px)'
                       }
                     }}
                     onClick={() => router.push(stat.path)}
                   >
-                    <CardContent sx={{ p: { xs: 1.5, sm: 2 }, '&:last-child': { pb: 2 } }}>
+                    <CardContent sx={{ 
+                      p: { xs: 1, sm: 1.5 }, 
+                      pb: { xs: 1, sm: 1.5 } 
+                    }}>
                       <Box sx={{
                         display: 'flex',
                         justifyContent: 'space-between',
-                        alignItems: 'flex-start',
+                        alignItems: 'center',
                         height: '100%'
                       }}>
-                        <Box>
+                        <Box sx={{ flex: 1 }}>
                           <Typography
                             variant="caption"
                             color="text.secondary"
                             sx={{ 
                               fontSize: { xs: '0.7rem', sm: '0.75rem' },
-                              fontWeight: 500
+                              fontWeight: 500,
+                              display: 'block'
                             }}
                             gutterBottom
                           >
@@ -338,17 +388,32 @@ const EmployeeTicketDashboard = () => {
                             variant={isMobile ? "h6" : "h5"} 
                             fontWeight="bold"
                             lineHeight={1}
+                            sx={{ fontSize: { xs: '1rem', sm: '1.25rem' } }}
                           >
                             {stat.value}
                           </Typography>
+                          <Typography 
+                            variant="caption" 
+                            color={stat.color}
+                            sx={{ 
+                              fontSize: '0.6rem',
+                              fontWeight: 600,
+                              display: { xs: 'none', sm: 'block' }
+                            }}
+                          >
+                            {stat.trend}
+                          </Typography>
                         </Box>
                         <Box sx={{
-                          p: { xs: 0.75, sm: 1 },
+                          p: { xs: 0.5, sm: 0.75 },
                           borderRadius: '50%',
-                          bgcolor: `${stat.color}15`
+                          bgcolor: stat.bgColor,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center'
                         }}>
                           <IconComponent 
-                            size={isMobile ? 18 : 20} 
+                            size={isMobile ? 16 : 18} 
                             style={{ color: stat.color }} 
                           />
                         </Box>
@@ -361,57 +426,61 @@ const EmployeeTicketDashboard = () => {
           })}
         </Grid>
 
-        {/* Quick Actions - Compact Cards */}
         <Box mb={2}>
           <Typography 
-            variant={isMobile ? "subtitle1" : "h6"} 
+            variant={isMobile ? "subtitle2" : "subtitle1"} 
             fontWeight="bold" 
             gutterBottom
-            sx={{ px: { xs: 1, sm: 0 } }}
+            sx={{ 
+              px: { xs: 0.5, sm: 0 },
+              fontSize: { xs: '0.9rem', sm: '1rem' },
+              color: 'text.primary'
+            }}
           >
             Quick Actions
           </Typography>
-          <Grid container spacing={1.5}>
+          <Grid container spacing={1}>
             {userModules.map((module, index) => {
               const IconComponent = module.icon;
               return (
-                <Grid item xs={12} sm={6} md={4} key={index}>
-                  <Fade in={true} timeout={500} style={{ transitionDelay: `${index * 150}ms` }}>
+                <Grid item xs={12} sm={4} key={index}>
+                  <Fade in={true} timeout={300} style={{ transitionDelay: `${index * 100}ms` }}>
                     <Card
                       elevation={0}
                       sx={{
-                        border: 1,
-                        borderColor: 'grey.200',
-                        borderRadius: 1.5,
+                        border: '1px solid',
+                        borderColor: 'divider',
+                        borderRadius: 1,
                         cursor: 'pointer',
                         transition: 'all 0.2s ease',
                         height: '100%',
+                        bgcolor: 'white',
                         '&:hover': {
-                          boxShadow: 2,
+                          boxShadow: 3,
                           borderColor: module.color,
-                          transform: 'translateY(-1px)'
+                          transform: 'translateY(-2px)'
                         }
                       }}
                       onClick={() => router.push(module.path)}
                     >
-                      <CardContent sx={{ p: { xs: 1.5, sm: 2 } }}>
-                        <Stack direction="row" spacing={1.5} alignItems="center">
+                      <CardContent sx={{ p: { xs: 1, sm: 1.5 } }}>
+                        <Stack direction="row" spacing={1} alignItems="center">
                           <Avatar
                             sx={{
-                              width: { xs: 36, sm: 40 },
-                              height: { xs: 36, sm: 40 },
-                              bgcolor: module.color,
-                              color: 'white'
+                              width: { xs: 32, sm: 36 },
+                              height: { xs: 32, sm: 36 },
+                              bgcolor: module.bgColor,
+                              color: module.color
                             }}
                           >
-                            <IconComponent size={isMobile ? 18 : 20} />
+                            <IconComponent size={isMobile ? 16 : 18} />
                           </Avatar>
                           <Box sx={{ flex: 1 }}>
                             <Typography 
-                              variant={isMobile ? "body2" : "subtitle2"} 
+                              variant="body2" 
                               fontWeight="bold"
                               lineHeight={1.2}
-                              gutterBottom={!isMobile}
+                              sx={{ fontSize: { xs: '0.8rem', sm: '0.9rem' } }}
                             >
                               {module.title}
                             </Typography>
@@ -419,7 +488,7 @@ const EmployeeTicketDashboard = () => {
                               variant="caption" 
                               color="text.secondary"
                               sx={{ 
-                                fontSize: { xs: '0.7rem', sm: '0.75rem' },
+                                fontSize: '0.7rem',
                                 display: { xs: 'none', sm: 'block' }
                               }}
                             >
@@ -428,7 +497,7 @@ const EmployeeTicketDashboard = () => {
                           </Box>
                           <ArrowForwardIcon 
                             sx={{ 
-                              fontSize: { xs: 16, sm: 20 },
+                              fontSize: { xs: 14, sm: 16 },
                               color: 'action.active'
                             }} 
                           />
@@ -441,112 +510,151 @@ const EmployeeTicketDashboard = () => {
             })}
           </Grid>
         </Box>
-
         <Card
           elevation={0}
           sx={{
-            border: 1,
-            borderColor: 'grey.200',
-            borderRadius: 1.5,
-            mb: 3,
-            overflow: 'hidden'
+            border: '1px solid',
+            borderColor: 'divider',
+            borderRadius: 1,
+            mb: 2,
+            overflow: 'hidden',
+            bgcolor: 'white'
           }}
         >
           <Box sx={{
-            p: { xs: 1.5, sm: 2 },
-            borderBottom: 1,
-            borderColor: 'grey.200',
+            p: { xs: 1, sm: 1.5 },
+            borderBottom: '1px solid',
+            borderColor: 'divider',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
             bgcolor: 'grey.50'
           }}>
-            <Typography variant={isMobile ? "subtitle1" : "h6"} fontWeight="bold">
-              Recent Tickets
-            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <TiTicket size={18} />
+              <Typography variant="subtitle2" fontWeight="bold">
+                Recent Tickets
+              </Typography>
+              <Chip 
+                label={tickets.length}
+                size="small"
+                sx={{ height: 20, fontSize: '0.65rem' }}
+              />
+            </Box>
             <Button
-              size={isMobile ? "small" : "medium"}
-              endIcon={<ArrowForwardIcon />}
+              size="small"
+              endIcon={<OpenInNewIcon sx={{ fontSize: 14 }} />}
               onClick={() => router.push('/emp-tickets/all-tickets')}
+              sx={{ minWidth: 'auto', fontSize: '0.75rem' }}
             >
-              {isMobile ? 'View All' : 'View All'}
+              {isMobile ? 'All' : 'View All'}
             </Button>
           </Box>
 
-          {isMobile ? (
-            // Mobile List View
+          {loading ? (
+            <Box sx={{ textAlign: 'center', py: 3 }}>
+              <CircularProgress size={24} sx={{ mb: 1 }} />
+              <Typography variant="caption" color="text.secondary">
+                Loading tickets...
+              </Typography>
+            </Box>
+          ) : tickets.length === 0 ? (
+            <Box sx={{ textAlign: 'center', py: 3, px: 2 }}>
+              <ErrorOutlineIcon sx={{ fontSize: 32, color: 'grey.400', mb: 1 }} />
+              <Typography variant="body2" color="text.secondary" gutterBottom>
+                No tickets found
+              </Typography>
+              <Button
+                size="small"
+                variant="outlined"
+                onClick={() => router.push('/emp-tickets/create-tickets')}
+                sx={{ mt: 0.5, fontSize: '0.75rem' }}
+              >
+                Create First Ticket
+              </Button>
+            </Box>
+          ) : isMobile ? (
             <Box>
               {tickets.slice(0, 5).map((ticket, index) => (
                 <Box
                   key={index}
                   sx={{
-                    p: 1.5,
-                    borderBottom: 1,
+                    p: 1,
+                    borderBottom: '1px solid',
                     borderColor: 'divider',
                     cursor: 'pointer',
+                    transition: 'background-color 0.2s',
                     '&:hover': { bgcolor: 'action.hover' },
                     '&:last-child': { borderBottom: 0 }
                   }}
                   onClick={() => router.push(`/emp-tickets/ticket-detail/${ticket.id}`)}
                 >
-                  <Stack direction="row" justifyContent="space-between" alignItems="flex-start" spacing={1}>
+                  <Stack direction="row" justifyContent="space-between" alignItems="flex-start" spacing={0.5}>
                     <Box sx={{ flex: 1, minWidth: 0 }}>
-                      <Typography 
-                        variant="caption" 
-                        fontWeight="bold" 
-                        color="primary.main"
-                        display="block"
-                        gutterBottom
-                      >
-                        #{ticket.id}
-                      </Typography>
+                      <Stack direction="row" spacing={0.5} alignItems="center" mb={0.5}>
+                        <Typography 
+                          variant="caption" 
+                          fontWeight="bold" 
+                          color="primary.main"
+                          sx={{ fontSize: '0.7rem' }}
+                        >
+                          #{ticket.id}
+                        </Typography>
+                        <Box sx={{ flex: 1 }}>
+                          <PriorityBadge priority={ticket.priority} />
+                        </Box>
+                      </Stack>
+                      
                       <Typography 
                         variant="body2" 
                         fontWeight="medium"
                         sx={{ 
+                          fontSize: '0.8rem',
                           overflow: 'hidden',
                           textOverflow: 'ellipsis',
-                          whiteSpace: 'nowrap'
+                          whiteSpace: 'nowrap',
+                          mb: 0.5
                         }}
                       >
                         {ticket.title}
                       </Typography>
-                 
-                    </Box>
-                    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 0.5 }}>
-                      <StatusBadge status={ticket.status} />
-                      <PriorityBadge priority={ticket.priority} />
+                      
+                      <Stack direction="row" justifyContent="space-between" alignItems="center">
+                        <Stack direction="row" spacing={1} alignItems="center">
+                          <AccessTimeIcon sx={{ fontSize: 10, color: 'text.secondary' }} />
+                          <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.65rem' }}>
+                            {formatDate(ticket.createdAt)}
+                          </Typography>
+                        </Stack>
+                        <StatusBadge status={ticket.status} />
+                      </Stack>
                     </Box>
                   </Stack>
-                  <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
-                    Created: {formatDate(ticket.createdAt)}
-                  </Typography>
                 </Box>
               ))}
             </Box>
           ) : (
-            // Desktop Table View
             <TableContainer>
-              <Table size={isTablet ? "small" : "medium"}>
+              <Table size="small" sx={{ minWidth: 650 }}>
                 <TableHead>
                   <TableRow sx={{ bgcolor: 'grey.50' }}>
-                    <TableCell sx={{ fontWeight: 'bold', color: 'text.secondary', py: 1.5 }}>
-                      Ticket No
+                    <TableCell sx={{ fontWeight: 'bold', fontSize: '0.75rem', py: 0.75, width: '15%' }}>
+                      ID
                     </TableCell>
-                    <TableCell sx={{ fontWeight: 'bold', color: 'text.secondary', py: 1.5 }}>
+                    <TableCell sx={{ fontWeight: 'bold', fontSize: '0.75rem', py: 0.75, width: '30%' }}>
                       Title
                     </TableCell>
-                    <TableCell sx={{ fontWeight: 'bold', color: 'text.secondary', py: 1.5 }}>
+                    <TableCell sx={{ fontWeight: 'bold', fontSize: '0.75rem', py: 0.75, width: '15%' }}>
                       Priority
                     </TableCell>
-                    <TableCell sx={{ fontWeight: 'bold', color: 'text.secondary', py: 1.5 }}>
+                    <TableCell sx={{ fontWeight: 'bold', fontSize: '0.75rem', py: 0.75, width: '15%' }}>
                       Status
                     </TableCell>
-                    <TableCell sx={{ fontWeight: 'bold', color: 'text.secondary', py: 1.5 }}>
+                    <TableCell sx={{ fontWeight: 'bold', fontSize: '0.75rem', py: 0.75, width: '15%' }}>
                       Created
                     </TableCell>
-                    <TableCell sx={{ fontWeight: 'bold', color: 'text.secondary', py: 1.5 }}>
-                      Actions
+                    <TableCell sx={{ fontWeight: 'bold', fontSize: '0.75rem', py: 0.75, width: '10%' }}>
+                      Action
                     </TableCell>
                   </TableRow>
                 </TableHead>
@@ -557,40 +665,45 @@ const EmployeeTicketDashboard = () => {
                       hover
                       sx={{
                         cursor: 'pointer',
-                        '&:hover': { bgcolor: 'action.hover' }
+                        '&:hover': { bgcolor: 'action.hover' },
+                        height: 48
                       }}
                     >
-                      <TableCell sx={{ py: 1.5 }}>
-                        <Typography variant="body2" fontWeight="medium" color="primary.main">
+                      <TableCell sx={{ py: 0.75 }}>
+                        <Typography variant="caption" fontWeight="medium" color="primary.main">
                           #{ticket.id}
                         </Typography>
                       </TableCell>
-                      <TableCell sx={{ py: 1.5 }}>
+                      <TableCell sx={{ py: 0.75 }}>
                         <Box>
-                          <Typography variant="body2" fontWeight="medium" gutterBottom>
+                          <Typography variant="body2" fontWeight="medium" sx={{ fontSize: '0.8rem' }}>
                             {ticket.title}
                           </Typography>
-                          <Typography variant="caption" color="text.secondary" noWrap>
-                            {ticket.description}
+                          <Typography variant="caption" color="text.secondary" noWrap sx={{ fontSize: '0.7rem' }}>
+                            {ticket.category}
                           </Typography>
                         </Box>
                       </TableCell>
-                      <TableCell sx={{ py: 1.5 }}>
+                      <TableCell sx={{ py: 0.75 }}>
                         <PriorityBadge priority={ticket.priority} />
                       </TableCell>
-                      <TableCell sx={{ py: 1.5 }}>
+                      <TableCell sx={{ py: 0.75 }}>
                         <StatusBadge status={ticket.status} />
                       </TableCell>
-                      <TableCell sx={{ py: 1.5 }}>
-                        <Typography variant="body2" color="text.secondary">
+                      <TableCell sx={{ py: 0.75 }}>
+                        <Typography variant="caption" color="text.secondary">
                           {formatDate(ticket.createdAt)}
                         </Typography>
                       </TableCell>
-                      <TableCell sx={{ py: 1.5 }}>
-                        <Tooltip title="View Details">
+                      <TableCell sx={{ py: 0.75 }}>
+                        <Tooltip title="View" arrow>
                           <IconButton
                             size="small"
-                            onClick={() => router.push(`/emp-tickets/ticket-detail/${ticket.id}`)}
+                            // onClick={(e) => {
+                            //   e.stopPropagation();
+                            //   router.push(`/emp-tickets/ticket-detail/${ticket.id}`);
+                            // }}
+                            sx={{ p: 0.5 }}
                           >
                             <VisibilityIcon fontSize="small" />
                           </IconButton>
@@ -602,110 +715,108 @@ const EmployeeTicketDashboard = () => {
               </Table>
             </TableContainer>
           )}
-
-          {tickets.length === 0 && !loading && (
-            <Box sx={{ textAlign: 'center', py: 6, px: 2 }}>
-              <TiTicket size={isMobile ? 36 : 48} style={{ color: '#e0e0e0', marginBottom: 12 }} />
-              <Typography color="text.secondary" gutterBottom>
-                No tickets found
-              </Typography>
-              <Button
-                size="small"
-                variant="outlined"
-                onClick={() => router.push('/emp-tickets/create-tickets')}
-                sx={{ mt: 1 }}
-              >
-                Create your first ticket
-              </Button>
-            </Box>
-          )}
-
-          {loading && (
-            <Box sx={{ textAlign: 'center', py: 6 }}>
-              <CircularProgress size={isMobile ? 30 : 40} sx={{ mb: 2 }} />
-              <Typography variant="body2" color="text.secondary">
-                Loading tickets...
-              </Typography>
-            </Box>
-          )}
         </Card>
 
-        {/* Status Distribution and Help - Compact Layout */}
-        <Grid container spacing={2}>
-          <Grid item xs={12} md={6}>
+        <Grid container spacing={1}>
+          <Grid item xs={12} md={8}>
             <Card
               elevation={0}
               sx={{
-                border: 1,
-                borderColor: 'grey.200',
-                borderRadius: 1.5,
-                height: '100%'
+                border: '1px solid',
+                borderColor: 'divider',
+                borderRadius: 1,
+                height: '100%',
+                bgcolor: 'white'
               }}
             >
-              <CardContent sx={{ p: { xs: 1.5, sm: 2 } }}>
-                <Typography variant={isMobile ? "subtitle1" : "h6"} fontWeight="bold" gutterBottom>
+              <CardContent sx={{ p: { xs: 1, sm: 1.5 } }}>
+                <Typography variant="subtitle2" fontWeight="bold" gutterBottom>
                   Status Distribution
                 </Typography>
-                <Stack spacing={1} mt={1}>
+                <Stack spacing={0.75} mt={1}>
                   {[
-                    { status: 'Open', count: stats.open, color: '#ef4444' },
-                    { status: 'In Progress', count: stats.inProgress, color: '#f59e0b' },
-                    { status: 'Resolved', count: stats.resolved, color: '#10b981' },
-                    { status: 'Closed', count: stats.closed, color: '#6b7280' }
-                  ].map((item, index) => (
-                    <Box
-                      key={index}
-                      sx={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center'
-                      }}
-                    >
-                      <Stack direction="row" spacing={1} alignItems="center">
-                        <CircleIcon sx={{ fontSize: 8, color: item.color }} />
-                        <Typography variant="body2" fontWeight="medium">
-                          {item.status}
-                        </Typography>
-                      </Stack>
-                      <Stack direction="row" spacing={1} alignItems="center">
-                        <Typography variant="body2" fontWeight="bold">
-                          {item.count}
-                        </Typography>
-                        <Typography 
-                          variant="caption" 
-                          color="text.secondary"
-                          sx={{ fontSize: '0.7rem' }}
+                    { status: 'Open', count: stats.open, color: '#ef4444', icon: FaExclamationTriangle },
+                    { status: 'In Progress', count: stats.inProgress, color: '#f59e0b', icon: MdSchedule },
+                    { status: 'Resolved', count: stats.resolved, color: '#10b981', icon: MdCheckCircleOutline },
+                    { status: 'Closed', count: stats.closed, color: '#6b7280', icon: MdCheckCircleOutline }
+                  ].map((item, index) => {
+                    const percentage = stats.total > 0 ? Math.round((item.count / stats.total) * 100) : 0;
+                    const IconComponent = item.icon;
+                    return (
+                      <Box key={index}>
+                        <Box
+                          sx={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            mb: 0.5
+                          }}
                         >
-                          ({stats.total > 0 ? Math.round((item.count / stats.total) * 100) : 0}%)
-                        </Typography>
-                      </Stack>
-                    </Box>
-                  ))}
+                          <Stack direction="row" spacing={1} alignItems="center">
+                            <IconComponent size={12} style={{ color: item.color }} />
+                            <Typography variant="caption" fontWeight="medium" sx={{ fontSize: '0.75rem' }}>
+                              {item.status}
+                            </Typography>
+                          </Stack>
+                          <Typography variant="caption" fontWeight="bold" sx={{ fontSize: '0.75rem' }}>
+                            {item.count} ({percentage}%)
+                          </Typography>
+                        </Box>
+                        <LinearProgress
+                          variant="determinate"
+                          value={percentage}
+                          sx={{
+                            height: 4,
+                            borderRadius: 2,
+                            bgcolor: `${item.color}20`,
+                            '& .MuiLinearProgress-bar': {
+                              bgcolor: item.color,
+                              borderRadius: 2
+                            }
+                          }}
+                        />
+                      </Box>
+                    );
+                  })}
                 </Stack>
               </CardContent>
             </Card>
           </Grid>
 
-          <Grid item xs={12} md={6}>
+          <Grid item xs={12} md={4}>
             <Card
               elevation={0}
               sx={{
-                border: 1,
+                border: '1px solid',
                 borderColor: 'primary.light',
-                borderRadius: 1.5,
-                bgcolor: 'primary.50',
-                height: '100%'
+                borderRadius: 1,
+                bgcolor: alpha('#3b82f6', 0.03),
+                height: '100%',
+                position: 'relative',
+                overflow: 'hidden'
               }}
             >
-              <CardContent sx={{ p: { xs: 1.5, sm: 2 } }}>
-                <Typography variant={isMobile ? "subtitle1" : "h6"} fontWeight="bold" gutterBottom>
+              <Box
+                sx={{
+                  position: 'absolute',
+                  top: -20,
+                  right: -20,
+                  width: 80,
+                  height: 80,
+                  borderRadius: '50%',
+                  bgcolor: alpha('#3b82f6', 0.1),
+                  zIndex: 0
+                }}
+              />
+              <CardContent sx={{ p: { xs: 1, sm: 1.5 }, position: 'relative', zIndex: 1 }}>
+                <Typography variant="subtitle2" fontWeight="bold" gutterBottom color="primary.main">
                   Need Help?
                 </Typography>
                 <Typography 
-                  variant="body2" 
+                  variant="caption" 
                   color="text.secondary" 
                   paragraph
-                  sx={{ fontSize: { xs: '0.875rem', sm: '0.9rem' } }}
+                  sx={{ fontSize: '0.75rem', mb: 1.5 }}
                 >
                   Having issues with your tickets?
                 </Typography>
@@ -715,9 +826,9 @@ const EmployeeTicketDashboard = () => {
                     'Raise new ticket for any issue',
                     'Contact support for urgent matters'
                   ].map((item, index) => (
-                    <Stack key={index} direction="row" spacing={1} alignItems="center">
-                      <CircleIcon sx={{ fontSize: 6, color: 'primary.main' }} />
-                      <Typography variant="body2" sx={{ fontSize: '0.875rem' }}>
+                    <Stack key={index} direction="row" spacing={1} alignItems="flex-start">
+                      <CircleIcon sx={{ fontSize: 6, color: 'primary.main', mt: 0.5 }} />
+                      <Typography variant="caption" sx={{ fontSize: '0.75rem', flex: 1 }}>
                         {item}
                       </Typography>
                     </Stack>
@@ -726,9 +837,14 @@ const EmployeeTicketDashboard = () => {
                 <Button
                   variant="contained"
                   fullWidth
-                  size={isMobile ? "small" : "medium"}
+                  size="small"
                   onClick={() => router.push('/emp-tickets/create-tickets')}
-                  sx={{ mt: 1 }}
+                  sx={{ 
+                    bgcolor: 'primary.main',
+                    '&:hover': { bgcolor: 'primary.dark' },
+                    fontSize: '0.75rem',
+                    py: 0.5
+                  }}
                 >
                   Get Support
                 </Button>

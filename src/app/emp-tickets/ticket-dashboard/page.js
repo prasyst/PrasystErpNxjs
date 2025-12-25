@@ -1,8 +1,7 @@
 "use client"
 
-// import EmployeeDashboardLayout from '@/components/emp-dashboard/EmployeeDashboardLayout';
+
 import EmployeeTicketDashboard from '@/components/ticket/empTicketsComp/EmployeeTicketDashboard';
-// import TicketDashboard from '@/components/ticket/TicketDashboard';
 
 export default function TicketDashboardPage() {
   return <EmployeeTicketDashboard/>;
