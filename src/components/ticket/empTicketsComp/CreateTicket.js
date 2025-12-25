@@ -99,6 +99,16 @@ const CreateTicketPage = () => {
   const [selectedImage, setselectedImage] = useState("");
   const [zoomOpen, setZoomOpen] = useState(false);
   const [zoomSrc, setZoomSrc] = useState('');
+  const [userName,setUserName]=useState()
+
+  useEffect(() => {
+      const storedName = localStorage.getItem('EMP_NAME') || localStorage.getItem('USER_NAME');
+      const storedRole = localStorage.getItem('userRole');
+      if (storedName) {
+        const name=storedName.length>3 ? storedName.substring(0,11) + '..' :storedName
+        setUserName(name);
+      }
+    }, []);
   useEffect(() => {
     setIsItemRequisitionEnabled(validateForm());
   }, [formData, ticketFor]);
@@ -456,8 +466,8 @@ const CreateTicketPage = () => {
         ticketData.CreatedBy = 0
       }
       const apiUrl = isUpdate
-        ? `TrnTkt/UpdateTrnTkt?UserName=${USER_NAME}&strCobrid=${cobrId}`
-        : `TrnTkt/InsertTrnTkt?UserName=${USER_NAME}&strCobrid=${cobrId}`;
+        ? `TrnTkt/UpdateTrnTkt?UserName=${userName}&strCobrid=${cobrId}`
+        : `TrnTkt/InsertTrnTkt?UserName=${userName}&strCobrid=${cobrId}`;
       const response = await axiosInstance.post(apiUrl, ticketData);
       if (response.data.STATUS === 0) {
         toast.success(
@@ -466,7 +476,7 @@ const CreateTicketPage = () => {
             : `Ticket ${newTktNo} created successfully!`
         );
         setTimeout(() => {
-          router.push("/tickets/all-tickets");
+          router.push("/emp-tickets/all-tickets");
         }, 1500);
       } else {
         toast.error(response.data.MESSAGE || "Failed to save ticket.");

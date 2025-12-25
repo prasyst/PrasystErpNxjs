@@ -4,14 +4,41 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { usePathname } from 'next/navigation';
 import {
-  MdDashboard, MdAddTask, MdAssignmentTurnedIn, MdSearch, 
-  MdCollectionsBookmark, MdHelp, MdClose, MdMenu, MdChevronRight,
-  MdPayments, MdReceipt
-} from 'react-icons/md';
-import { TiTicket } from 'react-icons/ti';
+  Box,
+  Drawer,
+  List,
+  ListItem,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
+  Typography,
+  IconButton,
+  TextField,
+  InputAdornment,
+  Divider,
+  Tooltip,
+  useMediaQuery,
+  useTheme,
+  Collapse,
+  Paper
+} from '@mui/material';
+import {
+  Dashboard as DashboardIcon,
+  AddTask as AddTaskIcon,
+  AssignmentTurnedIn as AssignmentTurnedInIcon,
+  Search as SearchIcon,
+  Close as CloseIcon,
+  Menu as MenuIcon,
+  ChevronRight as ChevronRightIcon,
+  Receipt as ReceiptIcon,
+  ExpandMore as ExpandMoreIcon,
+  ExpandLess as ExpandLessIcon,
+  LocalOffer as TicketIcon
+} from '@mui/icons-material';
 import { useRecentPaths } from '../../app/context/RecentPathsContext';
 
 const EmployeeSidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => {
+  const theme = useTheme();
   const sidebarRef = useRef(null);
   const router = useRouter();
   const pathname = usePathname();
@@ -22,9 +49,12 @@ const EmployeeSidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClos
   const { addRecentPath } = useRecentPaths();
   const [searchQuery, setSearchQuery] = useState('');
   const searchInputRef = useRef(null);
-  const [hasOpenSubmenu, setHasOpenSubmenu] = useState(false);
   const [userName, setUserName] = useState('');
-  
+  const [hoveredItem, setHoveredItem] = useState(null);
+
+ 
+  const isSmallScreen = useMediaQuery(theme.breakpoints.down('md'));
+
   useEffect(() => {
     const storedName = localStorage.getItem('EMP_NAME') || localStorage.getItem('USER_NAME');
     if (storedName) {
@@ -36,24 +66,25 @@ const EmployeeSidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClos
   const employeeMenuItems = [
     {
       name: 'Ticketing',
-      icon: TiTicket,
+      icon: TicketIcon,
       path: '/employeepage?activeTab=ticketing',
       children: [
         { 
           name: 'Dashboard', 
-          icon: MdReceipt, 
+          icon: ReceiptIcon, 
           path: '/emp-tickets/ticket-dashboard' 
         },
         { 
-          name: 'Raise Ticket', 
-          icon: MdAddTask, 
-          path: '/emp-tickets/create-tickets/' 
-        },
-        { 
           name: 'My Tickets', 
-          icon: MdAssignmentTurnedIn, 
+          icon: AssignmentTurnedInIcon, 
           path: '/emp-tickets/all-tickets' 
         },
+        { 
+          name: 'Raise Ticket', 
+          icon: AddTaskIcon, 
+          path: '/emp-tickets/create-tickets/' 
+        },
+        
       ],
     },
   ];
@@ -64,24 +95,14 @@ const EmployeeSidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClos
         addRecentPath(path, name);
       }
       router.push(path);
-      
-      if (isMobile && isGrandchild) {
-        onClose();
-      }
     }
   };
 
   const toggleSection = (name) => {
-    setOpenSections(prev => {
-      const newState = { ...prev };
-      if (newState[name]) {
-        delete newState[name];
-      } else {
-        newState[name] = true;
-      }
-      setHasOpenSubmenu(Object.keys(newState).length > 0);
-      return newState;
-    });
+    setOpenSections(prev => ({
+      ...prev,
+      [name]: !prev[name]
+    }));
   };
 
   const handleParentClick = (item, e) => {
@@ -149,7 +170,6 @@ const EmployeeSidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClos
     if (grandchild.path && grandchild.path !== '#') {
       handleNavigationWithTracking(grandchild.path, grandchild.name, true);
     }
-    
   };
 
   useEffect(() => {
@@ -170,27 +190,10 @@ const EmployeeSidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClos
               setOpenSections(prev => ({ ...prev, [item.name]: true }));
               return true;
             }
-
-            if (child.children) {
-              for (const grandchild of child.children) {
-                if (grandchild.path && pathname.includes(grandchild.path)) {
-                  setActiveItem(item.name);
-                  setActiveChild(child.name);
-                  setActiveGrandchild(grandchild.name);
-                  setOpenSections(prev => ({
-                    ...prev,
-                    [item.name]: true,
-                    [child.name]: true
-                  }));
-                  return true;
-                }
-              }
-            }
           }
         }
       }
-      
-  
+
       if (pathname.startsWith('/employeepage') || pathname.includes('ticket')) {
         const url = new URL(window.location.href);
         const activeTab = url.searchParams.get('activeTab');
@@ -285,28 +288,6 @@ const EmployeeSidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClos
     return filterMenuTree(employeeMenuItems, searchQuery);
   };
 
-  const highlightText = (text, query) => {
-    if (!query || !text) return text;
-    
-    const lowerText = text.toLowerCase();
-    const lowerQuery = query.toLowerCase();
-    const index = lowerText.indexOf(lowerQuery);
-    
-    if (index === -1) return text;
-    
-    const before = text.substring(0, index);
-    const match = text.substring(index, index + query.length);
-    const after = text.substring(index + query.length);
-    
-    return (
-      <>
-        {before}
-        <span style={{ backgroundColor: '#ffeb3b', fontWeight: 'bold', borderRadius: '2px' }}>{match}</span>
-        {after}
-      </>
-    );
-  };
-
   const handleSearchChange = (e) => {
     const value = e.target.value;
     setSearchQuery(value);
@@ -341,7 +322,7 @@ const EmployeeSidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClos
 
   const menuItems = getFilteredMenuItems();
 
-  const renderMenu = useCallback((items) => {
+  const renderMenuItems = useCallback((items, level = 0) => {
     return items
       .filter(item => item)
       .map((item, index) => {
@@ -349,377 +330,300 @@ const EmployeeSidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClos
         const hasChildren = item.children && item.children.length > 0;
         const isOpen = openSections[item.name] || (searchQuery.trim() && hasChildren);
         const isActive = activeItem === item.name;
-        const hasValidPath = item.path && item.path !== '#';
+        const isHovered = hoveredItem === `${item.name}-${level}`;
 
         return (
-          <div key={`${item.name}-${index}`}>
-            {/* PARENT ITEM */}
-            <div
-              onClick={(e) => handleParentClick(item, e)}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = isActive ? '#5ba8ffff' : '#f0f2ff';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = isActive ? '#5ba8ffff' : 'transparent';
-              }}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                padding: '0.4rem 0.8rem',
-                cursor: 'pointer',
-                backgroundColor: isActive ? '#5ba8ffff' : 'transparent',
-                color: isActive ? 'white' : '#333',
-                transition: 'all 0.2s ease',
-                borderRadius: '8px',
-                border: isActive ? '1px solid #5ba8ff' : '1px solid transparent',
-                borderLeft: isActive ? '4px solid #1b69e7' : '4px solid transparent',
-              }}
+          <Box key={`${item.name}-${index}-${level}`}>
+            <ListItem
+              disablePadding
             >
-              {IconComponent && (
-                <IconComponent
-                  size={20}
-                  style={{
-                    marginRight: isCollapsed ? 0 : '12px',
-                    minWidth: '24px',
-                    color: isActive ? 'white' : '#1b69e7',
-                  }}
-                />
-              )}
-              {!isCollapsed && (
-                <>
-                  <span style={{ 
-                    flex: 1, 
-                    fontWeight: isActive ? 600 : 500,
+              <ListItemButton
+                onClick={(e) => {
+                  if (level === 0) {
+                    handleParentClick(item, e);
+                  } else if (level === 1) {
+                    handleChildClick(item, activeItem, e);
+                  }
+                }}
+                onMouseEnter={() => setHoveredItem(`${item.name}-${level}`)}
+                onMouseLeave={() => setHoveredItem(null)}
+                sx={{
+                  borderRadius: 1,
+                  backgroundColor: isActive 
+                    ? theme.palette.primary.main 
+                    : isHovered 
+                      ? theme.palette.action.hover 
+                      : 'transparent',
+                  color: isActive ? theme.palette.primary.contrastText : theme.palette.text.primary,
+                  borderLeft: isActive 
+                    ? `4px solid ${theme.palette.primary.dark}`
+                    : '4px solid transparent',
+                  '&:hover': {
+                    backgroundColor: isActive 
+                      ? theme.palette.primary.main 
+                      : theme.palette.action.hover,
+                  },
+                  height: level === 0 ? 35 : 35,
+                }}
+              >
+                {IconComponent && (
+                  <ListItemIcon sx={{ 
+                    // minWidth: 40,
+                    color: isActive ? theme.palette.primary.contrastText : theme.palette.primary.main,
                   }}>
-                    {searchQuery.trim() ? highlightText(item.name, searchQuery) : item.name}
-                  </span>
-                  {hasChildren && (
-                    <MdChevronRight
-                      size={18}
-                      style={{
-                        transform: isOpen ? 'rotate(90deg)' : 'rotate(0)',
-                        transition: 'transform 0.25s ease',
-                        color: isActive ? 'white' : '#777',
+                    <IconComponent />
+                  </ListItemIcon>
+                )}
+                
+                {!isCollapsed && (
+                  <>
+                    <ListItemText
+                      primary={item.name}
+                      primaryTypographyProps={{
+                        fontWeight: isActive ? 600 : 500,
+                        fontSize: level === 0 ? '0.95rem' : '0.875rem',
+                        noWrap: true,
+                      }}
+                      sx={{
+                        mr: 1,
                       }}
                     />
-                  )}
-                </>
-              )}
-            </div>
+                    
+                    {hasChildren && (
+                      isOpen ? <ExpandLessIcon /> : <ChevronRightIcon />
+                    )}
+                  </>
+                )}
+                
+                {isCollapsed && level === 0 && (
+                  <Tooltip title={item.name} placement="right">
+                    <ListItemIcon sx={{ minWidth: 'auto' }}>
+                      <IconComponent />
+                    </ListItemIcon>
+                  </Tooltip>
+                )}
+              </ListItemButton>
+            </ListItem>
 
             {hasChildren && isOpen && !isCollapsed && (
-              <div style={{ marginLeft: '20px', borderLeft: '2px solid #e0e0e0', paddingLeft: '12px' }}>
-                {item.children
-                  .filter(child => child)
-                  .map((child, childIndex) => {
-                    const ChildIcon = child.icon;
-                    const childIsOpen = openSections[child.name] || (searchQuery.trim() && child.children);
-                    const hasGrandChildren = child.children && child.children.length > 0;
-                    const isChildActive = activeChild === child.name;
-
-                    return (
-                      <div key={`${child.name}-${childIndex}`}>
-                        <div
-                          onClick={(e) => handleChildClick(child, item.name, e)}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.backgroundColor = isChildActive ? '#5ba8ffff' : '#f0f2ff';
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.backgroundColor = isChildActive ? '#5ba8ffff' : 'transparent';
-                          }}
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            padding: '0.3rem 0.6rem',
-                            cursor: 'pointer',
-                            borderRadius: '6px',
-                            margin: '4px 0',
-                            backgroundColor: isChildActive ? '#5ba8ffff' : 'transparent',
-                            color: isChildActive ? 'white' : '#444',
-                            fontWeight: isChildActive ? 600 : 500,
-                            transition: 'all 0.2s ease',
-                            borderLeft: isChildActive ? '3px solid #1b69e7' : '3px solid transparent',
-                          }}
-                        >
-                          {ChildIcon && (
-                            <ChildIcon 
-                              size={18} 
-                              style={{ 
-                                marginRight: '8px', 
-                                color: isChildActive ? 'white' : '#1b69e7',
-                              }} 
-                            />
-                          )}
-                          <span
-                            style={{
-                              flex: 1,
-                              fontSize: '0.9rem',
-                            }}
-                          >
-                            {searchQuery.trim() ? highlightText(child.name, searchQuery) : child.name}
-                          </span>
-
-                          {hasGrandChildren && (
-                            <MdChevronRight
-                              size={16}
-                              style={{
-                                transform: childIsOpen ? 'rotate(90deg)' : 'rotate(0)',
-                                transition: 'transform 0.2s',
-                                color: isChildActive ? 'white' : '#777',
-                              }}
-                            />
-                          )}
-                        </div>
-
-                        {hasGrandChildren && childIsOpen && (
-                          <div style={{ marginLeft: '20px', paddingLeft: '8px' }}>
-                            {child.children
-                              .filter(grandchild => grandchild)
-                              .map((grandchild, grandchildIndex) => {
-                                const GrandIcon = grandchild.icon;
-                                const hasPath = grandchild.path && grandchild.path !== '#';
-                                const isGrandchildActive = activeGrandchild === grandchild.name;
-
-                                return (
-                                  <div
-                                    key={`${grandchild.name}-${grandchildIndex}`}
-                                    onClick={(e) => hasPath ? handleGrandchildClick(grandchild, item.name, child.name, e) : null}
-                                    onMouseEnter={(e) => {
-                                      if (hasPath) {
-                                        e.currentTarget.style.backgroundColor = isGrandchildActive ? '#1b69e7' : '#f0f2ff';
-                                      }
-                                    }}
-                                    onMouseLeave={(e) => {
-                                      if (hasPath) {
-                                        e.currentTarget.style.backgroundColor = isGrandchildActive ? '#1b69e7' : 'transparent';
-                                      }
-                                    }}
-                                    style={{
-                                      display: 'flex',
-                                      alignItems: 'center',
-                                      padding: '0.5rem 0.8rem',
-                                      cursor: hasPath ? 'pointer' : 'default',
-                                      backgroundColor: isGrandchildActive ? '#1b69e7' : 'transparent',
-                                      color: isGrandchildActive ? 'white' : '#333',
-                                      borderRadius: '6px',
-                                      margin: '2px 0',
-                                      fontSize: '0.85rem',
-                                      transition: 'all 0.2s ease',
-                                      borderLeft: isGrandchildActive ? '2px solid #1b69e7' : '2px solid transparent',
-                                    }}
-                                  >
-                                    {GrandIcon && (
-                                      <GrandIcon
-                                        size={16}
-                                        style={{
-                                          marginRight: '6px',
-                                          color: isGrandchildActive ? 'white' : '#444',
-                                        }}
-                                      />
-                                    )}
-                                    <span>
-                                      {searchQuery.trim() ? highlightText(grandchild.name, searchQuery) : grandchild.name}
-                                    </span>
-                                  </div>
-                                );
-                              })}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-              </div>
+              <Collapse in={isOpen} timeout="auto" unmountOnExit>
+                <List component="div" disablePadding>
+                  {renderMenuItems(item.children, level + 1)}
+                </List>
+              </Collapse>
             )}
-          </div>
+          </Box>
         );
       });
-  }, [openSections, activeItem, activeChild, activeGrandchild, isCollapsed, searchQuery]);
+  }, [openSections, activeItem, hoveredItem, isCollapsed, searchQuery, theme]);
 
-  return (
-    <>
-      <div
-        ref={sidebarRef}
-        onClick={(e) => e.stopPropagation()}
-        style={{
-          backgroundColor: '#fff',
-          color: '#0e0d0dff',
-          height: '100vh',
-          position: 'fixed',
-          borderRight: '1px solid #e0e0e0',
-          left: 0,
-          top: 0,
-          width: isMobile
-            ? (isOpen ? '270px' : '0')
-            : (isCollapsed ? '77px' : '240px'),
-          transition: 'width 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
-          padding: isMobile ? (isOpen ? '0.8rem 0.6rem' : '0') : '0.8rem 0.6rem',
-          overflow: 'hidden',
-          zIndex: 1000,
-          display: 'flex',
-          flexDirection: 'column',
-          boxShadow: isMobile ? '2px 0 15px rgba(0,0,0,0.1)' : '2px 0 15px rgba(0,0,0,0.05)',
-          opacity: isMobile ? (isOpen ? 1 : 0) : 1,
-          visibility: isMobile ? (isOpen ? 'visible' : 'hidden') : 'visible',
+
+  if (isMobile) {
+    return (
+      <Drawer
+        anchor="left"
+        open={isOpen}
+        onClose={onClose}
+        variant="temporary"
+        PaperProps={{
+          sx: {
+            width: 280,
+            bgcolor: 'background.paper',
+            boxShadow: 3,
+            overflowX: 'hidden',
+          },
+          ref: sidebarRef
+        }}
+        ModalProps={{
+          keepMounted: true,
         }}
       >
-        {/* HEADER */}
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: isCollapsed && !isMobile ? 'center' : 'space-between',
-          marginBottom: '1rem',
-          padding: '0 0.5rem',
-          minHeight: '40px',
-        }}>
-          {(!isCollapsed || isMobile) && (
-            <h2 style={{
-              fontSize: '1.3rem',
-              fontWeight: '700',
-              margin: 0,
-              whiteSpace: 'nowrap',
-              color: '#1b69e7',
-              letterSpacing: '0.5px',
-            }}>
-              {userName}
-            </h2>
-          )}
 
-          {isMobile && isOpen && (
-            <button
-              onClick={onClose}
-              style={{
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                color: '#635bff',
-                padding: '0.25rem',
-                borderRadius: '4px',
-                transition: 'background-color 0.2s',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                width: '40px',
-                height: '40px',
-              }}
-              title="Close sidebar"
-              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f0f2ff'}
-              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-            >
-              <MdClose size={24} />
-            </button>
-          )}
-    
-          {!isMobile && (
-            <button
-              onClick={() => setIsCollapsed(!isCollapsed)}
-              style={{
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                color: '#635bff',
-                padding: '0.25rem',
-                borderRadius: '4px',
-                transition: 'background-color 0.2s',
-              }}
-              title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f0f2ff'}
-              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-            >
-              <MdMenu size={24} />
-            </button>
-          )}
-        </div>
-
-        {(!isCollapsed || isMobile) && (
-          <div style={{
-            marginBottom: '1rem',
-            padding: '0 0.5rem',
-          }}>
-            <div style={{
-              position: 'relative',
-              display: 'flex',
-              alignItems: 'center',
-            }}>
-              <MdSearch 
-                size={20} 
-                style={{
-                  position: 'absolute',
-                  left: '10px',
-                  color: '#999',
-                  zIndex: 1,
-                }}
-              />
-              <input
-                ref={searchInputRef}
-                type="text"
-                placeholder="Search ticket features..."
-                value={searchQuery}
-                onChange={handleSearchChange}
-                style={{
-                  width: '100%',
-                  padding: '0.5rem 0.5rem 0.5rem 2.5rem',
-                  border: '1px solid #ddd',
-                  borderRadius: '6px',
-                  fontSize: '0.9rem',
-                  outline: 'none',
-                  transition: 'all 0.2s',
-                  backgroundColor: '#f8f9fa',
-                }}
-                onFocus={(e) => {
-                  e.target.style.borderColor = '#1b69e7';
-                  e.target.style.boxShadow = '0 0 0 2px rgba(27, 105, 231, 0.1)';
-                }}
-                onBlur={(e) => {
-                  e.target.style.borderColor = '#ddd';
-                  e.target.style.boxShadow = 'none';
-                }}
-              />
-              {searchQuery && (
-                <MdClose 
-                  size={18}
-                  onClick={clearSearch}
-                  style={{
-                    position: 'absolute',
-                    right: '10px',
-                    color: '#999',
-                    cursor: 'pointer',
-                    zIndex: 1,
-                  }}
-                  title="Clear search"
-                />
-              )}
-            </div>
-          </div>
-        )}
-        <div style={{
-          flex: 1,
-          overflowY: 'auto',
-          overflowX: 'hidden',
-          maxHeight: 'calc(100vh - 180px)',
-          paddingRight: '4px',
-          visibility: isMobile ? (isOpen ? 'visible' : 'hidden') : 'visible',
+        <Box sx={{ 
+          p: 2, 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'space-between',
+          borderBottom: 1,
+          borderColor: 'divider'
         }}>
-          {searchQuery.trim() && menuItems.length === 0 && (
-            <div style={{
-              textAlign: 'center',
-              padding: '2rem 1rem',
-              color: '#666',
-              fontStyle: 'italic',
+          <Typography variant="h6" sx={{ fontWeight: 700, color: 'primary.main' }}>
+            {userName}
+          </Typography>
+          <IconButton onClick={onClose} size="small">
+            <CloseIcon />
+          </IconButton>
+        </Box>
+
+
+        <Box sx={{ p: 2, pb: 1 }}>
+          <TextField
+            fullWidth
+            size="small"
+            placeholder="Search features..."
+            value={searchQuery}
+            onChange={handleSearchChange}
+            inputRef={searchInputRef}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon fontSize="small" />
+                </InputAdornment>
+              ),
+              endAdornment: searchQuery && (
+                <InputAdornment position="end">
+                  <IconButton size="small" onClick={clearSearch} edge="end">
+                    <CloseIcon fontSize="small" />
+                  </IconButton>
+                </InputAdornment>
+              ),
+            }}
+            sx={{
+              '& .MuiOutlinedInput-root': {
+                borderRadius: 1,
+              }
+            }}
+          />
+        </Box>
+
+        {/* <Divider /> */}
+
+        <Box sx={{ 
+          flex: 1, 
+          overflowY: 'auto', 
+          height: 'calc(100vh - 120px)',
+          p: 1 
+        }}>
+          {searchQuery.trim() && menuItems.length === 0 ? (
+            <Box sx={{ 
+              textAlign: 'center', 
+              p: 4, 
+              color: 'text.secondary',
+              fontStyle: 'italic'
             }}>
               No features found for "{searchQuery}"
-            </div>
+            </Box>
+          ) : (
+            <List disablePadding>
+              {renderMenuItems(menuItems)}
+            </List>
           )}
-          
-          <ul style={{
-            listStyle: 'none',
-            padding: 0,
-            margin: 0,
+        </Box>
+      </Drawer>
+    );
+  }
+
+  return (
+    <Paper
+      elevation={2}
+      sx={{
+        width: isCollapsed ? 80 : 240,
+        height: '100vh',
+        position: 'fixed',
+        left: 0,
+        top: 0,
+        display: 'flex',
+        flexDirection: 'column',
+        transition: theme.transitions.create(['width'], {
+          easing: theme.transitions.easing.sharp,
+          duration: theme.transitions.duration.leavingScreen,
+        }),
+        overflow: 'hidden',
+        zIndex: theme.zIndex.drawer,
+        borderRight: 1,
+        borderColor: 'divider',
+        borderRadius: 0,
+      }}
+      ref={sidebarRef}
+    >
+
+      <Box sx={{ 
+        p: 1, 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: isCollapsed ? 'center' : 'space-between',
+        borderBottom: 1,
+        borderColor: 'divider'
+      }}>
+        {!isCollapsed && (
+          <Typography variant="h6" sx={{ fontWeight: 700, color: 'primary.main' }}>
+            {userName}
+          </Typography>
+        )}
+        <IconButton 
+          onClick={() => setIsCollapsed(!isCollapsed)}
+          size="small"
+          sx={{ ml: isCollapsed ? 0 : 'auto' }}
+        >
+          {isCollapsed ? <MenuIcon /> : <CloseIcon />}
+        </IconButton>
+      </Box>
+
+      {/* Search Box for Desktop */}
+      {!isCollapsed && (
+        <Box sx={{ p: 1, pb: 1 }}>
+          <TextField
+            fullWidth
+            size="small"
+            placeholder="Search..."
+            value={searchQuery}
+            onChange={handleSearchChange}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon fontSize="small" />
+                </InputAdornment>
+              ),
+              endAdornment: searchQuery && (
+                <InputAdornment position="end">
+                  <IconButton size="small" onClick={clearSearch} edge="end">
+                    <CloseIcon fontSize="small" />
+                  </IconButton>
+                </InputAdornment>
+              ),
+            }}
+            sx={{
+              '& .MuiOutlinedInput-root': {
+                borderRadius: 1,
+              }
+            }}
+          />
+        </Box>
+      )}
+
+      <Divider />
+      <Box sx={{ 
+        flex: 1, 
+        overflowY: 'auto', 
+        overflowX: 'hidden',
+        height: 'calc(100vh - 120px)',
+        '&::-webkit-scrollbar': {
+          width: '6px',
+        },
+        '&::-webkit-scrollbar-track': {
+          background: 'transparent',
+        },
+        '&::-webkit-scrollbar-thumb': {
+          background: theme.palette.action.hover,
+          borderRadius: '3px',
+        },
+      }}>
+        {searchQuery.trim() && menuItems.length === 0 ? (
+          <Box sx={{ 
+            textAlign: 'center', 
+            p: 4, 
+            color: 'text.secondary',
+            fontStyle: 'italic'
           }}>
-            {renderMenu(menuItems)}
-          </ul>
-        </div>
-      </div>
-    </>
+            No results found
+          </Box>
+        ) : (
+          <List disablePadding sx={{ p: 1 }}>
+            {renderMenuItems(menuItems)}
+          </List>
+        )}
+      </Box>
+    </Paper>
   );
 };
 
