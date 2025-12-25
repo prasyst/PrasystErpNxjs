@@ -543,6 +543,8 @@ const QcSubGroup = () => {
                                 onView={handlePrint}
                                 onExit={handleExit}
                                 readOnlyMode={mode === FORM_MODE.read}
+                                disableEdit={!currentQC_SUBGROUP_KEY}
+                                disableDelete={!currentQC_SUBGROUP_KEY}
                             />
                         </Grid>
                     </Grid>
