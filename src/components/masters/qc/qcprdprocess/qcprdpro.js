@@ -476,6 +476,8 @@ const QcPrdPro = () => {
                                 onView={handlePrint}
                                 onExit={handleExit}
                                 readOnlyMode={mode === FORM_MODE.read}
+                                disableEdit={!currentQC_ID}
+                                disableDelete={!currentQC_ID}
                             />
                         </Grid>
                     </Grid>

@@ -16,13 +16,11 @@ import { TbListSearch } from "react-icons/tb";
 import { textInputSx } from '../../../../../public/styles/textInputSx';
 import PrintQcGrp from './PrintQcGrp';
 import ConfirmationDialog from '@/GlobalFunction/DeleteDialog/ConfirmationDialog';
-
 const FORM_MODE = getFormMode();
 const qcGrpFormSchema = z.object({
     QC_GROUP_NAME: z.string().min(1, "QC Group Name is required"),
     QC_TYPE: z.string().min(1, "QC Type is required"),
 });
-
 const QcGroup = () => {
     const router = useRouter();
     const searchParams = useSearchParams();
@@ -109,7 +107,7 @@ const QcGroup = () => {
         }
     }, []);
     useEffect(() => {
-            if (QC_GROUP_KEY) {
+        if (QC_GROUP_KEY) {
             setCurrentQC_GROUP_KEY(QC_GROUP_KEY);
             fetchRetriveData(QC_GROUP_KEY);
             setMode(FORM_MODE.read);
@@ -128,7 +126,7 @@ const QcGroup = () => {
             }));
             setMode(FORM_MODE.read);
         }
-         setMode(FORM_MODE.read);
+        setMode(FORM_MODE.read);
     }, [QC_GROUP_KEY, fetchRetriveData]);
     const handleSubmit = async () => {
         const result = qcGrpFormSchema.safeParse(form);
@@ -144,7 +142,6 @@ const QcGroup = () => {
         const USER_ID = localStorage.getItem('USER_ID');
         const COBR_ID = localStorage.getItem('COBR_ID');
         try {
-
             const UserName = UserRole === 'user' ? USER_NAME : PARTY_KEY
             let url;
             if (mode === FORM_MODE.edit && currentQC_GROUP_KEY) {
@@ -272,7 +269,6 @@ const QcGroup = () => {
         }));
         // Step 1: Fetch CPREFIX value from the first API
         let cprefix = '';
-
         const COBR_ID = localStorage.getItem('COBR_ID');
         const FCYR_KEY = localStorage.getItem('FCYR_KEY');
         try {
@@ -355,7 +351,7 @@ const QcGroup = () => {
         setOpenConfirmDialog(false);
         try {
             const response = await axiosInstance.post(`QC_GROUP/DeleteQC_GROUP?UserName=${(USER_NAME)}&strCobrid=${COBR_ID}`, {
-                QC_GROUP_KEY: currentQC_GROUP_KEY
+                QC_GROUP_KEY: currentQC_GROUP_KEY || ''
             });
             const { data: { STATUS, MESSAGE, DATA } } = response;
             if (STATUS === 0) {
@@ -496,6 +492,8 @@ const QcGroup = () => {
                                 onView={handlePrint}
                                 onExit={handleExit}
                                 readOnlyMode={mode === FORM_MODE.read}
+                                disableEdit={!currentQC_GROUP_KEY}
+                                disableDelete={!currentQC_GROUP_KEY}
                             />
                         </Grid>
                     </Grid>
@@ -659,7 +657,6 @@ const QcGroup = () => {
                                 label="Active "
                             />
                         </Grid>
-
                     </Grid>
 
                     <Grid sx={{
