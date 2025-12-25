@@ -86,7 +86,7 @@ const UserPermission = () => {
       setLoading(true);
       
       const response = await axiosInstance.post(
-        'http://43.230.196.22:8181/api/MODULE/GetMODULESDashBoard?currentPage=1&limit=100',
+        '/MODULE/GetMODULESDashBoard?currentPage=1&limit=100',
         {
           PageNumber: 1,
           PageSize: 100,
@@ -173,16 +173,17 @@ const UserPermission = () => {
     return sortNodes(rootNodes);
   };
   
-  // Fetch users from API
+  // Fetch users from NEW API
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const response = await axiosInstance.post('/USERS/GetUserLogin', {
-        "USER_NAME": "Admin",
-        "USER_PWD": "<_hdi"
+      const response = await axiosInstance.post('/USERS/GetUserLoginDrp', {
+        "FLAG": "User"
       });
 
-      if (response.data && response.data.DATA) {
+      console.log('Users API Response:', response.data);
+
+      if (response.data && response.data.DATA && response.data.DATA.length > 0) {
         const users = response.data.DATA.map(user => ({
           Id: user.USER_ID,
           Name: user.USER_NAME
@@ -190,11 +191,14 @@ const UserPermission = () => {
         
         setUsersList(users);
         
-        if (users.length > 0) {
-          setSelectedRoleId(users[0].Id);
-          setSelectedRole(users[0].Name);
-          setSelectedUsers([users[0].Id]);
-        }
+        // Auto-select the first user
+        const firstUser = users[1];
+        setSelectedRoleId(firstUser.Id);
+        setSelectedRole(firstUser.Name);
+        setSelectedUsers([firstUser.Id]);
+        
+        // Fetch modules after selecting first user
+        await fetchModules();
       }
     } catch (error) {
       console.error('Error fetching users:', error);
@@ -454,7 +458,7 @@ const UserPermission = () => {
       <Box
         key={node.ModuleId}
         sx={{
-          pl: node.Level * 2, // Reduced indentation
+          pl: node.Level * 2,
           mt: 0,
           borderLeft: node.Level > 0 ? "1px dashed #ddd" : "none",
           padding: '0px',
@@ -465,7 +469,7 @@ const UserPermission = () => {
           sx={{
             display: "flex",
             alignItems: "center",
-            minHeight: "28px", // Reduced height
+            minHeight: "28px",
             maxHeight: "28px",
             backgroundColor: node.checked ? "rgba(25, 118, 210, 0.04)" : "transparent",
             borderRadius: 0.5,
@@ -474,7 +478,6 @@ const UserPermission = () => {
             }
           }}
         >
-          {/* Expand/Collapse icon */}
           {node.children && node.children.length > 0 ? (
             <IconButton
               onClick={() => {
@@ -505,7 +508,6 @@ const UserPermission = () => {
             <Box sx={{ width: 32 }}></Box>
           )}
 
-          {/* Checkbox */}
           <Checkbox
             size="small"
             checked={node.checked}
@@ -517,7 +519,6 @@ const UserPermission = () => {
             }}
           />
 
-          {/* Module Name with truncation // */}
           <Tooltip title={node.ModuleName} arrow>
             <Typography
               variant="body2"
@@ -537,11 +538,9 @@ const UserPermission = () => {
             </Typography>
           </Tooltip>
 
-          {/* Permission buttons for leaf nodes */}
           {renderPermissionButtons(node)}
         </Box>
 
-        {/* Render children if expanded */}
         {node.children && node.children.length > 0 && (
           <Collapse in={node.expanded} timeout="auto" unmountOnExit>
             <Box sx={{ ml: 0.5, mt: 0 }}>
@@ -553,18 +552,17 @@ const UserPermission = () => {
     ));
   };
 
-  // Initialize
+  // Initialize - Only fetch users on mount
   useEffect(() => {
-    fetchModules();
-    fetchUsers();
+    fetchUsers(); // This will auto-select first user and call fetchModules
   }, []);
 
   // Fetch permissions when user changes
   useEffect(() => {
-    if (selectedRoleId) {
+    if (selectedRoleId && menus.length > 0) {
       fetchUserPermissions(selectedRoleId);
     }
-  }, [selectedRoleId]);
+  }, [selectedRoleId, menus.length]);
 
   return (
     <Box sx={{ 
