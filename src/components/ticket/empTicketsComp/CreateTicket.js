@@ -92,7 +92,7 @@ const CreateTicketPage = () => {
   const [rowsSecondTable, setRowsSecondTable] = useState([]);
   const fileInputRef = useRef(null);
   const [isItemRequisitionEnabled, setIsItemRequisitionEnabled] = useState(false);
-  const USER_NAME = localStorage.getItem("USER_NAME");
+  const USER_NAME = 0;
   const USER_ID = localStorage.getItem("USER_ID");
   const EMP_KEY = localStorage.getItem("EMP_KEY");
   const EMP_NAME = localStorage.getItem("EMP_NAME");
@@ -451,9 +451,9 @@ const CreateTicketPage = () => {
         trnTktDtlEntities: rowsSecondTable
       };
       if (isUpdate) {
-        ticketData.UpdatedBy = USER_ID || EMP_KEY;
+        ticketData.UpdatedBy = 0;
       } else {
-        ticketData.CreatedBy = USER_ID || EMP_KEY;
+        ticketData.CreatedBy = 0
       }
       const apiUrl = isUpdate
         ? `TrnTkt/UpdateTrnTkt?UserName=${USER_NAME}&strCobrid=${cobrId}`
