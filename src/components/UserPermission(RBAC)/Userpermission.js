@@ -517,7 +517,7 @@ const UserPermission = () => {
             }}
           />
 
-          {/* Module Name with truncation */}
+          {/* Module Name with truncation // */}
           <Tooltip title={node.ModuleName} arrow>
             <Typography
               variant="body2"

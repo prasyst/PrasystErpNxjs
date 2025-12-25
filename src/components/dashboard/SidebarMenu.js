@@ -617,12 +617,12 @@ export const sidebarMenuItems = [
       { name: ' Help', icon: MdSummarize, path: '#' },
     ],
   },
-  // {
-  //   name: 'UserPermission',
-  //   icon: MdAccountBalance,
-  //   // path: '#',
-  //   path: '/userpermission',
+  {
+    name: 'UserPermission',
+    icon: MdAccountBalance,
     
-  // },
+    path: '/userpermission',
+    
+  },
 
 ];
