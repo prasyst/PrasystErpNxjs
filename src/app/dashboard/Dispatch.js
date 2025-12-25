@@ -54,25 +54,29 @@ const Dispatch = () => {
   const [filteredRecentPack, setFilteredRecentPack] = useState([]);
   const [loading, setLoading] = useState(false);
   const [partyLoading, setPartyLoading] = useState(false);
+  const [stateLoading, setStateLoading] = useState([]);
   const [partySearchQuery, setPartySearchQuery] = useState('');
   const [filteredPartyTable, setFilteredPartyTable] = useState([]);
+  const [stateOrd, setStateOrd] = useState([]);
 
   const handleGetData = () => {
     fetchOpenPack();
     fetchDispOrder();
     fetchUnBilledPacking();
-    fetchDisclosedOrder();
+    fetchDispWithoutOrder();
     fetchPartyWiseTable();
     fetchRecentPacking();
+    fetchStateWiseOrder();
   };
 
   useEffect(() => {
     fetchOpenPack();
     fetchDispOrder();
     fetchUnBilledPacking();
-    fetchDisclosedOrder();
+    fetchDispWithoutOrder();
     fetchPartyWiseTable();
     fetchRecentPacking();
+    fetchStateWiseOrder();
   }, []);
 
   const fetchOpenPack = async () => {
@@ -138,7 +142,7 @@ const Dispatch = () => {
     }
   };
 
-  const fetchDisclosedOrder = async () => {
+  const fetchDispWithoutOrder = async () => {
     try {
       const response = await axiosInstance.post("OrderDash/GetPackDashBoard", {
         COBR_ID: cobrId,
@@ -254,6 +258,31 @@ const Dispatch = () => {
     setFilteredPartyTable(filteredData);
   }, 500);
 
+  const fetchStateWiseOrder = async () => {
+    setStateLoading(true);
+    try {
+      const response = await axiosInstance.post("OrderDash/GetPackDashBoard", {
+        COBR_ID: cobrId,
+        FCYR_KEY: fcyr,
+        FROM_DT: dayjs(dateFrom).format('YYYY-MM-DD'),
+        To_DT: dayjs(dateTo).format('YYYY-MM-DD'),
+        Flag: "StateWiseOrdSum",
+        PageNumber: 1,
+        PageSize: 10,
+        SearchText: "",
+        ...filters
+      });
+
+      if (response.data.STATUS === 0 && Array.isArray(response.data.DATA)) {
+        setStateOrd(response.data.DATA);
+      }
+    } catch (error) {
+      toast.error("Error while fetching api data.");
+    } finally {
+      setStateLoading(false);
+    }
+  };
+
   return (
     <Box sx={{ bgcolor: '#f0f4f8', minHeight: '100vh', py: { xs: 2, md: 2 } }}>
       <ToastContainer />
@@ -293,7 +322,7 @@ const Dispatch = () => {
                 sx={{
                   width: 150,
                   '& .MuiPickersSectionList-root': {
-                    padding: '9.5px 0',
+                    padding: '6.5px 0',
                   },
                 }}
               />
@@ -306,13 +335,14 @@ const Dispatch = () => {
                 sx={{
                   width: 150,
                   '& .MuiPickersSectionList-root': {
-                    padding: '9.5px 0',
+                    padding: '6.5px 0',
                   },
                 }}
                 className="custom-datepicker"
               />
               <Button
                 variant="contained"
+                size='small'
                 onClick={handleGetData}
                 sx={{
                   borderRadius: '20px',
@@ -329,12 +359,12 @@ const Dispatch = () => {
         </Box>
 
         <Grid container spacing={1.5}>
-          <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
-            <Paper elevation={4} sx={{ p: 2, borderRadius: 3, bgcolor: '#fff', height: '100%' }}>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <Paper elevation={4} sx={{ p: 2, borderRadius: 3, background: 'linear-gradient(135deg, #2196f3 0%, #2196f399 100%)', color: 'white', height: '100%' }}>
               <Stack direction="row" justifyContent="space-between">
                 <Box>
                   <Typography variant="h6" fontWeight="bold">
-                    Open - {openPack[0]?.ROWNUM || 0}
+                    Doc Total - {openPack[0]?.ROWNUM || 0}
                   </Typography>
                   <Typography variant="h6" fontWeight="bold">
                     Value: {isNaN(openPack[0]?.AMOUNT) ? "0.00 L" : ((openPack[0]?.AMOUNT / 100000).toFixed(2) + " L")}
@@ -348,36 +378,36 @@ const Dispatch = () => {
             </Paper>
           </Grid>
 
-          <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
-            <Paper elevation={4} sx={{ p: 2, borderRadius: 3, bgcolor: '#fff', height: '100%' }}>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <Paper elevation={4} sx={{ p: 2, borderRadius: 3, background: 'linear-gradient(135deg, #4caf50 0%, #4caf5099 100%)', color: 'white', height: '100%' }}>
               <Stack direction="row" justifyContent="space-between">
                 <Box>
-                  <Typography variant="h6" fontWeight="bold">Dispatch - {dispOrd[0]?.ROWNUM || 0}</Typography>
+                  <Typography variant="h6" fontWeight="bold">Dispatched - {dispOrd[0]?.ROWNUM || 0}</Typography>
                   <Typography variant="h6" fontWeight="bold" mt={0.5}>
                     Value: {isNaN(dispOrd[0]?.AMOUNT) ? "0.00 L" : ((dispOrd[0]?.AMOUNT / 100000).toFixed(2) + ' L')}
                   </Typography>
                   <Typography variant="h6" mt={0.5}> Qty: {dispOrd[0]?.PACKITMDTL_QTY || 0}</Typography>
                 </Box>
-                <ShoppingCart sx={{ fontSize: 40, color: '#8bd191ff' }} />
+                <ShoppingCart sx={{ fontSize: 40, color: '#3160c7ff' }} />
               </Stack>
             </Paper>
           </Grid>
 
-          <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
-            <Paper elevation={4} sx={{ p: 2, borderRadius: 3, bgcolor: '#fff', height: '100%' }}>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <Paper elevation={4} sx={{ p: 2, borderRadius: 3, height: '100%', background: 'linear-gradient(135deg, #f44336 0%, #f4433699 100%)', color: 'white' }}>
               <Stack direction="row" justifyContent="space-between">
                 <Box>
-                  <Typography variant="h6" fontWeight='bold'>Unbilled - {unBilled[0]?.ROWNUM || 0}</Typography>
+                  <Typography variant="h6" fontWeight='bold'>Unbilled Packing - {unBilled[0]?.ROWNUM || 0}</Typography>
                   <Typography variant="h6" fontWeight="bold" mt={0.5}>Value: {isNaN(unBilled[0]?.AMOUNT) ? "0.00" : (unBilled[0]?.AMOUNT / 100000).toFixed(2) + " L"}</Typography>
                   <Typography variant="h6" mt={0.5}>Qty: {unBilled[0]?.PACKITMDTL_QTY ?? 0}</Typography>
                 </Box>
-                <InventoryIcon sx={{ fontSize: 40, color: '#d3ae71ff' }} />
+                <InventoryIcon sx={{ fontSize: 40, color: '#0c89afff' }} />
               </Stack>
             </Paper>
           </Grid>
 
-          <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
-            <Paper elevation={4} sx={{ p: 2, borderRadius: 3, bgcolor: '#fff', height: '100%' }}>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <Paper elevation={4} sx={{ p: 2, borderRadius: 3, background: 'linear-gradient(135deg, #00bcd4 0%, #009688 100%)', color: 'white', height: '100%' }}>
               <Stack direction="row" justifyContent="space-between">
                 <Box>
                   <Typography variant="h6" fontWeight='bold'>Disclosed - {disOrd[0]?.ROWNUM || 0}</Typography>
@@ -388,223 +418,295 @@ const Dispatch = () => {
               </Stack>
             </Paper>
           </Grid>
+        </Grid>
 
-          <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
-            <Paper elevation={4} sx={{ p: 2, borderRadius: 3, bgcolor: '#fff', height: '100%' }}>
-              <Stack direction="row" justifyContent="space-between">
-                <Box>
-                  <Typography variant="h6" fontWeight="bold">Total Amount</Typography>
-                  <Typography variant="h6" fontWeight="bold" mt={0.5}>Value: {(45600443 / 100000).toFixed(2) + ' L'}</Typography>
-                  <Typography variant="h6" mt={0.5}>Qty: 43025</Typography>
-                </Box>
-                <NotificationsActive sx={{ fontSize: 40, color: '#736ebdff' }} />
+        <Grid container spacing={1.5} mt={2}>
+          <Grid size={{ xs: 12, sm: 12, md: 12 }}>
+            <Paper sx={{ p: 1 }}>
+              <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1, px: 2 }}>
+                <Typography
+                  sx={{
+                    fontWeight: 'bold',
+                    fontSize: '1.25rem',
+                    color: 'transparent',
+                    backgroundImage: 'linear-gradient(to right, #cc4c2cff, #2798b4ff, #d17a37ff, #635bff)',
+                    backgroundClip: 'text',
+                    WebkitBackgroundClip: 'text',
+                    zIndex: 1
+                  }}
+                >
+                  Recent Packing
+                </Typography>
+
+                <TextField
+                  variant="outlined"
+                  placeholder="Search Any..."
+                  size="small"
+                  value={searchQuery}
+                  onChange={handleSearchChange}
+                  sx={{
+                    width: 200,
+                    height: '37px',
+                    '.MuiOutlinedInput-root': {
+                      borderRadius: '20px',
+                    },
+                    input: {
+                      padding: '6px 12px',
+                      fontSize: '0.875rem',
+                    }
+                  }}
+                  InputProps={{
+                    startAdornment: (
+                      <Search sx={{ color: 'action.active', fontSize: 17 }} />
+                    ),
+                  }}
+                />
               </Stack>
+              {loading ? (
+                <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '200px', flexDirection: 'column' }}>
+                  <CircularProgress size="3rem" />
+                  <Typography variant="body1" sx={{ mt: 2, color: '#334155', fontWeight: 500 }}>
+                    Loading recent packings...
+                  </Typography>
+                </Box>
+              ) : (
+                <TableContainer component={Paper} sx={{ maxHeight: 400, overflow: 'auto' }}>
+                  <Table sx={{ minWidth: 650 }} size="small" aria-label="a dense table">
+                    <TableHead sx={{ position: 'sticky', top: 0, backgroundColor: 'white', zIndex: 1 }}>
+                      <TableRow>
+                        <TableCell align="left">Party</TableCell>
+                        <TableCell align="left">PackNo</TableCell>
+                        <TableCell align="left">PactDt</TableCell>
+                        <TableCell align="left">City</TableCell>
+                        <TableCell align="left">State</TableCell>
+                        <TableCell align="left">Saleperson</TableCell>
+                        <TableCell align="left">Broker</TableCell>
+                        <TableCell align="left">Qty</TableCell>
+                        <TableCell align="left">Amount</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {filteredRecentPack.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={9} align="center" sx={{ color: 'gray', fontWeight: 'bold' }}>
+                            No records found
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        filteredRecentPack.map((row) => (
+                          <TableRow key={row.PACK_NO} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
+                            <TableCell align="left">{row.PARTY_NAME}</TableCell>
+                            <TableCell align="left">{row.PACK_NO}</TableCell>
+                            <TableCell align="left">{row.PACK_DT ? dayjs(row.PACK_DT).format('YYYY-MM-DD') : ''}</TableCell>
+                            <TableCell align="left">{row.CITY_NAME}</TableCell>
+                            <TableCell align="left">{row.STATE_NAME}</TableCell>
+                            <TableCell align="left">{row.SALEPERSON_NAME}</TableCell>
+                            <TableCell align="left">{row.BROKER_NAME}</TableCell>
+                            <TableCell align="left">{row.PACKITMDTL_QTY}</TableCell>
+                            <TableCell align="left">{row.AMOUNT}</TableCell>
+                          </TableRow>
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              )}
             </Paper>
           </Grid>
         </Grid>
 
         <Grid container spacing={1.5} mt={2}>
-          <Paper sx={{ width: '100%', p: 1 }}>
-            <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1, px: 2 }}>
-              <Typography
-                sx={{
-                  fontWeight: 'bold',
-                  fontSize: '1.25rem',
-                  color: 'transparent',
-                  backgroundImage: 'linear-gradient(to right, #cc4c2cff, #2798b4ff, #d17a37ff, #635bff)',
-                  backgroundClip: 'text',
-                  WebkitBackgroundClip: 'text',
-                  zIndex: 1
-                }}
-              >
-                Recent Packing
-              </Typography>
-
-              <TextField
-                variant="outlined"
-                placeholder="Search Any..."
-                size="small"
-                value={searchQuery}
-                onChange={handleSearchChange}
-                sx={{
-                  width: 200,
-                  height: '37px',
-                  '.MuiOutlinedInput-root': {
-                    borderRadius: '20px',
-                  },
-                  input: {
-                    padding: '6px 12px',
-                    fontSize: '0.875rem',
-                  }
-                }}
-                InputProps={{
-                  startAdornment: (
-                    <Search sx={{ color: 'action.active', fontSize: 17 }} />
-                  ),
-                }}
-              />
-            </Stack>
-            {loading ? (
-              <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '200px', flexDirection: 'column' }}>
-                <CircularProgress size="3rem" />
-                <Typography variant="body1" sx={{ mt: 2, color: '#334155', fontWeight: 500 }}>
-                  Loading recent packings...
+          <Grid size={{ xs: 12, sm: 12, md: 12 }}>
+            <Paper sx={{ p: 1 }}>
+              <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1, px: 2 }}>
+                <Typography
+                  sx={{
+                    mb: 1, fontWeight: 'bold', fontSize: '1.25rem',
+                    color: 'transparent',
+                    backgroundImage: 'linear-gradient(to right, #6431f1ff, #2be472ff)',
+                    backgroundClip: 'text',
+                    WebkitBackgroundClip: 'text',
+                    zIndex: 1
+                  }}
+                >
+                  Party Wise Packing
                 </Typography>
-              </Box>
-            ) : (
-              <TableContainer component={Paper} sx={{ maxHeight: 400, overflow: 'auto' }}>
-                <Table sx={{ minWidth: 650 }} size="small" aria-label="a dense table">
-                  <TableHead sx={{ position: 'sticky', top: 0, backgroundColor: 'white', zIndex: 1 }}>
-                    <TableRow>
-                      <TableCell align="left">Party</TableCell>
-                      <TableCell align="left">PackNo</TableCell>
-                      <TableCell align="left">PactDt</TableCell>
-                      <TableCell align="left">City</TableCell>
-                      <TableCell align="left">State</TableCell>
-                      <TableCell align="left">Saleperson</TableCell>
-                      <TableCell align="left">Broker</TableCell>
-                      <TableCell align="left">Qty</TableCell>
-                      <TableCell align="left">Amount</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {filteredRecentPack.length === 0 ? (
+
+                <TextField
+                  variant="outlined"
+                  placeholder="Search Any..."
+                  size="small"
+                  value={partySearchQuery}
+                  onChange={handlePartySearchChange}
+                  sx={{
+                    width: 200,
+                    height: '37px',
+                    '.MuiOutlinedInput-root': {
+                      borderRadius: '20px',
+                    },
+                    input: {
+                      padding: '6px 12px',
+                      fontSize: '0.875rem',
+                    }
+                  }}
+                  InputProps={{
+                    startAdornment: (
+                      <Search sx={{ color: 'action.active', fontSize: 17 }} />
+                    ),
+                  }}
+                />
+              </Stack>
+
+              {partyLoading ? (
+                <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '200px', flexDirection: 'column' }}>
+                  <CircularProgress size="3rem" />
+                  <Typography variant="body1" sx={{ mt: 2, color: '#334155', fontWeight: 500 }}>
+                    Loading party...
+                  </Typography>
+                </Box>
+              ) : (
+                <TableContainer component={Paper} sx={{ maxHeight: 400, overflow: 'auto' }}>
+                  <Table sx={{ minWidth: 650 }} size="small" aria-label="a dense table">
+                    <TableHead sx={{ position: 'sticky', top: 0, backgroundColor: 'white', zIndex: 1 }}>
                       <TableRow>
-                        <TableCell colSpan={9} align="center" sx={{ color: 'gray', fontWeight: 'bold' }}>
-                          No records found
-                        </TableCell>
+                        <TableCell align="left">Party</TableCell>
+                        <TableCell align="left">PackNo</TableCell>
+                        <TableCell align="left">PactDt</TableCell>
+                        <TableCell align="left">City</TableCell>
+                        <TableCell align="left">State</TableCell>
+                        <TableCell align="left">Saleperson</TableCell>
+                        <TableCell align="left">Broker</TableCell>
+                        <TableCell align="left">Qty</TableCell>
                       </TableRow>
-                    ) : (
-                      filteredRecentPack.map((row) => (
-                        <TableRow key={row.PACK_NO} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
-                          <TableCell align="left">{row.PARTY_NAME}</TableCell>
-                          <TableCell align="left">{row.PACK_NO}</TableCell>
-                          <TableCell align="left">{row.PACK_DT ? dayjs(row.PACK_DT).format('YYYY-MM-DD') : ''}</TableCell>
-                          <TableCell align="left">{row.CITY_NAME}</TableCell>
-                          <TableCell align="left">{row.STATE_NAME}</TableCell>
-                          <TableCell align="left">{row.SALEPERSON_NAME}</TableCell>
-                          <TableCell align="left">{row.BROKER_NAME}</TableCell>
-                          <TableCell align="left">{row.PACKITMDTL_QTY}</TableCell>
-                          <TableCell align="left">{row.AMOUNT}</TableCell>
+                    </TableHead>
+                    <TableBody>
+                      {filteredPartyTable.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={9} align='center' sx={{ color: 'gray', fontWeight: 'bold' }}>
+                            No party data found...
+                          </TableCell>
                         </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-            )}
-          </Paper>
+                      ) : (
+                        filteredPartyTable.map((row) => (
+                          <TableRow key={row.PACK_NO} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
+                            <TableCell align="left">{row.PARTY_NAME}</TableCell>
+                            <TableCell align="left">{row.PACK_NO}</TableCell>
+                            <TableCell align="left">{row.PACK_DT ? dayjs(row.PACK_DT).format('YYYY-MM-DD') : ''}</TableCell>
+                            <TableCell align="left">{row.CITY_NAME}</TableCell>
+                            <TableCell align="left">{row.STATE_NAME}</TableCell>
+                            <TableCell align="left">{row.SALEPERSON_NAME}</TableCell>
+                            <TableCell align="left">{row.BROKER_NAME}</TableCell>
+                            <TableCell align="left">{row.PACKITMDTL_QTY}</TableCell>
+                          </TableRow>
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              )}
+            </Paper>
+          </Grid>
         </Grid>
 
         <Grid container spacing={1.5} mt={2}>
-          <Paper sx={{ width: '100%', p: 1 }}>
-            <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1, px: 2 }}>
-              <Typography
-                sx={{
-                  mb: 1, fontWeight: 'bold', fontSize: '1.25rem',
-                  color: 'transparent',
-                  backgroundImage: 'linear-gradient(to right, #6431f1ff, #2be472ff)',
-                  backgroundClip: 'text',
-                  WebkitBackgroundClip: 'text',
-                  zIndex: 1
-                }}
-              >
-                Party Wise Packing
-              </Typography>
-
-              <TextField
-                variant="outlined"
-                placeholder="Search Any..."
-                size="small"
-                value={partySearchQuery}
-                onChange={handlePartySearchChange}
-                sx={{
-                  width: 200,
-                  height: '37px',
-                  '.MuiOutlinedInput-root': {
-                    borderRadius: '20px',
-                  },
-                  input: {
-                    padding: '6px 12px',
-                    fontSize: '0.875rem',
-                  }
-                }}
-                InputProps={{
-                  startAdornment: (
-                    <Search sx={{ color: 'action.active', fontSize: 17 }} />
-                  ),
-                }}
-              />
-            </Stack>
-
-            {partyLoading ? (
-              <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '200px', flexDirection: 'column' }}>
-                <CircularProgress size="3rem" />
-                <Typography variant="body1" sx={{ mt: 2, color: '#334155', fontWeight: 500 }}>
-                  Loading party...
+          <Grid item xs={12} sm={12} md={6}>
+            <Paper sx={{ p: 1 }}>
+              <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1, px: 2 }}>
+                <Typography
+                  sx={{
+                    mb: 1, fontWeight: 'bold', fontSize: '1.25rem',
+                    color: 'transparent',
+                    backgroundImage: 'linear-gradient(to right, #6431f1ff, #2be472ff)',
+                    backgroundClip: 'text',
+                    WebkitBackgroundClip: 'text',
+                    zIndex: 1
+                  }}
+                >
+                  State Wise Packing
                 </Typography>
-              </Box>
-            ) : (
-              <TableContainer component={Paper} sx={{ maxHeight: 400, overflow: 'auto' }}>
-                <Table sx={{ minWidth: 650 }} size="small" aria-label="a dense table">
-                  <TableHead sx={{ position: 'sticky', top: 0, backgroundColor: 'white', zIndex: 1 }}>
-                    <TableRow>
-                      <TableCell align="left">Party</TableCell>
-                      <TableCell align="left">PackNo</TableCell>
-                      <TableCell align="left">PactDt</TableCell>
-                      <TableCell align="left">City</TableCell>
-                      <TableCell align="left">State</TableCell>
-                      <TableCell align="left">Saleperson</TableCell>
-                      <TableCell align="left">Broker</TableCell>
-                      <TableCell align="left">Qty</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {filteredPartyTable.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={9} align='center' sx={{ color: 'gray', fontWeight: 'bold' }}>
-                          No party data found...
-                        </TableCell>
-                      </TableRow>
-                    ) : (
-                      filteredPartyTable.map((row) => (
-                        <TableRow key={row.PACK_NO} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
-                          <TableCell align="left">{row.PARTY_NAME}</TableCell>
-                          <TableCell align="left">{row.PACK_NO}</TableCell>
-                          <TableCell align="left">{row.PACK_DT ? dayjs(row.PACK_DT).format('YYYY-MM-DD') : ''}</TableCell>
-                          <TableCell align="left">{row.CITY_NAME}</TableCell>
-                          <TableCell align="left">{row.STATE_NAME}</TableCell>
-                          <TableCell align="left">{row.SALEPERSON_NAME}</TableCell>
-                          <TableCell align="left">{row.BROKER_NAME}</TableCell>
-                          <TableCell align="left">{row.PACKITMDTL_QTY}</TableCell>
-                        </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-            )}
-          </Paper>
-        </Grid>
 
-        <Grid container spacing={1.5} mt={2}>
-          <BarChart
-            xAxis={[{ data: ['Delhi', 'Mumbai', 'Noida', 'London', 'Lucknow', 'Dadar', 'Bihar', 'Gurugram'] }]}
-            series={[
-              { data: [4, 3, 5, 6, 8, 4, 7, 4, 8], barLabel: 'value' },
-              {
-                data: [1, 6, 3, 8, 3, 6, 3, 5, 7],
-                barLabel: (item) => dollarFormatter.format(item.value),
-              },
-              { data: [2, 5, 6, 3, 4, 7, 5, 5, 8] },
-            ]}
-            height={350}
-            margin={{ left: 0 }}
-            yAxis={[{ width: 30 }]}
-          />
+                <TextField
+                  variant="outlined"
+                  placeholder="Search Any..."
+                  size="small"
+                  sx={{
+                    width: 200,
+                    height: '37px',
+                    '.MuiOutlinedInput-root': {
+                      borderRadius: '20px',
+                    },
+                    input: {
+                      padding: '6px 12px',
+                      fontSize: '0.875rem',
+                    }
+                  }}
+                  InputProps={{
+                    startAdornment: (
+                      <Search sx={{ color: 'action.active', fontSize: 17 }} />
+                    ),
+                  }}
+                />
+              </Stack>
+
+              {stateLoading ? (
+                <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '200px', flexDirection: 'column' }}>
+                  <CircularProgress size="3rem" />
+                  <Typography variant="body1" sx={{ mt: 2, color: '#334155', fontWeight: 500 }}>
+                    Loading state...
+                  </Typography>
+                </Box>
+              ) : (
+                <TableContainer component={Paper} sx={{ maxHeight: 300, overflow: 'auto' }}>
+                  <Table sx={{ minWidth: 500 }} size="small" aria-label="a dense table">
+                    <TableHead sx={{ position: 'sticky', top: 0, backgroundColor: 'white', zIndex: 1 }}>
+                      <TableRow>
+                        <TableCell align="left">State</TableCell>
+                        <TableCell align="left">Amount</TableCell>
+                        <TableCell align="left">Qty</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {stateOrd.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={3} align="center" sx={{ color: 'gray', fontWeight: 'bold' }}>
+                            No party data found...
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        stateOrd.map((row) => (
+                          <TableRow key={row.STATE_NAME} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
+                            <TableCell align="left">{row.STATE_NAME}</TableCell>
+                            <TableCell align="left">{row.AMOUNT}</TableCell>
+                            <TableCell align="left">{row.PACKITMDTL_QTY}</TableCell>
+                          </TableRow>
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              )}
+            </Paper>
+          </Grid>
+
+          <Grid size={{ xs: 12, sm: 12, md: 6 }}>
+            <BarChart
+              xAxis={[{ data: ['Delhi', 'Mumbai', 'Noida', 'London', 'Lucknow', 'Dadar', 'Bihar', 'Gurugram'] }]}
+              series={[
+                { data: [4, 3, 5, 6, 8, 4, 7, 4, 8], barLabel: 'value' },
+                {
+                  data: [1, 6, 3, 8, 3, 6, 3, 5, 7],
+                  barLabel: (item) => dollarFormatter.format(item.value),
+                },
+                { data: [2, 5, 6, 3, 4, 7, 5, 5, 8] },
+              ]}
+              height={350}
+              margin={{ left: 0 }}
+              yAxis={[{ width: 30 }]}
+            />
+          </Grid>
         </Grid>
       </Container>
-    </Box>
+    </Box >
   );
 };
 

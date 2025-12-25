@@ -107,24 +107,24 @@ const data = [
     { month: 'Dec-25', sales: 3490, profit: 6300 },
 ];
 
-const StyledSpeedDial = styled(SpeedDial)(({ theme }) => ({
-    position: 'absolute',
-    '&.MuiSpeedDial-directionUp, &.MuiSpeedDial-directionLeft': {
-        bottom: theme.spacing(2),
-        right: theme.spacing(2),
-    },
-    '&.MuiSpeedDial-directionDown, &.MuiSpeedDial-directionRight': {
-        top: theme.spacing(2),
-        left: theme.spacing(2),
-    },
-}));
-
 // const StyledSpeedDial = styled(SpeedDial)(({ theme }) => ({
-//     position: 'fixed',
-//     top: theme.spacing(7),
-//     right: theme.spacing(2),
-//     zIndex: 1000,
+//     position: 'absolute',
+//     '&.MuiSpeedDial-directionUp, &.MuiSpeedDial-directionLeft': {
+//         bottom: theme.spacing(2),
+//         right: theme.spacing(2),
+//     },
+//     '&.MuiSpeedDial-directionDown, &.MuiSpeedDial-directionRight': {
+//         top: theme.spacing(2),
+//         left: theme.spacing(2),
+//     },
 // }));
+
+const StyledSpeedDial = styled(SpeedDial)(({ theme }) => ({
+    position: 'fixed',
+    top: theme.spacing(7),
+    right: theme.spacing(2),
+    zIndex: 1000,
+}));
 
 const actions = [
     { icon: <StorefrontIcon />, name: 'Brand' },
@@ -795,7 +795,7 @@ const SalesDashboard = () => {
                         >
                             Get Data
                         </Button>
-                        <StyledSpeedDial ariaLabel="Filters" icon={<SpeedDialIcon />}>
+                        <StyledSpeedDial ariaLabel="Filters" direction="down" icon={<SpeedDialIcon />}>
                             {actions.map((action) => {
                                 const count = selectedOptions[action.name]?.length || 0;
                                 return (
@@ -860,101 +860,6 @@ const SalesDashboard = () => {
 
                             <DialogContent sx={{ p: 4, backgroundColor: '#fafbff' }}>
                                 <Grid container spacing={1}>
-                                    <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                                        <Box
-                                            sx={{
-                                                display: 'flex',
-                                                justifyContent: 'flex-start',
-                                                alignItems: 'center',
-                                                mb: 1,
-                                                position: 'sticky',
-                                                top: 0,
-                                                backgroundColor: '#fafbff',
-                                                zIndex: 10,
-                                                py: 1,
-                                                borderBottom: '1px solid #e0e0e0',
-                                            }}
-                                        >
-                                            <Typography variant="h6" fontWeight="bold" color="primary" sx={{ mr: 1 }}>
-                                                Brand
-                                            </Typography>
-                                            <Chip
-                                                label={selectedOptions.Brand.length}
-                                                size="small"
-                                                color="primary"
-                                                sx={{ mt: 0.5 }}
-                                            />
-                                        </Box>
-
-                                        <TextField
-                                            fullWidth
-                                            size="small"
-                                            placeholder="Brands..."
-                                            value={searchBrand}
-                                            onChange={(e) => setSearchBrand(e.target.value)}
-                                            InputProps={{
-                                                startAdornment: <SearchIcon fontSize="small" sx={{ color: 'action.active', mr: 1 }} />,
-                                                endAdornment: searchBrand && (
-                                                    <IconButton size="small" onClick={() => setSearchBrand('')}>
-                                                        <ClearIcon fontSize="small" />
-                                                    </IconButton>
-                                                ),
-                                            }}
-                                            sx={{
-                                                mb: 3,
-                                                borderRadius: '50px',
-                                                maxWidth: 150,
-                                                height: 20,
-                                                '& .MuiInputBase-input': {
-                                                    padding: '4.5px 0px',
-                                                },
-                                                '& .MuiOutlinedInput-notchedOutline': {
-                                                    borderRadius: '50px',
-                                                },
-                                            }}
-                                        />
-
-                                        <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-                                            {brandDrp
-                                                .filter(option => option.BRAND_NAME.toLowerCase().includes(searchBrand.toLowerCase()))
-                                                .sort((a, b) => {
-                                                    const aChecked = selectedOptions.Brand.includes(a.BRAND_KEY);
-                                                    const bChecked = selectedOptions.Brand.includes(b.BRAND_KEY);
-
-                                                    if (aChecked && !bChecked) return -1;
-                                                    if (!aChecked && bChecked) return 1;
-                                                    return 0;
-                                                })
-                                                .map((option) => (
-                                                    <FormControlLabel
-                                                        key={option.BRAND_KEY}
-                                                        control={
-                                                            <Checkbox
-                                                                checked={selectedOptions.Brand.includes(option.BRAND_KEY)}
-                                                                onChange={(e) => handleCheckboxChange(e, 'Brand')}
-                                                                value={option.BRAND_KEY}
-                                                                size="small"
-                                                                sx={{
-                                                                    color: '#635bff',
-                                                                    '&.Mui-checked': { color: '#635bff' },
-                                                                    p: 0.3,
-                                                                }}
-                                                            />
-                                                        }
-                                                        label={<Typography variant="body2">{option.BRAND_NAME}</Typography>}
-                                                        sx={{
-                                                            mx: 0,
-                                                            my: 0.2,
-                                                            '&:hover': {
-                                                                backgroundColor: 'rgba(99, 91, 255, 0.12)',
-                                                                borderRadius: 1,
-                                                            },
-                                                        }}
-                                                    />
-                                                ))}
-                                        </Box>
-                                    </Grid>
-
                                     {/* Party */}
                                     <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                                         <Box sx={{
@@ -1210,6 +1115,101 @@ const SalesDashboard = () => {
                                                                 backgroundColor: 'rgba(99, 91, 255, 0.12)',
                                                                 borderRadius: 1
                                                             }
+                                                        }}
+                                                    />
+                                                ))}
+                                        </Box>
+                                    </Grid>
+
+                                    <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                                        <Box
+                                            sx={{
+                                                display: 'flex',
+                                                justifyContent: 'flex-start',
+                                                alignItems: 'center',
+                                                mb: 1,
+                                                position: 'sticky',
+                                                top: 0,
+                                                backgroundColor: '#fafbff',
+                                                zIndex: 10,
+                                                py: 1,
+                                                borderBottom: '1px solid #e0e0e0',
+                                            }}
+                                        >
+                                            <Typography variant="h6" fontWeight="bold" color="primary" sx={{ mr: 1 }}>
+                                                Brand
+                                            </Typography>
+                                            <Chip
+                                                label={selectedOptions.Brand.length}
+                                                size="small"
+                                                color="primary"
+                                                sx={{ mt: 0.5 }}
+                                            />
+                                        </Box>
+
+                                        <TextField
+                                            fullWidth
+                                            size="small"
+                                            placeholder="Brands..."
+                                            value={searchBrand}
+                                            onChange={(e) => setSearchBrand(e.target.value)}
+                                            InputProps={{
+                                                startAdornment: <SearchIcon fontSize="small" sx={{ color: 'action.active', mr: 1 }} />,
+                                                endAdornment: searchBrand && (
+                                                    <IconButton size="small" onClick={() => setSearchBrand('')}>
+                                                        <ClearIcon fontSize="small" />
+                                                    </IconButton>
+                                                ),
+                                            }}
+                                            sx={{
+                                                mb: 3,
+                                                borderRadius: '50px',
+                                                maxWidth: 150,
+                                                height: 20,
+                                                '& .MuiInputBase-input': {
+                                                    padding: '4.5px 0px',
+                                                },
+                                                '& .MuiOutlinedInput-notchedOutline': {
+                                                    borderRadius: '50px',
+                                                },
+                                            }}
+                                        />
+
+                                        <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+                                            {brandDrp
+                                                .filter(option => option.BRAND_NAME.toLowerCase().includes(searchBrand.toLowerCase()))
+                                                .sort((a, b) => {
+                                                    const aChecked = selectedOptions.Brand.includes(a.BRAND_KEY);
+                                                    const bChecked = selectedOptions.Brand.includes(b.BRAND_KEY);
+
+                                                    if (aChecked && !bChecked) return -1;
+                                                    if (!aChecked && bChecked) return 1;
+                                                    return 0;
+                                                })
+                                                .map((option) => (
+                                                    <FormControlLabel
+                                                        key={option.BRAND_KEY}
+                                                        control={
+                                                            <Checkbox
+                                                                checked={selectedOptions.Brand.includes(option.BRAND_KEY)}
+                                                                onChange={(e) => handleCheckboxChange(e, 'Brand')}
+                                                                value={option.BRAND_KEY}
+                                                                size="small"
+                                                                sx={{
+                                                                    color: '#635bff',
+                                                                    '&.Mui-checked': { color: '#635bff' },
+                                                                    p: 0.3,
+                                                                }}
+                                                            />
+                                                        }
+                                                        label={<Typography variant="body2">{option.BRAND_NAME}</Typography>}
+                                                        sx={{
+                                                            mx: 0,
+                                                            my: 0.2,
+                                                            '&:hover': {
+                                                                backgroundColor: 'rgba(99, 91, 255, 0.12)',
+                                                                borderRadius: 1,
+                                                            },
                                                         }}
                                                     />
                                                 ))}
