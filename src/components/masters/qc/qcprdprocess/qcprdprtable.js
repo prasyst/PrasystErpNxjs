@@ -97,7 +97,6 @@ const columnDefs = [
     width: 100,
     minWidth: 100,
     valueFormatter: (params) => {
-      // Checking the value and returning the appropriate label
       return params.value === "1" ? 'Active' : 'Inactive';
     }
   },

@@ -37,7 +37,7 @@ const Login = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [role, setRole] = useState('user');
-  const [form, setForm] = useState({ username: '', password: '', mobile: '', });
+  const [form, setForm] = useState({ username: 'Admin', password: 'Admin', mobile: '', });
   const [showPwd, setShowPwd] = useState(false);
   const [showNewPwd, setShowNewPwd] = useState(false);
   const router = useRouter();
@@ -115,7 +115,7 @@ const Login = () => {
     } else {
       setLoginMode('mobile');
     }
-    setForm({ username: '', password: '', mobile: '' });
+    setForm({ username: 'Admin', password: 'Admin', mobile: '' });
     setMobilePassword('');
     setOtpSent(false);
     setOtp('');
@@ -309,6 +309,7 @@ const Login = () => {
     if (!mobilePassword) return toast.error('Enter password');
     try {
       const encRes = await axiosInstance.post('USERS/Getpwdencryption', {
+        USER_NAME:form.mobile,
         USER_PWD: mobilePassword
       });
       const encryptedPwd = encRes.data.DATA;
@@ -335,10 +336,9 @@ const Login = () => {
         localStorage.removeItem('USER_ID');
         setShowLogin(false);
         setModalOpen(true);
-      } else if (loginRes.data.STATUS === 1 && loginRes.data.MESSAGE === "No Record Found") {
-        setShowCreatePwdLink(true);
       } else {
-        toast.error(loginRes.data.MESSAGE || 'Invalid credentials');
+        setShowCreatePwdLink(true);
+        toast.error('Wrong Password');
       }
     } catch (err) {
       toast.error('Login failed');
@@ -354,6 +354,7 @@ const Login = () => {
     setLoading(true);
     try {
       const encryptionResponse = await axiosInstance.post('USERS/Getpwdencryption', {
+        USER_NAME:form.username,
         USER_PWD: form.password,
       });
       const encryptedPassword = encryptionResponse.data.DATA;
@@ -548,7 +549,6 @@ const Login = () => {
                     >
                       Select Your Role:
                     </FormLabel>
-
                     <RadioGroup
                       value={role}
                       onChange={(e) => handleRoleSelect(e.target.value)}
@@ -558,12 +558,14 @@ const Login = () => {
                           <Grid size={{ xs: 6 }} key={r.value}>
                             <FormControlLabel
                               value={r.value}
-                              control={<Radio />}
+                              control={<Radio sx={{ padding: 1 }} />}
                               label={r.label}
                               sx={{
                                 '& .MuiFormControlLabel-label': {
                                   fontSize: '0.8rem',
+                                   margin: 0,
                                 },
+                                // marginBottom: 0.5, 
                               }}
                             />
                           </Grid>
@@ -751,7 +753,7 @@ const Login = () => {
                             }}
                             onClick={openCreatePasswordModal}
                           >
-                            New User? Click here to create password.
+                             Forgot Password?
                           </Typography>
                         )}
                       </>
@@ -1250,7 +1252,7 @@ const Login = () => {
                               }}
                               onClick={openCreatePasswordModal}
                             >
-                              New User? Click here to create password.
+                              Forgot Password?
                             </Typography>
                           )}
                         </>
@@ -1458,7 +1460,7 @@ const Login = () => {
         sx={{ zIndex: 9999 }}
       />
       <Dialog open={createPwdOpen} onClose={() => setCreatePwdOpen(false)}>
-        <DialogTitle sx={{ textAlign: 'center' }}>Create Password for {empNameForModal}</DialogTitle>
+        <DialogTitle sx={{ textAlign: 'center' }}>New Password for {empNameForModal}</DialogTitle>
         <DialogContent>
           <TextField
             autoFocus
