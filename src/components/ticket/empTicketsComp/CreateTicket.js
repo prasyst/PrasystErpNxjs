@@ -749,7 +749,6 @@ const CreateTicketPage = () => {
                 spacing={1}
                 sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', flexDirection: { xs: 'column', md: 'row' } }}
               >
-                {/* Image Box (6 out of 12 grid columns) */}
                 <Grid item xs={12} md={6} sx={{
                   position: 'relative',
                   width: { xs: '100%', md: '50%' },
@@ -762,7 +761,6 @@ const CreateTicketPage = () => {
                   transition: 'all .2s',
                   '&:hover': { borderColor: '#ccc' },
                 }}>
-                  {/* Image Preview or Placeholder */}
                   {formData.TktImage ? (
                     <img
                       src={formData.TktImage}
@@ -800,7 +798,6 @@ const CreateTicketPage = () => {
                     }}
                   />
 
-                  {/* ----- DELETE ICON (only when image exists) ----- */}
                   {formData.TktImage && (
                     <Tooltip title="Remove Image" arrow>
                       <IconButton
@@ -828,7 +825,6 @@ const CreateTicketPage = () => {
                     </Tooltip>
                   )}
 
-                  {/* ----- ZOOM ICON (only when image exists) ----- */}
                   {formData.TktImage && (
                     <Tooltip title="Zoom Image" arrow>
                       <IconButton
@@ -853,7 +849,7 @@ const CreateTicketPage = () => {
                   )}
                 </Grid>
 
-                {/* Image Path (6 out of 12 grid columns) */}
+
                 <Grid item xs={12} md={6} sx={{
                   display: 'flex',
                   alignItems: 'center',
@@ -867,8 +863,8 @@ const CreateTicketPage = () => {
                       sx={{
                         wordBreak: 'break-word',
                         textAlign: 'left',
-                        margin: 0, // Remove any margin to avoid unwanted space
-                        width: '100%', // Make sure it takes full width
+                        margin: 0, 
+                        width: '100%', 
                       }}
                     >
                       {formData.ImgName || 'Image path not available'}
@@ -888,7 +884,7 @@ const CreateTicketPage = () => {
               >
                 {loading ? "Submitting..." : "Submit"}
               </Button>
-              <Button variant="outlined" color="error" onClick={() => router.push("/tickets/all-tickets/")}>
+              <Button variant="outlined" color="error" onClick={() => router.push("/emp-tickets/all-tickets/")}>
                 Cancel
               </Button>
             </Box>
