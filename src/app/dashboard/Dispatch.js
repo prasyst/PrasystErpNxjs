@@ -2,17 +2,10 @@
 
 import React, { useEffect, useState } from 'react';
 import {
-  Box, Container, Typography, Grid, Paper, Stack, useTheme, useMediaQuery, Button,
-  TextField,
-  CircularProgress,
-  Divider,
+  Box, Container, Typography, Grid, Paper, Stack, useTheme, useMediaQuery, Button, TextField, CircularProgress,
+  Dialog, DialogTitle, DialogContent, DialogActions, Autocomplete, Checkbox, ListItemText, IconButton, Chip
 } from '@mui/material';
-import {
-  ShoppingCart,
-  People,
-  Search,
-  NotificationsActive
-} from '@mui/icons-material';
+import { ShoppingCart, People, Search } from '@mui/icons-material';
 import InventoryIcon from '@mui/icons-material/Inventory';
 import ImportContactsIcon from '@mui/icons-material/ImportContacts';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -29,6 +22,8 @@ import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import { debounce } from "lodash";
+import FilterAltIcon from '@mui/icons-material/FilterAlt';
+import CloseIcon from '@mui/icons-material/Close';
 
 const Dispatch = () => {
   const theme = useTheme();
@@ -44,12 +39,7 @@ const Dispatch = () => {
   const [cobrId, setCobrId] = useState(localStorage.getItem("COBR_ID"));
   const [partyTable, setPartyTable] = useState([]);
   const [recentPack, setRecentPack] = useState([]);
-  const [filters, setFilters] = useState({
-    Brandfilter: "",
-    Partyfilter: "",
-    statefilter: "",
-    Brokerfilter: ""
-  });
+  const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredRecentPack, setFilteredRecentPack] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -58,6 +48,18 @@ const Dispatch = () => {
   const [partySearchQuery, setPartySearchQuery] = useState('');
   const [filteredPartyTable, setFilteredPartyTable] = useState([]);
   const [stateOrd, setStateOrd] = useState([]);
+  const [stateSearch, setStateSearch] = useState("");
+  const [filterState, setFilterState] = useState([]);
+  const [brandOption, setBrandOption] = useState([]);
+  const [partyOption, setPartyOption] = useState([]);
+  const [stateOption, setStateOption] = useState([]);
+  const [BrokerOption, setBrokerOption] = useState([]);
+  const [filters, setFilters] = useState({
+    Brandfilter: [],
+    Partyfilter: [],
+    Statefilter: [],
+    Brokerfilter: [],
+  });
 
   const handleGetData = () => {
     fetchOpenPack();
@@ -77,10 +79,48 @@ const Dispatch = () => {
     fetchPartyWiseTable();
     fetchRecentPacking();
     fetchStateWiseOrder();
+    fetchBrandDrp();
+    fetchStateDrp();
+    fetchBrokerDrp();
+    fetchPartyDrp();
   }, []);
+
+  const handleOpen = () => setOpen(true);
+  const handleClose = () => setOpen(false);
+
+  const handleFilterChange = (event) => {
+    setFilters({
+      ...filters,
+      [event.target.name]: event.target.value,
+    });
+  };
+
+  const handleApplyFilters = () => {
+    setOpen(false);
+    handleGetData();
+  };
+
+  const handleResetFilters = () => {
+    setFilters({
+      Partyfilter: [],
+      Brandfilter: [],
+      Statefilter: [],
+      Brokerfilter: [],
+    });
+    setOpen(false);
+    handleGetData();
+  };
+
+  const getFilterPayload = () => ({
+    Brandfilter: filters.Brandfilter.map(item => item.BRAND_KEY).join(',') || '',
+    Partyfilter: filters.Partyfilter.map(item => item.PARTY_KEY).join(',') || '',
+    Statefilter: filters.Statefilter.map(item => item.STATE_KEY).join(',') || '',
+    Brokerfilter: filters.Brokerfilter.map(item => item.BROKER_KEY).join(',') || '',
+  });
 
   const fetchOpenPack = async () => {
     try {
+      const filterPayload = getFilterPayload();
       const response = await axiosInstance.post("OrderDash/GetPackDashBoard", {
         COBR_ID: cobrId,
         FCYR_KEY: fcyr,
@@ -90,7 +130,7 @@ const Dispatch = () => {
         PageNumber: 1,
         PageSize: 10,
         SearchText: "",
-        ...filters
+        ...filterPayload
       });
       if (response.data.STATUS === 0 && Array.isArray(response.data.DATA)) {
         setOpenPack(response.data.DATA);
@@ -102,6 +142,7 @@ const Dispatch = () => {
 
   const fetchDispOrder = async () => {
     try {
+      const filterPayload = getFilterPayload();
       const response = await axiosInstance.post("OrderDash/GetPackDashBoard", {
         COBR_ID: cobrId,
         FCYR_KEY: fcyr,
@@ -111,7 +152,7 @@ const Dispatch = () => {
         PageNumber: 1,
         PageSize: 10,
         SerchText: "",
-        ...filters
+        ...filterPayload
       });
       if (response.data.STATUS === 0 && Array.isArray(response.data.DATA)) {
         setDispOrd(response.data.DATA);
@@ -123,6 +164,7 @@ const Dispatch = () => {
 
   const fetchUnBilledPacking = async () => {
     try {
+      const filterPayload = getFilterPayload();
       const response = await axiosInstance.post("OrderDash/GetPackDashBoard", {
         COBR_ID: cobrId,
         FCYR_KEY: fcyr,
@@ -132,10 +174,12 @@ const Dispatch = () => {
         PageNumber: 1,
         PageSize: 10,
         SearchText: "",
-        ...filters
+        ...filterPayload
       });
       if (response.data && response.data.STATUS === 0 && Array.isArray(response.data.DATA)) {
         setUnBilled(response.data.DATA);
+      } else {
+        setUnBilled([]);
       }
     } catch (error) {
       toast.error("Error while fetching unbilled.");
@@ -144,6 +188,7 @@ const Dispatch = () => {
 
   const fetchDispWithoutOrder = async () => {
     try {
+      const filterPayload = getFilterPayload();
       const response = await axiosInstance.post("OrderDash/GetPackDashBoard", {
         COBR_ID: cobrId,
         FCYR_KEY: fcyr,
@@ -153,10 +198,12 @@ const Dispatch = () => {
         PageNumber: 1,
         PageSize: 10,
         SearchText: "",
-        ...filters
+        ...filterPayload
       });
       if (response.data.STATUS === 0 && Array.isArray(response.data.DATA)) {
         setDisOrd(response.data.DATA);
+      } else {
+        setDisOrd([]);
       }
     } catch (error) {
       toast.error("Error while getting data.");
@@ -166,6 +213,7 @@ const Dispatch = () => {
   const fetchPartyWiseTable = async () => {
     setPartyLoading(true);
     try {
+      const filterPayload = getFilterPayload();
       const response = await axiosInstance.post("OrderDash/GetPackDashBoard", {
         COBR_ID: cobrId,
         FCYR_KEY: fcyr,
@@ -175,13 +223,14 @@ const Dispatch = () => {
         PageNumber: 1,
         PageSize: 10,
         SearchText: "",
-        ...filters
+        ...filterPayload
       });
       if (response.data.STATUS === 0 && Array.isArray(response.data.DATA)) {
         setPartyTable(response.data.DATA);
         setFilteredPartyTable(response.data.DATA);
       } else {
         setPartyTable([]);
+        setFilteredPartyTable([]);
       }
     } catch (error) {
       toast.error("Error while getting data.");
@@ -193,6 +242,7 @@ const Dispatch = () => {
   const fetchRecentPacking = async () => {
     setLoading(true);
     try {
+      const filterPayload = getFilterPayload();
       const response = await axiosInstance.post("OrderDash/GetPackDashBoard", {
         COBR_ID: cobrId,
         FCYR_KEY: fcyr,
@@ -202,13 +252,14 @@ const Dispatch = () => {
         PageNumber: 1,
         PageSize: 10,
         SearchText: "",
-        ...filters
+        ...filterPayload
       });
       if (response.data.STATUS === 0 && Array.isArray(response.data.DATA)) {
         setRecentPack(response.data.DATA);
         setFilteredRecentPack(response.data.DATA);
       } else {
         setRecentPack([]);
+        setFilteredRecentPack([]);
       }
     } catch (error) {
       toast.error("Api response error.");
@@ -225,6 +276,11 @@ const Dispatch = () => {
   const handlePartySearchChange = (e) => {
     setPartySearchQuery(e.target.value);
     debouncedPartySearch(e.target.value);
+  };
+
+  const handleStateSearch = (e) => {
+    setStateSearch(e.target.value);
+    debouncedStateSearch(e.target.value);
   };
 
   const debouncedSearch = debounce((query) => {
@@ -258,9 +314,21 @@ const Dispatch = () => {
     setFilteredPartyTable(filteredData);
   }, 500);
 
+  const debouncedStateSearch = debounce((query) => {
+    const filteredData = stateOrd.filter((row) => {
+      return (
+        row.STATE_NAME.toLowerCase().includes(query.toLowerCase()) ||
+        row.AMOUNT.toString().toLowerCase().includes(query.toLowerCase()) ||
+        row.PACKITMDTL_QTY.toString().toLowerCase().includes(query.toLowerCase())
+      );
+    });
+    setFilterState(filteredData);
+  }, 500);
+
   const fetchStateWiseOrder = async () => {
     setStateLoading(true);
     try {
+      const filterPayload = getFilterPayload();
       const response = await axiosInstance.post("OrderDash/GetPackDashBoard", {
         COBR_ID: cobrId,
         FCYR_KEY: fcyr,
@@ -270,16 +338,76 @@ const Dispatch = () => {
         PageNumber: 1,
         PageSize: 10,
         SearchText: "",
-        ...filters
+        ...filterPayload,
       });
 
       if (response.data.STATUS === 0 && Array.isArray(response.data.DATA)) {
         setStateOrd(response.data.DATA);
+        setFilterState(response.data.DATA);
+      } else {
+        setStateOrd([]);
+        setFilterState([]);
       }
     } catch (error) {
       toast.error("Error while fetching api data.");
     } finally {
       setStateLoading(false);
+    }
+  };
+
+  const fetchBrandDrp = async () => {
+    try {
+      const response = await axiosInstance.post('Brand/GetBrandDrp', {})
+      if (response.data.STATUS === 0 && Array.isArray(response.data.DATA)) {
+        setBrandOption(response.data.DATA);
+      };
+    } catch (error) {
+      toast.error("Error while fetching the brand.");
+    }
+  };
+
+  const fetchPartyDrp = async () => {
+    try {
+      const response = await axiosInstance.post("Party/GetParty_By_Name", {
+        PARTY_NAME: ""
+      });
+      if (response.data.STATUS === 0 && Array.isArray(response.data.DATA)) {
+        setPartyOption(response.data.DATA);
+      };
+    } catch (error) {
+      toast.error("Error while fetching party.");
+    }
+  };
+
+  const fetchBrokerDrp = async () => {
+    try {
+      const response = await axiosInstance.post('BROKER/GetBrokerDrp', {
+        PARTY_KEY: "",
+        FLAG: "Drp",
+        BROKER_KEY: "",
+        PageNumber: 1,
+        PageSize: 10,
+        SearchText: ""
+      });
+      if (response.data.STATUS === 0 && Array.isArray(response.data.DATA)) {
+        setBrokerOption(response.data.DATA);
+      };
+    } catch (error) {
+      toast.error("Error while fetching the broker.");
+    }
+  };
+
+  const fetchStateDrp = async () => {
+    try {
+      const response = await axiosInstance.post("PinCode/GetPinCodeDrp", {
+        FLAG: "State",
+        STATE_KEY: ""
+      });
+      if (response.data.STATUS === 0 && Array.isArray(response.data.DATA)) {
+        setStateOption(response.data.DATA);
+      };
+    } catch (error) {
+      toast.error("Error while fetching the State.");
     }
   };
 
@@ -354,6 +482,21 @@ const Dispatch = () => {
               >
                 Get Data
               </Button>
+              <Button
+                variant="contained"
+                size='small'
+                startIcon={<FilterAltIcon />}
+                onClick={handleOpen}
+                sx={{
+                  borderRadius: '20px',
+                  backgroundColor: '#635bff',
+                  '&:hover': {
+                    backgroundColor: '#635bff'
+                  },
+                }}
+              >
+                Filter
+              </Button>
             </Box>
           </LocalizationProvider>
         </Box>
@@ -407,7 +550,7 @@ const Dispatch = () => {
           </Grid>
 
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-            <Paper elevation={4} sx={{ p: 2, borderRadius: 3, background: 'linear-gradient(135deg, #00bcd4 0%, #009688 100%)', color: 'white', height: '100%' }}>
+            <Paper elevation={4} sx={{ p: 2, borderRadius: 3, background: 'linear-gradient(135deg, #00bcd4 0%, #4caf50 100%)', color: 'white', height: '100%' }}>
               <Stack direction="row" justifyContent="space-between">
                 <Box>
                   <Typography variant="h6" fontWeight='bold'>Disclosed - {disOrd[0]?.ROWNUM || 0}</Typography>
@@ -494,7 +637,7 @@ const Dispatch = () => {
                         </TableRow>
                       ) : (
                         filteredRecentPack.map((row) => (
-                          <TableRow key={row.PACK_NO} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
+                          <TableRow key={row.PACK_NO ? row.PACK_NO : `recent-${index}`} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
                             <TableCell align="left">{row.PARTY_NAME}</TableCell>
                             <TableCell align="left">{row.PACK_NO}</TableCell>
                             <TableCell align="left">{row.PACK_DT ? dayjs(row.PACK_DT).format('YYYY-MM-DD') : ''}</TableCell>
@@ -529,7 +672,7 @@ const Dispatch = () => {
                     zIndex: 1
                   }}
                 >
-                  Party Wise Packing
+                  Party Wise
                 </Typography>
 
                 <TextField
@@ -570,8 +713,6 @@ const Dispatch = () => {
                     <TableHead sx={{ position: 'sticky', top: 0, backgroundColor: 'white', zIndex: 1 }}>
                       <TableRow>
                         <TableCell align="left">Party</TableCell>
-                        <TableCell align="left">PackNo</TableCell>
-                        <TableCell align="left">PactDt</TableCell>
                         <TableCell align="left">City</TableCell>
                         <TableCell align="left">State</TableCell>
                         <TableCell align="left">Saleperson</TableCell>
@@ -588,10 +729,8 @@ const Dispatch = () => {
                         </TableRow>
                       ) : (
                         filteredPartyTable.map((row) => (
-                          <TableRow key={row.PACK_NO} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
+                          <TableRow key={row.PACK_NO ? row.PACK_NO : `party-${index}`} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
                             <TableCell align="left">{row.PARTY_NAME}</TableCell>
-                            <TableCell align="left">{row.PACK_NO}</TableCell>
-                            <TableCell align="left">{row.PACK_DT ? dayjs(row.PACK_DT).format('YYYY-MM-DD') : ''}</TableCell>
                             <TableCell align="left">{row.CITY_NAME}</TableCell>
                             <TableCell align="left">{row.STATE_NAME}</TableCell>
                             <TableCell align="left">{row.SALEPERSON_NAME}</TableCell>
@@ -609,26 +748,28 @@ const Dispatch = () => {
         </Grid>
 
         <Grid container spacing={1.5} mt={2}>
-          <Grid item xs={12} sm={12} md={6}>
+          <Grid size={{ xs: 12, sm: 12, md: 6 }}>
             <Paper sx={{ p: 1 }}>
               <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1, px: 2 }}>
                 <Typography
                   sx={{
                     mb: 1, fontWeight: 'bold', fontSize: '1.25rem',
                     color: 'transparent',
-                    backgroundImage: 'linear-gradient(to right, #6431f1ff, #2be472ff)',
+                    backgroundImage: 'linear-gradient(to right, rgba(72, 102, 68, 1), rgba(221, 34, 34, 1), rgba(147, 31, 170, 1), #89d)',
                     backgroundClip: 'text',
                     WebkitBackgroundClip: 'text',
                     zIndex: 1
                   }}
                 >
-                  State Wise Packing
+                  State Wise
                 </Typography>
 
                 <TextField
                   variant="outlined"
                   placeholder="Search Any..."
                   size="small"
+                  value={stateSearch}
+                  onChange={handleStateSearch}
                   sx={{
                     width: 200,
                     height: '37px',
@@ -666,15 +807,15 @@ const Dispatch = () => {
                       </TableRow>
                     </TableHead>
                     <TableBody>
-                      {stateOrd.length === 0 ? (
+                      {filterState.length === 0 ? (
                         <TableRow>
-                          <TableCell colSpan={3} align="center" sx={{ color: 'gray', fontWeight: 'bold' }}>
-                            No party data found...
+                          <TableCell colSpan={9} align='center' sx={{ color: 'gray', fontWeight: 'bold' }}>
+                            No data found...
                           </TableCell>
                         </TableRow>
                       ) : (
-                        stateOrd.map((row) => (
-                          <TableRow key={row.STATE_NAME} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
+                        filterState.map((row) => (
+                          <TableRow key={row.STATE_NAME || `state-${index}`} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
                             <TableCell align="left">{row.STATE_NAME}</TableCell>
                             <TableCell align="left">{row.AMOUNT}</TableCell>
                             <TableCell align="left">{row.PACKITMDTL_QTY}</TableCell>
@@ -689,22 +830,176 @@ const Dispatch = () => {
           </Grid>
 
           <Grid size={{ xs: 12, sm: 12, md: 6 }}>
-            <BarChart
-              xAxis={[{ data: ['Delhi', 'Mumbai', 'Noida', 'London', 'Lucknow', 'Dadar', 'Bihar', 'Gurugram'] }]}
-              series={[
-                { data: [4, 3, 5, 6, 8, 4, 7, 4, 8], barLabel: 'value' },
-                {
-                  data: [1, 6, 3, 8, 3, 6, 3, 5, 7],
-                  barLabel: (item) => dollarFormatter.format(item.value),
-                },
-                { data: [2, 5, 6, 3, 4, 7, 5, 5, 8] },
-              ]}
-              height={350}
-              margin={{ left: 0 }}
-              yAxis={[{ width: 30 }]}
-            />
+            <Paper>
+              <BarChart
+                xAxis={[{
+                  scaleType: 'band',
+                  data: ['Delhi', 'Mumbai', 'Noida', 'London', 'Lucknow', 'Dadar', 'Bihar', 'Gurugram', 'Pune']
+                }]}
+                series={[
+                  { data: [4, 3, 5, 6, 8, 4, 7, 4, 8] },
+                  { data: [1, 6, 3, 8, 3, 6, 3, 5, 7] },
+                  { data: [2, 5, 6, 3, 4, 7, 5, 5, 8] },
+                ]}
+                height={350}
+                margin={{ left: 10 }}
+              />
+            </Paper>
           </Grid>
         </Grid>
+
+        <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
+          <DialogTitle sx={{ padding: '8px 24px' }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span>Apply Filters</span>
+              <IconButton onClick={handleClose} size="large">
+                <CloseIcon color='error' />
+              </IconButton>
+            </Box>
+          </DialogTitle>
+          <DialogContent>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, py: 1 }}>
+              <Autocomplete
+                multiple
+                id="party-filter"
+                options={partyOption}
+                getOptionLabel={(option) => option.PARTY_NAME || ''}
+                isOptionEqualToValue={(option, value) => option.PARTY_KEY === value.PARTY_KEY}
+                value={filters.Partyfilter || []}
+                onChange={(event, newValue) => {
+                  setFilters({ ...filters, Partyfilter: newValue });
+                }}
+                disableCloseOnSelect
+                renderInput={(params) => (
+                  <TextField {...params} label="Party" variant="outlined" placeholder="Select parties" />
+                )}
+                renderOption={(props, option, { selected }) => (
+                  <li {...props} key={option.PARTY_KEY}>
+                    <Checkbox checked={selected} size='small' color='secondary' />
+                    <ListItemText primary={option.PARTY_NAME} />
+                  </li>
+                )}
+                renderTags={(value, getTagProps) =>
+                  value.map((option, index) => (
+                    <Chip
+                      key={option.PARTY_KEY || index}
+                      label={option.PARTY_NAME}
+                      size="small"
+                      {...getTagProps({ index })}
+                    />
+                  ))
+                }
+              />
+
+              {/* Brand Filter */}
+              <Autocomplete
+                multiple
+                id="brand-filter"
+                options={brandOption}
+                getOptionLabel={(option) => option.BRAND_NAME || ''}
+                isOptionEqualToValue={(option, value) => option.BRAND_KEY === value.BRAND_KEY}
+                value={filters.Brandfilter || []}
+                onChange={(event, newValue) => {
+                  setFilters({ ...filters, Brandfilter: newValue });
+                }}
+                disableCloseOnSelect
+                renderInput={(params) => (
+                  <TextField {...params} label="Brand" variant="outlined" placeholder="Select brands" />
+                )}
+                renderOption={(props, option, { selected }) => (
+                  <li {...props} key={option.BRAND_KEY}>
+                    <Checkbox checked={selected} size='small' color='secondary' />
+                    <ListItemText primary={option.BRAND_NAME} />
+                  </li>
+                )}
+                renderTags={(value, getTagProps) =>
+                  value.map((option, index) => (
+                    <Chip
+                      key={option.BRAND_KEY || index}
+                      label={option.BRAND_NAME}
+                      {...getTagProps({ index })}
+                      size="small"
+                    />
+                  ))
+                }
+              />
+
+              {/* State Filter */}
+              <Autocomplete
+                multiple
+                id="state-filter"
+                options={stateOption}
+                getOptionLabel={(option) => option.STATE_NAME || ''}
+                isOptionEqualToValue={(option, value) => option.STATE_KEY === value.STATE_KEY}
+                value={filters.Statefilter || []}
+                onChange={(event, newValue) => {
+                  setFilters({ ...filters, Statefilter: newValue });
+                }}
+                disableCloseOnSelect
+                renderInput={(params) => (
+                  <TextField {...params} label="State" variant="outlined" placeholder="Select states" />
+                )}
+                renderOption={(props, option, { selected }) => (
+                  <li {...props} key={option.STATE_KEY}>
+                    <Checkbox checked={selected} size='small' color='secondary' />
+                    <ListItemText primary={option.STATE_NAME} />
+                  </li>
+                )}
+                renderTags={(value, getTagProps) =>
+                  value.map((option, index) => (
+                    <Chip
+                      key={option.STATE_KEY || index}
+                      label={option.STATE_NAME}
+                      {...getTagProps({ index })}
+                      size="small"
+                    />
+                  ))
+                }
+              />
+
+              {/* Broker Filter */}
+              <Autocomplete
+                multiple
+                id="broker-filter"
+                options={BrokerOption}
+                getOptionLabel={(option) => option.BROKER_NAME || ''}
+                isOptionEqualToValue={(option, value) => option.BROKER_KEY === value.BROKER_KEY}
+                value={filters.Brokerfilter || []}
+                onChange={(event, newValue) => {
+                  setFilters({ ...filters, Brokerfilter: newValue });
+                }}
+                disableCloseOnSelect
+                renderInput={(params) => (
+                  <TextField {...params} label="Broker" variant="outlined" placeholder="Select brokers" />
+                )}
+                renderOption={(props, option, { selected }) => (
+                  <li {...props} key={option.BROKER_KEY}>
+                    <Checkbox checked={selected} size='small' color='secondary' />
+                    <ListItemText primary={option.BROKER_NAME} />
+                  </li>
+                )}
+                renderTags={(value, getTagProps) =>
+                  value.map((option, index) => (
+                    <Chip
+                      key={option.BROKER_KEY || index}
+                      label={option.BROKER_NAME}
+                      {...getTagProps({ index })}
+                      size="small"
+                    />
+                  ))
+                }
+              />
+            </Box>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleResetFilters} color="secondary" size="small" variant="outlined">
+              Reset
+            </Button>
+            <Button onClick={handleApplyFilters} color="primary" size="small" variant="contained">
+              Apply
+            </Button>
+          </DialogActions>
+        </Dialog>
       </Container>
     </Box >
   );

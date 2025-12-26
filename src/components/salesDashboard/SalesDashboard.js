@@ -614,7 +614,6 @@ const SalesDashboard = () => {
                 SearchText: "",
                 ...filters
             });
-            console.log("Api response", response);
             if (response.data.STATUS === 0 && Array.isArray(response.data.DATA)) {
                 setOrdTrend(response.data.DATA);
             };
@@ -631,14 +630,20 @@ const SalesDashboard = () => {
                 FCYR_KEY: fcyr,
                 FROM_DT: dayjs(dateFrom).format('YYYY-MM-DD'),
                 To_DT: dayjs(dateTo).format('YYYY-MM-DD'),
-                Flag: "MonthWise",
+                Flag: "SalepersonWise",
                 PageNumber: 1,
                 PageSize: 10,
                 SearchText: "",
                 ...filters
             });
+
             if (response.data.STATUS === 0 && Array.isArray(response.data.DATA)) {
-                setSalesPerson(response.data.DATA);
+                const transformedData = response.data.DATA.map((item) => ({
+                    month: item.SALEPERSON_NAME,
+                    amt: item.AMT / 100000,
+                    qty: item.QTY / 100000
+                }));
+                setSalesPerson(transformedData);
             }
         } catch (error) {
             toast.error("Error while fetching sales person.");
@@ -1992,35 +1997,45 @@ const SalesDashboard = () => {
                         </Typography>
                         <Box sx={{ width: '100%', height: '100%' }}>
                             <ResponsiveContainer width="100%" height="90%">
-                                <ComposedChart
-                                    data={data}
-                                    margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-                                >
+                                <ComposedChart data={salesPerson} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
                                     <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
                                     <XAxis dataKey="month" />
                                     <YAxis
                                         tickLine={true}
                                         axisLine={true}
                                         yAxisId="left"
-                                        label={{ value: 'Sales', angle: -90, position: 'insideLeft' }}
+                                        label={{
+                                            value: 'Quantity (L)',
+                                            angle: -90,
+                                            position: 'insideLeft'
+                                        }}
                                     />
                                     <YAxis
                                         tickLine={true}
                                         axisLine={true}
                                         yAxisId="right"
                                         orientation="right"
-                                        label={{ value: 'Profit', angle: 90, position: 'insideRight' }}
+                                        label={{
+                                            value: 'Amount (L)',
+                                            angle: 90,
+                                            position: 'insideRight'
+                                        }}
                                     />
                                     <Tooltip
-                                        formatter={(value, name) =>
-                                            [value.toLocaleString('en-US'), name === 'sales' ? 'Sales' : 'Profit']
-                                        }
+                                        formatter={(value, name) => {
+                                            if (name === 'amt') {
+                                                return [value.toLocaleString('en-US') + ' L', 'Amount (L)'];
+                                            } else if (name === 'qty') {
+                                                return [value.toLocaleString('en-US') + ' L', 'Quantity (L)'];
+                                            }
+                                            return value;
+                                        }}
                                     />
                                     <Legend verticalAlign="top" height={36} />
                                     <Bar
                                         yAxisId="left"
-                                        dataKey="sales"
-                                        name="Sales"
+                                        dataKey="qty"
+                                        name="Quantity (L)"
                                         barSize={40}
                                         fill="#1976d2"
                                         radius={[4, 4, 0, 0]}
@@ -2028,8 +2043,8 @@ const SalesDashboard = () => {
                                     <Line
                                         yAxisId="right"
                                         type="monotone"
-                                        dataKey="profit"
-                                        name="Profit"
+                                        dataKey="amt"
+                                        name="Amount (L)" 
                                         stroke="#ff7f50"
                                         strokeWidth={3}
                                         dot={{ r: 5 }}
