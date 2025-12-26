@@ -263,7 +263,7 @@ const Stores = () => {
                         REMARK: qcData.REMARK || ''
                     }));
                     setTableData(qcData.QC_TESTDTLEntities.map(item => ({
-                        ...item, 
+                        ...item,
                         USER_VALUE: item.USER_VALUE || '',
                         RESULT: item.RESULT,
                         FINAL_RESULT: item.FINAL_RESULT,
@@ -320,9 +320,9 @@ const Stores = () => {
             QC_SUBGROUP_KEY: selectedSubGroupKey,
         }));
         if (!selectedSubGroupKey) {
-            fetchTableData();  
+            fetchTableData();
         } else {
-            setTableData([]);  
+            setTableData([]);
         }
     };
     const handleCellChange = (rowId, field, value) => {
@@ -377,18 +377,18 @@ const Stores = () => {
         const USER_ID = localStorage.getItem('USER_ID');
         const apiUrl = form.QC_TEST_ID === 0 ? 'QC_TEST/InsertQC_TEST' : 'QC_TEST/UpdateQC_TEST';
         const mainData = {
-            QC_TEST_ID: form.QC_TEST_ID || 0, 
+            QC_TEST_ID: form.QC_TEST_ID || 0,
             DOC_KEY: form.DOC_KEY,
             DOC_DTL_ID: form.DOC_DTL_ID,
             QC_TYPE: 'Stores',
             QC_SUBGROUP_KEY: form.QC_SUBGROUP_KEY,
-            DECISION_STATUS: 'P',    
+            DECISION_STATUS: 'P',
             PASS_PARTIAL_REMARK: form.PASS_PARTIAL_REMARK,
             REMARK: form.REMARK,
             CHECKED_BY: 1,
             PASSED_BY: 1,
             CREATED_BY: USER_ID,
-            DBFLAG: mode === FORM_MODE.add ? 'I' : 'U', 
+            DBFLAG: mode === FORM_MODE.add ? 'I' : 'U',
             QC_TESTDTLEntities: tableData.map(item => ({
                 QC_TEST_DTL_ID: item.QC_TEST_DTL_ID || 0,
                 QC_TEST_ID: form.QC_TEST_ID || 0,
@@ -407,6 +407,7 @@ const Stores = () => {
             if (data.STATUS === 0) {
                 toast.success(data.MESSAGE || 'Data saved successfully!', { autoClose: 2000 });
                 fetchTableData();
+                setMode(FORM_MODE.read)
             } else {
                 toast.error(data.MESSAGE || 'Something went wrong!', { autoClose: 3000 });
                 if (data.MESSAGE.includes('Duplicate Data')) {
@@ -651,14 +652,14 @@ const Stores = () => {
                             ) : (
                                 tableData.map((row) => {
                                     const isEditable = editableRow === row.QC_PM_ID && mode !== FORM_MODE.read;
+                                      const rowBackground = row.FINAL_RESULT === 'F' ? 'pink' :'transparent';
                                     return (
                                         <TableRow
                                             key={row.QC_PM_ID}
-                                            hover
                                             onClick={() => setEditableRow(row.QC_PM_ID)}
                                             sx={{
                                                 cursor: mode === FORM_MODE.read ? 'default' : 'pointer',
-                                                '&:nth-of-type(odd)': { backgroundColor: '#f9f9f9' }
+                                                backgroundColor: rowBackground
                                             }}
                                         >
                                             <TableCell sx={commonCellSx}>

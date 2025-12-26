@@ -24,8 +24,6 @@ import { TbListSearch } from "react-icons/tb";
 import { textInputSx } from '../../../../../public/styles/textInputSx';
 import PrintQcSubGrp from './PrintQcSubGrp';
 import ConfirmationDialog from '@/GlobalFunction/DeleteDialog/ConfirmationDialog';
-import AutoVibe from '@/GlobalFunction/CustomAutoComplete/AutoVibe';
-import { DropInputSx } from '../../../../../public/styles/dropInputSx';
 import { inputStyle } from '../../../../../public/styles/inputStyleDrp';
 
 const FORM_MODE = getFormMode();
@@ -52,7 +50,6 @@ const QcSubGroup = () => {
     });
     const [openConfirmDialog, setOpenConfirmDialog] = useState(false);
     const QC_SUBGROUP_KEYRef = useRef(null);
-    const QC_GROUP_KEYRef = useRef(null);
     const REMARKRef = useRef(null);
     const QC_SUBGROUP_NAMERef = useRef(null);
     const SERIESRef = useRef(null);
@@ -174,7 +171,6 @@ const QcSubGroup = () => {
         const USER_ID = localStorage.getItem('USER_ID');
         const COBR_ID = localStorage.getItem('COBR_ID');
         try {
-
             const UserName = UserRole === 'user' ? USER_NAME : PARTY_KEY;
             let url;
             if (mode === FORM_MODE.edit && currentQC_SUBGROUP_KEY) {
@@ -414,10 +410,6 @@ const QcSubGroup = () => {
     };
     const handleEdit = () => {
         setMode(FORM_MODE.edit);
-    };
-    const handleAddClick = () => {
-        const url = '/masters/qc/qcgrp/qcgroup/';
-        window.open(url, '_blank');
     };
     const handlePrint = async () => {
         try {

@@ -441,6 +441,7 @@ const RawMaterial = () => {
             if (data.STATUS === 0) {
                 toast.success(data.MESSAGE || 'Data saved successfully!', { autoClose: 2000 });
                 fetchTableData();
+                setMode(FORM_MODE.read)
             } else {
                 toast.error(data.MESSAGE || 'Something went wrong!', { autoClose: 3000 });
                 if (data.MESSAGE.includes('Duplicate Data')) {
@@ -686,14 +687,14 @@ const RawMaterial = () => {
                             ) : (
                                 tableData.map((row) => {
                                     const isEditable = editableRow === row.QC_PM_ID && mode !== FORM_MODE.read;
+                                     const rowBackground = row.FINAL_RESULT === 'F' ? 'pink' : 'transparent';
                                     return (
                                         <TableRow
                                             key={row.QC_PM_ID}
-                                            hover
                                             onClick={() => setEditableRow(row.QC_PM_ID)}
                                             sx={{
                                                 cursor: mode === FORM_MODE.read ? 'default' : 'pointer',
-                                                '&:nth-of-type(odd)': { backgroundColor: '#f9f9f9' }
+                                                 backgroundColor: rowBackground
                                             }}
                                         >
                                             <TableCell sx={commonCellSx}>
@@ -854,7 +855,7 @@ const RawMaterial = () => {
                                     minWidth: { xs: 40, sm: 46, md: 60 },
                                     height: { xs: 40, sm: 46, md: 30 },
                                 }}
-                               disabled >
+                                disabled >
                                 Submit
                             </Button>
                             <Button variant="contained"
