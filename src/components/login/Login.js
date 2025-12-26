@@ -309,7 +309,7 @@ const Login = () => {
     if (!mobilePassword) return toast.error('Enter password');
     try {
       const encRes = await axiosInstance.post('USERS/Getpwdencryption', {
-        USER_NAME:form.mobile,
+        USER_NAME: form.mobile,
         USER_PWD: mobilePassword
       });
       const encryptedPwd = encRes.data.DATA;
@@ -328,7 +328,7 @@ const Login = () => {
         localStorage.setItem('EMP_NAME', employeeData.EMP_NAME);
         if (employeeData.EMP_KEY) {
           localStorage.setItem('EMP_KEY', employeeData.EMP_KEY);
-           router.push('/employeepage');
+          router.push('/employeepage');
         }
         if (employeeData.EMP_NAME) {
           localStorage.setItem('EMP_NAME', employeeData.EMP_NAME);
@@ -338,7 +338,7 @@ const Login = () => {
         setModalOpen(true);
       } else {
         setShowCreatePwdLink(true);
-        toast.error('Wrong Password');
+        toast.error('Invalid Credentials');
       }
     } catch (err) {
       toast.error('Login failed');
@@ -347,14 +347,14 @@ const Login = () => {
   const handleLogin = async () => {
     if (role !== 'customer') {
       if (!form.username.trim() || !form.password.trim()) {
-        toast.info("Please fill in the username & password.");
+        toast.info("Username and password are required.");
         return;
       }
     }
     setLoading(true);
     try {
       const encryptionResponse = await axiosInstance.post('USERS/Getpwdencryption', {
-        USER_NAME:form.username,
+        USER_NAME: form.username,
         USER_PWD: form.password,
       });
       const encryptedPassword = encryptionResponse.data.DATA;
@@ -381,10 +381,12 @@ const Login = () => {
         setShowLogin(false);
         setModalOpen(true);
       } else {
-        setError(true);
+        toast.error('Invalid Credentials');
+        // setError(true);
       }
     } catch (err) {
-      setError(true);
+      console.log("Error in Login Api ", err)
+      // setError(true);
     } finally {
       setLoading(false);
     }
@@ -563,7 +565,7 @@ const Login = () => {
                               sx={{
                                 '& .MuiFormControlLabel-label': {
                                   fontSize: '0.8rem',
-                                   margin: 0,
+                                  margin: 0,
                                 },
                                 // marginBottom: 0.5, 
                               }}
@@ -578,9 +580,9 @@ const Login = () => {
                 {role === 'user' && (
                   <>
                     <Box sx={{
-                      display: 'flex', gap: 1, justifyContent: 'center', alignItems: 'center', 
+                      display: 'flex', gap: 1, justifyContent: 'center', alignItems: 'center',
                       bgcolor: '#f5f5f5', p: 0, border: '1px solid #ddd', width: '100%', maxWidth: '300px', margin: '0 auto',
-                       boxShadow: '0 1px 2px rgba(0,0,0,0.1)', display: 'flex', borderRadius: 2,
+                      boxShadow: '0 1px 2px rgba(0,0,0,0.1)', display: 'flex', borderRadius: 2,
                     }}>
                       <FormControlLabel
                         control={
@@ -594,7 +596,7 @@ const Login = () => {
                         label="Username"
                         sx={{
                           '& .MuiFormControlLabel-label': {
-                            fontSize: '0.8rem', 
+                            fontSize: '0.8rem',
                           },
                         }}
                       />
@@ -610,7 +612,7 @@ const Login = () => {
                         label="Mobile"
                         sx={{
                           '& .MuiFormControlLabel-label': {
-                            fontSize: '0.8rem', 
+                            fontSize: '0.8rem',
                           },
                         }}
                       />
@@ -753,7 +755,7 @@ const Login = () => {
                             }}
                             onClick={openCreatePasswordModal}
                           >
-                             Forgot Password?
+                            Forgot Password?
                           </Typography>
                         )}
                       </>
@@ -888,26 +890,26 @@ const Login = () => {
                 >
                   <Button
                     variant="contained"
-                     onClick={() => {
-                        if (role === 'user' && loginMode === 'mobile') {
-                          if (isNewUser) {
-                            toast.info("Please create a password first");
-                          } else if (mobileValid === 'valid') {
-                            handleEmployeeLogin();
-                          }
-                        } else if (['customer', 'salesman', 'broker'].includes(role)) {
-                          if (otpSent && otp.length === 4) handleVerifyOtp();
-                          else toast.info("Please verify OTP");
-                        } else {
-                          handleLogin(); 
+                    onClick={() => {
+                      if (role === 'user' && loginMode === 'mobile') {
+                        if (isNewUser) {
+                          toast.info("Please create a password first");
+                        } else if (mobileValid === 'valid') {
+                          handleEmployeeLogin();
                         }
-                      }}
-                     disabled={
-                        loading ||
-                        (role === 'user' && loginMode === 'mobile' && mobileValid !== 'valid') ||
-                        (['customer', 'salesman', 'broker'].includes(role) && !otpSent)
+                      } else if (['customer', 'salesman', 'broker'].includes(role)) {
+                        if (otpSent && otp.length === 4) handleVerifyOtp();
+                        else toast.info("Please verify OTP");
+                      } else {
+                        handleLogin();
                       }
-                    
+                    }}
+                    disabled={
+                      loading ||
+                      (role === 'user' && loginMode === 'mobile' && mobileValid !== 'valid') ||
+                      (['customer', 'salesman', 'broker'].includes(role) && !otpSent)
+                    }
+
                     sx={buttonStyles}
                     fullWidth
                   >
@@ -1395,7 +1397,7 @@ const Login = () => {
                           if (otpSent && otp.length === 4) handleVerifyOtp();
                           else toast.info("Please verify OTP");
                         } else {
-                          handleLogin(); 
+                          handleLogin();
                         }
                       }}
                       disabled={
@@ -1445,13 +1447,13 @@ const Login = () => {
       ) : (
         <CoBrModal open={modalOpen} onClose={resetToLogin} />
       )}
-      <Snackbar
+      {/* <Snackbar
         open={error}
         onClose={handleCloseSnackbar}
         message="Invalid username or password"
         autoHideDuration={3000}
         sx={{ zIndex: 9999 }}
-      />
+      /> */}
       <Snackbar
         open={otpError}
         onClose={() => setOtpError(false)}

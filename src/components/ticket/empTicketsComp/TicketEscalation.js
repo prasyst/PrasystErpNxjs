@@ -18,6 +18,7 @@ import {
 
 } from '@mui/icons-material';
 import axiosInstance from '@/lib/axios';
+import { toast } from 'react-toastify';
 
 
 
@@ -128,11 +129,11 @@ const TicketEscalation = () => {
                 });
                 fetchTickets();
             } else {
-                throw new Error(response.data.MESSAGE || 'Escalation failed');
+                // throw new Error(response.data.MESSAGE || 'Escalation failed');
             }
         } catch (error) {
             console.error('Escalation failed:', error);
-            alert(error.message || 'Failed to escalate tickets. Please try again.');
+            toast.error(error.message || 'Failed to escalate tickets. Please try again.');
         } finally {
             setLoading(false);
         }
@@ -243,7 +244,7 @@ const TicketEscalation = () => {
 
     const handleEscalate = () => {
         if (selectedTickets.length === 0) {
-            alert('Please select at least one ticket to escalate');
+            toast.error('Please select at least one ticket to escalate');
             return;
         }
         setEscalationDialogOpen(true);
