@@ -363,16 +363,22 @@ const QcPrdPro = () => {
                     ...row,
                     STATUS: row.STATUS === "1" ? "Active" : "Inactive"
                 }));
-                const asPdf = pdf(<PrintPrdPr rows={formattedData} />);
-                const blob = await asPdf.toBlob();
-                const url = URL.createObjectURL(blob);
-                const newTab = window.open(url, '_blank');
-                if (newTab) {
-                    newTab.focus();
+                if (formattedData.length > 0) {
+
+
+                    const asPdf = pdf(<PrintPrdPr rows={formattedData} />);
+                    const blob = await asPdf.toBlob();
+                    const url = URL.createObjectURL(blob);
+                    const newTab = window.open(url, '_blank');
+                    if (newTab) {
+                        newTab.focus();
+                    }
+                    setTimeout(() => {
+                        URL.revokeObjectURL(url);
+                    }, 100);
+                } else {
+                    toast.info("No data available to print");
                 }
-                setTimeout(() => {
-                    URL.revokeObjectURL(url);
-                }, 100);
             }
         } catch (error) {
             console.error("Print Error:", error);
