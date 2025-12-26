@@ -18,8 +18,7 @@ import {
   Close as CloseIcon
 } from '@mui/icons-material';
 import axiosInstance from '@/lib/axios';
-import TicketDetailsDialog from '../ViewTicketDetailsDialog/TicketDetailsDialog';
-// import TicketDetailsDialog from '../ViewTicketDetailsDialog/TicketDetailsDialog';
+import TicketDetailsDialog from '../empTicketsComp/ViewTicketDetailsDialog/TicketDetailsDialog';
 
 const AllTicketsPage = () => {
   const router = useRouter();
@@ -771,7 +770,7 @@ const AllTicketsPage = () => {
                   variant="contained"
                   size="large"
                   startIcon={<AddIcon />}
-                  onClick={() => router.push('/tickets/create-tickets')}
+                  onClick={() => router.push('/emp-tickets/create-tickets')}
                 >
                   Create Your First Ticket
                 </Button>
@@ -789,7 +788,7 @@ const AllTicketsPage = () => {
               bottom: 16,
               right: 16,
             }}
-            onClick={() => router.push('/tickets/create-tickets')}
+            onClick={() => router.push('/emp-tickets/create-tickets')}
           >
             <AddIcon />
           </Fab>

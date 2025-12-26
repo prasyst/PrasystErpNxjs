@@ -35,6 +35,7 @@ import {
   ExpandLess as ExpandLessIcon,
   LocalOffer as TicketIcon
 } from '@mui/icons-material';
+import EscalatorIcon from '@mui/icons-material/Escalator';
 import { useRecentPaths } from '../../app/context/RecentPathsContext';
 
 const EmployeeSidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => {
@@ -52,7 +53,6 @@ const EmployeeSidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClos
   const [userName, setUserName] = useState('');
   const [hoveredItem, setHoveredItem] = useState(null);
 
- 
   const isSmallScreen = useMediaQuery(theme.breakpoints.down('md'));
 
   useEffect(() => {
@@ -80,11 +80,15 @@ const EmployeeSidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClos
           path: '/emp-tickets/all-tickets' 
         },
         { 
+          name: 'Escalate Tickets', 
+          icon: EscalatorIcon, 
+          path: '/emp-tickets/ticket-esclation/' 
+        },
+        { 
           name: 'Raise Ticket', 
           icon: AddTaskIcon, 
           path: '/emp-tickets/create-tickets/' 
         },
-        
       ],
     },
   ];
@@ -94,6 +98,11 @@ const EmployeeSidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClos
       if (isGrandchild) {
         addRecentPath(path, name);
       }
+      
+      if (isMobile && onClose) {
+        onClose();
+      }
+
       router.push(path);
     }
   };
@@ -106,7 +115,9 @@ const EmployeeSidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClos
   };
 
   const handleParentClick = (item, e) => {
+    e.preventDefault();
     e.stopPropagation();
+    
     setActiveItem(item.name);
     setActiveChild(null);
     setActiveGrandchild(null);
@@ -121,6 +132,7 @@ const EmployeeSidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClos
   };
 
   const handleChildClick = (child, parentName, e) => {
+    e.preventDefault();
     e.stopPropagation();
     
     setActiveItem(parentName);
@@ -155,6 +167,7 @@ const EmployeeSidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClos
   };
 
   const handleGrandchildClick = (grandchild, parentName, childName, e) => {
+    e.preventDefault();
     e.stopPropagation();
     
     setActiveItem(parentName);
@@ -368,7 +381,6 @@ const EmployeeSidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClos
               >
                 {IconComponent && (
                   <ListItemIcon sx={{ 
-                    // minWidth: 40,
                     color: isActive ? theme.palette.primary.contrastText : theme.palette.primary.main,
                   }}>
                     <IconComponent />
@@ -417,7 +429,6 @@ const EmployeeSidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClos
       });
   }, [openSections, activeItem, hoveredItem, isCollapsed, searchQuery, theme]);
 
-
   if (isMobile) {
     return (
       <Drawer
@@ -438,7 +449,7 @@ const EmployeeSidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClos
           keepMounted: true,
         }}
       >
-
+        {/* Header */}
         <Box sx={{ 
           p: 2, 
           display: 'flex', 
@@ -454,7 +465,6 @@ const EmployeeSidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClos
             <CloseIcon />
           </IconButton>
         </Box>
-
 
         <Box sx={{ p: 2, pb: 1 }}>
           <TextField
@@ -485,8 +495,6 @@ const EmployeeSidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClos
             }}
           />
         </Box>
-
-        {/* <Divider /> */}
 
         <Box sx={{ 
           flex: 1, 
@@ -536,7 +544,7 @@ const EmployeeSidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClos
       }}
       ref={sidebarRef}
     >
-
+      {/* Header */}
       <Box sx={{ 
         p: 1, 
         display: 'flex', 
@@ -559,7 +567,6 @@ const EmployeeSidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClos
         </IconButton>
       </Box>
 
-      {/* Search Box for Desktop */}
       {!isCollapsed && (
         <Box sx={{ p: 1, pb: 1 }}>
           <TextField
@@ -592,6 +599,7 @@ const EmployeeSidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClos
       )}
 
       <Divider />
+  
       <Box sx={{ 
         flex: 1, 
         overflowY: 'auto', 
