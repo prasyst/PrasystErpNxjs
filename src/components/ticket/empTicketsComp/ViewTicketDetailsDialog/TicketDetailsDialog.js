@@ -216,11 +216,11 @@ const TicketDetailsDialog = ({
 
                 reader.onload = () => {
                     const base64File = reader.result;
-                    resolve({ 
-                        fileName: file.name, 
+                    resolve({
+                        fileName: file.name,
                         fileData: base64File,
                         size: file.size,
-                        type: file.type 
+                        type: file.type
                     });
                 };
 
@@ -327,7 +327,7 @@ const TicketDetailsDialog = ({
             maxWidth="lg"
             fullWidth
             PaperProps={{
-                sx: { 
+                sx: {
                     borderRadius: 2,
                     maxHeight: '90vh'
                 }
@@ -384,42 +384,78 @@ const TicketDetailsDialog = ({
                 )}
 
                 {ticketDetails && !loading && (
-                    <Grid container spacing={3}>
-                        <Grid item xs={12} md={7}>
-                            <Stack spacing={3}>
+                    <Grid container spacing={2}>
+                        <Grid size={{ xs: 12, md: 8 }}>
+                            <Stack spacing={2}>
                                 <Card variant="outlined" sx={{ p: 2 }}>
-                                    <Box display="flex" alignItems="flex-start" gap={3}>
-                                        <Box flex={1}>
-                                            <Typography variant="h5" fontWeight="700" gutterBottom color="primary.main">
+                                    <Box display="flex"
+                                        flexDirection={{ xs: 'column', md: 'row' }}
+                                        alignItems={{ xs: 'flex-start', md: 'center' }}
+                                        gap={{ xs: 2, md: 3 }}>
+
+                                        {/* Title and Description Section */}
+                                        <Box flex={1} width={{ xs: '100%', md: 'auto' }}>
+                                            <Typography variant="h5"
+                                                fontWeight="700"
+                                                gutterBottom
+                                                color="primary.main"
+                                                fontSize={{ xs: '1.25rem', md: '1.5rem' }}>
                                                 {ticketDetails.title}
                                             </Typography>
-                                            <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.4 }}>
+                                            <Typography variant="body2"
+                                                color="text.secondary"
+                                                sx={{
+                                                    lineHeight: 1.4,
+                                                    mb: { xs: 2, md: 0 }
+                                                }}
+                                                fontSize={{ xs: '0.875rem', md: '1rem' }}>
                                                 {ticketDetails.description}
                                             </Typography>
                                         </Box>
 
-                                        <Box display="flex" flexDirection="column" gap={1} minWidth="140px">
+                                        {/* Chips Section - Mobile में full width, Desktop में auto width */}
+                                        <Box display="flex"
+                                            flexDirection={{ xs: 'row', md: 'column' }}
+                                            gap={1}
+                                            width={{ xs: '100%', md: 'auto' }}
+                                            minWidth={{ md: '140px' }}
+                                            flexWrap={{ xs: 'wrap', md: 'nowrap' }}>
+
                                             <Chip
                                                 icon={<PriorityIcon />}
                                                 label={ticketDetails.priority}
                                                 color={getPriorityColor(ticketDetails.priority)}
                                                 variant="filled"
                                                 size="small"
-                                                sx={{ justifyContent: 'flex-start' }}
+                                                sx={{
+                                                    justifyContent: { xs: 'center', md: 'flex-start' },
+                                                    flex: { xs: 1, md: 'none' },
+                                                    minWidth: { xs: '100px', md: 'auto' }
+                                                }}
                                             />
+
                                             <Chip
                                                 label={ticketDetails.status.replace('-', ' ')}
                                                 color={getStatusColor(ticketDetails.status)}
                                                 variant="filled"
                                                 size="small"
-                                                sx={{ justifyContent: 'flex-start' }}
+                                                sx={{
+                                                    justifyContent: { xs: 'center', md: 'flex-start' },
+                                                    flex: { xs: 1, md: 'none' },
+                                                    minWidth: { xs: '100px', md: 'auto' }
+                                                }}
                                             />
+
                                             <Chip
                                                 icon={<CategoryIcon />}
                                                 label={ticketDetails.category}
                                                 variant="outlined"
                                                 size="small"
-                                                sx={{ justifyContent: 'flex-start' }}
+                                                sx={{
+                                                    justifyContent: { xs: 'center', md: 'flex-start' },
+                                                    flex: { xs: 1, md: 'none' },
+                                                    minWidth: { xs: '100px', md: 'auto' }
+                                                }}
                                             />
                                         </Box>
                                     </Box>
@@ -431,42 +467,42 @@ const TicketDetailsDialog = ({
                                             Basic Information
                                         </Typography>
                                         <Grid container spacing={2}>
-                                            <Grid item xs={6}>
+                                            <Grid item size={{ xs: 12, md: 2 }}>
                                                 <InfoRow
                                                     icon={<PersonIcon fontSize="small" />}
                                                     label="Ticket ID"
                                                     value={ticketDetails.id}
                                                 />
                                             </Grid>
-                                            <Grid item xs={6}>
+                                            <Grid item size={{ xs: 12, md: 2 }}>
                                                 <InfoRow
                                                     icon={<CategoryIcon fontSize="small" />}
                                                     label="Type"
                                                     value={ticketDetails.tktType}
                                                 />
                                             </Grid>
-                                            <Grid item xs={6}>
+                                            <Grid item size={{ xs: 12, md: 2 }}>
                                                 <InfoRow
                                                     icon={<BuildIcon fontSize="small" />}
                                                     label="Tag"
                                                     value={ticketDetails.tktTag}
                                                 />
                                             </Grid>
-                                            <Grid item xs={6}>
+                                            <Grid item size={{ xs: 12, md: 3 }}>
                                                 <InfoRow
                                                     icon={<CalendarIcon fontSize="small" />}
                                                     label="Created Date"
                                                     value={formatDateTime(ticketDetails.createdAt)}
                                                 />
                                             </Grid>
-                                            <Grid item xs={6}>
+                                            <Grid item size={{ xs: 12, Md: 3 }}>
                                                 <InfoRow
                                                     icon={<CalendarIcon fontSize="small" />}
                                                     label="Due Date"
                                                     value={formatDate(ticketDetails.dueDate)}
                                                 />
                                             </Grid>
-                                            <Grid item xs={6}>
+                                            <Grid item size={{ xs: 12, Md: 3 }}>
                                                 <InfoRow
                                                     icon={<PersonIcon fontSize="small" />}
                                                     label="Reporter"
@@ -521,14 +557,14 @@ const TicketDetailsDialog = ({
                             </Stack>
                         </Grid>
 
-                        <Grid item xs={12} md={5}>
+                        <Grid size={{ xs: 12, md: 4 }}>
                             <Stack spacing={1}>
                                 <Card variant="outlined">
                                     <CardContent>
                                         <Typography variant="h6" gutterBottom fontWeight="600" color="primary.main">
                                             Update Ticket Status
                                         </Typography>
-                                        
+
                                         <FormControl fullWidth sx={{ mb: 2 }}>
                                             <FormLabel id="ticket-status-label" sx={{ mb: 1, fontSize: '0.875rem', fontWeight: 500 }}>
                                                 Select Status
@@ -545,18 +581,18 @@ const TicketDetailsDialog = ({
                                                     control={<Radio />}
                                                     label={
                                                         <Box display="flex" alignItems="center" gap={1}>
-                                                           
+
                                                             <Typography variant="body2">Resolve</Typography>
                                                         </Box>
                                                     }
                                                 />
-                                                 
+
                                                 <FormControlLabel
                                                     value="C"
                                                     control={<Radio />}
                                                     label={
                                                         <Box display="flex" alignItems="center" gap={1}>
-                                                           
+
                                                             <Typography variant="body2">Close</Typography>
                                                         </Box>
                                                     }
@@ -566,12 +602,12 @@ const TicketDetailsDialog = ({
                                                     control={<Radio />}
                                                     label={
                                                         <Box display="flex" alignItems="center" gap={1}>
-                                                            
+
                                                             <Typography variant="body2">Hold</Typography>
                                                         </Box>
                                                     }
                                                 />
-                                               
+
                                             </RadioGroup>
                                         </FormControl>
 
@@ -601,7 +637,7 @@ const TicketDetailsDialog = ({
                                             <Typography variant="subtitle2" fontWeight={500} gutterBottom>
                                                 Attach Images
                                             </Typography>
-                                            
+
                                             <Box
                                                 sx={{
                                                     border: '2px dashed #d1d5db',
@@ -626,12 +662,12 @@ const TicketDetailsDialog = ({
                                                     style={{ display: 'none' }}
                                                     onChange={handleFileUpload}
                                                 />
-                                                <AttachFileIcon 
-                                                    sx={{ 
-                                                        fontSize: 48, 
+                                                <AttachFileIcon
+                                                    sx={{
+                                                        fontSize: 48,
                                                         color: '#9ca3af',
-                                                        mb: 1 
-                                                    }} 
+                                                        mb: 1
+                                                    }}
                                                 />
                                                 <Typography fontWeight={500} color="#6b7280" gutterBottom>
                                                     Click to upload images
@@ -660,9 +696,9 @@ const TicketDetailsDialog = ({
                                                                 }}
                                                             >
                                                                 <Box display="flex" alignItems="center" gap={1.5}>
-                                                                    <AttachFileIcon 
-                                                                        fontSize="small" 
-                                                                        sx={{ color: '#6b7280' }} 
+                                                                    <AttachFileIcon
+                                                                        fontSize="small"
+                                                                        sx={{ color: '#6b7280' }}
                                                                     />
                                                                     <Box>
                                                                         <Typography variant="body2" fontWeight={500}>
@@ -695,12 +731,12 @@ const TicketDetailsDialog = ({
                                             <Typography variant="h6" gutterBottom fontWeight={600} color="success.main">
                                                 Previous Resolution Remarks
                                             </Typography>
-                                            <Paper 
-                                                variant="outlined" 
-                                                sx={{ 
-                                                    p: 1, 
+                                            <Paper
+                                                variant="outlined"
+                                                sx={{
+                                                    p: 1,
                                                     bgcolor: 'white',
-                                                    borderRadius: 1 
+                                                    borderRadius: 1
                                                 }}
                                             >
                                                 <Typography variant="body2">
@@ -722,6 +758,13 @@ const TicketDetailsDialog = ({
                     variant="contained"
                     disabled={updating || !resolveRemark.trim()}
                     startIcon={updating && <CircularProgress size={16} />}
+                    sx={{
+                        fontSize: {
+                            xs: '0.65rem',
+                            sm: '0.75rem',
+                            md: '0.875rem'
+                        },
+                    }}
                 >
                     {updating ? 'Updating...' : 'Update Status'}
                 </Button>
@@ -730,14 +773,28 @@ const TicketDetailsDialog = ({
                         variant="outlined"
                         startIcon={<EditIcon />}
                         onClick={handleEdit}
+                        sx={{
+                            fontSize: {
+                                xs: '0.65rem',
+                                sm: '0.75rem',
+                                md: '0.875rem'
+                            },
+                        }}
                     >
-                        Edit Ticket
+                        Edit
                     </Button>
                 )}
                 <Button
                     onClick={onClose}
                     variant="outlined"
                     color="inherit"
+                    sx={{
+                        fontSize: {
+                            xs: '0.65rem',
+                            sm: '0.75rem',
+                            md: '0.875rem'
+                        },
+                    }}
                 >
                     Cancel
                 </Button>
