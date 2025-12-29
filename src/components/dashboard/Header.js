@@ -1,3 +1,4 @@
+
 // 'use client';
 
 // import { useEffect, useState, useRef } from 'react';
@@ -11,6 +12,7 @@
 // import ReportIcon from '@mui/icons-material/Report';
 // import axiosInstance from '@/lib/axios';
 // import { useRecentPaths } from '../../../src/app/context/RecentPathsContext';
+// import { IoMdMic, IoMdMicOff } from 'react-icons/io';
 
 // const Header = ({ isSidebarCollapsed, onMenuToggle, isMobile }) => {
 //   const [isSearchExpanded, setIsSearchExpanded] = useState(false);
@@ -35,6 +37,13 @@
 //   const { pinnedModules, unpinModule } = usePin();
 //   const [showUnpinConfirm, setShowUnpinConfirm] = useState(null);
 //   const { recentPaths, clearRecentPaths, removeRecentPath } = useRecentPaths();
+//   const [isListening, setIsListening] = useState(false);
+//   const [voiceSupported, setVoiceSupported] = useState(false);
+//   const [aiSpeaking, setAiSpeaking] = useState(false);
+//   const [voiceMessage, setVoiceMessage] = useState('');
+//   const recognitionRef = useRef(null);
+//   const synthRef = useRef(null);
+  
 //   const [notifications, setNotifications] = useState([
 //     { id: 1, text: 'New ticket assigned to you', time: '5 min ago', read: false, type: 'ticket' },
 //     { id: 2, text: 'Inventory stock running low', time: '1 hour ago', read: false, type: 'inventory' },
@@ -89,6 +98,199 @@
 //       }
 //     } catch (error) {
 //       console.error('Error fetching company/branch names:', error);
+//     }
+//   };
+
+//   useEffect(() => {
+//     // Check if browser supports Web Speech API
+//     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+//     const speechSynthesis = window.speechSynthesis;
+    
+//     if (SpeechRecognition && speechSynthesis) {
+//       setVoiceSupported(true);
+//       synthRef.current = speechSynthesis;
+      
+//       // Create recognition instance
+//       const recognition = new SpeechRecognition();
+//       recognition.continuous = false;
+//       recognition.interimResults = false;
+//       recognition.lang = 'en-US';
+      
+//       // Handle results
+//       recognition.onresult = (event) => {
+//         const transcript = event.results[0][0].transcript.toLowerCase().trim();
+//         console.log('User said:', transcript);
+//         setVoiceMessage(`Searching for: ${transcript}`);
+        
+//         // Search for matching module with fuzzy matching
+//         let matchedItem = null;
+        
+//         // First try exact match
+//         matchedItem = searchableItems.find(item => 
+//           item.name.toLowerCase() === transcript
+//         );
+        
+//         // If no exact match, try partial match
+//         if (!matchedItem) {
+//           matchedItem = searchableItems.find(item => {
+//             const itemName = item.name.toLowerCase();
+//             const searchWords = transcript.split(' ');
+            
+//             // Check if all words from transcript are in item name
+//             return searchWords.every(word => itemName.includes(word)) ||
+//                    itemName.includes(transcript);
+//           });
+//         }
+        
+//         // If still no match, try finding any word match
+//         if (!matchedItem) {
+//           const searchWords = transcript.split(' ').filter(word => word.length > 3);
+//           matchedItem = searchableItems.find(item => {
+//             const itemName = item.name.toLowerCase();
+//             return searchWords.some(word => itemName.includes(word));
+//           });
+//         }
+        
+//         if (matchedItem) {
+//           // Found a match - speak confirmation and redirect
+//           console.log('Match found:', matchedItem.name);
+//           setVoiceMessage(`Opening ${matchedItem.name}`);
+          
+//           speakText(`Opening ${matchedItem.name}`, () => {
+//             window.open(matchedItem.path, '_blank');
+//             setVoiceMessage('');
+//             setIsListening(false);
+//           });
+//         } else {
+//           // No match found - inform user
+//           console.log('No match found for:', transcript);
+//           setVoiceMessage('Module not found');
+          
+//           speakText(`Sorry, I couldn't find ${transcript}. Please try again with a different module name.`, () => {
+//             setVoiceMessage('');
+//             setIsListening(false);
+//           });
+//         }
+//       };
+      
+//       recognition.onerror = (event) => {
+//         console.error('Voice recognition error:', event.error);
+//         setIsListening(false);
+//         setVoiceMessage('');
+        
+//         if (event.error === 'no-speech') {
+//           speakText('I didn\'t hear anything. Please try again.');
+//         } else if (event.error === 'not-allowed') {
+//           alert('Microphone access denied. Please enable microphone permissions.');
+//         } else {
+//           speakText('Sorry, there was an error. Please try again.');
+//         }
+//       };
+      
+//       recognition.onend = () => {
+//         if (isListening && !aiSpeaking) {
+//           setIsListening(false);
+//           setVoiceMessage('');
+//         }
+//       };
+      
+//       recognitionRef.current = recognition;
+//     }
+    
+//     return () => {
+//       if (recognitionRef.current) {
+//         recognitionRef.current.stop();
+//       }
+//       if (synthRef.current) {
+//         synthRef.current.cancel();
+//       }
+//     };
+//   }, [isListening, aiSpeaking]);
+
+//   // Function to make AI speak
+//   const speakText = (text, callback) => {
+//     if (!synthRef.current) return;
+    
+//     // Cancel any ongoing speech
+//     synthRef.current.cancel();
+    
+//     setAiSpeaking(true);
+    
+//     const utterance = new SpeechSynthesisUtterance(text);
+//     utterance.rate = 1.0;
+//     utterance.pitch = 1.0;
+//     utterance.volume = 1.0;
+//     utterance.lang = 'en-US';
+    
+//     // Try to use a female voice for better experience
+//     const voices = synthRef.current.getVoices();
+//     const femaleVoice = voices.find(voice => 
+//       voice.name.includes('Female') || 
+//       voice.name.includes('Samantha') || 
+//       voice.name.includes('Victoria')
+//     );
+//     if (femaleVoice) {
+//       utterance.voice = femaleVoice;
+//     }
+    
+//     utterance.onend = () => {
+//       setAiSpeaking(false);
+//       if (callback) callback();
+//     };
+    
+//     utterance.onerror = () => {
+//       setAiSpeaking(false);
+//       if (callback) callback();
+//     };
+    
+//     synthRef.current.speak(utterance);
+//   };
+
+//   // Add this function to handle voice button click
+//   const handleVoiceSearch = () => {
+//     if (!voiceSupported) {
+//       alert('Voice recognition is not supported in your browser. Please use Chrome, Edge, or Safari.');
+//       return;
+//     }
+    
+//     if (isListening) {
+//       // Stop listening and speaking
+//       if (recognitionRef.current) {
+//         recognitionRef.current.stop();
+//       }
+//       if (synthRef.current) {
+//         synthRef.current.cancel();
+//       }
+//       setIsListening(false);
+//       setAiSpeaking(false);
+//       setVoiceMessage('');
+//     } else {
+//       // Start voice assistant
+//       try {
+//         setIsListening(true);
+//         setIsSearchExpanded(true);
+//         setVoiceMessage('AI Assistant listening...');
+        
+//         // AI greets and asks what to search
+//         speakText('Hello! Which module would you like to search for?', () => {
+//           // After AI finishes speaking, start listening to user
+//           try {
+//             recognitionRef.current.start();
+//             setVoiceMessage('Listening for your command...');
+//             console.log('Voice recognition started');
+//           } catch (error) {
+//             console.error('Error starting recognition:', error);
+//             setIsListening(false);
+//             setVoiceMessage('');
+//           }
+//         });
+        
+//       } catch (error) {
+//         console.error('Error starting voice assistant:', error);
+//         setIsListening(false);
+//         setVoiceMessage('');
+//         alert('Could not start voice assistant. Please try again.');
+//       }
 //     }
 //   };
 
@@ -227,7 +429,7 @@
 
 //   return (
 //     <header
-//       style={{
+//      style={{
 //         backgroundColor: '#635bff',
 //         padding: isMobile ? '0.2rem 0.8rem' : '0.2rem 1.5rem',
 //         position: 'fixed',
@@ -244,7 +446,7 @@
 //       }}
 //     >
 
-//       <div className="flex items-center gap-3 md:gap-4">
+//       <div className="flex items-center gap-3 md:gap-4" style={{ flex: 1 }}>
 //         {isMobile && (
 //           <button
 //             onClick={onMenuToggle}
@@ -272,13 +474,15 @@
 //           ref={searchRef}
 //           className="flex items-center relative"
 //           style={{
-//             backgroundColor: 'rgba(255, 255, 255, 0.15)',
+//             backgroundColor: isListening ? 'rgba(255, 71, 87, 0.2)' : 'rgba(255, 255, 255, 0.15)',
 //             borderRadius: '2rem',
 //             padding: '0.5rem',
 //             overflow: 'visible',
-//             border: isSearchExpanded ? '2px solid rgba(255, 255, 255, 0.8)' : '2px solid transparent',
+//             border: isSearchExpanded 
+//               ? (isListening ? '2px solid #ff4757' : '2px solid rgba(255, 255, 255, 0.8)') 
+//               : '2px solid transparent',
 //             transition: 'all 0.3s ease-out',
-//             width: isSearchExpanded ? (isMobile ? '200px' : '320px') : '40px',
+//             width: isSearchExpanded ? (isMobile ? '200px' : '380px') : '40px',
 //             backdropFilter: 'blur(10px)',
 //             WebkitBackdropFilter: 'blur(10px)',
 //           }}
@@ -304,28 +508,132 @@
 
 //           <input
 //             type="text"
-//             placeholder="Search modules, features..."
+//             placeholder={voiceMessage || "Search modules, features..."}
 //             value={searchQuery}
 //             onChange={handleSearchChange}
-//             onFocus={() => setShowSearchResults(true)}
+//             onFocus={() => !isListening && setShowSearchResults(true)}
+//             disabled={isListening}
 //             style={{
 //               background: 'none',
 //               border: 'none',
 //               outline: 'none',
 //               color: 'white',
 //               marginLeft: '0.5rem',
-//               width: isSearchExpanded ? '100%' : '0',
+//               width: isSearchExpanded ? 'calc(100% - 70px)' : '0',
 //               padding: isSearchExpanded ? '0.25rem 0' : '0',
 //               opacity: isSearchExpanded ? 1 : 0,
 //               transition: 'all 0.3s ease-out',
 //               fontSize: '0.9rem',
 //               lineHeight: '1.2',
+//               cursor: isListening ? 'not-allowed' : 'text',
 //             }}
 //             className="placeholder:text-white placeholder:text-opacity-80"
 //           />
 
-//           {/* Search Results Dropdown */}
-//           {showSearchResults && searchResults.length > 0 && isSearchExpanded && (
+//           {/* Voice Search Button with Animation */}
+//           {voiceSupported && isSearchExpanded && (
+//             <button
+//               onClick={handleVoiceSearch}
+//               style={{
+//                 background: isListening 
+//                   ? (aiSpeaking ? 'rgba(99, 91, 255, 0.3)' : 'rgba(255, 71, 87, 0.3)') 
+//                   : 'none',
+//                 border: 'none',
+//                 cursor: 'pointer',
+//                 color: isListening 
+//                   ? (aiSpeaking ? '#635bff' : '#ff4757') 
+//                   : 'white',
+//                 display: 'flex',
+//                 alignItems: 'center',
+//                 justifyContent: 'center',
+//                 width: '36px',
+//                 height: '36px',
+//                 borderRadius: '50%',
+//                 transition: 'all 0.3s ease',
+//                 animation: isListening ? 'pulse 1.5s infinite' : 'none',
+//                 position: 'relative',
+//               }}
+//               className="hover:bg-white hover:bg-opacity-10"
+//               title={isListening ? "Stop AI assistant" : "Start AI voice assistant"}
+//               aria-label={isListening ? "Stop AI assistant" : "Start AI assistant"}
+//             >
+//               {isListening ? (
+//                 aiSpeaking ? <IoMdMic size={20} /> : <IoMdMic size={20} />
+//               ) : (
+//                 <IoMdMic size={20} />
+//               )}
+              
+//               {/* Listening indicator */}
+//               {isListening && (
+//                 <span style={{
+//                   position: 'absolute',
+//                   top: '-2px',
+//                   right: '-2px',
+//                   width: '10px',
+//                   height: '10px',
+//                   borderRadius: '50%',
+//                   backgroundColor: aiSpeaking ? '#635bff' : '#ff4757',
+//                   animation: 'blink 1s infinite',
+//                 }} />
+//               )}
+//             </button>
+//           )}
+
+//           {/* Voice Status Indicator */}
+//           {isListening && voiceMessage && (
+//             <div style={{
+//               position: 'absolute',
+//               top: '100%',
+//               left: 0,
+//               right: 0,
+//               backgroundColor: aiSpeaking ? '#f0f2ff' : '#fff5f5',
+//               border: `1px solid ${aiSpeaking ? '#635bff' : '#ff4757'}`,
+//               borderRadius: '8px',
+//               marginTop: '0.5rem',
+//               padding: '0.75rem',
+//               display: 'flex',
+//               alignItems: 'center',
+//               gap: '0.5rem',
+//               boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+//               zIndex: 999,
+//             }}>
+//               <span style={{
+//                 fontSize: '1.2rem',
+//                 animation: 'pulse 1.5s infinite',
+//               }}>
+//                 {aiSpeaking ? '🤖' : '🎤'}
+//               </span>
+//               <span style={{
+//                 fontSize: '0.85rem',
+//                 color: aiSpeaking ? '#635bff' : '#ff4757',
+//                 fontWeight: '500',
+//               }}>
+//                 {voiceMessage}
+//               </span>
+//               <div style={{
+//                 marginLeft: 'auto',
+//                 display: 'flex',
+//                 gap: '2px',
+//               }}>
+//                 {[1, 2, 3].map((i) => (
+//                   <div
+//                     key={i}
+//                     style={{
+//                       width: '3px',
+//                       height: '12px',
+//                       backgroundColor: aiSpeaking ? '#635bff' : '#ff4757',
+//                       borderRadius: '2px',
+//                       animation: `wave 1s ease-in-out infinite`,
+//                       animationDelay: `${i * 0.1}s`,
+//                     }}
+//                   />
+//                 ))}
+//               </div>
+//             </div>
+//           )}
+
+//           {/* Existing Search Results Dropdown - Only show when not listening */}
+//           {showSearchResults && searchResults.length > 0 && isSearchExpanded && !isListening && (
 //             <div style={{
 //               position: 'absolute',
 //               top: '100%',
@@ -348,8 +656,25 @@
 //                 color: '#666',
 //                 textTransform: 'uppercase',
 //                 letterSpacing: '0.5px',
+//                 display: 'flex',
+//                 justifyContent: 'space-between',
+//                 alignItems: 'center',
 //               }}>
-//                 Quick Navigation
+//                 <span>Quick Navigation</span>
+//                 {voiceSupported && (
+//                   <span style={{
+//                     fontSize: '0.7rem',
+//                     color: '#635bff',
+//                     backgroundColor: '#f0f2ff',
+//                     padding: '0.2rem 0.5rem',
+//                     borderRadius: '4px',
+//                     display: 'flex',
+//                     alignItems: 'center',
+//                     gap: '0.25rem',
+//                   }}>
+//                     {/* 🤖 AI Assistant */}
+//                   </span>
+//                 )}
 //               </div>
 //               {searchResults.map((item, index) => {
 //                 const IconComponent = getIconComponent(item.icon);
@@ -404,7 +729,7 @@
 //             </div>
 //           )}
 
-//           {showSearchResults && searchResults.length === 0 && searchQuery.length > 0 && isSearchExpanded && (
+//           {showSearchResults && searchResults.length === 0 && searchQuery.length > 0 && isSearchExpanded && !isListening && (
 //             <div style={{
 //               position: 'absolute',
 //               top: '100%',
@@ -422,15 +747,15 @@
 //               zIndex: 1000,
 //             }}>
 //               <div style={{ fontSize: '3rem', marginBottom: '0.5rem' }}>🔍</div>
-//               No results found for {searchQuery}
+//               No results found for `{searchQuery}`
 //               <div style={{ fontSize: '0.8rem', color: '#999', marginTop: '0.5rem' }}>
-//                 Try different keywords
+//                 Try different keywords or use AI voice assistant 🤖
 //               </div>
 //             </div>
 //           )}
 //         </div>
 
-//         {/* Company and Branch Name Display */}
+//         {/* Company and Branch Name Display - ONLY for Desktop */}
 //         {!isMobile && (companyName || branchName) && (
 //           <div
 //             style={{
@@ -443,6 +768,7 @@
 //               borderRadius: '8px',
 //               border: '1px solid rgba(255, 255, 255, 0.2)',
 //               maxWidth: '300px',
+//               flexShrink: 0,
 //             }}
 //           >
 //             {branchName && (
@@ -467,299 +793,336 @@
 //         )}
 //       </div>
 
-//       <div className="flex items-center gap-2 md:gap-3">
-//         {/* Recently Visited Button */}
-//         {!isMobile && (
-//           <div ref={recentlyVisitedRef} style={{ position: 'relative' }}>
-//             <button
-//               onClick={() => {
-//                 setIsRecentlyVisitedOpen(!isRecentlyVisitedOpen);
-//                 setIsNotificationsOpen(false);
-//                 setIsDropdownOpen(false);
-//               }}
-//               style={{
-//                 background: 'none',
-//                 border: 'none',
-//                 cursor: 'pointer',
+//       <div className="flex items-center gap-2 md:gap-3" style={{ flexShrink: 0 }}>
+//         {/* Recently Visited Button - Mobile और Desktop दोनों में */}
+//         <div ref={recentlyVisitedRef} style={{ position: 'relative' }}>
+//           <button
+//             onClick={() => {
+//               setIsRecentlyVisitedOpen(!isRecentlyVisitedOpen);
+//               setIsNotificationsOpen(false);
+//               setIsDropdownOpen(false);
+//             }}
+//             style={{
+//               background: 'none',
+//               border: 'none',
+//               cursor: 'pointer',
+//               color: 'white',
+//               display: 'flex',
+//               alignItems: 'center',
+//               justifyContent: 'center',
+//               width: '40px',
+//               height: '40px',
+//               borderRadius: '50%',
+//               transition: 'all 0.2s ease',
+//               position: 'relative',
+//             }}
+//             className="hover:bg-white hover:bg-opacity-10 active:bg-opacity-20"
+//             title={`Recently Visited (${recentPaths.length})`}
+//           >
+//             <IoIosTime size={20} />
+//             {recentPaths.length > 0 && (
+//               <span style={{
+//                 position: 'absolute',
+//                 top: '2px',
+//                 right: '2px',
+//                 backgroundColor: '#ff4757',
 //                 color: 'white',
+//                 borderRadius: '50%',
+//                 width: '15px',
+//                 height: '15px',
+//                 fontSize: '0.7rem',
+//                 fontWeight: 'bold',
 //                 display: 'flex',
 //                 alignItems: 'center',
 //                 justifyContent: 'center',
-//                 width: '40px',
-//                 height: '40px',
-//                 borderRadius: '50%',
-//                 transition: 'all 0.2s ease',
-//                 position: 'relative',
-//               }}
-//               className="hover:bg-white hover:bg-opacity-10 active:bg-opacity-20"
-//               title={`Recently Visited (${recentPaths.length})`}
-//             >
-//               <IoIosTime size={20} />
-//               {/* Red notification badge for recently visited count */}
-//               {recentPaths.length > 0 && (
-//                 <span style={{
-//                   position: 'absolute',
-//                   top: '2px',
-//                   right: '2px',
-//                   backgroundColor: '#ff4757',
-//                   color: 'white',
-//                   borderRadius: '50%',
-//                   width: '15px',
-//                   height: '15px',
-//                   fontSize: '0.7rem',
-//                   fontWeight: 'bold',
-//                   display: 'flex',
-//                   alignItems: 'center',
-//                   justifyContent: 'center',
-//                   // border: '2px solid #635bff',
-//                   // boxShadow: '0 0 0 2px rgba(255, 255, 255, 0.8)',
-//                 }}>
-//                   {recentPaths.length}
-//                 </span>
-//               )}
-//             </button>
-
-//             {isRecentlyVisitedOpen && (
-//               <div style={{
-//                 position: 'absolute',
-//                 top: '100%',
-//                 right: 0,
-//                 backgroundColor: 'white',
-//                 border: '1px solid #e0e0e0',
-//                 borderRadius: '12px',
-//                 width: '280px',
-//                 maxHeight: '400px',
-//                 zIndex: 1000,
-//                 boxShadow: '0 8px 25px rgba(0,0,0,0.15)',
-//                 marginTop: '0.5rem',
 //               }}>
-//                 <div style={{
-//                   padding: '1rem',
-//                   borderBottom: '1px solid #f0f0f0',
-//                   display: 'flex',
-//                   justifyContent: 'space-between',
-//                   alignItems: 'center',
-//                 }}>
-//                   <span style={{ fontWeight: '600', color: '#333' }}>
-//                     Recently Visited
-//                     {recentPaths.length > 0 && (
-//                       <span style={{
-//                         marginLeft: '0.5rem',
-//                         fontSize: '0.8rem',
-//                         backgroundColor: '#635bff',
-//                         color: 'white',
-//                         padding: '0.2rem 0.5rem',
-//                         borderRadius: '10px',
-//                         fontWeight: '500',
-//                       }}>
-//                         {recentPaths.length}
-//                       </span>
-//                     )}
-//                   </span>
-//                   {recentPaths.length > 0 && (
-//                     <button
-//                       onClick={clearRecentPaths}
-//                       style={{
-//                         background: 'none',
-//                         border: 'none',
-//                         color: '#635bff',
-//                         fontSize: '0.8rem',
-//                         cursor: 'pointer',
-//                         fontWeight: '500',
-//                       }}
-//                     >
-//                       Clear All
-//                     </button>
-//                   )}
-//                 </div>
+//                 {recentPaths.length}
+//               </span>
+//             )}
+//           </button>
 
-//                 <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
-//                   {recentPaths.length > 0 ? (
-//                     recentPaths.map((item, index) => (
-//                       <div
-//                         key={item.id}
-//                         style={{
-//                           padding: '0.75rem 1rem',
-//                           borderBottom: index < recentPaths.length - 1 ? '1px solid #f8f8f8' : 'none',
-//                           cursor: 'pointer',
-//                           backgroundColor: '#fff',
-//                           transition: 'background-color 0.2s ease',
+//           {isRecentlyVisitedOpen && (
+//             <div style={{
+//               position: 'absolute',
+//               top: '100%',
+//               // Mobile view में center में position करें
+//               right: isMobile ? 'auto' : 0,
+//               left: isMobile ? '50%' : 'auto',
+//               transform: isMobile ? 'translateX(-50%)' : 'none',
+//               backgroundColor: 'white',
+//               border: '1px solid #e0e0e0',
+//               borderRadius: '12px',
+//               // Mobile view में screen width के according responsive width
+//               width: isMobile ? 'calc(100vw - 32px)' : '320px',
+//               maxWidth: isMobile ? '400px' : '320px',
+//               maxHeight: isMobile ? '60vh' : '400px',
+//               zIndex: 1000,
+//               boxShadow: '0 8px 25px rgba(0,0,0,0.15)',
+//               marginTop: '0.5rem',
+//               // Mobile view में screen से थोड़ा distance रखें
+//               marginLeft: isMobile ? '16px' : '0',
+//               marginRight: isMobile ? '16px' : '0',
+//             }}>
+//               <div style={{
+//                 padding: '1rem',
+//                 borderBottom: '1px solid #f0f0f0',
+//                 display: 'flex',
+//                 justifyContent: 'space-between',
+//                 alignItems: 'center',
+//               }}>
+//                 <span style={{ fontWeight: '600', color: '#333' }}>
+//                   Recently Visited
+//                   {recentPaths.length > 0 && (
+//                     <span style={{
+//                       marginLeft: '0.5rem',
+//                       fontSize: '0.8rem',
+//                       backgroundColor: '#635bff',
+//                       color: 'white',
+//                       padding: '0.2rem 0.5rem',
+//                       borderRadius: '10px',
+//                       fontWeight: '500',
+//                     }}>
+//                       {recentPaths.length}
+//                     </span>
+//                   )}
+//                 </span>
+//                 {recentPaths.length > 0 && (
+//                   <button
+//                     onClick={clearRecentPaths}
+//                     style={{
+//                       background: 'none',
+//                       border: 'none',
+//                       color: '#635bff',
+//                       fontSize: '0.8rem',
+//                       cursor: 'pointer',
+//                       fontWeight: '500',
+//                     }}
+//                   >
+//                     Clear All
+//                   </button>
+//                 )}
+//               </div>
+
+//               <div style={{ 
+//                 maxHeight: isMobile ? 'calc(60vh - 120px)' : '300px', 
+//                 overflowY: 'auto',
+//                 // Mobile view में scrollbar hide करें
+//                 scrollbarWidth: isMobile ? 'none' : 'thin',
+//                 msOverflowStyle: isMobile ? 'none' : 'auto',
+//               }}>
+//                 {isMobile && (
+//                   <style>
+//                     {`
+//                       @media (max-width: 768px) {
+//                         div[style*="maxHeight"]::-webkit-scrollbar {
+//                           display: none;
+//                         }
+//                       }
+//                     `}
+//                   </style>
+//                 )}
+//                 {recentPaths.length > 0 ? (
+//                   recentPaths.map((item, index) => (
+//                     <div
+//                       key={item.id}
+//                       style={{
+//                         padding: '0.75rem 1rem',
+//                         borderBottom: index < recentPaths.length - 1 ? '1px solid #f8f8f8' : 'none',
+//                         cursor: 'pointer',
+//                         backgroundColor: '#fff',
+//                         transition: 'background-color 0.2s ease',
+//                         display: 'flex',
+//                         alignItems: 'center',
+//                         justifyContent: 'space-between',
+//                       }}
+//                       className="hover:bg-gray-50"
+//                       onClick={() => handleRecentPathClick(item.path)}
+//                       title={`Click to open "${item.name}" in new tab`}
+//                     >
+//                       <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '0.5rem' : '0.75rem', flex: 1 }}>
+//                         <div style={{
+//                           width: '28px',
+//                           height: '28px',
+//                           borderRadius: '6px',
+//                           backgroundColor: '#f0f2ff',
 //                           display: 'flex',
 //                           alignItems: 'center',
-//                           justifyContent: 'space-between',
-//                         }}
-//                         className="hover:bg-gray-50"
-//                         onClick={() => handleRecentPathClick(item.path)}
-//                         title={`Click to open "${item.name}" in new tab`}
-//                       >
-//                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flex: 1 }}>
+//                           justifyContent: 'center',
+//                           color: '#635bff',
+//                           fontSize: '0.8rem',
+//                           fontWeight: '600',
+//                           flexShrink: 0,
+//                         }}>
+//                           {index + 1}
+//                         </div>
+//                         <div style={{ flex: 1, minWidth: 0 }}>
 //                           <div style={{
-//                             width: '28px',
-//                             height: '28px',
-//                             borderRadius: '6px',
-//                             backgroundColor: '#f0f2ff',
+//                             fontSize: isMobile ? '0.85rem' : '0.9rem',
+//                             color: '#333',
+//                             fontWeight: '500',
+//                             lineHeight: '1.4',
+//                             marginBottom: '0.2rem',
 //                             display: 'flex',
 //                             alignItems: 'center',
-//                             justifyContent: 'center',
-//                             color: '#635bff',
-//                             fontSize: '0.8rem',
-//                             fontWeight: '600',
+//                             gap: '0.25rem',
 //                           }}>
-//                             {index + 1}
-//                           </div>
-//                           <div style={{ flex: 1 }}>
-//                             <div style={{
-//                               fontSize: '0.9rem',
-//                               color: '#333',
-//                               fontWeight: '500',
-//                               lineHeight: '1.4',
-//                               marginBottom: '0.2rem',
-//                               display: 'flex',
-//                               alignItems: 'center',
-//                               gap: '0.25rem',
+//                             <span style={{
+//                               flex: 1,
+//                               overflow: 'hidden',
+//                               textOverflow: 'ellipsis',
+//                               whiteSpace: 'nowrap',
 //                             }}>
 //                               {item.name}
-//                               <span style={{
-//                                 fontSize: '0.7rem',
-//                                 color: '#999',
-//                                 marginLeft: 'auto',
-//                               }}>
-//                                 {formatTimeAgo(item.timestamp)}
-//                               </span>
-//                             </div>
-//                             {/* Time ago indicator */}
-//                             <div style={{
+//                             </span>
+//                             <span style={{
 //                               fontSize: '0.7rem',
 //                               color: '#999',
-//                               display: 'flex',
-//                               alignItems: 'center',
-//                               gap: '0.25rem',
+//                               flexShrink: 0,
 //                             }}>
-//                               <span style={{
-//                                 fontSize: '0.6rem',
-//                                 color: '#635bff',
-//                                 backgroundColor: '#f0f2ff',
-//                                 padding: '0.1rem 0.4rem',
-//                                 borderRadius: '4px',
-//                                 fontWeight: '500',
-//                               }}>
-//                                 New Tab
-//                               </span>
-//                             </div>
+//                               {formatTimeAgo(item.timestamp)}
+//                             </span>
+//                           </div>
+//                           {/* Time ago indicator */}
+//                           <div style={{
+//                             fontSize: '0.7rem',
+//                             color: '#999',
+//                             display: 'flex',
+//                             alignItems: 'center',
+//                             gap: '0.25rem',
+//                           }}>
+//                             <span style={{
+//                               fontSize: '0.6rem',
+//                               color: '#635bff',
+//                               backgroundColor: '#f0f2ff',
+//                               padding: '0.1rem 0.4rem',
+//                               borderRadius: '4px',
+//                               fontWeight: '500',
+//                               flexShrink: 0,
+//                             }}>
+//                               New Tab
+//                             </span>
 //                           </div>
 //                         </div>
-//                         <button
-//                           onClick={(e) => {
-//                             e.stopPropagation();
-//                             removeRecentPath(item.id);
-//                           }}
-//                           style={{
-//                             background: 'none',
-//                             border: 'none',
-//                             color: '#999',
-//                             cursor: 'pointer',
-//                             fontSize: '1rem',
-//                             padding: '0.25rem',
-//                             borderRadius: '4px',
-//                             transition: 'all 0.2s ease',
-//                           }}
-//                           className="hover:bg-gray-100 hover:text-red-500"
-//                           title="Remove from history"
-//                         >
-//                           ×
-//                         </button>
 //                       </div>
-//                     ))
-//                   ) : (
-//                     <div style={{
-//                       padding: '2rem 1rem',
-//                       textAlign: 'center',
-//                       color: '#999',
-//                       fontSize: '0.9rem',
-//                     }}>
-//                       <div style={{ fontSize: '2rem', marginBottom: '0.5rem', color: '#ccc' }}>
-//                         <IoIosTime />
-//                       </div>
-//                       No recent visits
-//                       <div style={{ fontSize: '0.8rem', color: '#ccc', marginTop: '0.5rem' }}>
-//                         Visit pages to see them here
-//                       </div>
+//                       <button
+//                         onClick={(e) => {
+//                           e.stopPropagation();
+//                           removeRecentPath(item.id);
+//                         }}
+//                         style={{
+//                           background: 'none',
+//                           border: 'none',
+//                           color: '#999',
+//                           cursor: 'pointer',
+//                           fontSize: '1rem',
+//                           padding: '0.25rem',
+//                           borderRadius: '4px',
+//                           transition: 'all 0.2s ease',
+//                           flexShrink: 0,
+//                           marginLeft: '0.5rem',
+//                         }}
+//                         className="hover:bg-gray-100 hover:text-red-500"
+//                         title="Remove from history"
+//                       >
+//                         ×
+//                       </button>
 //                     </div>
-//                   )}
-//                 </div>
-                
-//                 {/* Footer with info */}
-//                 {recentPaths.length > 0 && (
+//                   ))
+//                 ) : (
 //                   <div style={{
-//                     padding: '0.75rem 1rem',
-//                     borderTop: '1px solid #f0f0f0',
-//                     fontSize: '0.75rem',
-//                     color: '#999',
+//                     padding: '2rem 1rem',
 //                     textAlign: 'center',
-//                     backgroundColor: '#f9f9f9',
-//                     borderBottomLeftRadius: '12px',
-//                     borderBottomRightRadius: '12px',
+//                     color: '#999',
+//                     fontSize: isMobile ? '0.85rem' : '0.9rem',
 //                   }}>
-//                     <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.25rem' }}>
-//                       <span style={{ color: '#635bff' }}>ℹ️</span>
-//                       Click any item to open in new tab
-//                     </span>
+//                     <div style={{ fontSize: '2rem', marginBottom: '0.5rem', color: '#ccc' }}>
+//                       <IoIosTime />
+//                     </div>
+//                     No recent visits
+//                     <div style={{ fontSize: isMobile ? '0.75rem' : '0.8rem', color: '#ccc', marginTop: '0.5rem' }}>
+//                       Visit pages to see them here
+//                     </div>
 //                   </div>
 //                 )}
 //               </div>
-//             )}
-//           </div>
-//         )}
+              
+//               {/* Footer with info */}
+//               {recentPaths.length > 0 && (
+//                 <div style={{
+//                   padding: isMobile ? '0.75rem' : '0.75rem 1rem',
+//                   borderTop: '1px solid #f0f0f0',
+//                   fontSize: isMobile ? '0.7rem' : '0.75rem',
+//                   color: '#999',
+//                   textAlign: 'center',
+//                   backgroundColor: '#f9f9f9',
+//                   borderBottomLeftRadius: '12px',
+//                   borderBottomRightRadius: '12px',
+//                 }}>
+//                   <span style={{ 
+//                     display: 'flex', 
+//                     alignItems: 'center', 
+//                     justifyContent: 'center', 
+//                     gap: '0.25rem',
+//                     flexWrap: 'wrap',
+//                   }}>
+//                     <span style={{ color: '#635bff' }}>ℹ️</span>
+//                     Click any item to open in new tab
+//                   </span>
+//                 </div>
+//               )}
+//             </div>
+//           )}
+//         </div>
 
-//         {!isMobile && (
-//           <Link href="/pinned-modules" passHref>
-//             <button
-//               style={{
-//                 background: 'none',
-//                 border: 'none',
-//                 cursor: 'pointer',
-//                 color: 'white',
-//                 display: 'flex',
-//                 alignItems: 'center',
-//                 justifyContent: 'center',
-//                 width: '40px',
-//                 height: '40px',
-//                 borderRadius: '50%',
-//                 transition: 'all 0.2s ease',
-//                 position: 'relative',
-//               }}
-//               className="hover:bg-white hover:bg-opacity-10 active:bg-opacity-20"
-//               title="Pinned Modules"
-//             >
-//               <MdPushPin size={20} />
-//             </button>
-//           </Link>
-//         )}
-//         {!isMobile && (
-//           <Link href="/analytics" passHref>
-//             <button
-//               style={{
-//                 background: 'none',
-//                 border: 'none',
-//                 cursor: 'pointer',
-//                 color: 'white',
-//                 display: 'flex',
-//                 alignItems: 'center',
-//                 justifyContent: 'center',
-//                 width: '40px',
-//                 height: '40px',
-//                 borderRadius: '50%',
-//                 transition: 'all 0.2s ease',
-//                 position: 'relative',
-//               }}
-//               className="hover:bg-white hover:bg-opacity-10 active:bg-opacity-20"
-//               title="Analytics"
-//             >
-//               <ReportIcon size={20} />
-//             </button>
-//           </Link>
-//         )}
+//         {/* Pinned Modules - Mobile और Desktop दोनों में */}
+//         <Link href="/pinned-modules" passHref>
+//           <button
+//             style={{
+//               background: 'none',
+//               border: 'none',
+//               cursor: 'pointer',
+//               color: 'white',
+//               display: 'flex',
+//               alignItems: 'center',
+//               justifyContent: 'center',
+//               width: '40px',
+//               height: '40px',
+//               borderRadius: '50%',
+//               transition: 'all 0.2s ease',
+//               position: 'relative',
+//             }}
+//             className="hover:bg-white hover:bg-opacity-10 active:bg-opacity-20"
+//             title="Pinned Modules"
+//           >
+//             <MdPushPin size={20} />
+//           </button>
+//         </Link>
 
+//         {/* Analytics - Mobile और Desktop दोनों में */}
+//         <Link href="/analytics" passHref>
+//           <button
+//             style={{
+//               background: 'none',
+//               border: 'none',
+//               cursor: 'pointer',
+//               color: 'white',
+//               display: 'flex',
+//               alignItems: 'center',
+//               justifyContent: 'center',
+//               width: '40px',
+//               height: '40px',
+//               borderRadius: '50%',
+//               transition: 'all 0.2s ease',
+//               position: 'relative',
+//             }}
+//             className="hover:bg-white hover:bg-opacity-10 active:bg-opacity-20"
+//             title="Analytics"
+//           >
+//             <ReportIcon size={20} />
+//           </button>
+//         </Link>
+
+//         {/* Notifications - Mobile और Desktop दोनों में */}
 //         <div ref={notificationsRef} style={{ position: 'relative' }}>
 //           <button
 //             onClick={() => {
@@ -815,8 +1178,9 @@
 //               backgroundColor: 'white',
 //               border: '1px solid #e0e0e0',
 //               borderRadius: '12px',
-//               width: '320px',
-//               maxHeight: '400px',
+//               width: isMobile ? 'calc(100vw - 32px)' : '320px',
+//               maxWidth: isMobile ? '400px' : '320px',
+//               maxHeight: isMobile ? '60vh' : '400px',
 //               zIndex: 1000,
 //               boxShadow: '0 8px 25px rgba(0,0,0,0.15)',
 //               marginTop: '0.5rem',
@@ -846,7 +1210,23 @@
 //                 )}
 //               </div>
 
-//               <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
+//               <div style={{ 
+//                 maxHeight: isMobile ? 'calc(60vh - 120px)' : '300px', 
+//                 overflowY: 'auto',
+//                 scrollbarWidth: isMobile ? 'none' : 'thin',
+//                 msOverflowStyle: isMobile ? 'none' : 'auto',
+//               }}>
+//                 {isMobile && (
+//                   <style>
+//                     {`
+//                       @media (max-width: 768px) {
+//                         div[style*="maxHeight"]::-webkit-scrollbar {
+//                           display: none;
+//                         }
+//                       }
+//                     `}
+//                   </style>
+//                 )}
 //                 {notifications.length > 0 ? (
 //                   notifications.map((notification) => (
 //                     <div
@@ -862,12 +1242,12 @@
 //                       onClick={() => markNotificationAsRead(notification.id)}
 //                     >
 //                       <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
-//                         <span style={{ fontSize: '1.2rem' }}>
+//                         <span style={{ fontSize: '1.2rem', flexShrink: 0 }}>
 //                           {getNotificationIcon(notification.type)}
 //                         </span>
-//                         <div style={{ flex: 1 }}>
+//                         <div style={{ flex: 1, minWidth: 0 }}>
 //                           <div style={{
-//                             fontSize: '0.9rem',
+//                             fontSize: isMobile ? '0.85rem' : '0.9rem',
 //                             color: '#333',
 //                             fontWeight: notification.read ? '400' : '500',
 //                             lineHeight: '1.4',
@@ -889,6 +1269,7 @@
 //                             borderRadius: '50%',
 //                             backgroundColor: '#635bff',
 //                             marginTop: '0.5rem',
+//                             flexShrink: 0,
 //                           }} />
 //                         )}
 //                       </div>
@@ -899,7 +1280,7 @@
 //                     padding: '2rem 1rem',
 //                     textAlign: 'center',
 //                     color: '#999',
-//                     fontSize: '0.9rem',
+//                     fontSize: isMobile ? '0.85rem' : '0.9rem',
 //                   }}>
 //                     No notifications
 //                   </div>
@@ -909,17 +1290,19 @@
 //           )}
 //         </div>
 
+//         {/* User Profile Dropdown */}
 //         <div
 //           ref={dropdownRef}
 //           style={{
 //             display: 'flex',
 //             alignItems: 'center',
-//             gap: '0.75rem',
+//             gap: isMobile ? '0.5rem' : '0.75rem',
 //             cursor: 'pointer',
 //             position: 'relative',
 //             padding: '0.25rem 0.5rem',
 //             borderRadius: '2rem',
 //             transition: 'background-color 0.2s ease',
+//             flexShrink: 0,
 //           }}
 //           className="hover:bg-white hover:bg-opacity-10"
 //           onClick={() => {
@@ -930,8 +1313,8 @@
 //         >
 //           <div
 //             style={{
-//               width: '36px',
-//               height: '36px',
+//               width: isMobile ? '32px' : '36px',
+//               height: isMobile ? '32px' : '36px',
 //               borderRadius: '50%',
 //               backgroundColor: 'rgba(255, 255, 255, 0.2)',
 //               display: 'flex',
@@ -940,7 +1323,7 @@
 //               color: 'white',
 //               fontWeight: 'bold',
 //               border: '2px solid rgba(255, 255, 255, 0.3)',
-//               fontSize: '0.9rem',
+//               fontSize: isMobile ? '0.8rem' : '0.9rem',
 //               transition: 'all 0.2s ease',
 //             }}
 //             className="hover:bg-opacity-30"
@@ -948,32 +1331,57 @@
 //             {getInitial(userName)}
 //           </div>
 
+//           {/* User name और role - Desktop view में */}
 //           {!isMobile && (
 //             <div style={{
 //               display: 'flex',
 //               flexDirection: 'column',
 //               alignItems: 'flex-start',
-//               lineHeight: '1.3'
+//               lineHeight: '1.3',
+//               maxWidth: '150px',
 //             }}>
 //               <span style={{
 //                 color: 'white',
 //                 fontWeight: '600',
 //                 fontSize: '0.9rem',
+//                 whiteSpace: 'nowrap',
+//                 overflow: 'hidden',
+//                 textOverflow: 'ellipsis',
 //               }}>
 //                 {userName || 'User'}
 //                 {userRole && (
 //                   <span style={{
-//                     marginLeft: '0px',
+//                     marginLeft: '4px',
 //                     fontWeight: '500',
 //                     color: 'rgba(255, 255, 255, 0.85)',
-//                     fontSize: '0.88rem',
-//                     padding: '0.15rem 0.1rem',
-//                     borderRadius: '6px',
-//                     backdropFilter: 'blur(4px)',
+//                     fontSize: '0.8rem',
+//                     padding: '0.1rem 0.3rem',
+//                     borderRadius: '4px',
 //                   }}>
 //                     ({userRole})
 //                   </span>
 //                 )}
+//               </span>
+//             </div>
+//           )}
+
+//           {/* Mobile view में छोटा username */}
+//           {isMobile && userName && (
+//             <div style={{
+//               display: 'flex',
+//               flexDirection: 'column',
+//               alignItems: 'flex-start',
+//               maxWidth: '80px',
+//             }}>
+//               <span style={{
+//                 color: 'white',
+//                 fontWeight: '600',
+//                 fontSize: '0.8rem',
+//                 whiteSpace: 'nowrap',
+//                 overflow: 'hidden',
+//                 textOverflow: 'ellipsis',
+//               }}>
+//                 {userName.split(' ')[0] || 'User'}
 //               </span>
 //             </div>
 //           )}
@@ -994,12 +1402,12 @@
 //           {isDropdownOpen && (
 //             <div style={{
 //               position: 'absolute',
-//               top: '90%',
+//               top: '100%',
 //               right: 0,
 //               backgroundColor: 'white',
 //               border: '1px solid #e0e0e0',
 //               borderRadius: '12px',
-//               width: '170px',
+//               width: isMobile ? '160px' : '180px',
 //               zIndex: 1000,
 //               boxShadow: '0 8px 25px rgba(0,0,0,0.15)',
 //               marginTop: '0.15rem',
@@ -1014,6 +1422,9 @@
 //                   fontWeight: '600',
 //                   color: '#333',
 //                   fontSize: '0.95rem',
+//                   whiteSpace: 'nowrap',
+//                   overflow: 'hidden',
+//                   textOverflow: 'ellipsis',
 //                 }}>
 //                   {userName || 'User'}
 //                   {userRole && (
@@ -1033,7 +1444,7 @@
 //                 <button
 //                   onClick={handleProfile}
 //                   style={{
-//                     width: '90%',
+//                     width: '100%',
 //                     padding: '0.3rem 1rem',
 //                     background: 'none',
 //                     border: 'none',
@@ -1097,9 +1508,7 @@
 //                   <span>🚪</span>
 //                   <span>Logout</span>
 //                 </button>
-
 //               </div>
-
 //             </div>
 //           )}
 //         </div>
@@ -1188,14 +1597,6 @@
 
 
 
-
-
-
-
-
-
-
-
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
@@ -1247,7 +1648,213 @@ const Header = ({ isSidebarCollapsed, onMenuToggle, isMobile }) => {
     { id: 3, text: 'Monthly report is ready', time: '2 hours ago', read: true, type: 'report' }
   ]);
 
+  // Indian accent variations map
+  const indianAccentMap = {
+    'rm': ['आरएम', 'ar em', 'ar-em', 'रॉ मटेरियल', 'raw material', 'आर एम'],
+    'purchase': ['पर्चेज', 'परचेज', 'पर्चेस', 'buy', 'खरीद'],
+    'order': ['ऑर्डर', 'ओर्डर', 'आर्डर', 'order'],
+    'sales': ['सेल्स', 'सेल', 'sale'],
+    'dashboard': ['डैशबोर्ड', 'डैश बोर्ड', 'dash board', 'dashbord'],
+    'master': ['मास्टर', 'मास्टर', 'mastar'],
+    'company': ['कंपनी', 'campany', 'company'],
+    'property': ['प्रॉपर्टी', 'प्रोपर्टी', 'proparty', 'properti'],
+    'inventory': ['इन्वेंटरी', 'इनवेंटरी', 'inventry', 'stock'],
+    'ticket': ['टिकट', 'टिकेट', 'tiket'],
+    'account': ['अकाउंट', 'account'],
+    'report': ['रिपोर्ट', 'reporrt', 'riport'],
+    'payment': ['पेमेंट', 'paymant', 'paymment'],
+    'room': ['रूम', 'rum', 'रुम', 'रोम'],
+    'raw': ['रॉ', 'raw', 'रॉ'],
+    'material': ['मटेरियल', 'material'],
+  };
+
+  // Get all menu items
   const searchableItems = getAllMenuItemsWithPaths();
+
+  // Enhanced Indian accent variations generator
+  const generateIndianVariations = (text) => {
+    const variations = new Set();
+    const lowerText = text.toLowerCase().trim();
+    
+    // Add original
+    variations.add(lowerText);
+    
+    // Common Indian mispronunciations
+    const transformations = [
+      // "RM Purchase Order" variations
+      (str) => str.replace(/rm purchase order/gi, 'आरएम पर्चेज ऑर्डर'),
+      (str) => str.replace(/rm purchase order/gi, 'ar em purchase order'),
+      (str) => str.replace(/rm purchase order/gi, 'आरएम परचेज आर्डर'),
+      (str) => str.replace(/rm purchase/gi, 'आरएम पर्चेज'),
+      (str) => str.replace(/purchase order/gi, 'पर्चेज ऑर्डर'),
+      (str) => str.replace(/rm order/gi, 'आरएम ऑर्डर'),
+      
+      // "Sales Order" variations
+      (str) => str.replace(/sales order/gi, 'सेल्स ऑर्डर'),
+      (str) => str.replace(/sales order/gi, 'सेल ऑर्डर'),
+      (str) => str.replace(/sales order/gi, 'salesorder'),
+      
+      // General word variations
+      (str) => {
+        let result = str;
+        Object.entries(indianAccentMap).forEach(([key, values]) => {
+          values.forEach(value => {
+            const regex = new RegExp(`\\b${key}\\b`, 'gi');
+            result = result.replace(regex, value);
+          });
+        });
+        return result;
+      },
+      
+      // Remove spaces
+      (str) => str.replace(/\s+/g, ''),
+      (str) => str.replace(/\s+/g, ' ').trim(),
+      
+      // Common Indian abbreviations
+      (str) => str.replace(/\braw material\b/gi, 'rm'),
+      (str) => str.replace(/\brm\b/gi, 'raw material'),
+      
+      // Double letters (common in Indian accent)
+      (str) => str.replace(/([a-z])\1/gi, '$1'),
+      (str) => str.replace(/([bcdfghjklmnpqrstvwxyz])/gi, '$1$1'),
+      
+      // Vowel variations
+      (str) => str.replace(/a/gi, 'aa'),
+      (str) => str.replace(/i/gi, 'ee'),
+      (str) => str.replace(/u/gi, 'oo'),
+    ];
+    
+    // Generate variations
+    transformations.forEach(transform => {
+      try {
+        const variation = transform(lowerText);
+        if (variation && variation !== lowerText) {
+          variations.add(variation);
+        }
+      } catch (e) {
+        // Ignore errors
+      }
+    });
+    
+    // Add common partial queries for "RM Purchase Order"
+    if (lowerText.includes('rm') && lowerText.includes('purchase') && lowerText.includes('order')) {
+      variations.add('rm purchase');
+      variations.add('rm order');
+      variations.add('purchase order');
+      variations.add('rmpo');
+      variations.add('आरएमपीओ');
+      variations.add('raw material purchase');
+      variations.add('raw material order');
+    }
+    
+    return Array.from(variations);
+  };
+
+  // Calculate similarity between two strings (Indian accent aware)
+  const calculateSimilarity = (str1, str2) => {
+    const s1 = str1.toLowerCase().trim();
+    const s2 = str2.toLowerCase().trim();
+    
+    // Exact match
+    if (s1 === s2) return 1.0;
+    
+    // Check if one contains the other
+    if (s1.includes(s2) || s2.includes(s1)) {
+      return 0.9;
+    }
+    
+    // Check Indian variations
+    const item = searchableItems.find(item => {
+      const variations = generateIndianVariations(item.name);
+      return variations.some(variation => 
+        variation === s1 || variation === s2 ||
+        s1.includes(variation) || variation.includes(s1) ||
+        s2.includes(variation) || variation.includes(s2)
+      );
+    });
+    
+    if (item) {
+      return 0.85;
+    }
+    
+    // Word-wise matching for Indian accent
+    const words1 = s1.split(/\s+/);
+    const words2 = s2.split(/\s+/);
+    
+    // Check if all words from s1 are in s2 (or variations)
+    let matchCount = 0;
+    words1.forEach(word1 => {
+      if (words2.some(word2 => calculateWordSimilarity(word1, word2) > 0.7)) {
+        matchCount++;
+      } else {
+        // Check if word1 is a variation of any word in words2
+        const word1Variations = generateIndianVariations(word1);
+        if (word1Variations.some(variation => 
+          words2.some(word2 => calculateWordSimilarity(variation, word2) > 0.7)
+        )) {
+          matchCount++;
+        }
+      }
+    });
+    
+    const similarityScore = matchCount / Math.max(words1.length, words2.length);
+    
+    // Boost score for partial matches (e.g., "rm purchase" for "rm purchase order")
+    if (words1.length < words2.length && matchCount === words1.length) {
+      return Math.max(similarityScore, 0.8);
+    }
+    
+    return similarityScore;
+  };
+
+  const calculateWordSimilarity = (word1, word2) => {
+    if (word1 === word2) return 1.0;
+    
+    // Check Indian accent map
+    for (const [key, values] of Object.entries(indianAccentMap)) {
+      if ((word1 === key && values.includes(word2)) || 
+          (word2 === key && values.includes(word1))) {
+        return 0.9;
+      }
+    }
+    
+    // Check if words are variations
+    const variations1 = generateIndianVariations(word1);
+    const variations2 = generateIndianVariations(word2);
+    
+    if (variations1.includes(word2) || variations2.includes(word1)) {
+      return 0.85;
+    }
+    
+    // Levenshtein distance for fuzzy matching
+    const len1 = word1.length;
+    const len2 = word2.length;
+    const maxLen = Math.max(len1, len2);
+    
+    if (maxLen === 0) return 1.0;
+    
+    const matrix = [];
+    for (let i = 0; i <= len1; i++) {
+      matrix[i] = [i];
+    }
+    for (let j = 0; j <= len2; j++) {
+      matrix[0][j] = j;
+    }
+    
+    for (let i = 1; i <= len1; i++) {
+      for (let j = 1; j <= len2; j++) {
+        const cost = word1[i - 1] === word2[j - 1] ? 0 : 1;
+        matrix[i][j] = Math.min(
+          matrix[i - 1][j] + 1,
+          matrix[i][j - 1] + 1,
+          matrix[i - 1][j - 1] + cost
+        );
+      }
+    }
+    
+    const distance = matrix[len1][len2];
+    return 1 - (distance / maxLen);
+  };
 
   useEffect(() => {
     const storedName = localStorage.getItem('USER_NAME');
@@ -1307,63 +1914,129 @@ const Header = ({ isSidebarCollapsed, onMenuToggle, isMobile }) => {
       setVoiceSupported(true);
       synthRef.current = speechSynthesis;
       
-      // Create recognition instance
+      // Create recognition instance with Indian English
       const recognition = new SpeechRecognition();
       recognition.continuous = false;
       recognition.interimResults = false;
-      recognition.lang = 'en-US';
+      recognition.lang = 'en-IN'; // Indian English
+      recognition.maxAlternatives = 5; // Get multiple alternatives for better matching
       
       // Handle results
       recognition.onresult = (event) => {
-        const transcript = event.results[0][0].transcript.toLowerCase().trim();
-        console.log('User said:', transcript);
-        setVoiceMessage(`Searching for: ${transcript}`);
+        const results = event.results[0];
+        const alternatives = [];
         
-        // Search for matching module with fuzzy matching
-        let matchedItem = null;
-        
-        // First try exact match
-        matchedItem = searchableItems.find(item => 
-          item.name.toLowerCase() === transcript
-        );
-        
-        // If no exact match, try partial match
-        if (!matchedItem) {
-          matchedItem = searchableItems.find(item => {
-            const itemName = item.name.toLowerCase();
-            const searchWords = transcript.split(' ');
-            
-            // Check if all words from transcript are in item name
-            return searchWords.every(word => itemName.includes(word)) ||
-                   itemName.includes(transcript);
-          });
+        // Collect all alternatives
+        for (let i = 0; i < results.length; i++) {
+          alternatives.push(results[i].transcript.toLowerCase().trim());
         }
         
-        // If still no match, try finding any word match
-        if (!matchedItem) {
-          const searchWords = transcript.split(' ').filter(word => word.length > 3);
-          matchedItem = searchableItems.find(item => {
-            const itemName = item.name.toLowerCase();
-            return searchWords.some(word => itemName.includes(word));
-          });
-        }
+        const bestTranscript = alternatives[0];
+        console.log('Voice input alternatives:', alternatives);
+        setVoiceMessage(`Searching for: "${bestTranscript}"`);
         
-        if (matchedItem) {
-          // Found a match - speak confirmation and redirect
-          console.log('Match found:', matchedItem.name);
-          setVoiceMessage(`Opening ${matchedItem.name}`);
+        // Find best match among all menu items
+        let bestMatch = null;
+        let bestSimilarity = 0;
+        const allMatches = [];
+        
+        searchableItems.forEach(item => {
+          let maxSimilarity = 0;
           
-          speakText(`Opening ${matchedItem.name}`, () => {
-            window.open(matchedItem.path, '_blank');
+          // Check against each alternative
+          alternatives.forEach(transcript => {
+            const similarity = calculateSimilarity(transcript, item.name.toLowerCase());
+            if (similarity > maxSimilarity) {
+              maxSimilarity = similarity;
+            }
+          });
+          
+          // Check Indian variations
+          const variations = generateIndianVariations(item.name);
+          variations.forEach(variation => {
+            alternatives.forEach(transcript => {
+              const similarity = calculateSimilarity(transcript, variation);
+              if (similarity > maxSimilarity) {
+                maxSimilarity = similarity;
+              }
+            });
+          });
+          
+          // Check partial matches (e.g., "rm purchase" for "RM Purchase Order")
+          const itemWords = item.name.toLowerCase().split(/\s+/);
+          alternatives.forEach(transcript => {
+            const inputWords = transcript.split(/\s+/);
+            
+            // Check if all input words match item words
+            const allWordsMatch = inputWords.every(inputWord =>
+              itemWords.some(itemWord => calculateWordSimilarity(inputWord, itemWord) > 0.6)
+            );
+            
+            if (allWordsMatch && maxSimilarity < 0.8) {
+              maxSimilarity = Math.max(maxSimilarity, 0.8);
+            }
+            
+            // Check if any word matches
+            const anyWordMatch = inputWords.some(inputWord =>
+              itemWords.some(itemWord => calculateWordSimilarity(inputWord, itemWord) > 0.6)
+            );
+            
+            if (anyWordMatch && maxSimilarity < 0.7) {
+              maxSimilarity = Math.max(maxSimilarity, 0.7);
+            }
+          });
+          
+          if (maxSimilarity > 0) {
+            allMatches.push({
+              item: item,
+              similarity: maxSimilarity
+            });
+          }
+          
+          if (maxSimilarity > bestSimilarity) {
+            bestSimilarity = maxSimilarity;
+            bestMatch = { item: item, similarity: maxSimilarity };
+          }
+        });
+        
+        // Sort all matches by similarity
+        allMatches.sort((a, b) => b.similarity - a.similarity);
+        
+        console.log('All matches:', allMatches);
+        
+        if (bestMatch && bestMatch.similarity > 0.7) {
+          // High confidence match
+          console.log('Best match found:', bestMatch.item.name, 'Similarity:', bestMatch.similarity);
+          setVoiceMessage(`Opening ${bestMatch.item.name}`);
+          
+          speakText(`Opening ${bestMatch.item.name}. You said "${bestTranscript}"`, () => {
+            // Open in new tab
+            window.open(bestMatch.item.path, '_blank');
+            setVoiceMessage('');
+            setIsListening(false);
+          });
+        } else if (allMatches.length > 0) {
+          // Suggest top matches
+          const topMatches = allMatches.slice(0, 3);
+          setVoiceMessage(`Found ${allMatches.length} similar modules`);
+          
+          const suggestionText = topMatches.map((match, i) => 
+            `${i + 1}. ${match.item.name}`
+          ).join(', ');
+          
+          speakText(`Did you mean: ${suggestionText}? Please select from the search results.`, () => {
+            // Show suggestions in search results
+            setSearchResults(topMatches.map(match => match.item));
+            setShowSearchResults(true);
             setVoiceMessage('');
             setIsListening(false);
           });
         } else {
-          // No match found - inform user
-          console.log('No match found for:', transcript);
+          // No match found
+          console.log('No match found for:', bestTranscript);
           setVoiceMessage('Module not found');
           
-          speakText(`Sorry, I couldn't find ${transcript}. Please try again with a different module name.`, () => {
+          speakText(`Sorry, I couldn't find "${bestTranscript}". Please try a different module name or use text search.`, () => {
             setVoiceMessage('');
             setIsListening(false);
           });
@@ -1376,11 +2049,13 @@ const Header = ({ isSidebarCollapsed, onMenuToggle, isMobile }) => {
         setVoiceMessage('');
         
         if (event.error === 'no-speech') {
-          speakText('I didn\'t hear anything. Please try again.');
+          speakText('I didn\'t hear anything. Please speak clearly and try again.');
         } else if (event.error === 'not-allowed') {
-          alert('Microphone access denied. Please enable microphone permissions.');
+          alert('Microphone access denied. Please enable microphone permissions in your browser settings.');
+        } else if (event.error === 'audio-capture') {
+          speakText('No microphone found. Please check your microphone connection.');
         } else {
-          speakText('Sorry, there was an error. Please try again.');
+          speakText('Sorry, there was an error with voice recognition. Please try again.');
         }
       };
       
@@ -1392,6 +2067,9 @@ const Header = ({ isSidebarCollapsed, onMenuToggle, isMobile }) => {
       };
       
       recognitionRef.current = recognition;
+    } else {
+      setVoiceSupported(false);
+      console.warn('Web Speech API not supported in this browser');
     }
     
     return () => {
@@ -1402,11 +2080,14 @@ const Header = ({ isSidebarCollapsed, onMenuToggle, isMobile }) => {
         synthRef.current.cancel();
       }
     };
-  }, [isListening, aiSpeaking]);
+  }, []);
 
-  // Function to make AI speak
+  // Function to make AI speak with Indian accent
   const speakText = (text, callback) => {
-    if (!synthRef.current) return;
+    if (!synthRef.current) {
+      if (callback) callback();
+      return;
+    }
     
     // Cancel any ongoing speech
     synthRef.current.cancel();
@@ -1414,20 +2095,35 @@ const Header = ({ isSidebarCollapsed, onMenuToggle, isMobile }) => {
     setAiSpeaking(true);
     
     const utterance = new SpeechSynthesisUtterance(text);
-    utterance.rate = 1.0;
+    utterance.rate = 1.0; // Normal speed for Indian English
     utterance.pitch = 1.0;
     utterance.volume = 1.0;
-    utterance.lang = 'en-US';
+    utterance.lang = 'en-IN'; // Indian English
     
-    // Try to use a female voice for better experience
+    // Try to get an Indian voice
     const voices = synthRef.current.getVoices();
-    const femaleVoice = voices.find(voice => 
-      voice.name.includes('Female') || 
-      voice.name.includes('Samantha') || 
-      voice.name.includes('Victoria')
+    let selectedVoice = null;
+    
+    // Prefer Indian voices
+    selectedVoice = voices.find(voice => 
+      voice.lang === 'en-IN' || 
+      voice.name.includes('India') ||
+      voice.name.includes('Indian')
     );
-    if (femaleVoice) {
-      utterance.voice = femaleVoice;
+    
+    // If no Indian voice, try female voice for clarity
+    if (!selectedVoice) {
+      selectedVoice = voices.find(voice => 
+        voice.name.includes('Female') || 
+        voice.name.includes('Samantha') || 
+        voice.name.includes('Victoria') ||
+        voice.name.includes('Zira') ||
+        voice.name.includes('Hazel')
+      );
+    }
+    
+    if (selectedVoice) {
+      utterance.voice = selectedVoice;
     }
     
     utterance.onend = () => {
@@ -1435,15 +2131,18 @@ const Header = ({ isSidebarCollapsed, onMenuToggle, isMobile }) => {
       if (callback) callback();
     };
     
-    utterance.onerror = () => {
+    utterance.onerror = (event) => {
+      console.error('Speech synthesis error:', event);
       setAiSpeaking(false);
       if (callback) callback();
     };
     
-    synthRef.current.speak(utterance);
+    setTimeout(() => {
+      synthRef.current.speak(utterance);
+    }, 100);
   };
 
-  // Add this function to handle voice button click
+  // Voice search handler with Indian accent support
   const handleVoiceSearch = () => {
     if (!voiceSupported) {
       alert('Voice recognition is not supported in your browser. Please use Chrome, Edge, or Safari.');
@@ -1468,17 +2167,20 @@ const Header = ({ isSidebarCollapsed, onMenuToggle, isMobile }) => {
         setIsSearchExpanded(true);
         setVoiceMessage('AI Assistant listening...');
         
-        // AI greets and asks what to search
-        speakText('Hello! Which module would you like to search for?', () => {
-          // After AI finishes speaking, start listening to user
+        // AI introduction with Indian accent hints
+        speakText('Hello! Please say the name of the module you want to search for.', () => {
+          // After AI finishes speaking, start listening
           try {
-            recognitionRef.current.start();
-            setVoiceMessage('Listening for your command...');
-            console.log('Voice recognition started');
+            setTimeout(() => {
+              recognitionRef.current.start();
+              setVoiceMessage('Listening... Speak now');
+              console.log('Voice recognition started with Indian English');
+            }, 500);
           } catch (error) {
             console.error('Error starting recognition:', error);
             setIsListening(false);
             setVoiceMessage('');
+            speakText('Sorry, I could not start listening. Please try again.');
           }
         });
         
@@ -1525,9 +2227,49 @@ const Header = ({ isSidebarCollapsed, onMenuToggle, isMobile }) => {
     setSearchQuery(query);
 
     if (query.length > 0) {
-      const results = searchableItems.filter(item =>
-        item.name.toLowerCase().includes(query.toLowerCase())
-      );
+      // Enhanced search with Indian accent variations
+      const results = searchableItems.filter(item => {
+        const itemName = item.name.toLowerCase();
+        const searchQueryLower = query.toLowerCase();
+        
+        // Direct match
+        if (itemName.includes(searchQueryLower)) {
+          return true;
+        }
+        
+        // Check Indian variations
+        const variations = generateIndianVariations(item.name);
+        if (variations.some(variation => variation.includes(searchQueryLower))) {
+          return true;
+        }
+        
+        // Word-wise matching for partial queries
+        const searchWords = searchQueryLower.split(/\s+/);
+        const itemWords = itemName.split(/\s+/);
+        
+        // Check if all search words are present in item
+        const allWordsMatch = searchWords.every(searchWord =>
+          itemWords.some(itemWord => 
+            itemWord.includes(searchWord) || 
+            calculateWordSimilarity(searchWord, itemWord) > 0.6
+          )
+        );
+        
+        if (allWordsMatch) {
+          return true;
+        }
+        
+        // Check if any word matches significantly
+        const significantMatch = searchWords.some(searchWord => {
+          if (searchWord.length < 3) return false;
+          return itemWords.some(itemWord => 
+            calculateWordSimilarity(searchWord, itemWord) > 0.8
+          );
+        });
+        
+        return significantMatch;
+      });
+      
       setSearchResults(results);
       setShowSearchResults(true);
     } else {
@@ -1619,1006 +2361,1005 @@ const Header = ({ isSidebarCollapsed, onMenuToggle, isMobile }) => {
   };
 
   const handleRecentPathClick = (path) => {
-    // Open in new tab
     window.open(path, '_blank');
     setIsRecentlyVisitedOpen(false);
   };
 
+  // Add CSS animations for voice search
+  const voiceSearchStyles = `
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+      100% { transform: scale(1); }
+    }
+    
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+    
+    @keyframes wave {
+      0%, 100% { height: 12px; }
+      50% { height: 18px; }
+    }
+    
+    .voice-status-indicator {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background-color: #fff5f5;
+      border: 1px solid #ff4757;
+      border-radius: 8px;
+      margin-top: 0.5rem;
+      padding: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      z-index: 999;
+    }
+    
+    .voice-wave {
+      display: flex;
+      gap: 2px;
+    }
+    
+    .wave-bar {
+      width: 3px;
+      height: 12px;
+      background-color: #ff4757;
+      border-radius: 2px;
+      animation: wave 1s ease-in-out infinite;
+    }
+  `;
+
   return (
-    <header
-     style={{
-        backgroundColor: '#635bff',
-        padding: isMobile ? '0.2rem 0.8rem' : '0.2rem 1.5rem',
-        position: 'fixed',
-        top: 0,
-        right: 0,
-        left: isMobile ? '0' : (isSidebarCollapsed ? '80px' : '250px'),
-        zIndex: 50,
-        borderBottom: '1px solid #e0e0e0',
-        transition: 'left 0.3s ease, padding 0.3s ease',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
-      }}
-    >
+    <>
+      <style jsx>{voiceSearchStyles}</style>
+      <header
+        style={{
+          backgroundColor: '#635bff',
+          padding: isMobile ? '0.2rem 0.8rem' : '0.2rem 1.5rem',
+          position: 'fixed',
+          top: 0,
+          right: 0,
+          left: isMobile ? '0' : (isSidebarCollapsed ? '80px' : '250px'),
+          zIndex: 50,
+          borderBottom: '1px solid #e0e0e0',
+          transition: 'left 0.3s ease, padding 0.3s ease',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
+        }}
+      >
 
-      <div className="flex items-center gap-3 md:gap-4" style={{ flex: 1 }}>
-        {isMobile && (
-          <button
-            onClick={onMenuToggle}
-            style={{
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              color: 'white',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: '40px',
-              height: '40px',
-              borderRadius: '50%',
-              transition: 'background-color 0.2s ease',
-            }}
-            className="hover:bg-white hover:bg-opacity-10 active:bg-opacity-20"
-            aria-label="Toggle menu"
-          >
-            <MdMenu size={24} />
-          </button>
-        )}
-
-        <div
-          ref={searchRef}
-          className="flex items-center relative"
-          style={{
-            backgroundColor: isListening ? 'rgba(255, 71, 87, 0.2)' : 'rgba(255, 255, 255, 0.15)',
-            borderRadius: '2rem',
-            padding: '0.5rem',
-            overflow: 'visible',
-            border: isSearchExpanded 
-              ? (isListening ? '2px solid #ff4757' : '2px solid rgba(255, 255, 255, 0.8)') 
-              : '2px solid transparent',
-            transition: 'all 0.3s ease-out',
-            width: isSearchExpanded ? (isMobile ? '200px' : '380px') : '40px',
-            backdropFilter: 'blur(10px)',
-            WebkitBackdropFilter: 'blur(10px)',
-          }}
-        >
-          <button
-            onClick={handleSearchIconClick}
-            style={{
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              color: 'white',
-              display: 'flex',
-              alignItems: 'center',
-              minWidth: '30px',
-              height: '20px',
-              transition: 'transform 0.3s ease',
-              transform: isSearchExpanded ? 'scale(1.1)' : 'scale(1)',
-            }}
-            aria-label={isSearchExpanded ? "Collapse search" : "Expand search"}
-          >
-            <IoIosSearch size={20} />
-          </button>
-
-          <input
-            type="text"
-            placeholder={voiceMessage || "Search modules, features..."}
-            value={searchQuery}
-            onChange={handleSearchChange}
-            onFocus={() => !isListening && setShowSearchResults(true)}
-            disabled={isListening}
-            style={{
-              background: 'none',
-              border: 'none',
-              outline: 'none',
-              color: 'white',
-              marginLeft: '0.5rem',
-              width: isSearchExpanded ? 'calc(100% - 70px)' : '0',
-              padding: isSearchExpanded ? '0.25rem 0' : '0',
-              opacity: isSearchExpanded ? 1 : 0,
-              transition: 'all 0.3s ease-out',
-              fontSize: '0.9rem',
-              lineHeight: '1.2',
-              cursor: isListening ? 'not-allowed' : 'text',
-            }}
-            className="placeholder:text-white placeholder:text-opacity-80"
-          />
-
-          {/* Voice Search Button with Animation */}
-          {voiceSupported && isSearchExpanded && (
+        <div className="flex items-center gap-3 md:gap-4" style={{ flex: 1 }}>
+          {isMobile && (
             <button
-              onClick={handleVoiceSearch}
+              onClick={onMenuToggle}
               style={{
-                background: isListening 
-                  ? (aiSpeaking ? 'rgba(99, 91, 255, 0.3)' : 'rgba(255, 71, 87, 0.3)') 
-                  : 'none',
+                background: 'none',
                 border: 'none',
                 cursor: 'pointer',
-                color: isListening 
-                  ? (aiSpeaking ? '#635bff' : '#ff4757') 
-                  : 'white',
+                color: 'white',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                width: '36px',
-                height: '36px',
+                width: '40px',
+                height: '40px',
                 borderRadius: '50%',
-                transition: 'all 0.3s ease',
-                animation: isListening ? 'pulse 1.5s infinite' : 'none',
-                position: 'relative',
+                transition: 'background-color 0.2s ease',
               }}
-              className="hover:bg-white hover:bg-opacity-10"
-              title={isListening ? "Stop AI assistant" : "Start AI voice assistant"}
-              aria-label={isListening ? "Stop AI assistant" : "Start AI assistant"}
+              className="hover:bg-white hover:bg-opacity-10 active:bg-opacity-20"
+              aria-label="Toggle menu"
             >
-              {isListening ? (
-                aiSpeaking ? <IoMdMic size={20} /> : <IoMdMic size={20} />
-              ) : (
-                <IoMdMic size={20} />
-              )}
-              
-              {/* Listening indicator */}
-              {isListening && (
-                <span style={{
-                  position: 'absolute',
-                  top: '-2px',
-                  right: '-2px',
-                  width: '10px',
-                  height: '10px',
-                  borderRadius: '50%',
-                  backgroundColor: aiSpeaking ? '#635bff' : '#ff4757',
-                  animation: 'blink 1s infinite',
-                }} />
-              )}
+              <MdMenu size={24} />
             </button>
           )}
 
-          {/* Voice Status Indicator */}
-          {isListening && voiceMessage && (
-            <div style={{
-              position: 'absolute',
-              top: '100%',
-              left: 0,
-              right: 0,
-              backgroundColor: aiSpeaking ? '#f0f2ff' : '#fff5f5',
-              border: `1px solid ${aiSpeaking ? '#635bff' : '#ff4757'}`,
-              borderRadius: '8px',
-              marginTop: '0.5rem',
-              padding: '0.75rem',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-              zIndex: 999,
-            }}>
-              <span style={{
-                fontSize: '1.2rem',
-                animation: 'pulse 1.5s infinite',
-              }}>
-                {aiSpeaking ? '🤖' : '🎤'}
-              </span>
-              <span style={{
-                fontSize: '0.85rem',
-                color: aiSpeaking ? '#635bff' : '#ff4757',
-                fontWeight: '500',
-              }}>
-                {voiceMessage}
-              </span>
-              <div style={{
-                marginLeft: 'auto',
+          <div
+            ref={searchRef}
+            className="flex items-center relative"
+            style={{
+              backgroundColor: isListening ? 'rgba(255, 71, 87, 0.2)' : 'rgba(255, 255, 255, 0.15)',
+              borderRadius: '2rem',
+              padding: '0.5rem',
+              overflow: 'visible',
+              border: isSearchExpanded 
+                ? (isListening ? '2px solid #ff4757' : '2px solid rgba(255, 255, 255, 0.8)') 
+                : '2px solid transparent',
+              transition: 'all 0.3s ease-out',
+              width: isSearchExpanded ? (isMobile ? '200px' : '380px') : '40px',
+              backdropFilter: 'blur(10px)',
+              WebkitBackdropFilter: 'blur(10px)',
+            }}
+          >
+            <button
+              onClick={handleSearchIconClick}
+              style={{
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                color: 'white',
                 display: 'flex',
-                gap: '2px',
-              }}>
-                {[1, 2, 3].map((i) => (
-                  <div
-                    key={i}
-                    style={{
-                      width: '3px',
-                      height: '12px',
-                      backgroundColor: aiSpeaking ? '#635bff' : '#ff4757',
-                      borderRadius: '2px',
-                      animation: `wave 1s ease-in-out infinite`,
-                      animationDelay: `${i * 0.1}s`,
-                    }}
-                  />
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Existing Search Results Dropdown - Only show when not listening */}
-          {showSearchResults && searchResults.length > 0 && isSearchExpanded && !isListening && (
-            <div style={{
-              position: 'absolute',
-              top: '100%',
-              left: 0,
-              right: 0,
-              backgroundColor: 'white',
-              border: '1px solid #e0e0e0',
-              borderRadius: '12px',
-              marginTop: '0.75rem',
-              maxHeight: '400px',
-              overflowY: 'auto',
-              boxShadow: '0 8px 25px rgba(0,0,0,0.15)',
-              zIndex: 1000,
-            }}>
-              <div style={{
-                padding: '0.75rem 1rem',
-                borderBottom: '1px solid #f0f0f0',
-                fontSize: '0.8rem',
-                fontWeight: '600',
-                color: '#666',
-                textTransform: 'uppercase',
-                letterSpacing: '0.5px',
-                display: 'flex',
-                justifyContent: 'space-between',
                 alignItems: 'center',
-              }}>
-                <span>Quick Navigation</span>
-                {voiceSupported && (
-                  <span style={{
-                    fontSize: '0.7rem',
-                    color: '#635bff',
-                    backgroundColor: '#f0f2ff',
-                    padding: '0.2rem 0.5rem',
-                    borderRadius: '4px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.25rem',
-                  }}>
-                    {/* 🤖 AI Assistant */}
-                  </span>
-                )}
-              </div>
-              {searchResults.map((item, index) => {
-                const IconComponent = getIconComponent(item.icon);
+                minWidth: '30px',
+                height: '20px',
+                transition: 'transform 0.3s ease',
+                transform: isSearchExpanded ? 'scale(1.1)' : 'scale(1)',
+              }}
+              aria-label={isSearchExpanded ? "Collapse search" : "Expand search"}
+            >
+              <IoIosSearch size={20} />
+            </button>
 
-                return (
-                  <div
-                    key={index}
-                    onClick={() => handleSearchResultClick(item.path)}
-                    style={{
-                      padding: '0.4rem 1rem',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      borderBottom: index < searchResults.length - 1 ? '1px solid #f8f8f8' : 'none',
-                      transition: 'background-color 0.2s ease',
-                      backgroundColor: '#fff',
-                    }}
-                    className="hover:bg-gray-50 active:bg-gray-100"
-                  >
-                    {IconComponent && (
-                      <span style={{
-                        marginRight: '0.875rem',
-                        color: '#635bff',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        width: '20px',
-                      }}>
-                        <IconComponent size={16} />
-                      </span>
-                    )}
+            <input
+              type="text"
+              placeholder={voiceMessage || "Search modules, features..."}
+              value={searchQuery}
+              onChange={handleSearchChange}
+              onFocus={() => !isListening && setShowSearchResults(true)}
+              disabled={isListening}
+              style={{
+                background: 'none',
+                border: 'none',
+                outline: 'none',
+                color: 'white',
+                marginLeft: '0.5rem',
+                width: isSearchExpanded ? 'calc(100% - 70px)' : '0',
+                padding: isSearchExpanded ? '0.25rem 0' : '0',
+                opacity: isSearchExpanded ? 1 : 0,
+                transition: 'all 0.3s ease-out',
+                fontSize: '0.9rem',
+                lineHeight: '1.2',
+                cursor: isListening ? 'not-allowed' : 'text',
+              }}
+              className="placeholder:text-white placeholder:text-opacity-80"
+            />
+
+            {/* Enhanced Voice Search Button */}
+            {voiceSupported && isSearchExpanded && (
+              <button
+                onClick={handleVoiceSearch}
+                style={{
+                  background: isListening 
+                    ? (aiSpeaking ? 'rgba(99, 91, 255, 0.3)' : 'rgba(255, 71, 87, 0.3)') 
+                    : 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  color: isListening 
+                    ? (aiSpeaking ? '#635bff' : '#ff4757') 
+                    : 'white',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: '36px',
+                  height: '36px',
+                  borderRadius: '50%',
+                  transition: 'all 0.3s ease',
+                  animation: isListening ? 'pulse 1.5s infinite' : 'none',
+                  position: 'relative',
+                }}
+                className="hover:bg-white hover:bg-opacity-10"
+                title={isListening ? "Stop AI assistant" : "Start AI voice assistant (Indian Accent Supported)"}
+                aria-label={isListening ? "Stop AI assistant" : "Start AI assistant"}
+              >
+                {isListening ? (
+                  aiSpeaking ? <IoMdMic size={20} /> : <IoMdMic size={20} />
+                ) : (
+                  <IoMdMic size={20} />
+                )}
+                
+                {/* Listening indicator */}
+                {isListening && (
+                  <span style={{
+                    position: 'absolute',
+                    top: '-2px',
+                    right: '-2px',
+                    width: '10px',
+                    height: '10px',
+                    borderRadius: '50%',
+                    backgroundColor: aiSpeaking ? '#635bff' : '#ff4757',
+                    animation: 'blink 1s infinite',
+                  }} />
+                )}
+              </button>
+            )}
+
+            {/* Voice Status Indicator */}
+            {isListening && voiceMessage && (
+              <div className="voice-status-indicator">
+                <span style={{
+                  fontSize: '1.2rem',
+                  animation: 'pulse 1.5s infinite',
+                }}>
+                  {aiSpeaking ? '🤖' : '🎤'}
+                </span>
+                <span style={{
+                  fontSize: '0.85rem',
+                  color: aiSpeaking ? '#635bff' : '#ff4757',
+                  fontWeight: '500',
+                }}>
+                  {voiceMessage}
+                </span>
+                <div className="voice-wave">
+                  {[1, 2, 3].map((i) => (
+                    <div
+                      key={i}
+                      className="wave-bar"
+                      style={{ animationDelay: `${i * 0.1}s` }}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Search Results Dropdown */}
+            {showSearchResults && searchResults.length > 0 && isSearchExpanded && (
+              <div style={{
+                position: 'absolute',
+                top: '100%',
+                left: 0,
+                right: 0,
+                backgroundColor: 'white',
+                border: '1px solid #e0e0e0',
+                borderRadius: '12px',
+                marginTop: voiceMessage ? '4rem' : '0.75rem',
+                maxHeight: '400px',
+                overflowY: 'auto',
+                boxShadow: '0 8px 25px rgba(0,0,0,0.15)',
+                zIndex: 1000,
+              }}>
+                <div style={{
+                  padding: '0.75rem 1rem',
+                  borderBottom: '1px solid #f0f0f0',
+                  fontSize: '0.8rem',
+                  fontWeight: '600',
+                  color: '#666',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.5px',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                }}>
+                  <span>Quick Navigation</span>
+                  {voiceSupported && (
                     <span style={{
-                      fontSize: '0.9rem',
-                      color: '#333',
-                      fontWeight: '500',
-                      flex: 1,
-                    }}>
-                      {item.name}
-                    </span>
-                    <span style={{
-                      fontSize: '0.75rem',
-                      color: '#999',
-                      backgroundColor: '#f5f5f5',
+                      fontSize: '0.7rem',
+                      color: '#635bff',
+                      backgroundColor: '#f0f2ff',
                       padding: '0.2rem 0.5rem',
                       borderRadius: '4px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.25rem',
                     }}>
-                      Module
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-
-          {showSearchResults && searchResults.length === 0 && searchQuery.length > 0 && isSearchExpanded && !isListening && (
-            <div style={{
-              position: 'absolute',
-              top: '100%',
-              left: 0,
-              right: 0,
-              backgroundColor: 'white',
-              border: '1px solid #e0e0e0',
-              borderRadius: '12px',
-              marginTop: '0.75rem',
-              padding: '2rem 1rem',
-              textAlign: 'center',
-              color: '#666',
-              fontSize: '0.9rem',
-              boxShadow: '0 8px 25px rgba(0,0,0,0.15)',
-              zIndex: 1000,
-            }}>
-              <div style={{ fontSize: '3rem', marginBottom: '0.5rem' }}>🔍</div>
-              No results found for `{searchQuery}`
-              <div style={{ fontSize: '0.8rem', color: '#999', marginTop: '0.5rem' }}>
-                Try different keywords or use AI voice assistant 🤖
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Company and Branch Name Display - ONLY for Desktop */}
-        {!isMobile && (companyName || branchName) && (
-          <div
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'flex-start',
-              marginLeft: '1rem',
-              padding: '0.5rem 1rem',
-              backgroundColor: 'rgba(255, 255, 255, 0.1)',
-              borderRadius: '8px',
-              border: '1px solid rgba(255, 255, 255, 0.2)',
-              maxWidth: '300px',
-              flexShrink: 0,
-            }}
-          >
-            {branchName && (
-              <span
-                style={{
-                  color: 'rgba(255, 255, 255, 0.9)',
-                  fontSize: '1rem',
-                  lineHeight: '1.2',
-                  marginTop: '0.1rem',
-                  whiteSpace: 'nowrap',
-                  fontWeight: '600',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  width: '100%',
-                }}
-                title={branchName}
-              >
-                {branchName}
-              </span>
-            )}
-          </div>
-        )}
-      </div>
-
-      <div className="flex items-center gap-2 md:gap-3" style={{ flexShrink: 0 }}>
-        {/* Recently Visited Button - Mobile और Desktop दोनों में */}
-        <div ref={recentlyVisitedRef} style={{ position: 'relative' }}>
-          <button
-            onClick={() => {
-              setIsRecentlyVisitedOpen(!isRecentlyVisitedOpen);
-              setIsNotificationsOpen(false);
-              setIsDropdownOpen(false);
-            }}
-            style={{
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              color: 'white',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: '40px',
-              height: '40px',
-              borderRadius: '50%',
-              transition: 'all 0.2s ease',
-              position: 'relative',
-            }}
-            className="hover:bg-white hover:bg-opacity-10 active:bg-opacity-20"
-            title={`Recently Visited (${recentPaths.length})`}
-          >
-            <IoIosTime size={20} />
-            {recentPaths.length > 0 && (
-              <span style={{
-                position: 'absolute',
-                top: '2px',
-                right: '2px',
-                backgroundColor: '#ff4757',
-                color: 'white',
-                borderRadius: '50%',
-                width: '15px',
-                height: '15px',
-                fontSize: '0.7rem',
-                fontWeight: 'bold',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}>
-                {recentPaths.length}
-              </span>
-            )}
-          </button>
-
-          {isRecentlyVisitedOpen && (
-            <div style={{
-              position: 'absolute',
-              top: '100%',
-              // Mobile view में center में position करें
-              right: isMobile ? 'auto' : 0,
-              left: isMobile ? '50%' : 'auto',
-              transform: isMobile ? 'translateX(-50%)' : 'none',
-              backgroundColor: 'white',
-              border: '1px solid #e0e0e0',
-              borderRadius: '12px',
-              // Mobile view में screen width के according responsive width
-              width: isMobile ? 'calc(100vw - 32px)' : '320px',
-              maxWidth: isMobile ? '400px' : '320px',
-              maxHeight: isMobile ? '60vh' : '400px',
-              zIndex: 1000,
-              boxShadow: '0 8px 25px rgba(0,0,0,0.15)',
-              marginTop: '0.5rem',
-              // Mobile view में screen से थोड़ा distance रखें
-              marginLeft: isMobile ? '16px' : '0',
-              marginRight: isMobile ? '16px' : '0',
-            }}>
-              <div style={{
-                padding: '1rem',
-                borderBottom: '1px solid #f0f0f0',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-              }}>
-                <span style={{ fontWeight: '600', color: '#333' }}>
-                  Recently Visited
-                  {recentPaths.length > 0 && (
-                    <span style={{
-                      marginLeft: '0.5rem',
-                      fontSize: '0.8rem',
-                      backgroundColor: '#635bff',
-                      color: 'white',
-                      padding: '0.2rem 0.5rem',
-                      borderRadius: '10px',
-                      fontWeight: '500',
-                    }}>
-                      {recentPaths.length}
+                      🎤 AI Voice Search
+                      {/* <span style={{
+                        fontSize: '0.6rem',
+                        color: '#ff4757',
+                        marginLeft: '0.25rem',
+                      }}>
+                        (Indian Accent)
+                      </span> */}
                     </span>
                   )}
-                </span>
-                {recentPaths.length > 0 && (
-                  <button
-                    onClick={clearRecentPaths}
-                    style={{
-                      background: 'none',
-                      border: 'none',
-                      color: '#635bff',
-                      fontSize: '0.8rem',
-                      cursor: 'pointer',
-                      fontWeight: '500',
-                    }}
-                  >
-                    Clear All
-                  </button>
+                </div>
+                
+                {/* Indian Accent Tips */}
+                {voiceSupported && (
+                  <div style={{
+                    padding: '0.5rem 1rem',
+                    backgroundColor: '#f8fbff',
+                    borderBottom: '1px solid #e8f0fe',
+                    fontSize: '0.75rem',
+                    color: '#635bff',
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
+                      {/* <span>🇮🇳</span>
+                      <strong>Indian Accent Examples:</strong>
+                    </div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', fontSize: '0.7rem' }}>
+                      <span style={{ backgroundColor: '#e8e7ff', padding: '0.2rem 0.4rem', borderRadius: '4px' }}>
+                        "आरएम पर्चेज ऑर्डर" or "rm purchase"
+                      </span>
+                      <span style={{ backgroundColor: '#e8e7ff', padding: '0.2rem 0.4rem', borderRadius: '4px' }}>
+                        "सेल्स ऑर्डर" or "sales order"
+                      </span>
+                      <span style={{ backgroundColor: '#e8e7ff', padding: '0.2rem 0.4rem', borderRadius: '4px' }}>
+                        "डैशबोर्ड" or "dashboard"
+                      </span> */}
+                    </div>
+                  </div>
                 )}
-              </div>
+                
+                {searchResults.map((item, index) => {
+                  const IconComponent = getIconComponent(item.icon);
 
-              <div style={{ 
-                maxHeight: isMobile ? 'calc(60vh - 120px)' : '300px', 
-                overflowY: 'auto',
-                // Mobile view में scrollbar hide करें
-                scrollbarWidth: isMobile ? 'none' : 'thin',
-                msOverflowStyle: isMobile ? 'none' : 'auto',
-              }}>
-                {isMobile && (
-                  <style>
-                    {`
-                      @media (max-width: 768px) {
-                        div[style*="maxHeight"]::-webkit-scrollbar {
-                          display: none;
-                        }
-                      }
-                    `}
-                  </style>
-                )}
-                {recentPaths.length > 0 ? (
-                  recentPaths.map((item, index) => (
+                  return (
                     <div
-                      key={item.id}
+                      key={index}
+                      onClick={() => handleSearchResultClick(item.path)}
                       style={{
-                        padding: '0.75rem 1rem',
-                        borderBottom: index < recentPaths.length - 1 ? '1px solid #f8f8f8' : 'none',
+                        padding: '0.4rem 1rem',
                         cursor: 'pointer',
-                        backgroundColor: '#fff',
-                        transition: 'background-color 0.2s ease',
                         display: 'flex',
                         alignItems: 'center',
-                        justifyContent: 'space-between',
+                        borderBottom: index < searchResults.length - 1 ? '1px solid #f8f8f8' : 'none',
+                        transition: 'background-color 0.2s ease',
+                        backgroundColor: '#fff',
                       }}
-                      className="hover:bg-gray-50"
-                      onClick={() => handleRecentPathClick(item.path)}
-                      title={`Click to open "${item.name}" in new tab`}
+                      className="hover:bg-gray-50 active:bg-gray-100"
                     >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '0.5rem' : '0.75rem', flex: 1 }}>
-                        <div style={{
-                          width: '28px',
-                          height: '28px',
-                          borderRadius: '6px',
-                          backgroundColor: '#f0f2ff',
+                      {IconComponent && (
+                        <span style={{
+                          marginRight: '0.875rem',
+                          color: '#635bff',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          color: '#635bff',
-                          fontSize: '0.8rem',
-                          fontWeight: '600',
-                          flexShrink: 0,
+                          width: '20px',
                         }}>
-                          {index + 1}
-                        </div>
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{
-                            fontSize: isMobile ? '0.85rem' : '0.9rem',
-                            color: '#333',
-                            fontWeight: '500',
-                            lineHeight: '1.4',
-                            marginBottom: '0.2rem',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '0.25rem',
-                          }}>
-                            <span style={{
-                              flex: 1,
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis',
-                              whiteSpace: 'nowrap',
-                            }}>
-                              {item.name}
-                            </span>
-                            <span style={{
-                              fontSize: '0.7rem',
-                              color: '#999',
-                              flexShrink: 0,
-                            }}>
-                              {formatTimeAgo(item.timestamp)}
-                            </span>
-                          </div>
-                          {/* Time ago indicator */}
-                          <div style={{
-                            fontSize: '0.7rem',
-                            color: '#999',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '0.25rem',
-                          }}>
-                            <span style={{
-                              fontSize: '0.6rem',
-                              color: '#635bff',
-                              backgroundColor: '#f0f2ff',
-                              padding: '0.1rem 0.4rem',
-                              borderRadius: '4px',
-                              fontWeight: '500',
-                              flexShrink: 0,
-                            }}>
-                              New Tab
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          removeRecentPath(item.id);
-                        }}
-                        style={{
-                          background: 'none',
-                          border: 'none',
-                          color: '#999',
-                          cursor: 'pointer',
-                          fontSize: '1rem',
-                          padding: '0.25rem',
-                          borderRadius: '4px',
-                          transition: 'all 0.2s ease',
-                          flexShrink: 0,
-                          marginLeft: '0.5rem',
-                        }}
-                        className="hover:bg-gray-100 hover:text-red-500"
-                        title="Remove from history"
-                      >
-                        ×
-                      </button>
+                          <IconComponent size={16} />
+                        </span>
+                      )}
+                      <span style={{
+                        fontSize: '0.9rem',
+                        color: '#333',
+                        fontWeight: '500',
+                        flex: 1,
+                      }}>
+                        {item.name}
+                      </span>
+                      <span style={{
+                        fontSize: '0.75rem',
+                        color: '#999',
+                        backgroundColor: '#f5f5f5',
+                        padding: '0.2rem 0.5rem',
+                        borderRadius: '4px',
+                      }}>
+                        Module
+                      </span>
                     </div>
-                  ))
-                ) : (
-                  <div style={{
-                    padding: '2rem 1rem',
-                    textAlign: 'center',
-                    color: '#999',
-                    fontSize: isMobile ? '0.85rem' : '0.9rem',
-                  }}>
-                    <div style={{ fontSize: '2rem', marginBottom: '0.5rem', color: '#ccc' }}>
-                      <IoIosTime />
-                    </div>
-                    No recent visits
-                    <div style={{ fontSize: isMobile ? '0.75rem' : '0.8rem', color: '#ccc', marginTop: '0.5rem' }}>
-                      Visit pages to see them here
-                    </div>
-                  </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {showSearchResults && searchResults.length === 0 && searchQuery.length > 0 && isSearchExpanded && !isListening && (
+              <div style={{
+                position: 'absolute',
+                top: '100%',
+                left: 0,
+                right: 0,
+                backgroundColor: 'white',
+                border: '1px solid #e0e0e0',
+                borderRadius: '12px',
+                marginTop: '0.75rem',
+                padding: '2rem 1rem',
+                textAlign: 'center',
+                color: '#666',
+                fontSize: '0.9rem',
+                boxShadow: '0 8px 25px rgba(0,0,0,0.15)',
+                zIndex: 1000,
+              }}>
+                <div style={{ fontSize: '3rem', marginBottom: '0.5rem' }}>🔍</div>
+                No results found for `{searchQuery}`
+                <div style={{ fontSize: '0.8rem', color: '#999', marginTop: '0.5rem' }}>
+                  Try different keywords or use AI voice assistant with Indian accent support 🤖
+                </div>
+                {voiceSupported && (
+                  <button
+                    onClick={handleVoiceSearch}
+                    style={{
+                      marginTop: '1rem',
+                      padding: '0.5rem 1rem',
+                      backgroundColor: '#635bff',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '20px',
+                      cursor: 'pointer',
+                      fontSize: '0.8rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                      margin: '1rem auto 0',
+                    }}
+                  >
+                    <IoMdMic size={16} />
+                    Try Voice Search (Indian Accent Supported)
+                  </button>
                 )}
               </div>
-              
-              {/* Footer with info */}
-              {recentPaths.length > 0 && (
-                <div style={{
-                  padding: isMobile ? '0.75rem' : '0.75rem 1rem',
-                  borderTop: '1px solid #f0f0f0',
-                  fontSize: isMobile ? '0.7rem' : '0.75rem',
-                  color: '#999',
-                  textAlign: 'center',
-                  backgroundColor: '#f9f9f9',
-                  borderBottomLeftRadius: '12px',
-                  borderBottomRightRadius: '12px',
-                }}>
-                  <span style={{ 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    justifyContent: 'center', 
-                    gap: '0.25rem',
-                    flexWrap: 'wrap',
-                  }}>
-                    <span style={{ color: '#635bff' }}>ℹ️</span>
-                    Click any item to open in new tab
-                  </span>
-                </div>
+            )}
+          </div>
+
+          {/* Company and Branch Name Display - ONLY for Desktop */}
+          {!isMobile && (companyName || branchName) && (
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'flex-start',
+                marginLeft: '1rem',
+                padding: '0.5rem 1rem',
+                backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                borderRadius: '8px',
+                border: '1px solid rgba(255, 255, 255, 0.2)',
+                maxWidth: '300px',
+                flexShrink: 0,
+              }}
+            >
+              {branchName && (
+                <span
+                  style={{
+                    color: 'rgba(255, 255, 255, 0.9)',
+                    fontSize: '1rem',
+                    lineHeight: '1.2',
+                    marginTop: '0.1rem',
+                    whiteSpace: 'nowrap',
+                    fontWeight: '600',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    width: '100%',
+                  }}
+                  title={branchName}
+                >
+                  {branchName}
+                </span>
               )}
             </div>
           )}
         </div>
 
-        {/* Pinned Modules - Mobile और Desktop दोनों में */}
-        <Link href="/pinned-modules" passHref>
-          <button
-            style={{
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              color: 'white',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: '40px',
-              height: '40px',
-              borderRadius: '50%',
-              transition: 'all 0.2s ease',
-              position: 'relative',
-            }}
-            className="hover:bg-white hover:bg-opacity-10 active:bg-opacity-20"
-            title="Pinned Modules"
-          >
-            <MdPushPin size={20} />
-          </button>
-        </Link>
-
-        {/* Analytics - Mobile और Desktop दोनों में */}
-        <Link href="/analytics" passHref>
-          <button
-            style={{
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              color: 'white',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: '40px',
-              height: '40px',
-              borderRadius: '50%',
-              transition: 'all 0.2s ease',
-              position: 'relative',
-            }}
-            className="hover:bg-white hover:bg-opacity-10 active:bg-opacity-20"
-            title="Analytics"
-          >
-            <ReportIcon size={20} />
-          </button>
-        </Link>
-
-        {/* Notifications - Mobile और Desktop दोनों में */}
-        <div ref={notificationsRef} style={{ position: 'relative' }}>
-          <button
-            onClick={() => {
-              setIsNotificationsOpen(!isNotificationsOpen);
-              setIsRecentlyVisitedOpen(false);
-              setIsDropdownOpen(false);
-            }}
-            style={{
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              color: 'white',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: '40px',
-              height: '40px',
-              borderRadius: '50%',
-              transition: 'all 0.2s ease',
-              position: 'relative',
-            }}
-            className="hover:bg-white hover:bg-opacity-10 active:bg-opacity-20"
-            aria-label="Notifications"
-          >
-            <MdNotifications size={20} />
-            {getUnreadNotificationCount() > 0 && (
-              <span style={{
-                position: 'absolute',
-                top: '6px',
-                right: '6px',
-                backgroundColor: '#ff4757',
+        <div className="flex items-center gap-2 md:gap-3" style={{ flexShrink: 0 }}>
+          {/* Recently Visited Button */}
+          <div ref={recentlyVisitedRef} style={{ position: 'relative' }}>
+            <button
+              onClick={() => {
+                setIsRecentlyVisitedOpen(!isRecentlyVisitedOpen);
+                setIsNotificationsOpen(false);
+                setIsDropdownOpen(false);
+              }}
+              style={{
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
                 color: 'white',
-                borderRadius: '50%',
-                width: '18px',
-                height: '18px',
-                fontSize: '0.7rem',
-                fontWeight: 'bold',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                border: '2px solid #635bff',
-              }}>
-                {getUnreadNotificationCount()}
-              </span>
-            )}
-          </button>
+                width: '40px',
+                height: '40px',
+                borderRadius: '50%',
+                transition: 'all 0.2s ease',
+                position: 'relative',
+              }}
+              className="hover:bg-white hover:bg-opacity-10 active:bg-opacity-20"
+              title={`Recently Visited (${recentPaths.length})`}
+            >
+              <IoIosTime size={20} />
+              {recentPaths.length > 0 && (
+                <span style={{
+                  position: 'absolute',
+                  top: '2px',
+                  right: '2px',
+                  backgroundColor: '#ff4757',
+                  color: 'white',
+                  borderRadius: '50%',
+                  width: '15px',
+                  height: '15px',
+                  fontSize: '0.7rem',
+                  fontWeight: 'bold',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}>
+                  {recentPaths.length}
+                </span>
+              )}
+            </button>
 
-          {isNotificationsOpen && (
-            <div style={{
-              position: 'absolute',
-              top: '100%',
-              right: 0,
-              backgroundColor: 'white',
-              border: '1px solid #e0e0e0',
-              borderRadius: '12px',
-              width: isMobile ? 'calc(100vw - 32px)' : '320px',
-              maxWidth: isMobile ? '400px' : '320px',
-              maxHeight: isMobile ? '60vh' : '400px',
-              zIndex: 1000,
-              boxShadow: '0 8px 25px rgba(0,0,0,0.15)',
-              marginTop: '0.5rem',
-            }}>
+            {isRecentlyVisitedOpen && (
               <div style={{
-                padding: '1rem',
-                borderBottom: '1px solid #f0f0f0',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
+                position: 'absolute',
+                top: '100%',
+                right: isMobile ? 'auto' : 0,
+                left: isMobile ? '50%' : 'auto',
+                transform: isMobile ? 'translateX(-50%)' : 'none',
+                backgroundColor: 'white',
+                border: '1px solid #e0e0e0',
+                borderRadius: '12px',
+                width: isMobile ? 'calc(100vw - 32px)' : '320px',
+                maxWidth: isMobile ? '400px' : '320px',
+                maxHeight: isMobile ? '60vh' : '400px',
+                zIndex: 1000,
+                boxShadow: '0 8px 25px rgba(0,0,0,0.15)',
+                marginTop: '0.5rem',
+                marginLeft: isMobile ? '16px' : '0',
+                marginRight: isMobile ? '16px' : '0',
               }}>
-                <span style={{ fontWeight: '600', color: '#333' }}>Notifications</span>
-                {notifications.length > 0 && (
-                  <button
-                    onClick={clearAllNotifications}
-                    style={{
-                      background: 'none',
-                      border: 'none',
-                      color: '#635bff',
-                      fontSize: '0.8rem',
-                      cursor: 'pointer',
-                      fontWeight: '500',
-                    }}
-                  >
-                    Clear All
-                  </button>
-                )}
-              </div>
-
-              <div style={{ 
-                maxHeight: isMobile ? 'calc(60vh - 120px)' : '300px', 
-                overflowY: 'auto',
-                scrollbarWidth: isMobile ? 'none' : 'thin',
-                msOverflowStyle: isMobile ? 'none' : 'auto',
-              }}>
-                {isMobile && (
-                  <style>
-                    {`
-                      @media (max-width: 768px) {
-                        div[style*="maxHeight"]::-webkit-scrollbar {
-                          display: none;
-                        }
-                      }
-                    `}
-                  </style>
-                )}
-                {notifications.length > 0 ? (
-                  notifications.map((notification) => (
-                    <div
-                      key={notification.id}
+                <div style={{
+                  padding: '1rem',
+                  borderBottom: '1px solid #f0f0f0',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                }}>
+                  <span style={{ fontWeight: '600', color: '#333' }}>
+                    Recently Visited
+                    {recentPaths.length > 0 && (
+                      <span style={{
+                        marginLeft: '0.5rem',
+                        fontSize: '0.8rem',
+                        backgroundColor: '#635bff',
+                        color: 'white',
+                        padding: '0.2rem 0.5rem',
+                        borderRadius: '10px',
+                        fontWeight: '500',
+                      }}>
+                        {recentPaths.length}
+                      </span>
+                    )}
+                  </span>
+                  {recentPaths.length > 0 && (
+                    <button
+                      onClick={clearRecentPaths}
                       style={{
-                        padding: '0.875rem 1rem',
-                        borderBottom: '1px solid #f8f8f8',
+                        background: 'none',
+                        border: 'none',
+                        color: '#635bff',
+                        fontSize: '0.8rem',
                         cursor: 'pointer',
-                        backgroundColor: notification.read ? '#fff' : '#f8fbff',
-                        transition: 'background-color 0.2s ease',
+                        fontWeight: '500',
                       }}
-                      className="hover:bg-gray-50"
-                      onClick={() => markNotificationAsRead(notification.id)}
                     >
-                      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
-                        <span style={{ fontSize: '1.2rem', flexShrink: 0 }}>
-                          {getNotificationIcon(notification.type)}
-                        </span>
-                        <div style={{ flex: 1, minWidth: 0 }}>
+                      Clear All
+                    </button>
+                  )}
+                </div>
+
+                <div style={{ 
+                  maxHeight: isMobile ? 'calc(60vh - 120px)' : '300px', 
+                  overflowY: 'auto',
+                  scrollbarWidth: isMobile ? 'none' : 'thin',
+                  msOverflowStyle: isMobile ? 'none' : 'auto',
+                }}>
+                  {isMobile && (
+                    <style>
+                      {`
+                        @media (max-width: 768px) {
+                          div[style*="maxHeight"]::-webkit-scrollbar {
+                            display: none;
+                          }
+                        }
+                      `}
+                    </style>
+                  )}
+                  {recentPaths.length > 0 ? (
+                    recentPaths.map((item, index) => (
+                      <div
+                        key={item.id}
+                        style={{
+                          padding: '0.75rem 1rem',
+                          borderBottom: index < recentPaths.length - 1 ? '1px solid #f8f8f8' : 'none',
+                          cursor: 'pointer',
+                          backgroundColor: '#fff',
+                          transition: 'background-color 0.2s ease',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                        }}
+                        className="hover:bg-gray-50"
+                        onClick={() => handleRecentPathClick(item.path)}
+                        title={`Click to open "${item.name}" in new tab`}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '0.5rem' : '0.75rem', flex: 1 }}>
                           <div style={{
-                            fontSize: isMobile ? '0.85rem' : '0.9rem',
-                            color: '#333',
-                            fontWeight: notification.read ? '400' : '500',
-                            lineHeight: '1.4',
+                            width: '28px',
+                            height: '28px',
+                            borderRadius: '6px',
+                            backgroundColor: '#f0f2ff',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: '#635bff',
+                            fontSize: '0.8rem',
+                            fontWeight: '600',
+                            flexShrink: 0,
                           }}>
-                            {notification.text}
+                            {index + 1}
                           </div>
-                          <div style={{
-                            fontSize: '0.75rem',
-                            color: '#999',
-                            marginTop: '0.25rem',
-                          }}>
-                            {notification.time}
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{
+                              fontSize: isMobile ? '0.85rem' : '0.9rem',
+                              color: '#333',
+                              fontWeight: '500',
+                              lineHeight: '1.4',
+                              marginBottom: '0.2rem',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '0.25rem',
+                            }}>
+                              <span style={{
+                                flex: 1,
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap',
+                              }}>
+                                {item.name}
+                              </span>
+                              <span style={{
+                                fontSize: '0.7rem',
+                                color: '#999',
+                                flexShrink: 0,
+                              }}>
+                                {formatTimeAgo(item.timestamp)}
+                              </span>
+                            </div>
+                            <div style={{
+                              fontSize: '0.7rem',
+                              color: '#999',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '0.25rem',
+                            }}>
+                              <span style={{
+                                fontSize: '0.6rem',
+                                color: '#635bff',
+                                backgroundColor: '#f0f2ff',
+                                padding: '0.1rem 0.4rem',
+                                borderRadius: '4px',
+                                fontWeight: '500',
+                                flexShrink: 0,
+                              }}>
+                                New Tab
+                              </span>
+                            </div>
                           </div>
                         </div>
-                        {!notification.read && (
-                          <div style={{
-                            width: '8px',
-                            height: '8px',
-                            borderRadius: '50%',
-                            backgroundColor: '#635bff',
-                            marginTop: '0.5rem',
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            removeRecentPath(item.id);
+                          }}
+                          style={{
+                            background: 'none',
+                            border: 'none',
+                            color: '#999',
+                            cursor: 'pointer',
+                            fontSize: '1rem',
+                            padding: '0.25rem',
+                            borderRadius: '4px',
+                            transition: 'all 0.2s ease',
                             flexShrink: 0,
-                          }} />
-                        )}
+                            marginLeft: '0.5rem',
+                          }}
+                          className="hover:bg-gray-100 hover:text-red-500"
+                          title="Remove from history"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ))
+                  ) : (
+                    <div style={{
+                      padding: '2rem 1rem',
+                      textAlign: 'center',
+                      color: '#999',
+                      fontSize: isMobile ? '0.85rem' : '0.9rem',
+                    }}>
+                      <div style={{ fontSize: '2rem', marginBottom: '0.5rem', color: '#ccc' }}>
+                        <IoIosTime />
+                      </div>
+                      No recent visits
+                      <div style={{ fontSize: isMobile ? '0.75rem' : '0.8rem', color: '#ccc', marginTop: '0.5rem' }}>
+                        Visit pages to see them here
                       </div>
                     </div>
-                  ))
-                ) : (
+                  )}
+                </div>
+                
+                {/* Footer with info */}
+                {recentPaths.length > 0 && (
                   <div style={{
-                    padding: '2rem 1rem',
-                    textAlign: 'center',
+                    padding: isMobile ? '0.75rem' : '0.75rem 1rem',
+                    borderTop: '1px solid #f0f0f0',
+                    fontSize: isMobile ? '0.7rem' : '0.75rem',
                     color: '#999',
-                    fontSize: isMobile ? '0.85rem' : '0.9rem',
+                    textAlign: 'center',
+                    backgroundColor: '#f9f9f9',
+                    borderBottomLeftRadius: '12px',
+                    borderBottomRightRadius: '12px',
                   }}>
-                    No notifications
+                    <span style={{ 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'center', 
+                      gap: '0.25rem',
+                      flexWrap: 'wrap',
+                    }}>
+                      <span style={{ color: '#635bff' }}>ℹ️</span>
+                      Click any item to open in new tab
+                    </span>
                   </div>
                 )}
               </div>
-            </div>
-          )}
-        </div>
-
-        {/* User Profile Dropdown */}
-        <div
-          ref={dropdownRef}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: isMobile ? '0.5rem' : '0.75rem',
-            cursor: 'pointer',
-            position: 'relative',
-            padding: '0.25rem 0.5rem',
-            borderRadius: '2rem',
-            transition: 'background-color 0.2s ease',
-            flexShrink: 0,
-          }}
-          className="hover:bg-white hover:bg-opacity-10"
-          onClick={() => {
-            setIsDropdownOpen(!isDropdownOpen);
-            setIsNotificationsOpen(false);
-            setIsRecentlyVisitedOpen(false);
-          }}
-        >
-          <div
-            style={{
-              width: isMobile ? '32px' : '36px',
-              height: isMobile ? '32px' : '36px',
-              borderRadius: '50%',
-              backgroundColor: 'rgba(255, 255, 255, 0.2)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: 'white',
-              fontWeight: 'bold',
-              border: '2px solid rgba(255, 255, 255, 0.3)',
-              fontSize: isMobile ? '0.8rem' : '0.9rem',
-              transition: 'all 0.2s ease',
-            }}
-            className="hover:bg-opacity-30"
-          >
-            {getInitial(userName)}
+            )}
           </div>
 
-          {/* User name और role - Desktop view में */}
-          {!isMobile && (
-            <div style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'flex-start',
-              lineHeight: '1.3',
-              maxWidth: '150px',
-            }}>
-              <span style={{
+          {/* Pinned Modules */}
+          <Link href="/pinned-modules" passHref>
+            <button
+              style={{
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
                 color: 'white',
-                fontWeight: '600',
-                fontSize: '0.9rem',
-                whiteSpace: 'nowrap',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-              }}>
-                {userName || 'User'}
-                {userRole && (
-                  <span style={{
-                    marginLeft: '4px',
-                    fontWeight: '500',
-                    color: 'rgba(255, 255, 255, 0.85)',
-                    fontSize: '0.8rem',
-                    padding: '0.1rem 0.3rem',
-                    borderRadius: '4px',
-                  }}>
-                    ({userRole})
-                  </span>
-                )}
-              </span>
-            </div>
-          )}
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: '40px',
+                height: '40px',
+                borderRadius: '50%',
+                transition: 'all 0.2s ease',
+                position: 'relative',
+              }}
+              className="hover:bg-white hover:bg-opacity-10 active:bg-opacity-20"
+              title="Pinned Modules"
+            >
+              <MdPushPin size={20} />
+            </button>
+          </Link>
 
-          {/* Mobile view में छोटा username */}
-          {isMobile && userName && (
-            <div style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'flex-start',
-              maxWidth: '80px',
-            }}>
-              <span style={{
+          {/* Analytics */}
+          <Link href="/analytics" passHref>
+            <button
+              style={{
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
                 color: 'white',
-                fontWeight: '600',
-                fontSize: '0.8rem',
-                whiteSpace: 'nowrap',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-              }}>
-                {userName.split(' ')[0] || 'User'}
-              </span>
-            </div>
-          )}
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: '40px',
+                height: '40px',
+                borderRadius: '50%',
+                transition: 'all 0.2s ease',
+                position: 'relative',
+              }}
+              className="hover:bg-white hover:bg-opacity-10 active:bg-opacity-20"
+              title="Analytics"
+            >
+              <ReportIcon size={20} />
+            </button>
+          </Link>
 
-          <svg
-            width="12"
-            height="12"
-            viewBox="0 0 12 12"
-            fill="none"
-            style={{
-              transition: 'transform 0.2s ease',
-              transform: isDropdownOpen ? 'rotate(180deg)' : 'rotate(0)',
-            }}
-          >
-            <path d="M3 4.5L6 7.5L9 4.5" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
+          {/* Notifications */}
+          <div ref={notificationsRef} style={{ position: 'relative' }}>
+            <button
+              onClick={() => {
+                setIsNotificationsOpen(!isNotificationsOpen);
+                setIsRecentlyVisitedOpen(false);
+                setIsDropdownOpen(false);
+              }}
+              style={{
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                color: 'white',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: '40px',
+                height: '40px',
+                borderRadius: '50%',
+                transition: 'all 0.2s ease',
+                position: 'relative',
+              }}
+              className="hover:bg-white hover:bg-opacity-10 active:bg-opacity-20"
+              aria-label="Notifications"
+            >
+              <MdNotifications size={20} />
+              {getUnreadNotificationCount() > 0 && (
+                <span style={{
+                  position: 'absolute',
+                  top: '6px',
+                  right: '6px',
+                  backgroundColor: '#ff4757',
+                  color: 'white',
+                  borderRadius: '50%',
+                  width: '18px',
+                  height: '18px',
+                  fontSize: '0.7rem',
+                  fontWeight: 'bold',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  border: '2px solid #635bff',
+                }}>
+                  {getUnreadNotificationCount()}
+                </span>
+              )}
+            </button>
 
-          {isDropdownOpen && (
-            <div style={{
-              position: 'absolute',
-              top: '100%',
-              right: 0,
-              backgroundColor: 'white',
-              border: '1px solid #e0e0e0',
-              borderRadius: '12px',
-              width: isMobile ? '160px' : '180px',
-              zIndex: 1000,
-              boxShadow: '0 8px 25px rgba(0,0,0,0.15)',
-              marginTop: '0.15rem',
-              overflow: 'hidden',
-            }}>
+            {isNotificationsOpen && (
               <div style={{
-                padding: '1rem',
-                backgroundColor: '#f8fbff',
-                borderBottom: '1px solid #e8f0fe',
+                position: 'absolute',
+                top: '100%',
+                right: 0,
+                backgroundColor: 'white',
+                border: '1px solid #e0e0e0',
+                borderRadius: '12px',
+                width: isMobile ? 'calc(100vw - 32px)' : '320px',
+                maxWidth: isMobile ? '400px' : '320px',
+                maxHeight: isMobile ? '60vh' : '400px',
+                zIndex: 1000,
+                boxShadow: '0 8px 25px rgba(0,0,0,0.15)',
+                marginTop: '0.5rem',
               }}>
                 <div style={{
+                  padding: '1rem',
+                  borderBottom: '1px solid #f0f0f0',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                }}>
+                  <span style={{ fontWeight: '600', color: '#333' }}>Notifications</span>
+                  {notifications.length > 0 && (
+                    <button
+                      onClick={clearAllNotifications}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: '#635bff',
+                        fontSize: '0.8rem',
+                        cursor: 'pointer',
+                        fontWeight: '500',
+                      }}
+                    >
+                      Clear All
+                    </button>
+                  )}
+                </div>
+
+                <div style={{ 
+                  maxHeight: isMobile ? 'calc(60vh - 120px)' : '300px', 
+                  overflowY: 'auto',
+                  scrollbarWidth: isMobile ? 'none' : 'thin',
+                  msOverflowStyle: isMobile ? 'none' : 'auto',
+                }}>
+                  {isMobile && (
+                    <style>
+                      {`
+                        @media (max-width: 768px) {
+                          div[style*="maxHeight"]::-webkit-scrollbar {
+                            display: none;
+                          }
+                        }
+                      `}
+                    </style>
+                  )}
+                  {notifications.length > 0 ? (
+                    notifications.map((notification) => (
+                      <div
+                        key={notification.id}
+                        style={{
+                          padding: '0.875rem 1rem',
+                          borderBottom: '1px solid #f8f8f8',
+                          cursor: 'pointer',
+                          backgroundColor: notification.read ? '#fff' : '#f8fbff',
+                          transition: 'background-color 0.2s ease',
+                        }}
+                        className="hover:bg-gray-50"
+                        onClick={() => markNotificationAsRead(notification.id)}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
+                          <span style={{ fontSize: '1.2rem', flexShrink: 0 }}>
+                            {getNotificationIcon(notification.type)}
+                          </span>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{
+                              fontSize: isMobile ? '0.85rem' : '0.9rem',
+                              color: '#333',
+                              fontWeight: notification.read ? '400' : '500',
+                              lineHeight: '1.4',
+                            }}>
+                              {notification.text}
+                            </div>
+                            <div style={{
+                              fontSize: '0.75rem',
+                              color: '#999',
+                              marginTop: '0.25rem',
+                            }}>
+                              {notification.time}
+                            </div>
+                          </div>
+                          {!notification.read && (
+                            <div style={{
+                              width: '8px',
+                              height: '8px',
+                              borderRadius: '50%',
+                              backgroundColor: '#635bff',
+                              marginTop: '0.5rem',
+                              flexShrink: 0,
+                            }} />
+                          )}
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div style={{
+                      padding: '2rem 1rem',
+                      textAlign: 'center',
+                      color: '#999',
+                      fontSize: isMobile ? '0.85rem' : '0.9rem',
+                    }}>
+                      No notifications
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* User Profile Dropdown */}
+          <div
+            ref={dropdownRef}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: isMobile ? '0.5rem' : '0.75rem',
+              cursor: 'pointer',
+              position: 'relative',
+              padding: '0.25rem 0.5rem',
+              borderRadius: '2rem',
+              transition: 'background-color 0.2s ease',
+              flexShrink: 0,
+            }}
+            className="hover:bg-white hover:bg-opacity-10"
+            onClick={() => {
+              setIsDropdownOpen(!isDropdownOpen);
+              setIsNotificationsOpen(false);
+              setIsRecentlyVisitedOpen(false);
+            }}
+          >
+            <div
+              style={{
+                width: isMobile ? '32px' : '36px',
+                height: isMobile ? '32px' : '36px',
+                borderRadius: '50%',
+                backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: 'white',
+                fontWeight: 'bold',
+                border: '2px solid rgba(255, 255, 255, 0.3)',
+                fontSize: isMobile ? '0.8rem' : '0.9rem',
+                transition: 'all 0.2s ease',
+              }}
+              className="hover:bg-opacity-30"
+            >
+              {getInitial(userName)}
+            </div>
+
+            {/* User name और role - Desktop view में */}
+            {!isMobile && (
+              <div style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'flex-start',
+                lineHeight: '1.3',
+                maxWidth: '150px',
+              }}>
+                <span style={{
+                  color: 'white',
                   fontWeight: '600',
-                  color: '#333',
-                  fontSize: '0.95rem',
+                  fontSize: '0.9rem',
                   whiteSpace: 'nowrap',
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
@@ -2626,160 +3367,239 @@ const Header = ({ isSidebarCollapsed, onMenuToggle, isMobile }) => {
                   {userName || 'User'}
                   {userRole && (
                     <span style={{
-                      marginLeft: '0.4rem',
+                      marginLeft: '4px',
                       fontWeight: '500',
-                      fontSize: '0.85rem',
-                      color: '#635bff',
+                      color: 'rgba(255, 255, 255, 0.85)',
+                      fontSize: '0.8rem',
+                      padding: '0.1rem 0.3rem',
+                      borderRadius: '4px',
                     }}>
                       ({userRole})
                     </span>
                   )}
+                </span>
+              </div>
+            )}
+
+            {/* Mobile view में छोटा username */}
+            {isMobile && userName && (
+              <div style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'flex-start',
+                maxWidth: '80px',
+              }}>
+                <span style={{
+                  color: 'white',
+                  fontWeight: '600',
+                  fontSize: '0.8rem',
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                }}>
+                  {userName.split(' ')[0] || 'User'}
+                </span>
+              </div>
+            )}
+
+            <svg
+              width="12"
+              height="12"
+              viewBox="0 0 12 12"
+              fill="none"
+              style={{
+                transition: 'transform 0.2s ease',
+                transform: isDropdownOpen ? 'rotate(180deg)' : 'rotate(0)',
+              }}
+            >
+              <path d="M3 4.5L6 7.5L9 4.5" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+
+            {isDropdownOpen && (
+              <div style={{
+                position: 'absolute',
+                top: '100%',
+                right: 0,
+                backgroundColor: 'white',
+                border: '1px solid #e0e0e0',
+                borderRadius: '12px',
+                width: isMobile ? '160px' : '180px',
+                zIndex: 1000,
+                boxShadow: '0 8px 25px rgba(0,0,0,0.15)',
+                marginTop: '0.15rem',
+                overflow: 'hidden',
+              }}>
+                <div style={{
+                  padding: '1rem',
+                  backgroundColor: '#f8fbff',
+                  borderBottom: '1px solid #e8f0fe',
+                }}>
+                  <div style={{
+                    fontWeight: '600',
+                    color: '#333',
+                    fontSize: '0.95rem',
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                  }}>
+                    {userName || 'User'}
+                    {userRole && (
+                      <span style={{
+                        marginLeft: '0.4rem',
+                        fontWeight: '500',
+                        fontSize: '0.85rem',
+                        color: '#635bff',
+                      }}>
+                        ({userRole})
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                <div style={{ padding: '0.1rem 0' }}>
+                  <button
+                    onClick={handleProfile}
+                    style={{
+                      width: '100%',
+                      padding: '0.3rem 1rem',
+                      background: 'none',
+                      border: 'none',
+                      textAlign: 'left',
+                      cursor: 'pointer',
+                      fontSize: '0.9rem',
+                      color: '#333',
+                      transition: 'background-color 0.2s ease',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.75rem',
+                    }}
+                    className="hover:bg-gray-50"
+                  >
+                    <span>👤</span>
+                    <span>My Profile</span>
+                  </button>
+
+                  <button
+                    onClick={handleChangePassword}
+                    style={{
+                      width: '100%',
+                      padding: '0.3rem 1rem',
+                      background: 'none',
+                      border: 'none',
+                      textAlign: 'left',
+                      cursor: 'pointer',
+                      fontSize: '0.9rem',
+                      color: '#333',
+                      transition: 'background-color 0.2s ease',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.75rem',
+                    }}
+                    className="hover:bg-gray-50"
+                  >
+                    <span>🔒</span>
+                    <span>Change Password</span>
+                  </button>
+                  
+                  <button
+                    onClick={handleLogout}
+                    style={{
+                      width: '100%',
+                      padding: '0.3rem 1rem',
+                      marginBottom:'3px',
+                      background: 'none',
+                      border: 'none',
+                      textAlign: 'left',
+                      cursor: 'pointer',
+                      fontSize: '0.9rem',
+                      color: '#e74c3c',
+                      transition: 'background-color 0.2s ease',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.75rem',
+                      fontWeight: '500',
+                    }}
+                    className="hover:bg-red-50"
+                  >
+                    <span>🚪</span>
+                    <span>Logout</span>
+                  </button>
                 </div>
               </div>
+            )}
+          </div>
+        </div>
 
-              <div style={{ padding: '0.1rem 0' }}>
+        {showUnpinConfirm && (
+          <div style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0,0,0,0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 2000,
+          }}>
+            <div style={{
+              backgroundColor: 'white',
+              padding: '1.5rem',
+              borderRadius: '12px',
+              maxWidth: '400px',
+              width: '90%',
+              textAlign: 'center',
+              boxShadow: '0 10px 40px rgba(0,0,0,0.2)',
+            }}>
+              <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>📌</div>
+              <h3 style={{ marginTop: 0, marginBottom: '0.5rem', color: '#333' }}>Unpin Module</h3>
+              <p style={{ color: '#666', lineHeight: '1.5' }}>
+                Are you sure you want to unpin <strong>{showUnpinConfirm.name}</strong> from your quick access?
+              </p>
+              <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', marginTop: '1.5rem' }}>
                 <button
-                  onClick={handleProfile}
+                  onClick={() => setShowUnpinConfirm(null)}
                   style={{
-                    width: '100%',
-                    padding: '0.3rem 1rem',
-                    background: 'none',
-                    border: 'none',
-                    textAlign: 'left',
+                    padding: '0.6rem 1.5rem',
+                    border: '1px solid #ddd',
+                    borderRadius: '8px',
+                    backgroundColor: '#f8f9fa',
                     cursor: 'pointer',
                     fontSize: '0.9rem',
-                    color: '#333',
-                    transition: 'background-color 0.2s ease',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.75rem',
-                  }}
-                  className="hover:bg-gray-50"
-                >
-                  <span>👤</span>
-                  <span>My Profile</span>
-                </button>
-
-                <button
-                  onClick={handleChangePassword}
-                  style={{
-                    width: '100%',
-                    padding: '0.3rem 1rem',
-                    background: 'none',
-                    border: 'none',
-                    textAlign: 'left',
-                    cursor: 'pointer',
-                    fontSize: '0.9rem',
-                    color: '#333',
-                    transition: 'background-color 0.2s ease',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.75rem',
-                  }}
-                  className="hover:bg-gray-50"
-                >
-                  <span>🔒</span>
-                  <span>Change Password</span>
-                </button>
-                
-                <button
-                  onClick={handleLogout}
-                  style={{
-                    width: '100%',
-                    padding: '0.3rem 1rem',
-                    marginBottom:'3px',
-                    background: 'none',
-                    border: 'none',
-                    textAlign: 'left',
-                    cursor: 'pointer',
-                    fontSize: '0.9rem',
-                    color: '#e74c3c',
-                    transition: 'background-color 0.2s ease',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.75rem',
                     fontWeight: '500',
+                    transition: 'all 0.2s ease',
                   }}
-                  className="hover:bg-red-50"
+                  className="hover:bg-gray-100"
                 >
-                  <span>🚪</span>
-                  <span>Logout</span>
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    unpinModule(showUnpinConfirm.id);
+                    setShowUnpinConfirm(null);
+                  }}
+                  style={{
+                    padding: '0.6rem 1.5rem',
+                    border: 'none',
+                    borderRadius: '8px',
+                    backgroundColor: '#ff4757',
+                    color: 'white',
+                    cursor: 'pointer',
+                    fontSize: '0.9rem',
+                    fontWeight: '500',
+                    transition: 'all 0.2s ease',
+                  }}
+                  className="hover:bg-red-600"
+                >
+                  Yes, Unpin It
                 </button>
               </div>
             </div>
-          )}
-        </div>
-      </div>
-
-      {showUnpinConfirm && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0,0,0,0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 2000,
-        }}>
-          <div style={{
-            backgroundColor: 'white',
-            padding: '1.5rem',
-            borderRadius: '12px',
-            maxWidth: '400px',
-            width: '90%',
-            textAlign: 'center',
-            boxShadow: '0 10px 40px rgba(0,0,0,0.2)',
-          }}>
-            <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>📌</div>
-            <h3 style={{ marginTop: 0, marginBottom: '0.5rem', color: '#333' }}>Unpin Module</h3>
-            <p style={{ color: '#666', lineHeight: '1.5' }}>
-              Are you sure you want to unpin <strong>{showUnpinConfirm.name}</strong> from your quick access?
-            </p>
-            <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', marginTop: '1.5rem' }}>
-              <button
-                onClick={() => setShowUnpinConfirm(null)}
-                style={{
-                  padding: '0.6rem 1.5rem',
-                  border: '1px solid #ddd',
-                  borderRadius: '8px',
-                  backgroundColor: '#f8f9fa',
-                  cursor: 'pointer',
-                  fontSize: '0.9rem',
-                  fontWeight: '500',
-                  transition: 'all 0.2s ease',
-                }}
-                className="hover:bg-gray-100"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={() => {
-                  unpinModule(showUnpinConfirm.id);
-                  setShowUnpinConfirm(null);
-                }}
-                style={{
-                  padding: '0.6rem 1.5rem',
-                  border: 'none',
-                  borderRadius: '8px',
-                  backgroundColor: '#ff4757',
-                  color: 'white',
-                  cursor: 'pointer',
-                  fontSize: '0.9rem',
-                  fontWeight: '500',
-                  transition: 'all 0.2s ease',
-                }}
-                className="hover:bg-red-600"
-              >
-                Yes, Unpin It
-              </button>
-            </div>
           </div>
-        </div>
-      )}
-    </header>
+        )}
+      </header>
+    </>
   );
 };
 
