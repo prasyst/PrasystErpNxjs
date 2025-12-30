@@ -1,8 +1,8 @@
-'use client';
-
+// components/Sidebar.js (Updated permission checking logic)
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { usePathname } from 'next/navigation';
+import { useSelector } from 'react-redux';
 import { sidebarMenuItems } from './SidebarMenu';
 import {
   MdPushPin, MdOutlinePushPin, MdChevronRight, MdSearch, MdClear, MdMenu,
@@ -10,7 +10,7 @@ import {
 } from 'react-icons/md';
 import { usePin } from '../../app/hooks/usePin';
 import { useRecentPaths } from '../../app/context/RecentPathsContext';
-//
+
 const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => {
   const sidebarRef = useRef(null);
   const router = useRouter();
@@ -29,34 +29,66 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
   const searchInputRef = useRef(null);
   const [activeGreatGrandchild, setActiveGreatGrandchild] = useState(null);
 
+  // Get permissions from Redux
+  const permissions = useSelector(state => state.permission.userPermissions);
+  const currentUser = useSelector(state => state.permission.currentUser);
+  const isLoading = useSelector(state => state.permission.isLoading);
+
   // State for company name
   const [companyName, setCompanyName] = useState('Prasyst');
 
   // Track if user has manually interacted with sidebar
   const [isUserInteracted, setIsUserInteracted] = useState(false);
 
-  // Fetch company name from API
-  useEffect(() => {
-    const fetchCompanyName = async () => {
-      try {
-        // Replace with your actual API endpoint
-        const response = await fetch('/api/company/name');
-        if (response.ok) {
-          const data = await response.json();
-          setCompanyName(data.companyName || 'Prasyst');
-        }
-      } catch (error) {
-        console.error('Failed to fetch company name:', error);
-        // Fallback to localStorage if available
-        const storedName = localStorage.getItem('companyName');
-        if (storedName) {
-          setCompanyName(storedName);
+  // Helper function to check if a module has any permission
+  const hasAnyPermission = (moduleName) => {
+    if (!moduleName) return false;
+    
+    const modulePermissions = permissions[moduleName];
+    if (!modulePermissions) return false;
+    
+    return modulePermissions.ADD_PRIV === "1" ||
+           modulePermissions.EDIT_PRIV === "1" ||
+           modulePermissions.DELETE_PRIV === "1" ||
+           modulePermissions.SELECT_PRIV === "1";
+  };
+
+  // Recursive function to check if any descendant has permission
+  const hasAnyDescendantWithPermission = (item) => {
+    // If item itself has MOD_NAME and permission
+    if (item.MOD_NAME && hasAnyPermission(item.MOD_NAME)) {
+      return true;
+    }
+    
+    // Check children recursively
+    if (item.children && item.children.length > 0) {
+      for (const child of item.children) {
+        if (hasAnyDescendantWithPermission(child)) {
+          return true;
         }
       }
-    };
+    }
+    
+    return false;
+  };
 
-    fetchCompanyName();
-  }, []);
+  // Check if a menu item should be shown based on permissions
+  const shouldShowMenuItem = (item) => {
+    // If no MOD_NAME specified, always show (for backward compatibility)
+    if (!item.MOD_NAME) return true;
+    
+    // Check if this item or any of its descendants have permission
+    return hasAnyDescendantWithPermission(item);
+  };
+
+  // Check if any child should be shown (for parent items)
+  const hasVisibleChildren = (children) => {
+    if (!children || children.length === 0) return false;
+    
+    return children.some(child => {
+      return shouldShowMenuItem(child);
+    });
+  };
 
   // Main navigation function with recent path tracking
   const handleNavigationWithTracking = (path, name, isGrandchild = false) => {
@@ -256,10 +288,43 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
     return false;
   };
 
-  // Filter menu tree
+  // Filter menu tree with permission check
   const filterMenuTree = (items, query) => {
-    if (!query.trim()) return items.filter(item => item);
+    if (!query.trim()) {
+      // No search query, filter based on permissions
+      return items
+        .filter(item => {
+          if (!item) return false;
+          if (item.divider) return true;
+          
+          // Check if item should be shown based on permissions
+          return shouldShowMenuItem(item);
+        })
+        .map(item => {
+          if (!item.children || item.children.length === 0) return item;
 
+          const filteredChildren = filterMenuTree(item.children, query);
+
+          // If item has visible children, keep it even if it doesn't have MOD_NAME
+          if (filteredChildren.length > 0) {
+            return {
+              ...item,
+              children: filteredChildren
+            };
+          }
+          
+          // If no children visible, check if item itself has permission
+          if (item.MOD_NAME && hasAnyPermission(item.MOD_NAME)) {
+            return item;
+          }
+          
+          // If item doesn't have MOD_NAME but has children (shouldn't reach here due to filter above)
+          return item;
+        })
+        .filter(item => item !== null);
+    }
+
+    // With search query, show items that match search
     return items
       .filter(item => {
         if (!item) return false;
@@ -278,12 +343,12 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
           };
         }
 
-        return item;
-      });
+        return null;
+      })
+      .filter(item => item !== null);
   };
 
   const getFilteredMenuItems = () => {
-    if (!searchQuery.trim()) return sidebarMenuItems.filter(item => item);
     return filterMenuTree(sidebarMenuItems, searchQuery);
   };
 
@@ -510,9 +575,6 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
     if (isMobile) {
       if (isOpen) {
         onClose();
-      } else {
-        // This should be handled by parent component
-        // The onClose function should toggle the state
       }
     }
   };
@@ -543,8 +605,11 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
         const isActive = activeParent === item.name;
         const hasValidPath = item.path && item.path !== '#';
 
-        // Check if any child is active for hover effect
-        const isHovered = false; // This can be enhanced with mouse events
+        // Check if this item or any descendant has permission
+        const shouldShow = shouldShowMenuItem(item);
+
+        // If item shouldn't be shown, return null
+        if (!shouldShow) return null;
 
         return (
           <div key={item.name}>
@@ -606,7 +671,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
             {hasChildren && isOpen && !isCollapsed && (
               <div style={{ marginLeft: '10px', borderLeft: '2px solid #e0e0e0', paddingLeft: '12px' }}>
                 {item.children
-                  .filter(child => child)
+                  .filter(child => child && shouldShowMenuItem(child))
                   .map((child) => {
                     const ChildIcon = child.icon;
                     const childIsOpen = openSections[child.name] || (searchQuery.trim() && child.children);
@@ -673,7 +738,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
                         {hasGrandChildren && childIsOpen && (
                           <div style={{ marginLeft: '8px', paddingLeft: '8px' }}>
                             {child.children
-                              .filter(grandchild => grandchild)
+                              .filter(grandchild => grandchild && shouldShowMenuItem(grandchild))
                               .map((grandchild) => {
                                 const GrandIcon = grandchild.icon;
                                 const hasPath = grandchild.path && grandchild.path !== '#';
@@ -762,7 +827,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
                                     {hasGreatGrandChildren && isGrandchildOpen && (
                                       <div style={{ marginLeft: '10px', paddingLeft: '8px', borderLeft: '1px dashed #ddd' }}>
                                         {grandchild.children
-                                          .filter(great => great)
+                                          .filter(great => great && shouldShowMenuItem(great))
                                           .map((greatGrandchild) => {
                                             const GreatIcon = greatGrandchild.icon;
                                             const hasPath = greatGrandchild.path && greatGrandchild.path !== '#';
@@ -823,7 +888,27 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
           </div>
         );
       });
-  }, [openSections, activeParent, activeChild, activeGrandchild, isCollapsed, searchQuery]);
+  }, [openSections, activeParent, activeChild, activeGrandchild, isCollapsed, searchQuery, permissions]);
+
+  // Debug: Log permissions and visible items
+  useEffect(() => {
+    console.log('Current permissions:', permissions);
+    console.log('Filtered menu items:', menuItems);
+    
+    // Check specific example
+    if (permissions['mnuonlybarcode']) {
+      console.log('Order Booking (Only BarCode) permissions:', permissions['mnuonlybarcode']);
+    }
+    if (permissions['mnuTrnSalesOrderWOStk']) {
+      console.log('Order Booking (Hide Stock/FOB/WO) permissions:', permissions['mnuTrnSalesOrderWOStk']);
+    }
+    if (permissions['mnuTrnSales']) {
+      console.log('Sales/Dispatch permissions:', permissions['mnuTrnSales']);
+    }
+    if (permissions['mnuTransaction']) {
+      console.log('Inventory permissions:', permissions['mnuTransaction']);
+    }
+  }, [permissions, menuItems]);
 
   return (
     <>
@@ -871,6 +956,16 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
               letterSpacing: '0.5px',
             }}>
               {companyName}
+              {currentUser && (
+                <span style={{
+                  fontSize: '0.7rem',
+                  color: '#666',
+                  marginLeft: '10px',
+                  fontWeight: 'normal'
+                }}>
+                  ({currentUser})
+                </span>
+              )}
             </h2>
           )}
 
@@ -1010,6 +1105,17 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
               fontStyle: 'italic',
             }}>
               No menu items found for "{searchQuery}"
+            </div>
+          )}
+
+          {!searchQuery.trim() && menuItems.length === 0 && (
+            <div style={{
+              textAlign: 'center',
+              padding: '2rem 1rem',
+              color: '#666',
+              fontStyle: 'italic',
+            }}>
+              No menu items available with current permissions
             </div>
           )}
 
