@@ -691,10 +691,12 @@ export const sidebarMenuItems = [
     children: [
       {
         name: 'Company',
-        icon: FaBuilding,
+        icon: FaBuilding, 
+        // MOD_NAME: "mnuMstCompany",
+        // MOD_NAME: "mnuCompany",
         path: '/masterpage?activeTab=company',
         children: [
-          { name: 'Company', icon: MdDomain, path: '/masters/company/company' },
+          { name: 'Company', icon: MdDomain,MOD_NAME: "mnuMstCompany", path: '/masters/company/company' },
           { name: 'Company Area', icon: MdMap, path: '#' },
           { name: 'Company Division', icon: MdOutlineGroupWork, path: '#' },
           { name: 'Stock Type', icon: MdCategory, path: '#' },
@@ -715,20 +717,22 @@ export const sidebarMenuItems = [
       },
       {
         name: 'Vendors',
-        icon: MdLocalShipping,
+        icon: MdLocalShipping, 
+        // MOD_NAME: "mnuVendors",
         path: '/masterpage?activeTab=vendors',
         children: [
           { name: 'Broker', icon: FaHandshake, path: '#' },
           { name: 'Transporter', icon: MdLocalShipping, path: '#' },
-          { name: 'Creditors/Suppliers', icon: FaUserTag, path: '/masters/vendors' },
+          { name: 'Creditors/Suppliers',MOD_NAME: "mnuMstSuppliers", icon: FaUserTag, path: '/masters/vendors' },
         ],
       },
       {
         name: 'Customers',
         icon: MdPeople,
+        // MOD_NAME: "mnuParty",
         path: '/masterpage?activeTab=customers',
         children: [
-          { name: 'Debtors/Customers', icon: MdPeople, path: '/masters/customers' },
+          { name: 'Debtors/Customers', MOD_NAME: "mnuMstrClient", icon: MdPeople, path: '/masters/customers' },
           { name: 'Category (For Rate)', icon: MdCategory, path: '#' },
           { name: 'Customer Group', icon: AiOutlineUsergroupAdd, path: '#' },
           { name: 'Consignee', icon: MdPersonAdd, path: '#' },
@@ -747,20 +751,54 @@ export const sidebarMenuItems = [
       },
       {
         name: 'Products',
-        icon: FaBoxOpen,
+        icon: FaBoxOpen, 
+        // MOD_NAME: "mnuMstrProduct",
         path: '/masterpage?activeTab=products',
         children: [
-          { name: 'Category Master', icon: MdCategory, path: '/masters/products/category' },
-          { name: 'Product Group', icon: AiOutlineNodeIndex, path: '/masters/products/productgrp' },
-          { name: 'Product Master', icon: MdLocalMall, path: '/masters/products/product' },
-          { name: 'Style Master', icon: MdCollectionsBookmark, path: '#' },
-          { name: 'Type Master', icon: MdCategory, path: '/masters/products/type' },
-          { name: 'Shade Master', icon: MdBrandingWatermark, path: '/masters/products/shade' },
-          { name: 'Pattern Master', icon: MdCollectionsBookmark, path: '/masters/products/pattern' },
-          { name: 'Brand Master', icon: MdBrandingWatermark, path: '/masters/products/brand' },
-          { name: 'Unit Master', icon: MdStraighten, path: '/masters/products/unit' },
-          { name: 'Web Collection', icon: MdCollectionsBookmark, path: '/masters/products/webcollection' },
-          { name: 'Quality', icon: MdBrandingWatermark, path: '/masters/products/quality' },
+          { name: 'Category Master', 
+            // MOD_NAME: "mnuMstrFinishPrdCateg",
+             icon: MdCategory, path: '/masters/products/category' },
+
+          { name: 'Product Group',
+            // MOD_NAME: "mnuProdGrp", 
+            icon: AiOutlineNodeIndex, path: '/masters/products/productgrp' },
+
+          { name: 'Product Master', 
+            // MOD_NAME: "ToolStripMenuItem20", 
+            icon: MdLocalMall, path: '/masters/products/product' },
+
+          { name: 'Style Master',
+            // MOD_NAME: "mnuMstStyleRate",
+             icon: MdCollectionsBookmark, path: '#' },
+
+          { name: 'Type Master',
+            //  MOD_NAME: "mnuMstStyleRate",
+              icon: MdCategory, path: '/masters/products/type' },
+
+          { name: 'Shade Master',
+            // MOD_NAME: "mnuRmShadeMast",
+             icon: MdBrandingWatermark, path: '/masters/products/shade' },
+
+          { name: 'Pattern Master', 
+            // MOD_NAME: "PatternMasterToolStripMenuItem", 
+            icon: MdCollectionsBookmark, path: '/masters/products/pattern' },
+
+          { name: 'Brand Master',
+            // MOD_NAME: "mnuMstrBrand",
+             icon: MdBrandingWatermark, path: '/masters/products/brand' },
+
+          { name: 'Unit Master',  
+            //  MOD_NAME: "mnuMstrUnit",
+             icon: MdStraighten, path: '/masters/products/unit' },
+
+          { name: 'Web Collection', 
+            // MOD_NAME: "mnuWebCollection",
+             icon: MdCollectionsBookmark, path: '/masters/products/webcollection' },
+
+          { name: 'Quality',
+            // MOD_NAME: "mnuQuality", 
+            icon: MdBrandingWatermark, path: '/masters/products/quality' },
+
           { name: 'RackMst', icon: MdBuild, path: '/masters/products/rack' },
           { name: 'Prod Series', icon: MdAssignment, path: '/masters/products/prodseries' },
         ],
@@ -933,6 +971,7 @@ export const sidebarMenuItems = [
   {
     name: 'Inventory',
     icon: MdWarehouse,
+    // MOD_NAME: "mnuTransaction",
     path: '/inventorypage?activeTab=inventory-items',
     children: [
       {
@@ -1125,10 +1164,11 @@ export const sidebarMenuItems = [
       {
         name: 'Sales/Dispatch',
         icon: RiTruckLine,
+        // MOD_NAME: "mnuTrnSales",
         path: '/inventorypage?activeTab=sales-dispatch',
         children: [
-          { name: 'Sales Order Offline', icon: RiShoppingCart2Line, path: '/inverntory/inventory-offline/' },
-          { name: 'Sales Order Barcode', icon: RiShoppingCart2Line, path: '/inverntory/salesorderbarcode' },
+          { name: 'Order Booking (Hide Stock/FOB/WO)',MOD_NAME: "mnuTrnSalesOrderWOStk", icon: RiShoppingCart2Line, path: '/inverntory/inventory-offline/' },
+          { name: 'Order Booking (Only BarCode)',MOD_NAME: "mnuonlybarcode", icon: RiShoppingCart2Line, path: '/inverntory/salesorderbarcode' },
         ],
       },
       {
