@@ -407,15 +407,15 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
   };
 
   // Focus search input on mobile open
-  useEffect(() => {
-    if (isOpen && isMobile) {
-      setTimeout(() => {
-        if (searchInputRef.current) {
-          searchInputRef.current.focus();
-        }
-      }, 100);
-    }
-  }, [isOpen, isMobile]);
+  // useEffect(() => {
+  //   if (isOpen && isMobile) {
+  //     setTimeout(() => {
+  //       if (searchInputRef.current) {
+  //         searchInputRef.current.focus();
+  //       }
+  //     }, 100);
+  //   }
+  // }, [isOpen, isMobile]);
 
   // Set active states based on current path
   useEffect(() => {
@@ -1027,66 +1027,87 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
 
         {/* SEARCH BOX */}
         {(!isCollapsed || isMobile) && (
-          <div style={{
-            marginBottom: '1rem',
-            padding: '0 0.5rem',
-          }}>
-            <div style={{
-              position: 'relative',
-              display: 'flex',
-              alignItems: 'center',
-            }}>
-              <MdSearch
-                size={20}
-                style={{
-                  position: 'absolute',
-                  left: '10px',
-                  color: '#999',
-                  zIndex: 1,
-                }}
-              />
-              <input
-                ref={searchInputRef}
-                type="text"
-                placeholder="Search menus..."
-                value={searchQuery}
-                onChange={handleSearchChange}
-                style={{
-                  width: '100%',
-                  padding: '0.5rem 0.5rem 0.5rem 2.5rem',
-                  border: '1px solid #ddd',
-                  borderRadius: '6px',
-                  fontSize: '0.9rem',
-                  outline: 'none',
-                  transition: 'all 0.2s',
-                  backgroundColor: '#f8f9fa',
-                }}
-                onFocus={(e) => {
-                  e.target.style.borderColor = '#635bff';
-                  e.target.style.boxShadow = '0 0 0 2px rgba(99, 91, 255, 0.1)';
-                }}
-                onBlur={(e) => {
-                  e.target.style.borderColor = '#ddd';
-                  e.target.style.boxShadow = 'none';
-                }}
-              />
-              {searchQuery && (
-                <MdClear
-                  size={18}
-                  onClick={clearSearch}
-                  style={{
-                    position: 'absolute',
-                    right: '10px',
-                    color: '#999',
-                    cursor: 'pointer',
-                    zIndex: 1,
-                  }}
-                  title="Clear search"
-                />
-              )}
-            </div>
-          </div>
-        )}
+  <div style={{
+    marginBottom: '1rem',
+    padding: '0 0.5rem',
+  }}>
+    <div style={{
+      position: 'relative',
+      display: 'flex',
+      alignItems: 'center',
+    }}>
+      {/* Search Icon - Clickable for mobile */}
+      <div
+        onClick={() => {
+          if (searchInputRef.current) {
+            searchInputRef.current.focus();
+            setIsUserInteracted(true);
+          }
+        }}
+        style={{
+          position: 'absolute',
+          left: '10px',
+          color: '#999',
+          zIndex: 1,
+          cursor: 'pointer',
+          padding: '2px',
+          borderRadius: '4px',
+        }}
+        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f0f2ff'}
+        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+        title="Click to search"
+      >
+        <MdSearch size={20} />
+      </div>
+      
+      <input
+        ref={searchInputRef}
+        type="text"
+        placeholder="Search menus..."
+        value={searchQuery}
+        onChange={handleSearchChange}
+        onFocus={() => setIsUserInteracted(true)} // Add this line
+        style={{
+          width: '100%',
+          padding: '0.5rem 0.5rem 0.5rem 2.5rem',
+          border: '1px solid #ddd',
+          borderRadius: '6px',
+          fontSize: '0.9rem',
+          outline: 'none',
+          transition: 'all 0.2s',
+          backgroundColor: '#f8f9fa',
+          cursor: 'text',
+        }}
+      />
+      
+      {/* Clear button */}
+      {searchQuery && (
+        <MdClear
+          size={18}
+          onClick={() => {
+            clearSearch();
+            if (searchInputRef.current) {
+              searchInputRef.current.blur();
+            }
+          }}
+          style={{
+            position: 'absolute',
+            right: '10px',
+            color: '#999',
+            cursor: 'pointer',
+            zIndex: 1,
+            padding: '2px',
+            borderRadius: '4px',
+          }}
+          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f0f2ff'}
+          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+          title="Clear search"
+        />
+      )}
+     
+    </div>
+  </div>
+)}
 
         {/* MENU ITEMS */}
         <div style={{
