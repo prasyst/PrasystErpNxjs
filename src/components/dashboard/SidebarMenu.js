@@ -1169,6 +1169,7 @@ export const sidebarMenuItems = [
         children: [
           { name: 'Order Booking (Hide Stock/FOB/WO)',MOD_NAME: "mnuTrnSalesOrderWOStk", icon: RiShoppingCart2Line, path: '/inverntory/inventory-offline/' },
           { name: 'Order Booking (Only BarCode)',MOD_NAME: "mnuonlybarcode", icon: RiShoppingCart2Line, path: '/inverntory/salesorderbarcode' },
+          { name: 'Scan Barcode', icon: RiShoppingCart2Line, path: '/inverntory/scan-Barcode' },
         ],
       },
       {
