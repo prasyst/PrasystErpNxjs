@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, Suspense } from 'react';
 import {
   Box,
   Grid,
@@ -7,7 +7,6 @@ import {
   Typography,
   Button,
   Stack,
-  Paper,
   IconButton,
   Dialog,
   DialogTitle,
@@ -27,9 +26,20 @@ import {
   Add as AddIcon,
   Delete as DeleteIcon
 } from '@mui/icons-material';
-import { Html5QrcodeScanner, Html5QrcodeScanType } from 'html5-qrcode';
+import dynamic from 'next/dynamic';
 import AutoVibe from '../../../../GlobalFunction/CustomAutoComplete/AutoVibe';
 import axiosInstance from '../../../../lib/axios';
+
+// Dynamic import for Html5QrcodeScanner (client-side only)
+const Html5QrcodeScanner = dynamic(
+  () => import('html5-qrcode').then(mod => mod.Html5QrcodeScanner),
+  { ssr: false }
+);
+
+const Html5QrcodeScanType = dynamic(
+  () => import('html5-qrcode').then(mod => mod.Html5QrcodeScanType),
+  { ssr: false }
+);
 
 const ScanBarcode = () => {
   const [formData, setFormData] = useState({
@@ -80,6 +90,7 @@ const ScanBarcode = () => {
   const [isScanning, setIsScanning] = useState(false);
   const [scannerError, setScannerError] = useState('');
   const [isLoadingBarcode, setIsLoadingBarcode] = useState(false);
+  const [isClient, setIsClient] = useState(false);
   
   // Snackbar
   const [snackbar, setSnackbar] = useState({ 
@@ -135,6 +146,11 @@ const ScanBarcode = () => {
       right: '10px',
     },
   };
+
+  // Check if window is available
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   // Fetch party data
   const fetchPartiesByName = async (name = "") => {
@@ -220,7 +236,7 @@ const ScanBarcode = () => {
     }
   };
 
-  // Fetch style data by barcode - UPDATED
+  // Fetch style data by barcode
   const fetchStyleDataByBarcode = async (barcode) => {
     if (!barcode || barcode.trim() === '') {
       setScannerError('Please enter a barcode');
@@ -233,7 +249,6 @@ const ScanBarcode = () => {
       
       console.log('Fetching data for barcode:', barcode);
       
-      // Try multiple API endpoints or parameters
       const payload = {
         "FGSTYLE_ID": "",
         "FGPRD_KEY": "",
@@ -283,41 +298,6 @@ const ScanBarcode = () => {
       showSnackbar('Error fetching product', 'error');
     } finally {
       setIsLoadingBarcode(false);
-    }
-  };
-
-  // Alternative API call if main one fails
-  const fetchProductByAlternativeMethod = async (barcode) => {
-    try {
-      // Try with different parameters
-      const payloads = [
-        {
-          "FGSTYLE_ID": "",
-          "FGPRD_KEY": "",
-          "FGSTYLE_CODE": barcode,
-          "ALT_BARCODE": "",
-          "FLAG": ""
-        },
-        {
-          "BARCODE": barcode,
-          "FLAG": "BARCODE"
-        }
-      ];
-
-      for (const payload of payloads) {
-        try {
-          const response = await axiosInstance.post('/FGSTYLE/GetFgstyleDrp', payload);
-          if (response.data.DATA && response.data.DATA.length > 0) {
-            return response.data.DATA[0];
-          }
-        } catch (err) {
-          continue;
-        }
-      }
-      return null;
-    } catch (error) {
-      console.error('Alternative fetch error:', error);
-      return null;
     }
   };
 
@@ -564,8 +544,13 @@ const ScanBarcode = () => {
     showSnackbar('Item removed from order', 'info');
   };
 
-  // Initialize scanner
+  // Initialize scanner (client-side only)
   const initScanner = () => {
+    if (typeof window === 'undefined' || !Html5QrcodeScanner || !Html5QrcodeScanType) {
+      console.error('Scanner not available');
+      return;
+    }
+
     if (!qrCodeScannerRef.current && document.getElementById('qr-reader')) {
       try {
         qrCodeScannerRef.current = new Html5QrcodeScanner(
@@ -620,6 +605,10 @@ const ScanBarcode = () => {
 
   // Start scanner
   const startScanner = () => {
+    if (typeof window === 'undefined') {
+      showSnackbar('Scanner not available on server', 'error');
+      return;
+    }
     setShowScanner(true);
     setScannerError('');
   };
@@ -685,7 +674,7 @@ const ScanBarcode = () => {
     });
   };
 
-  // Initialize on component mount
+  // Initialize on component mount (client-side only)
   useEffect(() => {
     fetchPartiesByName();
     
@@ -699,9 +688,9 @@ const ScanBarcode = () => {
     };
   }, []);
 
-  // Initialize scanner when dialog opens
+  // Initialize scanner when dialog opens (client-side only)
   useEffect(() => {
-    if (showScanner) {
+    if (showScanner && isClient && Html5QrcodeScanner) {
       const timer = setTimeout(() => {
         initScanner();
       }, 300);
@@ -710,14 +699,35 @@ const ScanBarcode = () => {
     } else {
       stopScanner();
     }
-  }, [showScanner]);
+  }, [showScanner, isClient]);
 
-  // Focus barcode input on load
+  // Focus barcode input on load (client-side only)
   useEffect(() => {
-    if (barcodeInputRef.current) {
+    if (isClient && barcodeInputRef.current) {
       barcodeInputRef.current.focus();
     }
-  }, []);
+  }, [isClient]);
+
+  // Get window width safely
+  const getWindowWidth = () => {
+    return isClient ? window.innerWidth : 1024; // Default desktop width
+  };
+
+  if (!isClient) {
+    return (
+      <Box sx={{ 
+        p: { xs: 1, sm: 2 }, 
+        maxWidth: '100%', 
+        margin: '0 auto',
+        minHeight: '100vh',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center'
+      }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
 
   return (
     <Box sx={{ 
@@ -906,162 +916,162 @@ const ScanBarcode = () => {
       </Card>
 
       {/* Product Details (Auto-filled after scan) */}
-{(newItemData.product || isLoadingBarcode) && (
-  <Card elevation={2} sx={{ mb: 3 }}>
-    <CardContent>
-      <Typography variant="h6" sx={{ mb: 2, fontSize: '1.1rem' }}>
-        🏷️ Product Details {isLoadingBarcode && '(Loading...)'}
-      </Typography>
-      
-      <Grid container spacing={2}>
-        {/* Barcode and Product */}
-        <Grid item xs={12} sm={6}>
-          <TextField
-            label="Barcode"
-            variant="filled"
-            fullWidth
-            value={newItemData.barcode}
-            disabled
-            sx={textInputSx}
-            size="small"
-          />
-        </Grid>
-        
-        <Grid item xs={12} sm={6}>
-          <TextField
-            label="Product"
-            variant="filled"
-            fullWidth
-            value={newItemData.product}
-            disabled
-            sx={textInputSx}
-            size="small"
-          />
-        </Grid>
-        
-        {/* Style and Type */}
-        <Grid item xs={12} sm={6}>
-          <TextField
-            label="Style"
-            variant="filled"
-            fullWidth
-            value={newItemData.style}
-            disabled
-            sx={textInputSx}
-            size="small"
-          />
-        </Grid>
-        
-        <Grid item xs={12} sm={6}>
-          <TextField
-            label="Type"
-            variant="filled"
-            fullWidth
-            value={newItemData.type}
-            disabled
-            sx={textInputSx}
-            size="small"
-          />
-        </Grid>
-        
-        {/* Shade and MRP */}
-        <Grid item xs={12} sm={6}>
-          <TextField
-            label="Shade"
-            variant="filled"
-            fullWidth
-            value={newItemData.shade}
-            disabled
-            sx={textInputSx}
-            size="small"
-          />
-        </Grid>
-        
-        <Grid item xs={12} sm={6}>
-          <TextField
-            label="MRP"
-            variant="filled"
-            fullWidth
-            value={newItemData.mrp}
-            disabled
-            sx={textInputSx}
-            size="small"
-          />
-        </Grid>
-        
-        {/* Rate and Discount */}
-        <Grid item xs={12} sm={6}>
-          <TextField
-            label="Rate"
-            variant="filled"
-            fullWidth
-            value={newItemData.rate}
-            disabled
-            sx={textInputSx}
-            size="small"
-          />
-        </Grid>
-        
-        <Grid item xs={12} sm={6}>
-          <TextField
-            label="Discount"
-            variant="filled"
-            fullWidth
-            value={newItemData.discount}
-            onChange={(e) => setNewItemData(prev => ({ 
-              ...prev, 
-              discount: e.target.value 
-            }))}
-            sx={textInputSx}
-            size="small"
-            inputProps={{ 
-              type: 'number',
-              step: '0.01',
-              min: '0'
-            }}
-          />
-        </Grid>
-        
-        {/* Sets and Remark */}
-        <Grid item xs={12} sm={6}>
-          <TextField
-            label="Sets"
-            variant="filled"
-            fullWidth
-            value={newItemData.sets}
-            onChange={(e) => setNewItemData(prev => ({ 
-              ...prev, 
-              sets: e.target.value 
-            }))}
-            sx={textInputSx}
-            size="small"
-            inputProps={{ 
-              type: 'number',
-              step: '1',
-              min: '1'
-            }}
-          />
-        </Grid>
+      {(newItemData.product || isLoadingBarcode) && (
+        <Card elevation={2} sx={{ mb: 3 }}>
+          <CardContent>
+            <Typography variant="h6" sx={{ mb: 2, fontSize: '1.1rem' }}>
+              🏷️ Product Details {isLoadingBarcode && '(Loading...)'}
+            </Typography>
+            
+            <Grid container spacing={2}>
+              {/* Barcode and Product */}
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  label="Barcode"
+                  variant="filled"
+                  fullWidth
+                  value={newItemData.barcode}
+                  disabled
+                  sx={textInputSx}
+                  size="small"
+                />
+              </Grid>
+              
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  label="Product"
+                  variant="filled"
+                  fullWidth
+                  value={newItemData.product}
+                  disabled
+                  sx={textInputSx}
+                  size="small"
+                />
+              </Grid>
+              
+              {/* Style and Type */}
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  label="Style"
+                  variant="filled"
+                  fullWidth
+                  value={newItemData.style}
+                  disabled
+                  sx={textInputSx}
+                  size="small"
+                />
+              </Grid>
+              
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  label="Type"
+                  variant="filled"
+                  fullWidth
+                  value={newItemData.type}
+                  disabled
+                  sx={textInputSx}
+                  size="small"
+                />
+              </Grid>
+              
+              {/* Shade and MRP */}
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  label="Shade"
+                  variant="filled"
+                  fullWidth
+                  value={newItemData.shade}
+                  disabled
+                  sx={textInputSx}
+                  size="small"
+                />
+              </Grid>
+              
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  label="MRP"
+                  variant="filled"
+                  fullWidth
+                  value={newItemData.mrp}
+                  disabled
+                  sx={textInputSx}
+                  size="small"
+                />
+              </Grid>
+              
+              {/* Rate and Discount */}
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  label="Rate"
+                  variant="filled"
+                  fullWidth
+                  value={newItemData.rate}
+                  disabled
+                  sx={textInputSx}
+                  size="small"
+                />
+              </Grid>
+              
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  label="Discount"
+                  variant="filled"
+                  fullWidth
+                  value={newItemData.discount}
+                  onChange={(e) => setNewItemData(prev => ({ 
+                    ...prev, 
+                    discount: e.target.value 
+                  }))}
+                  sx={textInputSx}
+                  size="small"
+                  inputProps={{ 
+                    type: 'number',
+                    step: '0.01',
+                    min: '0'
+                  }}
+                />
+              </Grid>
+              
+              {/* Sets and Remark */}
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  label="Sets"
+                  variant="filled"
+                  fullWidth
+                  value={newItemData.sets}
+                  onChange={(e) => setNewItemData(prev => ({ 
+                    ...prev, 
+                    sets: e.target.value 
+                  }))}
+                  sx={textInputSx}
+                  size="small"
+                  inputProps={{ 
+                    type: 'number',
+                    step: '1',
+                    min: '1'
+                  }}
+                />
+              </Grid>
 
-        {/* Remark */}
-        <Grid item xs={12} sm={6}>
-          <TextField
-            label="Remark"
-            variant="filled"
-            fullWidth
-            value={newItemData.remark}
-            onChange={(e) => setNewItemData(prev => ({ 
-              ...prev, 
-              remark: e.target.value 
-            }))}
-            sx={textInputSx}
-            size="small"
-          />
-        </Grid>
-      </Grid>
-    </CardContent>
-  </Card>
-)}
+              {/* Remark */}
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  label="Remark"
+                  variant="filled"
+                  fullWidth
+                  value={newItemData.remark}
+                  onChange={(e) => setNewItemData(prev => ({ 
+                    ...prev, 
+                    remark: e.target.value 
+                  }))}
+                  sx={textInputSx}
+                  size="small"
+                />
+              </Grid>
+            </Grid>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Size Details Table */}
       {sizeDetailsData.length > 0 && (
@@ -1217,296 +1227,296 @@ const ScanBarcode = () => {
       )}
 
       {/* Order Items Table */}
-{tableData.length > 0 && (
-  <Card elevation={2} sx={{ mb: 3 }}>
-    <CardContent>
-      <Typography variant="h6" sx={{ mb: 2, fontSize: '1.1rem' }}>
-        🛒 Order Items ({tableData.length})
-      </Typography>
-      
-      <Box sx={{ 
-        overflowX: 'auto',
-        backgroundColor: '#f8f9fa',
-        borderRadius: 1,
-        p: 1
-      }}>
-        <table style={{ 
-          width: '100%', 
-          borderCollapse: 'collapse',
-          minWidth: '700px'
-        }}>
-          <thead>
-            <tr style={{ backgroundColor: '#e9ecef' }}>
-              <th style={{ 
-                padding: '10px', 
-                border: '1px solid #dee2e6', 
-                textAlign: 'left',
-                fontSize: '14px',
-                fontWeight: '600'
-              }}>Barcode</th>
-              <th style={{ 
-                padding: '10px', 
-                border: '1px solid #dee2e6', 
-                textAlign: 'left',
-                fontSize: '14px',
-                fontWeight: '600'
-              }}>Product</th>
-              <th style={{ 
-                padding: '10px', 
-                border: '1px solid #dee2e6', 
-                textAlign: 'left',
-                fontSize: '14px',
-                fontWeight: '600'
-              }}>Style</th>
-              <th style={{ 
-                padding: '10px', 
-                border: '1px solid #dee2e6', 
-                textAlign: 'left',
-                fontSize: '14px',
-                fontWeight: '600'
-              }}>Type</th>
-              <th style={{ 
-                padding: '10px', 
-                border: '1px solid #dee2e6', 
-                textAlign: 'left',
-                fontSize: '14px',
-                fontWeight: '600'
-              }}>Shade</th>
-              <th style={{ 
-                padding: '10px', 
-                border: '1px solid #dee2e6', 
-                textAlign: 'center',
-                fontSize: '14px',
-                fontWeight: '600'
-              }}>Qty</th>
-              <th style={{ 
-                padding: '10px', 
-                border: '1px solid #dee2e6', 
-                textAlign: 'right',
-                fontSize: '14px',
-                fontWeight: '600'
-              }}>Rate</th>
-              <th style={{ 
-                padding: '10px', 
-                border: '1px solid #dee2e6', 
-                textAlign: 'right',
-                fontSize: '14px',
-                fontWeight: '600'
-              }}>Amount</th>
-              <th style={{ 
-                padding: '10px', 
-                border: '1px solid #dee2e6', 
-                textAlign: 'center',
-                fontSize: '14px',
-                fontWeight: '600'
-              }}>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {tableData.map((item, index) => (
-              <tr key={item.id} style={{ 
-                backgroundColor: index % 2 === 0 ? '#ffffffff' : '#ffffffff',
-                borderBottom: '1px solid #dee2e6'
-              }}>
-                <td style={{ 
-                  padding: '10px', 
-                  border: '1px solid #dee2e6',
-                  fontSize: '14px',
-                  fontFamily: 'monospace'
-                }}>{item.barcode}</td>
-                <td style={{ 
-                  padding: '10px', 
-                  border: '1px solid #dee2e6',
-                  fontSize: '14px'
-                }}>{item.product}</td>
-                <td style={{ 
-                  padding: '10px', 
-                  border: '1px solid #dee2e6',
-                  fontSize: '14px'
-                }}>{item.style}</td>
-                <td style={{ 
-                  padding: '10px', 
-                  border: '1px solid #dee2e6',
-                  fontSize: '14px'
-                }}>
-                  <div>{item.type}</div>
-                  
-                </td>
-                <td style={{ 
-                  padding: '10px', 
-                  border: '1px solid #dee2e6',
-                  fontSize: '14px'
-                }}>
-                 
-                  <div>{item.shade}</div>
-                </td>
-                <td style={{ 
-                  padding: '10px', 
-                  border: '1px solid #dee2e6',
-                  textAlign: 'center',
-                  fontSize: '14px'
-                }}>{item.qty}</td>
-                <td style={{ 
-                  padding: '10px', 
-                  border: '1px solid #dee2e6',
-                  textAlign: 'right',
-                  fontSize: '14px'
-                }}>₹{item.rate}</td>
-                <td style={{ 
-                  padding: '10px', 
-                  border: '1px solid #dee2e6',
-                  textAlign: 'right',
-                  fontSize: '14px',
-                  fontWeight: '500'
-                }}>₹{item.amount.toFixed(2)}</td>
-                <td style={{ 
-                  padding: '10px', 
-                  border: '1px solid #dee2e6',
-                  textAlign: 'center'
-                }}>
-                  <IconButton 
-                    onClick={() => handleDeleteItem(item.id)}
-                    size="small"
-                    sx={{ color: '#f44336' }}
-                  >
-                    <DeleteIcon fontSize="small" />
-                  </IconButton>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </Box>
-      
-      {/* Order Summary */}
       {tableData.length > 0 && (
-        <Box sx={{ 
-          mt: 3, 
-          p: 2, 
-          backgroundColor: '#e8f5e9', 
-          borderRadius: 1 
-        }}>
-          <Typography variant="h6" sx={{ mb: 2 }}>📊 Order Summary</Typography>
-          <Grid container spacing={2} sx={{ mt: 1 }}>
-            <Grid item xs={6} sm={3}>
-              <Typography variant="body2">Total Items:</Typography>
-              <Typography variant="h6">{tableData.length}</Typography>
-            </Grid>
-            <Grid item xs={6} sm={3}>
-              <Typography variant="body2">Total Quantity:</Typography>
-              <Typography variant="h6">{tableData.reduce((sum, item) => sum + item.qty, 0)}</Typography>
-            </Grid>
-            <Grid item xs={6} sm={3}>
-              <Typography variant="body2">Total Amount:</Typography>
-              <Typography variant="h6">₹{tableData.reduce((sum, item) => sum + item.amount, 0).toFixed(2)}</Typography>
-            </Grid>
-            <Grid item xs={6} sm={3}>
-              <Button
-                variant="contained"
-                fullWidth
-                onClick={handleSubmitOrder}
-                sx={{ 
-                  backgroundColor: '#2196F3',
-                  '&:hover': { backgroundColor: '#1976d2' }
-                }}
-              >
-                Submit Order
-              </Button>
-            </Grid>
-          </Grid>
-        </Box>
+        <Card elevation={2} sx={{ mb: 3 }}>
+          <CardContent>
+            <Typography variant="h6" sx={{ mb: 2, fontSize: '1.1rem' }}>
+              🛒 Order Items ({tableData.length})
+            </Typography>
+            
+            <Box sx={{ 
+              overflowX: 'auto',
+              backgroundColor: '#f8f9fa',
+              borderRadius: 1,
+              p: 1
+            }}>
+              <table style={{ 
+                width: '100%', 
+                borderCollapse: 'collapse',
+                minWidth: '700px'
+              }}>
+                <thead>
+                  <tr style={{ backgroundColor: '#e9ecef' }}>
+                    <th style={{ 
+                      padding: '10px', 
+                      border: '1px solid #dee2e6', 
+                      textAlign: 'left',
+                      fontSize: '14px',
+                      fontWeight: '600'
+                    }}>Barcode</th>
+                    <th style={{ 
+                      padding: '10px', 
+                      border: '1px solid #dee2e6', 
+                      textAlign: 'left',
+                      fontSize: '14px',
+                      fontWeight: '600'
+                    }}>Product</th>
+                    <th style={{ 
+                      padding: '10px', 
+                      border: '1px solid #dee2e6', 
+                      textAlign: 'left',
+                      fontSize: '14px',
+                      fontWeight: '600'
+                    }}>Style</th>
+                    <th style={{ 
+                      padding: '10px', 
+                      border: '1px solid #dee2e6', 
+                      textAlign: 'left',
+                      fontSize: '14px',
+                      fontWeight: '600'
+                    }}>Type</th>
+                    <th style={{ 
+                      padding: '10px', 
+                      border: '1px solid #dee2e6', 
+                      textAlign: 'left',
+                      fontSize: '14px',
+                      fontWeight: '600'
+                    }}>Shade</th>
+                    <th style={{ 
+                      padding: '10px', 
+                      border: '1px solid #dee2e6', 
+                      textAlign: 'center',
+                      fontSize: '14px',
+                      fontWeight: '600'
+                    }}>Qty</th>
+                    <th style={{ 
+                      padding: '10px', 
+                      border: '1px solid #dee2e6', 
+                      textAlign: 'right',
+                      fontSize: '14px',
+                      fontWeight: '600'
+                    }}>Rate</th>
+                    <th style={{ 
+                      padding: '10px', 
+                      border: '1px solid #dee2e6', 
+                      textAlign: 'right',
+                      fontSize: '14px',
+                      fontWeight: '600'
+                    }}>Amount</th>
+                    <th style={{ 
+                      padding: '10px', 
+                      border: '1px solid #dee2e6', 
+                      textAlign: 'center',
+                      fontSize: '14px',
+                      fontWeight: '600'
+                    }}>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {tableData.map((item, index) => (
+                    <tr key={item.id} style={{ 
+                      backgroundColor: index % 2 === 0 ? '#ffffffff' : '#ffffffff',
+                      borderBottom: '1px solid #dee2e6'
+                    }}>
+                      <td style={{ 
+                        padding: '10px', 
+                        border: '1px solid #dee2e6',
+                        fontSize: '14px',
+                        fontFamily: 'monospace'
+                      }}>{item.barcode}</td>
+                      <td style={{ 
+                        padding: '10px', 
+                        border: '1px solid #dee2e6',
+                        fontSize: '14px'
+                      }}>{item.product}</td>
+                      <td style={{ 
+                        padding: '10px', 
+                        border: '1px solid #dee2e6',
+                        fontSize: '14px'
+                      }}>{item.style}</td>
+                      <td style={{ 
+                        padding: '10px', 
+                        border: '1px solid #dee2e6',
+                        fontSize: '14px'
+                      }}>
+                        <div>{item.type}</div>
+                      </td>
+                      <td style={{ 
+                        padding: '10px', 
+                        border: '1px solid #dee2e6',
+                        fontSize: '14px'
+                      }}>
+                        <div>{item.shade}</div>
+                      </td>
+                      <td style={{ 
+                        padding: '10px', 
+                        border: '1px solid #dee2e6',
+                        textAlign: 'center',
+                        fontSize: '14px'
+                      }}>{item.qty}</td>
+                      <td style={{ 
+                        padding: '10px', 
+                        border: '1px solid #dee2e6',
+                        textAlign: 'right',
+                        fontSize: '14px'
+                      }}>₹{item.rate}</td>
+                      <td style={{ 
+                        padding: '10px', 
+                        border: '1px solid #dee2e6',
+                        textAlign: 'right',
+                        fontSize: '14px',
+                        fontWeight: '500'
+                      }}>₹{item.amount.toFixed(2)}</td>
+                      <td style={{ 
+                        padding: '10px', 
+                        border: '1px solid #dee2e6',
+                        textAlign: 'center'
+                      }}>
+                        <IconButton 
+                          onClick={() => handleDeleteItem(item.id)}
+                          size="small"
+                          sx={{ color: '#f44336' }}
+                        >
+                          <DeleteIcon fontSize="small" />
+                        </IconButton>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </Box>
+            
+            {/* Order Summary */}
+            {tableData.length > 0 && (
+              <Box sx={{ 
+                mt: 3, 
+                p: 2, 
+                backgroundColor: '#e8f5e9', 
+                borderRadius: 1 
+              }}>
+                <Typography variant="h6" sx={{ mb: 2 }}>📊 Order Summary</Typography>
+                <Grid container spacing={2} sx={{ mt: 1 }}>
+                  <Grid item xs={6} sm={3}>
+                    <Typography variant="body2">Total Items:</Typography>
+                    <Typography variant="h6">{tableData.length}</Typography>
+                  </Grid>
+                  <Grid item xs={6} sm={3}>
+                    <Typography variant="body2">Total Quantity:</Typography>
+                    <Typography variant="h6">{tableData.reduce((sum, item) => sum + item.qty, 0)}</Typography>
+                  </Grid>
+                  <Grid item xs={6} sm={3}>
+                    <Typography variant="body2">Total Amount:</Typography>
+                    <Typography variant="h6">₹{tableData.reduce((sum, item) => sum + item.amount, 0).toFixed(2)}</Typography>
+                  </Grid>
+                  <Grid item xs={6} sm={3}>
+                    <Button
+                      variant="contained"
+                      fullWidth
+                      onClick={handleSubmitOrder}
+                      sx={{ 
+                        backgroundColor: '#2196F3',
+                        '&:hover': { backgroundColor: '#1976d2' }
+                      }}
+                    >
+                      Submit Order
+                    </Button>
+                  </Grid>
+                </Grid>
+              </Box>
+            )}
+          </CardContent>
+        </Card>
       )}
-    </CardContent>
-  </Card>
-)}
 
       {/* Barcode Scanner Dialog */}
-      <Dialog
-        open={showScanner}
-        onClose={stopScanner}
-        maxWidth="md"
-        fullWidth
-        fullScreen={window.innerWidth < 600}
-        PaperProps={{
-          sx: {
-            maxWidth: { xs: '100%', sm: '80%', md: '600px' },
-            height: { xs: '100vh', sm: '600px' },
-            margin: { xs: 0, sm: 'auto' },
-            borderRadius: { xs: 0, sm: 2 }
-          }
-        }}
-      >
-        <DialogTitle sx={{ 
-          display: 'flex', 
-          justifyContent: 'space-between', 
-          alignItems: 'center',
-          backgroundColor: '#1976d2',
-          color: 'white'
-        }}>
-          <Typography variant="h6">📷 Scan Barcode</Typography>
-          <IconButton onClick={stopScanner} sx={{ color: 'white' }}>
-            <CloseIcon />
-          </IconButton>
-        </DialogTitle>
-        
-        <DialogContent sx={{ 
-          p: 2,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center'
-        }}>
-          <Typography variant="body2" sx={{ 
-            mb: 2, 
-            color: 'text.secondary',
-            textAlign: 'center'
+      {isClient && (
+        <Dialog
+          open={showScanner}
+          onClose={stopScanner}
+          maxWidth="md"
+          fullWidth
+          fullScreen={getWindowWidth() < 600}
+          PaperProps={{
+            sx: {
+              maxWidth: { xs: '100%', sm: '80%', md: '600px' },
+              height: { xs: '100vh', sm: '600px' },
+              margin: { xs: 0, sm: 'auto' },
+              borderRadius: { xs: 0, sm: 2 }
+            }
+          }}
+        >
+          <DialogTitle sx={{ 
+            display: 'flex', 
+            justifyContent: 'space-between', 
+            alignItems: 'center',
+            backgroundColor: '#1976d2',
+            color: 'white'
           }}>
-            Point your camera at the barcode
-          </Typography>
+            <Typography variant="h6">📷 Scan Barcode</Typography>
+            <IconButton onClick={stopScanner} sx={{ color: 'white' }}>
+              <CloseIcon />
+            </IconButton>
+          </DialogTitle>
           
-          <Box
-            id="qr-reader"
-            sx={{
-              width: '100%',
-              height: { xs: '70vh', sm: '400px' },
-              border: '2px dashed #ccc',
-              borderRadius: 2,
-              overflow: 'hidden',
-              backgroundColor: '#000'
-            }}
-          />
+          <DialogContent sx={{ 
+            p: 2,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}>
+            <Typography variant="body2" sx={{ 
+              mb: 2, 
+              color: 'text.secondary',
+              textAlign: 'center'
+            }}>
+              Point your camera at the barcode
+            </Typography>
+            
+            <Box
+              id="qr-reader"
+              sx={{
+                width: '100%',
+                height: { xs: '70vh', sm: '400px' },
+                border: '2px dashed #ccc',
+                borderRadius: 2,
+                overflow: 'hidden',
+                backgroundColor: '#000'
+              }}
+            />
+            
+            <Typography variant="caption" sx={{ 
+              mt: 2, 
+              display: 'block', 
+              color: 'text.secondary',
+              textAlign: 'center'
+            }}>
+              The scanner will automatically detect barcodes
+            </Typography>
+          </DialogContent>
           
-          <Typography variant="caption" sx={{ 
-            mt: 2, 
-            display: 'block', 
-            color: 'text.secondary',
-            textAlign: 'center'
+          <DialogActions sx={{ 
+            p: 2,
+            backgroundColor: '#f5f5f5'
           }}>
-            The scanner will automatically detect barcodes
-          </Typography>
-        </DialogContent>
-        
-        <DialogActions sx={{ 
-          p: 2,
-          backgroundColor: '#f5f5f5'
-        }}>
-          <Button 
-            onClick={stopScanner} 
-            variant="outlined"
-            sx={{ mr: 2 }}
-          >
-            Cancel
-          </Button>
-          <Typography variant="body2" sx={{ 
-            flexGrow: 1, 
-            textAlign: 'center', 
-            color: 'text.secondary',
-            fontSize: '12px'
-          }}>
-            Camera permission required • Works best in good light
-          </Typography>
-        </DialogActions>
-      </Dialog>
+            <Button 
+              onClick={stopScanner} 
+              variant="outlined"
+              sx={{ mr: 2 }}
+            >
+              Cancel
+            </Button>
+            <Typography variant="body2" sx={{ 
+              flexGrow: 1, 
+              textAlign: 'center', 
+              color: 'text.secondary',
+              fontSize: '12px'
+            }}>
+              Camera permission required • Works best in good light
+            </Typography>
+          </DialogActions>
+        </Dialog>
+      )}
     </Box>
   );
 };
