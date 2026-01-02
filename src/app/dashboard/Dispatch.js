@@ -29,8 +29,9 @@ const Dispatch = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const currentYear = dayjs().year();
-  const [dateFrom, setDateFrom] = useState(dayjs(`${currentYear}-04-01`));
-  const [dateTo, setDateTo] = useState(dayjs(`${currentYear + 1}-03-31`));
+  const previousYear = currentYear - 1;
+  const [dateFrom, setDateFrom] = useState(dayjs(`${previousYear}-04-01`));
+  const [dateTo, setDateTo] = useState(dayjs(`${currentYear}-03-31`));
   const [openPack, setOpenPack] = useState([]);
   const [dispOrd, setDispOrd] = useState([]);
   const [unBilled, setUnBilled] = useState([]);
@@ -525,13 +526,26 @@ const Dispatch = () => {
             <Paper elevation={4} sx={{ p: 2, borderRadius: 3, background: 'linear-gradient(135deg, #4caf50 0%, #4caf5099 100%)', color: 'white', height: '100%' }}>
               <Stack direction="row" justifyContent="space-between">
                 <Box>
-                  <Typography variant="h6" fontWeight="bold">Dispatched - {dispOrd[0]?.ROWNUM || 0}</Typography>
+                  <Typography variant="h7" fontWeight="bold">Dispatched With Order - {dispOrd[0]?.ROWNUM || 0}</Typography>
                   <Typography variant="h6" fontWeight="bold" mt={0.5}>
                     Value: {isNaN(dispOrd[0]?.AMOUNT) ? "0.00 L" : ((dispOrd[0]?.AMOUNT / 100000).toFixed(2) + ' L')}
                   </Typography>
                   <Typography variant="h6" mt={0.5}> Qty: {dispOrd[0]?.PACKITMDTL_QTY || 0}</Typography>
                 </Box>
                 <ShoppingCart sx={{ fontSize: 40, color: '#3160c7ff' }} />
+              </Stack>
+            </Paper>
+          </Grid>
+
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <Paper elevation={4} sx={{ p: 2, borderRadius: 3, background: 'linear-gradient(135deg, #00bcd4 0%, #4caf50 100%)', color: 'white', height: '100%' }}>
+              <Stack direction="row" justifyContent="space-between">
+                <Box>
+                  <Typography variant="h7" fontWeight='bold'>Dispatched Without Order - {disOrd[0]?.ROWNUM || 0}</Typography>
+                  <Typography variant="h6" fontWeight="bold" mt={0.5}>Value: {isNaN(disOrd[0]?.AMOUNT) ? "0.00" : (disOrd[0]?.AMOUNT / 100000).toFixed(2) + " L"}</Typography>
+                  <Typography variant="h6" mt={0.5}>Qty: {disOrd[0]?.PACKITMDTL_QTY ?? 0}</Typography>
+                </Box>
+                <People sx={{ fontSize: 40, color: '#d486e0ff' }} />
               </Stack>
             </Paper>
           </Grid>
@@ -545,19 +559,6 @@ const Dispatch = () => {
                   <Typography variant="h6" mt={0.5}>Qty: {unBilled[0]?.PACKITMDTL_QTY ?? 0}</Typography>
                 </Box>
                 <InventoryIcon sx={{ fontSize: 40, color: '#0c89afff' }} />
-              </Stack>
-            </Paper>
-          </Grid>
-
-          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-            <Paper elevation={4} sx={{ p: 2, borderRadius: 3, background: 'linear-gradient(135deg, #00bcd4 0%, #4caf50 100%)', color: 'white', height: '100%' }}>
-              <Stack direction="row" justifyContent="space-between">
-                <Box>
-                  <Typography variant="h6" fontWeight='bold'>Disclosed - {disOrd[0]?.ROWNUM || 0}</Typography>
-                  <Typography variant="h6" fontWeight="bold" mt={0.5}>Value: {isNaN(disOrd[0]?.AMOUNT) ? "0.00" : (disOrd[0]?.AMOUNT / 100000).toFixed(2) + " L"}</Typography>
-                  <Typography variant="h6" mt={0.5}>Qty: {disOrd[0]?.PACKITMDTL_QTY ?? 0}</Typography>
-                </Box>
-                <People sx={{ fontSize: 40, color: '#d486e0ff' }} />
               </Stack>
             </Paper>
           </Grid>
