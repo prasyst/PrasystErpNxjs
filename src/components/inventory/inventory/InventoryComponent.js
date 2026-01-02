@@ -175,7 +175,8 @@ export default function InventoryComponent() {
   const inventoryData = [
     {
       id: 'inventory-items',
-      name: 'Inventory',MOD_NAME: "mnuTransaction",
+      name: 'Inventory',
+      // MOD_NAME: "mnuTransaction",
       children: [
         { name: 'Artical/Style Master', icon: SummarizeIcon, path: '/inverntory/style/' },
         { name: 'Style/Parts Master', icon: SummarizeIcon, path: '#' },
@@ -296,8 +297,12 @@ export default function InventoryComponent() {
       // MOD_NAME: "mnuTrnSales",
       children: [
         // { name: 'Stock Enquiry', icon: SearchIcon, path: '/dashboard/stock-enquiry-table' },
-        {name: 'Order Booking (Hide Stock/FOB/WO)',MOD_NAME: "mnuTrnSalesOrderWOStk", icon: ShoppingIcon, path: '/inverntory/inventory-offline' },
-        { name: 'Order Booking (Only BarCode)',MOD_NAME: "mnuonlybarcode", icon: ShoppingIcon, path: '/inverntory/salesorderbarcode' },
+        {name: 'Order Booking (Hide Stock/FOB/WO)',
+          // MOD_NAME: "mnuTrnSalesOrderWOStk",
+           icon: ShoppingIcon, path: '/inverntory/inventory-offline' },
+        { name: 'Order Booking (Only BarCode)',
+          // MOD_NAME: "mnuonlybarcode", 
+          icon: ShoppingIcon, path: '/inverntory/salesorderbarcode' },
         { name: 'Scan Barcode', icon: ShoppingIcon, path: '/inverntory/scan-Barcode' },
         // { name: 'Packaging/Barcode', icon: InventoryIcon, path: '/inverntory/packeging-barcode/' },
       ],
