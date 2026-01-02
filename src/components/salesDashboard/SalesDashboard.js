@@ -136,8 +136,9 @@ const actions = [
 const SalesDashboard = () => {
     const theme = useTheme();
     const currentYear = dayjs().year();
-    const [dateFrom, setDateFrom] = useState(dayjs(`${currentYear}-04-01`));
-    const [dateTo, setDateTo] = useState(dayjs(`${currentYear + 1}-03-31`));
+    const previousYear = currentYear - 1;
+    const [dateFrom, setDateFrom] = useState(dayjs(`${previousYear}-04-01`));
+    const [dateTo, setDateTo] = useState(dayjs(`${currentYear}-03-31`));
     const [tableData, setTableData] = useState([]);
     const [partywise, setPartyWise] = useState([]);
     const [stateWise, setStateWise] = useState([]);
@@ -2044,7 +2045,7 @@ const SalesDashboard = () => {
                                         yAxisId="right"
                                         type="monotone"
                                         dataKey="amt"
-                                        name="Amount (L)" 
+                                        name="Amount (L)"
                                         stroke="#ff7f50"
                                         strokeWidth={3}
                                         dot={{ r: 5 }}

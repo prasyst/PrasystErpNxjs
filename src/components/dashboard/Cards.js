@@ -19,8 +19,10 @@ const Cards = () => {
   const [fcyr, setFcyr] = useState(null);
   const [cobrId, setCobrId] = useState(null);
   const currentYear = dayjs().year();
-  const [dateFrom, setDateFrom] = useState(dayjs(`${currentYear}-04-01`));
-  const [dateTo, setDateTo] = useState(dayjs(`${currentYear + 1}-03-31`));
+  const previousYear = currentYear - 1;
+  const [dateFrom, setDateFrom] = useState(dayjs(`${previousYear}-04-01`));
+  const [dateTo, setDateTo] = useState(dayjs(`${currentYear}-03-31`));
+
   const [totalRev, setTotalRev] = useState([]);
   const [totalColl, setTotalColl] = useState([]);
   const [totalOut, setTotalOut] = useState([]);
