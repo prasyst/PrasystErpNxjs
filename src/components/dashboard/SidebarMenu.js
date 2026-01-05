@@ -696,7 +696,9 @@ export const sidebarMenuItems = [
         // MOD_NAME: "mnuCompany",
         path: '/masterpage?activeTab=company',
         children: [
-          { name: 'Company', icon: MdDomain,MOD_NAME: "mnuMstCompany", path: '/masters/company/company' },
+          { name: 'Company', icon: MdDomain,
+            // MOD_NAME: "mnuMstCompany",
+             path: '/masters/company/company' },
           { name: 'Company Area', icon: MdMap, path: '#' },
           { name: 'Company Division', icon: MdOutlineGroupWork, path: '#' },
           { name: 'Stock Type', icon: MdCategory, path: '#' },
@@ -723,7 +725,9 @@ export const sidebarMenuItems = [
         children: [
           { name: 'Broker', icon: FaHandshake, path: '#' },
           { name: 'Transporter', icon: MdLocalShipping, path: '#' },
-          { name: 'Creditors/Suppliers',MOD_NAME: "mnuMstSuppliers", icon: FaUserTag, path: '/masters/vendors' },
+          { name: 'Creditors/Suppliers',
+            // MOD_NAME: "mnuMstSuppliers",
+             icon: FaUserTag, path: '/masters/vendors' },
         ],
       },
       {
@@ -732,7 +736,9 @@ export const sidebarMenuItems = [
         // MOD_NAME: "mnuParty",
         path: '/masterpage?activeTab=customers',
         children: [
-          { name: 'Debtors/Customers', MOD_NAME: "mnuMstrClient", icon: MdPeople, path: '/masters/customers' },
+          { name: 'Debtors/Customers', 
+            // MOD_NAME: "mnuMstrClient",
+             icon: MdPeople, path: '/masters/customers' },
           { name: 'Category (For Rate)', icon: MdCategory, path: '#' },
           { name: 'Customer Group', icon: AiOutlineUsergroupAdd, path: '#' },
           { name: 'Consignee', icon: MdPersonAdd, path: '#' },
@@ -1167,8 +1173,12 @@ export const sidebarMenuItems = [
         // MOD_NAME: "mnuTrnSales",
         path: '/inventorypage?activeTab=sales-dispatch',
         children: [
-          { name: 'Order Booking (Hide Stock/FOB/WO)',MOD_NAME: "mnuTrnSalesOrderWOStk", icon: RiShoppingCart2Line, path: '/inverntory/inventory-offline/' },
-          { name: 'Order Booking (Only BarCode)',MOD_NAME: "mnuonlybarcode", icon: RiShoppingCart2Line, path: '/inverntory/salesorderbarcode' },
+          { name: 'Order Booking (Hide Stock/FOB/WO)',
+            // MOD_NAME: "mnuTrnSalesOrderWOStk",
+             icon: RiShoppingCart2Line, path: '/inverntory/inventory-offline/' },
+          { name: 'Order Booking (Only BarCode)',
+            // MOD_NAME: "mnuonlybarcode",
+             icon: RiShoppingCart2Line, path: '/inverntory/salesorderbarcode' },
           { name: 'Scan Barcode', icon: RiShoppingCart2Line, path: '/inverntory/scan-Barcode' },
         ],
       },
