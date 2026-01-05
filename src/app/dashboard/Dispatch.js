@@ -875,9 +875,11 @@ const Dispatch = () => {
                   <TextField {...params} label="Party" variant="outlined" placeholder="Select parties" />
                 )}
                 renderOption={(props, option, { selected }) => (
-                  <li {...props} key={option.PARTY_KEY}>
-                    <Checkbox checked={selected} size='small' color='secondary' />
-                    <ListItemText primary={option.PARTY_NAME} />
+                  <li {...props} key={option.PARTY_KEY}
+                    style={{ display: 'flex', alignItems: 'center', padding: '2px 12px', margin: '0' }}
+                  >
+                    <Checkbox checked={selected} size='small' color='secondary' sx={{ p: 0, mr: '8px', height: '15px', width: '18px' }} />
+                    <ListItemText primary={option.PARTY_NAME} sx={{ p: 0, m: 0 }} />
                   </li>
                 )}
                 renderTags={(value, getTagProps) =>
@@ -908,9 +910,11 @@ const Dispatch = () => {
                   <TextField {...params} label="Brand" variant="outlined" placeholder="Select brands" />
                 )}
                 renderOption={(props, option, { selected }) => (
-                  <li {...props} key={option.BRAND_KEY}>
-                    <Checkbox checked={selected} size='small' color='secondary' />
-                    <ListItemText primary={option.BRAND_NAME} />
+                  <li {...props} key={option.BRAND_KEY}
+                    style={{ display: 'flex', alignItems: 'center', padding: '2px 12px', margin: '0' }}
+                  >
+                    <Checkbox checked={selected} size='small' color='secondary' sx={{ p: 0, mr: '8px', height: '15px', width: '18px' }} />
+                    <ListItemText primary={option.BRAND_NAME} sx={{ p: 0, m: 0 }} />
                   </li>
                 )}
                 renderTags={(value, getTagProps) =>
@@ -941,9 +945,11 @@ const Dispatch = () => {
                   <TextField {...params} label="State" variant="outlined" placeholder="Select states" />
                 )}
                 renderOption={(props, option, { selected }) => (
-                  <li {...props} key={option.STATE_KEY}>
-                    <Checkbox checked={selected} size='small' color='secondary' />
-                    <ListItemText primary={option.STATE_NAME} />
+                  <li {...props} key={option.STATE_KEY}
+                    style={{ display: 'flex', alignItems: 'center', padding: '2px 12px', margin: '0' }}
+                  >
+                    <Checkbox checked={selected} size='small' color='secondary' sx={{ p: 0, mr: '8px', height: '15px', width: '18px' }} />
+                    <ListItemText primary={option.STATE_NAME} sx={{ p: 0, m: 0 }} />
                   </li>
                 )}
                 renderTags={(value, getTagProps) =>
@@ -974,9 +980,11 @@ const Dispatch = () => {
                   <TextField {...params} label="Broker" variant="outlined" placeholder="Select brokers" />
                 )}
                 renderOption={(props, option, { selected }) => (
-                  <li {...props} key={option.BROKER_KEY}>
-                    <Checkbox checked={selected} size='small' color='secondary' />
-                    <ListItemText primary={option.BROKER_NAME} />
+                  <li {...props} key={option.BROKER_KEY}
+                    style={{ display: 'flex', alignItems: 'center', padding: '2px 12px', margin: '0' }}
+                  >
+                    <Checkbox checked={selected} size='small' color='secondary' sx={{ p: 0, mr: '8px', height: '15px', width: '18px' }} />
+                    <ListItemText primary={option.BROKER_NAME} sx={{ p: 0, m: 0 }} />
                   </li>
                 )}
                 renderTags={(value, getTagProps) =>

@@ -23,16 +23,6 @@ import { AllCommunityModule, ModuleRegistry } from "ag-grid-community";
 import "ag-grid-community/styles/ag-theme-quartz.css";
 ModuleRegistry.registerModules([AllCommunityModule]);
 
-const dataLine = [
-    { name: 'Week 1', amt: 0, qty: 8400 },
-    { name: 'Week 2', amt: 6000, qty: 1398 },
-    { name: 'Week 3', amt: 2000, qty: 9800 },
-    { name: 'Week 4', amt: 2780, qty: 2080 },
-    { name: 'Week 5', amt: 8890, qty: 2800 },
-    { name: 'Week 6', amt: 2390, qty: 4800 },
-    { name: 'Week 7', amt: 3490, qty: 4300 },
-];
-
 const dataPie = [
     { name: 'Brand A', value: 400 },
     { name: 'Brand B', value: 300 },
@@ -45,21 +35,6 @@ const dataPie = [
 
 const COLORS = ['#4a6eb1', '#67a968', '#ffbb33', '#ff4444', '#635bff', '#555', '#222'];
 
-const dataArea = [
-    { name: 'Week 1', amt: 4000, qty: 2400 },
-    { name: 'Week 2', amt: 3000, qty: 1398 },
-    { name: 'Week 3', amt: 2000, qty: 9800 },
-    { name: 'Week 4', amt: 2780, qty: 3908 },
-    { name: 'Week 5', amt: 1890, qty: 4800 },
-    { name: 'Week 6', amt: 2390, qty: 3800 },
-    { name: 'Week 7', amt: 3490, qty: 4300 },
-    { name: 'Week 8', amt: 4490, qty: 5300 },
-    { name: 'Week 9', amt: 3490, qty: 2300 },
-    { name: 'Week 10', amt: 5490, qty: 6300 },
-    { name: 'Week 11', amt: 2490, qty: 3300 },
-    { name: 'Week 12', amt: 4490, qty: 5300 },
-];
-
 const Stock = () => {
     const currentYear = dayjs().year();
     const previousYear = currentYear - 1;
@@ -69,6 +44,7 @@ const Stock = () => {
     const [fcyr, setFcyr] = useState(localStorage.getItem("FCYR_KEY"));
     const [totalStck, setTotalStck] = useState([]);
     const [brandData, setBrandData] = useState([]);
+    const [productWise, setProductWise] = useState([]);
     const [recentStock, setRecentStock] = useState([]);
     const [recentLoading, setRecentLoading] = useState(false);
     const [productType, setProductType] = useState([]);
@@ -76,6 +52,10 @@ const Stock = () => {
     const [brandOption, setBrandOption] = useState([]);
     const [categoryOption, setCategoryOption] = useState([]);
     const [ProductOption, setProductOption] = useState([]);
+    const [StylesOption, setStyleOption] = useState([]);
+    const [TypeOption, setTypeOption] = useState([]);
+    const [ShadeOption, setShadeOption] = useState([]);
+    const [PtnOption, setPtnOption] = useState([]);
     const [stockFilter, setStockFilter] = useState({
         Brandfilter: [],
         Catfilter: [],
@@ -86,13 +66,6 @@ const Stock = () => {
         Ptnfilter: [],
     });
 
-    const categoryOptions = ['Category 1', 'Category 2', 'Category 3'];
-    const productOptions = ['Product X', 'Product Y', 'Product Z'];
-    const styleOptions = ['Style 1', 'Style 2', 'Style 3'];
-    const typeOptions = ['Type A', 'Type B', 'Type C'];
-    const shadeOptions = ['shade A', 'shade B', 'shade C'];
-    const ptnOptions = ['Ptn A', 'Ptn B', 'Ptn C'];
-
     const handleAutocompleteChange = (event, newValue, filterName) => {
         setStockFilter((prev) => ({
             ...prev,
@@ -100,8 +73,9 @@ const Stock = () => {
         }));
     };
 
-    const applyFilters = () => {
+    const handleApplyFilters = () => {
         setOpenDialog(false);
+        handleGetData();
     };
 
     const clearFilters = () => {
@@ -115,6 +89,7 @@ const Stock = () => {
             Ptnfilter: [],
         })
         setOpenDialog(false);
+        handleGetData();
     };
 
     const handleOpenDialog = () => {
@@ -146,28 +121,34 @@ const Stock = () => {
     useEffect(() => {
         fetchTotalStock();
         fetchBrandWiseStock();
+        fetchProductWiseStock();
         fetchRecentStock();
         fetchProductType();
         fetchBrandDrp();
         fetchCategory();
         fetchProduct();
+        fetchStyles();
+        fetchType();
+        fetchShade();
+        fetchFgPtn();
     }, []);
 
     const handleGetData = () => {
         fetchTotalStock();
         fetchBrandWiseStock();
+        fetchProductWiseStock();
         fetchRecentStock();
         fetchProductType();
     };
 
     const filterStockPayload = () => ({
         Brandfilter: stockFilter.Brandfilter.map((item) => item.BRAND_KEY).join(',') || '',
-        Catfilter: stockFilter.Catfilter.map((item) => item.CAT_KEY).join(',') || '',
-        Prdfilter: stockFilter.Prdfilter.map((item) => item.Prd_KEY).join(',') || '',
-        Stylefilter: stockFilter.Stylefilter.map((item) => item.STYLE_KEY).join(',') || '',
-        Typefilter: stockFilter.Typefilter.map((item) => item.TYPE_KEY).join(',') || '',
-        Shadefilter: stockFilter.Shadefilter.map((item) => item.SHADE_KEY).join(',') || '',
-        Ptnfilter: stockFilter.Ptnfilter.map((item) => item.PTN_KEY).join(',') || ''
+        Catfilter: stockFilter.Catfilter.map((item) => item.FGCAT_KEY).join(',') || '',
+        Prdfilter: stockFilter.Prdfilter.map((item) => item.FGPRD_KEY).join(',') || '',
+        Stylefilter: stockFilter.Stylefilter.map((item) => item.FGSTYLE_CODE).join(',') || '',
+        Typefilter: stockFilter.Typefilter.map((item) => item.FGTYPE_KEY).join(',') || '',
+        Shadefilter: stockFilter.Shadefilter.map((item) => item.FGSHADE_KEY).join(',') || '',
+        Ptnfilter: stockFilter.Ptnfilter.map((item) => item.FGPTN_KEY).join(',') || ''
     });
 
     const fetchTotalStock = async () => {
@@ -186,8 +167,11 @@ const Stock = () => {
             })
             if (response.data.STATUS === 0 && Array.isArray(response.data.DATA)) {
                 setTotalStck(response.data.DATA);
+            } else {
+                setTotalStck([]);
             }
         } catch {
+            setTotalStck([]);
             toast.error("Error while loading total");
         }
     };
@@ -212,11 +196,48 @@ const Stock = () => {
                     qty: item.QTY,
                 }));
                 setBrandData(chartData);
+            } else {
+                setBrandData([])
             }
         } catch (error) {
+            setBrandData([]);
             toast.error("Error from api response.");
         }
     };
+
+    const fetchProductWiseStock = async () => {
+        try {
+            const getFilterPayload = filterStockPayload();
+            const response = await axiosInstance.post('OrderDash/GetStockDashBoard', {
+                COBR_ID: cobrId,
+                FCYR_KEY: fcyr,
+                FROM_DT: dayjs(dateFrom).format('YYYY-MM-DD'),
+                To_DT: dayjs(dateTo).format('YYYY-MM-DD'),
+                Flag: 'Productwise',
+                PageNumber: 1,
+                PageSize: 10,
+                SearchText: "",
+                ...getFilterPayload
+            })
+            if (response.data.STATUS === 0 && Array.isArray(response.data.DATA)) {
+                let prodChart = response.data.DATA.map(item => ({
+                    name: item.FGCAT_NAME,
+                    prodQty: item.QTY
+                }))
+                setProductWise(prodChart);
+            } else {
+                setProductWise([]);
+            }
+        } catch (error) {
+            toast.error("Errror while fetching product wise.");
+        }
+    };
+
+    const lineChartData = brandData.map((brand, index) => ({
+        name: brand.name || `Brand ${index + 1}`,
+        brandQty: brand.qty || 0,
+        productQty: productWise[index]?.prodQty || 0,
+    }));
 
     const fetchRecentStock = async () => {
         setRecentLoading(true);
@@ -235,8 +256,11 @@ const Stock = () => {
             });
             if (response.data.STATUS === 0 && Array.isArray(response.data.DATA)) {
                 setRecentStock(response.data.DATA);
+            } else {
+                setRecentStock([]);
             }
         } catch {
+            setRecentStock([]);
             toast.error("Error from api response.");
         } finally {
             setRecentLoading(false);
@@ -257,8 +281,11 @@ const Stock = () => {
             })
             if (response.data.STATUS === 0 && Array.isArray(response.data.DATA)) {
                 setProductType(response.data.DATA);
+            } else {
+                setProductType([]);
             }
         } catch (error) {
+            setProductType([]);
             toast.error("Error while fetching product type.");
         }
     };
@@ -288,14 +315,73 @@ const Stock = () => {
 
     const fetchProduct = async () => {
         try {
-            const response = await axiosInstance.post("Product/GetFgPrdDrp", {
-                Flag: ""
+            const response = await axiosInstance.post('Product/GetFgPrdDrp', {
+                Flag: "",
             });
-            if (response.response.STATUS === 0) {
+            if (response.data.STATUS === 0 && Array.isArray(response.data.DATA)) {
                 setProductOption(response.data.DATA);
             }
         } catch (error) {
-            // toast.error("Error while fetching product.");
+            toast.error('Error fetching products:', error);
+        }
+    };
+
+    const fetchStyles = async () => {
+        try {
+            const response = await axiosInstance.post("FGSTYLE/GetFgstyleDrp", {
+                FGSTYLE_ID: 0,
+                FGPRD_KEY: "",
+                FGSTYLE_CODE: "",
+                FLAG: "",
+                ALT_BARCODE: ""
+            })
+            if (response.data.STATUS === 0) {
+                setStyleOption(response.data.DATA);
+            }
+        } catch {
+            toast.error("Error while fetching styles.");
+        }
+    };
+
+    const fetchType = async () => {
+        try {
+            const response = await axiosInstance.post("FgType/GetFgTypeDrp", {
+                FGSTYLE_ID: 0,
+                FLAG: ""
+            });
+            if (response.data.STATUS === 0 && Array.isArray(response.data.DATA)) {
+                setTypeOption(response.data.DATA);
+            }
+        } catch (error) {
+            toast.error("Error while fetching the type.");
+        }
+    };
+
+    const fetchShade = async () => {
+        try {
+            const response = await axiosInstance.post("Fgshade/GetFgshadedrp", {
+                FGSTYLE_ID: 0,
+                FLAG: ""
+            })
+            if (response.data.STATUS === 0) {
+                setShadeOption(response.data.DATA);
+            }
+        } catch (error) {
+            toast.error("Error while fetching shade.");
+        }
+    };
+
+    const fetchFgPtn = async () => {
+        try {
+            const response = await axiosInstance.post("Fgptn/GetFgptnDrp", {
+                FGSTYLE_ID: 0,
+                FLAG: ""
+            })
+            if (response.data.STATUS === 0) {
+                setPtnOption(response.data.DATA);
+            }
+        } catch (error) {
+            toast.error("Error while fetching shade.");
         }
     };
 
@@ -394,7 +480,7 @@ const Stock = () => {
                         <Stack direction="row" justifyContent="space-between">
                             <Box>
                                 <Typography variant="body2" fontWeight='bold'>Total Stock Qty</Typography>
-                                <Typography variant="h5" fontWeight="bold" mt={1}>{totalStck[0]?.QTY || 0}</Typography>
+                                <Typography variant="h5" fontWeight="bold" mt={1}>{(totalStck[0]?.QTY / 100000).toFixed(2) + 'L' || 0}</Typography>
                                 <Stack direction="row" alignItems="center" mt={1}>
                                     <TrendingUp sx={{ color: '#4caf50', fontSize: 20 }} />
                                     <Typography variant="body2" color="#4caf50" ml={1}>+$10,250 this month</Typography>
@@ -501,7 +587,7 @@ const Stock = () => {
                                 fontSize: '1.25rem',
                             }}
                         >
-                            Brand Chart
+                            Brand Wise Qty
                         </Typography>
                         <Box sx={{ width: '100%', height: 400 }}>
                             <ResponsiveContainer width="100%" height="100%">
@@ -525,27 +611,28 @@ const Stock = () => {
                             fontWeight="bold"
                             mb={1}
                             sx={{
-                                background: 'linear-gradient(45deg, #a3fd, #22ff, #000, rgba(141, 15, 15, 1))',
+                                background: 'linear-gradient(45deg, #667eea, #764ba2)',
                                 WebkitBackgroundClip: 'text',
                                 WebkitTextFillColor: 'transparent',
-                                color: 'transparent',
-                                display: 'inline-block',
-                                fontSize: '1.25rem',
                             }}
                         >
-                            Line Chart
+                            Brand vs Product Quantity
                         </Typography>
-                        <Box sx={{ width: '100%', height: 400 }}>
+
+                        <Box sx={{ width: '100%', height: 420 }}>
                             <ResponsiveContainer width="100%" height="100%">
-                                <LineChart data={dataLine} margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
+                                <LineChart
+                                    data={lineChartData}
+                                    margin={{ top: 10, right: 30, left: 10, bottom: 20 }}
+                                >
                                     <CartesianGrid strokeDasharray="3 3" />
-                                    <XAxis dataKey="name" />
+                                    <XAxis dataKey="name" angle={-45} textAnchor="end" height={70} interval={0} />
                                     <YAxis />
                                     <Tooltip />
-                                    <Legend />
-                                    <Line type="monotone" dataKey="amt" stroke="#4a6eb1" activeDot={{ r: 8 }} />
-                                    <Line type="monotone" dataKey="qty" stroke="#67a968" activeDot={{ r: 8 }} />
+                                    <Legend verticalAlign="top" height={36} />
 
+                                    <Line type="monotone" dataKey="brandQty" name="Brand Qty" stroke="#4a6eb1" strokeWidth={2} dot={{ r: 5 }} activeDot={{ r: 8 }} />
+                                    <Line type="monotone" dataKey="productQty" name="Product Qty" stroke="#67a968" strokeWidth={2} dot={{ r: 5 }} activeDot={{ r: 8 }} />
                                 </LineChart>
                             </ResponsiveContainer>
                         </Box>
@@ -697,14 +784,14 @@ const Stock = () => {
                         </Typography>
                         <Box sx={{ width: '100%', height: 400 }}>
                             <ResponsiveContainer width="100%" height="100%">
-                                <AreaChart data={dataArea}>
+                                <AreaChart data={lineChartData}>
                                     <CartesianGrid strokeDasharray="3 3" />
                                     <XAxis dataKey="name" />
                                     <YAxis />
                                     <Tooltip />
                                     <Legend />
-                                    <Area type="monotone" dataKey="amt" stroke="#4a6eb1" fill="#4a6eb1" fillOpacity={0.3} activeDot={{ r: 8 }} />
-                                    <Area type="monotone" dataKey="qty" stroke="#67a968" fill="#67a968" fillOpacity={0.3} activeDot={{ r: 8 }} />
+                                    <Area type="monotone" dataKey="brandQty" stroke="#4a6eb1" fill="#4a6eb1" fillOpacity={0.3} activeDot={{ r: 8 }} />
+                                    <Area type="monotone" dataKey="productQty" stroke="67a968" fill="#67a968" fillOpacity={0.3} activeDot={{ r: 8 }} />
                                 </AreaChart>
                             </ResponsiveContainer>
                         </Box>
@@ -722,19 +809,22 @@ const Stock = () => {
                     </Box>
                 </DialogTitle>
                 <DialogContent>
-                    <Grid container spacing={2} py={1}>
+                    <Grid container spacing={1} py={1}>
                         <Grid size={{ xs: 12, md: 6, lg: 6 }}>
                             <Autocomplete
                                 multiple
-                                options={categoryOptions}
+                                options={categoryOption}
                                 value={stockFilter.Catfilter}
                                 onChange={(event, newValue) => handleAutocompleteChange(event, newValue, 'Catfilter')}
+                                getOptionLabel={(option) => option.FGCAT_NAME}
+                                isOptionEqualToValue={(option, value) => option.FGCAT_KEY === value.FGCAT_KEY}
                                 renderInput={(params) => <TextField {...params} label="Category" />}
-                                isOptionEqualToValue={(option, value) => option === value}
                                 renderOption={(props, option, { selected }) => (
-                                    <li {...props}>
-                                        <Checkbox checked={selected} size='small' />
-                                        <ListItemText primary={option} />
+                                    <li {...props} key={option.FGCAT_KEY}
+                                        style={{ display: 'flex', alignItems: 'center', padding: '2px 12px', margin: '0' }}
+                                    >
+                                        <Checkbox checked={selected} size='small' sx={{ p: 0, mr: '8px', height: '15px', width: '18px' }} />
+                                        <ListItemText primary={option.FGCAT_NAME} sx={{ m: 0, p: 0 }} />
                                     </li>
                                 )}
                             />
@@ -743,15 +833,18 @@ const Stock = () => {
                         <Grid size={{ xs: 12, md: 6, lg: 6 }}>
                             <Autocomplete
                                 multiple
-                                options={productOptions}
+                                options={ProductOption}
                                 value={stockFilter.Prdfilter}
                                 onChange={(event, newValue) => handleAutocompleteChange(event, newValue, 'Prdfilter')}
+                                getOptionLabel={(option) => option.FGPRD_NAME}
+                                isOptionEqualToValue={(option, value) => option.FGPRD_KEY === value.FGPRD_KEY}
                                 renderInput={(params) => <TextField {...params} label="Product" />}
-                                isOptionEqualToValue={(option, value) => option === value}
                                 renderOption={(props, option, { selected }) => (
-                                    <li {...props}>
-                                        <Checkbox checked={selected} size='small' />
-                                        <ListItemText primary={option} />
+                                    <li {...props} key={option.FGPRD_KEY || `product-${option.FGPRD_KEY}`}
+                                        style={{ display: 'flex', alignItems: 'center', padding: '2px 12px', margin: '0' }}
+                                    >
+                                        <Checkbox checked={selected} size='small' sx={{ p: 0, mr: '8px', height: '15px', width: '18px' }} />
+                                        <ListItemText primary={option.FGPRD_NAME} sx={{ m: 0, p: 0 }} />
                                     </li>
                                 )}
                             />
@@ -760,15 +853,18 @@ const Stock = () => {
                         <Grid size={{ xs: 12, md: 6, lg: 6 }}>
                             <Autocomplete
                                 multiple
-                                options={styleOptions}
+                                options={StylesOption}
                                 value={stockFilter.Stylefilter}
                                 onChange={(event, newValue) => handleAutocompleteChange(event, newValue, 'Stylefilter')}
+                                getOptionLabel={(option) => option.FGSTYLE_NAME}
+                                isOptionEqualToValue={(option, value) => option.FGSTYLE_CODE === value.FGSTYLE_CODE}
                                 renderInput={(params) => <TextField {...params} label="Style" />}
-                                isOptionEqualToValue={(option, value) => option === value}
                                 renderOption={(props, option, { selected }) => (
-                                    <li {...props}>
-                                        <Checkbox checked={selected} size='small' />
-                                        <ListItemText primary={option} />
+                                    <li {...props} key={option.FGSTYLE_CODE}
+                                        style={{ display: 'flex', alignItems: 'center', padding: '2px 12px', margin: '0' }}
+                                    >
+                                        <Checkbox checked={selected} size='small' sx={{ p: 0, mr: '8px', height: '15px', width: '18px' }} />
+                                        <ListItemText primary={option.FGSTYLE_NAME} sx={{ m: 0, p: 0 }} />
                                     </li>
                                 )}
                             />
@@ -777,15 +873,19 @@ const Stock = () => {
                         <Grid size={{ xs: 12, md: 6, lg: 6 }}>
                             <Autocomplete
                                 multiple
-                                options={typeOptions}
+                                options={TypeOption}
                                 value={stockFilter.Typefilter}
                                 onChange={(event, newValue) => handleAutocompleteChange(event, newValue, 'Typefilter')}
+                                getOptionLabel={(option) => option.FGTYPE_NAME}
+                                isOptionEqualToValue={(option, value) => option.FGTYPE_KEY === value.FGTYPE_KEY}
                                 renderInput={(params) => <TextField {...params} label="Type" />}
-                                isOptionEqualToValue={(option, value) => option === value}
                                 renderOption={(props, option, { selected }) => (
-                                    <li {...props}>
-                                        <Checkbox checked={selected} size='small' />
-                                        <ListItemText primary={option} />
+                                    <li {...props} key={option.FGTYPE_KEY}
+                                        style={{ display: 'flex', alignItems: 'center', padding: '2px 12px', margin: '0' }}
+                                    >
+                                        <Checkbox checked={selected} size="small" sx={{ padding: 0, marginRight: '8px', height: '15px', width: '18px' }} />
+                                        <ListItemText primary={option.FGTYPE_NAME} sx={{ margin: 0, padding: 0 }}
+                                        />
                                     </li>
                                 )}
                             />
@@ -794,15 +894,18 @@ const Stock = () => {
                         <Grid size={{ xs: 12, md: 6, lg: 6 }}>
                             <Autocomplete
                                 multiple
-                                options={shadeOptions}
+                                options={ShadeOption}
                                 value={stockFilter.Shadefilter}
                                 onChange={(event, newValue) => handleAutocompleteChange(event, newValue, 'Shadefilter')}
+                                getOptionLabel={(option) => option.FGSHADE_NAME}
+                                isOptionEqualToValue={(option, value) => option.FGSHADE_KEY === value.FGSHADE_KEY}
                                 renderInput={(params) => <TextField {...params} label="Shade" />}
-                                isOptionEqualToValue={(option, value) => option === value}
                                 renderOption={(props, option, { selected }) => (
-                                    <li {...props}>
-                                        <Checkbox checked={selected} size='small' />
-                                        <ListItemText primary={option} />
+                                    <li {...props} key={option.FGSHADE_KEY}
+                                        style={{ display: 'flex', alignItems: 'center', padding: '2px 12px', margin: '0' }}
+                                    >
+                                        <Checkbox checked={selected} size='small' sx={{ p: 0, mr: '8px', height: '15px', width: '18px' }} />
+                                        <ListItemText primary={option.FGSHADE_NAME} sx={{ m: 0, p: 0 }} />
                                     </li>
                                 )}
                             />
@@ -811,15 +914,18 @@ const Stock = () => {
                         <Grid size={{ xs: 12, md: 6, lg: 6 }}>
                             <Autocomplete
                                 multiple
-                                options={ptnOptions}
+                                options={PtnOption}
                                 value={stockFilter.Ptnfilter}
                                 onChange={(event, newValue) => handleAutocompleteChange(event, newValue, 'Ptnfilter')}
+                                getOptionLabel={(option) => option.FGPTN_NAME}
+                                isOptionEqualToValue={(option, value) => option.FGPTN_KEY === value.FGPTN_KEY}
                                 renderInput={(params) => <TextField {...params} label="PTN" />}
-                                isOptionEqualToValue={(option, value) => option === value}
                                 renderOption={(props, option, { selected }) => (
-                                    <li {...props}>
-                                        <Checkbox checked={selected} size='small' />
-                                        <ListItemText primary={option} />
+                                    <li {...props} key={option.FGPTN_KEY}
+                                        style={{ display: 'flex', alignItems: 'center', padding: '2px, 12px', margin: 0 }}
+                                    >
+                                        <Checkbox checked={selected} size='small' sx={{ p: 0, mr: '8px', height: '15px', width: '18px' }} />
+                                        <ListItemText primary={option.FGPTN_NAME} sx={{ m: 0, p: 0 }} />
                                     </li>
                                 )}
                             />
@@ -835,9 +941,11 @@ const Stock = () => {
                                 isOptionEqualToValue={(option, value) => option.BRAND_KEY === value.BRAND_KEY}
                                 renderInput={(params) => <TextField {...params} label="Brand" />}
                                 renderOption={(props, option, { selected }) => (
-                                    <li {...props} key={option.BRAND_KEY}>
-                                        <Checkbox checked={selected} size='small' />
-                                        <ListItemText primary={option.BRAND_NAME} />
+                                    <li {...props} key={option.BRAND_KEY}
+                                        style={{ display: 'flex', alignItems: 'center', padding: '2px 12px', margin: '0' }}
+                                    >
+                                        <Checkbox checked={selected} size='small' sx={{ p: 0, mr: '8px', height: '15px', width: '18px' }} />
+                                        <ListItemText primary={option.BRAND_NAME} sx={{ m: 0, p: 0 }} />
                                     </li>
                                 )}
                             />
@@ -849,7 +957,7 @@ const Stock = () => {
                     <Button onClick={clearFilters} color="error" variant='contained' size='small'>
                         Clear
                     </Button>
-                    <Button onClick={applyFilters} color="primary" variant='contained' size='small'>
+                    <Button onClick={handleApplyFilters} color="primary" variant='contained' size='small'>
                         Apply
                     </Button>
                 </DialogActions>
