@@ -1,3 +1,4 @@
+
 // 'use client';
 // import React, { useState, useEffect, useRef, useCallback, Suspense } from 'react';
 // import {
@@ -30,16 +31,7 @@
 // import AutoVibe from '../../../../GlobalFunction/CustomAutoComplete/AutoVibe';
 // import axiosInstance from '../../../../lib/axios';
 
-// // Dynamic import for Html5QrcodeScanner (client-side only)
-// const Html5QrcodeScanner = dynamic(
-//   () => import('html5-qrcode').then(mod => mod.Html5QrcodeScanner),
-//   { ssr: false }
-// );
-
-// const Html5QrcodeScanType = dynamic(
-//   () => import('html5-qrcode').then(mod => mod.Html5QrcodeScanType),
-//   { ssr: false }
-// );
+// import { Html5QrcodeScanner, Html5QrcodeScanType } from 'html5-qrcode';
 
 // const ScanBarcode = () => {
 //   const [formData, setFormData] = useState({
@@ -545,63 +537,83 @@
 //   };
 
 //   // Initialize scanner (client-side only)
-//   const initScanner = () => {
-//     if (typeof window === 'undefined' || !Html5QrcodeScanner || !Html5QrcodeScanType) {
-//       console.error('Scanner not available');
-//       return;
-//     }
+//   // Replace initScanner function (around line 385)
+// const initScanner = () => {
+//   if (typeof window === 'undefined') {
+//     console.error('Scanner not available on server');
+//     return;
+//   }
 
-//     if (!qrCodeScannerRef.current && document.getElementById('qr-reader')) {
-//       try {
-//         qrCodeScannerRef.current = new Html5QrcodeScanner(
-//           "qr-reader",
-//           {
-//             fps: 10,
-//             qrbox: { width: 250, height: 250 },
-//             rememberLastUsedCamera: true,
-//             supportedScanTypes: [Html5QrcodeScanType.SCAN_TYPE_CAMERA]
-//           },
-//           false
-//         );
+//   // Clear any existing scanner first
+//   if (qrCodeScannerRef.current) {
+//     qrCodeScannerRef.current.clear().catch(err => {
+//       console.error("Failed to clear existing scanner", err);
+//     });
+//     qrCodeScannerRef.current = null;
+//   }
 
-//         const onScanSuccess = (decodedText, decodedResult) => {
-//           console.log(`Scan result: ${decodedText}`, decodedResult);
-          
-//           // Stop scanner
-//           if (qrCodeScannerRef.current) {
-//             qrCodeScannerRef.current.clear().then(() => {
-//               qrCodeScannerRef.current = null;
-//             }).catch(err => {
-//               console.error("Failed to clear scanner", err);
-//             });
-//           }
-          
-//           setIsScanning(false);
-//           setShowScanner(false);
-          
-//           // Update barcode field and fetch data
-//           setNewItemData(prev => ({ ...prev, barcode: decodedText }));
-          
-//           // Fetch product by scanned barcode
-//           setTimeout(() => {
-//             fetchStyleDataByBarcode(decodedText);
-//           }, 500);
-//         };
+//   const qrReaderElement = document.getElementById('qr-reader');
+//   if (!qrReaderElement) {
+//     console.error('qr-reader element not found');
+//     setScannerError('Scanner element not found. Please try again.');
+//     return;
+//   }
 
-//         const onScanFailure = (error) => {
-//           // Handle scan failure gracefully
-//           console.warn(`Scan error: ${error}`);
-//         };
+//   try {
+//     const scanner = new Html5QrcodeScanner(
+//       "qr-reader",
+//       {
+//         fps: 10,
+//         qrbox: { width: 250, height: 250 },
+//         rememberLastUsedCamera: true,
+//         supportedScanTypes: [Html5QrcodeScanType.SCAN_TYPE_CAMERA],
+//         showTorchButtonIfSupported: true,
+//         showZoomSliderIfSupported: true
+//       },
+//       false
+//     );
 
-//         qrCodeScannerRef.current.render(onScanSuccess, onScanFailure);
-//         setIsScanning(true);
-//       } catch (error) {
-//         console.error("Scanner initialization error:", error);
-//         setScannerError('Failed to initialize scanner. Please refresh and try again.');
-//         showSnackbar('Scanner initialization failed', 'error');
+//     const onScanSuccess = (decodedText, decodedResult) => {
+//       console.log(`Scan result: ${decodedText}`, decodedResult);
+      
+//       // Stop scanner
+//       scanner.clear().then(() => {
+//         qrCodeScannerRef.current = null;
+//         setIsScanning(false);
+//         setShowScanner(false);
+        
+//         // Update barcode field
+//         setNewItemData(prev => ({ ...prev, barcode: decodedText }));
+        
+//         // Fetch product data
+//         fetchStyleDataByBarcode(decodedText);
+        
+//         showSnackbar('Barcode scanned successfully!', 'success');
+//       }).catch(err => {
+//         console.error("Failed to clear scanner", err);
+//       });
+//     };
+
+//     const onScanFailure = (error) => {
+//       // Silently handle scan failures (they happen continuously while scanning)
+//       // Only log actual errors
+//       if (!error.includes('NotFoundException')) {
+//         console.warn(`Scan error: ${error}`);
 //       }
-//     }
-//   };
+//     };
+
+//     scanner.render(onScanSuccess, onScanFailure);
+//     qrCodeScannerRef.current = scanner;
+//     setIsScanning(true);
+//     setScannerError('');
+    
+//   } catch (error) {
+//     console.error("Scanner initialization error:", error);
+//     setScannerError(`Failed to initialize scanner: ${error.message}`);
+//     showSnackbar('Scanner initialization failed. Please check camera permissions.', 'error');
+//     setShowScanner(false);
+//   }
+// };
 
 //   // Start scanner
 //   const startScanner = () => {
@@ -688,18 +700,25 @@
 //     };
 //   }, []);
 
-//   // Initialize scanner when dialog opens (client-side only)
-//   useEffect(() => {
-//     if (showScanner && isClient && Html5QrcodeScanner) {
-//       const timer = setTimeout(() => {
-//         initScanner();
-//       }, 300);
-      
-//       return () => clearTimeout(timer);
-//     } else {
-//       stopScanner();
-//     }
-//   }, [showScanner, isClient]);
+//  // Update useEffect for scanner (around line 565)
+// useEffect(() => {
+//   if (showScanner && isClient) {
+//     // Wait for dialog to fully render
+//     const timer = setTimeout(() => {
+//       initScanner();
+//     }, 500); // Increased timeout
+    
+//     return () => {
+//       clearTimeout(timer);
+//       if (qrCodeScannerRef.current) {
+//         qrCodeScannerRef.current.clear().catch(err => {
+//           console.error("Cleanup error", err);
+//         });
+//         qrCodeScannerRef.current = null;
+//       }
+//     };
+//   }
+// }, [showScanner, isClient]);
 
 //   // Focus barcode input on load (client-side only)
 //   useEffect(() => {
@@ -1527,6 +1546,8 @@
 
 
 
+
+
 'use client';
 import React, { useState, useEffect, useRef, useCallback, Suspense } from 'react';
 import {
@@ -1546,6 +1567,11 @@ import {
   Snackbar,
   Card,
   CardContent,
+  FormControlLabel,
+  Checkbox,
+  FormGroup,
+  Divider,
+  Paper,
 } from '@mui/material';
 import { 
   CameraAlt as CameraIcon, 
@@ -1553,15 +1579,24 @@ import {
   QrCodeScanner as QrCodeIcon,
   Search as SearchIcon,
   Add as AddIcon,
-  Delete as DeleteIcon
+  Delete as DeleteIcon,
+  Visibility as VisibilityIcon,
+  VisibilityOff as VisibilityOffIcon
 } from '@mui/icons-material';
 import dynamic from 'next/dynamic';
 import AutoVibe from '../../../../GlobalFunction/CustomAutoComplete/AutoVibe';
 import axiosInstance from '../../../../lib/axios';
-
 import { Html5QrcodeScanner, Html5QrcodeScanType } from 'html5-qrcode';
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
+import { format, parse } from "date-fns";
 
 const ScanBarcode = () => {
+  // Main state
+  const [showAdvancedFields, setShowAdvancedFields] = useState(false);
+  const [useStyleCodeMode, setUseStyleCodeMode] = useState(false); // NEW: Style code mode toggle
+  
   const [formData, setFormData] = useState({
     Party: '',
     PARTY_KEY: '',
@@ -1573,7 +1608,36 @@ const ScanBarcode = () => {
     SHP_PARTYDTL_ID: '',
     Order_Type: 'Sales And Work-Order',
     ORDBK_TYPE: '2',
-    Status: 'O'
+    Status: 'O',
+    
+    // New fields
+    ORDER_NO: '',
+    ORDER_DATE: new Date().toLocaleDateString('en-GB'),
+    LAST_ORD_NO: '',
+    SERIES: '',
+    PARTY_ORD_NO: '',
+    SEASON: '',
+    ORD_REF_DT: '',
+    QUOTE_NO: '',
+    Broker: '',
+    BROKER_KEY: '',
+    SALESPERSON_1: '',
+    SALEPERSON1_KEY: '',
+    SALESPERSON_2: '',
+    SALEPERSON2_KEY: '',
+    MERCHANDISER_NAME: '',
+    MERCHANDISER_ID: '',
+    REMARK_STATUS: '',
+    GST_APPL: 'N',
+    GST_TYPE: 'STATE',
+    DLV_DT: '',
+    ORG_DLV_DT: '',
+    MAIN_DETAILS: 'G',
+    RACK_MIN: '0',
+    REGISTERED_DEALER: '0',
+    SHORT_CLOSE: '0',
+    READY_SI: '0',
+    PLANNING: '0'
   });
 
   const [newItemData, setNewItemData] = useState({
@@ -1588,8 +1652,19 @@ const ScanBarcode = () => {
     discount: '',
     sets: '',
     convFact: '1',
-    remark: ''
+    remark: '',
+    varPer: '0',
+    stdQty: '',
+    setNo: '',
+    percent: '0',
+    rQty: '',
+    divDt: ''
   });
+
+  // NEW: State for style code input
+  const [styleCodeInput, setStyleCodeInput] = useState('');
+  const [isLoadingStyleCode, setIsLoadingStyleCode] = useState(false);
+  const styleCodeTimeoutRef = useRef(null);
 
   const [sizeDetailsData, setSizeDetailsData] = useState([]);
   const [tableData, setTableData] = useState([]);
@@ -1599,17 +1674,30 @@ const ScanBarcode = () => {
   const [branchOptions, setBranchOptions] = useState([]);
   const [shippingPartyOptions, setShippingPartyOptions] = useState([]);
   const [shippingPlaceOptions, setShippingPlaceOptions] = useState([]);
+  const [brokerOptions, setBrokerOptions] = useState([]);
+  const [salesperson1Options, setSalesperson1Options] = useState([]);
+  const [salesperson2Options, setSalesperson2Options] = useState([]);
+  const [merchandiserOptions, setMerchandiserOptions] = useState([]);
+  const [seasonOptions, setSeasonOptions] = useState([]);
+  const [orderTypeOptions, setOrderTypeOptions] = useState(['Sales And Work-Order', 'Sales Order', 'Work Order']);
+  const [statusOptions] = useState(['O', 'C', 'S']);
 
   // State for mappings
   const [partyMapping, setPartyMapping] = useState({});
   const [branchMapping, setBranchMapping] = useState({});
   const [shippingBranchMapping, setShippingBranchMapping] = useState({});
+  const [brokerMapping, setBrokerMapping] = useState({});
+  const [salesperson1Mapping, setSalesperson1Mapping] = useState({});
+  const [salesperson2Mapping, setSalesperson2Mapping] = useState({});
+  const [merchandiserMapping, setMerchandiserMapping] = useState({});
+  const [seasonMapping, setSeasonMapping] = useState({});
 
   // Scanner state
   const [showScanner, setShowScanner] = useState(false);
   const [isScanning, setIsScanning] = useState(false);
   const [scannerError, setScannerError] = useState('');
   const [isLoadingBarcode, setIsLoadingBarcode] = useState(false);
+  const [isLoadingData, setIsLoadingData] = useState(false);
   const [isClient, setIsClient] = useState(false);
   
   // Snackbar
@@ -1619,9 +1707,13 @@ const ScanBarcode = () => {
     severity: 'success' 
   });
 
+  // Store style data for later use in payload
+  const [currentStyleData, setCurrentStyleData] = useState(null);
+
   const scannerRef = useRef(null);
   const qrCodeScannerRef = useRef(null);
   const barcodeInputRef = useRef(null);
+  const styleCodeInputRef = useRef(null);
 
   const showSnackbar = (message, severity = 'success') => {
     setSnackbar({ open: true, message, severity });
@@ -1667,10 +1759,124 @@ const ScanBarcode = () => {
     },
   };
 
+  const datePickerSx = {
+    "& .MuiInputBase-root": {
+      height: "40px", 
+    },
+    "& .MuiInputBase-input": {
+      padding: "10px 12px", 
+      fontSize: "14px",
+    },
+    "& .MuiInputLabel-root": {
+      top: "-4px", 
+      fontSize: "14px",
+    },
+  };
+
   // Check if window is available
   useEffect(() => {
     setIsClient(true);
   }, []);
+
+  // Initialize data on component mount
+  useEffect(() => {
+    if (isClient) {
+      fetchInitialData();
+      generateOrderNumber();
+    }
+  }, [isClient]);
+
+  // Cleanup timeout on component unmount
+  useEffect(() => {
+    return () => {
+      if (styleCodeTimeoutRef.current) {
+        clearTimeout(styleCodeTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  // Generate order number
+  const generateOrderNumber = async () => {
+    try {
+      setIsLoadingData(true);
+      
+      // Get series prefix
+      const seriesPayload = {
+        "MODULENAME": "Ordbk",
+        "TBLNAME": "Ordbk",
+        "FLDNAME": "Ordbk_KEY",
+        "NCOLLEN": 0,
+        "CPREFIX": "",
+        "COBR_ID": "02",
+        "FCYR_KEY": "25",
+        "TRNSTYPE": "M",
+        "SERIESID": 66,
+        "FLAG": "Series"
+      };
+
+      const seriesResponse = await axiosInstance.post('/GetSeriesSettings/GetSeriesLastNewKey', seriesPayload);
+      
+      if (seriesResponse.data.DATA && seriesResponse.data.DATA.length > 0) {
+        const prefix = seriesResponse.data.DATA[0].CPREFIX;
+        
+        // Get order number
+        const orderPayload = {
+          "MODULENAME": "Ordbk",
+          "TBLNAME": "Ordbk",
+          "FLDNAME": "Ordbk_No",
+          "NCOLLEN": 6,
+          "CPREFIX": prefix,
+          "COBR_ID": "02",
+          "FCYR_KEY": "25",
+          "TRNSTYPE": "T",
+          "SERIESID": 0,
+          "FLAG": ""
+        };
+
+        const orderResponse = await axiosInstance.post('/GetSeriesSettings/GetSeriesLastNewKey', orderPayload);
+        
+        if (orderResponse.data.DATA && orderResponse.data.DATA.length > 0) {
+          const orderData = orderResponse.data.DATA[0];
+          const correctOrdbkKey = `2502${orderData.ID}`;
+          
+          setFormData(prev => ({
+            ...prev,
+            ORDER_NO: orderData.ID,
+            LAST_ORD_NO: orderData.LASTID,
+            SERIES: prefix,
+            ORDBK_KEY: correctOrdbkKey
+          }));
+        }
+      }
+    } catch (error) {
+      console.error('Error generating order number:', error);
+      showSnackbar('Error generating order number', 'error');
+    } finally {
+      setIsLoadingData(false);
+    }
+  };
+
+  // Fetch initial dropdown data
+  const fetchInitialData = async () => {
+    try {
+      setIsLoadingData(true);
+      
+      // Fetch all dropdown data in parallel
+      await Promise.all([
+        fetchPartiesByName(),
+        fetchBrokerData(),
+        fetchSalespersonData(),
+        fetchMerchandiserData(),
+        fetchSeasonData()
+      ]);
+      
+    } catch (error) {
+      console.error('Error fetching initial data:', error);
+      showSnackbar('Error loading initial data', 'error');
+    } finally {
+      setIsLoadingData(false);
+    }
+  };
 
   // Fetch party data
   const fetchPartiesByName = async (name = "") => {
@@ -1756,6 +1962,124 @@ const ScanBarcode = () => {
     }
   };
 
+  // Fetch broker data
+  const fetchBrokerData = async () => {
+    try {
+      const payload = {
+        "PARTY_KEY": "",
+        "FLAG": "Drp",
+        "BROKER_KEY": "",
+        "PageNumber": 1,
+        "PageSize": 100,
+        "SearchText": ""
+      };
+
+      const response = await axiosInstance.post('/BROKER/GetBrokerDrp', payload);
+      if (response.data.DATA && Array.isArray(response.data.DATA)) {
+        const brokers = response.data.DATA.map(item => item.BROKER_NAME || '');
+        setBrokerOptions(brokers);
+        
+        const mapping = {};
+        response.data.DATA.forEach(item => {
+          if (item.BROKER_NAME && item.BROKER_KEY) {
+            mapping[item.BROKER_NAME] = item.BROKER_KEY;
+          }
+        });
+        setBrokerMapping(mapping);
+      }
+    } catch (error) {
+      console.error('Error fetching broker data:', error);
+    }
+  };
+
+  // Fetch salesperson data
+  const fetchSalespersonData = async () => {
+    try {
+      const payload = {
+        "PARTY_KEY": "",
+        "FLAG": "Drp",
+        "SALEPERSON_KEY": "",
+        "PageNumber": 1,
+        "PageSize": 100,
+        "SearchText": ""
+      };
+
+      const response = await axiosInstance.post('/SALEPERSON/GetSALEPERSONDrp', payload);
+      if (response.data.DATA && Array.isArray(response.data.DATA)) {
+        const salespersons = response.data.DATA.map(item => item.SALEPERSON_NAME || '');
+        setSalesperson1Options(salespersons);
+        setSalesperson2Options(salespersons);
+        
+        const mapping = {};
+        response.data.DATA.forEach(item => {
+          if (item.SALEPERSON_NAME && item.SALEPERSON_KEY) {
+            mapping[item.SALEPERSON_NAME] = item.SALEPERSON_KEY;
+          }
+        });
+        setSalesperson1Mapping(mapping);
+        setSalesperson2Mapping(mapping);
+      }
+    } catch (error) {
+      console.error('Error fetching salesperson data:', error);
+    }
+  };
+
+  // Fetch merchandiser data
+  const fetchMerchandiserData = async () => {
+    try {
+      const payload = {
+        "FLAG": "MECH"
+      };
+
+      const response = await axiosInstance.post('/USERS/GetUserLoginDrp', payload);
+      if (response.data.DATA && Array.isArray(response.data.DATA)) {
+        const merchandisers = response.data.DATA.map(item => item.USER_NAME || '');
+        setMerchandiserOptions(merchandisers);
+        
+        const mapping = {};
+        response.data.DATA.forEach(item => {
+          if (item.USER_NAME && item.USER_ID) {
+            mapping[item.USER_NAME] = item.USER_ID;
+          }
+        });
+        setMerchandiserMapping(mapping);
+      }
+    } catch (error) {
+      console.error('Error fetching merchandiser data:', error);
+    }
+  };
+
+  // Fetch season data
+  const fetchSeasonData = async () => {
+    try {
+      const payload = {
+        "FLAG": "P",
+        "TBLNAME": "SEASON",
+        "FLDNAME": "SEASON_KEY",
+        "ID": "",
+        "ORDERBYFLD": "",
+        "CWHAER": "",
+        "CO_ID": ""
+      };
+
+      const response = await axiosInstance.post('/SEASON/GetSEASONDrp', payload);
+      if (response.data.DATA && Array.isArray(response.data.DATA)) {
+        const seasons = response.data.DATA.map(item => item.SEASON_NAME || '');
+        setSeasonOptions(seasons);
+        
+        const mapping = {};
+        response.data.DATA.forEach(item => {
+          if (item.SEASON_NAME && item.SEASON_KEY) {
+            mapping[item.SEASON_NAME] = item.SEASON_KEY;
+          }
+        });
+        setSeasonMapping(mapping);
+      }
+    } catch (error) {
+      console.error('Error fetching season data:', error);
+    }
+  };
+
   // Fetch style data by barcode
   const fetchStyleDataByBarcode = async (barcode) => {
     if (!barcode || barcode.trim() === '') {
@@ -1784,16 +2108,22 @@ const ScanBarcode = () => {
         const styleData = response.data.DATA[0];
         console.log('Style Data:', styleData);
         
+        // Store style data for later use in payload
+        setCurrentStyleData(styleData);
+        
         const barcodeValue = styleData.ALT_BARCODE || styleData.STYSTKDTL_KEY || barcode;
         const shadeValue = styleData.FGSHADE_NAME || '';
+        const sizeValue = styleData.STYSIZE_NAME || '';
         
         // Update new item data
         setNewItemData({
+          ...newItemData,
           barcode: barcodeValue,
           product: styleData.FGPRD_NAME || '',
           style: styleData.FGSTYLE_CODE || styleData.FGSTYLE_NAME || '',
           type: styleData.FGTYPE_NAME || '',
           shade: shadeValue,
+           size: sizeValue,
           mrp: styleData.MRP ? styleData.MRP.toString() : '0',
           rate: styleData.SSP ? styleData.SSP.toString() : '0',
           qty: '',
@@ -1803,7 +2133,7 @@ const ScanBarcode = () => {
           remark: ''
         });
         
-        showSnackbar('Product found successfully!');
+        // showSnackbar('Product found successfully!');
         
         // Fetch size details
         await fetchSizeDetailsForStyle(styleData);
@@ -1821,128 +2151,271 @@ const ScanBarcode = () => {
     }
   };
 
-  // Fetch size details for style
-  const fetchSizeDetailsForStyle = async (styleData) => {
+  // NEW: Fetch style data by style code
+  const fetchStyleDataByCode = async (styleCode) => {
+    if (!styleCode) return;
+
     try {
-      const fgprdKey = styleData.FGPRD_KEY;
-      const fgstyleId = styleData.FGSTYLE_ID;
-      const fgtypeKey = styleData.FGTYPE_KEY || "";
-      const fgshadeKey = styleData.FGSHADE_KEY || "";
-      const fgptnKey = styleData.FGPTN_KEY || "";
-
-      if (!fgprdKey || !fgstyleId) {
-        console.warn('Missing required data for size details');
-        return;
-      }
-
+      setIsLoadingStyleCode(true);
+      setScannerError('');
+      
+      console.log('Fetching data for style code:', styleCode);
+      
       const payload = {
-        "FGSTYLE_ID": fgstyleId,
-        "FGPRD_KEY": fgprdKey,
-        "FGTYPE_KEY": fgtypeKey,
-        "FGSHADE_KEY": fgshadeKey,
-        "FGPTN_KEY": fgptnKey,
-        "MRP": parseFloat(styleData.MRP) || 0,
-        "SSP": parseFloat(styleData.SSP) || 0,
-        "PARTY_KEY": formData.PARTY_KEY || "",
-        "PARTYDTL_ID": formData.PARTYDTL_ID || 0,
+        "FGSTYLE_ID": "",
+        "FGPRD_KEY": "",
+        "FGSTYLE_CODE": styleCode.trim(),
         "FLAG": ""
       };
 
-      console.log('Fetching size details with payload:', payload);
-
-      const response = await axiosInstance.post('/STYSIZE/AddSizeDetail', payload);
-      console.log('Size Details Response:', response.data);
+      const response = await axiosInstance.post('/FGSTYLE/GetFgstyleDrp', payload);
+      console.log('API Response:', response.data);
 
       if (response.data.DATA && response.data.DATA.length > 0) {
-        const transformedSizeDetails = response.data.DATA.map((size, index) => ({
-          STYSIZE_ID: size.STYSIZE_ID || index + 1,
-          STYSIZE_NAME: size.STYSIZE_NAME || `Size ${index + 1}`,
-          FGSTYLE_ID: size.FGSTYLE_ID || fgstyleId,
-          QTY: 0,
-          ITM_AMT: 0,
-          ORDER_QTY: 0,
-          MRP: parseFloat(styleData.MRP) || 0,
-          RATE: parseFloat(styleData.SSP) || 0,
-          FGITEM_KEY: styleData.STYSTKDTL_KEY || ""
-        }));
-
-        setSizeDetailsData(transformedSizeDetails);
-        showSnackbar('Size details loaded! Enter quantities.');
+        const styleData = response.data.DATA[0];
+        console.log('Style Data:', styleData);
+        
+        // Store style data for later use in payload
+        setCurrentStyleData(styleData);
+        
+        const barcodeValue = styleData.ALT_BARCODE || styleData.STYSTKDTL_KEY || '';
+        const shadeValue = styleData.FGSHADE_NAME || '';
+        const sizeValue = styleData.STYSIZE_NAME || '';
+        
+        // Update new item data
+        setNewItemData({
+          ...newItemData,
+          barcode: barcodeValue,
+          product: styleData.FGPRD_NAME || '',
+          style: styleData.FGSTYLE_CODE || styleData.FGSTYLE_NAME || '',
+          type: styleData.FGTYPE_NAME || '',
+          shade: shadeValue,
+          size: sizeValue,
+          mrp: styleData.MRP ? styleData.MRP.toString() : '0',
+          rate: styleData.SSP ? styleData.SSP.toString() : '0',
+          qty: '',
+          discount: '0',
+          sets: '1',
+          convFact: '1',
+          remark: ''
+        });
+        
+        showSnackbar('Product found successfully by style code!');
+        
+        // Fetch size details
+        await fetchSizeDetailsForStyle(styleData);
+        
       } else {
-        // Create default size details if API returns empty
-        const defaultSizes = [
-          { STYSIZE_NAME: 'Default', STYSIZE_ID: 1, QTY: 0, MRP: parseFloat(styleData.MRP) || 0, RATE: parseFloat(styleData.SSP) || 0 }
-        ];
-        setSizeDetailsData(defaultSizes);
-        showSnackbar('Using default size. Enter quantity.', 'info');
+        setScannerError('No product found for this style code. Please check the style code and try again.');
+        showSnackbar('Product not found', 'warning');
       }
     } catch (error) {
-      console.error('Error fetching size details:', error);
-      // Create default size on error
+      console.error('Error fetching style data by code:', error);
+      setScannerError('Error fetching product details. Please try again.');
+      showSnackbar('Error fetching product', 'error');
+    } finally {
+      setIsLoadingStyleCode(false);
+    }
+  };
+
+  // Handle style code input change with debounce
+  const handleStyleCodeInputChange = (e) => {
+    const value = e.target.value;
+    setStyleCodeInput(value);
+    
+    if (styleCodeTimeoutRef.current) {
+      clearTimeout(styleCodeTimeoutRef.current);
+    }
+    
+    if (value && value.trim() !== '') {
+      styleCodeTimeoutRef.current = setTimeout(() => {
+        fetchStyleDataByCode(value.trim());
+      }, 500);
+    }
+  };
+
+  // Handle style code Enter key press
+  const handleStyleCodeKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      if (styleCodeTimeoutRef.current) {
+        clearTimeout(styleCodeTimeoutRef.current);
+      }
+      fetchStyleDataByCode(styleCodeInput.trim());
+    }
+  };
+
+  // Fetch size details for style
+const fetchSizeDetailsForStyle = async (styleData) => {
+  try {
+    const fgprdKey = styleData.FGPRD_KEY;
+    const fgstyleId = styleData.FGSTYLE_ID;
+    const fgtypeKey = styleData.FGTYPE_KEY || "";
+    const fgshadeKey = styleData.FGSHADE_KEY || "";
+    const fgptnKey = styleData.FGPTN_KEY || "";
+
+    if (!fgprdKey || !fgstyleId) {
+      console.warn('Missing required data for size details');
+      return;
+    }
+
+    // CRITICAL FIX: Even if party is not selected, we need to fetch size details
+    // The API might work with default/empty party values for basic size info
+    const payload = {
+      "FGSTYLE_ID": fgstyleId,
+      "FGPRD_KEY": fgprdKey,
+      "FGTYPE_KEY": fgtypeKey,
+      "FGSHADE_KEY": fgshadeKey,
+      "FGPTN_KEY": fgptnKey,
+      "MRP": parseFloat(styleData.MRP) || 0,
+      "SSP": parseFloat(styleData.SSP) || 0,
+      "PARTY_KEY": formData.PARTY_KEY || "",  // Can be empty
+      "PARTYDTL_ID": formData.PARTYDTL_ID || 0,  // Can be 0
+      "FLAG": "S"  // IMPORTANT: Add this flag to get size details without party
+    };
+
+    console.log('Fetching size details with payload:', payload);
+
+    const response = await axiosInstance.post('/STYSIZE/AddSizeDetail', payload);
+    console.log('Size Details Response:', response.data);
+
+    if (response.data.DATA && response.data.DATA.length > 0) {
+      const transformedSizeDetails = response.data.DATA.map((size, index) => ({
+        STYSIZE_ID: size.STYSIZE_ID || index + 1,
+        STYSIZE_NAME: size.STYSIZE_NAME || `Size ${index + 1}`,
+        FGSTYLE_ID: size.FGSTYLE_ID || fgstyleId,
+        QTY: 0,
+        ITM_AMT: 0,
+        ORDER_QTY: 0,
+        MRP: parseFloat(styleData.MRP) || 0,
+        RATE: parseFloat(styleData.SSP) || 0,
+        FGITEM_KEY: styleData.STYSTKDTL_KEY || ""
+      }));
+
+      setSizeDetailsData(transformedSizeDetails);
+      showSnackbar('Size details loaded! Enter quantities.');
+    } else {
+      // ALTERNATIVE FIX: Use the STYSIZE_NAME from the original response
+      const stysizeName = styleData.STYSIZE_NAME || 'Default';
+      const stysizeId = styleData.STYSIZE_ID || 1;
+      
       const defaultSizes = [
-        { STYSIZE_NAME: 'Default', STYSIZE_ID: 1, QTY: 0, MRP: parseFloat(newItemData.mrp) || 0, RATE: parseFloat(newItemData.rate) || 0 }
+        { 
+          STYSIZE_NAME: stysizeName,  // Use the actual size from API
+          STYSIZE_ID: stysizeId, 
+          QTY: 0, 
+          MRP: parseFloat(styleData.MRP) || 0, 
+          RATE: parseFloat(styleData.SSP) || 0 
+        }
       ];
       setSizeDetailsData(defaultSizes);
-      showSnackbar('Could not load size details. Using default.', 'warning');
+      // showSnackbar(`Size details: ${stysizeName}. Enter quantity.`, 'info');
     }
-  };
+  } catch (error) {
+    console.error('Error fetching size details:', error);
+    
+    // FALLBACK: Extract size info from the original style data
+    const stysizeName = styleData.STYSIZE_NAME || 'Default';
+    const stysizeId = styleData.STYSIZE_ID || 1;
+    
+    const defaultSizes = [
+      { 
+        STYSIZE_NAME: stysizeName,  // Use size from the main API response
+        STYSIZE_ID: stysizeId, 
+        QTY: 0, 
+        MRP: parseFloat(newItemData.mrp) || 0, 
+        RATE: parseFloat(newItemData.rate) || 0 
+      }
+    ];
+    setSizeDetailsData(defaultSizes);
+    showSnackbar(`Using size: ${stysizeName}. Enter quantity.`, 'warning');
+  }
+};
 
-  // Handle party selection
-  const handlePartyChange = (event, value) => {
+  // Handle form field changes
+  const handleFormChange = (field, value) => {
     setFormData(prev => ({
       ...prev,
-      Party: value,
-      PARTY_KEY: partyMapping[value] || '',
-      SHIPPING_PARTY: value,
-      SHP_PARTY_KEY: partyMapping[value] || ''
+      [field]: value
     }));
-
-    if (value && partyMapping[value]) {
+    
+    // Handle key mappings
+    if (field === 'Party' && partyMapping[value]) {
+      setFormData(prev => ({
+        ...prev,
+        PARTY_KEY: partyMapping[value],
+        SHIPPING_PARTY: value,
+        SHP_PARTY_KEY: partyMapping[value]
+      }));
       fetchPartyDetails(partyMapping[value]);
     }
-  };
-
-  // Handle shipping party selection
-  const handleShippingPartyChange = (event, value) => {
-    setFormData(prev => ({
-      ...prev,
-      SHIPPING_PARTY: value,
-      SHP_PARTY_KEY: partyMapping[value] || '',
-      SHIPPING_PLACE: ''
-    }));
-
-    if (value && partyMapping[value]) {
+    
+    if (field === 'SHIPPING_PARTY' && partyMapping[value]) {
+      setFormData(prev => ({
+        ...prev,
+        SHP_PARTY_KEY: partyMapping[value],
+        SHIPPING_PLACE: ''
+      }));
       fetchPartyDetails(partyMapping[value], true);
+    }
+    
+    if (field === 'Branch' && branchMapping[value]) {
+      setFormData(prev => ({
+        ...prev,
+        PARTYDTL_ID: branchMapping[value],
+        SHIPPING_PLACE: value,
+        SHP_PARTYDTL_ID: branchMapping[value]
+      }));
+    }
+    
+    if (field === 'SHIPPING_PLACE' && shippingBranchMapping[value]) {
+      setFormData(prev => ({
+        ...prev,
+        SHP_PARTYDTL_ID: shippingBranchMapping[value]
+      }));
+    }
+    
+    if (field === 'Broker' && brokerMapping[value]) {
+      setFormData(prev => ({
+        ...prev,
+        BROKER_KEY: brokerMapping[value]
+      }));
+    }
+    
+    if (field === 'SALESPERSON_1' && salesperson1Mapping[value]) {
+      setFormData(prev => ({
+        ...prev,
+        SALEPERSON1_KEY: salesperson1Mapping[value]
+      }));
+    }
+    
+    if (field === 'SALESPERSON_2' && salesperson2Mapping[value]) {
+      setFormData(prev => ({
+        ...prev,
+        SALEPERSON2_KEY: salesperson2Mapping[value]
+      }));
+    }
+    
+    if (field === 'MERCHANDISER_NAME' && merchandiserMapping[value]) {
+      setFormData(prev => ({
+        ...prev,
+        MERCHANDISER_ID: merchandiserMapping[value]
+      }));
+    }
+    
+    if (field === 'SEASON' && seasonMapping[value]) {
+      setFormData(prev => ({
+        ...prev,
+        CURR_SEASON_KEY: seasonMapping[value]
+      }));
     }
   };
 
-  // Handle branch selection
-  const handleBranchChange = (event, value) => {
-    const branchId = branchMapping[value];
-    setFormData(prev => ({
+  // Handle new item data changes
+  const handleNewItemChange = (field, value) => {
+    setNewItemData(prev => ({
       ...prev,
-      Branch: value,
-      PARTYDTL_ID: branchId,
-      SHIPPING_PLACE: value,
-      SHP_PARTYDTL_ID: branchId
+      [field]: value
     }));
-  };
-
-  // Handle shipping place selection
-  const handleShippingPlaceChange = (event, value) => {
-    const branchId = shippingBranchMapping[value];
-    setFormData(prev => ({
-      ...prev,
-      SHIPPING_PLACE: value,
-      SHP_PARTYDTL_ID: branchId || ''
-    }));
-  };
-
-  // Handle barcode input change
-  const handleBarcodeInputChange = (e) => {
-    const value = e.target.value;
-    setNewItemData(prev => ({ ...prev, barcode: value }));
-    setScannerError('');
   };
 
   // Handle barcode search (manual entry)
@@ -2000,10 +2473,10 @@ const ScanBarcode = () => {
     };
   };
 
-  // Handle confirm button
+  // Handle confirm button for adding item to order
   const handleConfirmItem = () => {
     if (!newItemData.product || !newItemData.style) {
-      showSnackbar("Please scan a valid barcode first", 'error');
+      showSnackbar("Please scan a valid barcode or enter style code first", 'error');
       return;
     }
 
@@ -2029,9 +2502,12 @@ const ScanBarcode = () => {
       discAmt: parseFloat(newItemData.discount) || 0,
       netAmt: netAmount,
       sets: parseFloat(newItemData.sets) || 0,
+      varPer: parseFloat(newItemData.varPer) || 0,
+      remark: newItemData.remark,
       sizeDetails: [...sizeDetailsData],
       convFact: newItemData.convFact,
-      remark: newItemData.remark
+      // Store additional data for payload
+      styleData: currentStyleData // Store the style data for later use in payload
     };
 
     // Add to table
@@ -2050,8 +2526,21 @@ const ScanBarcode = () => {
       discount: '0',
       sets: '1',
       convFact: '1',
-      remark: ''
+      remark: '',
+      varPer: '0',
+      stdQty: '',
+      setNo: '',
+      percent: '0',
+      rQty: '',
+      divDt: ''
     });
+    
+    // Reset style code input if in style code mode
+    if (useStyleCodeMode) {
+      setStyleCodeInput('');
+    }
+    
+    setCurrentStyleData(null);
     setSizeDetailsData([]);
     setScannerError('');
 
@@ -2065,83 +2554,81 @@ const ScanBarcode = () => {
   };
 
   // Initialize scanner (client-side only)
-  // Replace initScanner function (around line 385)
-const initScanner = () => {
-  if (typeof window === 'undefined') {
-    console.error('Scanner not available on server');
-    return;
-  }
+  const initScanner = () => {
+    if (typeof window === 'undefined') {
+      console.error('Scanner not available on server');
+      return;
+    }
 
-  // Clear any existing scanner first
-  if (qrCodeScannerRef.current) {
-    qrCodeScannerRef.current.clear().catch(err => {
-      console.error("Failed to clear existing scanner", err);
-    });
-    qrCodeScannerRef.current = null;
-  }
-
-  const qrReaderElement = document.getElementById('qr-reader');
-  if (!qrReaderElement) {
-    console.error('qr-reader element not found');
-    setScannerError('Scanner element not found. Please try again.');
-    return;
-  }
-
-  try {
-    const scanner = new Html5QrcodeScanner(
-      "qr-reader",
-      {
-        fps: 10,
-        qrbox: { width: 250, height: 250 },
-        rememberLastUsedCamera: true,
-        supportedScanTypes: [Html5QrcodeScanType.SCAN_TYPE_CAMERA],
-        showTorchButtonIfSupported: true,
-        showZoomSliderIfSupported: true
-      },
-      false
-    );
-
-    const onScanSuccess = (decodedText, decodedResult) => {
-      console.log(`Scan result: ${decodedText}`, decodedResult);
-      
-      // Stop scanner
-      scanner.clear().then(() => {
-        qrCodeScannerRef.current = null;
-        setIsScanning(false);
-        setShowScanner(false);
-        
-        // Update barcode field
-        setNewItemData(prev => ({ ...prev, barcode: decodedText }));
-        
-        // Fetch product data
-        fetchStyleDataByBarcode(decodedText);
-        
-        showSnackbar('Barcode scanned successfully!', 'success');
-      }).catch(err => {
-        console.error("Failed to clear scanner", err);
+    // Clear any existing scanner first
+    if (qrCodeScannerRef.current) {
+      qrCodeScannerRef.current.clear().catch(err => {
+        console.error("Failed to clear existing scanner", err);
       });
-    };
+      qrCodeScannerRef.current = null;
+    }
 
-    const onScanFailure = (error) => {
-      // Silently handle scan failures (they happen continuously while scanning)
-      // Only log actual errors
-      if (!error.includes('NotFoundException')) {
-        console.warn(`Scan error: ${error}`);
-      }
-    };
+    const qrReaderElement = document.getElementById('qr-reader');
+    if (!qrReaderElement) {
+      console.error('qr-reader element not found');
+      setScannerError('Scanner element not found. Please try again.');
+      return;
+    }
 
-    scanner.render(onScanSuccess, onScanFailure);
-    qrCodeScannerRef.current = scanner;
-    setIsScanning(true);
-    setScannerError('');
-    
-  } catch (error) {
-    console.error("Scanner initialization error:", error);
-    setScannerError(`Failed to initialize scanner: ${error.message}`);
-    showSnackbar('Scanner initialization failed. Please check camera permissions.', 'error');
-    setShowScanner(false);
-  }
-};
+    try {
+      const scanner = new Html5QrcodeScanner(
+        "qr-reader",
+        {
+          fps: 10,
+          qrbox: { width: 250, height: 250 },
+          rememberLastUsedCamera: true,
+          supportedScanTypes: [Html5QrcodeScanType.SCAN_TYPE_CAMERA],
+          showTorchButtonIfSupported: true,
+          showZoomSliderIfSupported: true
+        },
+        false
+      );
+
+      const onScanSuccess = (decodedText, decodedResult) => {
+        console.log(`Scan result: ${decodedText}`, decodedResult);
+        
+        // Stop scanner
+        scanner.clear().then(() => {
+          qrCodeScannerRef.current = null;
+          setIsScanning(false);
+          setShowScanner(false);
+          
+          // Update barcode field
+          setNewItemData(prev => ({ ...prev, barcode: decodedText }));
+          
+          // Fetch product data
+          fetchStyleDataByBarcode(decodedText);
+          
+          showSnackbar('Barcode scanned successfully!', 'success');
+        }).catch(err => {
+          console.error("Failed to clear scanner", err);
+        });
+      };
+
+      const onScanFailure = (error) => {
+        // Silently handle scan failures
+        if (!error.includes('NotFoundException')) {
+          console.warn(`Scan error: ${error}`);
+        }
+      };
+
+      scanner.render(onScanSuccess, onScanFailure);
+      qrCodeScannerRef.current = scanner;
+      setIsScanning(true);
+      setScannerError('');
+      
+    } catch (error) {
+      console.error("Scanner initialization error:", error);
+      setScannerError(`Failed to initialize scanner: ${error.message}`);
+      showSnackbar('Scanner initialization failed. Please check camera permissions.', 'error');
+      setShowScanner(false);
+    }
+  };
 
   // Start scanner
   const startScanner = () => {
@@ -2165,8 +2652,225 @@ const initScanner = () => {
     setShowScanner(false);
   };
 
+  // Prepare submit payload with FIXED FGSTYLE_ID
+  const prepareSubmitPayload = () => {
+    const dbFlag = 'I';
+    const currentDate = new Date().toISOString().replace('T', ' ').split('.')[0];
+    
+    const userId = localStorage.getItem('USER_ID') || '1';
+    const userName = localStorage.getItem('USER_NAME') || 'Admin';
+    
+    console.log('User Info:', { userId, userName });
+
+    const getStatusValue = (status) => {
+      const statusMapping = {
+        'O': '1',
+        'C': '0',
+        'S': '5'
+      };
+      return statusMapping[status] || "1";
+    };
+
+    // CRITICAL FIX: Use the correct ORDBK_KEY format
+    const correctOrdbkKey = `2502${formData.ORDER_NO}`;
+    
+    console.log('Using ORDBK_KEY:', correctOrdbkKey);
+
+    // Transform table data to ORDBKSTYLIST format with CORRECT FGSTYLE_ID
+    const transformedOrdbkStyleList = tableData.map((item, index) => {
+      const tempId = Date.now() + index;
+      
+      // Get FGSTYLE_ID from stored style data
+      const fgstyleId = item.styleData?.FGSTYLE_ID || 0;
+      const fgprdKey = item.styleData?.FGPRD_KEY || '';
+      const fgtypeKey = item.styleData?.FGTYPE_KEY || '';
+      const fgshadeKey = item.styleData?.FGSHADE_KEY || '';
+      const fgptnKey = item.styleData?.FGPTN_KEY || '';
+      
+      console.log(`Item ${index} - FGSTYLE_ID: ${fgstyleId}, FGPRD_KEY: ${fgprdKey}`);
+
+      return {
+        DBFLAG: 'I',
+        ORDBKSTY_ID: tempId,
+        ORDBK_KEY: correctOrdbkKey,
+        FGPRD_KEY: fgprdKey, // Use actual FGPRD_KEY from style data
+        FGSTYLE_ID: fgstyleId, // CRITICAL FIX: Use actual FGSTYLE_ID from style data
+        FGSTYLE_CODE: item.style || '',
+        FGTYPE_KEY: fgtypeKey,
+        FGSHADE_KEY: fgshadeKey,
+        FGPTN_KEY: fgptnKey,
+        FGITEM_KEY: item.barcode || "",
+        QTY: parseFloat(item.qty) || 0,
+        STYCATRT_ID: 0,
+        FGITM_KEY: item.FGITM_KEY || "",
+        RATE: parseFloat(item.rate) || 0,
+        AMT: parseFloat(item.amount) || 0,
+        DLV_VAR_PERCENT: parseFloat(item.varPer) || 0,
+        DLV_VAR_QTY: 0,
+        OPEN_RATE: "",
+        TERM_KEY: "",
+        TERM_NAME: "",
+        TERM_PERCENT: 0,
+        TERM_FIX_AMT: 0,
+        TERM_RATE: 0,
+        TERM_PERQTY: 0,
+        DISC_AMT: parseFloat(item.discAmt) || 0,
+        NET_AMT: parseFloat(item.netAmt) || 0,
+        INIT_DT: "1900-01-01 00:00:00.000",
+        INIT_REMK: "",
+        INIT_QTY: 0,
+        DLV_DT: "1900-01-01 00:00:00.000",
+        BAL_QTY: parseFloat(item.qty) || 0,
+        STATUS: "1",
+        STYLE_PRN: "",
+        TYPE_PRN: "",
+        MRP_PRN: parseFloat(item.mrp) || 0,
+        REMK: item.remark || "",
+        QUOTEDTL_ID: 0,
+        SETQTY: parseFloat(item.sets) || 0,
+        RQTY: 0,
+        DISTBTR_KEY: "",
+        LOTNO: formData.CURR_SEASON_KEY || "",
+        WOBALQTY: parseFloat(item.qty) || 0,
+        REFORDBKSTY_ID: 0,
+        BOMSTY_ID: 0,
+        ISRMREQ: "N",
+        OP_QTY: 0,
+        ORDBKSTYSZLIST: (item.sizeDetails || []).map((sizeItem, sizeIndex) => ({
+          DBFLAG: 'I',
+          ORDBKSTYSZ_ID: sizeItem.STYSIZE_ID || (tempId * 100 + sizeIndex),
+          ORDBK_KEY: correctOrdbkKey,
+          ORDBKSTY_ID: tempId,
+          STYSIZE_ID: sizeItem.STYSIZE_ID || 0,
+          STYSIZE_NAME: sizeItem.STYSIZE_NAME || "",
+          QTY: parseFloat(sizeItem.QTY) || 0,
+          INIT_DT: "1900-01-01 00:00:00.000",
+          INIT_REMK: "",
+          INIT_QTY: 0,
+          BAL_QTY: parseFloat(sizeItem.QTY) || 0,
+          MRP: parseFloat(item.mrp) || 0,
+          WSP: parseFloat(item.rate) || 0,
+          RQTY: 0,
+          WOBALQTY: parseFloat(sizeItem.QTY) || 0,
+          REFORDBKSTYSZ_ID: 0,
+          OP_QTY: 0,
+          HSNCODE_KEY: "IG001",
+          GST_RATE_SLAB_ID: 39,
+          ITM_AMT: parseFloat(sizeItem.ITM_AMT) || 0,
+          DISC_AMT: 0,
+          NET_AMT: parseFloat(sizeItem.ITM_AMT) || 0,
+          SGST_AMT: 0,
+          CGST_AMT: 0,
+          IGST_AMT: 0,
+          NET_SALE_RATE: 0,
+          OTHER_AMT: 0,
+          ADD_CESS_RATE: 0,
+          ADD_CESS_AMT: 0
+        }))
+      };
+    });
+
+    // Calculate totals
+    const totalQty = tableData.reduce((sum, item) => sum + (item.qty || 0), 0);
+    const totalAmount = tableData.reduce((sum, item) => sum + (item.amount || 0), 0);
+    const totalDiscount = tableData.reduce((sum, item) => sum + (item.discAmt || 0), 0);
+    const netAmount = totalAmount - totalDiscount;
+
+    // Base payload
+    const basePayload = {
+      DBFLAG: dbFlag,
+      FCYR_KEY: "25",
+      CO_ID: "02",
+      COBR_ID: "02",
+      ORDBK_NO: formData.ORDER_NO || "",
+      CURR_SEASON_KEY: formData.CURR_SEASON_KEY || "",
+      ORDBK_X: "",
+      ORDBK_TNA_TYPE: "I",
+      MERCHANDISER_ID: parseInt(formData.MERCHANDISER_ID) || 1,
+      ORD_EVENT_KEY: "",
+      ORG_DLV_DT: formatDateForAPI(formData.ORG_DLV_DT) || "1900-01-01T00:00:00",
+      PLANNING: "0",
+      STATUS: getStatusValue(formData.Status),
+      ORDBK_KEY: correctOrdbkKey,
+      ORDBK_DT: formatDateForAPI(formData.ORDER_DATE) || currentDate,
+      PORD_REF: formData.PARTY_ORD_NO || "",
+      PORD_DT: formatDateForAPI(formData.ORD_REF_DT) || "1900-01-01T00:00:00",
+      QUOTE_NO: formData.QUOTE_NO || "",
+      QUOTE_DT: formatDateForAPI(formData.ORDER_DATE) || currentDate,
+      PARTY_KEY: formData.PARTY_KEY || "",
+      PARTYDTL_ID: parseInt(formData.PARTYDTL_ID) || 0,
+      BROKER_KEY: formData.BROKER_KEY || "",
+      BROKER1_KEY: "",
+      BROKER_COMM: 0.00,
+      COMMON_DLV_DT_FLG: "0",
+      STK_FLG: formData.RACK_MIN || "0",
+      DLV_DT: formatDateForAPI(formData.DLV_DT) || "1900-01-01T00:00:00",
+      DLV_PLACE: formData.SHIPPING_PLACE || "",
+      TRSP_KEY: "",
+      ORDBK_AMT: parseFloat(totalAmount) || 0,
+      REMK: formData.REMARK_STATUS || "",
+      CURRN_KEY: "",
+      EX_RATE: 0,
+      IMP_ORDBK_KEY: "",
+      ORDBK_TYPE: formData.ORDBK_TYPE || "2",
+      ROUND_OFF_DESC: "",
+      ROUND_OFF: 0.00,
+      BOMSTY_ID: 0,
+      LOTWISE: formData.MAIN_DETAILS === "L" ? "Y" : "N",
+      IsWO: "0",
+      SuplKey: "",
+      KNIT_DT: "1900-01-01 00:00:00.000",
+      OrdBk_CoBr_Id: "02",
+      GR_AMT: parseFloat(totalAmount) || 0,
+      GST_APP: formData.GST_APPL || "N",
+      GST_TYPE: formData.GST_TYPE === "STATE" ? "S" : "I",
+      SHP_PARTY_KEY: formData.SHP_PARTY_KEY || formData.PARTY_KEY,
+      SHP_PARTYDTL_ID: parseInt(formData.SHP_PARTYDTL_ID) || parseInt(formData.PARTYDTL_ID) || 0,
+      STATE_CODE: "",
+      ORDBK_ITM_AMT: parseFloat(totalAmount) || 0,
+      ORDBK_SGST_AMT: 0,
+      ORDBK_CGST_AMT: 0,
+      ORDBK_IGST_AMT: 0,
+      ORDBK_ADD_CESS_AMT: 0,
+      ORDBK_GST_AMT: 0,
+      ORDBK_EXTRA_AMT: 0,
+      ORDBKSTYLIST: transformedOrdbkStyleList,
+      ORDBKTERMLIST: [],
+      ORDBKGSTLIST: [],
+      DISTBTR_KEY: "",
+      SALEPERSON1_KEY: formData.SALEPERSON1_KEY || "",
+      SALEPERSON2_KEY: formData.SALEPERSON2_KEY || "",
+      TRSP_KEY: "",
+      PRICELIST_KEY: "",
+      DESP_PORT: "",
+      CREATED_BY: parseInt(userId) || 1,
+      CREATED_DT: currentDate
+    };
+
+    console.log('Submit Payload:', JSON.stringify(basePayload, null, 2));
+    return basePayload;
+  };
+
+  // Helper function to format date for API
+  const formatDateForAPI = (dateString) => {
+    if (!dateString) return "1900-01-01T00:00:00";
+    
+    try {
+      if (dateString.includes('/')) {
+        const [day, month, year] = dateString.split('/');
+        return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}T00:00:00`;
+      }
+      
+      const date = new Date(dateString);
+      return date.toISOString().split('T')[0] + 'T00:00:00';
+    } catch (error) {
+      console.error('Error formatting date for API:', error);
+      return "1900-01-01T00:00:00";
+    }
+  };
+
   // Submit complete order
-  const handleSubmitOrder = () => {
+  const handleSubmitOrder = async () => {
     if (tableData.length === 0) {
       showSnackbar('Please add at least one item to the order', 'error');
       return;
@@ -2177,87 +2881,140 @@ const initScanner = () => {
       return;
     }
 
-    // Prepare order data for submission
-    const orderData = {
-      party: formData.Party,
-      partyKey: formData.PARTY_KEY,
-      branch: formData.Branch,
-      shippingParty: formData.SHIPPING_PARTY,
-      shippingPlace: formData.SHIPPING_PLACE,
-      items: tableData,
-      totalQty: tableData.reduce((sum, item) => sum + item.qty, 0),
-      totalAmount: tableData.reduce((sum, item) => sum + item.amount, 0),
-      totalDiscount: tableData.reduce((sum, item) => sum + item.discAmt, 0),
-      netAmount: tableData.reduce((sum, item) => sum + item.netAmt, 0)
-    };
-
-    console.log('Order Data:', orderData);
-    
-    // Here you would call your order submission API
-    // For now, just show a success message
-    showSnackbar(`Order submitted successfully! ${tableData.length} items added.`, 'success');
-    
-    // Reset form
-    setTableData([]);
-    setFormData({
-      Party: '',
-      PARTY_KEY: '',
-      SHIPPING_PARTY: '',
-      SHP_PARTY_KEY: '',
-      Branch: '',
-      PARTYDTL_ID: '',
-      SHIPPING_PLACE: '',
-      SHP_PARTYDTL_ID: '',
-      Order_Type: 'Sales And Work-Order',
-      ORDBK_TYPE: '2',
-      Status: 'O'
-    });
+    try {
+      setIsLoadingData(true);
+      
+      const payload = prepareSubmitPayload();
+      const userName = localStorage.getItem('USER_NAME') || 'Admin';
+      const strCobrid = "02";
+      
+      console.log('Submitting order with payload:', payload);
+      
+      const response = await axiosInstance.post(
+        `/ORDBK/ApiMangeOrdbk?UserName=${userName}&strCobrid=${strCobrid}`, 
+        payload
+      );
+      
+      console.log('Submit API Response:', response.data);
+      
+      if (response.data.RESPONSESTATUSCODE === 1) {
+        showSnackbar(`Order submitted successfully! Order No: ${formData.ORDER_NO}`, 'success');
+        
+        // Reset form
+        setTableData([]);
+        setFormData({
+          Party: '',
+          PARTY_KEY: '',
+          SHIPPING_PARTY: '',
+          SHP_PARTY_KEY: '',
+          Branch: '',
+          PARTYDTL_ID: '',
+          SHIPPING_PLACE: '',
+          SHP_PARTYDTL_ID: '',
+          Order_Type: 'Sales And Work-Order',
+          ORDBK_TYPE: '2',
+          Status: 'O',
+          ORDER_NO: '',
+          ORDER_DATE: new Date().toLocaleDateString('en-GB'),
+          LAST_ORD_NO: '',
+          SERIES: '',
+          PARTY_ORD_NO: '',
+          SEASON: '',
+          ORD_REF_DT: '',
+          QUOTE_NO: '',
+          Broker: '',
+          BROKER_KEY: '',
+          SALESPERSON_1: '',
+          SALEPERSON1_KEY: '',
+          SALESPERSON_2: '',
+          SALEPERSON2_KEY: '',
+          MERCHANDISER_NAME: '',
+          MERCHANDISER_ID: '',
+          REMARK_STATUS: '',
+          GST_APPL: 'N',
+          GST_TYPE: 'STATE',
+          DLV_DT: '',
+          ORG_DLV_DT: '',
+          MAIN_DETAILS: 'G',
+          RACK_MIN: '0',
+          REGISTERED_DEALER: '0',
+          SHORT_CLOSE: '0',
+          READY_SI: '0',
+          PLANNING: '0'
+        });
+        
+        setNewItemData({
+          barcode: '',
+          product: '',
+          style: '',
+          type: '',
+          shade: '',
+          mrp: '',
+          rate: '',
+          qty: '',
+          discount: '',
+          sets: '',
+          convFact: '1',
+          remark: '',
+          varPer: '0',
+          stdQty: '',
+          setNo: '',
+          percent: '0',
+          rQty: '',
+          divDt: ''
+        });
+        
+        setStyleCodeInput('');
+        setCurrentStyleData(null);
+        setSizeDetailsData([]);
+        
+        // Generate new order number
+        await generateOrderNumber();
+        
+      } else {
+        showSnackbar('Error submitting order: ' + (response.data.RESPONSEMESSAGE || 'Unknown error'), 'error');
+      }
+    } catch (error) {
+      console.error('Error submitting order:', error);
+      showSnackbar('Error submitting order. Please try again.', 'error');
+    } finally {
+      setIsLoadingData(false);
+    }
   };
 
-  // Initialize on component mount (client-side only)
+  // Focus on input field based on mode
   useEffect(() => {
-    fetchPartiesByName();
-    
-    // Cleanup scanner on unmount
-    return () => {
-      if (qrCodeScannerRef.current) {
-        qrCodeScannerRef.current.clear().catch(error => {
-          console.error("Failed to clear scanner", error);
-        });
+    if (isClient) {
+      if (useStyleCodeMode && styleCodeInputRef.current) {
+        styleCodeInputRef.current.focus();
+      } else if (!useStyleCodeMode && barcodeInputRef.current) {
+        barcodeInputRef.current.focus();
       }
-    };
-  }, []);
-
- // Update useEffect for scanner (around line 565)
-useEffect(() => {
-  if (showScanner && isClient) {
-    // Wait for dialog to fully render
-    const timer = setTimeout(() => {
-      initScanner();
-    }, 500); // Increased timeout
-    
-    return () => {
-      clearTimeout(timer);
-      if (qrCodeScannerRef.current) {
-        qrCodeScannerRef.current.clear().catch(err => {
-          console.error("Cleanup error", err);
-        });
-        qrCodeScannerRef.current = null;
-      }
-    };
-  }
-}, [showScanner, isClient]);
-
-  // Focus barcode input on load (client-side only)
-  useEffect(() => {
-    if (isClient && barcodeInputRef.current) {
-      barcodeInputRef.current.focus();
     }
-  }, [isClient]);
+  }, [isClient, useStyleCodeMode]);
+
+  // Initialize scanner
+  useEffect(() => {
+    if (showScanner && isClient) {
+      const timer = setTimeout(() => {
+        initScanner();
+      }, 500);
+      
+      return () => {
+        clearTimeout(timer);
+        if (qrCodeScannerRef.current) {
+          qrCodeScannerRef.current.clear().catch(err => {
+            console.error("Cleanup error", err);
+          });
+          qrCodeScannerRef.current = null;
+        }
+      };
+    }
+  }, [showScanner, isClient]);
 
   // Get window width safely
   const getWindowWidth = () => {
-    return isClient ? window.innerWidth : 1024; // Default desktop width
+    return isClient ? window.innerWidth : 1024;
   };
 
   if (!isClient) {
@@ -2309,115 +3066,503 @@ useEffect(() => {
          Order Booking By Barcode Scan
       </Typography>
 
-      {/* Main Form */}
-      <Card elevation={2} sx={{ mb: 3 }}>
-        <CardContent>
-          <Typography variant="h6" sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
-            <span style={{ fontSize: '1.1rem' }}>📋 Order Details</span>
-          </Typography>
-          
-          <Grid container spacing={2}>
-            {/* Party Selection */}
-            <Grid item xs={12} md={6}>
-              <AutoVibe
-                id="Party"
-                getOptionLabel={(option) => option || ''}
-                options={partyOptions}
-                label="Party *"
-                name="Party"
-                value={formData.Party}
-                onChange={handlePartyChange}
-                sx={DropInputSx}
-                size="small"
-              />
-            </Grid>
-            
-            {/* Shipping Party */}
-            <Grid item xs={12} md={6}>
-              <AutoVibe
-                id="SHIPPING_PARTY"
-                getOptionLabel={(option) => option || ''}
-                options={shippingPartyOptions}
-                label="Shipping Party"
-                name="SHIPPING_PARTY"
-                value={formData.SHIPPING_PARTY}
-                onChange={handleShippingPartyChange}
-                sx={DropInputSx}
-                size="small"
-              />
-            </Grid>
-            
-            {/* Branch */}
-            <Grid item xs={12} md={6}>
-              <AutoVibe
-                id="Branch"
-                getOptionLabel={(option) => option || ''}
-                options={branchOptions}
-                label="Branch"
-                name="Branch"
-                value={formData.Branch}
-                onChange={handleBranchChange}
-                sx={DropInputSx}
-                size="small"
-              />
-            </Grid>
-            
-            {/* Shipping Place */}
-            <Grid item xs={12} md={6}>
-              <AutoVibe
-                id="SHIPPING_PLACE"
-                getOptionLabel={(option) => option || ''}
-                options={shippingPlaceOptions}
-                label="Shipping Place"
-                name="SHIPPING_PLACE"
-                value={formData.SHIPPING_PLACE}
-                onChange={handleShippingPlaceChange}
-                sx={DropInputSx}
-                size="small"
-              />
-            </Grid>
-          </Grid>
-        </CardContent>
-      </Card>
-
-      {/* Barcode Scanner Section */}
-      <Card elevation={2} sx={{ mb: 3 }}>
-        <CardContent>
+      {/* Advanced Fields Toggle */}
+<Card elevation={2} sx={{ mb: 3 }}>
+  <CardContent>
+    <FormGroup>
+      <FormControlLabel
+        control={
+          <Checkbox
+            checked={showAdvancedFields}
+            onChange={(e) => setShowAdvancedFields(e.target.checked)}
+            size="medium"
+            sx={{
+              color: '#1976d2',
+              '&.Mui-checked': {
+                color: '#1976d2',
+              },
+            }}
+          />
+        }
+        label={
           <Typography variant="h6" sx={{ 
-            mb: 2, 
-            display: 'flex', 
-            alignItems: 'center', 
-            gap: 1,
-            fontSize: '1.1rem'
+            fontSize: { xs: '1rem', sm: '1.1rem' },
+            fontWeight: '600',
+            color: '#1976d2'
           }}>
-            <QrCodeIcon /> Product Scanning
+            {showAdvancedFields ? 'Hide Order Fields' : 'Show Order Fields'}
           </Typography>
+        }
+        sx={{ margin: 0 }}
+      />
+    </FormGroup>
+  </CardContent>
+</Card>
+
+      {showAdvancedFields && (
+  <Card elevation={2} sx={{ mb: 3 }}>
+    <CardContent>
+      <Typography variant="h6" sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+        <span style={{ fontSize: '1.1rem' }}>📋 Advanced Order Details</span>
+      </Typography>
+      
+      <Grid container spacing={1}>
+        {/* Order Information Row - Adjusted for mobile */}
+        <Grid item xs={12} container spacing={1}>
+          {/* Series - Smaller on mobile */}
+          <Grid size={{ xs: 6, md: 2 }}>
+            <TextField
+              label="Series"
+              variant="filled"
+              fullWidth
+              value={formData.SERIES}
+              onChange={(e) => handleFormChange('SERIES', e.target.value)}
+              sx={textInputSx}
+              size="small"
+              InputProps={{
+                sx: { 
+                  fontSize: { xs: '12px', sm: '14px' },
+                  '& input': { padding: { xs: '8px 6px', sm: '10px 12px' } }
+                }
+              }}
+            />
+          </Grid>
           
-          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems="center">
-            {/* Barcode Input with Search Button */}
-            <Box sx={{ flex: 1, width: '100%' }}>
-              <TextField
-                label="Enter Barcode Number"
-                variant="filled"
-                fullWidth
-                value={newItemData.barcode}
-                onChange={handleBarcodeInputChange}
-                onKeyPress={handleBarcodeKeyPress}
-                placeholder="Type barcode and press Enter"
-                sx={textInputSx}
-                inputRef={barcodeInputRef}
-                InputProps={{
-                  endAdornment: (
-                    <IconButton 
-                      onClick={handleManualBarcodeSubmit}
-                      disabled={!newItemData.barcode || isLoadingBarcode}
-                      sx={{ mr: -1 }}
-                    >
-                      {isLoadingBarcode ? <CircularProgress size={20} /> : <SearchIcon />}
-                    </IconButton>
-                  )
+          {/* Last Order No */}
+          <Grid size={{ xs: 6, md: 2 }}>
+            <TextField
+              label="Last Order No"
+              variant="filled"
+              fullWidth
+              value={formData.LAST_ORD_NO}
+              onChange={(e) => handleFormChange('LAST_ORD_NO', e.target.value)}
+              sx={textInputSx}
+              size="small"
+              InputProps={{
+                sx: { 
+                  fontSize: { xs: '12px', sm: '14px' },
+                  '& input': { padding: { xs: '8px 6px', sm: '10px 12px' } }
+                }
+              }}
+            />
+          </Grid>
+          
+          {/* Order No */}
+          <Grid size={{ xs: 6, md: 2 }}>
+            <TextField
+              label="Order No"
+              variant="filled"
+              fullWidth
+              value={formData.ORDER_NO}
+              onChange={(e) => handleFormChange('ORDER_NO', e.target.value)}
+              sx={textInputSx}
+              size="small"
+              required
+              InputProps={{
+                sx: { 
+                  fontSize: { xs: '12px', sm: '14px' },
+                  '& input': { padding: { xs: '8px 6px', sm: '10px 12px' } }
+                }
+              }}
+            />
+          </Grid>
+          
+          {/* Order Date */}
+          <Grid size={{ xs: 6, md: 2 }}>
+            <LocalizationProvider dateAdapter={AdapterDateFns}>
+              <DatePicker
+                label="Order Date"
+                value={formData.ORDER_DATE ? parse(formData.ORDER_DATE, 'dd/MM/yyyy', new Date()) : null}
+                onChange={(date) => handleFormChange('ORDER_DATE', date ? format(date, 'dd/MM/yyyy') : '')}
+                format="dd/MM/yyyy"
+                slotProps={{
+                  textField: {
+                    fullWidth: true,
+                    variant: "filled",
+                    sx: {
+                      ...datePickerSx,
+                      "& .MuiInputBase-root": {
+                        height: { xs: "36px", sm: "40px" },
+                      },
+                      "& .MuiInputBase-input": {
+                        padding: { xs: "8px 10px", sm: "10px 12px" },
+                        fontSize: { xs: "12px", sm: "14px" },
+                      },
+                    },
+                    InputProps: {
+                      sx: {
+                        height: { xs: "36px", sm: "40px" },
+                      },
+                    },
+                  },
                 }}
               />
+            </LocalizationProvider>
+          </Grid>
+          <Grid size={{ xs: 6, md: 2 }}>
+          <AutoVibe
+            id="Party"
+            getOptionLabel={(option) => option || ''}
+            options={partyOptions}
+            label="Party *"
+            name="Party"
+            value={formData.Party}
+            onChange={(e, value) => handleFormChange('Party', value)}
+            sx={{
+              ...DropInputSx,
+              '& .MuiInputBase-root': {
+                height: { xs: '36px', sm: '40px' },
+              },
+              '& .MuiInputBase-input': {
+                padding: { xs: '8px 10px', sm: '10px 12px' } + ' !important',
+                fontSize: { xs: '12px', sm: '14px' } + ' !important',
+              },
+            }}
+            size="small"
+            // Remove icons from AutoVibe
+            onAddClick={null}
+            onRefreshClick={null}
+          />
+        </Grid>
+        
+        <Grid size={{ xs: 6, md: 2 }}>
+          <AutoVibe
+            id="Branch"
+            getOptionLabel={(option) => option || ''}
+            options={branchOptions}
+            label="Branch"
+            name="Branch"
+            value={formData.Branch}
+            onChange={(e, value) => handleFormChange('Branch', value)}
+            sx={{
+              ...DropInputSx,
+              '& .MuiInputBase-root': {
+                height: { xs: '36px', sm: '40px' },
+              },
+              '& .MuiInputBase-input': {
+                padding: { xs: '8px 10px', sm: '10px 12px' } + ' !important',
+                fontSize: { xs: '12px', sm: '14px' } + ' !important',
+              },
+            }}
+            size="small"
+            // Remove icons from AutoVibe
+            onAddClick={null}
+            onRefreshClick={null}
+          />
+        </Grid>
+
+              {/* Shipping Party and Place */}
+        <Grid size={{ xs: 6, md: 2 }}>
+          <AutoVibe
+            id="SHIPPING_PARTY"
+            getOptionLabel={(option) => option || ''}
+            options={shippingPartyOptions}
+            label="Shipping Party"
+            name="SHIPPING_PARTY"
+            value={formData.SHIPPING_PARTY}
+            onChange={(e, value) => handleFormChange('SHIPPING_PARTY', value)}
+            sx={{
+              ...DropInputSx,
+              '& .MuiInputBase-root': {
+                height: { xs: '36px', sm: '40px' },
+              },
+              '& .MuiInputBase-input': {
+                padding: { xs: '8px 10px', sm: '10px 12px' } + ' !important',
+                fontSize: { xs: '12px', sm: '14px' } + ' !important',
+              },
+            }}
+            size="small"
+            // Remove icons from AutoVibe
+            onAddClick={null}
+            onRefreshClick={null}
+          />
+        </Grid>
+        
+        <Grid size={{ xs: 6, md: 2 }}>
+          <AutoVibe
+            id="SHIPPING_PLACE"
+            getOptionLabel={(option) => option || ''}
+            options={shippingPlaceOptions}
+            label="Shipping Place"
+            name="SHIPPING_PLACE"
+            value={formData.SHIPPING_PLACE}
+            onChange={(e, value) => handleFormChange('SHIPPING_PLACE', value)}
+            sx={{
+              ...DropInputSx,
+              '& .MuiInputBase-root': {
+                height: { xs: '36px', sm: '40px' },
+              },
+              '& .MuiInputBase-input': {
+                padding: { xs: '8px 10px', sm: '10px 12px' } + ' !important',
+                fontSize: { xs: '12px', sm: '14px' } + ' !important',
+              },
+            }}
+            size="small"
+            // Remove icons from AutoVibe
+            onAddClick={null}
+            onRefreshClick={null}
+          />
+        </Grid>
+
+        {/* Sales & Broker Row with full width on mobile */}
+        <Grid size={{ xs: 6, md: 2 }}>
+          <AutoVibe
+            id="Broker"
+            getOptionLabel={(option) => option || ''}
+            options={brokerOptions}
+            label="Broker"
+            name="Broker"
+            value={formData.Broker}
+            onChange={(e, value) => handleFormChange('Broker', value)}
+            sx={{
+              ...DropInputSx,
+              '& .MuiInputBase-root': {
+                height: { xs: '36px', sm: '40px' },
+              },
+              '& .MuiInputBase-input': {
+                padding: { xs: '8px 10px', sm: '10px 12px' } + ' !important',
+                fontSize: { xs: '12px', sm: '14px' } + ' !important',
+              },
+            }}
+            size="small"
+            // Remove icons from AutoVibe
+            onAddClick={null}
+            onRefreshClick={null}
+          />
+        </Grid>
+        
+        <Grid size={{ xs: 6, md: 2 }}>
+          <AutoVibe
+            id="SALESPERSON_1"
+            getOptionLabel={(option) => option || ''}
+            options={salesperson1Options}
+            label="Salesperson 1"
+            name="SALESPERSON_1"
+            value={formData.SALESPERSON_1}
+            onChange={(e, value) => handleFormChange('SALESPERSON_1', value)}
+            sx={{
+              ...DropInputSx,
+              '& .MuiInputBase-root': {
+                height: { xs: '36px', sm: '40px' },
+              },
+              '& .MuiInputBase-input': {
+                padding: { xs: '8px 10px', sm: '10px 12px' } + ' !important',
+                fontSize: { xs: '12px', sm: '14px' } + ' !important',
+              },
+            }}
+            size="small"
+            // Remove icons from AutoVibe
+            onAddClick={null}
+            onRefreshClick={null}
+          />
+        </Grid>
+        
+        <Grid size={{ xs: 6, md: 2 }}>
+          <AutoVibe
+            id="SALESPERSON_2"
+            getOptionLabel={(option) => option || ''}
+            options={salesperson2Options}
+            label="Salesperson 2"
+            name="SALESPERSON_2"
+            value={formData.SALESPERSON_2}
+            onChange={(e, value) => handleFormChange('SALESPERSON_2', value)}
+            sx={{
+              ...DropInputSx,
+              '& .MuiInputBase-root': {
+                height: { xs: '36px', sm: '40px' },
+              },
+              '& .MuiInputBase-input': {
+                padding: { xs: '8px 10px', sm: '10px 12px' } + ' !important',
+                fontSize: { xs: '12px', sm: '14px' } + ' !important',
+              },
+            }}
+            size="small"
+            // Remove icons from AutoVibe
+            onAddClick={null}
+            onRefreshClick={null}
+          />
+        </Grid>
+        
+        <Grid size={{ xs: 6, md: 2 }}>
+          <AutoVibe
+            id="MERCHANDISER_NAME"
+            getOptionLabel={(option) => option || ''}
+            options={merchandiserOptions}
+            label="Merchandiser"
+            name="MERCHANDISER_NAME"
+            value={formData.MERCHANDISER_NAME}
+            onChange={(e, value) => handleFormChange('MERCHANDISER_NAME', value)}
+            sx={{
+              ...DropInputSx,
+              '& .MuiInputBase-root': {
+                height: { xs: '36px', sm: '40px' },
+              },
+              '& .MuiInputBase-input': {
+                padding: { xs: '8px 10px', sm: '10px 12px' } + ' !important',
+                fontSize: { xs: '12px', sm: '14px' } + ' !important',
+              },
+            }}
+            size="small"
+            // Remove icons from AutoVibe
+            onAddClick={null}
+            onRefreshClick={null}
+          />
+        </Grid>
+        
+        <Grid size={{ xs: 6, md: 2 }}>
+          <AutoVibe
+            id="SEASON"
+            getOptionLabel={(option) => option || ''}
+            options={seasonOptions}
+            label="Season"
+            name="SEASON"
+            value={formData.SEASON}
+            onChange={(e, value) => handleFormChange('SEASON', value)}
+            sx={{
+              ...DropInputSx,
+              '& .MuiInputBase-root': {
+                height: { xs: '36px', sm: '40px' },
+              },
+              '& .MuiInputBase-input': {
+                padding: { xs: '8px 10px', sm: '10px 12px' } + ' !important',
+                fontSize: { xs: '12px', sm: '14px' } + ' !important',
+              },
+            }}
+            size="small"
+            // Remove icons from AutoVibe
+            onAddClick={null}
+            onRefreshClick={null}
+          />
+        </Grid>
+        
+        {/* Status and Type Row */}
+        <Grid size={{ xs: 6, md: 2 }}>
+          <AutoVibe
+            id="Order_Type"
+            getOptionLabel={(option) => option || ''}
+            options={orderTypeOptions}
+            label="Order Type"
+            name="Order_Type"
+            value={formData.Order_Type}
+            onChange={(e, value) => handleFormChange('Order_Type', value)}
+            sx={{
+              ...DropInputSx,
+              '& .MuiInputBase-root': {
+                height: { xs: '36px', sm: '40px' },
+              },
+              '& .MuiInputBase-input': {
+                padding: { xs: '8px 10px', sm: '10px 12px' } + ' !important',
+                fontSize: { xs: '12px', sm: '14px' } + ' !important',
+              },
+            }}
+            size="small"
+            // Remove icons from AutoVibe
+            onAddClick={null}
+            onRefreshClick={null}
+          />
+        </Grid>
+        </Grid>
+        
+        {/* Party and Branch with adjusted heights */}
+        
+        
+  
+      </Grid>
+    </CardContent>
+  </Card>
+)}
+
+      {/* Barcode Scanner Section with Style Code Toggle */}
+      <Card elevation={2} sx={{ mb: 3 }}>
+        <CardContent>
+          <Box sx={{ 
+            mb: 2, 
+            display: 'flex', 
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: 2
+          }}>
+            <Typography variant="h6" sx={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: 1,
+              fontSize: '1.1rem'
+            }}>
+              <QrCodeIcon /> Product Scanning
+            </Typography>
+            
+            {/* Style Code Toggle Checkbox */}
+            <FormGroup>
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={useStyleCodeMode}
+                    onChange={(e) => setUseStyleCodeMode(e.target.checked)}
+                    size="small"
+                  />
+                }
+                label={
+                  <Typography variant="body2" sx={{ fontWeight: '500' }}>
+                    Use Style Code
+                  </Typography>
+                }
+              />
+            </FormGroup>
+          </Box>
+          
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems="center">
+            {/* Barcode Input OR Style Code Input based on mode */}
+            <Box sx={{ flex: 1, width: '100%' }}>
+              {useStyleCodeMode ? (
+                // Style Code Input
+                <TextField
+                  label="Type Style Code"
+                  variant="filled"
+                  fullWidth
+                  value={styleCodeInput}
+                  onChange={handleStyleCodeInputChange}
+                  onKeyPress={handleStyleCodeKeyPress}
+                  placeholder="Type style code and press Enter"
+                  sx={textInputSx}
+                  inputRef={styleCodeInputRef}
+                  InputProps={{
+                    endAdornment: (
+                      <IconButton 
+                        onClick={() => fetchStyleDataByCode(styleCodeInput.trim())}
+                        disabled={!styleCodeInput || isLoadingStyleCode}
+                        sx={{ mr: -1 }}
+                      >
+                        {isLoadingStyleCode ? <CircularProgress size={20} /> : <SearchIcon />}
+                      </IconButton>
+                    )
+                  }}
+                />
+              ) : (
+                // Barcode Input
+                <TextField
+                  label="Enter Barcode Number"
+                  variant="filled"
+                  fullWidth
+                  value={newItemData.barcode}
+                  onChange={(e) => handleNewItemChange('barcode', e.target.value)}
+                  onKeyPress={handleBarcodeKeyPress}
+                  placeholder="Type barcode and press Enter"
+                  sx={textInputSx}
+                  inputRef={barcodeInputRef}
+                  InputProps={{
+                    endAdornment: (
+                      <IconButton 
+                        onClick={handleManualBarcodeSubmit}
+                        disabled={!newItemData.barcode || isLoadingBarcode}
+                        sx={{ mr: -1 }}
+                      >
+                        {isLoadingBarcode ? <CircularProgress size={20} /> : <SearchIcon />}
+                      </IconButton>
+                    )
+                  }}
+                />
+              )}
             </Box>
             
             {/* OR Divider */}
@@ -2428,23 +3573,25 @@ useEffect(() => {
               OR
             </Typography>
             
-            {/* Scanner Button */}
-            <Button
-              variant="contained"
-              startIcon={<CameraIcon />}
-              onClick={startScanner}
-              sx={{ 
-                backgroundColor: '#1976d2',
-                color: 'white',
-                minWidth: { xs: '100%', sm: 150 },
-                height: 40,
-                '&:hover': {
-                  backgroundColor: '#1565c0'
-                }
-              }}
-            >
-              Scan Barcode
-            </Button>
+            {/* Scanner Button - Only show for barcode mode */}
+            {!useStyleCodeMode && (
+              <Button
+                variant="contained"
+                startIcon={<CameraIcon />}
+                onClick={startScanner}
+                sx={{ 
+                  backgroundColor: '#1976d2',
+                  color: 'white',
+                  minWidth: { xs: '100%', sm: 150 },
+                  height: 40,
+                  '&:hover': {
+                    backgroundColor: '#1565c0'
+                  }
+                }}
+              >
+                Scan Barcode
+              </Button>
+            )}
           </Stack>
 
           {scannerError && (
@@ -2453,21 +3600,23 @@ useEffect(() => {
             </Alert>
           )}
 
-          {isLoadingBarcode && (
+          {(isLoadingBarcode || isLoadingStyleCode) && (
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 2 }}>
               <CircularProgress size={20} />
-              <Typography variant="body2">Fetching product details...</Typography>
+              <Typography variant="body2">
+                {useStyleCodeMode ? 'Fetching product details by style code...' : 'Fetching product details...'}
+              </Typography>
             </Box>
           )}
         </CardContent>
       </Card>
 
-      {/* Product Details (Auto-filled after scan) */}
-      {(newItemData.product || isLoadingBarcode) && (
+      {/* Product Details (Auto-filled after scan/style code) */}
+      {(newItemData.product || isLoadingBarcode || isLoadingStyleCode) && (
         <Card elevation={2} sx={{ mb: 3 }}>
           <CardContent>
             <Typography variant="h6" sx={{ mb: 2, fontSize: '1.1rem' }}>
-              🏷️ Product Details {isLoadingBarcode && '(Loading...)'}
+              Product Details {(isLoadingBarcode || isLoadingStyleCode) && '(Loading...)'}
             </Typography>
             
             <Grid container spacing={2}>
@@ -2565,10 +3714,7 @@ useEffect(() => {
                   variant="filled"
                   fullWidth
                   value={newItemData.discount}
-                  onChange={(e) => setNewItemData(prev => ({ 
-                    ...prev, 
-                    discount: e.target.value 
-                  }))}
+                  onChange={(e) => handleNewItemChange('discount', e.target.value)}
                   sx={textInputSx}
                   size="small"
                   inputProps={{ 
@@ -2586,10 +3732,7 @@ useEffect(() => {
                   variant="filled"
                   fullWidth
                   value={newItemData.sets}
-                  onChange={(e) => setNewItemData(prev => ({ 
-                    ...prev, 
-                    sets: e.target.value 
-                  }))}
+                  onChange={(e) => handleNewItemChange('sets', e.target.value)}
                   sx={textInputSx}
                   size="small"
                   inputProps={{ 
@@ -2607,12 +3750,44 @@ useEffect(() => {
                   variant="filled"
                   fullWidth
                   value={newItemData.remark}
-                  onChange={(e) => setNewItemData(prev => ({ 
-                    ...prev, 
-                    remark: e.target.value 
-                  }))}
+                  onChange={(e) => handleNewItemChange('remark', e.target.value)}
                   sx={textInputSx}
                   size="small"
+                />
+              </Grid>
+              
+              {/* Additional Fields */}
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  label="Var %"
+                  variant="filled"
+                  fullWidth
+                  value={newItemData.varPer}
+                  onChange={(e) => handleNewItemChange('varPer', e.target.value)}
+                  sx={textInputSx}
+                  size="small"
+                  inputProps={{ 
+                    type: 'number',
+                    step: '0.01',
+                    min: '0'
+                  }}
+                />
+              </Grid>
+              
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  label="Std Qty"
+                  variant="filled"
+                  fullWidth
+                  value={newItemData.stdQty}
+                  onChange={(e) => handleNewItemChange('stdQty', e.target.value)}
+                  sx={textInputSx}
+                  size="small"
+                  inputProps={{ 
+                    type: 'number',
+                    step: '1',
+                    min: '0'
+                  }}
                 />
               </Grid>
             </Grid>
@@ -2625,7 +3800,7 @@ useEffect(() => {
         <Card elevation={2} sx={{ mb: 3 }}>
           <CardContent>
             <Typography variant="h6" sx={{ mb: 2, fontSize: '1.1rem' }}>
-              📏 Size Details
+               Size Details
             </Typography>
             
             <Box sx={{ 
@@ -2960,12 +4135,13 @@ useEffect(() => {
                       variant="contained"
                       fullWidth
                       onClick={handleSubmitOrder}
+                      disabled={isLoadingData}
                       sx={{ 
                         backgroundColor: '#2196F3',
                         '&:hover': { backgroundColor: '#1976d2' }
                       }}
                     >
-                      Submit Order
+                      {isLoadingData ? <CircularProgress size={24} /> : 'Submit Order'}
                     </Button>
                   </Grid>
                 </Grid>
@@ -2976,7 +4152,7 @@ useEffect(() => {
       )}
 
       {/* Barcode Scanner Dialog */}
-      {isClient && (
+      {isClient && !useStyleCodeMode && (
         <Dialog
           open={showScanner}
           onClose={stopScanner}
