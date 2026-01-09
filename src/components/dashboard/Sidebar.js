@@ -825,6 +825,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
         );
       });
   }, [openSections, activeParent, activeChild, activeGrandchild, isCollapsed, searchQuery]);
+  //
 
   return (
     <>
