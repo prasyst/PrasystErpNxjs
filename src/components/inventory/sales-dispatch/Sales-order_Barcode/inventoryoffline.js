@@ -2086,61 +2086,7 @@ if (loading || isDataLoading) {
         </Grid>
       )}
 
-      {/* {(tabIndex === 1 || tabIndex === 2) && (
-      <Grid xs={12} sx={{ display: "flex", justifyContent: "end", mr: '4.5%', gap: 1, mt: 2 }}>
-        {tabIndex === 1 && (
-          <>
-            <Button
-              variant="contained"
-              color="primary"
-              sx={{
-                margin: { xs: '0 4px', sm: '0 6px' },
-                backgroundColor: '#39ace2',
-                color: '#fff',
-                minWidth: { xs: 40, sm: 46, md: 60 },
-                height: { xs: 40, sm: 46, md: 30 },
-              }}
-              onClick={handlePrev}
-              disabled={mode === 'view'}
-            >
-              Previous
-            </Button>
-            <Button
-              variant="contained"
-              color="primary"
-              sx={{
-                margin: { xs: '0 4px', sm: '0 6px' },
-                backgroundColor: '#39ace2',
-                color: '#fff',
-                minWidth: { xs: 40, sm: 46, md: 60 },
-                height: { xs: 40, sm: 46, md: 30 },
-              }}
-              onClick={handleNext}
-              disabled={mode === 'view'}
-            >
-              Next
-            </Button>
-          </>
-        )}
-        {tabIndex === 2 && (
-          <Button
-            variant="contained"
-            color="primary"
-            sx={{
-              margin: { xs: '0 4px', sm: '0 6px' },
-              backgroundColor: '#39ace2',
-              color: '#fff',
-              minWidth: { xs: 40, sm: 46, md: 60 },
-              height: { xs: 40, sm: 46, md: 30 },
-            }}
-            onClick={handlePrev}
-            disabled={mode === 'view'}
-          >
-            Previous
-          </Button>
-        )}
-      </Grid>
-    )} */}
+      
     </Box>
   );
 };

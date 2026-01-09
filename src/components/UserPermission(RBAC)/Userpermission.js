@@ -981,11 +981,7 @@
 
 
 
-
-
-// app/userpermission/page.js
 'use client';
-
 import React, { useState, useEffect } from "react";
 import {
   Checkbox,
@@ -1013,8 +1009,6 @@ import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import axiosInstance from '@/lib/axios';
-import { useDispatch, useSelector } from 'react-redux';
-import { setUserPermissions, clearPermissions, setLoading as setPermissionLoading } from '@/app/redux/store/permissionSlice';
 
 const UserPermission = () => {
   const [menus, setMenus] = useState([]);
@@ -1037,9 +1031,6 @@ const UserPermission = () => {
   const [targetUserPermissions, setTargetUserPermissions] = useState([]);
   const [loadingSourcePermissions, setLoadingSourcePermissions] = useState(false);
   const [loadingTargetPermissions, setLoadingTargetPermissions] = useState(false);
-
-  const dispatch = useDispatch();
-  const permissionState = useSelector(state => state.permission);
 
   // Build tree structure from flat modules array
   const buildTree = (data) => {
@@ -1140,42 +1131,18 @@ const UserPermission = () => {
     return sortNodes(rootNodes);
   };
 
-  // Convert permissions to a flat map for Redux
-  const convertPermissionsToMap = (permissionsData) => {
-    const permissionMap = {};
-    
-    permissionsData.forEach(item => {
-      if (item.MOD_NAME) {
-        permissionMap[item.MOD_NAME] = {
-          ADD_PRIV: item.ADD_PRIV || "0",
-          EDIT_PRIV: item.EDIT_PRIV || "0",
-          DELETE_PRIV: item.DELETE_PRIV || "0",
-          SELECT_PRIV: item.SELECT_PRIV || "0",
-          MOD_ID: item.MOD_ID,
-          MOD_DESC: item.MOD_DESC,
-          PARENT_ID: item.PARENT_ID
-        };
-      }
-    });
-    
-    return permissionMap;
-  };
-
   // Convert flat permissions array to a map for easy comparison
   const permissionsToMap = (permissions) => {
     const map = {};
     if (permissions && permissions.length > 0) {
       permissions.forEach(permission => {
-        if (permission.MOD_NAME) {
-          map[permission.MOD_NAME] = {
-            ADD_PRIV: permission.ADD_PRIV || "0",
-            EDIT_PRIV: permission.EDIT_PRIV || "0",
-            DELETE_PRIV: permission.DELETE_PRIV || "0",
-            SELECT_PRIV: permission.SELECT_PRIV || "0",
-            MOD_ID: permission.MOD_ID,
-            MOD_DESC: permission.MOD_DESC
-          };
-        }
+        map[permission.MOD_ID] = {
+          ADD_PRIV: permission.ADD_PRIV || "0",
+          EDIT_PRIV: permission.EDIT_PRIV || "0",
+          DELETE_PRIV: permission.DELETE_PRIV || "0",
+          SELECT_PRIV: permission.SELECT_PRIV || "0",
+          MOD_ID: permission.MOD_ID
+        };
       });
     }
     return map;
@@ -1228,8 +1195,6 @@ const UserPermission = () => {
     
     try {
       setPermissionsLoading(true);
-      dispatch(setPermissionLoading(true));
-      
       const response = await axiosInstance.post('/MODULE/RetriveUSERPRIVS', {
         "FLAG": "R",
         "TBLNAME": "USERPRIVS",
@@ -1247,32 +1212,18 @@ const UserPermission = () => {
         const tree = buildTree(response.data.DATA);
         setMenus(tree);
         setOriginalMenus(JSON.parse(JSON.stringify(tree))); // Deep copy for comparison
-        
-        // Convert permissions to map and store in Redux
-        const permissionMap = convertPermissionsToMap(response.data.DATA);
-        dispatch(setUserPermissions({
-          permissions: permissionMap,
-          userName: userName
-        }));
-        
-        console.log('Permissions stored in Redux:', permissionMap);
       } else {
         toast.warning("No permissions found for this user");
         setMenus([]);
         setOriginalMenus([]);
-        // Clear permissions in Redux
-        dispatch(clearPermissions());
       }
     } catch (error) {
       console.error('Error fetching permissions:', error);
       toast.error('Failed to load permissions');
       setMenus([]);
       setOriginalMenus([]);
-      // Clear permissions in Redux on error
-      dispatch(clearPermissions());
     } finally {
       setPermissionsLoading(false);
-      dispatch(setPermissionLoading(false));
     }
   };
 
@@ -1346,15 +1297,15 @@ const UserPermission = () => {
     const differences = [];
     
     // Check all modules in source
-    Object.keys(sourceMap).forEach(moduleName => {
-      const sourcePerm = sourceMap[moduleName];
-      const targetPerm = targetMap[moduleName];
+    Object.keys(sourceMap).forEach(moduleId => {
+      const sourcePerm = sourceMap[moduleId];
+      const targetPerm = targetMap[moduleId];
       
       // Check if permissions are different or module doesn't exist in target
       if (!targetPerm) {
         // Module doesn't exist in target, add all source permissions
         differences.push({
-          moduleName,
+          moduleId,
           ...sourcePerm
         });
       } else {
@@ -1367,7 +1318,7 @@ const UserPermission = () => {
         
         if (isDifferent) {
           differences.push({
-            moduleName,
+            moduleId,
             ...sourcePerm
           });
         }
@@ -1677,8 +1628,7 @@ const UserPermission = () => {
       // Prepare payload with only different permissions
       const permissionsPayload = differences.map(item => ({
         "User_Name": targetUserName,
-        "Mod_ID": item.MOD_ID,
-        "MOD_NAME": item.moduleName,
+        "Mod_ID": item.moduleId,
         "ADD_PRIV": item.ADD_PRIV || "0",
         "EDIT_PRIV": item.EDIT_PRIV || "0",
         "DELETE_PRIV": item.DELETE_PRIV || "0",
