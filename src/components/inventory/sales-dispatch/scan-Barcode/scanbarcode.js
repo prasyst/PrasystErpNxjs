@@ -1591,11 +1591,14 @@ import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { format, parse } from "date-fns";
+import { useRouter } from 'next/navigation';
+import { TbListSearch } from "react-icons/tb";
 
 const ScanBarcode = () => {
   // Main state
   const [showAdvancedFields, setShowAdvancedFields] = useState(false);
   const [useStyleCodeMode, setUseStyleCodeMode] = useState(false); // NEW: Style code mode toggle
+    const router = useRouter();
   
   const [formData, setFormData] = useState({
     Party: '',
@@ -2428,6 +2431,10 @@ const fetchSizeDetailsForStyle = async (styleData) => {
     fetchStyleDataByBarcode(newItemData.barcode);
   };
 
+   const handleTable = () => {
+    router.push('/inverntory/stock-enquiry-table');
+  };
+
   // Handle Enter key press in barcode field
   const handleBarcodeKeyPress = (e) => {
     if (e.key === 'Enter') {
@@ -3057,26 +3064,59 @@ const fetchSizeDetailsForStyle = async (styleData) => {
       </Snackbar>
 
       {/* Header */}
-      <Typography variant="h5" sx={{ 
-        mb: 3, 
-        textAlign: 'center', 
-        fontWeight: 'bold',
-        fontSize: { xs: '1.3rem', sm: '1.5rem' }
-      }}>
-         Order Booking By Barcode Scan
-      </Typography>
+    <Box
+  sx={{
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 1.2,
+    mb: 1,
+    flexWrap: 'wrap', // mobile safe
+  }}
+>
+  <Typography
+    variant="h5"
+    sx={{
+      fontWeight: 'bold',
+      fontSize: { xs: '1.2rem', sm: '1.5rem' },
+      textAlign: 'center',
+      lineHeight: 1.2,
+    }}
+  >
+     Barcode Scan
+  </Typography>
+
+  <TbListSearch
+    onClick={handleTable}
+    style={{
+      color: 'rgb(99, 91, 255)',
+      width: '28px',
+      height: '28px',
+      cursor: 'pointer',
+    }}
+  />
+</Box>
+
 
       {/* Advanced Fields Toggle */}
-<Card elevation={2} sx={{ mb: 3 }}>
-  <CardContent>
+<Card elevation={2} sx={{ mb: 0.5 }}>
+  <CardContent
+    sx={{
+      padding: '6px 12px',     // ⬅ height kam
+      '&:last-child': {
+        paddingBottom: '6px', // ⬅ default extra padding remove
+      },
+    }}
+  >
     <FormGroup>
       <FormControlLabel
         control={
           <Checkbox
             checked={showAdvancedFields}
             onChange={(e) => setShowAdvancedFields(e.target.checked)}
-            size="medium"
+            size="small"          // ⬅ checkbox chhota
             sx={{
+              padding: '4px',
               color: '#1976d2',
               '&.Mui-checked': {
                 color: '#1976d2',
@@ -3085,24 +3125,30 @@ const fetchSizeDetailsForStyle = async (styleData) => {
           />
         }
         label={
-          <Typography variant="h6" sx={{ 
-            fontSize: { xs: '1rem', sm: '1.1rem' },
-            fontWeight: '600',
-            color: '#1976d2'
-          }}>
+          <Typography
+            sx={{
+              fontSize: '1.07rem', 
+              fontWeight: 600,
+              color: '#1976d2',
+            }}
+          >
             {showAdvancedFields ? 'Hide Order Fields' : 'Show Order Fields'}
           </Typography>
         }
-        sx={{ margin: 0 }}
+        sx={{
+          margin: 0,
+          gap: '6px',
+        }}
       />
     </FormGroup>
   </CardContent>
 </Card>
 
+
       {showAdvancedFields && (
-  <Card elevation={2} sx={{ mb: 3 }}>
+  <Card elevation={2} sx={{ mb: 1 }}>
     <CardContent>
-      <Typography variant="h6" sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+      <Typography variant="h6" sx={{ mb: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
         <span style={{ fontSize: '1.1rem' }}>📋 Advanced Order Details</span>
       </Typography>
       
@@ -3473,10 +3519,10 @@ const fetchSizeDetailsForStyle = async (styleData) => {
 )}
 
       {/* Barcode Scanner Section with Style Code Toggle */}
-      <Card elevation={2} sx={{ mb: 3 }}>
+      <Card elevation={2} sx={{ mb: 1 }}>
         <CardContent>
           <Box sx={{ 
-            mb: 2, 
+            mb: 1, 
             display: 'flex', 
             justifyContent: 'space-between',
             alignItems: 'center',
@@ -3613,15 +3659,15 @@ const fetchSizeDetailsForStyle = async (styleData) => {
 
       {/* Product Details (Auto-filled after scan/style code) */}
       {(newItemData.product || isLoadingBarcode || isLoadingStyleCode) && (
-        <Card elevation={2} sx={{ mb: 3 }}>
+        <Card elevation={2} sx={{ mb: 1 }}>
           <CardContent>
-            <Typography variant="h6" sx={{ mb: 2, fontSize: '1.1rem' }}>
+            <Typography variant="h6" sx={{ mb: 1, fontSize: '1.1rem' }}>
               Product Details {(isLoadingBarcode || isLoadingStyleCode) && '(Loading...)'}
             </Typography>
             
-            <Grid container spacing={2}>
+            <Grid container spacing={1}>
               {/* Barcode and Product */}
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 6, md: 2 }}>
                 <TextField
                   label="Barcode"
                   variant="filled"
@@ -3633,7 +3679,7 @@ const fetchSizeDetailsForStyle = async (styleData) => {
                 />
               </Grid>
               
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 6, md: 2 }}>
                 <TextField
                   label="Product"
                   variant="filled"
@@ -3646,7 +3692,7 @@ const fetchSizeDetailsForStyle = async (styleData) => {
               </Grid>
               
               {/* Style and Type */}
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 6, md: 2 }}>
                 <TextField
                   label="Style"
                   variant="filled"
@@ -3658,7 +3704,7 @@ const fetchSizeDetailsForStyle = async (styleData) => {
                 />
               </Grid>
               
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 6, md: 2 }}>
                 <TextField
                   label="Type"
                   variant="filled"
@@ -3671,7 +3717,7 @@ const fetchSizeDetailsForStyle = async (styleData) => {
               </Grid>
               
               {/* Shade and MRP */}
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 6, md: 2 }}>
                 <TextField
                   label="Shade"
                   variant="filled"
@@ -3683,7 +3729,7 @@ const fetchSizeDetailsForStyle = async (styleData) => {
                 />
               </Grid>
               
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 6, md: 2 }}>
                 <TextField
                   label="MRP"
                   variant="filled"
@@ -3696,7 +3742,7 @@ const fetchSizeDetailsForStyle = async (styleData) => {
               </Grid>
               
               {/* Rate and Discount */}
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 6, md: 2 }}>
                 <TextField
                   label="Rate"
                   variant="filled"
@@ -3707,44 +3753,9 @@ const fetchSizeDetailsForStyle = async (styleData) => {
                   size="small"
                 />
               </Grid>
-              
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  label="Discount"
-                  variant="filled"
-                  fullWidth
-                  value={newItemData.discount}
-                  onChange={(e) => handleNewItemChange('discount', e.target.value)}
-                  sx={textInputSx}
-                  size="small"
-                  inputProps={{ 
-                    type: 'number',
-                    step: '0.01',
-                    min: '0'
-                  }}
-                />
-              </Grid>
-              
-              {/* Sets and Remark */}
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  label="Sets"
-                  variant="filled"
-                  fullWidth
-                  value={newItemData.sets}
-                  onChange={(e) => handleNewItemChange('sets', e.target.value)}
-                  sx={textInputSx}
-                  size="small"
-                  inputProps={{ 
-                    type: 'number',
-                    step: '1',
-                    min: '1'
-                  }}
-                />
-              </Grid>
-
+  
               {/* Remark */}
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 6, md: 2 }}>
                 <TextField
                   label="Remark"
                   variant="filled"
@@ -3756,40 +3767,9 @@ const fetchSizeDetailsForStyle = async (styleData) => {
                 />
               </Grid>
               
-              {/* Additional Fields */}
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  label="Var %"
-                  variant="filled"
-                  fullWidth
-                  value={newItemData.varPer}
-                  onChange={(e) => handleNewItemChange('varPer', e.target.value)}
-                  sx={textInputSx}
-                  size="small"
-                  inputProps={{ 
-                    type: 'number',
-                    step: '0.01',
-                    min: '0'
-                  }}
-                />
-              </Grid>
               
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  label="Std Qty"
-                  variant="filled"
-                  fullWidth
-                  value={newItemData.stdQty}
-                  onChange={(e) => handleNewItemChange('stdQty', e.target.value)}
-                  sx={textInputSx}
-                  size="small"
-                  inputProps={{ 
-                    type: 'number',
-                    step: '1',
-                    min: '0'
-                  }}
-                />
-              </Grid>
+              
+             
             </Grid>
           </CardContent>
         </Card>
@@ -3797,9 +3777,9 @@ const fetchSizeDetailsForStyle = async (styleData) => {
 
       {/* Size Details Table */}
       {sizeDetailsData.length > 0 && (
-        <Card elevation={2} sx={{ mb: 3 }}>
+        <Card elevation={1} sx={{ mb: 1 }}>
           <CardContent>
-            <Typography variant="h6" sx={{ mb: 2, fontSize: '1.1rem' }}>
+            <Typography variant="h6" sx={{ mb: 1, fontSize: '1.1rem' }}>
                Size Details
             </Typography>
             
@@ -3817,35 +3797,35 @@ const fetchSizeDetailsForStyle = async (styleData) => {
                 <thead>
                   <tr style={{ backgroundColor: '#e9ecef' }}>
                     <th style={{ 
-                      padding: '10px', 
+                       padding: '2px 8px',
                       border: '1px solid #dee2e6', 
                       textAlign: 'left',
                       fontSize: '14px',
                       fontWeight: '600'
                     }}>Size</th>
                     <th style={{ 
-                      padding: '10px', 
+                     padding: '2px 8px', 
                       border: '1px solid #dee2e6', 
                       textAlign: 'center',
                       fontSize: '14px',
                       fontWeight: '600'
                     }}>Quantity</th>
                     <th style={{ 
-                      padding: '10px', 
+                      padding: '2px 8px',
                       border: '1px solid #dee2e6', 
                       textAlign: 'right',
                       fontSize: '14px',
                       fontWeight: '600'
                     }}>MRP</th>
                     <th style={{ 
-                      padding: '10px', 
+                      padding: '2px 8px',
                       border: '1px solid #dee2e6', 
                       textAlign: 'right',
                       fontSize: '14px',
                       fontWeight: '600'
                     }}>Rate</th>
                     <th style={{ 
-                      padding: '10px', 
+                     padding: '2px 8px',
                       border: '1px solid #dee2e6', 
                       textAlign: 'right',
                       fontSize: '14px',
@@ -3859,31 +3839,36 @@ const fetchSizeDetailsForStyle = async (styleData) => {
                       backgroundColor: index % 2 === 0 ? '#fff' : '#f8f9fa',
                       borderBottom: '1px solid #dee2e6'
                     }}>
-                      <td style={{ 
-                        padding: '10px', 
+                      <td style={{
+                        padding: '4px 8px',
                         border: '1px solid #dee2e6',
-                        fontSize: '14px'
+                        fontSize: '13px',
+                        lineHeight: '1.2'
                       }}>{size.STYSIZE_NAME}</td>
                       <td style={{ 
                         padding: '5px', 
                         border: '1px solid #dee2e6',
                         textAlign: 'center'
                       }}>
-                        <TextField
-                          type="number"
-                          value={size.QTY}
-                          onChange={(e) => handleSizeQtyChange(index, e.target.value)}
-                          size="small"
-                          sx={{ width: '80px' }}
-                          inputProps={{ 
-                            style: { 
-                              padding: '8px',
-                              textAlign: 'center',
-                              fontSize: '14px'
-                            },
-                            min: 0 
-                          }}
-                        />
+                       <TextField
+  type="number"
+  value={size.QTY}
+  onChange={(e) => handleSizeQtyChange(index, e.target.value)}
+  size="small"
+  sx={{
+    width: '60px',
+    '& .MuiInputBase-root': {
+      height: '20px',
+      fontSize: '13px'
+    },
+    '& input': {
+      padding: '1px',
+      textAlign: 'center'
+    }
+  }}
+  inputProps={{ min: 0 }}
+/>
+
                       </td>
                       <td style={{ 
                         padding: '10px', 
@@ -3950,9 +3935,9 @@ const fetchSizeDetailsForStyle = async (styleData) => {
 
       {/* Order Items Table */}
       {tableData.length > 0 && (
-        <Card elevation={2} sx={{ mb: 3 }}>
+        <Card elevation={2} sx={{ mb: 1 }}>
           <CardContent>
-            <Typography variant="h6" sx={{ mb: 2, fontSize: '1.1rem' }}>
+            <Typography variant="h6" sx={{ mb: 1, fontSize: '1.1rem' }}>
               🛒 Order Items ({tableData.length})
             </Typography>
             
@@ -3960,7 +3945,7 @@ const fetchSizeDetailsForStyle = async (styleData) => {
               overflowX: 'auto',
               backgroundColor: '#f8f9fa',
               borderRadius: 1,
-              p: 1
+              p: 0
             }}>
               <table style={{ 
                 width: '100%', 
@@ -3970,63 +3955,63 @@ const fetchSizeDetailsForStyle = async (styleData) => {
                 <thead>
                   <tr style={{ backgroundColor: '#e9ecef' }}>
                     <th style={{ 
-                      padding: '10px', 
+                      padding: '5px', 
                       border: '1px solid #dee2e6', 
                       textAlign: 'left',
                       fontSize: '14px',
                       fontWeight: '600'
                     }}>Barcode</th>
                     <th style={{ 
-                      padding: '10px', 
+                      padding: '5px', 
                       border: '1px solid #dee2e6', 
                       textAlign: 'left',
                       fontSize: '14px',
                       fontWeight: '600'
                     }}>Product</th>
                     <th style={{ 
-                      padding: '10px', 
+                      padding: '5px', 
                       border: '1px solid #dee2e6', 
                       textAlign: 'left',
                       fontSize: '14px',
                       fontWeight: '600'
                     }}>Style</th>
                     <th style={{ 
-                      padding: '10px', 
+                      padding: '5px', 
                       border: '1px solid #dee2e6', 
                       textAlign: 'left',
                       fontSize: '14px',
                       fontWeight: '600'
                     }}>Type</th>
                     <th style={{ 
-                      padding: '10px', 
+                      padding: '5px', 
                       border: '1px solid #dee2e6', 
                       textAlign: 'left',
                       fontSize: '14px',
                       fontWeight: '600'
                     }}>Shade</th>
                     <th style={{ 
-                      padding: '10px', 
+                      padding: '5px', 
                       border: '1px solid #dee2e6', 
                       textAlign: 'center',
                       fontSize: '14px',
                       fontWeight: '600'
                     }}>Qty</th>
                     <th style={{ 
-                      padding: '10px', 
+                      padding: '5px', 
                       border: '1px solid #dee2e6', 
                       textAlign: 'right',
                       fontSize: '14px',
                       fontWeight: '600'
                     }}>Rate</th>
                     <th style={{ 
-                      padding: '10px', 
+                      padding: '5px', 
                       border: '1px solid #dee2e6', 
                       textAlign: 'right',
                       fontSize: '14px',
                       fontWeight: '600'
                     }}>Amount</th>
                     <th style={{ 
-                      padding: '10px', 
+                      padding: '5px', 
                       border: '1px solid #dee2e6', 
                       textAlign: 'center',
                       fontSize: '14px',
@@ -4036,61 +4021,61 @@ const fetchSizeDetailsForStyle = async (styleData) => {
                 </thead>
                 <tbody>
                   {tableData.map((item, index) => (
-                    <tr key={item.id} style={{ 
+                    <tr key={item.id} style={{  height: '32px', 
                       backgroundColor: index % 2 === 0 ? '#ffffffff' : '#ffffffff',
                       borderBottom: '1px solid #dee2e6'
                     }}>
                       <td style={{ 
-                        padding: '10px', 
+                        padding: '2px 6px',
                         border: '1px solid #dee2e6',
                         fontSize: '14px',
                         fontFamily: 'monospace'
                       }}>{item.barcode}</td>
                       <td style={{ 
-                        padding: '10px', 
+                        padding: '2px 6px', 
                         border: '1px solid #dee2e6',
                         fontSize: '14px'
                       }}>{item.product}</td>
                       <td style={{ 
-                        padding: '10px', 
+                       padding: '2px 6px',
                         border: '1px solid #dee2e6',
                         fontSize: '14px'
                       }}>{item.style}</td>
                       <td style={{ 
-                        padding: '10px', 
+                        padding: '2px 6px',  
                         border: '1px solid #dee2e6',
                         fontSize: '14px'
                       }}>
                         <div>{item.type}</div>
                       </td>
                       <td style={{ 
-                        padding: '10px', 
+                        padding: '2px 6px',
                         border: '1px solid #dee2e6',
                         fontSize: '14px'
                       }}>
                         <div>{item.shade}</div>
                       </td>
                       <td style={{ 
-                        padding: '10px', 
+                        padding: '2px 6px', 
                         border: '1px solid #dee2e6',
                         textAlign: 'center',
                         fontSize: '14px'
                       }}>{item.qty}</td>
                       <td style={{ 
-                        padding: '10px', 
+                        padding: '2px 6px',
                         border: '1px solid #dee2e6',
                         textAlign: 'right',
                         fontSize: '14px'
                       }}>₹{item.rate}</td>
                       <td style={{ 
-                        padding: '10px', 
+                        padding: '2px 6px',
                         border: '1px solid #dee2e6',
                         textAlign: 'right',
                         fontSize: '14px',
                         fontWeight: '500'
                       }}>₹{item.amount.toFixed(2)}</td>
                       <td style={{ 
-                        padding: '10px', 
+                        padding: '2px 6px', 
                         border: '1px solid #dee2e6',
                         textAlign: 'center'
                       }}>
@@ -4111,12 +4096,12 @@ const fetchSizeDetailsForStyle = async (styleData) => {
             {/* Order Summary */}
             {tableData.length > 0 && (
               <Box sx={{ 
-                mt: 3, 
-                p: 2, 
+                mt: 1, 
+                p: 1, 
                 backgroundColor: '#e8f5e9', 
                 borderRadius: 1 
               }}>
-                <Typography variant="h6" sx={{ mb: 2 }}>📊 Order Summary</Typography>
+                <Typography variant="h6" sx={{ mb: 1 }}>📊 Order Summary</Typography>
                 <Grid container spacing={2} sx={{ mt: 1 }}>
                   <Grid item xs={6} sm={3}>
                     <Typography variant="body2">Total Items:</Typography>
@@ -4189,7 +4174,7 @@ const fetchSizeDetailsForStyle = async (styleData) => {
             justifyContent: 'center'
           }}>
             <Typography variant="body2" sx={{ 
-              mb: 2, 
+              mb: 1, 
               color: 'text.secondary',
               textAlign: 'center'
             }}>
