@@ -1,40 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import {
-  MdDashboard, MdAdd, MdList, MdViewList, MdCategory,
-  MdSettings, MdTimer, MdAnalytics, MdPerson, MdGroup,
-  MdEmail, MdTrendingUp, MdCheckCircle, MdBarChart,
-  MdRefresh, MdFilterList, MdSearch, MdDownload,
-  MdNotifications, MdSupport, MdWork, MdAssignment,
-  MdSchedule, MdWarning, MdCheckCircleOutline, MdClose
+  MdDashboard, MdAdd, MdList, MdViewList, MdCategory, MdSettings, MdTimer, MdAnalytics, MdPerson, MdGroup,
+  MdEmail, MdTrendingUp, MdCheckCircle, MdBarChart, MdRefresh, MdFilterList, MdSearch, MdDownload,
+  MdNotifications, MdSupport, MdWork, MdAssignment, MdSchedule, MdWarning, MdCheckCircleOutline, MdClose
 } from 'react-icons/md';
 import {
   ArrowBack as ArrowBackIcon,
-
 } from '@mui/icons-material';
 import {
-  Card,
-  CardContent,
-  Typography,
-  Button,
-  TableContainer,
-  Table,
-  TableHead,
-  TableBody,
-  TableRow,
-  TableCell,
-  Chip,
-  Box,
-  Grid,
-  IconButton,
-  Stack,
-  Paper,
-  LinearProgress
+  Card, CardContent, Typography, Button, TableContainer, Table, TableHead, TableBody, TableRow, TableCell, Chip, Box, Grid,
+  IconButton, Stack, Paper, LinearProgress
 } from '@mui/material';
 import axiosInstance from '@/lib/axios';
 import { FaExclamationTriangle, FaUsers, FaChartPie } from 'react-icons/fa';
 import { TiTicket } from "react-icons/ti";
-
-
 import CreateTicket from './raiseTicket/CreateTicket';
 import TicketList from './TicketList';
 import TicketDetail from './TicketDetail';
@@ -57,12 +36,12 @@ const TicketDashboard = () => {
     overdue: 0
   });
 
-
   const [showCreateTicket, setShowCreateTicket] = useState(false);
   const [selectedTicket, setSelectedTicket] = useState(null);
   const [editingTicket, setEditingTicket] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+
   const fetchRecentTickets = async () => {
     setLoading(true);
     setError(null);
@@ -71,10 +50,7 @@ const TicketDashboard = () => {
         SearchText: ""
       };
 
-      const response = await axiosInstance.post(
-        "TrnTkt/GetTrnTktDashBoard",
-        payload
-      );
+      const response = await axiosInstance.post("TrnTkt/GetTrnTktDashBoard", payload);
 
       if (response.data.STATUS === 0 && Array.isArray(response.data.DATA)) {
         const realTickets = response.data.DATA;
@@ -85,7 +61,7 @@ const TicketDashboard = () => {
           description: tkt.TKTDESC || tkt.REASON || "No description",
           category: tkt.TKTSERVICENAME || "General",
           priority: tkt.TKTSVRTYNAME || "Medium",
-           status: tkt.TKTSTATUS === "O" ? "open" :
+          status: tkt.TKTSTATUS === "O" ? "open" :
             tkt.TKTSTATUS === "P" ? "in-progress" :
               tkt.TKTSTATUS === "R" ? "resolved" : "closed",
           assignee: tkt.TECHEMP_NAME || "Unassigned",
@@ -96,15 +72,12 @@ const TicketDashboard = () => {
           ccnName: tkt.CCN_NAME || "",
           machineryName: tkt.MACHINERY_NAME || "",
         }));
-
         setTickets(mappedTickets);
       }
-
       else {
         setError("Failed to load tickets");
       }
     } catch (err) {
-      console.error('Error fetching tickets:', err);
       setError("Failed to load tickets. Please try again.");
     } finally {
       setLoading(false);
@@ -114,8 +87,6 @@ const TicketDashboard = () => {
   useEffect(() => {
     fetchRecentTickets();
   }, []);
-
-
 
   const calculateStats = (tickets) => {
     const stats = {
@@ -130,11 +101,8 @@ const TicketDashboard = () => {
   };
 
   const handleModuleClick = (modulePath) => {
-    console.log('Navigating to:', modulePath);
     router.push(modulePath);
   };
-  console.log('tickets', tickets)
-  console.log('filter', tickets.filter(ticket => ticket.TKTSTATUS === "O").length,)
 
   const handleCreateTicket = (newTicket) => {
     const ticket = {
@@ -348,7 +316,6 @@ const TicketDashboard = () => {
     }
   };
 
-
   const renderActiveModule = () => {
     switch (activeModule) {
       case 'ticket-list':
@@ -386,10 +353,8 @@ const TicketDashboard = () => {
     }
   };
 
-
   const renderOverview = () => (
     <>
-
       <div style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))',
@@ -475,18 +440,10 @@ const TicketDashboard = () => {
             </div>
           );
         })}
-
       </div>
 
-
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: '2fr 1fr',
-        gap: '1.5rem'
-      }}>
-
+      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1.5rem' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-
           <div style={{
             backgroundColor: 'white',
             borderRadius: '0.75rem',

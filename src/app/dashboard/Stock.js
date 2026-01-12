@@ -5,19 +5,20 @@ import {
     Autocomplete, Box, Button, Checkbox, Chip, CircularProgress, Dialog, DialogActions, DialogContent, TextField,
     DialogTitle, Grid, ListItemText, Paper, Stack, Typography, IconButton
 } from '@mui/material';
-import { AttachMoney, People, ShoppingCart, TrendingUp, ArrowBack } from '@mui/icons-material';
+import { ShoppingCart } from '@mui/icons-material';
 import axiosInstance from '@/lib/axios';
 import { toast, ToastContainer } from 'react-toastify';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import dayjs from 'dayjs';
-import { DatePicker } from '@mui/x-date-pickers/DatePicker';
-import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line, PieChart, Pie,
     Cell, AreaChart, Area
 } from 'recharts';
 import CloseIcon from '@mui/icons-material/Close';
+import ShowChartIcon from '@mui/icons-material/ShowChart';
+import InventoryIcon from '@mui/icons-material/Inventory';
 import FilterListIcon from '@mui/icons-material/FilterList';
+import CurrencyRupeeIcon from '@mui/icons-material/CurrencyRupee';
+import { FixedSizeList as List } from 'react-window';
 import { AgGridReact } from "ag-grid-react";
 import { AllCommunityModule, ModuleRegistry } from "ag-grid-community";
 import "ag-grid-community/styles/ag-theme-quartz.css";
@@ -412,120 +413,72 @@ const Stock = () => {
                     Order Stock
                 </Typography>
 
-                <LocalizationProvider dateAdapter={AdapterDayjs}>
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap" }}>
-                        <DatePicker
-                            label="From-Date"
-                            value={dateFrom}
-                            onChange={(newValue) => setDateFrom(newValue)}
-                            format="DD/MM/YYYY"
-                            views={['day', 'month', 'year']}
-                            sx={{
-                                width: 150,
-                                '& .MuiPickersSectionList-root': {
-                                    padding: '6.5px 0',
-                                },
-                            }}
-                        />
-                        <DatePicker
-                            label="To-Date"
-                            value={dateTo}
-                            onChange={(newValue) => setDateTo(newValue)}
-                            format="DD/MM/YYYY"
-                            views={['day', 'month', 'year']}
-                            sx={{
-                                width: 150,
-                                '& .MuiPickersSectionList-root': {
-                                    padding: '6.5px 0',
-                                },
-                            }}
-                            className="custom-datepicker"
-                        />
-                        <Button
-                            variant="contained"
-                            size='small'
-                            onClick={handleGetData}
-                            sx={{
-                                borderRadius: '20px',
-                                backgroundColor: '#635bff',
-                                '&:hover': {
-                                    backgroundColor: '#635bff'
-                                },
-                            }}
-                        >
-                            Get Data
-                        </Button>
-                        <Button
-                            variant="contained"
-                            size='small'
-                            startIcon={<FilterListIcon />}
-                            onClick={handleOpenDialog}
-                            sx={{
-                                borderRadius: '20px',
-                                backgroundColor: '#635bff',
-                                '&:hover': {
-                                    backgroundColor: '#635bff'
-                                },
-                            }}
-                        >
-                            Filters
-                        </Button>
-                    </Box>
-                </LocalizationProvider>
+                <Box sx={{ display: "flex", alignItems: "center", flexWrap: "wrap" }}>
+                    <Button
+                        variant="contained"
+                        size="small"
+                        startIcon={<FilterListIcon />}
+                        onClick={handleOpenDialog}
+                        sx={{
+                            borderRadius: '20px',
+                            background: 'linear-gradient(135deg, #635bff 30%, #a558e0 100%)',
+                            color: '#fff',
+                            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.2)',
+                            padding: '5px 12px',
+                            fontWeight: 'bold',
+                            textTransform: 'none',
+                            '& .MuiButton-startIcon': {
+                                fontSize: '18px',
+                            },
+                        }}
+                    >
+                        Filters
+                    </Button>
+                </Box>
             </Box>
-
             <Grid container spacing={2} mb={2}>
                 <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                     <Paper elevation={4} sx={{ p: 3, borderRadius: 3, bgcolor: '#fff', height: '100%' }}>
                         <Stack direction="row" justifyContent="space-between">
                             <Box>
-                                <Typography variant="body2" fontWeight='bold'>Total Stock Qty</Typography>
-                                <Typography variant="h5" fontWeight="bold" mt={1}>{(totalStck[0]?.QTY / 100000).toFixed(2) + 'L' || 0}</Typography>
-                                <Stack direction="row" alignItems="center" mt={1}>
-                                    <TrendingUp sx={{ color: '#4caf50', fontSize: 20 }} />
-                                    <Typography variant="body2" color="#4caf50" ml={1}>+$10,250 this month</Typography>
-                                </Stack>
+                                <Typography variant="h6" fontWeight='bold'>Opening Stock</Typography>
+                                <Typography variant="h5" fontWeight="bold">{totalStck[0]?.OP_QTY || 0}</Typography>
                             </Box>
-                            <AttachMoney sx={{ fontSize: 50, color: '#8cbbddff' }} />
+                            <ShowChartIcon sx={{ fontSize: 50, color: '#d486e0ff' }} />
                         </Stack>
                     </Paper>
                 </Grid>
-
                 <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                     <Paper elevation={4} sx={{ p: 3, borderRadius: 3, bgcolor: '#fff', height: '100%' }}>
                         <Stack direction="row" justifyContent="space-between">
                             <Box>
-                                <Typography variant="body2" color="text.secondary">Total Orders</Typography>
-                                <Typography variant="h5" fontWeight="bold" mt={1}>1,660</Typography>
-                                <Chip label="+4% from last month" color="success" size="small" sx={{ mt: 1 }} />
+                                <Typography variant="h6" fontWeight='bold'>Closing Stock</Typography>
+                                <Typography variant="h5" fontWeight="bold">{totalStck[0]?.QTY || 0}</Typography>
                             </Box>
                             <ShoppingCart sx={{ fontSize: 50, color: '#8bd191ff' }} />
                         </Stack>
                     </Paper>
                 </Grid>
-
                 <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                     <Paper elevation={4} sx={{ p: 3, borderRadius: 3, bgcolor: '#fff', height: '100%' }}>
                         <Stack direction="row" justifyContent="space-between">
                             <Box>
-                                <Typography variant="body2" color="text.secondary">Total Revenue</Typography>
-                                <Typography variant="h5" fontWeight="bold" mt={1}>$92,120</Typography>
-                                <Chip label="+2%" color="success" size="small" sx={{ mt: 1 }} />
+                                <Typography variant="h6" fontWeight='bold'>Stock Value</Typography>
+                                <Typography variant="h6" fontWeight='bold'>Qty: {(totalStck[0]?.TOT_AMT / 100000).toFixed(2) + ' L' || 0}</Typography>
                             </Box>
-                            <ArrowBack sx={{ fontSize: 50, color: '#d3ae71ff' }} />
+                            <CurrencyRupeeIcon sx={{ fontSize: 50, color: '#d3ae71ff' }} />
                         </Stack>
                     </Paper>
                 </Grid>
-
                 <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                     <Paper elevation={4} sx={{ p: 3, borderRadius: 3, bgcolor: '#fff', height: '100%' }}>
                         <Stack direction="row" justifyContent="space-between">
                             <Box>
-                                <Typography variant="body2" color="text.secondary">Customers</Typography>
-                                <Typography variant="h5" fontWeight="bold" mt={1}>842</Typography>
-                                <Chip label="+12%" color="success" size="small" sx={{ mt: 1 }} />
+                                <Typography variant="body1" fontWeight='bold'>Total Stock Qty</Typography>
+                                <Typography variant="body1" fontWeight='bold'>Qty: {(totalStck[0]?.QTY / 100000).toFixed(2) + 'L' || 0}</Typography>
+                                <Typography variant="body1" fontWeight='bold'>Value: {(totalStck[0]?.TOT_AMT / 100000).toFixed(2) + 'L' || 0}</Typography>
                             </Box>
-                            <People sx={{ fontSize: 50, color: '#d486e0ff' }} />
+                            <InventoryIcon sx={{ fontSize: 50, color: '#8cbbddff' }} />
                         </Stack>
                     </Paper>
                 </Grid>
@@ -722,7 +675,6 @@ const Stock = () => {
                         </Box>
                     </Paper>
                 </Grid>
-
                 <Grid size={{ xs: 12, sm: 4, md: 4 }}>
                     <Paper elevation={4} sx={{ mb: 2, px: 2, py: 3, borderRadius: 3, backgroundColor: '#fff' }}>
                         <Typography
@@ -840,7 +792,7 @@ const Stock = () => {
                                 isOptionEqualToValue={(option, value) => option.FGPRD_KEY === value.FGPRD_KEY}
                                 renderInput={(params) => <TextField {...params} label="Product" />}
                                 renderOption={(props, option, { selected }) => (
-                                    <li {...props} key={option.FGPRD_KEY || `product-${option.FGPRD_KEY}`}
+                                    <li {...props} key={option.FGPRD_KEY}
                                         style={{ display: 'flex', alignItems: 'center', padding: '2px 12px', margin: '0' }}
                                     >
                                         <Checkbox checked={selected} size='small' sx={{ p: 0, mr: '8px', height: '15px', width: '18px' }} />
@@ -954,10 +906,10 @@ const Stock = () => {
                 </DialogContent>
 
                 <DialogActions>
-                    <Button onClick={clearFilters} color="error" variant='contained' size='small'>
+                    <Button onClick={clearFilters} color="error" variant='contained' size='small' sx={{ borderRadius: '20px' }}>
                         Clear
                     </Button>
-                    <Button onClick={handleApplyFilters} color="primary" variant='contained' size='small'>
+                    <Button onClick={handleApplyFilters} color="primary" variant='contained' size='small' sx={{ borderRadius: '20px' }}>
                         Apply
                     </Button>
                 </DialogActions>

@@ -49,8 +49,9 @@ const Login = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const [showLogin, setShowLogin] = useState(true);
   const currentYear = new Date().getFullYear();
-  const nextYear = currentYear + 1;
-  const defaultYearRange = `${currentYear}-${nextYear}`;
+  const fixedCurrentYear = currentYear - 1;
+  const nextYear = fixedCurrentYear + 1;
+  const defaultYearRange = `${fixedCurrentYear}-${nextYear}`;
   const years = [defaultYearRange];
   const [selectedYear, setSelectedYear] = useState(defaultYearRange);
   const [otpRequests, setOtpRequests] = useState({});
@@ -70,6 +71,7 @@ const Login = () => {
   const [showCreatePwdLink, setShowCreatePwdLink] = useState(false);
   const [empNameForModal, setEmpNameForModal] = useState('');
   const [mobilePassword, setMobilePassword] = useState('');
+
   useEffect(() => {
     const checkMobile = async () => {
       if (form.mobile.length === 10 && role === 'user' && loginMode === 'mobile') {
@@ -109,6 +111,7 @@ const Login = () => {
     const timer = setTimeout(checkMobile, 800);
     return () => clearTimeout(timer);
   }, [form.mobile, role, loginMode]);
+
   useEffect(() => {
     if (role === 'user') {
       setLoginMode('username');
@@ -120,9 +123,8 @@ const Login = () => {
     setOtpSent(false);
     setOtp('');
     setShowCreatePwdLink(false);
-    // Optional: log the states to verify clearing
-    console.log("Form reset:", form);
   }, [role]);
+
   useEffect(() => {
     const interval = setInterval(() => {
       setColorIndex((prevIndex) => (prevIndex + 1) % colors.length);
@@ -138,6 +140,7 @@ const Login = () => {
       router.push('/dashboard', { replace: true });
     }
   }, [router]);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     if (name === 'mobile') {
@@ -160,9 +163,11 @@ const Login = () => {
       setForm((prev) => ({ ...prev, [name]: value }));
     }
   };
+
   const handleRoleSelect = (value) => {
     setRole(value);
   };
+  
   const canSendOtp = (mobile) => {
     if (!otpRequests[mobile]) return true;
     const lastRequestTime = otpRequests[mobile];
@@ -170,11 +175,13 @@ const Login = () => {
     const currentTime = new Date().getTime();
     return (currentTime - lastRequestTime) > fiveMinutes;
   };
+
   const getOTPFlag = () => {
     if (role === "salesman") return "S";
     if (role === "broker") return "B";
     return "C";
   };
+
   const handleGenerateOtp = async () => {
     if (form.mobile.length !== 10) {
       setOtpError(true);
@@ -220,6 +227,7 @@ const Login = () => {
       toast.error('Error sending OTP. Please try again.', { autoClose: 1000 });
     }
   };
+
   const handleVerifyOtp = () => {
     if (!otp || otp.length !== 6) {
       toast.info("Please enter a valid 6-digit otp.");
@@ -236,6 +244,7 @@ const Login = () => {
       toast.error('Invalid OTP. Please try again.');
     }
   };
+
   const openCreatePasswordModal = async () => {
     try {
       const res1 = await axiosInstance.post('Employee/EmployeeLogin', {
@@ -344,6 +353,7 @@ const Login = () => {
       toast.error('Login failed');
     }
   };
+
   const handleLogin = async () => {
     if (role !== 'customer') {
       if (!form.username.trim() || !form.password.trim()) {
@@ -364,17 +374,16 @@ const Login = () => {
       });
       if (loginResponse.data.STATUS === 0) {
         const loginDetails = loginResponse.data.DATA[0];
-        console.log("logindetails", loginDetails);
         const USER_NAME = loginDetails.USER_NAME;
         const USER_ID = loginDetails.USER_ID;
         const currentYear = new Date().getFullYear();
-        const lastTwoDigits = currentYear.toString().slice(-2);
+        const fixCurrentYear = currentYear - 1;
+        const lastTwoDigits = fixCurrentYear.toString().slice(-2);
         localStorage.setItem('USER_NAME', USER_NAME);
         localStorage.setItem('USER_ID', USER_ID);
         localStorage.setItem('USER_NAME', USER_NAME);
         localStorage.setItem('FCYR_KEY', lastTwoDigits);
         localStorage.setItem('authenticated', 'true');
-        // localStorage.setItem('userRole', role);
         localStorage.setItem('userRole', 'user');
         localStorage.removeItem('EMP_KEY');
         localStorage.removeItem('EMP_NAME');
