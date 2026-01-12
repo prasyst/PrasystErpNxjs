@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import {
     Box, Typography, Grid, Paper, IconButton, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Button,
     styled, useTheme, TextField, DialogTitle, DialogActions, Dialog, LinearProgress, Chip, TableFooter, CircularProgress,
-    DialogContent, FormControlLabel, Checkbox, Badge, InputAdornment,
+    DialogContent, FormControlLabel, Checkbox, Badge, InputAdornment, Fade,
 } from "@mui/material";
 import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
 import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
@@ -38,6 +38,7 @@ import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import SearchIcon from '@mui/icons-material/Search';
 import ClearIcon from '@mui/icons-material/Clear';
+import FilterListIcon from '@mui/icons-material/FilterList';
 
 const GaugeComponent = dynamic(
     async () => {
@@ -79,8 +80,9 @@ const StyledCard2 = styled(Paper)(({ theme }) => ({
     display: 'flex',
     alignItems: 'center',
     padding: theme.spacing(2),
+    height: 400,
     borderRadius: '12px',
-    background: 'linear-gradient(135deg, #5d6bbbff 0%, #706161ff 100%)',
+    backgroundColor: '#4A6E8C',
     color: '#fff',
 }));
 
@@ -92,20 +94,6 @@ const headerCellStyle = {
     top: 0,
     zIndex: 10,
 };
-
-const data = [
-    { month: 'Jan-25', sales: 4000, profit: 2400 },
-    { month: 'Feb-25', sales: 3000, profit: 1398 },
-    { month: 'Mar-25', sales: 2000, profit: 980 },
-    { month: 'Apr-25', sales: 2780, profit: 3908 },
-    { month: 'May-25', sales: 1890, profit: 4800 },
-    { month: 'Jun-25', sales: 2390, profit: 3800 },
-    { month: 'Jul-25', sales: 3490, profit: 3000 },
-    { month: 'Aug-25', sales: 2490, profit: 4500 },
-    { month: 'Sep-25', sales: 4490, profit: 5300 },
-    { month: 'Nov-25', sales: 5490, profit: 3300 },
-    { month: 'Dec-25', sales: 3490, profit: 6300 },
-];
 
 // const StyledSpeedDial = styled(SpeedDial)(({ theme }) => ({
 //     position: 'absolute',
@@ -211,6 +199,7 @@ const SalesDashboard = () => {
     const [chartData, setChartData] = useState([]);
     const [totalSales, setTotalSales] = useState(0);
     const [salesPerson, setSalesPerson] = useState([]);
+    const [visible, setVisible] = useState(false);
 
     const handleDialogOpen = (filterName) => {
         setCurrentFilter(filterName);
@@ -238,6 +227,10 @@ const SalesDashboard = () => {
     const totalConversion = !isNaN(dispOrd.QTY) && !isNaN(summaryData.QTY) && parseFloat(summaryData.QTY) !== 0
         ? (parseFloat(dispOrd.QTY) / parseFloat(summaryData.QTY)) * 100
         : 0;
+
+    useEffect(() => {
+        setVisible(true);
+    }, []);
 
     useEffect(() => {
         const fcyrFromStorage = localStorage.getItem("FCYR_KEY");
@@ -801,7 +794,21 @@ const SalesDashboard = () => {
                         >
                             Get Data
                         </Button>
-                        <StyledSpeedDial ariaLabel="Filters" direction="down" icon={<SpeedDialIcon />}>
+                        <Button
+                            variant="contained"
+                            onClick={() => setOpenDialog(true)}
+                            startIcon={< FilterListIcon />}
+                            sx={{
+                                borderRadius: '20px',
+                                backgroundColor: '#635bff',
+                                '&:hover': {
+                                    backgroundColor: '#635bff'
+                                },
+                            }}
+                        >
+                            Filters
+                        </Button>
+                        {/* <StyledSpeedDial ariaLabel="Filters" direction="down" icon={<SpeedDialIcon />}>
                             {actions.map((action) => {
                                 const count = selectedOptions[action.name]?.length || 0;
                                 return (
@@ -817,7 +824,7 @@ const SalesDashboard = () => {
                                     />
                                 );
                             })}
-                        </StyledSpeedDial>
+                        </StyledSpeedDial> */}
 
                         {/* Dialog to show checkboxes */}
                         <Dialog
@@ -866,7 +873,6 @@ const SalesDashboard = () => {
 
                             <DialogContent sx={{ p: 4, backgroundColor: '#fafbff' }}>
                                 <Grid container spacing={1}>
-                                    {/* Party */}
                                     <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                                         <Box sx={{
                                             display: 'flex',
@@ -1275,146 +1281,154 @@ const SalesDashboard = () => {
             {/* Cards Data */}
             <Grid container spacing={1} mb={2} gap={1}>
                 <Grid size={{ xs: 12, md: 3 }} sx={{ display: "flex" }}>
-                    <StyledCard sx={{ width: "100%", position: "relative" }}>
-                        <IconButton
-                            sx={{
-                                position: "absolute",
-                                top: 8,
-                                right: 8,
-                                bgcolor: "#02020222",
-                                color: "#4caf50",
-                                width: 60,
-                                height: 60,
-                                boxShadow: "0 0 20px #4caf5066",
-                                "&:hover": { bgcolor: "#4caf5044" },
-                            }}
-                            aria-label="Total Orders"
-                        >
-                            <ReceiptLongIcon fontSize="large" />
-                        </IconButton>
-                        <Box>
-                            <Typography variant="h6" fontWeight="bold" sx={{ mb: 1 }}>
-                                Total Orders - {summaryData.ROWNUM}
-                            </Typography>
-                            <Typography variant="h6" fontWeight="bold">
-                                Value: ₹ {(summaryData.AMOUNT / 100000).toFixed(2)} L
-                            </Typography>
-                            <Typography variant="h6" fontWeight="bold" sx={{ mt: 0.5 }}>
-                                Qty: {summaryData.QTY}
-                            </Typography>
-                        </Box>
-                    </StyledCard>
-                </Grid>
-
-                <Grid size={{ xs: 12, md: 3 }} sx={{ display: "flex" }}>
-                    <StyledCard sx={{ width: "100%", position: 'relative' }}>
-                        <IconButton
-                            sx={{
-                                position: "absolute",
-                                top: 8,
-                                right: 8,
-                                bgcolor: "#2196f322",
-                                color: "#2196f3",
-                                width: 60,
-                                height: 60,
-                                boxShadow: "0 0 20px #2196f366",
-                                "&:hover": { bgcolor: "#2196f344" },
-                            }}
-                            aria-label="Dispatch"
-                        >
-                            <ShoppingCartIcon fontSize="large" />
-                        </IconButton>
-                        <Box>
-                            <Typography variant="h6" fontWeight="bold" sx={{ mb: 1 }}>
-                                Dispatch
-                            </Typography>
-                            <Typography variant="h6" fontWeight="bold">
-                                Value: ₹{(dispOrd.AMOUNT / 100000).toFixed(2)} L
-                            </Typography>
-                            <Typography variant="h6" fontWeight="bold">
-                                Qty: {dispOrd.QTY}
-                            </Typography>
-                        </Box>
-                    </StyledCard>
-                </Grid>
-
-                <Grid size={{ xs: 12, md: 3 }} sx={{ display: "flex" }}>
-                    <StyledCard sx={{ width: "100%", position: 'relative' }}>
-                        <IconButton
-                            sx={{
-                                position: "absolute",
-                                top: 8,
-                                right: 8,
-                                bgcolor: "#9c27b022",
-                                color: "#9bb027ff",
-                                width: 60,
-                                height: 60,
-                                boxShadow: "0 0 20px #2752b066",
-                                "&:hover": { bgcolor: "#2789b044" },
-                            }}
-                            aria-label="Conversion %"
-                        >
-                            <PercentIcon fontSize="large" />
-                        </IconButton>
-                        <Box>
-                            <Typography variant="h6" fontWeight="bold" sx={{ mb: 1 }}>
-                                Conversion Ratio
-                            </Typography>
-                            <Typography variant="h6" fontWeight="bold" letterSpacing={1}>
-                                {totalConversion.toFixed(2)}%
-                            </Typography>
-                            <Box display="flex" alignItems="center" gap={0.5}>
-                                {totalConversion > 50 ? (
-                                    <ArrowUpwardIcon sx={{ color: '#4caf50' }} fontSize="small" />
-                                ) : (
-                                    <ArrowDownwardIcon sx={{ color: '#f44336' }} fontSize="small" />
-                                )}
-                                <Typography variant="body2" color={totalConversion > 50 ? "success.main" : "error.main"} fontWeight={600}>
-                                    {totalConversion.toFixed(0) ?? '0.00'}%
+                    <Fade in={visible} timeout={500}>
+                        <StyledCard sx={{ width: "100%", position: "relative" }}>
+                            <IconButton
+                                sx={{
+                                    position: "absolute",
+                                    top: 8,
+                                    right: 8,
+                                    bgcolor: "#02020222",
+                                    color: "#4caf50",
+                                    width: 60,
+                                    height: 60,
+                                    boxShadow: "0 0 20px #4caf5066",
+                                    "&:hover": { bgcolor: "#4caf5044" },
+                                }}
+                                aria-label="Total Orders"
+                            >
+                                <ReceiptLongIcon fontSize="large" />
+                            </IconButton>
+                            <Box>
+                                <Typography variant="h6" fontWeight="bold" sx={{ mb: 1 }}>
+                                    Total Orders - {summaryData.ROWNUM}
+                                </Typography>
+                                <Typography variant="h6" fontWeight="bold">
+                                    Value: ₹ {(summaryData.AMOUNT / 100000).toFixed(2)} L
+                                </Typography>
+                                <Typography variant="h6" fontWeight="bold" sx={{ mt: 0.5 }}>
+                                    Qty: {summaryData.QTY}
                                 </Typography>
                             </Box>
-                            <Box>
-                                <LinearProgress
-                                    variant="determinate"
-                                    value={totalConversion}
-                                    sx={{ height: 10, borderRadius: 5, bgcolor: '#fff3e0' }}
-                                    color="success"
-                                />
-                            </Box>
-                        </Box>
-                    </StyledCard>
+                        </StyledCard>
+                    </Fade>
                 </Grid>
 
                 <Grid size={{ xs: 12, md: 3 }} sx={{ display: "flex" }}>
-                    <StyledCard sx={{ width: "100%", position: 'relative' }}>
-                        <IconButton
-                            sx={{
-                                position: "absolute",
-                                top: 8,
-                                right: 8,
-                                bgcolor: "#ff980022",
-                                color: "#ff9800",
-                                width: 60,
-                                height: 60,
-                                boxShadow: "0 0 20px #ff980066",
-                                "&:hover": { bgcolor: "#ff980044" },
-                            }}
-                            aria-label="Order Balance"
-                        >
-                            <AccountBalanceIcon fontSize="large" />
-                        </IconButton>
-                        <Box>
-                            <Typography variant="h6" fontWeight="bold" sx={{ mb: 1 }}>
-                                Pending Order
-                            </Typography>
-                            <Typography variant="h6" fontWeight="bold">
-                                Value: ₹ {(balOrd.AMOUNT / 100000).toFixed(2)} L
-                            </Typography>
-                            <Typography variant="h6" fontWeight="bold">
-                                Qty: {balOrd.QTY} |  Cancel Qty: {canOrd.QTY}
-                            </Typography>
-                        </Box>
-                    </StyledCard>
+                    <Fade in={visible} timeout={1000}>
+                        <StyledCard sx={{ width: "100%", position: 'relative' }}>
+                            <IconButton
+                                sx={{
+                                    position: "absolute",
+                                    top: 8,
+                                    right: 8,
+                                    bgcolor: "#2196f322",
+                                    color: "#2196f3",
+                                    width: 60,
+                                    height: 60,
+                                    boxShadow: "0 0 20px #2196f366",
+                                    "&:hover": { bgcolor: "#2196f344" },
+                                }}
+                                aria-label="Dispatch"
+                            >
+                                <ShoppingCartIcon fontSize="large" />
+                            </IconButton>
+                            <Box>
+                                <Typography variant="h6" fontWeight="bold" sx={{ mb: 1 }}>
+                                    Dispatch
+                                </Typography>
+                                <Typography variant="h6" fontWeight="bold">
+                                    Value: ₹{(dispOrd.AMOUNT / 100000).toFixed(2)} L
+                                </Typography>
+                                <Typography variant="h6" fontWeight="bold">
+                                    Qty: {dispOrd.QTY}
+                                </Typography>
+                            </Box>
+                        </StyledCard>
+                    </Fade>
+                </Grid>
+
+                <Grid size={{ xs: 12, md: 3 }} sx={{ display: "flex" }}>
+                    <Fade in={visible} timeout={1500}>
+                        <StyledCard sx={{ width: "100%", position: 'relative' }}>
+                            <IconButton
+                                sx={{
+                                    position: "absolute",
+                                    top: 8,
+                                    right: 8,
+                                    bgcolor: "#9c27b022",
+                                    color: "#9bb027ff",
+                                    width: 60,
+                                    height: 60,
+                                    boxShadow: "0 0 20px #2752b066",
+                                    "&:hover": { bgcolor: "#2789b044" },
+                                }}
+                                aria-label="Conversion %"
+                            >
+                                <PercentIcon fontSize="large" />
+                            </IconButton>
+                            <Box>
+                                <Typography variant="h6" fontWeight="bold" sx={{ mb: 1 }}>
+                                    Conversion Ratio
+                                </Typography>
+                                <Typography variant="h6" fontWeight="bold" letterSpacing={1}>
+                                    {totalConversion.toFixed(2)}%
+                                </Typography>
+                                <Box display="flex" alignItems="center" gap={0.5}>
+                                    {totalConversion > 50 ? (
+                                        <ArrowUpwardIcon sx={{ color: '#4caf50' }} fontSize="small" />
+                                    ) : (
+                                        <ArrowDownwardIcon sx={{ color: '#f44336' }} fontSize="small" />
+                                    )}
+                                    <Typography variant="body2" color={totalConversion > 50 ? "success.main" : "error.main"} fontWeight={600}>
+                                        {totalConversion.toFixed(0) ?? '0.00'}%
+                                    </Typography>
+                                </Box>
+                                <Box>
+                                    <LinearProgress
+                                        variant="determinate"
+                                        value={totalConversion}
+                                        sx={{ height: 10, borderRadius: 5, bgcolor: '#fff3e0' }}
+                                        color="success"
+                                    />
+                                </Box>
+                            </Box>
+                        </StyledCard>
+                    </Fade>
+                </Grid>
+
+                <Grid size={{ xs: 12, md: 3 }} sx={{ display: "flex" }}>
+                    <Fade in={visible} timeout={2000}>
+                        <StyledCard sx={{ width: "100%", position: 'relative' }}>
+                            <IconButton
+                                sx={{
+                                    position: "absolute",
+                                    top: 8,
+                                    right: 8,
+                                    bgcolor: "#ff980022",
+                                    color: "#ff9800",
+                                    width: 60,
+                                    height: 60,
+                                    boxShadow: "0 0 20px #ff980066",
+                                    "&:hover": { bgcolor: "#ff980044" },
+                                }}
+                                aria-label="Order Balance"
+                            >
+                                <AccountBalanceIcon fontSize="large" />
+                            </IconButton>
+                            <Box>
+                                <Typography variant="h6" fontWeight="bold" sx={{ mb: 1 }}>
+                                    Pending Order
+                                </Typography>
+                                <Typography variant="h6" fontWeight="bold">
+                                    Value: ₹ {(balOrd.AMOUNT / 100000).toFixed(2)} L
+                                </Typography>
+                                <Typography variant="h6" fontWeight="bold">
+                                    Qty: {balOrd.QTY} |  Cancel Qty: {canOrd.QTY}
+                                </Typography>
+                            </Box>
+                        </StyledCard>
+                    </Fade>
                 </Grid>
             </Grid>
 
@@ -1491,6 +1505,8 @@ const SalesDashboard = () => {
                                                     borderBottom: '2px solid #cbd5e1',
                                                     borderRight: '1px solid #e2e8f0',
                                                     '&:last-child': { borderRight: 'none' },
+                                                    py: 0.5,
+                                                    px: 1,
                                                 }}
                                             >
                                                 {header}
@@ -1514,7 +1530,7 @@ const SalesDashboard = () => {
                                                     },
                                                 }}
                                             >
-                                                <TableCell sx={{ px: 2, borderRight: '1px solid #e2e8f0' }}>
+                                                <TableCell sx={{ borderRight: '1px solid #e2e8f0' }}>
                                                     <IconButton
                                                         size="small"
                                                         onClick={() => handleViewDocument(item)}
@@ -1523,38 +1539,38 @@ const SalesDashboard = () => {
                                                         <VisibilityIcon fontSize="small" />
                                                     </IconButton>
                                                 </TableCell>
-                                                <TableCell sx={{ px: 2, borderRight: '1px solid #e2e8f0', fontSize: '0.875rem' }}>
+                                                <TableCell sx={{ borderRight: '1px solid #e2e8f0', fontSize: '0.875rem' }}>
                                                     {item.ORDBK_NO}
                                                 </TableCell>
-                                                <TableCell sx={{ px: 2, borderRight: '1px solid #e2e8f0', fontSize: '0.875rem' }}>
+                                                <TableCell sx={{ borderRight: '1px solid #e2e8f0', fontSize: '0.875rem' }}>
                                                     {dayjs(item.ORDBK_DT).format('DD/MM/YYYY')}
                                                 </TableCell>
-                                                <TableCell sx={{ px: 2, borderRight: '1px solid #e2e8f0', fontSize: '0.875rem' }}>
+                                                <TableCell sx={{ borderRight: '1px solid #e2e8f0', fontSize: '0.875rem' }}>
                                                     {item.PARTY_NAME}
                                                 </TableCell>
-                                                <TableCell sx={{ px: 2, borderRight: '1px solid #e2e8f0', fontSize: '0.875rem' }}>
+                                                <TableCell sx={{ borderRight: '1px solid #e2e8f0', fontSize: '0.875rem' }}>
                                                     {item.CITY_NAME}
                                                 </TableCell>
-                                                <TableCell sx={{ px: 2, borderRight: '1px solid #e2e8f0', fontSize: '0.875rem' }}>
+                                                <TableCell sx={{ borderRight: '1px solid #e2e8f0', fontSize: '0.875rem' }}>
                                                     {item.STATE_NAME}
                                                 </TableCell>
-                                                <TableCell sx={{ px: 2, borderRight: '1px solid #e2e8f0', fontWeight: 700, fontSize: '0.875rem' }}>
+                                                <TableCell sx={{ borderRight: '1px solid #e2e8f0', fontWeight: 700, fontSize: '0.875rem' }}>
                                                     {item.QTY}
                                                 </TableCell>
-                                                <TableCell sx={{ px: 2, borderRight: '1px solid #e2e8f0', fontSize: '0.875rem' }}>
+                                                <TableCell sx={{ borderRight: '1px solid #e2e8f0', fontSize: '0.875rem' }}>
                                                     {item.BROKER_NAME}
                                                 </TableCell>
-                                                <TableCell sx={{ px: 2, borderRight: '1px solid #e2e8f0', fontSize: '0.875rem' }}>
+                                                <TableCell sx={{ borderRight: '1px solid #e2e8f0', fontSize: '0.875rem' }}>
                                                     {item.SALEPERSON_NAME}
                                                 </TableCell>
-                                                <TableCell sx={{ px: 2 }}>
+                                                <TableCell>
                                                     <Chip
                                                         label={item.STATUS === 'CANL' ? 'Cancelled' : item.STATUS || 'Active'}
                                                         size="small"
                                                         color={item.STATUS === 'CANL' ? 'error' : 'success'}
                                                         sx={{
                                                             fontSize: '0.75rem',
-                                                            height: 24,
+                                                            height: 20,
                                                             fontWeight: 600,
                                                             minWidth: 76,
                                                         }}
@@ -1591,7 +1607,7 @@ const SalesDashboard = () => {
                                         borderRadius: 4,
                                     }}
                                 >
-                                    <CircularProgress size='3rem' thickness={4.5} color="primary" />
+                                    <CircularProgress size="3rem" thickness={4.5} color="primary" />
                                     <Typography variant="body1" sx={{ mt: 2, color: '#334155', fontWeight: 500 }}>
                                         Loading recent orders...
                                     </Typography>
@@ -1604,7 +1620,7 @@ const SalesDashboard = () => {
 
             {/* Party Wise Orders Summary */}
             <Grid container spacing={2} sx={{ height: '100%', mt: 2 }}>
-                <Grid size={{ xs: 12, md: 9 }} sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+                <Grid size={{ xs: 12, md: 12 }} sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
                     <Paper
                         elevation={5}
                         sx={{
@@ -1624,14 +1640,14 @@ const SalesDashboard = () => {
 
                             {/* Search Box */}
                             <TextField
-                                label="Search Orders"
+                                label="Search Party Orders"
                                 variant="outlined"
                                 size="small"
                                 sx={{
                                     width: 250,
                                     borderRadius: '9px',
                                     '& .MuiOutlinedInput-root': {
-                                        borderRadius: '9px',
+                                        borderRadius: '20px',
                                     },
                                     '& .MuiInputLabel-root': {
                                         borderRadius: '9px',
@@ -1745,10 +1761,11 @@ const SalesDashboard = () => {
                         </TableContainer>
                     </Paper>
                 </Grid>
+            </Grid>
 
-                {/* Right Column with Cards */}
-                <Grid size={{ xs: 12, md: 3 }} sx={{ display: 'flex', flexDirection: 'column', gap: 1, height: '100%' }}>
-                    <StyledCard2 sx={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%', p: 2 }}>
+            <Grid container spacing={2} mt={2}>
+                <Grid size={{ xs: 12, md: 6 }} sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                    <StyledCard2 sx={{ flex: 1, display: 'flex', flexDirection: 'column', p: 2 }}>
                         <Typography variant="subtitle1" fontWeight="bold" align="center" gutterBottom>
                             Top 10 Parties by Order Amount
                         </Typography>
@@ -1764,13 +1781,13 @@ const SalesDashboard = () => {
                                     faded: { innerRadius: 30, additionalRadius: -30, color: 'gray' },
                                 },
                             ]}
-                            height={235}
+                            height={200}
                             slotProps={{
                                 legend: {
                                     direction: 'column',
-                                    position: { vertical: 'middle', horizontal: 'right' },
+                                    position: { vertical: 'middle', horizontal: 'start' },
                                     padding: { left: 10 },
-                                    labelStyle: { fontSize: 11 },
+                                    style: { color: 'white' },
                                 },
                             }}
                             onItemClick={(event, { dataIndex }) => {
@@ -1778,28 +1795,69 @@ const SalesDashboard = () => {
                                 setSelectedParty(clicked?.fullPartyName || null);
                             }}
                         >
-                            {/* Optional: Show total in center */}
-                            <Typography
-                                variant="h6"
-                                sx={{
-                                    position: 'absolute',
-                                    top: '50%',
-                                    left: '50%',
-                                    transform: 'translate(-50%, -50%)',
-                                    fontWeight: 'bold',
-                                    color: '#333',
+                        </PieChart>
+                    </StyledCard2>
+                </Grid>
+
+                <Grid size={{ xs: 12, md: 6 }} sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                    <StyledCard2 sx={{ flex: 1, display: 'flex', flexDirection: 'column', p: 2 }}>
+                        <Typography variant="subtitle1" fontWeight="bold" align="center" gutterBottom>
+                            Top 10 States by Order Amount
+                        </Typography>
+                        {stateWise.length > 0 ? (
+                            <PieChart
+                                series={[
+                                    {
+                                        data: stateWise
+                                            .sort((a, b) => parseFloat(b.AMOUNT || 0) - parseFloat(a.AMOUNT || 0))
+                                            .slice(0, 10)
+                                            .map((item, index) => ({
+                                                id: index,
+                                                label: (item.STATE_NAME || "Unknown").slice(0, 18) + (item.STATE_NAME?.length > 18 ? '...' : ''),
+                                                // label: `${(item.STATE_NAME || "Unknown").slice(0, 18)}${item.STATE_NAME?.length > 18 ? '...' : ''} - ${parseFloat(item.AMOUNT || 0).toFixed(2)}`,
+                                                value: parseFloat(item.AMOUNT || 0),
+                                                color: `hsl(${index * 36}, 70%, 50%)`,
+                                                fullStateName: item.STATE_NAME || "Unknown",
+                                            })),
+                                        innerRadius: 25,
+                                        outerRadius: 90,
+                                        paddingAngle: 3,
+                                        cornerRadius: 8,
+                                        highlightScope: { faded: 'global', highlighted: 'item' },
+                                        faded: { innerRadius: 30, additionalRadius: -30, color: 'gray' },
+                                    },
+                                ]}
+                                height={230}
+                                slotProps={{
+                                    legend: {
+                                        direction: 'column',
+                                        position: { vertical: 'middle', horizontal: 'right' },
+                                        padding: { left: 10 },
+                                        style: { color: 'white' },
+                                    },
+                                }}
+                                onItemClick={(event, { dataIndex }) => {
+                                    const clickedItem = stateWise
+                                        .sort((a, b) => parseFloat(b.AMOUNT || 0) - parseFloat(a.AMOUNT || 0))
+                                        .slice(0, 10)[dataIndex];
+
+                                    const stateName = clickedItem?.STATE_NAME || null;
+                                    setSelectedState(stateName);
                                 }}
                             >
-                                ₹{(summaryData.TOT_AMT / 100000).toFixed(2)}
-                            </Typography>
-                        </PieChart>
+                            </PieChart>
+                        ) : (
+                            <Box display="flex" justifyContent="center" alignItems="center" height="100%">
+                                <Typography color="text.secondary">No state data available</Typography>
+                            </Box>
+                        )}
                     </StyledCard2>
                 </Grid>
             </Grid>
 
             {/* State wise order summary */}
             <Grid container spacing={2} sx={{ height: '100%', mt: 2 }}>
-                <Grid size={{ xs: 12, md: 9 }} sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+                <Grid size={{ xs: 12, md: 12 }} sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
                     <Paper
                         elevation={5}
                         sx={{
@@ -1824,7 +1882,7 @@ const SalesDashboard = () => {
                                 sx={{
                                     width: 250,
                                     borderRadius: '9px',
-                                    '& .MuiOutlinedInput-root': { borderRadius: '9px' },
+                                    '& .MuiOutlinedInput-root': { borderRadius: '20px' },
                                 }}
                                 value={searchTermState}
                                 onChange={(e) => setSearchTermState(e.target.value)}
@@ -1906,75 +1964,6 @@ const SalesDashboard = () => {
                             </Table>
                         </TableContainer>
                     </Paper>
-                </Grid>
-
-                {/* Right Column - Pie Chart */}
-                <Grid size={{ xs: 12, md: 3 }} sx={{ display: 'flex', flexDirection: 'column', gap: 1, height: '100%' }}>
-                    <StyledCard2 sx={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%', p: 2 }}>
-                        <Typography variant="subtitle1" fontWeight="bold" align="center" gutterBottom>
-                            Top 10 States by Order Amount
-                        </Typography>
-
-                        {stateWise.length > 0 ? (
-                            <PieChart
-                                series={[
-                                    {
-                                        data: stateWise
-                                            .sort((a, b) => parseFloat(b.AMOUNT || 0) - parseFloat(a.AMOUNT || 0))
-                                            .slice(0, 10)
-                                            .map((item, index) => ({
-                                                id: index,
-                                                label: (item.STATE_NAME || "Unknown").slice(0, 18) + (item.STATE_NAME?.length > 18 ? '...' : ''),
-                                                value: parseFloat(item.AMOUNT || 0),
-                                                color: `hsl(${index * 36}, 70%, 50%)`,
-                                                fullStateName: item.STATE_NAME || "Unknown",
-                                            })),
-                                        innerRadius: 25,
-                                        outerRadius: 90,
-                                        paddingAngle: 3,
-                                        cornerRadius: 8,
-                                        highlightScope: { faded: 'global', highlighted: 'item' },
-                                        faded: { innerRadius: 30, additionalRadius: -30, color: 'gray' },
-                                    },
-                                ]}
-                                height={215}
-                                slotProps={{
-                                    legend: {
-                                        direction: 'column',
-                                        position: { vertical: 'middle', horizontal: 'right' },
-                                        padding: { left: 10 },
-                                        labelStyle: { fontSize: 11 },
-                                    },
-                                }}
-                                onItemClick={(event, { dataIndex }) => {
-                                    const clickedItem = stateWise
-                                        .sort((a, b) => parseFloat(b.AMOUNT || 0) - parseFloat(a.AMOUNT || 0))
-                                        .slice(0, 10)[dataIndex];
-
-                                    const stateName = clickedItem?.STATE_NAME || null;
-                                    setSelectedState(stateName);
-                                }}
-                            >
-                                <Typography
-                                    variant="h6"
-                                    sx={{
-                                        position: 'absolute',
-                                        top: '50%',
-                                        left: '50%',
-                                        transform: 'translate(-50%, -50%)',
-                                        fontWeight: 'bold',
-                                        color: '#333',
-                                    }}
-                                >
-                                    ₹{(summaryData.TOT_AMT / 100000).toFixed(1)}L
-                                </Typography>
-                            </PieChart>
-                        ) : (
-                            <Box display="flex" justifyContent="center" alignItems="center" height="100%">
-                                <Typography color="text.secondary">No state data available</Typography>
-                            </Box>
-                        )}
-                    </StyledCard2>
                 </Grid>
             </Grid>
 
@@ -2095,10 +2084,10 @@ const SalesDashboard = () => {
                             {/* Animated Total Quantity */}
                             <Box textAlign="right">
                                 <Typography variant="h4" fontWeight="bold" color="primary">
-                                    <span style={{ fontSize: '25px' }}>📝</span> <CountUp end={totalSales} duration={2.5} separator="," />
+                                    <span style={{ fontSize: '25px' }}>📝</span> <CountUp end={totalSales} duration={20} separator="," />
                                 </Typography>
                                 <Typography color="text.secondary" fontSize={14}>
-                                    Total Order Quantity This Period
+                                    Total Order Quantity of This Period
                                 </Typography>
                             </Box>
                         </Box>
@@ -2156,7 +2145,6 @@ const SalesDashboard = () => {
                                         wrapperStyle={{ paddingTop: '10px' }}
                                         iconType="line"
                                     />
-
                                     <Area
                                         type="monotone"
                                         dataKey="sales"

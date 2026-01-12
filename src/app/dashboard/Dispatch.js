@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import {
   Box, Container, Typography, Grid, Paper, Stack, useTheme, useMediaQuery, Button, TextField, CircularProgress,
-  Dialog, DialogTitle, DialogContent, DialogActions, Autocomplete, Checkbox, ListItemText, IconButton, Chip
+  Dialog, DialogTitle, DialogContent, DialogActions, Autocomplete, Checkbox, ListItemText, IconButton, Chip, Fade
 } from '@mui/material';
 import { ShoppingCart, People, Search } from '@mui/icons-material';
 import InventoryIcon from '@mui/icons-material/Inventory';
@@ -504,63 +504,71 @@ const Dispatch = () => {
 
         <Grid container spacing={1.5}>
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-            <Paper elevation={4} sx={{ p: 2, borderRadius: 3, background: 'linear-gradient(135deg, #2196f3 0%, #2196f399 100%)', color: 'white', height: '100%' }}>
-              <Stack direction="row" justifyContent="space-between">
-                <Box>
-                  <Typography variant="h6" fontWeight="bold">
-                    Doc Total - {openPack[0]?.ROWNUM || 0}
-                  </Typography>
-                  <Typography variant="h6" fontWeight="bold">
-                    Value: {isNaN(openPack[0]?.AMOUNT) ? "0.00 L" : ((openPack[0]?.AMOUNT / 100000).toFixed(2) + " L")}
-                  </Typography>
-                  <Typography variant="h6" mt={0.5}>
-                    Qty: {openPack[0]?.PACKITMDTL_QTY || 0}
-                  </Typography>
-                </Box>
-                <ImportContactsIcon sx={{ fontSize: 40, color: '#6741beff' }} />
-              </Stack>
-            </Paper>
+            <Fade in={true} timeout={1000}>
+              <Paper elevation={4} sx={{ p: 2, borderRadius: 3, background: 'linear-gradient(135deg, #2196f3 0%, #2196f399 100%)', color: 'white', height: '100%' }}>
+                <Stack direction="row" justifyContent="space-between">
+                  <Box>
+                    <Typography variant="h6" fontWeight="bold">
+                      Doc Total - {openPack[0]?.ROWNUM || 0}
+                    </Typography>
+                    <Typography variant="h6" fontWeight="bold">
+                      Value: {isNaN(openPack[0]?.AMOUNT) ? "0.00 L" : ((openPack[0]?.AMOUNT / 100000).toFixed(2) + " L")}
+                    </Typography>
+                    <Typography variant="h6" mt={0.5}>
+                      Qty: {openPack[0]?.PACKITMDTL_QTY || 0}
+                    </Typography>
+                  </Box>
+                  <ImportContactsIcon sx={{ fontSize: 40, color: '#6741beff' }} />
+                </Stack>
+              </Paper>
+            </Fade>
           </Grid>
 
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-            <Paper elevation={4} sx={{ p: 2, borderRadius: 3, background: 'linear-gradient(135deg, #4caf50 0%, #4caf5099 100%)', color: 'white', height: '100%' }}>
-              <Stack direction="row" justifyContent="space-between">
-                <Box>
-                  <Typography variant="h7" fontWeight="bold">Dispatched With Order - {dispOrd[0]?.ROWNUM || 0}</Typography>
-                  <Typography variant="h6" fontWeight="bold" mt={0.5}>
-                    Value: {isNaN(dispOrd[0]?.AMOUNT) ? "0.00 L" : ((dispOrd[0]?.AMOUNT / 100000).toFixed(2) + ' L')}
-                  </Typography>
-                  <Typography variant="h6" mt={0.5}> Qty: {dispOrd[0]?.PACKITMDTL_QTY || 0}</Typography>
-                </Box>
-                <ShoppingCart sx={{ fontSize: 40, color: '#3160c7ff' }} />
-              </Stack>
-            </Paper>
+            <Fade in={true} timeout={1000}>
+              <Paper elevation={4} sx={{ p: 2, borderRadius: 3, background: 'linear-gradient(135deg, #4caf50 0%, #4caf5099 100%)', color: 'white', height: '100%' }}>
+                <Stack direction="row" justifyContent="space-between">
+                  <Box>
+                    <Typography variant="h7" fontWeight="bold">Dispatched With Order - {dispOrd[0]?.ROWNUM || 0}</Typography>
+                    <Typography variant="h6" fontWeight="bold" mt={0.5}>
+                      Value: {isNaN(dispOrd[0]?.AMOUNT) ? "0.00 L" : ((dispOrd[0]?.AMOUNT / 100000).toFixed(2) + ' L')}
+                    </Typography>
+                    <Typography variant="h6" mt={0.5}> Qty: {dispOrd[0]?.PACKITMDTL_QTY || 0}</Typography>
+                  </Box>
+                  <ShoppingCart sx={{ fontSize: 40, color: '#3160c7ff' }} />
+                </Stack>
+              </Paper>
+            </Fade>
           </Grid>
 
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-            <Paper elevation={4} sx={{ p: 2, borderRadius: 3, background: 'linear-gradient(135deg, #00bcd4 0%, #4caf50 100%)', color: 'white', height: '100%' }}>
-              <Stack direction="row" justifyContent="space-between">
-                <Box>
-                  <Typography variant="h7" fontWeight='bold'>Dispatched Without Order - {disOrd[0]?.ROWNUM || 0}</Typography>
-                  <Typography variant="h6" fontWeight="bold" mt={0.5}>Value: {isNaN(disOrd[0]?.AMOUNT) ? "0.00" : (disOrd[0]?.AMOUNT / 100000).toFixed(2) + " L"}</Typography>
-                  <Typography variant="h6" mt={0.5}>Qty: {disOrd[0]?.PACKITMDTL_QTY ?? 0}</Typography>
-                </Box>
-                <People sx={{ fontSize: 40, color: '#d486e0ff' }} />
-              </Stack>
-            </Paper>
+            <Fade in={true} timeout={1000}>
+              <Paper elevation={4} sx={{ p: 2, borderRadius: 3, background: 'linear-gradient(135deg, #00bcd4 0%, #4caf50 100%)', color: 'white', height: '100%' }}>
+                <Stack direction="row" justifyContent="space-between">
+                  <Box>
+                    <Typography variant="h7" fontWeight='bold'>Dispatched Without Order - {disOrd[0]?.ROWNUM || 0}</Typography>
+                    <Typography variant="h6" fontWeight="bold" mt={0.5}>Value: {isNaN(disOrd[0]?.AMOUNT) ? "0.00" : (disOrd[0]?.AMOUNT / 100000).toFixed(2) + " L"}</Typography>
+                    <Typography variant="h6" mt={0.5}>Qty: {disOrd[0]?.PACKITMDTL_QTY ?? 0}</Typography>
+                  </Box>
+                  <People sx={{ fontSize: 40, color: '#d486e0ff' }} />
+                </Stack>
+              </Paper>
+            </Fade>
           </Grid>
 
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-            <Paper elevation={4} sx={{ p: 2, borderRadius: 3, height: '100%', background: 'linear-gradient(135deg, #f44336 0%, #f4433699 100%)', color: 'white' }}>
-              <Stack direction="row" justifyContent="space-between">
-                <Box>
-                  <Typography variant="h6" fontWeight='bold'>Unbilled Packing - {unBilled[0]?.ROWNUM || 0}</Typography>
-                  <Typography variant="h6" fontWeight="bold" mt={0.5}>Value: {isNaN(unBilled[0]?.AMOUNT) ? "0.00" : (unBilled[0]?.AMOUNT / 100000).toFixed(2) + " L"}</Typography>
-                  <Typography variant="h6" mt={0.5}>Qty: {unBilled[0]?.PACKITMDTL_QTY ?? 0}</Typography>
-                </Box>
-                <InventoryIcon sx={{ fontSize: 40, color: '#0c89afff' }} />
-              </Stack>
-            </Paper>
+            <Fade in={true} timeout={1000}>
+              <Paper elevation={4} sx={{ p: 2, borderRadius: 3, height: '100%', background: 'linear-gradient(135deg, #f44336 0%, #f4433699 100%)', color: 'white' }}>
+                <Stack direction="row" justifyContent="space-between">
+                  <Box>
+                    <Typography variant="h6" fontWeight='bold'>Unbilled Packing - {unBilled[0]?.ROWNUM || 0}</Typography>
+                    <Typography variant="h6" fontWeight="bold" mt={0.5}>Value: {isNaN(unBilled[0]?.AMOUNT) ? "0.00" : (unBilled[0]?.AMOUNT / 100000).toFixed(2) + " L"}</Typography>
+                    <Typography variant="h6" mt={0.5}>Qty: {unBilled[0]?.PACKITMDTL_QTY ?? 0}</Typography>
+                  </Box>
+                  <InventoryIcon sx={{ fontSize: 40, color: '#0c89afff' }} />
+                </Stack>
+              </Paper>
+            </Fade>
           </Grid>
         </Grid>
 
