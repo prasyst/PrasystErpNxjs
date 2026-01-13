@@ -43,8 +43,8 @@ const FollowupDialog = ({
   const [selectedFile, setSelectedFile] = useState(null);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
 
-  const USER_ID = localStorage.getItem("USER_ID");
-  const EMP_KEY = localStorage.getItem("EMP_KEY");
+//   const USER_ID = localStorage.getItem("USER_ID");
+//   const EMP_KEY = localStorage.getItem("EMP_KEY");
 
   React.useEffect(() => {
     if (ticket) {
@@ -155,7 +155,7 @@ const FollowupDialog = ({
         TktKey: ticket.TKTKEY,
         ToDo: formData.ToDo,
         Remark: formData.Remark || "",
-        FlwBy: USER_ID, 
+        FlwBy: 1, 
         CREATED_BY: 1, 
         TktImage:  "",
         ImgName: ""
