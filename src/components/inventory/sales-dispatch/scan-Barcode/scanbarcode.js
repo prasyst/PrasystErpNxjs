@@ -1547,7 +1547,6 @@
 
 
 
-
 'use client';
 import React, { useState, useEffect, useRef, useCallback, Suspense } from 'react';
 import {
@@ -1572,6 +1571,8 @@ import {
   FormGroup,
   Divider,
   Paper,
+  Modal,
+  Fade,
 } from '@mui/material';
 import { 
   CameraAlt as CameraIcon, 
@@ -1581,7 +1582,8 @@ import {
   Add as AddIcon,
   Delete as DeleteIcon,
   Visibility as VisibilityIcon,
-  VisibilityOff as VisibilityOffIcon
+  VisibilityOff as VisibilityOffIcon,
+  ShoppingCart as CartIcon
 } from '@mui/icons-material';
 import dynamic from 'next/dynamic';
 import AutoVibe from '../../../../GlobalFunction/CustomAutoComplete/AutoVibe';
@@ -1597,8 +1599,24 @@ import { TbListSearch } from "react-icons/tb";
 const ScanBarcode = () => {
   // Main state
   const [showAdvancedFields, setShowAdvancedFields] = useState(false);
-  const [useStyleCodeMode, setUseStyleCodeMode] = useState(false); // NEW: Style code mode toggle
-    const router = useRouter();
+  const [useStyleCodeMode, setUseStyleCodeMode] = useState(false);
+  const [fillByRatioMode, setFillByRatioMode] = useState(false);
+  const [showOrderModal, setShowOrderModal] = useState(false);
+  
+  // NEW: Store current product info to track product changes
+  const [currentProductInfo, setCurrentProductInfo] = useState({
+    barcode: '',
+    style: '',
+    product: ''
+  });
+  
+  // NEW: Store ratio data in localStorage with product key
+  const [ratioData, setRatioData] = useState({
+    totalQty: '',
+    ratios: {}
+  });
+  
+  const router = useRouter();
   
   const [formData, setFormData] = useState({
     Party: '',
@@ -1664,13 +1682,16 @@ const ScanBarcode = () => {
     divDt: ''
   });
 
-  // NEW: State for style code input
+  // State for style code input
   const [styleCodeInput, setStyleCodeInput] = useState('');
   const [isLoadingStyleCode, setIsLoadingStyleCode] = useState(false);
   const styleCodeTimeoutRef = useRef(null);
 
   const [sizeDetailsData, setSizeDetailsData] = useState([]);
   const [tableData, setTableData] = useState([]);
+  
+  // Store available sizes from API response for ratio calculation
+  const [availableSizes, setAvailableSizes] = useState([]);
 
   // State for dropdowns
   const [partyOptions, setPartyOptions] = useState([]);
@@ -1776,6 +1797,37 @@ const ScanBarcode = () => {
     },
   };
 
+  // NEW: Get ratio data from localStorage for current product
+  const getRatioDataFromStorage = (productKey) => {
+    if (!isClient || !productKey) return { totalQty: '', ratios: {} };
+    
+    try {
+      const storedData = localStorage.getItem(`ratioData_${productKey}`);
+      if (storedData) {
+        return JSON.parse(storedData);
+      }
+    } catch (error) {
+      console.error('Error reading ratio data from storage:', error);
+    }
+    return { totalQty: '', ratios: {} };
+  };
+
+  // NEW: Save ratio data to localStorage for current product
+  const saveRatioDataToStorage = (productKey, data) => {
+    if (!isClient || !productKey) return;
+    
+    try {
+      localStorage.setItem(`ratioData_${productKey}`, JSON.stringify(data));
+    } catch (error) {
+      console.error('Error saving ratio data to storage:', error);
+    }
+  };
+
+  // NEW: Generate unique product key for localStorage
+  const generateProductKey = (barcode, style, product) => {
+    return `${barcode || ''}_${style || ''}_${product || ''}`.trim();
+  };
+
   // Check if window is available
   useEffect(() => {
     setIsClient(true);
@@ -1803,7 +1855,6 @@ const ScanBarcode = () => {
     try {
       setIsLoadingData(true);
       
-      // Get series prefix
       const seriesPayload = {
         "MODULENAME": "Ordbk",
         "TBLNAME": "Ordbk",
@@ -1822,7 +1873,6 @@ const ScanBarcode = () => {
       if (seriesResponse.data.DATA && seriesResponse.data.DATA.length > 0) {
         const prefix = seriesResponse.data.DATA[0].CPREFIX;
         
-        // Get order number
         const orderPayload = {
           "MODULENAME": "Ordbk",
           "TBLNAME": "Ordbk",
@@ -1859,12 +1909,12 @@ const ScanBarcode = () => {
     }
   };
 
-  // Fetch initial dropdown data
+  // Fetch initial dropdown data - MODIFIED: Auto-select first party
   const fetchInitialData = async () => {
     try {
       setIsLoadingData(true);
       
-      // Fetch all dropdown data in parallel
+      // Fetch all data in parallel
       await Promise.all([
         fetchPartiesByName(),
         fetchBrokerData(),
@@ -1881,7 +1931,7 @@ const ScanBarcode = () => {
     }
   };
 
-  // Fetch party data
+  // Fetch party data - MODIFIED: Auto-select first party
   const fetchPartiesByName = async (name = "") => {
     try {
       const response = await axiosInstance.post("Party/GetParty_By_Name", {
@@ -1899,6 +1949,24 @@ const ScanBarcode = () => {
           }
         });
         setPartyMapping(mapping);
+        
+        // NEW: Auto-select first party if no party is selected
+        if (parties.length > 0 && !formData.Party) {
+          const firstParty = parties[0];
+          const firstPartyKey = mapping[firstParty];
+          
+          // Update form data with first party
+          setFormData(prev => ({
+            ...prev,
+            Party: firstParty,
+            PARTY_KEY: firstPartyKey,
+            SHIPPING_PARTY: firstParty,
+            SHP_PARTY_KEY: firstPartyKey
+          }));
+          
+          // Fetch branches for the first party
+          fetchPartyDetails(firstPartyKey);
+        }
       }
     } catch (error) {
       console.error("Error fetching parties:", error);
@@ -1906,7 +1974,7 @@ const ScanBarcode = () => {
     }
   };
 
-  // Fetch party branches
+  // Fetch party branches - MODIFIED: Auto-select first branch
   const fetchPartyDetails = async (partyKey, isShippingParty = false) => {
     if (!partyKey) return;
     
@@ -1929,7 +1997,7 @@ const ScanBarcode = () => {
           setShippingPlaceOptions(branches);
           setShippingBranchMapping(mapping);
           
-          // Auto-select first branch for shipping
+          // Auto-select first shipping branch
           if (branches.length > 0 && !formData.SHIPPING_PLACE) {
             const firstBranch = branches[0];
             const firstBranchId = mapping[firstBranch];
@@ -1944,7 +2012,7 @@ const ScanBarcode = () => {
           setBranchOptions(branches);
           setBranchMapping(mapping);
           
-          // Auto-select first branch
+          // Auto-select first branch for main party
           if (branches.length > 0 && !formData.Branch) {
             const firstBranch = branches[0];
             const firstBranchId = mapping[firstBranch];
@@ -1953,8 +2021,11 @@ const ScanBarcode = () => {
               ...prev,
               Branch: firstBranch,
               PARTYDTL_ID: firstBranchId,
-              SHIPPING_PLACE: firstBranch,
-              SHP_PARTYDTL_ID: firstBranchId
+              // Also set shipping place to same branch if not already set
+              ...(!prev.SHIPPING_PLACE && {
+                SHIPPING_PLACE: firstBranch,
+                SHP_PARTYDTL_ID: firstBranchId
+              })
             }));
           }
         }
@@ -2083,7 +2154,7 @@ const ScanBarcode = () => {
     }
   };
 
-  // Fetch style data by barcode
+  // Fetch style data by barcode - MODIFIED: Check for product change
   const fetchStyleDataByBarcode = async (barcode) => {
     if (!barcode || barcode.trim() === '') {
       setScannerError('Please enter a barcode');
@@ -2111,22 +2182,62 @@ const ScanBarcode = () => {
         const styleData = response.data.DATA[0];
         console.log('Style Data:', styleData);
         
-        // Store style data for later use in payload
+        // NEW: Check if product has changed
+        const newProductInfo = {
+          barcode: styleData.ALT_BARCODE || styleData.STYSTKDTL_KEY || barcode,
+          style: styleData.FGSTYLE_CODE || styleData.FGSTYLE_NAME || '',
+          product: styleData.FGPRD_NAME || ''
+        };
+        
+        const productKey = generateProductKey(
+          newProductInfo.barcode, 
+          newProductInfo.style, 
+          newProductInfo.product
+        );
+        
+        // Check if product is different from current
+        const isSameProduct = (
+          currentProductInfo.barcode === newProductInfo.barcode &&
+          currentProductInfo.style === newProductInfo.style &&
+          currentProductInfo.product === newProductInfo.product
+        );
+        
+        // If product is different, show warning and clear ratio data
+        if (currentProductInfo.barcode && !isSameProduct) {
+          if (Object.keys(ratioData.ratios).length > 0) {
+            showSnackbar('Product has changed. Please enter new ratios for this product.', 'warning');
+          }
+          // Clear ratio data for new product
+          setRatioData({
+            totalQty: '',
+            ratios: {}
+          });
+        }
+        
+        // Update current product info
+        setCurrentProductInfo(newProductInfo);
+        
+        // Load saved ratio data for this product
+        const savedRatioData = getRatioDataFromStorage(productKey);
+        if (savedRatioData.ratios && Object.keys(savedRatioData.ratios).length > 0) {
+          setRatioData(savedRatioData);
+        }
+        
+        // Store all available sizes from API response
+        setAvailableSizes(response.data.DATA);
         setCurrentStyleData(styleData);
         
-        const barcodeValue = styleData.ALT_BARCODE || styleData.STYSTKDTL_KEY || barcode;
         const shadeValue = styleData.FGSHADE_NAME || '';
         const sizeValue = styleData.STYSIZE_NAME || '';
         
-        // Update new item data
         setNewItemData({
           ...newItemData,
-          barcode: barcodeValue,
-          product: styleData.FGPRD_NAME || '',
-          style: styleData.FGSTYLE_CODE || styleData.FGSTYLE_NAME || '',
+          barcode: newProductInfo.barcode,
+          product: newProductInfo.product,
+          style: newProductInfo.style,
           type: styleData.FGTYPE_NAME || '',
           shade: shadeValue,
-           size: sizeValue,
+          size: sizeValue,
           mrp: styleData.MRP ? styleData.MRP.toString() : '0',
           rate: styleData.SSP ? styleData.SSP.toString() : '0',
           qty: '',
@@ -2135,8 +2246,6 @@ const ScanBarcode = () => {
           convFact: '1',
           remark: ''
         });
-        
-        // showSnackbar('Product found successfully!');
         
         // Fetch size details
         await fetchSizeDetailsForStyle(styleData);
@@ -2154,7 +2263,7 @@ const ScanBarcode = () => {
     }
   };
 
-  // NEW: Fetch style data by style code
+  // Fetch style data by style code - MODIFIED: Check for product change
   const fetchStyleDataByCode = async (styleCode) => {
     if (!styleCode) return;
 
@@ -2178,19 +2287,59 @@ const ScanBarcode = () => {
         const styleData = response.data.DATA[0];
         console.log('Style Data:', styleData);
         
-        // Store style data for later use in payload
+        // NEW: Check if product has changed
+        const newProductInfo = {
+          barcode: styleData.ALT_BARCODE || styleData.STYSTKDTL_KEY || '',
+          style: styleData.FGSTYLE_CODE || styleData.FGSTYLE_NAME || '',
+          product: styleData.FGPRD_NAME || ''
+        };
+        
+        const productKey = generateProductKey(
+          newProductInfo.barcode, 
+          newProductInfo.style, 
+          newProductInfo.product
+        );
+        
+        // Check if product is different from current
+        const isSameProduct = (
+          currentProductInfo.barcode === newProductInfo.barcode &&
+          currentProductInfo.style === newProductInfo.style &&
+          currentProductInfo.product === newProductInfo.product
+        );
+        
+        // If product is different, show warning and clear ratio data
+        if (currentProductInfo.barcode && !isSameProduct) {
+          if (Object.keys(ratioData.ratios).length > 0) {
+            showSnackbar('Product has changed. Please enter new ratios for this product.', 'warning');
+          }
+          // Clear ratio data for new product
+          setRatioData({
+            totalQty: '',
+            ratios: {}
+          });
+        }
+        
+        // Update current product info
+        setCurrentProductInfo(newProductInfo);
+        
+        // Load saved ratio data for this product
+        const savedRatioData = getRatioDataFromStorage(productKey);
+        if (savedRatioData.ratios && Object.keys(savedRatioData.ratios).length > 0) {
+          setRatioData(savedRatioData);
+        }
+        
+        // Store all available sizes from API response
+        setAvailableSizes(response.data.DATA);
         setCurrentStyleData(styleData);
         
-        const barcodeValue = styleData.ALT_BARCODE || styleData.STYSTKDTL_KEY || '';
         const shadeValue = styleData.FGSHADE_NAME || '';
         const sizeValue = styleData.STYSIZE_NAME || '';
         
-        // Update new item data
         setNewItemData({
           ...newItemData,
-          barcode: barcodeValue,
-          product: styleData.FGPRD_NAME || '',
-          style: styleData.FGSTYLE_CODE || styleData.FGSTYLE_NAME || '',
+          barcode: newProductInfo.barcode,
+          product: newProductInfo.product,
+          style: newProductInfo.style,
           type: styleData.FGTYPE_NAME || '',
           shade: shadeValue,
           size: sizeValue,
@@ -2248,169 +2397,266 @@ const ScanBarcode = () => {
   };
 
   // Fetch size details for style
-const fetchSizeDetailsForStyle = async (styleData) => {
-  try {
-    const fgprdKey = styleData.FGPRD_KEY;
-    const fgstyleId = styleData.FGSTYLE_ID;
-    const fgtypeKey = styleData.FGTYPE_KEY || "";
-    const fgshadeKey = styleData.FGSHADE_KEY || "";
-    const fgptnKey = styleData.FGPTN_KEY || "";
+  const fetchSizeDetailsForStyle = async (styleData) => {
+    try {
+      const fgprdKey = styleData.FGPRD_KEY;
+      const fgstyleId = styleData.FGSTYLE_ID;
+      const fgtypeKey = styleData.FGTYPE_KEY || "";
+      const fgshadeKey = styleData.FGSHADE_KEY || "";
+      const fgptnKey = styleData.FGPTN_KEY || "";
 
-    if (!fgprdKey || !fgstyleId) {
-      console.warn('Missing required data for size details');
-      return;
-    }
+      if (!fgprdKey || !fgstyleId) {
+        console.warn('Missing required data for size details');
+        return;
+      }
 
-    // CRITICAL FIX: Even if party is not selected, we need to fetch size details
-    // The API might work with default/empty party values for basic size info
-    const payload = {
-      "FGSTYLE_ID": fgstyleId,
-      "FGPRD_KEY": fgprdKey,
-      "FGTYPE_KEY": fgtypeKey,
-      "FGSHADE_KEY": fgshadeKey,
-      "FGPTN_KEY": fgptnKey,
-      "MRP": parseFloat(styleData.MRP) || 0,
-      "SSP": parseFloat(styleData.SSP) || 0,
-      "PARTY_KEY": formData.PARTY_KEY || "",  // Can be empty
-      "PARTYDTL_ID": formData.PARTYDTL_ID || 0,  // Can be 0
-      "FLAG": "S"  // IMPORTANT: Add this flag to get size details without party
-    };
+      const payload = {
+        "FGSTYLE_ID": fgstyleId,
+        "FGPRD_KEY": fgprdKey,
+        "FGTYPE_KEY": fgtypeKey,
+        "FGSHADE_KEY": fgshadeKey,
+        "FGPTN_KEY": fgptnKey,
+        "MRP": parseFloat(styleData.MRP) || 0,
+        "SSP": parseFloat(styleData.SSP) || 0,
+        "PARTY_KEY": formData.PARTY_KEY || "",
+        "PARTYDTL_ID": formData.PARTYDTL_ID || 0,
+        "FLAG": "S"
+      };
 
-    console.log('Fetching size details with payload:', payload);
+      console.log('Fetching size details with payload:', payload);
 
-    const response = await axiosInstance.post('/STYSIZE/AddSizeDetail', payload);
-    console.log('Size Details Response:', response.data);
+      const response = await axiosInstance.post('/STYSIZE/AddSizeDetail', payload);
+      console.log('Size Details Response:', response.data);
 
-    if (response.data.DATA && response.data.DATA.length > 0) {
-      const transformedSizeDetails = response.data.DATA.map((size, index) => ({
-        STYSIZE_ID: size.STYSIZE_ID || index + 1,
-        STYSIZE_NAME: size.STYSIZE_NAME || `Size ${index + 1}`,
-        FGSTYLE_ID: size.FGSTYLE_ID || fgstyleId,
-        QTY: 0,
-        ITM_AMT: 0,
-        ORDER_QTY: 0,
-        MRP: parseFloat(styleData.MRP) || 0,
-        RATE: parseFloat(styleData.SSP) || 0,
-        FGITEM_KEY: styleData.STYSTKDTL_KEY || ""
-      }));
+      if (response.data.DATA && response.data.DATA.length > 0) {
+        const transformedSizeDetails = response.data.DATA.map((size, index) => ({
+          STYSIZE_ID: size.STYSIZE_ID || index + 1,
+          STYSIZE_NAME: size.STYSIZE_NAME || `Size ${index + 1}`,
+          FGSTYLE_ID: size.FGSTYLE_ID || fgstyleId,
+          QTY: 0,
+          ITM_AMT: 0,
+          ORDER_QTY: 0,
+          MRP: parseFloat(styleData.MRP) || 0,
+          RATE: parseFloat(styleData.SSP) || 0,
+          FGITEM_KEY: styleData.STYSTKDTL_KEY || ""
+        }));
 
-      setSizeDetailsData(transformedSizeDetails);
-      showSnackbar('Size details loaded! Enter quantities.');
-    } else {
-      // ALTERNATIVE FIX: Use the STYSIZE_NAME from the original response
+        setSizeDetailsData(transformedSizeDetails);
+        showSnackbar('Size details loaded! Enter quantities.');
+      } else {
+        // Use the STYSIZE_NAME from the original response
+        const stysizeName = styleData.STYSIZE_NAME || 'Default';
+        const stysizeId = styleData.STYSIZE_ID || 1;
+        
+        const defaultSizes = [
+          { 
+            STYSIZE_NAME: stysizeName,
+            STYSIZE_ID: stysizeId, 
+            QTY: 0, 
+            MRP: parseFloat(styleData.MRP) || 0, 
+            RATE: parseFloat(styleData.SSP) || 0 
+          }
+        ];
+        setSizeDetailsData(defaultSizes);
+      }
+    } catch (error) {
+      console.error('Error fetching size details:', error);
+      
+      // FALLBACK: Extract size info from the original style data
       const stysizeName = styleData.STYSIZE_NAME || 'Default';
       const stysizeId = styleData.STYSIZE_ID || 1;
       
       const defaultSizes = [
         { 
-          STYSIZE_NAME: stysizeName,  // Use the actual size from API
+          STYSIZE_NAME: stysizeName,
           STYSIZE_ID: stysizeId, 
           QTY: 0, 
-          MRP: parseFloat(styleData.MRP) || 0, 
-          RATE: parseFloat(styleData.SSP) || 0 
+          MRP: parseFloat(newItemData.mrp) || 0, 
+          RATE: parseFloat(newItemData.rate) || 0 
         }
       ];
       setSizeDetailsData(defaultSizes);
-      // showSnackbar(`Size details: ${stysizeName}. Enter quantity.`, 'info');
+      showSnackbar(`Using size: ${stysizeName}. Enter quantity.`, 'warning');
     }
-  } catch (error) {
-    console.error('Error fetching size details:', error);
-    
-    // FALLBACK: Extract size info from the original style data
-    const stysizeName = styleData.STYSIZE_NAME || 'Default';
-    const stysizeId = styleData.STYSIZE_ID || 1;
-    
-    const defaultSizes = [
-      { 
-        STYSIZE_NAME: stysizeName,  // Use size from the main API response
-        STYSIZE_ID: stysizeId, 
-        QTY: 0, 
-        MRP: parseFloat(newItemData.mrp) || 0, 
-        RATE: parseFloat(newItemData.rate) || 0 
-      }
-    ];
-    setSizeDetailsData(defaultSizes);
-    showSnackbar(`Using size: ${stysizeName}. Enter quantity.`, 'warning');
-  }
-};
+  };
 
-  // Handle form field changes
+  // Handle ratio change for each size - MODIFIED: Save to localStorage
+  const handleRatioChange = (sizeName, value) => {
+    const newRatioData = {
+      ...ratioData,
+      ratios: {
+        ...ratioData.ratios,
+        [sizeName]: value
+      }
+    };
+    
+    setRatioData(newRatioData);
+    
+    // Save to localStorage if we have a product key
+    if (currentProductInfo.barcode || currentProductInfo.style || currentProductInfo.product) {
+      const productKey = generateProductKey(
+        currentProductInfo.barcode,
+        currentProductInfo.style,
+        currentProductInfo.product
+      );
+      saveRatioDataToStorage(productKey, newRatioData);
+    }
+  };
+
+  // Handle total quantity change for ratio calculation - MODIFIED: Save to localStorage
+  const handleTotalQtyChange = (value) => {
+    const newRatioData = {
+      ...ratioData,
+      totalQty: value
+    };
+    
+    setRatioData(newRatioData);
+    
+    // Save to localStorage if we have a product key
+    if (currentProductInfo.barcode || currentProductInfo.style || currentProductInfo.product) {
+      const productKey = generateProductKey(
+        currentProductInfo.barcode,
+        currentProductInfo.style,
+        currentProductInfo.product
+      );
+      saveRatioDataToStorage(productKey, newRatioData);
+    }
+  };
+
+  // Calculate and fill quantities based on ratios
+  const fillQuantitiesByRatio = () => {
+    const totalQty = parseFloat(ratioData.totalQty);
+    if (!totalQty || totalQty <= 0) {
+      showSnackbar('Please enter a valid total quantity', 'error');
+      return;
+    }
+
+    const ratios = ratioData.ratios;
+    const sizeNames = Object.keys(ratios);
+    
+    // Check if all sizes have ratios
+    if (sizeNames.length === 0) {
+      showSnackbar('Please enter ratios for at least one size', 'error');
+      return;
+    }
+
+    // Calculate total ratio sum
+    const totalRatio = sizeNames.reduce((sum, sizeName) => {
+      const ratio = parseFloat(ratios[sizeName]) || 0;
+      return sum + ratio;
+    }, 0);
+
+    if (totalRatio === 0) {
+      showSnackbar('Total ratio cannot be zero', 'error');
+      return;
+    }
+
+    // Calculate quantities for each size and update sizeDetailsData
+    const updatedSizeDetails = [...sizeDetailsData];
+    let remainingQty = totalQty;
+    let allocatedQty = 0;
+
+    // First pass: allocate based on ratios
+    sizeNames.forEach((sizeName, index) => {
+      const ratio = parseFloat(ratios[sizeName]) || 0;
+      const exactQty = (ratio / totalRatio) * totalQty;
+      const roundedQty = Math.round(exactQty);
+      
+      // Find the size in sizeDetailsData
+      const sizeIndex = updatedSizeDetails.findIndex(size => size.STYSIZE_NAME === sizeName);
+      if (sizeIndex !== -1) {
+        updatedSizeDetails[sizeIndex] = {
+          ...updatedSizeDetails[sizeIndex],
+          QTY: roundedQty
+        };
+        allocatedQty += roundedQty;
+      }
+    });
+
+    // Adjust for rounding differences
+    const difference = totalQty - allocatedQty;
+    if (difference !== 0) {
+      // Add/remove the difference from the first size
+      const firstSizeIndex = updatedSizeDetails.findIndex(size => 
+        sizeNames.includes(size.STYSIZE_NAME)
+      );
+      if (firstSizeIndex !== -1) {
+        updatedSizeDetails[firstSizeIndex] = {
+          ...updatedSizeDetails[firstSizeIndex],
+          QTY: updatedSizeDetails[firstSizeIndex].QTY + difference
+        };
+      }
+    }
+
+    setSizeDetailsData(updatedSizeDetails);
+    
+    // Update total quantity in newItemData
+    const newTotalQty = updatedSizeDetails.reduce((sum, size) => sum + (parseFloat(size.QTY) || 0), 0);
+    setNewItemData(prev => ({ ...prev, qty: newTotalQty.toString() }));
+    
+    showSnackbar(`Quantities filled successfully! Total: ${newTotalQty}`, 'success');
+  };
+
+  // Handle form field changes - MODIFIED: Auto-select related fields
   const handleFormChange = (field, value) => {
-    setFormData(prev => ({
-      ...prev,
+    const updatedFormData = {
+      ...formData,
       [field]: value
-    }));
+    };
     
     // Handle key mappings
     if (field === 'Party' && partyMapping[value]) {
-      setFormData(prev => ({
-        ...prev,
-        PARTY_KEY: partyMapping[value],
-        SHIPPING_PARTY: value,
-        SHP_PARTY_KEY: partyMapping[value]
-      }));
+      updatedFormData.PARTY_KEY = partyMapping[value];
+      updatedFormData.SHIPPING_PARTY = value;
+      updatedFormData.SHP_PARTY_KEY = partyMapping[value];
+      
+      // Also clear shipping place if party changes
+      updatedFormData.SHIPPING_PLACE = '';
+      updatedFormData.SHP_PARTYDTL_ID = '';
+      
       fetchPartyDetails(partyMapping[value]);
     }
     
     if (field === 'SHIPPING_PARTY' && partyMapping[value]) {
-      setFormData(prev => ({
-        ...prev,
-        SHP_PARTY_KEY: partyMapping[value],
-        SHIPPING_PLACE: ''
-      }));
+      updatedFormData.SHP_PARTY_KEY = partyMapping[value];
+      updatedFormData.SHIPPING_PLACE = '';
       fetchPartyDetails(partyMapping[value], true);
     }
     
     if (field === 'Branch' && branchMapping[value]) {
-      setFormData(prev => ({
-        ...prev,
-        PARTYDTL_ID: branchMapping[value],
-        SHIPPING_PLACE: value,
-        SHP_PARTYDTL_ID: branchMapping[value]
-      }));
+      updatedFormData.PARTYDTL_ID = branchMapping[value];
+      // Auto-set shipping place to same branch if not already set
+      if (!updatedFormData.SHIPPING_PLACE) {
+        updatedFormData.SHIPPING_PLACE = value;
+        updatedFormData.SHP_PARTYDTL_ID = branchMapping[value];
+      }
     }
     
     if (field === 'SHIPPING_PLACE' && shippingBranchMapping[value]) {
-      setFormData(prev => ({
-        ...prev,
-        SHP_PARTYDTL_ID: shippingBranchMapping[value]
-      }));
+      updatedFormData.SHP_PARTYDTL_ID = shippingBranchMapping[value];
     }
     
     if (field === 'Broker' && brokerMapping[value]) {
-      setFormData(prev => ({
-        ...prev,
-        BROKER_KEY: brokerMapping[value]
-      }));
+      updatedFormData.BROKER_KEY = brokerMapping[value];
     }
     
     if (field === 'SALESPERSON_1' && salesperson1Mapping[value]) {
-      setFormData(prev => ({
-        ...prev,
-        SALEPERSON1_KEY: salesperson1Mapping[value]
-      }));
+      updatedFormData.SALEPERSON1_KEY = salesperson1Mapping[value];
     }
     
     if (field === 'SALESPERSON_2' && salesperson2Mapping[value]) {
-      setFormData(prev => ({
-        ...prev,
-        SALEPERSON2_KEY: salesperson2Mapping[value]
-      }));
+      updatedFormData.SALEPERSON2_KEY = salesperson2Mapping[value];
     }
     
     if (field === 'MERCHANDISER_NAME' && merchandiserMapping[value]) {
-      setFormData(prev => ({
-        ...prev,
-        MERCHANDISER_ID: merchandiserMapping[value]
-      }));
+      updatedFormData.MERCHANDISER_ID = merchandiserMapping[value];
     }
     
     if (field === 'SEASON' && seasonMapping[value]) {
-      setFormData(prev => ({
-        ...prev,
-        CURR_SEASON_KEY: seasonMapping[value]
-      }));
+      updatedFormData.CURR_SEASON_KEY = seasonMapping[value];
     }
+    
+    setFormData(updatedFormData);
   };
 
   // Handle new item data changes
@@ -2431,8 +2677,17 @@ const fetchSizeDetailsForStyle = async (styleData) => {
     fetchStyleDataByBarcode(newItemData.barcode);
   };
 
-   const handleTable = () => {
+  const handleTable = () => {
     router.push('/inverntory/stock-enquiry-table');
+  };
+
+  // Handle cart icon click to open modal
+  const handleCartIconClick = () => {
+    if (tableData.length === 0) {
+      showSnackbar('No items in the order yet', 'info');
+      return;
+    }
+    setShowOrderModal(true);
   };
 
   // Handle Enter key press in barcode field
@@ -2480,7 +2735,7 @@ const fetchSizeDetailsForStyle = async (styleData) => {
     };
   };
 
-  // Handle confirm button for adding item to order
+  // Handle confirm button for adding item to order - MODIFIED: Clear ratio data
   const handleConfirmItem = () => {
     if (!newItemData.product || !newItemData.style) {
       showSnackbar("Please scan a valid barcode or enter style code first", 'error');
@@ -2513,8 +2768,7 @@ const fetchSizeDetailsForStyle = async (styleData) => {
       remark: newItemData.remark,
       sizeDetails: [...sizeDetailsData],
       convFact: newItemData.convFact,
-      // Store additional data for payload
-      styleData: currentStyleData // Store the style data for later use in payload
+      styleData: currentStyleData
     };
 
     // Add to table
@@ -2547,11 +2801,23 @@ const fetchSizeDetailsForStyle = async (styleData) => {
       setStyleCodeInput('');
     }
     
+    // Clear current product info and ratio data
+    setCurrentProductInfo({
+      barcode: '',
+      style: '',
+      product: ''
+    });
     setCurrentStyleData(null);
     setSizeDetailsData([]);
+    setAvailableSizes([]);
+    setFillByRatioMode(false);
+    setRatioData({
+      totalQty: '',
+      ratios: {}
+    });
     setScannerError('');
 
-    showSnackbar('Item added to order!', 'success');
+    showSnackbar('Item added to order! Go To Cart', 'success');
   };
 
   // Handle delete item from table
@@ -2567,7 +2833,6 @@ const fetchSizeDetailsForStyle = async (styleData) => {
       return;
     }
 
-    // Clear any existing scanner first
     if (qrCodeScannerRef.current) {
       qrCodeScannerRef.current.clear().catch(err => {
         console.error("Failed to clear existing scanner", err);
@@ -2599,16 +2864,13 @@ const fetchSizeDetailsForStyle = async (styleData) => {
       const onScanSuccess = (decodedText, decodedResult) => {
         console.log(`Scan result: ${decodedText}`, decodedResult);
         
-        // Stop scanner
         scanner.clear().then(() => {
           qrCodeScannerRef.current = null;
           setIsScanning(false);
           setShowScanner(false);
           
-          // Update barcode field
           setNewItemData(prev => ({ ...prev, barcode: decodedText }));
           
-          // Fetch product data
           fetchStyleDataByBarcode(decodedText);
           
           showSnackbar('Barcode scanned successfully!', 'success');
@@ -2618,7 +2880,6 @@ const fetchSizeDetailsForStyle = async (styleData) => {
       };
 
       const onScanFailure = (error) => {
-        // Silently handle scan failures
         if (!error.includes('NotFoundException')) {
           console.warn(`Scan error: ${error}`);
         }
@@ -2678,16 +2939,13 @@ const fetchSizeDetailsForStyle = async (styleData) => {
       return statusMapping[status] || "1";
     };
 
-    // CRITICAL FIX: Use the correct ORDBK_KEY format
     const correctOrdbkKey = `2502${formData.ORDER_NO}`;
     
     console.log('Using ORDBK_KEY:', correctOrdbkKey);
 
-    // Transform table data to ORDBKSTYLIST format with CORRECT FGSTYLE_ID
     const transformedOrdbkStyleList = tableData.map((item, index) => {
       const tempId = Date.now() + index;
       
-      // Get FGSTYLE_ID from stored style data
       const fgstyleId = item.styleData?.FGSTYLE_ID || 0;
       const fgprdKey = item.styleData?.FGPRD_KEY || '';
       const fgtypeKey = item.styleData?.FGTYPE_KEY || '';
@@ -2700,8 +2958,8 @@ const fetchSizeDetailsForStyle = async (styleData) => {
         DBFLAG: 'I',
         ORDBKSTY_ID: tempId,
         ORDBK_KEY: correctOrdbkKey,
-        FGPRD_KEY: fgprdKey, // Use actual FGPRD_KEY from style data
-        FGSTYLE_ID: fgstyleId, // CRITICAL FIX: Use actual FGSTYLE_ID from style data
+        FGPRD_KEY: fgprdKey,
+        FGSTYLE_ID: fgstyleId,
         FGSTYLE_CODE: item.style || '',
         FGTYPE_KEY: fgtypeKey,
         FGSHADE_KEY: fgshadeKey,
@@ -2974,6 +3232,12 @@ const fetchSizeDetailsForStyle = async (styleData) => {
         setStyleCodeInput('');
         setCurrentStyleData(null);
         setSizeDetailsData([]);
+        setAvailableSizes([]);
+        setFillByRatioMode(false);
+        setRatioData({
+          totalQty: '',
+          ratios: {}
+        });
         
         // Generate new order number
         await generateOrderNumber();
@@ -3064,459 +3328,447 @@ const fetchSizeDetailsForStyle = async (styleData) => {
       </Snackbar>
 
       {/* Header */}
-    <Box
-  sx={{
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 1.2,
-    mb: 1,
-    flexWrap: 'wrap', // mobile safe
-  }}
->
-  <Typography
-    variant="h5"
-    sx={{
-      fontWeight: 'bold',
-      fontSize: { xs: '1.2rem', sm: '1.5rem' },
-      textAlign: 'center',
-      lineHeight: 1.2,
-    }}
-  >
-     Barcode Scan
-  </Typography>
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 1.2,
+          mb: 1,
+          flexWrap: 'wrap',
+        }}
+      >
+        <Typography
+          variant="h5"
+          sx={{
+            fontWeight: 'bold',
+            fontSize: { xs: '1.2rem', sm: '1.5rem' },
+            textAlign: 'center',
+            lineHeight: 1.2,
+          }}
+        >
+          Barcode Scan
+        </Typography>
 
-  <TbListSearch
-    onClick={handleTable}
-    style={{
-      color: 'rgb(99, 91, 255)',
-      width: '28px',
-      height: '28px',
-      cursor: 'pointer',
-    }}
-  />
-</Box>
-
+        <TbListSearch
+          onClick={handleTable}
+          style={{
+            color: 'rgb(99, 91, 255)',
+            width: '30px',
+            height: '30px',
+            cursor: 'pointer',
+            
+          }}
+        />
+        
+        {/* Cart Icon */}
+        <CartIcon
+          onClick={handleCartIconClick}
+          sx={{
+            color: 'rgb(99, 91, 255)',
+            width: '30px',
+            height: '30px',
+            cursor: 'pointer',
+          }}
+        />
+      </Box>
 
       {/* Advanced Fields Toggle */}
-<Card elevation={2} sx={{ mb: 0.5 }}>
-  <CardContent
-    sx={{
-      padding: '6px 12px',     // ⬅ height kam
-      '&:last-child': {
-        paddingBottom: '6px', // ⬅ default extra padding remove
-      },
-    }}
-  >
-    <FormGroup>
-      <FormControlLabel
-        control={
-          <Checkbox
-            checked={showAdvancedFields}
-            onChange={(e) => setShowAdvancedFields(e.target.checked)}
-            size="small"          // ⬅ checkbox chhota
-            sx={{
-              padding: '4px',
-              color: '#1976d2',
-              '&.Mui-checked': {
-                color: '#1976d2',
-              },
-            }}
-          />
-        }
-        label={
-          <Typography
-            sx={{
-              fontSize: '1.07rem', 
-              fontWeight: 600,
-              color: '#1976d2',
-            }}
-          >
-            {showAdvancedFields ? 'Hide Order Fields' : 'Show Order Fields'}
-          </Typography>
-        }
-        sx={{
-          margin: 0,
-          gap: '6px',
-        }}
-      />
-    </FormGroup>
-  </CardContent>
-</Card>
-
+      <Card elevation={2} sx={{ mb: 0.5 }}>
+        <CardContent
+          sx={{
+            padding: '6px 12px',
+            '&:last-child': {
+              paddingBottom: '6px',
+            },
+          }}
+        >
+          <FormGroup>
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={showAdvancedFields}
+                  onChange={(e) => setShowAdvancedFields(e.target.checked)}
+                  size="small"
+                  sx={{
+                    padding: '4px',
+                    color: '#1976d2',
+                    '&.Mui-checked': {
+                      color: '#1976d2',
+                    },
+                  }}
+                />
+              }
+              label={
+                <Typography
+                  sx={{
+                    fontSize: '1.07rem',
+                    fontWeight: 600,
+                    color: '#1976d2',
+                  }}
+                >
+                  {showAdvancedFields ? 'Hide Order Fields' : 'Show Order Fields'}
+                </Typography>
+              }
+              sx={{
+                margin: 0,
+                gap: '6px',
+              }}
+            />
+          </FormGroup>
+        </CardContent>
+      </Card>
 
       {showAdvancedFields && (
-  <Card elevation={2} sx={{ mb: 1 }}>
-    <CardContent>
-      <Typography variant="h6" sx={{ mb: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
-        <span style={{ fontSize: '1.1rem' }}>📋 Advanced Order Details</span>
-      </Typography>
-      
-      <Grid container spacing={1}>
-        {/* Order Information Row - Adjusted for mobile */}
-        <Grid item xs={12} container spacing={1}>
-          {/* Series - Smaller on mobile */}
-          <Grid size={{ xs: 6, md: 2 }}>
-            <TextField
-              label="Series"
-              variant="filled"
-              fullWidth
-              value={formData.SERIES}
-              onChange={(e) => handleFormChange('SERIES', e.target.value)}
-              sx={textInputSx}
-              size="small"
-              InputProps={{
-                sx: { 
-                  fontSize: { xs: '12px', sm: '14px' },
-                  '& input': { padding: { xs: '8px 6px', sm: '10px 12px' } }
-                }
-              }}
-            />
-          </Grid>
-          
-          {/* Last Order No */}
-          <Grid size={{ xs: 6, md: 2 }}>
-            <TextField
-              label="Last Order No"
-              variant="filled"
-              fullWidth
-              value={formData.LAST_ORD_NO}
-              onChange={(e) => handleFormChange('LAST_ORD_NO', e.target.value)}
-              sx={textInputSx}
-              size="small"
-              InputProps={{
-                sx: { 
-                  fontSize: { xs: '12px', sm: '14px' },
-                  '& input': { padding: { xs: '8px 6px', sm: '10px 12px' } }
-                }
-              }}
-            />
-          </Grid>
-          
-          {/* Order No */}
-          <Grid size={{ xs: 6, md: 2 }}>
-            <TextField
-              label="Order No"
-              variant="filled"
-              fullWidth
-              value={formData.ORDER_NO}
-              onChange={(e) => handleFormChange('ORDER_NO', e.target.value)}
-              sx={textInputSx}
-              size="small"
-              required
-              InputProps={{
-                sx: { 
-                  fontSize: { xs: '12px', sm: '14px' },
-                  '& input': { padding: { xs: '8px 6px', sm: '10px 12px' } }
-                }
-              }}
-            />
-          </Grid>
-          
-          {/* Order Date */}
-          <Grid size={{ xs: 6, md: 2 }}>
-            <LocalizationProvider dateAdapter={AdapterDateFns}>
-              <DatePicker
-                label="Order Date"
-                value={formData.ORDER_DATE ? parse(formData.ORDER_DATE, 'dd/MM/yyyy', new Date()) : null}
-                onChange={(date) => handleFormChange('ORDER_DATE', date ? format(date, 'dd/MM/yyyy') : '')}
-                format="dd/MM/yyyy"
-                slotProps={{
-                  textField: {
-                    fullWidth: true,
-                    variant: "filled",
-                    sx: {
-                      ...datePickerSx,
-                      "& .MuiInputBase-root": {
-                        height: { xs: "36px", sm: "40px" },
+        <Card elevation={2} sx={{ mb: 1 }}>
+          <CardContent>
+            <Typography variant="h6" sx={{ mb: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
+              <span style={{ fontSize: '1.1rem' }}>📋 Advanced Order Details</span>
+            </Typography>
+            
+            <Grid container spacing={1}>
+              <Grid item xs={12} container spacing={1}>
+                <Grid size={{ xs: 6, md: 2 }}>
+                  <TextField
+                    label="Series"
+                    variant="filled"
+                    fullWidth
+                    value={formData.SERIES}
+                    onChange={(e) => handleFormChange('SERIES', e.target.value)}
+                    sx={textInputSx}
+                    size="small"
+                    InputProps={{
+                      sx: { 
+                        fontSize: { xs: '12px', sm: '14px' },
+                        '& input': { padding: { xs: '8px 6px', sm: '10px 12px' } }
+                      }
+                    }}
+                  />
+                </Grid>
+                
+                <Grid size={{ xs: 6, md: 2 }}>
+                  <TextField
+                    label="Last Order No"
+                    variant="filled"
+                    fullWidth
+                    value={formData.LAST_ORD_NO}
+                    onChange={(e) => handleFormChange('LAST_ORD_NO', e.target.value)}
+                    sx={textInputSx}
+                    size="small"
+                    InputProps={{
+                      sx: { 
+                        fontSize: { xs: '12px', sm: '14px' },
+                        '& input': { padding: { xs: '8px 6px', sm: '10px 12px' } }
+                      }
+                    }}
+                  />
+                </Grid>
+                
+                <Grid size={{ xs: 6, md: 2 }}>
+                  <TextField
+                    label="Order No"
+                    variant="filled"
+                    fullWidth
+                    value={formData.ORDER_NO}
+                    onChange={(e) => handleFormChange('ORDER_NO', e.target.value)}
+                    sx={textInputSx}
+                    size="small"
+                    required
+                    InputProps={{
+                      sx: { 
+                        fontSize: { xs: '12px', sm: '14px' },
+                        '& input': { padding: { xs: '8px 6px', sm: '10px 12px' } }
+                      }
+                    }}
+                  />
+                </Grid>
+                
+                <Grid size={{ xs: 6, md: 2 }}>
+                  <LocalizationProvider dateAdapter={AdapterDateFns}>
+                    <DatePicker
+                      label="Order Date"
+                      value={formData.ORDER_DATE ? parse(formData.ORDER_DATE, 'dd/MM/yyyy', new Date()) : null}
+                      onChange={(date) => handleFormChange('ORDER_DATE', date ? format(date, 'dd/MM/yyyy') : '')}
+                      format="dd/MM/yyyy"
+                      slotProps={{
+                        textField: {
+                          fullWidth: true,
+                          variant: "filled",
+                          sx: {
+                            ...datePickerSx,
+                            "& .MuiInputBase-root": {
+                              height: { xs: "36px", sm: "40px" },
+                            },
+                            "& .MuiInputBase-input": {
+                              padding: { xs: "8px 10px", sm: "10px 12px" },
+                              fontSize: { xs: "12px", sm: "14px" },
+                            },
+                          },
+                          InputProps: {
+                            sx: {
+                              height: { xs: "36px", sm: "40px" },
+                            },
+                          },
+                        },
+                      }}
+                    />
+                  </LocalizationProvider>
+                </Grid>
+                
+                <Grid size={{ xs: 6, md: 2 }}>
+                  <AutoVibe
+                    id="Party"
+                    getOptionLabel={(option) => option || ''}
+                    options={partyOptions}
+                    label="Party *"
+                    name="Party"
+                    value={formData.Party}
+                    onChange={(e, value) => handleFormChange('Party', value)}
+                    sx={{
+                      ...DropInputSx,
+                      '& .MuiInputBase-root': {
+                        height: { xs: '36px', sm: '40px' },
                       },
-                      "& .MuiInputBase-input": {
-                        padding: { xs: "8px 10px", sm: "10px 12px" },
-                        fontSize: { xs: "12px", sm: "14px" },
+                      '& .MuiInputBase-input': {
+                        padding: { xs: '8px 10px', sm: '10px 12px' } + ' !important',
+                        fontSize: { xs: '12px', sm: '14px' } + ' !important',
                       },
-                    },
-                    InputProps: {
-                      sx: {
-                        height: { xs: "36px", sm: "40px" },
+                    }}
+                    size="small"
+                    onAddClick={null}
+                    onRefreshClick={null}
+                  />
+                </Grid>
+                
+                <Grid size={{ xs: 6, md: 2 }}>
+                  <AutoVibe
+                    id="Branch"
+                    getOptionLabel={(option) => option || ''}
+                    options={branchOptions}
+                    label="Branch"
+                    name="Branch"
+                    value={formData.Branch}
+                    onChange={(e, value) => handleFormChange('Branch', value)}
+                    sx={{
+                      ...DropInputSx,
+                      '& .MuiInputBase-root': {
+                        height: { xs: '36px', sm: '40px' },
                       },
-                    },
-                  },
-                }}
-              />
-            </LocalizationProvider>
-          </Grid>
-          <Grid size={{ xs: 6, md: 2 }}>
-          <AutoVibe
-            id="Party"
-            getOptionLabel={(option) => option || ''}
-            options={partyOptions}
-            label="Party *"
-            name="Party"
-            value={formData.Party}
-            onChange={(e, value) => handleFormChange('Party', value)}
-            sx={{
-              ...DropInputSx,
-              '& .MuiInputBase-root': {
-                height: { xs: '36px', sm: '40px' },
-              },
-              '& .MuiInputBase-input': {
-                padding: { xs: '8px 10px', sm: '10px 12px' } + ' !important',
-                fontSize: { xs: '12px', sm: '14px' } + ' !important',
-              },
-            }}
-            size="small"
-            // Remove icons from AutoVibe
-            onAddClick={null}
-            onRefreshClick={null}
-          />
-        </Grid>
-        
-        <Grid size={{ xs: 6, md: 2 }}>
-          <AutoVibe
-            id="Branch"
-            getOptionLabel={(option) => option || ''}
-            options={branchOptions}
-            label="Branch"
-            name="Branch"
-            value={formData.Branch}
-            onChange={(e, value) => handleFormChange('Branch', value)}
-            sx={{
-              ...DropInputSx,
-              '& .MuiInputBase-root': {
-                height: { xs: '36px', sm: '40px' },
-              },
-              '& .MuiInputBase-input': {
-                padding: { xs: '8px 10px', sm: '10px 12px' } + ' !important',
-                fontSize: { xs: '12px', sm: '14px' } + ' !important',
-              },
-            }}
-            size="small"
-            // Remove icons from AutoVibe
-            onAddClick={null}
-            onRefreshClick={null}
-          />
-        </Grid>
+                      '& .MuiInputBase-input': {
+                        padding: { xs: '8px 10px', sm: '10px 12px' } + ' !important',
+                        fontSize: { xs: '12px', sm: '14px' } + ' !important',
+                      },
+                    }}
+                    size="small"
+                    onAddClick={null}
+                    onRefreshClick={null}
+                  />
+                </Grid>
 
-              {/* Shipping Party and Place */}
-        <Grid size={{ xs: 6, md: 2 }}>
-          <AutoVibe
-            id="SHIPPING_PARTY"
-            getOptionLabel={(option) => option || ''}
-            options={shippingPartyOptions}
-            label="Shipping Party"
-            name="SHIPPING_PARTY"
-            value={formData.SHIPPING_PARTY}
-            onChange={(e, value) => handleFormChange('SHIPPING_PARTY', value)}
-            sx={{
-              ...DropInputSx,
-              '& .MuiInputBase-root': {
-                height: { xs: '36px', sm: '40px' },
-              },
-              '& .MuiInputBase-input': {
-                padding: { xs: '8px 10px', sm: '10px 12px' } + ' !important',
-                fontSize: { xs: '12px', sm: '14px' } + ' !important',
-              },
-            }}
-            size="small"
-            // Remove icons from AutoVibe
-            onAddClick={null}
-            onRefreshClick={null}
-          />
-        </Grid>
-        
-        <Grid size={{ xs: 6, md: 2 }}>
-          <AutoVibe
-            id="SHIPPING_PLACE"
-            getOptionLabel={(option) => option || ''}
-            options={shippingPlaceOptions}
-            label="Shipping Place"
-            name="SHIPPING_PLACE"
-            value={formData.SHIPPING_PLACE}
-            onChange={(e, value) => handleFormChange('SHIPPING_PLACE', value)}
-            sx={{
-              ...DropInputSx,
-              '& .MuiInputBase-root': {
-                height: { xs: '36px', sm: '40px' },
-              },
-              '& .MuiInputBase-input': {
-                padding: { xs: '8px 10px', sm: '10px 12px' } + ' !important',
-                fontSize: { xs: '12px', sm: '14px' } + ' !important',
-              },
-            }}
-            size="small"
-            // Remove icons from AutoVibe
-            onAddClick={null}
-            onRefreshClick={null}
-          />
-        </Grid>
+                <Grid size={{ xs: 6, md: 2 }}>
+                  <AutoVibe
+                    id="SHIPPING_PARTY"
+                    getOptionLabel={(option) => option || ''}
+                    options={shippingPartyOptions}
+                    label="Shipping Party"
+                    name="SHIPPING_PARTY"
+                    value={formData.SHIPPING_PARTY}
+                    onChange={(e, value) => handleFormChange('SHIPPING_PARTY', value)}
+                    sx={{
+                      ...DropInputSx,
+                      '& .MuiInputBase-root': {
+                        height: { xs: '36px', sm: '40px' },
+                      },
+                      '& .MuiInputBase-input': {
+                        padding: { xs: '8px 10px', sm: '10px 12px' } + ' !important',
+                        fontSize: { xs: '12px', sm: '14px' } + ' !important',
+                      },
+                    }}
+                    size="small"
+                    onAddClick={null}
+                    onRefreshClick={null}
+                  />
+                </Grid>
+                
+                <Grid size={{ xs: 6, md: 2 }}>
+                  <AutoVibe
+                    id="SHIPPING_PLACE"
+                    getOptionLabel={(option) => option || ''}
+                    options={shippingPlaceOptions}
+                    label="Shipping Place"
+                    name="SHIPPING_PLACE"
+                    value={formData.SHIPPING_PLACE}
+                    onChange={(e, value) => handleFormChange('SHIPPING_PLACE', value)}
+                    sx={{
+                      ...DropInputSx,
+                      '& .MuiInputBase-root': {
+                        height: { xs: '36px', sm: '40px' },
+                      },
+                      '& .MuiInputBase-input': {
+                        padding: { xs: '8px 10px', sm: '10px 12px' } + ' !important',
+                        fontSize: { xs: '12px', sm: '14px' } + ' !important',
+                      },
+                    }}
+                    size="small"
+                    onAddClick={null}
+                    onRefreshClick={null}
+                  />
+                </Grid>
 
-        {/* Sales & Broker Row with full width on mobile */}
-        <Grid size={{ xs: 6, md: 2 }}>
-          <AutoVibe
-            id="Broker"
-            getOptionLabel={(option) => option || ''}
-            options={brokerOptions}
-            label="Broker"
-            name="Broker"
-            value={formData.Broker}
-            onChange={(e, value) => handleFormChange('Broker', value)}
-            sx={{
-              ...DropInputSx,
-              '& .MuiInputBase-root': {
-                height: { xs: '36px', sm: '40px' },
-              },
-              '& .MuiInputBase-input': {
-                padding: { xs: '8px 10px', sm: '10px 12px' } + ' !important',
-                fontSize: { xs: '12px', sm: '14px' } + ' !important',
-              },
-            }}
-            size="small"
-            // Remove icons from AutoVibe
-            onAddClick={null}
-            onRefreshClick={null}
-          />
-        </Grid>
-        
-        <Grid size={{ xs: 6, md: 2 }}>
-          <AutoVibe
-            id="SALESPERSON_1"
-            getOptionLabel={(option) => option || ''}
-            options={salesperson1Options}
-            label="Salesperson 1"
-            name="SALESPERSON_1"
-            value={formData.SALESPERSON_1}
-            onChange={(e, value) => handleFormChange('SALESPERSON_1', value)}
-            sx={{
-              ...DropInputSx,
-              '& .MuiInputBase-root': {
-                height: { xs: '36px', sm: '40px' },
-              },
-              '& .MuiInputBase-input': {
-                padding: { xs: '8px 10px', sm: '10px 12px' } + ' !important',
-                fontSize: { xs: '12px', sm: '14px' } + ' !important',
-              },
-            }}
-            size="small"
-            // Remove icons from AutoVibe
-            onAddClick={null}
-            onRefreshClick={null}
-          />
-        </Grid>
-        
-        <Grid size={{ xs: 6, md: 2 }}>
-          <AutoVibe
-            id="SALESPERSON_2"
-            getOptionLabel={(option) => option || ''}
-            options={salesperson2Options}
-            label="Salesperson 2"
-            name="SALESPERSON_2"
-            value={formData.SALESPERSON_2}
-            onChange={(e, value) => handleFormChange('SALESPERSON_2', value)}
-            sx={{
-              ...DropInputSx,
-              '& .MuiInputBase-root': {
-                height: { xs: '36px', sm: '40px' },
-              },
-              '& .MuiInputBase-input': {
-                padding: { xs: '8px 10px', sm: '10px 12px' } + ' !important',
-                fontSize: { xs: '12px', sm: '14px' } + ' !important',
-              },
-            }}
-            size="small"
-            // Remove icons from AutoVibe
-            onAddClick={null}
-            onRefreshClick={null}
-          />
-        </Grid>
-        
-        <Grid size={{ xs: 6, md: 2 }}>
-          <AutoVibe
-            id="MERCHANDISER_NAME"
-            getOptionLabel={(option) => option || ''}
-            options={merchandiserOptions}
-            label="Merchandiser"
-            name="MERCHANDISER_NAME"
-            value={formData.MERCHANDISER_NAME}
-            onChange={(e, value) => handleFormChange('MERCHANDISER_NAME', value)}
-            sx={{
-              ...DropInputSx,
-              '& .MuiInputBase-root': {
-                height: { xs: '36px', sm: '40px' },
-              },
-              '& .MuiInputBase-input': {
-                padding: { xs: '8px 10px', sm: '10px 12px' } + ' !important',
-                fontSize: { xs: '12px', sm: '14px' } + ' !important',
-              },
-            }}
-            size="small"
-            // Remove icons from AutoVibe
-            onAddClick={null}
-            onRefreshClick={null}
-          />
-        </Grid>
-        
-        <Grid size={{ xs: 6, md: 2 }}>
-          <AutoVibe
-            id="SEASON"
-            getOptionLabel={(option) => option || ''}
-            options={seasonOptions}
-            label="Season"
-            name="SEASON"
-            value={formData.SEASON}
-            onChange={(e, value) => handleFormChange('SEASON', value)}
-            sx={{
-              ...DropInputSx,
-              '& .MuiInputBase-root': {
-                height: { xs: '36px', sm: '40px' },
-              },
-              '& .MuiInputBase-input': {
-                padding: { xs: '8px 10px', sm: '10px 12px' } + ' !important',
-                fontSize: { xs: '12px', sm: '14px' } + ' !important',
-              },
-            }}
-            size="small"
-            // Remove icons from AutoVibe
-            onAddClick={null}
-            onRefreshClick={null}
-          />
-        </Grid>
-        
-        {/* Status and Type Row */}
-        <Grid size={{ xs: 6, md: 2 }}>
-          <AutoVibe
-            id="Order_Type"
-            getOptionLabel={(option) => option || ''}
-            options={orderTypeOptions}
-            label="Order Type"
-            name="Order_Type"
-            value={formData.Order_Type}
-            onChange={(e, value) => handleFormChange('Order_Type', value)}
-            sx={{
-              ...DropInputSx,
-              '& .MuiInputBase-root': {
-                height: { xs: '36px', sm: '40px' },
-              },
-              '& .MuiInputBase-input': {
-                padding: { xs: '8px 10px', sm: '10px 12px' } + ' !important',
-                fontSize: { xs: '12px', sm: '14px' } + ' !important',
-              },
-            }}
-            size="small"
-            // Remove icons from AutoVibe
-            onAddClick={null}
-            onRefreshClick={null}
-          />
-        </Grid>
-        </Grid>
-        
-        {/* Party and Branch with adjusted heights */}
-        
-        
-  
-      </Grid>
-    </CardContent>
-  </Card>
-)}
+                <Grid size={{ xs: 6, md: 2 }}>
+                  <AutoVibe
+                    id="Broker"
+                    getOptionLabel={(option) => option || ''}
+                    options={brokerOptions}
+                    label="Broker"
+                    name="Broker"
+                    value={formData.Broker}
+                    onChange={(e, value) => handleFormChange('Broker', value)}
+                    sx={{
+                      ...DropInputSx,
+                      '& .MuiInputBase-root': {
+                        height: { xs: '36px', sm: '40px' },
+                      },
+                      '& .MuiInputBase-input': {
+                        padding: { xs: '8px 10px', sm: '10px 12px' } + ' !important',
+                        fontSize: { xs: '12px', sm: '14px' } + ' !important',
+                      },
+                    }}
+                    size="small"
+                    onAddClick={null}
+                    onRefreshClick={null}
+                  />
+                </Grid>
+                
+                <Grid size={{ xs: 6, md: 2 }}>
+                  <AutoVibe
+                    id="SALESPERSON_1"
+                    getOptionLabel={(option) => option || ''}
+                    options={salesperson1Options}
+                    label="Salesperson 1"
+                    name="SALESPERSON_1"
+                    value={formData.SALESPERSON_1}
+                    onChange={(e, value) => handleFormChange('SALESPERSON_1', value)}
+                    sx={{
+                      ...DropInputSx,
+                      '& .MuiInputBase-root': {
+                        height: { xs: '36px', sm: '40px' },
+                      },
+                      '& .MuiInputBase-input': {
+                        padding: { xs: '8px 10px', sm: '10px 12px' } + ' !important',
+                        fontSize: { xs: '12px', sm: '14px' } + ' !important',
+                      },
+                    }}
+                    size="small"
+                    onAddClick={null}
+                    onRefreshClick={null}
+                  />
+                </Grid>
+                
+                <Grid size={{ xs: 6, md: 2 }}>
+                  <AutoVibe
+                    id="SALESPERSON_2"
+                    getOptionLabel={(option) => option || ''}
+                    options={salesperson2Options}
+                    label="Salesperson 2"
+                    name="SALESPERSON_2"
+                    value={formData.SALESPERSON_2}
+                    onChange={(e, value) => handleFormChange('SALESPERSON_2', value)}
+                    sx={{
+                      ...DropInputSx,
+                      '& .MuiInputBase-root': {
+                        height: { xs: '36px', sm: '40px' },
+                      },
+                      '& .MuiInputBase-input': {
+                        padding: { xs: '8px 10px', sm: '10px 12px' } + ' !important',
+                        fontSize: { xs: '12px', sm: '14px' } + ' !important',
+                      },
+                    }}
+                    size="small"
+                    onAddClick={null}
+                    onRefreshClick={null}
+                  />
+                </Grid>
+                
+                <Grid size={{ xs: 6, md: 2 }}>
+                  <AutoVibe
+                    id="MERCHANDISER_NAME"
+                    getOptionLabel={(option) => option || ''}
+                    options={merchandiserOptions}
+                    label="Merchandiser"
+                    name="MERCHANDISER_NAME"
+                    value={formData.MERCHANDISER_NAME}
+                    onChange={(e, value) => handleFormChange('MERCHANDISER_NAME', value)}
+                    sx={{
+                      ...DropInputSx,
+                      '& .MuiInputBase-root': {
+                        height: { xs: '36px', sm: '40px' },
+                      },
+                      '& .MuiInputBase-input': {
+                        padding: { xs: '8px 10px', sm: '10px 12px' } + ' !important',
+                        fontSize: { xs: '12px', sm: '14px' } + ' !important',
+                      },
+                    }}
+                    size="small"
+                    onAddClick={null}
+                    onRefreshClick={null}
+                  />
+                </Grid>
+                
+                <Grid size={{ xs: 6, md: 2 }}>
+                  <AutoVibe
+                    id="SEASON"
+                    getOptionLabel={(option) => option || ''}
+                    options={seasonOptions}
+                    label="Season"
+                    name="SEASON"
+                    value={formData.SEASON}
+                    onChange={(e, value) => handleFormChange('SEASON', value)}
+                    sx={{
+                      ...DropInputSx,
+                      '& .MuiInputBase-root': {
+                        height: { xs: '36px', sm: '40px' },
+                      },
+                      '& .MuiInputBase-input': {
+                        padding: { xs: '8px 10px', sm: '10px 12px' } + ' !important',
+                        fontSize: { xs: '12px', sm: '14px' } + ' !important',
+                      },
+                    }}
+                    size="small"
+                    onAddClick={null}
+                    onRefreshClick={null}
+                  />
+                </Grid>
+                
+                <Grid size={{ xs: 6, md: 2 }}>
+                  <AutoVibe
+                    id="Order_Type"
+                    getOptionLabel={(option) => option || ''}
+                    options={orderTypeOptions}
+                    label="Order Type"
+                    name="Order_Type"
+                    value={formData.Order_Type}
+                    onChange={(e, value) => handleFormChange('Order_Type', value)}
+                    sx={{
+                      ...DropInputSx,
+                      '& .MuiInputBase-root': {
+                        height: { xs: '36px', sm: '40px' },
+                      },
+                      '& .MuiInputBase-input': {
+                        padding: { xs: '8px 10px', sm: '10px 12px' } + ' !important',
+                        fontSize: { xs: '12px', sm: '14px' } + ' !important',
+                      },
+                    }}
+                    size="small"
+                    onAddClick={null}
+                    onRefreshClick={null}
+                  />
+                </Grid>
+              </Grid>
+            </Grid>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Barcode Scanner Section with Style Code Toggle */}
       <Card elevation={2} sx={{ mb: 1 }}>
@@ -3538,7 +3790,6 @@ const fetchSizeDetailsForStyle = async (styleData) => {
               <QrCodeIcon /> Product Scanning
             </Typography>
             
-            {/* Style Code Toggle Checkbox */}
             <FormGroup>
               <FormControlLabel
                 control={
@@ -3558,10 +3809,8 @@ const fetchSizeDetailsForStyle = async (styleData) => {
           </Box>
           
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems="center">
-            {/* Barcode Input OR Style Code Input based on mode */}
             <Box sx={{ flex: 1, width: '100%' }}>
               {useStyleCodeMode ? (
-                // Style Code Input
                 <TextField
                   label="Type Style Code"
                   variant="filled"
@@ -3585,7 +3834,6 @@ const fetchSizeDetailsForStyle = async (styleData) => {
                   }}
                 />
               ) : (
-                // Barcode Input
                 <TextField
                   label="Enter Barcode Number"
                   variant="filled"
@@ -3611,7 +3859,6 @@ const fetchSizeDetailsForStyle = async (styleData) => {
               )}
             </Box>
             
-            {/* OR Divider */}
             <Typography variant="body2" sx={{ 
               color: 'text.secondary',
               display: { xs: 'none', sm: 'block' }
@@ -3619,7 +3866,6 @@ const fetchSizeDetailsForStyle = async (styleData) => {
               OR
             </Typography>
             
-            {/* Scanner Button - Only show for barcode mode */}
             {!useStyleCodeMode && (
               <Button
                 variant="contained"
@@ -3666,7 +3912,6 @@ const fetchSizeDetailsForStyle = async (styleData) => {
             </Typography>
             
             <Grid container spacing={1}>
-              {/* Barcode and Product */}
               <Grid size={{ xs: 6, md: 2 }}>
                 <TextField
                   label="Barcode"
@@ -3691,7 +3936,6 @@ const fetchSizeDetailsForStyle = async (styleData) => {
                 />
               </Grid>
               
-              {/* Style and Type */}
               <Grid size={{ xs: 6, md: 2 }}>
                 <TextField
                   label="Style"
@@ -3716,7 +3960,6 @@ const fetchSizeDetailsForStyle = async (styleData) => {
                 />
               </Grid>
               
-              {/* Shade and MRP */}
               <Grid size={{ xs: 6, md: 2 }}>
                 <TextField
                   label="Shade"
@@ -3741,7 +3984,6 @@ const fetchSizeDetailsForStyle = async (styleData) => {
                 />
               </Grid>
               
-              {/* Rate and Discount */}
               <Grid size={{ xs: 6, md: 2 }}>
                 <TextField
                   label="Rate"
@@ -3754,7 +3996,6 @@ const fetchSizeDetailsForStyle = async (styleData) => {
                 />
               </Grid>
   
-              {/* Remark */}
               <Grid size={{ xs: 6, md: 2 }}>
                 <TextField
                   label="Remark"
@@ -3766,11 +4007,152 @@ const fetchSizeDetailsForStyle = async (styleData) => {
                   size="small"
                 />
               </Grid>
-              
-              
-              
-             
             </Grid>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Fill by Ratio Section */}
+      {availableSizes.length > 0 && (
+        <Card elevation={0.5} sx={{ mb: 0 }}>
+          <CardContent>
+            <Box sx={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'space-between',
+              mb: 0.1 
+            }}>
+              <Typography variant="h6" sx={{ fontSize: '1.1rem' }}>
+                Fill By Ratio
+              </Typography>
+              
+              <FormGroup>
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={fillByRatioMode}
+                      onChange={(e) => setFillByRatioMode(e.target.checked)}
+                      size="small"
+                    />
+                  }
+                  label="Enable Ratio Fill"
+                />
+              </FormGroup>
+            </Box>
+            
+            {fillByRatioMode && (
+              <Box>
+                {/* Total Quantity Input */}
+                <Box sx={{ mb: 2 }}>
+                  <TextField
+                    label="Total Quantity"
+                    variant="outlined"
+                    fullWidth
+                    type="number"
+                    value={ratioData.totalQty}
+                    onChange={(e) => handleTotalQtyChange(e.target.value)}
+                    sx={{
+                      '& .MuiInputBase-root': {
+                        height: 40,
+                      },
+                    }}
+                    InputProps={{
+                      inputProps: { min: 0 }
+                    }}
+                  />
+                </Box>
+                
+                {/* Horizontal Ratio Table */}
+                <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: '600' }}>
+                  Enter Ratios for Each Size:
+                </Typography>
+                
+                <Box sx={{ 
+                  overflowX: 'auto',
+                  backgroundColor: '#f8f9fa',
+                  borderRadius: 1,
+                  p: 1,
+                  mb: 0.7
+                }}>
+                  <table style={{ 
+                    width: '100%', 
+                    borderCollapse: 'collapse',
+                    minWidth: `${availableSizes.length * 50}px`
+                  }}>
+                    <thead>
+                      <tr style={{ backgroundColor: '#e9ecef' }}>
+                        {/* Size Headers */}
+                        {availableSizes.map((size) => (
+                          <th key={`th-${size.STYSIZE_ID}`} style={{ 
+                            padding: '10px',
+                            border: '1px solid #dee2e6', 
+                            textAlign: 'center',
+                            fontSize: '14px',
+                            fontWeight: '600',
+                            minWidth: '40px'
+                          }}>
+                            {size.STYSIZE_NAME}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        {/* Ratio Inputs */}
+                        {availableSizes.map((size, index) => (
+                          <td key={`td-${size.STYSIZE_ID}`} style={{ 
+                            padding: '2px', 
+                            border: '1px solid #dee2e6',
+                            textAlign: 'center',
+                            backgroundColor: '#fff'
+                          }}>
+                            <TextField
+                              type="number"
+                              value={ratioData.ratios[size.STYSIZE_NAME] || ''}
+                              onChange={(e) => handleRatioChange(size.STYSIZE_NAME, e.target.value)}
+                              size="small"
+                              sx={{
+                                width: '50px',
+                                '& .MuiInputBase-root': {
+                                  height: '26px',
+                                  fontSize: '14px'
+                                },
+                                '& input': {
+                                  padding: '8px',
+                                  textAlign: 'center'
+                                }
+                              }}
+                              inputProps={{ 
+                                min: 0, 
+                                step: 0.1,
+                                style: { textAlign: 'center' }
+                              }}
+                            />
+                          </td>
+                        ))}
+                      </tr>
+                    </tbody>
+                  </table>
+                </Box>
+                
+                {/* Fill Qty Button */}
+                <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+                  <Button
+                    variant="contained"
+                    onClick={fillQuantitiesByRatio}
+                    disabled={!ratioData.totalQty || parseFloat(ratioData.totalQty) <= 0}
+                    sx={{ 
+                      backgroundColor: '#4CAF50',
+                      color: 'white',
+                      '&:hover': { backgroundColor: '#45a049' },
+                      minWidth: '80px'
+                    }}
+                  >
+                    Fill Qty
+                  </Button>
+                </Box>
+              </Box>
+            )}
           </CardContent>
         </Card>
       )}
@@ -3780,7 +4162,7 @@ const fetchSizeDetailsForStyle = async (styleData) => {
         <Card elevation={1} sx={{ mb: 1 }}>
           <CardContent>
             <Typography variant="h6" sx={{ mb: 1, fontSize: '1.1rem' }}>
-               Size Details
+              Size Details (Qty) :<strong style={{ color: '#1976d2' }}>{calculateTotalQty()}</strong>
             </Typography>
             
             <Box sx={{ 
@@ -3797,14 +4179,14 @@ const fetchSizeDetailsForStyle = async (styleData) => {
                 <thead>
                   <tr style={{ backgroundColor: '#e9ecef' }}>
                     <th style={{ 
-                       padding: '2px 8px',
+                      padding: '2px 8px',
                       border: '1px solid #dee2e6', 
                       textAlign: 'left',
                       fontSize: '14px',
                       fontWeight: '600'
                     }}>Size</th>
                     <th style={{ 
-                     padding: '2px 8px', 
+                      padding: '2px 8px', 
                       border: '1px solid #dee2e6', 
                       textAlign: 'center',
                       fontSize: '14px',
@@ -3825,7 +4207,7 @@ const fetchSizeDetailsForStyle = async (styleData) => {
                       fontWeight: '600'
                     }}>Rate</th>
                     <th style={{ 
-                     padding: '2px 8px',
+                      padding: '2px 8px',
                       border: '1px solid #dee2e6', 
                       textAlign: 'right',
                       fontSize: '14px',
@@ -3850,25 +4232,24 @@ const fetchSizeDetailsForStyle = async (styleData) => {
                         border: '1px solid #dee2e6',
                         textAlign: 'center'
                       }}>
-                       <TextField
-  type="number"
-  value={size.QTY}
-  onChange={(e) => handleSizeQtyChange(index, e.target.value)}
-  size="small"
-  sx={{
-    width: '60px',
-    '& .MuiInputBase-root': {
-      height: '20px',
-      fontSize: '13px'
-    },
-    '& input': {
-      padding: '1px',
-      textAlign: 'center'
-    }
-  }}
-  inputProps={{ min: 0 }}
-/>
-
+                        <TextField
+                          type="number"
+                          value={size.QTY}
+                          onChange={(e) => handleSizeQtyChange(index, e.target.value)}
+                          size="small"
+                          sx={{
+                            width: '60px',
+                            '& .MuiInputBase-root': {
+                              height: '20px',
+                              fontSize: '13px'
+                            },
+                            '& input': {
+                              padding: '1px',
+                              textAlign: 'center'
+                            }
+                          }}
+                          inputProps={{ min: 0 }}
+                        />
                       </td>
                       <td style={{ 
                         padding: '10px', 
@@ -3933,208 +4314,287 @@ const fetchSizeDetailsForStyle = async (styleData) => {
         </Card>
       )}
 
-      {/* Order Items Table */}
-      {tableData.length > 0 && (
-        <Card elevation={2} sx={{ mb: 1 }}>
-          <CardContent>
-            <Typography variant="h6" sx={{ mb: 1, fontSize: '1.1rem' }}>
-              🛒 Order Items ({tableData.length})
-            </Typography>
-            
-            <Box sx={{ 
-              overflowX: 'auto',
-              backgroundColor: '#f8f9fa',
-              borderRadius: 1,
-              p: 0
+      {/* Order Items Modal */}
+      <Modal
+        open={showOrderModal}
+        onClose={() => setShowOrderModal(false)}
+        aria-labelledby="order-items-modal"
+        aria-describedby="order-items-list"
+      >
+        <Fade in={showOrderModal}>
+          <Box sx={{
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            width: { xs: '95%', sm: '90%', md: '85%', lg: '80%' },
+            maxHeight: '90vh',
+            bgcolor: 'background.paper',
+            borderRadius: 2,
+            boxShadow: 24,
+            overflow: 'hidden',
+            display: 'flex',
+            flexDirection: 'column'
+          }}>
+            {/* Modal Header */}
+            <Box sx={{
+              p: 0.7,
+              backgroundColor: '#1976d2',
+              color: 'white',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center'
             }}>
-              <table style={{ 
-                width: '100%', 
-                borderCollapse: 'collapse',
-                minWidth: '700px'
-              }}>
-                <thead>
-                  <tr style={{ backgroundColor: '#e9ecef' }}>
-                    <th style={{ 
-                      padding: '5px', 
-                      border: '1px solid #dee2e6', 
-                      textAlign: 'left',
-                      fontSize: '14px',
-                      fontWeight: '600'
-                    }}>Barcode</th>
-                    <th style={{ 
-                      padding: '5px', 
-                      border: '1px solid #dee2e6', 
-                      textAlign: 'left',
-                      fontSize: '14px',
-                      fontWeight: '600'
-                    }}>Product</th>
-                    <th style={{ 
-                      padding: '5px', 
-                      border: '1px solid #dee2e6', 
-                      textAlign: 'left',
-                      fontSize: '14px',
-                      fontWeight: '600'
-                    }}>Style</th>
-                    <th style={{ 
-                      padding: '5px', 
-                      border: '1px solid #dee2e6', 
-                      textAlign: 'left',
-                      fontSize: '14px',
-                      fontWeight: '600'
-                    }}>Type</th>
-                    <th style={{ 
-                      padding: '5px', 
-                      border: '1px solid #dee2e6', 
-                      textAlign: 'left',
-                      fontSize: '14px',
-                      fontWeight: '600'
-                    }}>Shade</th>
-                    <th style={{ 
-                      padding: '5px', 
-                      border: '1px solid #dee2e6', 
-                      textAlign: 'center',
-                      fontSize: '14px',
-                      fontWeight: '600'
-                    }}>Qty</th>
-                    <th style={{ 
-                      padding: '5px', 
-                      border: '1px solid #dee2e6', 
-                      textAlign: 'right',
-                      fontSize: '14px',
-                      fontWeight: '600'
-                    }}>Rate</th>
-                    <th style={{ 
-                      padding: '5px', 
-                      border: '1px solid #dee2e6', 
-                      textAlign: 'right',
-                      fontSize: '14px',
-                      fontWeight: '600'
-                    }}>Amount</th>
-                    <th style={{ 
-                      padding: '5px', 
-                      border: '1px solid #dee2e6', 
-                      textAlign: 'center',
-                      fontSize: '14px',
-                      fontWeight: '600'
-                    }}>Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {tableData.map((item, index) => (
-                    <tr key={item.id} style={{  height: '32px', 
-                      backgroundColor: index % 2 === 0 ? '#ffffffff' : '#ffffffff',
-                      borderBottom: '1px solid #dee2e6'
-                    }}>
-                      <td style={{ 
-                        padding: '2px 6px',
-                        border: '1px solid #dee2e6',
-                        fontSize: '14px',
-                        fontFamily: 'monospace'
-                      }}>{item.barcode}</td>
-                      <td style={{ 
-                        padding: '2px 6px', 
-                        border: '1px solid #dee2e6',
-                        fontSize: '14px'
-                      }}>{item.product}</td>
-                      <td style={{ 
-                       padding: '2px 6px',
-                        border: '1px solid #dee2e6',
-                        fontSize: '14px'
-                      }}>{item.style}</td>
-                      <td style={{ 
-                        padding: '2px 6px',  
-                        border: '1px solid #dee2e6',
-                        fontSize: '14px'
-                      }}>
-                        <div>{item.type}</div>
-                      </td>
-                      <td style={{ 
-                        padding: '2px 6px',
-                        border: '1px solid #dee2e6',
-                        fontSize: '14px'
-                      }}>
-                        <div>{item.shade}</div>
-                      </td>
-                      <td style={{ 
-                        padding: '2px 6px', 
-                        border: '1px solid #dee2e6',
-                        textAlign: 'center',
-                        fontSize: '14px'
-                      }}>{item.qty}</td>
-                      <td style={{ 
-                        padding: '2px 6px',
-                        border: '1px solid #dee2e6',
-                        textAlign: 'right',
-                        fontSize: '14px'
-                      }}>₹{item.rate}</td>
-                      <td style={{ 
-                        padding: '2px 6px',
-                        border: '1px solid #dee2e6',
-                        textAlign: 'right',
-                        fontSize: '14px',
-                        fontWeight: '500'
-                      }}>₹{item.amount.toFixed(2)}</td>
-                      <td style={{ 
-                        padding: '2px 6px', 
-                        border: '1px solid #dee2e6',
-                        textAlign: 'center'
-                      }}>
-                        <IconButton 
-                          onClick={() => handleDeleteItem(item.id)}
-                          size="small"
-                          sx={{ color: '#f44336' }}
-                        >
-                          <DeleteIcon fontSize="small" />
-                        </IconButton>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <CartIcon /> Order Items ({tableData.length})
+              </Typography>
+              <IconButton onClick={() => setShowOrderModal(false)} sx={{ color: 'white' }}>
+                <CloseIcon />
+              </IconButton>
             </Box>
-            
-            {/* Order Summary */}
-            {tableData.length > 0 && (
-              <Box sx={{ 
-                mt: 1, 
-                p: 1, 
-                backgroundColor: '#e8f5e9', 
-                borderRadius: 1 
-              }}>
-                <Typography variant="h6" sx={{ mb: 1 }}>📊 Order Summary</Typography>
-                <Grid container spacing={2} sx={{ mt: 1 }}>
-                  <Grid item xs={6} sm={3}>
-                    <Typography variant="body2">Total Items:</Typography>
-                    <Typography variant="h6">{tableData.length}</Typography>
-                  </Grid>
-                  <Grid item xs={6} sm={3}>
-                    <Typography variant="body2">Total Quantity:</Typography>
-                    <Typography variant="h6">{tableData.reduce((sum, item) => sum + item.qty, 0)}</Typography>
-                  </Grid>
-                  <Grid item xs={6} sm={3}>
-                    <Typography variant="body2">Total Amount:</Typography>
-                    <Typography variant="h6">₹{tableData.reduce((sum, item) => sum + item.amount, 0).toFixed(2)}</Typography>
-                  </Grid>
-                  <Grid item xs={6} sm={3}>
-                    <Button
-                      variant="contained"
-                      fullWidth
-                      onClick={handleSubmitOrder}
-                      disabled={isLoadingData}
-                      sx={{ 
-                        backgroundColor: '#2196F3',
-                        '&:hover': { backgroundColor: '#1976d2' }
-                      }}
-                    >
-                      {isLoadingData ? <CircularProgress size={24} /> : 'Submit Order'}
-                    </Button>
-                  </Grid>
-                </Grid>
-              </Box>
-            )}
-          </CardContent>
-        </Card>
-      )}
+
+            {/* Modal Content - Scrollable */}
+            <Box sx={{ 
+              p: 2,
+              overflow: 'auto',
+              flexGrow: 1
+            }}>
+              {tableData.length === 0 ? (
+                <Box sx={{ 
+                  display: 'flex', 
+                  flexDirection: 'column', 
+                  alignItems: 'center', 
+                  justifyContent: 'center',
+                  height: '200px',
+                  color: 'text.secondary'
+                }}>
+                  <CartIcon sx={{ fontSize: 60, mb: 2, opacity: 0.5 }} />
+                  <Typography variant="h6">No items in order</Typography>
+                  <Typography variant="body2">Scan and add products to your order</Typography>
+                </Box>
+              ) : (
+                <>
+                  {/* Order Items Table */}
+                  <Box sx={{ 
+                    overflowX: 'auto',
+                    backgroundColor: '#f8f9fa',
+                    borderRadius: 1,
+                    mb: 1
+                  }}>
+                    <table style={{ 
+                      width: '100%', 
+                      borderCollapse: 'collapse',
+                      minWidth: '800px'
+                    }}>
+                      <thead>
+                        <tr style={{ backgroundColor: '#e9ecef' }}>
+                          <th style={{ 
+                            padding: '8px', 
+                            border: '1px solid #dee2e6', 
+                            textAlign: 'left',
+                            fontSize: '14px',
+                            fontWeight: '600'
+                          }}>Barcode</th>
+                          <th style={{ 
+                            padding: '8px', 
+                            border: '1px solid #dee2e6', 
+                            textAlign: 'left',
+                            fontSize: '14px',
+                            fontWeight: '600'
+                          }}>Product</th>
+                          <th style={{ 
+                            padding: '8px', 
+                            border: '1px solid #dee2e6', 
+                            textAlign: 'left',
+                            fontSize: '14px',
+                            fontWeight: '600'
+                          }}>Style</th>
+                          <th style={{ 
+                            padding: '8px', 
+                            border: '1px solid #dee2e6', 
+                            textAlign: 'left',
+                            fontSize: '14px',
+                            fontWeight: '600'
+                          }}>Type</th>
+                          <th style={{ 
+                            padding: '8px', 
+                            border: '1px solid #dee2e6', 
+                            textAlign: 'left',
+                            fontSize: '14px',
+                            fontWeight: '600'
+                          }}>Shade</th>
+                          <th style={{ 
+                            padding: '8px', 
+                            border: '1px solid #dee2e6', 
+                            textAlign: 'center',
+                            fontSize: '14px',
+                            fontWeight: '600'
+                          }}>Qty</th>
+                          <th style={{ 
+                            padding: '8px', 
+                            border: '1px solid #dee2e6', 
+                            textAlign: 'right',
+                            fontSize: '14px',
+                            fontWeight: '600'
+                          }}>Rate</th>
+                          <th style={{ 
+                            padding: '8px', 
+                            border: '1px solid #dee2e6', 
+                            textAlign: 'right',
+                            fontSize: '14px',
+                            fontWeight: '600'
+                          }}>Amount</th>
+                          <th style={{ 
+                            padding: '8px', 
+                            border: '1px solid #dee2e6', 
+                            textAlign: 'center',
+                            fontSize: '14px',
+                            fontWeight: '600'
+                          }}>Action</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {tableData.map((item, index) => (
+                          <tr key={item.id} style={{ 
+                            backgroundColor: index % 2 === 0 ? '#fff' : '#f8f9fa',
+                            borderBottom: '1px solid #dee2e6'
+                          }}>
+                            <td style={{ 
+                              padding: '8px',
+                              border: '1px solid #dee2e6',
+                              fontSize: '14px',
+                              fontFamily: 'monospace'
+                            }}>{item.barcode}</td>
+                            <td style={{ 
+                              padding: '8px', 
+                              border: '1px solid #dee2e6',
+                              fontSize: '14px'
+                            }}>{item.product}</td>
+                            <td style={{ 
+                              padding: '8px',
+                              border: '1px solid #dee2e6',
+                              fontSize: '14px'
+                            }}>{item.style}</td>
+                            <td style={{ 
+                              padding: '8px',  
+                              border: '1px solid #dee2e6',
+                              fontSize: '14px'
+                            }}>{item.type}</td>
+                            <td style={{ 
+                              padding: '8px',
+                              border: '1px solid #dee2e6',
+                              fontSize: '14px'
+                            }}>{item.shade}</td>
+                            <td style={{ 
+                              padding: '8px', 
+                              border: '1px solid #dee2e6',
+                              textAlign: 'center',
+                              fontSize: '14px'
+                            }}>{item.qty}</td>
+                            <td style={{ 
+                              padding: '8px',
+                              border: '1px solid #dee2e6',
+                              textAlign: 'right',
+                              fontSize: '14px'
+                            }}>₹{item.rate}</td>
+                            <td style={{ 
+                              padding: '8px',
+                              border: '1px solid #dee2e6',
+                              textAlign: 'right',
+                              fontSize: '14px',
+                              fontWeight: '500'
+                            }}>₹{item.amount.toFixed(2)}</td>
+                            <td style={{ 
+                              padding: '8px', 
+                              border: '1px solid #dee2e6',
+                              textAlign: 'center'
+                            }}>
+                              <IconButton 
+                                onClick={() => {
+                                  handleDeleteItem(item.id);
+                                  if (tableData.length === 1) {
+                                    setShowOrderModal(false);
+                                  }
+                                }}
+                                size="small"
+                                sx={{ color: '#f44336' }}
+                              >
+                                <DeleteIcon fontSize="small" />
+                              </IconButton>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </Box>
+                  
+                  {/* Order Summary */}
+                  <Box sx={{ 
+                    p: 1, 
+                    backgroundColor: '#e8f5e9', 
+                    borderRadius: 1 
+                  }}>
+                    <Typography variant="h6" sx={{ mb: 0.5, display: 'flex', alignItems: 'center', gap: 1 }}>
+                      📊 Order Summary
+                    </Typography>
+                    <Grid container spacing={1} sx={{ mb: 1 }}>
+                      <Grid item xs={6} sm={3}>
+                        <Typography variant="body2" sx={{ color: 'text.secondary' }}>Total Items:</Typography>
+                        <Typography variant="h6" sx={{ color: '#1976d2' }}>{tableData.length}</Typography>
+                      </Grid>
+                      <Grid item xs={6} sm={3}>
+                        <Typography variant="body2" sx={{ color: 'text.secondary' }}>Total Quantity:</Typography>
+                        <Typography variant="h6" sx={{ color: '#1976d2' }}>
+                          {tableData.reduce((sum, item) => sum + item.qty, 0)}
+                        </Typography>
+                      </Grid>
+                      <Grid item xs={6} sm={3}>
+                        <Typography variant="body2" sx={{ color: 'text.secondary' }}>Total Amount:</Typography>
+                        <Typography variant="h6" sx={{ color: '#1976d2' }}>
+                          ₹{tableData.reduce((sum, item) => sum + item.amount, 0).toFixed(2)}
+                        </Typography>
+                      </Grid>
+                      <Grid item xs={6} sm={3}>
+                        <Button
+                          variant="contained"
+                          fullWidth
+                          onClick={handleSubmitOrder}
+                          disabled={isLoadingData}
+                          sx={{ 
+                            backgroundColor: '#2196F3',
+                            '&:hover': { backgroundColor: '#1976d2' }
+                          }}
+                        >
+                          {isLoadingData ? <CircularProgress size={24} /> : 'Submit Order'}
+                        </Button>
+                      </Grid>
+                    </Grid>
+                  </Box>
+                </>
+              )}
+            </Box>
+
+            {/* Modal Footer */}
+            {/* <Box sx={{ 
+              p: 2, 
+              borderTop: '1px solid #e0e0e0',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center'
+            }}>
+              <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                {tableData.length} item{tableData.length !== 1 ? 's' : ''} in order
+              </Typography>
+              <Button 
+                variant="outlined" 
+                onClick={() => setShowOrderModal(false)}
+              >
+                Close
+              </Button>
+            </Box> */}
+          </Box>
+        </Fade>
+      </Modal>
 
       {/* Barcode Scanner Dialog */}
       {isClient && !useStyleCodeMode && (

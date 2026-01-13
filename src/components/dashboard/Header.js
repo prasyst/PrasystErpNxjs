@@ -1639,6 +1639,7 @@ const Header = ({ isSidebarCollapsed, onMenuToggle, isMobile }) => {
   const [voiceSupported, setVoiceSupported] = useState(false);
   const [aiSpeaking, setAiSpeaking] = useState(false);
   const [voiceMessage, setVoiceMessage] = useState('');
+  const [clientId, setClientId] = useState('');
   const recognitionRef = useRef(null);
   const synthRef = useRef(null);
   
@@ -1870,40 +1871,59 @@ const Header = ({ isSidebarCollapsed, onMenuToggle, isMobile }) => {
   }, []);
 
   const fetchCompanyAndBranchNames = async () => {
-    try {
-      const coId = localStorage.getItem('CO_ID');
-      const cobrId = localStorage.getItem('COBR_ID');
+  try {
+    const coId = localStorage.getItem('CO_ID');
+    const cobrId = localStorage.getItem('COBR_ID');
 
-      if (coId && cobrId) {
-        const companyResponse = await axiosInstance.post('COMPANY/Getdrpcofill', {
-          CO_ID: "",
-          Flag: ""
-        });
-
-        if (companyResponse.data?.STATUS === 0 && Array.isArray(companyResponse.data.DATA)) {
-          const company = companyResponse.data.DATA.find(c => c.CO_ID === coId);
-          if (company) {
-            setCompanyName(company.CO_NAME);
+    if (coId && cobrId) {
+      // Fetch Client ID first
+      try {
+        const clientIdResponse = await axiosInstance.get('USERS/GetClientId');
+        console.log('Client ID Response:', clientIdResponse.data);
+        
+        if (clientIdResponse.data?.STATUS === 0 && clientIdResponse.data.DATA) {
+          // Extract number from "Client Id is 5102"
+          const clientIdMatch = clientIdResponse.data.DATA.match(/\d+/);
+          if (clientIdMatch) {
+            setClientId(clientIdMatch[0]);
+            console.log('Client ID Set:', clientIdMatch[0]);
           }
         }
+      } catch (error) {
+        console.error('Error fetching client ID:', error);
+      }
 
-        const branchResponse = await axiosInstance.post('COMPANY/Getdrpcobrfill', {
-          COBR_ID: "",
-          CO_ID: coId,
-          Flag: ""
-        });
+      // Fetch Company
+      const companyResponse = await axiosInstance.post('COMPANY/Getdrpcofill', {
+        CO_ID: "",
+        Flag: ""
+      });
 
-        if (branchResponse.data?.STATUS === 0 && Array.isArray(branchResponse.data.DATA)) {
-          const branch = branchResponse.data.DATA.find(b => b.COBR_ID === cobrId);
-          if (branch) {
-            setBranchName(branch.COBR_NAME);
-          }
+      if (companyResponse.data?.STATUS === 0 && Array.isArray(companyResponse.data.DATA)) {
+        const company = companyResponse.data.DATA.find(c => c.CO_ID === coId);
+        if (company) {
+          setCompanyName(company.CO_NAME);
         }
       }
-    } catch (error) {
-      console.error('Error fetching company/branch names:', error);
+
+      // Fetch Branch
+      const branchResponse = await axiosInstance.post('COMPANY/Getdrpcobrfill', {
+        COBR_ID: "",
+        CO_ID: coId,
+        Flag: ""
+      });
+
+      if (branchResponse.data?.STATUS === 0 && Array.isArray(branchResponse.data.DATA)) {
+        const branch = branchResponse.data.DATA.find(b => b.COBR_ID === cobrId);
+        if (branch) {
+          setBranchName(branch.COBR_NAME);
+        }
+      }
     }
-  };
+  } catch (error) {
+    console.error('Error fetching company/branch names:', error);
+  }
+};
 
   useEffect(() => {
     // Check if browser supports Web Speech API
@@ -2778,40 +2798,57 @@ const Header = ({ isSidebarCollapsed, onMenuToggle, isMobile }) => {
 
           {/* Company and Branch Name Display - ONLY for Desktop */}
           {!isMobile && (companyName || branchName) && (
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'flex-start',
-                marginLeft: '1rem',
-                padding: '0.5rem 1rem',
-                backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                borderRadius: '8px',
-                border: '1px solid rgba(255, 255, 255, 0.2)',
-                maxWidth: '300px',
-                flexShrink: 0,
-              }}
-            >
-              {branchName && (
-                <span
-                  style={{
-                    color: 'rgba(255, 255, 255, 0.9)',
-                    fontSize: '1rem',
-                    lineHeight: '1.2',
-                    marginTop: '0.1rem',
-                    whiteSpace: 'nowrap',
-                    fontWeight: '600',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    width: '100%',
-                  }}
-                  title={branchName}
-                >
-                  {branchName}
-                </span>
-              )}
-            </div>
-          )}
+  <div
+    style={{
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'flex-start',
+      marginLeft: '1rem',
+      padding: '0.5rem 1rem',
+      backgroundColor: 'rgba(255, 255, 255, 0.1)',
+      borderRadius: '8px',
+      border: '1px solid rgba(255, 255, 255, 0.2)',
+      maxWidth: '350px',
+      flexShrink: 0,
+    }}
+  >
+    {companyName && (
+      <span
+        style={{
+          color: 'rgba(255, 255, 255, 0.9)',
+          fontSize: '0.85rem',
+          lineHeight: '1.3',
+          whiteSpace: 'nowrap',
+          fontWeight: '500',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          width: '100%',
+        }}
+        title={`${companyName}${clientId ? ` (${clientId})` : ''}`}
+      >
+        {/* {companyName}{clientId && <span style={{ fontWeight: '600',fontSize: '1rem', color: 'rgba(255, 255, 255, 1)' }}> ({clientId})</span>} */}
+      </span>
+    )}
+    {branchName && (
+      <span
+        style={{
+          color: 'rgba(255, 255, 255, 0.95)',
+          fontSize: '1rem',
+          lineHeight: '1.3',
+          marginTop: '0.2rem',
+          whiteSpace: 'nowrap',
+          fontWeight: '600',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          width: '100%',
+        }}
+        title={branchName}
+      >
+        {companyName}{clientId && <span style={{ fontWeight: '600',fontSize: '1rem', color: 'rgba(255, 255, 255, 1)' }}> ({clientId})</span>}
+      </span>
+    )}
+  </div>
+)}
         </div>
 
         <div className="flex items-center gap-2 md:gap-3" style={{ flexShrink: 0 }}>
