@@ -6,10 +6,11 @@ import {
 } from 'react-icons/md';
 import {
   ArrowBack as ArrowBackIcon,
+    Comment as CommentIcon
 } from '@mui/icons-material';
 import {
   Card, CardContent, Typography, Button, TableContainer, Table, TableHead, TableBody, TableRow, TableCell, Chip, Box, Grid,
-  IconButton, Stack, Paper, LinearProgress
+  IconButton, Stack, Paper, LinearProgress,Tooltip 
 } from '@mui/material';
 import axiosInstance from '@/lib/axios';
 import { FaExclamationTriangle, FaUsers, FaChartPie } from 'react-icons/fa';
@@ -22,6 +23,7 @@ import TicketPriorities from './TicketPriorities';
 import TicketStatus from './TicketStatus';
 import TicketReports from './TicketReports';
 import { useRouter } from 'next/navigation';
+import FollowupDialog from './FollowupDialog';
 
 const TicketDashboard = () => {
   const router = useRouter();
@@ -35,7 +37,9 @@ const TicketDashboard = () => {
     closed: 0,
     overdue: 0
   });
-
+  console.log('tickets',tickets)
+const [followupDialogOpen, setFollowupDialogOpen] = useState(false);
+  const [selectedTicketForFollowup, setSelectedTicketForFollowup] = useState(null);
   const [showCreateTicket, setShowCreateTicket] = useState(false);
   const [selectedTicket, setSelectedTicket] = useState(null);
   const [editingTicket, setEditingTicket] = useState(null);
@@ -62,7 +66,7 @@ const TicketDashboard = () => {
           category: tkt.TKTSERVICENAME || "General",
           priority: tkt.TKTSVRTYNAME || "Medium",
           status: tkt.TKTSTATUS === "O" ? "open" :
-            tkt.TKTSTATUS === "P" ? "in-progress" :
+            tkt.TKTSTATUS === "I" ? "in-progress" :
               tkt.TKTSTATUS === "R" ? "resolved" : "closed",
           assignee: tkt.TECHEMP_NAME || "Unassigned",
           reporter: tkt.RAISEBYNM || "Unknown",
@@ -83,10 +87,18 @@ const TicketDashboard = () => {
       setLoading(false);
     }
   };
+    const handleQuickFollowup = (ticket) => {
+    setSelectedTicketForFollowup(ticket);
+    setFollowupDialogOpen(true);
+  };
 
   useEffect(() => {
     fetchRecentTickets();
   }, []);
+
+   const handleFollowupSuccess = () => {
+    // fetchTicketDash();
+  };
 
   const calculateStats = (tickets) => {
     const stats = {
@@ -254,21 +266,21 @@ const TicketDashboard = () => {
     },
     {
       title: 'Open Tickets',
-      value: stats.open,
+      value: tickets.filter(ticket => ticket.status == "open").length,
       change: '+5%',
       color: 'orange',
       icon: MdNotifications
     },
     {
       title: 'In Progress',
-      value: stats.inProgress,
+      value: tickets.filter(ticket => ticket.status == "in-progress").length,
       change: '-2%',
       color: 'purple',
       icon: MdSchedule
     },
     {
       title: 'Resolved',
-      value: stats.resolved,
+      value: tickets.filter(ticket => ticket.status == "resolved").length,
       change: '+8%',
       color: 'green',
       icon: MdCheckCircleOutline
@@ -664,6 +676,18 @@ const TicketDashboard = () => {
                       }}>
                         Assignee
                       </TableCell>
+                        <TableCell sx={{
+                        fontSize: '0.75rem',
+                        fontWeight: 600,
+                        color: '#6b7280',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.05em',
+                        py: 1.5,
+                        px: 1,
+                        border: 'none'
+                      }}>
+                        Action
+                      </TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -735,6 +759,23 @@ const TicketDashboard = () => {
                         }}>
                           {ticket.assignee}
                         </TableCell>
+                        <Tooltip title="Add Followup" arrow>
+                          <IconButton
+                            size="small"
+                            color="info"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleQuickFollowup(ticket);
+                            }}
+                            disabled={ticket.status !== "open"}
+                            sx={{
+                              padding: '3px',
+                              '& .MuiSvgIcon-root': { fontSize: '1rem' }
+                            }}
+                          >
+                            <CommentIcon />
+                          </IconButton>
+                        </Tooltip>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -1125,6 +1166,12 @@ const TicketDashboard = () => {
           onSuccess={(updatedTicket) => handleUpdateTicket(editingTicket.id, updatedTicket)}
         />
       )}
+      <FollowupDialog
+                open={followupDialogOpen}
+                onClose={() => setFollowupDialogOpen(false)}
+                ticket={selectedTicketForFollowup}
+                onSuccess={handleFollowupSuccess}
+              />
     </div>
   );
 };

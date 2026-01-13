@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   MdAdd, MdPerson, MdList, MdCheckCircleOutline,
-  MdWarning, MdRefresh, MdAnalytics, MdSchedule
+  MdWarning, MdRefresh, MdAnalytics, MdSchedule,
+  MdPieChart, MdTrendingUp, MdBarChart, MdDonutLarge
 } from 'react-icons/md';
 import { FaExclamationTriangle } from 'react-icons/fa';
 import { TiTicket } from 'react-icons/ti';
@@ -36,7 +37,12 @@ import {
   Tooltip,
   Fade,
   LinearProgress,
-  alpha
+  alpha,
+  ToggleButton,
+  ToggleButtonGroup,
+  MenuItem,
+  Select,
+  FormControl
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -47,15 +53,51 @@ import {
   Visibility as VisibilityIcon,
   OpenInNew as OpenInNewIcon,
   AccessTime as AccessTimeIcon,
-  ErrorOutline as ErrorOutlineIcon
+  ErrorOutline as ErrorOutlineIcon,
+  PieChart as PieChartIcon,
+  BarChart as BarChartIcon,
+  Timeline as TimelineIcon,
+  TrendingUp as TrendingUpIcon
 } from '@mui/icons-material';
+
+
+import {
+  Chart as ChartJS,
+  ArcElement,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip as ChartTooltip,
+  Legend,
+  Filler,
+  RadialLinearScale
+} from 'chart.js';
+import { Pie, Bar, Line, Doughnut } from 'react-chartjs-2';
+
+
+ChartJS.register(
+  ArcElement,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  PointElement,
+  LineElement,
+  Title,
+  ChartTooltip,
+  Legend,
+  Filler,
+  RadialLinearScale
+);
 
 const EmployeeTicketDashboard = () => {
   const router = useRouter();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const isTablet = useMediaQuery(theme.breakpoints.down('md'));
-  
+
   const [tickets, setTickets] = useState([]);
   const [stats, setStats] = useState({
     total: 0,
@@ -65,6 +107,8 @@ const EmployeeTicketDashboard = () => {
     closed: 0
   });
   const [loading, setLoading] = useState(false);
+  const [chartView, setChartView] = useState('pie');
+  const [timeRange, setTimeRange] = useState('week');
 
   const fetchMyTickets = async () => {
     setLoading(true);
@@ -86,7 +130,7 @@ const EmployeeTicketDashboard = () => {
           assignee: tkt.TECHEMP_NAME || "Unassigned",
           createdAt: tkt.TKTDATE,
           dueDate: tkt.ASSIGNDT || tkt.TKTDATE,
-          responseTime: "2h", // Mock data
+          responseTime: "2h", 
           lastUpdated: new Date().toISOString()
         }));
 
@@ -110,6 +154,181 @@ const EmployeeTicketDashboard = () => {
   useEffect(() => {
     fetchMyTickets();
   }, []);
+
+
+  const getChartData = useCallback(() => {
+    const statusData = [stats.open, stats.inProgress, stats.resolved, stats.closed];
+    const priorityData = tickets.reduce((acc, ticket) => {
+      const priority = ticket.priority || 'Medium';
+      acc[priority] = (acc[priority] || 0) + 1;
+      return acc;
+    }, { High: 0, Medium: 0, Low: 0 });
+
+    const timeSeriesData = {
+      week: [5, 8, 12, 10, 15, 18, 20],
+      month: [20, 25, 30, 28, 35, 40, 38, 42, 45, 40, 38, 35, 30, 28, 25, 22, 20, 18, 22, 25, 28, 30, 32, 35, 38, 40, 42, 45, 48, 50],
+      quarter: [150, 165, 180, 175, 190, 210]
+    };
+
+    const categoryData = tickets.reduce((acc, ticket) => {
+      const category = ticket.category || 'General';
+      acc[category] = (acc[category] || 0) + 1;
+      return acc;
+    }, {});
+
+    return {
+      statusData,
+      priorityData,
+      timeSeriesData,
+      categoryData
+    };
+  }, [stats, tickets]);
+
+  const chartColors = {
+    status: ['#ef4444', '#f59e0b', '#10b981', '#6b7280'],
+    priority: ['#ef4444', '#f59e0b', '#10b981'],
+    gradient: ['#3b82f6', '#8b5cf6', '#ec4899']
+  };
+
+
+  const pieChartData = {
+    labels: ['Open', 'In Progress', 'Resolved', 'Closed'],
+    datasets: [
+      {
+        data: getChartData().statusData,
+        backgroundColor: chartColors.status,
+        borderColor: chartColors.status.map(color => `${color}80`),
+        borderWidth: 1,
+        hoverOffset: 15
+      }
+    ]
+  };
+
+  const barChartData = {
+    labels: ['High', 'Medium', 'Low'],
+    datasets: [
+      {
+        label: 'Tickets by Priority',
+        data: [
+          getChartData().priorityData.High || 0,
+          getChartData().priorityData.Medium || 0,
+          getChartData().priorityData.Low || 0
+        ],
+        backgroundColor: chartColors.priority,
+        borderColor: chartColors.priority.map(color => `${color}80`),
+        borderWidth: 1,
+        borderRadius: 4,
+        barPercentage: 0.6
+      }
+    ]
+  };
+
+
+  const lineChartData = {
+    labels: getChartData().timeSeriesData[timeRange].map((_, i) =>
+      timeRange === 'week' ? `Day ${i + 1}` :
+        timeRange === 'month' ? `${i + 1}` :
+          `Week ${i + 1}`
+    ),
+    datasets: [
+      {
+        label: 'Ticket Trend',
+        data: getChartData().timeSeriesData[timeRange],
+        borderColor: '#3b82f6',
+        backgroundColor: alpha('#3b82f6', 0.1),
+        fill: true,
+        tension: 0.4,
+        pointBackgroundColor: '#3b82f6',
+        pointBorderColor: '#ffffff',
+        pointBorderWidth: 2,
+        pointRadius: 4
+      }
+    ]
+  };
+
+  const doughnutChartData = {
+    labels: Object.keys(getChartData().categoryData).slice(0, 5),
+    datasets: [
+      {
+        data: Object.values(getChartData().categoryData).slice(0, 5),
+        backgroundColor: chartColors.gradient,
+        borderColor: chartColors.gradient.map(color => `${color}80`),
+        borderWidth: 1,
+        cutout: '70%'
+      }
+    ]
+  };
+
+  const chartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: isMobile ? 'bottom' : 'right',
+        labels: {
+          padding: 15,
+          usePointStyle: true,
+          font: {
+            size: isMobile ? 10 : 11
+          }
+        }
+      },
+      tooltip: {
+        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+        titleFont: { size: 11 },
+        bodyFont: { size: 11 },
+        padding: 10,
+        cornerRadius: 6
+      }
+    }
+  };
+
+  const barChartOptions = {
+    ...chartOptions,
+    scales: {
+      y: {
+        beginAtZero: true,
+        grid: {
+          color: alpha('#000', 0.05)
+        },
+        ticks: {
+          font: { size: isMobile ? 9 : 10 }
+        }
+      },
+      x: {
+        grid: {
+          display: false
+        },
+        ticks: {
+          font: { size: isMobile ? 9 : 10 }
+        }
+      }
+    }
+  };
+
+  const lineChartOptions = {
+    ...chartOptions,
+    scales: {
+      y: {
+        beginAtZero: true,
+        grid: {
+          color: alpha('#000', 0.05)
+        },
+        ticks: {
+          font: { size: isMobile ? 9 : 10 }
+        }
+      },
+      x: {
+        grid: {
+          color: alpha('#000', 0.05)
+        },
+        ticks: {
+          font: { size: isMobile ? 9 : 10 },
+          maxTicksLimit: isMobile ? 5 : 10
+        }
+      }
+    }
+  };
 
   const quickStats = [
     {
@@ -168,10 +387,10 @@ const EmployeeTicketDashboard = () => {
       bgColor: alpha('#3b82f6', 0.1)
     },
     {
-      title: 'Track Ticket',
-      description: 'Track ticket status',
-      icon: MdList,
-      // path: '/emp-tickets/track-ticket',
+      title: 'Analytics',
+      description: 'Detailed ticket analytics',
+      icon: MdAnalytics,
+      path: '/emp-tickets/analytics',
       color: '#8b5cf6',
       bgColor: alpha('#8b5cf6', 0.1)
     }
@@ -245,9 +464,46 @@ const EmployeeTicketDashboard = () => {
     </Box>
   );
 
+  const renderChart = () => {
+    const chartHeight = isMobile ? 250 : 300;
+
+    switch (chartView) {
+      case 'pie':
+        return (
+          <Box sx={{ height: chartHeight, position: 'relative' }}>
+            <Pie data={pieChartData} options={chartOptions} />
+          </Box>
+        );
+      case 'bar':
+        return (
+          <Box sx={{ height: chartHeight, position: 'relative' }}>
+            <Bar data={barChartData} options={barChartOptions} />
+          </Box>
+        );
+      case 'line':
+        return (
+          <Box sx={{ height: chartHeight, position: 'relative' }}>
+            <Line data={lineChartData} options={lineChartOptions} />
+          </Box>
+        );
+      case 'doughnut':
+        return (
+          <Box sx={{ height: chartHeight, position: 'relative' }}>
+            <Doughnut data={doughnutChartData} options={chartOptions} />
+          </Box>
+        );
+      default:
+        return (
+          <Box sx={{ height: chartHeight, position: 'relative' }}>
+            <Pie data={pieChartData} options={chartOptions} />
+          </Box>
+        );
+    }
+  };
+
   return (
-    <Box sx={{ 
-      minHeight: '100vh', 
+    <Box sx={{
+      minHeight: '100vh',
       bgcolor: '#f8fafc',
       p: { xs: 0, sm: 1, md: 2 },
       overflowX: 'hidden'
@@ -269,7 +525,7 @@ const EmployeeTicketDashboard = () => {
           alignItems: { xs: 'flex-start', sm: 'center' },
           gap: { xs: 1.5, sm: 2 }
         }}>
-          <Box sx={{ flex: 1 }}>
+         <Box sx={{ flex: 1 }}>
             <Typography 
               variant={isMobile ? "h6" : "h5"} 
               fontWeight="bold" 
@@ -296,11 +552,11 @@ const EmployeeTicketDashboard = () => {
               Manage and track your support tickets
             </Typography>
           </Box>
-          
-          <Stack 
-            direction="row" 
+
+          <Stack
+            direction="row"
             spacing={1}
-            sx={{ 
+            sx={{
               width: { xs: '100%', sm: 'auto' },
               justifyContent: { xs: 'space-between', sm: 'flex-end' }
             }}
@@ -361,9 +617,9 @@ const EmployeeTicketDashboard = () => {
                     }}
                     onClick={() => router.push(stat.path)}
                   >
-                    <CardContent sx={{ 
-                      p: { xs: 1, sm: 1.5 }, 
-                      pb: { xs: 1, sm: 1.5 } 
+                    <CardContent sx={{
+                      p: { xs: 1, sm: 1.5 },
+                      pb: { xs: 1, sm: 1.5 }
                     }}>
                       <Box sx={{
                         display: 'flex',
@@ -375,7 +631,7 @@ const EmployeeTicketDashboard = () => {
                           <Typography
                             variant="caption"
                             color="text.secondary"
-                            sx={{ 
+                            sx={{
                               fontSize: { xs: '0.7rem', sm: '0.75rem' },
                               fontWeight: 500,
                               display: 'block'
@@ -384,18 +640,18 @@ const EmployeeTicketDashboard = () => {
                           >
                             {stat.title}
                           </Typography>
-                          <Typography 
-                            variant={isMobile ? "h6" : "h5"} 
+                          <Typography
+                            variant={isMobile ? "h6" : "h5"}
                             fontWeight="bold"
                             lineHeight={1}
                             sx={{ fontSize: { xs: '1rem', sm: '1.25rem' } }}
                           >
                             {stat.value}
                           </Typography>
-                          <Typography 
-                            variant="caption" 
+                          <Typography
+                            variant="caption"
                             color={stat.color}
-                            sx={{ 
+                            sx={{
                               fontSize: '0.6rem',
                               fontWeight: 600,
                               display: { xs: 'none', sm: 'block' }
@@ -412,9 +668,9 @@ const EmployeeTicketDashboard = () => {
                           alignItems: 'center',
                           justifyContent: 'center'
                         }}>
-                          <IconComponent 
-                            size={isMobile ? 16 : 18} 
-                            style={{ color: stat.color }} 
+                          <IconComponent
+                            size={isMobile ? 16 : 18}
+                            style={{ color: stat.color }}
                           />
                         </Box>
                       </Box>
@@ -427,11 +683,11 @@ const EmployeeTicketDashboard = () => {
         </Grid>
 
         <Box mb={2}>
-          <Typography 
-            variant={isMobile ? "subtitle2" : "subtitle1"} 
-            fontWeight="bold" 
+          <Typography
+            variant={isMobile ? "subtitle2" : "subtitle1"}
+            fontWeight="bold"
             gutterBottom
-            sx={{ 
+            sx={{
               px: { xs: 0.5, sm: 0 },
               fontSize: { xs: '0.9rem', sm: '1rem' },
               color: 'text.primary'
@@ -476,18 +732,18 @@ const EmployeeTicketDashboard = () => {
                             <IconComponent size={isMobile ? 16 : 18} />
                           </Avatar>
                           <Box sx={{ flex: 1 }}>
-                            <Typography 
-                              variant="body2" 
+                            <Typography
+                              variant="body2"
                               fontWeight="bold"
                               lineHeight={1.2}
                               sx={{ fontSize: { xs: '0.8rem', sm: '0.9rem' } }}
                             >
                               {module.title}
                             </Typography>
-                            <Typography 
-                              variant="caption" 
+                            <Typography
+                              variant="caption"
                               color="text.secondary"
-                              sx={{ 
+                              sx={{
                                 fontSize: '0.7rem',
                                 display: { xs: 'none', sm: 'block' }
                               }}
@@ -495,11 +751,11 @@ const EmployeeTicketDashboard = () => {
                               {module.description}
                             </Typography>
                           </Box>
-                          <ArrowForwardIcon 
-                            sx={{ 
+                          <ArrowForwardIcon
+                            sx={{
                               fontSize: { xs: 14, sm: 16 },
                               color: 'action.active'
-                            }} 
+                            }}
                           />
                         </Stack>
                       </CardContent>
@@ -510,6 +766,381 @@ const EmployeeTicketDashboard = () => {
             })}
           </Grid>
         </Box>
+
+        <Grid container spacing={1} mb={2}>
+          <Grid size={{ xs: 12, md: 8 }}>
+            <Card
+              elevation={0}
+              sx={{
+                border: '1px solid',
+                borderColor: 'divider',
+                borderRadius: 1,
+                bgcolor: 'white',
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column'
+              }}
+            >
+              <CardContent sx={{
+                p: { xs: 1, sm: 1.5, md: 2 },
+                flex: 1,
+                display: 'flex',
+                flexDirection: 'column'
+              }}>
+                <Box sx={{
+                  display: 'flex',
+                  flexDirection: { xs: 'column', sm: 'row' },
+                  justifyContent: 'space-between',
+                  alignItems: { xs: 'flex-start', sm: 'center' },
+                  mb: 2,
+                  gap: 1
+                }}>
+                  <Box>
+                    <Typography variant="h6" fontWeight="bold" gutterBottom sx={{
+                      fontSize: { xs: '0.9rem', sm: '1rem', md: '1.1rem' },
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 1
+                    }}>
+                      <MdAnalytics size={isMobile ? 16 : 18} />
+                      Ticket Analytics
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary" sx={{ fontSize: { xs: '0.7rem', sm: '0.75rem' } }}>
+                      Visual representation of ticket data and trends
+                    </Typography>
+                  </Box>
+
+                  <Stack
+                    direction="row"
+                    spacing={1}
+                    sx={{
+                      width: { xs: '100%', sm: 'auto' },
+                      justifyContent: { xs: 'space-between', sm: 'flex-end' }
+                    }}
+                  >
+                    <FormControl size="small" sx={{
+                      minWidth: { xs: '48%', sm: 100 },
+                      '& .MuiSelect-select': {
+                        fontSize: { xs: '0.7rem', sm: '0.75rem' },
+                        py: { xs: 0.75, sm: 1 }
+                      }
+                    }}>
+                      <Select
+                        value={timeRange}
+                        onChange={(e) => setTimeRange(e.target.value)}
+                      >
+                        <MenuItem value="week" sx={{ fontSize: '0.75rem' }}>Last Week</MenuItem>
+                        <MenuItem value="month" sx={{ fontSize: '0.75rem' }}>Last Month</MenuItem>
+                        <MenuItem value="quarter" sx={{ fontSize: '0.75rem' }}>Last Quarter</MenuItem>
+                      </Select>
+                    </FormControl>
+
+                    <ToggleButtonGroup
+                      value={chartView}
+                      exclusive
+                      onChange={(e, newView) => newView && setChartView(newView)}
+                      size="small"
+                      sx={{
+                        '& .MuiToggleButton-root': {
+                          px: { xs: 0.5, sm: 1 },
+                          py: { xs: 0.375, sm: 0.5 },
+                          fontSize: { xs: '0.7rem', sm: '0.75rem' },
+                          minWidth: { xs: 36, sm: 40 }
+                        }
+                      }}
+                    >
+                      <ToggleButton value="pie" title="Pie Chart">
+                        {isMobile ? <PieChartIcon fontSize="small" /> : 'Pie'}
+                      </ToggleButton>
+                      <ToggleButton value="bar" title="Bar Chart">
+                        {isMobile ? <BarChartIcon fontSize="small" /> : 'Bar'}
+                      </ToggleButton>
+                      <ToggleButton value="line" title="Line Chart">
+                        {isMobile ? <TimelineIcon fontSize="small" /> : 'Line'}
+                      </ToggleButton>
+                      <ToggleButton value="doughnut" title="Doughnut Chart">
+                        {isMobile ? <MdDonutLarge size={14} /> : 'Doughnut'}
+                      </ToggleButton>
+                    </ToggleButtonGroup>
+                  </Stack>
+                </Box>
+
+                <Box sx={{
+                  flex: 1,
+                  height: { xs: 250, sm: 280, md: 320 },
+                  position: 'relative',
+                  minHeight: 250
+                }}>
+                  {renderChart()}
+                </Box>
+              </CardContent>
+            </Card>
+          </Grid>
+
+          <Grid size={{ xs: 12, md: 4 }}>
+            <Stack spacing={1} sx={{ height: '100%' }}>
+              <Card
+                elevation={0}
+                sx={{
+                  border: '1px solid',
+                  borderColor: 'divider',
+                  borderRadius: 1,
+                  flex: 1,
+                  bgcolor: 'white'
+                }}
+              >
+                <CardContent sx={{ p: { xs: 1, sm: 1.25 } }}>
+                  <Typography
+                    variant="subtitle2"
+                    fontWeight="bold"
+                    gutterBottom
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 0.75,
+                      fontSize: { xs: '0.8rem', sm: '0.85rem' }
+                    }}
+                  >
+                    <MdPieChart size={14} />
+                    Status Distribution
+                  </Typography>
+                  <Stack spacing={0.75} mt={0.5}>
+                    {[
+                      { status: 'Open', count: stats.open, color: '#ef4444', icon: FaExclamationTriangle },
+                      { status: 'In Progress', count: stats.inProgress, color: '#f59e0b', icon: MdSchedule },
+                      { status: 'Resolved', count: stats.resolved, color: '#10b981', icon: MdCheckCircleOutline },
+                      { status: 'Closed', count: stats.closed, color: '#6b7280', icon: MdCheckCircleOutline }
+                    ].map((item, index) => {
+                      const percentage = stats.total > 0 ? Math.round((item.count / stats.total) * 100) : 0;
+                      const IconComponent = item.icon;
+                      return (
+                        <Box key={index}>
+                          <Box
+                            sx={{
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                              alignItems: 'center',
+                              mb: 0.25
+                            }}
+                          >
+                            <Stack direction="row" spacing={0.75} alignItems="center" sx={{ flex: 1 }}>
+                              <IconComponent size={10} style={{ color: item.color }} />
+                              <Typography
+                                variant="caption"
+                                fontWeight="medium"
+                                sx={{
+                                  fontSize: { xs: '0.65rem', sm: '0.7rem' },
+                                  flex: 1
+                                }}
+                              >
+                                {item.status}
+                              </Typography>
+                            </Stack>
+                            <Typography
+                              variant="caption"
+                              fontWeight="bold"
+                              sx={{
+                                fontSize: { xs: '0.65rem', sm: '0.7rem' },
+                                minWidth: 40,
+                                textAlign: 'right'
+                              }}
+                            >
+                              {item.count} ({percentage}%)
+                            </Typography>
+                          </Box>
+                          <LinearProgress
+                            variant="determinate"
+                            value={percentage}
+                            sx={{
+                              height: 4,
+                              borderRadius: 2,
+                              bgcolor: `${item.color}20`,
+                              '& .MuiLinearProgress-bar': {
+                                bgcolor: item.color,
+                                borderRadius: 2
+                              }
+                            }}
+                          />
+                        </Box>
+                      );
+                    })}
+                  </Stack>
+
+                  <Box
+                    sx={{
+                      mt: 1.5,
+                      pt: 1,
+                      borderTop: '1px solid',
+                      borderColor: 'divider',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center'
+                    }}
+                  >
+                    <Typography variant="caption" fontWeight="bold" sx={{ fontSize: '0.7rem' }}>
+                      Total Tickets:
+                    </Typography>
+                    <Typography variant="caption" fontWeight="bold" color="primary.main" sx={{ fontSize: '0.8rem' }}>
+                      {stats.total}
+                    </Typography>
+                  </Box>
+                </CardContent>
+              </Card>
+
+
+              <Card
+                elevation={0}
+                sx={{
+                  border: '1px solid',
+                  borderColor: 'divider',
+                  borderRadius: 1,
+                  flex: 1,
+                  bgcolor: 'white'
+                }}
+              >
+                <CardContent sx={{ p: { xs: 1, sm: 1.25 }, height: '100%' }}>
+                  <Typography
+                    variant="subtitle2"
+                    fontWeight="bold"
+                    gutterBottom
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 0.75,
+                      fontSize: { xs: '0.8rem', sm: '0.85rem' }
+                    }}
+                  >
+                    <MdBarChart size={14} />
+                    Priority Distribution
+                  </Typography>
+                  <Box sx={{
+                    height: { xs: 140, sm: 150 },
+                    mt: 0.5,
+                    position: 'relative'
+                  }}>
+                    <Bar
+                      data={{
+                        labels: ['High', 'Medium', 'Low'],
+                        datasets: [{
+                          label: 'Tickets',
+                          data: [
+                            getChartData().priorityData.High || 0,
+                            getChartData().priorityData.Medium || 0,
+                            getChartData().priorityData.Low || 0
+                          ],
+                          backgroundColor: chartColors.priority,
+                          borderColor: chartColors.priority.map(color => `${color}80`),
+                          borderWidth: 1,
+                          borderRadius: 3,
+                          barPercentage: 0.5
+                        }]
+                      }}
+                      options={{
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                          legend: { display: false },
+                          tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            titleFont: { size: 10 },
+                            bodyFont: { size: 10 },
+                            padding: 8
+                          }
+                        },
+                        scales: {
+                          y: {
+                            beginAtZero: true,
+                            grid: {
+                              color: alpha('#000', 0.05),
+                              drawBorder: false
+                            },
+                            ticks: {
+                              font: { size: 9 },
+                              padding: 4,
+                              callback: function (value) {
+                                return Number.isInteger(value) ? value : '';
+                              }
+                            },
+                            border: { display: false }
+                          },
+                          x: {
+                            grid: { display: false },
+                            ticks: {
+                              font: { size: 9 },
+                              padding: 4
+                            },
+                            border: { display: false }
+                          }
+                        },
+                        animation: {
+                          duration: 750
+                        }
+                      }}
+                    />
+                  </Box>
+
+                  <Box
+                    sx={{
+                      mt: 1,
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      gap: 1
+                    }}
+                  >
+                    {[
+                      { priority: 'High', color: '#ef4444', count: getChartData().priorityData.High || 0 },
+                      { priority: 'Medium', color: '#f59e0b', count: getChartData().priorityData.Medium || 0 },
+                      { priority: 'Low', color: '#10b981', count: getChartData().priorityData.Low || 0 }
+                    ].map((item, index) => (
+                      <Box
+                        key={index}
+                        sx={{
+                          textAlign: 'center',
+                          flex: 1
+                        }}
+                      >
+                        <Box
+                          sx={{
+                            width: 24,
+                            height: 24,
+                            borderRadius: '50%',
+                            bgcolor: `${item.color}20`,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            mx: 'auto',
+                            mb: 0.5
+                          }}
+                        >
+                          <Typography
+                            variant="caption"
+                            fontWeight="bold"
+                            sx={{
+                              fontSize: '0.65rem',
+                              color: item.color
+                            }}
+                          >
+                            {item.count}
+                          </Typography>
+                        </Box>
+                        <Typography
+                          variant="caption"
+                          sx={{
+                            fontSize: '0.65rem',
+                            color: 'text.secondary'
+                          }}
+                        >
+                          {item.priority}
+                        </Typography>
+                      </Box>
+                    ))}
+                  </Box>
+                </CardContent>
+              </Card>
+            </Stack>
+          </Grid>
+        </Grid>
+
         <Card
           elevation={0}
           sx={{
@@ -535,7 +1166,7 @@ const EmployeeTicketDashboard = () => {
               <Typography variant="subtitle2" fontWeight="bold">
                 Recent Tickets
               </Typography>
-              <Chip 
+              <Chip
                 label={tickets.length}
                 size="small"
                 sx={{ height: 20, fontSize: '0.65rem' }}
@@ -592,9 +1223,9 @@ const EmployeeTicketDashboard = () => {
                   <Stack direction="row" justifyContent="space-between" alignItems="flex-start" spacing={0.5}>
                     <Box sx={{ flex: 1, minWidth: 0 }}>
                       <Stack direction="row" spacing={0.5} alignItems="center" mb={0.5}>
-                        <Typography 
-                          variant="caption" 
-                          fontWeight="bold" 
+                        <Typography
+                          variant="caption"
+                          fontWeight="bold"
                           color="primary.main"
                           sx={{ fontSize: '0.7rem' }}
                         >
@@ -604,11 +1235,11 @@ const EmployeeTicketDashboard = () => {
                           <PriorityBadge priority={ticket.priority} />
                         </Box>
                       </Stack>
-                      
-                      <Typography 
-                        variant="body2" 
+
+                      <Typography
+                        variant="body2"
                         fontWeight="medium"
-                        sx={{ 
+                        sx={{
                           fontSize: '0.8rem',
                           overflow: 'hidden',
                           textOverflow: 'ellipsis',
@@ -618,7 +1249,7 @@ const EmployeeTicketDashboard = () => {
                       >
                         {ticket.title}
                       </Typography>
-                      
+
                       <Stack direction="row" justifyContent="space-between" alignItems="center">
                         <Stack direction="row" spacing={1} alignItems="center">
                           <AccessTimeIcon sx={{ fontSize: 10, color: 'text.secondary' }} />
@@ -699,10 +1330,6 @@ const EmployeeTicketDashboard = () => {
                         <Tooltip title="View" arrow>
                           <IconButton
                             size="small"
-                            // onClick={(e) => {
-                            //   e.stopPropagation();
-                            //   router.push(`/emp-tickets/ticket-detail/${ticket.id}`);
-                            // }}
                             sx={{ p: 0.5 }}
                           >
                             <VisibilityIcon fontSize="small" />
@@ -716,73 +1343,8 @@ const EmployeeTicketDashboard = () => {
             </TableContainer>
           )}
         </Card>
-
-        <Grid container spacing={1}>
-          <Grid item xs={12} md={8}>
-            <Card
-              elevation={0}
-              sx={{
-                border: '1px solid',
-                borderColor: 'divider',
-                borderRadius: 1,
-                height: '100%',
-                bgcolor: 'white'
-              }}
-            >
-              <CardContent sx={{ p: { xs: 1, sm: 1.5 } }}>
-                <Typography variant="subtitle2" fontWeight="bold" gutterBottom>
-                  Status Distribution
-                </Typography>
-                <Stack spacing={0.75} mt={1}>
-                  {[
-                    { status: 'Open', count: stats.open, color: '#ef4444', icon: FaExclamationTriangle },
-                    { status: 'In Progress', count: stats.inProgress, color: '#f59e0b', icon: MdSchedule },
-                    { status: 'Resolved', count: stats.resolved, color: '#10b981', icon: MdCheckCircleOutline },
-                    { status: 'Closed', count: stats.closed, color: '#6b7280', icon: MdCheckCircleOutline }
-                  ].map((item, index) => {
-                    const percentage = stats.total > 0 ? Math.round((item.count / stats.total) * 100) : 0;
-                    const IconComponent = item.icon;
-                    return (
-                      <Box key={index}>
-                        <Box
-                          sx={{
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'center',
-                            mb: 0.5
-                          }}
-                        >
-                          <Stack direction="row" spacing={1} alignItems="center">
-                            <IconComponent size={12} style={{ color: item.color }} />
-                            <Typography variant="caption" fontWeight="medium" sx={{ fontSize: '0.75rem' }}>
-                              {item.status}
-                            </Typography>
-                          </Stack>
-                          <Typography variant="caption" fontWeight="bold" sx={{ fontSize: '0.75rem' }}>
-                            {item.count} ({percentage}%)
-                          </Typography>
-                        </Box>
-                        <LinearProgress
-                          variant="determinate"
-                          value={percentage}
-                          sx={{
-                            height: 4,
-                            borderRadius: 2,
-                            bgcolor: `${item.color}20`,
-                            '& .MuiLinearProgress-bar': {
-                              bgcolor: item.color,
-                              borderRadius: 2
-                            }
-                          }}
-                        />
-                      </Box>
-                    );
-                  })}
-                </Stack>
-              </CardContent>
-            </Card>
-          </Grid>
-
+         <Grid container spacing={1}>
+         
           <Grid item xs={12} md={4}>
             <Card
               elevation={0}
