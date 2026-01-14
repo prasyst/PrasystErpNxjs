@@ -332,7 +332,7 @@ const Login = () => {
         const employeeData = loginRes.data.DATA[0];
         localStorage.setItem('authenticated', 'true');
         localStorage.setItem('userRole', 'employee');
-        localStorage.setItem('FCYR_KEY', currentYear.toString().slice(-2));
+        localStorage.setItem('FCYR_KEY', fixedCurrentYear.toString().slice(-2));
         localStorage.setItem('EMP_KEY', employeeData.EMP_KEY);
         localStorage.setItem('EMP_NAME', employeeData.EMP_NAME);
         if (employeeData.EMP_KEY) {
