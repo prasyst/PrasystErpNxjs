@@ -330,7 +330,7 @@ const ServiceComplaint = () => {
             TKTSVRTYID: formData?.TKTSVRTYID || '',
             TKTTYPEID: formData?.TKTTYPEID || '',
             TKTTAGID: formData?.TKTTAGID || '',
-            EMP_KEY: formData?.EMP_KEY || 'EP005',
+            EMP_KEY: formData?.EMP_KEY || '',
             LEADTIME: formData?.LEADTIME || '',
             DESCRIPTION: formData?.DESCRIPTION || '',
             STATUS: formData?.STATUS || 1,
