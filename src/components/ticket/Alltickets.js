@@ -43,7 +43,7 @@ const AllTicketsPage = () => {
   const [selectedTicketId, setSelectedTicketId] = useState(null);
   const [ticketDetailsOpen, setTicketDetailsOpen] = useState(false);
   const [selectedRows, setSelectedRows] = useState([]);
-  const [viewMode, setViewMode] = useState('grid'); 
+  const [viewMode, setViewMode] = useState('table'); 
 
   const [followupDialogOpen, setFollowupDialogOpen] = useState(false);
   const [selectedTicketForFollowup, setSelectedTicketForFollowup] = useState(null);
@@ -770,6 +770,15 @@ console.log('filteredTickets',filteredTickets)
         Tickets ({filteredTickets.length})
       </Typography>
       <Box display="flex" gap={1}>
+         <Tooltip title="Table View">
+          <IconButton
+            size="small"
+            onClick={() => setViewMode('table')}
+            color={viewMode === 'table' ? 'primary' : 'default'}
+          >
+            <TableChartIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
         <Tooltip title="Compact Grid">
           <IconButton
             size="small"
@@ -780,15 +789,7 @@ console.log('filteredTickets',filteredTickets)
           </IconButton>
         </Tooltip>
       
-        <Tooltip title="Table View">
-          <IconButton
-            size="small"
-            onClick={() => setViewMode('table')}
-            color={viewMode === 'table' ? 'primary' : 'default'}
-          >
-            <TableChartIcon fontSize="small" />
-          </IconButton>
-        </Tooltip>
+       
       </Box>
     </Box>
   );
