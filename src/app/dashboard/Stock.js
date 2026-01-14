@@ -102,14 +102,15 @@ const Stock = () => {
     };
 
     const recentStockColumns = [
-        { field: "FGCAT_NAME", headerName: "Category", width: 180 },
+        { field: "FGCAT_NAME", headerName: "Category", width: 180, filter: 'agSetColumnFilter' },
         { field: "FGPRD_NAME", headerName: "Product", width: 220 },
         { field: "FGSTYLE_CODE", headerName: "Code", width: 200 },
+        { field: "FGTYPE_NAME", headerName: "Type", width: 150 },
         { field: "FGSHADE_NAME", headerName: "Shade", width: 150 },
-        { field: "BRAND_NAME", headerName: "Brand", width: 200 },
+        { field: "BRAND_NAME", headerName: "Brand", width: 150 },
         { field: "QTY", headerName: "Qty", filter: "agNumberColumnFilter", width: 140 },
-        { field: "RATE", headerName: "Rate", filter: "agNumberColumnFilter", width: 140 },
-        { field: "AMT", headerName: "Amount", filter: "agNumberColumnFilter", width: 140 },
+        { field: "MRP", headerName: "Mrp", filter: "agNumberColumnFilter", width: 140 },
+        { field: "WSP", headerName: "Wsp", filter: "agNumberColumnFilter", width: 140 },
     ];
 
     const defaultColDef = {
@@ -394,10 +395,7 @@ const Stock = () => {
                     mb: 2,
                     display: "flex",
                     justifyContent: "space-between",
-                    alignItems: { xs: "flex-start", sm: "center" },
-                    flexDirection: { xs: "column", sm: "row" },
                     flexWrap: "wrap",
-                    gap: { xs: 2, sm: 1 },
                 }}
             >
                 <Typography
@@ -413,32 +411,32 @@ const Stock = () => {
                     Order Stock
                 </Typography>
 
-                <Box sx={{ display: "flex", alignItems: "center", flexWrap: "wrap" }}>
-                    <Button
-                        variant="contained"
-                        size="small"
-                        startIcon={<FilterListIcon />}
-                        onClick={handleOpenDialog}
-                        sx={{
-                            borderRadius: '20px',
-                            background: 'linear-gradient(135deg, #635bff 30%, #a558e0 100%)',
-                            color: '#fff',
-                            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.2)',
-                            padding: '5px 12px',
-                            fontWeight: 'bold',
-                            textTransform: 'none',
-                            '& .MuiButton-startIcon': {
-                                fontSize: '18px',
-                            },
-                        }}
-                    >
-                        Filters
-                    </Button>
-                </Box>
+
+                <Button
+                    variant="contained"
+                    size="small"
+                    startIcon={<FilterListIcon />}
+                    onClick={handleOpenDialog}
+                    sx={{
+                        borderRadius: '20px',
+                        background: 'linear-gradient(135deg, #635bff 30%, #a558e0 100%)',
+                        color: '#fff',
+                        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.2)',
+                        padding: '5px 12px',
+                        fontWeight: 'bold',
+                        textTransform: 'none',
+                        '& .MuiButton-startIcon': {
+                            fontSize: '18px',
+                        },
+                    }}
+                >
+                    Filters
+                </Button>
             </Box>
+
             <Grid container spacing={2} mb={2}>
                 <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                    <Paper elevation={4} sx={{ p: 3, borderRadius: 3, bgcolor: '#fff', height: '100%' }}>
+                    <Paper elevation={4} sx={{ p: 3, borderRadius: 3, bgcolor: '#e3f2fd', height: '100%' }}>
                         <Stack direction="row" justifyContent="space-between">
                             <Box>
                                 <Typography variant="h6" fontWeight='bold'>Opening Stock</Typography>
@@ -449,7 +447,7 @@ const Stock = () => {
                     </Paper>
                 </Grid>
                 <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                    <Paper elevation={4} sx={{ p: 3, borderRadius: 3, bgcolor: '#fff', height: '100%' }}>
+                    <Paper elevation={4} sx={{ p: 3, borderRadius: 3, bgcolor: '#c8e6c9', height: '100%' }}>
                         <Stack direction="row" justifyContent="space-between">
                             <Box>
                                 <Typography variant="h6" fontWeight='bold'>Closing Stock</Typography>
@@ -460,7 +458,7 @@ const Stock = () => {
                     </Paper>
                 </Grid>
                 <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                    <Paper elevation={4} sx={{ p: 3, borderRadius: 3, bgcolor: '#fff', height: '100%' }}>
+                    <Paper elevation={4} sx={{ p: 3, borderRadius: 3, bgcolor: '#f8bbd0', height: '100%' }}>
                         <Stack direction="row" justifyContent="space-between">
                             <Box>
                                 <Typography variant="h6" fontWeight='bold'>Stock Value</Typography>
@@ -471,7 +469,7 @@ const Stock = () => {
                     </Paper>
                 </Grid>
                 <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                    <Paper elevation={4} sx={{ p: 3, borderRadius: 3, bgcolor: '#fff', height: '100%' }}>
+                    <Paper elevation={4} sx={{ p: 3, borderRadius: 3, bgcolor: '#fff3e0', height: '100%' }}>
                         <Stack direction="row" justifyContent="space-between">
                             <Box>
                                 <Typography variant="body1" fontWeight='bold'>Total Stock Qty</Typography>
