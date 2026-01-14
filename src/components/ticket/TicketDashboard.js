@@ -782,7 +782,7 @@ const [followupDialogOpen, setFollowupDialogOpen] = useState(false);
                                 e.stopPropagation();
                                 handleQuickFollowup(ticket);
                               }}
-                              disabled={ticket.status === "close" || ticket.status === "resolved"}
+                              disabled={ticket.status === "closed" || ticket.status === "resolved"}
                               sx={{
                                 padding: '3px',
                                 '& .MuiSvgIcon-root': { fontSize: '1rem' }
