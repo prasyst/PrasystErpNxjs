@@ -6,15 +6,16 @@ import {
 } from 'react-icons/md';
 import {
   ArrowBack as ArrowBackIcon,
-    Comment as CommentIcon
+    Comment as CommentIcon,
+    Add as AddIcon,
+    Refresh  as RefreshIcon
 } from '@mui/icons-material';
 import {
   Card, CardContent, Typography, Button, TableContainer, Table, TableHead, TableBody, TableRow, TableCell, Chip, Box, Grid,
-  IconButton, Stack, Paper, LinearProgress,Tooltip 
+  IconButton, Stack, Paper, LinearProgress,Tooltip,useMediaQuery 
 } from '@mui/material';
 import axiosInstance from '@/lib/axios';
 import { FaExclamationTriangle, FaUsers, FaChartPie } from 'react-icons/fa';
-import { TiTicket } from "react-icons/ti";
 import CreateTicket from './raiseTicket/CreateTicket';
 import TicketList from './TicketList';
 import TicketDetail from './TicketDetail';
@@ -29,6 +30,8 @@ const TicketDashboard = () => {
   const router = useRouter();
   const [activeModule, setActiveModule] = useState('overview');
   const [tickets, setTickets] = useState([]);
+  const [totalTicket,setTotalTicket]=useState()
+ const isMobile = useMediaQuery('(max-width:600px)');
   const [stats, setStats] = useState({
     total: 0,
     open: 0,
@@ -58,6 +61,7 @@ const [followupDialogOpen, setFollowupDialogOpen] = useState(false);
 
       if (response.data.STATUS === 0 && Array.isArray(response.data.DATA)) {
         const realTickets = response.data.DATA;
+        setTotalTicket(response?.data?.PAGEDATA)
         const mappedTickets = realTickets.map(tkt => ({
           TKTKEY: tkt.TKTKEY,
           id: tkt.TKTNO,
@@ -66,7 +70,7 @@ const [followupDialogOpen, setFollowupDialogOpen] = useState(false);
           category: tkt.TKTSERVICENAME || "General",
           priority: tkt.TKTSVRTYNAME || "Medium",
           status: tkt.TKTSTATUS === "O" ? "open" :
-            tkt.TKTSTATUS === "I" ? "in-progress" :
+            (tkt.TKTSTATUS === "I" || tkt.TKTSTATUS === "H")  ? "in-progress" :
               tkt.TKTSTATUS === "R" ? "resolved" : "closed",
           assignee: tkt.TECHEMP_NAME || "Unassigned",
           reporter: tkt.RAISEBYNM || "Unknown",
@@ -259,7 +263,7 @@ const [followupDialogOpen, setFollowupDialogOpen] = useState(false);
   const quickStats = [
     {
       title: 'Total Tickets',
-      value: stats.total,
+      value: totalTicket?.TOTALRECORDS || '0',
       change: '+12%',
       color: 'blue',
       icon: MdList
@@ -462,21 +466,20 @@ const [followupDialogOpen, setFollowupDialogOpen] = useState(false);
             boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
             border: '1px solid #e5e7eb'
           }}>
-            <div style={{ padding: '1.5rem' }}>
+            <div style={{ padding: '1rem' }}>
               <div style={{
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
-                marginBottom: '1rem'
               }}>
-                <h2 style={{
+                <Typography sx={{
                   fontSize: '1.25rem',
                   fontWeight: '600',
                   color: '#111827',
                   margin: 0
                 }}>
                   Ticket Management Modules
-                </h2>
+                </Typography>
                 <div style={{ display: 'flex', gap: '0.5rem' }}>
                   <button style={{
                     padding: '0.5rem',
@@ -580,7 +583,7 @@ const [followupDialogOpen, setFollowupDialogOpen] = useState(false);
               border: '1px solid #e5e7eb'
             }}
           >
-            <CardContent sx={{ p: 2 }}>
+            <CardContent >
               <Box sx={{
                 display: 'flex',
                 justifyContent: 'space-between',
@@ -622,7 +625,7 @@ const [followupDialogOpen, setFollowupDialogOpen] = useState(false);
                         color: '#6b7280',
                         textTransform: 'uppercase',
                         letterSpacing: '0.05em',
-                        py: 1.5,
+                        py: 1,
                         px: 1,
                         border: 'none'
                       }}>
@@ -703,26 +706,32 @@ const [followupDialogOpen, setFollowupDialogOpen] = useState(false);
                         }}
                         onClick={() => setSelectedTicket(ticket)}
                       >
-                        <TableCell sx={{
-                          fontSize: '0.875rem',
-                          fontWeight: 600,
-                          color: '#2563eb',
-                          py: 1,
-                          px: 1,
-                          border: 'none'
-                        }}>
+                        <TableCell
+                          sx={{
+                            fontSize: '0.875rem',
+                            fontWeight: 600,
+                            color: '#2563eb',
+                            py: 1,
+                            px: 1,
+                            border: 'none'
+                          }}
+                        >
                           {ticket?.id}
                         </TableCell>
-                        <TableCell sx={{
-                          fontSize: '0.875rem',
-                          fontWeight: 500,
-                          color: '#111827',
-                          py: 1,
-                          px: 1,
-                          border: 'none'
-                        }}>
+
+                        <TableCell
+                          sx={{
+                            fontSize: '0.875rem',
+                            fontWeight: 500,
+                            color: '#111827',
+                            py: 1,
+                            px: 1,
+                            border: 'none'
+                          }}
+                        >
                           {ticket.title}
                         </TableCell>
+
                         <TableCell sx={{ py: 1, px: 1, border: 'none' }}>
                           <Chip
                             label={ticket.priority}
@@ -736,6 +745,7 @@ const [followupDialogOpen, setFollowupDialogOpen] = useState(false);
                             }}
                           />
                         </TableCell>
+
                         <TableCell sx={{ py: 1, px: 1, border: 'none' }}>
                           <Chip
                             label={ticket.status.replace('-', ' ')}
@@ -750,32 +760,38 @@ const [followupDialogOpen, setFollowupDialogOpen] = useState(false);
                             }}
                           />
                         </TableCell>
-                        <TableCell sx={{
-                          fontSize: '0.875rem',
-                          color: '#6b7280',
-                          py: 1,
-                          px: 1,
-                          border: 'none'
-                        }}>
+
+                        <TableCell
+                          sx={{
+                            fontSize: '0.875rem',
+                            color: '#6b7280',
+                            py: 1,
+                            px: 1,
+                            border: 'none'
+                          }}
+                        >
                           {ticket.assignee}
                         </TableCell>
-                        <Tooltip title="Add Followup" arrow>
-                          <IconButton
-                            size="small"
-                            color="info"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleQuickFollowup(ticket);
-                            }}
-                            disabled={ticket.status !== "open"}
-                            sx={{
-                              padding: '3px',
-                              '& .MuiSvgIcon-root': { fontSize: '1rem' }
-                            }}
-                          >
-                            <CommentIcon />
-                          </IconButton>
-                        </Tooltip>
+
+                        <TableCell sx={{ py: 1, px: 1, border: 'none' }}>
+                          <Tooltip title="Add Followup" arrow>
+                            <IconButton
+                              size="small"
+                              color="info"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleQuickFollowup(ticket);
+                              }}
+                              disabled={ticket.status === "close" || ticket.status === "resolved"}
+                              sx={{
+                                padding: '3px',
+                                '& .MuiSvgIcon-root': { fontSize: '1rem' }
+                              }}
+                            >
+                              <CommentIcon />
+                            </IconButton>
+                          </Tooltip>
+                        </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -1048,8 +1064,8 @@ const [followupDialogOpen, setFollowupDialogOpen] = useState(false);
                   </button>
                 )}
                 <div>
-                  <h1 style={{
-                    fontSize: '1.5rem',
+                  <Typography style={{
+                    fontSize: isMobile ? '1rem' : '1.25rem',
                     fontWeight: 'bold',
                     color: '#111827',
                     margin: 0,
@@ -1061,7 +1077,7 @@ const [followupDialogOpen, setFollowupDialogOpen] = useState(false);
                             activeModule === 'status' ? 'Status Workflow' :
                               activeModule === 'reports' ? 'Reports & Analytics' :
                                 activeModule === 'team' ? 'Team Management' : 'Ticket Management'}
-                  </h1>
+                  </Typography>
                   <p style={{
                     color: '#6b7280',
                     margin: '0.25rem 0 0 0',
@@ -1074,62 +1090,83 @@ const [followupDialogOpen, setFollowupDialogOpen] = useState(false);
                 </div>
               </div>
             </div>
-            <div style={{ display: 'flex', gap: '0.75rem' }}>
+            <Box sx={{
+              display: {
+                xs: 'flex',
+                sm: 'flex',
+                md: 'flex',
+              },
+              flexDirection: {
+                xs: 'column',
+                sm: 'row',
+              },
+              gap: {
+                xs: 1,
+                sm: 1.5,
+                md: 2,
+              }
+            }}>
               <Button
-                startIcon={<ArrowBackIcon />}
+                startIcon={<ArrowBackIcon sx={{ fontSize: isMobile ? 14 : 16 }} />}
                 onClick={() => router.push('/dashboard')}
                 sx={{
-
+                  padding: isMobile ? '0.365rem 0.70rem' : '0.5rem 0.9rem',
+                  borderRadius: '0.5rem',
+                  fontSize: isMobile ? '0.70rem' : '0.870rem',
                   borderRadius: 2,
                   fontWeight: '600',
                   textTransform: 'none'
                 }}
                 variant="outlined"
               >
-
               </Button>
               {activeModule === 'overview' && (
-                <>
-                  <button
-                    style={{
+                <Box sx={{ display: 'flex', gap: 1 }}>
+                  <Button
+                    variant="contained"
+                    startIcon={<AddIcon sx={{ fontSize: isMobile ? 14 : 16 }} />}
+                    onClick={() => window.location.href = '/tickets/create-tickets'}
+                    sx={{
                       backgroundColor: '#2563eb',
                       color: 'white',
-                      padding: '0.5rem 1rem',
+                      padding: isMobile ? '0.365rem 0.70rem' : '0.5rem 0.9rem',
                       borderRadius: '0.5rem',
-                      border: 'none',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.5rem',
-                      cursor: 'pointer',
-                      fontSize: '0.875rem',
-                      fontWeight: '500',
-                      transition: 'background-color 0.2s'
+                      fontSize: isMobile ? '0.70rem' : '0.870rem',
+                      fontWeight: 500,
+                      textTransform: 'none',
+                      minWidth: 'auto',
+                      '&:hover': {
+                        backgroundColor: '#1d4ed8',
+                      }
                     }}
-                    onClick={() => window.location.href = '/tickets/create-tickets'}
                   >
-                    <MdAdd size={18} />
-                    <span>New Ticket</span>
-                  </button>
-                  <button style={{
-                    border: '1px solid #d1d5db',
-                    color: '#374151',
-                    padding: '0.5rem 1rem',
-                    borderRadius: '0.5rem',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.5rem',
-                    cursor: 'pointer',
-                    backgroundColor: 'white',
-                    fontSize: '0.875rem',
-                    fontWeight: '500',
-                    transition: 'all 0.2s'
-                  }}>
-                    <MdRefresh size={18} />
-                    <span>Refresh</span>
-                  </button>
-                </>
+                    {isMobile ? 'New' : 'New Ticket'}
+                  </Button>
+
+                  <Button
+                    variant="outlined"
+                    startIcon={<RefreshIcon sx={{ fontSize: isMobile ? 14 : 16 }} />}
+                    sx={{
+                      borderColor: '#d1d5db',
+                      color: '#374151',
+                      padding: isMobile ? '0.365rem 0.70rem' : '0.5rem 0.9rem',
+                      borderRadius: '0.5rem',
+                      fontSize: isMobile ? '0.70rem' : '0.870rem',
+                      fontWeight: 500,
+                      textTransform: 'none',
+                      minWidth: 'auto',
+                      backgroundColor: 'white',
+                      '&:hover': {
+                        borderColor: '#9ca3af',
+                        backgroundColor: '#f9fafb',
+                      }
+                    }}
+                  >
+                    {isMobile ? 'Refresh' : 'Refresh'}
+                  </Button>
+                </Box>
               )}
-            </div>
+            </Box>
           </div>
         </div>
       </div>
@@ -1167,11 +1204,11 @@ const [followupDialogOpen, setFollowupDialogOpen] = useState(false);
         />
       )}
       <FollowupDialog
-                open={followupDialogOpen}
-                onClose={() => setFollowupDialogOpen(false)}
-                ticket={selectedTicketForFollowup}
-                onSuccess={handleFollowupSuccess}
-              />
+        open={followupDialogOpen}
+        onClose={() => setFollowupDialogOpen(false)}
+        ticket={selectedTicketForFollowup}
+        onSuccess={handleFollowupSuccess}
+      />
     </div>
   );
 };

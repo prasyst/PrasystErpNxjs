@@ -103,6 +103,7 @@ const CreateTicketPage = () => {
 
   useEffect(() => {
       const storedName = localStorage.getItem('EMP_NAME') || localStorage.getItem('USER_NAME');
+      console.log('storedName',storedName)
       const storedRole = localStorage.getItem('userRole');
       if (storedName) {
         const name=storedName.length>3 ? storedName.substring(0,11) + '..' :storedName
@@ -248,6 +249,7 @@ const CreateTicketPage = () => {
       });
       if (response.data.STATUS === 0 && Array.isArray(response.data.DATA)) {
         setSeriesData(response.data.DATA);
+        return response.data.DATA;
       }
     } catch (error) {
       toast.error("Error while loading series.");
@@ -384,21 +386,26 @@ const CreateTicketPage = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async () => {
-    setLoading(true);
-    if (!validateForm()) {
-      toast.error("Please fill in all required fields.");
-      setLoading(false);
-      return;
-    }
+const handleSubmit = async () => {
+  setLoading(true);
+  if (!validateForm()) {
+    toast.error("Please fill in all required fields.");
+    setLoading(false);
+    return;
+  }
+
+  const createOrUpdateTicket = async (retryCount = 0) => {
     try {
       let newTktNo = "TK0001";
       const isUpdate = !!TKTKEY;
       let generatedTktKey = "";
+      
       if (isUpdate) {
         generatedTktKey = TktKey;
         newTktNo = TktNo;
       } else {
+        await getSeriesData(seriesKey?.CPREFIX || "TK");
+        
         if (seriesData.length > 0) {
           const last = seriesData[0];
           const numericPart = (last.ID || "0").replace(/\D/g, "");
@@ -408,14 +415,14 @@ const CreateTicketPage = () => {
           const prefix = (last.CPREFIX || "TK").toUpperCase();
           generatedTktKey = fcyrKey + cobrId + prefix + paddedNumber;
           newTktNo = prefix + paddedNumber;
-        }
-        else {
+        } else {
           const prefix = "TK";
           const fallbackNum = "0001";
           generatedTktKey = fcyrKey + cobrId + prefix + fallbackNum;
           newTktNo = prefix + fallbackNum;
         }
       }
+
       let attachmentData = { TktImage: "", ImgName: "" };
       if (attachments.length > 0) {
         const file = attachments[0];
@@ -425,6 +432,7 @@ const CreateTicketPage = () => {
           ImgName: file.fileName,
         };
       }
+
       const ticketData = {
         FCYR_KEY: fcyrKey,
         COBR_ID: cobrId,
@@ -460,15 +468,19 @@ const CreateTicketPage = () => {
         ImgName: formData.ImgName,
         trnTktDtlEntities: rowsSecondTable
       };
+
       if (isUpdate) {
         ticketData.UpdatedBy = 0;
       } else {
-        ticketData.CreatedBy = 0
+        ticketData.CreatedBy = 0;
       }
+
       const apiUrl = isUpdate
         ? `TrnTkt/UpdateTrnTkt?UserName=${userName}&strCobrid=${cobrId}`
         : `TrnTkt/InsertTrnTkt?UserName=${userName}&strCobrid=${cobrId}`;
+
       const response = await axiosInstance.post(apiUrl, ticketData);
+      
       if (response.data.STATUS === 0) {
         toast.success(
           isUpdate
@@ -479,14 +491,26 @@ const CreateTicketPage = () => {
           router.push("/emp-tickets/all-tickets");
         }, 1500);
       } else {
-        toast.error(response.data.MESSAGE || "Failed to save ticket.");
+        if (response.data.MESSAGE && response.data.MESSAGE.includes("Cannot insert duplicate key") && retryCount < 3) {
+          toast.info("Duplicate ticket detected. Generating new ticket number...");
+          await createOrUpdateTicket(retryCount + 1);
+        } else {
+          toast.error(response.data.MESSAGE || "Failed to save ticket.");
+        }
       }
     } catch (error) {
-      console.error("Failed to create ticket. Check console.");
-    } finally {
-      setLoading(false);
+      console.error("Failed to create ticket:", error);
+      if (retryCount < 3 && !TKTKEY) {
+        toast.info("Retrying with new ticket number...");
+        await createOrUpdateTicket(retryCount + 1);
+      } else {
+        toast.error("Failed to create ticket after multiple attempts.");
+      }
     }
   };
+  await createOrUpdateTicket();
+  setLoading(false);
+};
   const handleFileChange = (event) => {
     const file = event.target.files[0];
     if (!file) return;

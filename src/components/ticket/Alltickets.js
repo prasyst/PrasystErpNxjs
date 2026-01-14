@@ -16,7 +16,10 @@ import {
   Visibility as VisibilityIcon,
   MoreVert as MoreVertIcon,
   Close as CloseIcon,
-  Comment as CommentIcon
+  Comment as CommentIcon,
+  GridOn as GridOnIcon,
+  ViewCompact as ViewCompactIcon,
+  TableChart as TableChartIcon,
 } from '@mui/icons-material';
 import axiosInstance from '@/lib/axios';
 import TicketDetailsDialog from './ViewTicketDetailsDialog/TicketDetailsDialog';
@@ -40,11 +43,11 @@ const AllTicketsPage = () => {
   const [selectedTicketId, setSelectedTicketId] = useState(null);
   const [ticketDetailsOpen, setTicketDetailsOpen] = useState(false);
   const [selectedRows, setSelectedRows] = useState([]);
-  
+  const [viewMode, setViewMode] = useState('grid'); 
 
   const [followupDialogOpen, setFollowupDialogOpen] = useState(false);
   const [selectedTicketForFollowup, setSelectedTicketForFollowup] = useState(null);
-
+console.log('filteredTickets',filteredTickets)
   useEffect(() => {
     fetchTicketDash();
   }, []);
@@ -67,7 +70,7 @@ const AllTicketsPage = () => {
           category: tkt.TKTSERVICENAME || "General",
           priority: tkt.TKTSVRTYNAME || "Medium",
           status: tkt.TKTSTATUS === "O" ? "open" :
-            tkt.TKTSTATUS === "I" ? "in-progress" :
+            (tkt.TKTSTATUS === "I" || tkt.TKTSTATUS === "H") ? "in-progress" :
               tkt.TKTSTATUS === "R" ? "resolved" : "closed",
           assignee: tkt.TECHEMP_NAME || "Unassigned",
           reporter: tkt.RAISEBYNM || "Unknown",
@@ -132,7 +135,6 @@ const AllTicketsPage = () => {
     setSelectedTicketForFollowup(ticket);
     setFollowupDialogOpen(true);
   };
-
 
   const handleFollowupSuccess = () => {
     fetchTicketDash();
@@ -416,7 +418,6 @@ const AllTicketsPage = () => {
                   }
                 }}
               >
-                {/* Row Checkbox */}
                 <TableCell 
                   padding="checkbox" 
                   sx={{ 
@@ -440,7 +441,6 @@ const AllTicketsPage = () => {
                   />
                 </TableCell>
 
-                {/* Ticket No */}
                 <TableCell>
                   <Typography 
                     variant="body2" 
@@ -456,7 +456,6 @@ const AllTicketsPage = () => {
                   </Typography>
                 </TableCell>
 
-                {/* Title */}
                 <TableCell sx={{ maxWidth: '180px' }}>
                   <Typography 
                     variant="subtitle2" 
@@ -472,7 +471,6 @@ const AllTicketsPage = () => {
                   </Typography>
                 </TableCell>
 
-                {/* Category */}
                 <TableCell>
                   <Chip 
                     label={ticket.category} 
@@ -490,7 +488,6 @@ const AllTicketsPage = () => {
                   />
                 </TableCell>
 
-                {/* Mobile No */}
                 <TableCell>
                   <Typography 
                     variant="body2" 
@@ -503,7 +500,6 @@ const AllTicketsPage = () => {
                   </Typography>
                 </TableCell>
 
-                {/* Priority */}
                 <TableCell>
                   <Chip 
                     label={ticket.priority} 
@@ -521,7 +517,6 @@ const AllTicketsPage = () => {
                   />
                 </TableCell>
 
-                {/* Status */}
                 <TableCell>
                   <Chip
                     label={
@@ -544,7 +539,6 @@ const AllTicketsPage = () => {
                   />
                 </TableCell>
 
-                {/* TKTFOR */}
                 <TableCell>
                   <Typography 
                     variant="body2" 
@@ -557,7 +551,6 @@ const AllTicketsPage = () => {
                   </Typography>
                 </TableCell>
 
-                {/* Raised At */}
                 <TableCell>
                   <Typography 
                     variant="body2" 
@@ -570,7 +563,6 @@ const AllTicketsPage = () => {
                   </Typography>
                 </TableCell>
 
-                {/* Actions */}
                 <TableCell onClick={(e) => e.stopPropagation()}>
                   <Box display="flex" justifyContent="center" gap={0.5}>
                     <Tooltip title="View" arrow>
@@ -597,7 +589,7 @@ const AllTicketsPage = () => {
                           e.stopPropagation();
                           handleQuickFollowup(ticket);
                         }}
-                         disabled={ticket.status !== "open"}
+                        disabled={ticket.status == "closed" ||ticket.status == "resolved"}
                         sx={{ 
                           padding: '3px',
                           '& .MuiSvgIcon-root': { fontSize: '1rem' }
@@ -656,9 +648,161 @@ const AllTicketsPage = () => {
     </TableContainer>
   );
 
+
+  const CompactGridView = () => (
+    <Box
+      sx={{
+        display: 'grid',
+        gridTemplateColumns: {
+          xs: '1fr',
+          sm: 'repeat(2, 1fr)',
+          md: 'repeat(3, 1fr)',
+          lg: 'repeat(4, 1fr)'
+        },
+        gap: 2,
+        overflowY:'auto',
+        p: 1,
+        '&::-webkit-scrollbar': {
+          width: '6px',
+        },
+        '&::-webkit-scrollbar-thumb': {
+          backgroundColor: '#c1c1c1',
+          borderRadius: '3px',
+        },
+      }}
+    >
+      {filteredTickets.map((ticket) => (
+        <Card
+          key={ticket.TKTKEY}
+          sx={{
+            height: '180px',
+            display: 'flex',
+            flexDirection: 'column',
+            cursor: 'pointer',
+            transition: 'all 0.2s ease',
+            '&:hover': {
+              transform: 'translateY(-4px)',
+              boxShadow: 4,
+            },
+          }}
+          onClick={() => handleViewTicket(ticket)}
+        >
+          <CardContent sx={{ p: 2, flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
+            <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={1}>
+              <Typography
+                variant="caption"
+                fontWeight="600"
+                color="primary"
+                sx={{
+                  fontSize: '0.7rem',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                  maxWidth: '80px',
+                }}
+              >
+                {ticket.id}
+              </Typography>
+              <Chip
+                label={ticket.status === 'open' ? 'Open' : ticket.status === 'in-progress' ? 'In Progress' : ticket.status}
+                size="small"
+                color={getStatusColor(ticket.status)}
+                sx={{ height: '20px', fontSize: '0.6rem' }}
+              />
+            </Box>
+
+            <Typography
+              variant="subtitle2"
+              fontWeight="600"
+              sx={{
+                mb: 1,
+                fontSize: '0.8rem',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                display: '-webkit-box',
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: 'vertical',
+                lineHeight: 1.2,
+              }}
+            >
+              {ticket.title}
+            </Typography>
+
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              sx={{
+                fontSize: '0.7rem',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                display: '-webkit-box',
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: 'vertical',
+                lineHeight: 1.3,
+                flexGrow: 1,
+                mb: 1,
+              }}
+            >
+              {ticket.description}
+            </Typography>
+
+            <Box display="flex" justifyContent="space-between" alignItems="center" mt="auto">
+              <Chip
+                label={ticket.priority}
+                size="small"
+                color={getPriorityColor(ticket.priority)}
+                sx={{ height: '20px', fontSize: '0.6rem' }}
+              />
+              <Typography variant="caption" color="text.secondary">
+                {formatDate(ticket.createdAt)}
+              </Typography>
+            </Box>
+          </CardContent>
+        </Card>
+      ))}
+    </Box>
+  );
+
+
+  const GridViewControls = () => (
+    <Box sx={{mb:1, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <Typography variant="h6">
+        Tickets ({filteredTickets.length})
+      </Typography>
+      <Box display="flex" gap={1}>
+        <Tooltip title="Compact Grid">
+          <IconButton
+            size="small"
+            onClick={() => setViewMode('grid')}
+            color={viewMode === 'grid' ? 'primary' : 'default'}
+          >
+            <GridOnIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
+      
+        <Tooltip title="Table View">
+          <IconButton
+            size="small"
+            onClick={() => setViewMode('table')}
+            color={viewMode === 'table' ? 'primary' : 'default'}
+          >
+            <TableChartIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
+      </Box>
+    </Box>
+  );
+
+  const GridView = () => (
+    <>
+      <GridViewControls />
+      {viewMode === 'grid' && <CompactGridView />}
+      {viewMode === 'table' && <DesktopTableView />}
+    </>
+  );
+
   return (
     <Box sx={{
-      minHeight: '100vh',
       backgroundColor: 'grey.50',
       py: { xs: 2, md: 2 },
       px: { xs: 1, sm: 2 }
@@ -697,12 +841,11 @@ const AllTicketsPage = () => {
           </Box>
         </Box>
 
-        {/* Filters */}
-        <Card sx={{ mb: 3, boxShadow: 2 }}>
+        <Card sx={{ mb: 2, boxShadow: 2 }}>
           <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
             <Grid container spacing={2} alignItems="flex-end">
               <Typography
-                variant={isSmallMobile ? "h5" : "h4"}
+                variant={isSmallMobile ? "h6" : "h5"}
                 component="h1"
                 fontWeight="bold"
                 sx={{
@@ -763,18 +906,6 @@ const AllTicketsPage = () => {
                   <MenuItem value="Low">Low</MenuItem>
                 </TextField>
               </Grid>
-
-              <Grid item xs={12} sm={4} md={2}>
-                <Button
-                  fullWidth
-                  variant="outlined"
-                  startIcon={<FilterListIcon />}
-                  size="small"
-                >
-                  More Filters
-                </Button>
-              </Grid>
-
               <Grid item xs={12} md={2}>
                 <Typography variant="body2" color="text.secondary" align="center">
                   {filteredTickets.length} tickets found
@@ -803,7 +934,7 @@ const AllTicketsPage = () => {
             ))}
           </Box>
         ) : (
-          <DesktopTableView />
+          <GridView />
         )}
 
         {filteredTickets.length === 0 && (
