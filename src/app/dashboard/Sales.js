@@ -63,19 +63,25 @@ const topProducts = [
 const Sales = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const [cobrid, setCobrId] = useState(localStorage.getItem('COBR_ID'));
+  const [fcyr, setFcyr] = useState(localStorage.getItem('FCYR_KEY'));
   const [recentTran, setRecentTran] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredData, setFilteredData] = useState([]);
+  const [billDis, setBillDis] = useState([]);
+  const [saleUnbilled, setSaleUnbilled] = useState([]);
 
   useEffect(() => {
     recentTransaction();
+    fetchBillDis();
+    fetchUnbilledSales();
   }, [])
 
   const recentTransaction = async () => {
     try {
       const response = await axiosInstance.post("OrderDash/GetBillDashBoard", {
-        COBR_ID: "01",
-        FCYR_KEY: "25",
+        COBR_ID: cobrid,
+        FCYR_KEY: fcyr,
         FROM_DT: "2025-01-01",
         To_DT: "2026-01-30",
         Flag: "RECENT",
@@ -90,6 +96,8 @@ const Sales = () => {
       if (response.data.STATUS === 0) {
         setRecentTran(response.data.DATA)
         setFilteredData(response.data.DATA);
+      } else {
+        setRecentTran([]);
       }
     } catch (error) {
       toast.error("Error while fetching recent transaction.");
@@ -111,6 +119,56 @@ const Sales = () => {
     );
     setFilteredData(filtered.length > 0 ? filtered : recentTran);
   }, 300);
+
+  const fetchBillDis = async () => {
+    try {
+      const response = await axiosInstance.post('OrderDash/GetBillDashBoard', {
+        COBR_ID: cobrid,
+        FCYR_KEY: fcyr,
+        FROM_DT: "2025-04-01",
+        To_DT: "2026-01-30",
+        Flag: "BillDis",
+        PageNumber: 1,
+        PageSize: 10,
+        SearchText: "",
+        Brandfilter: "",
+        Partyfilter: "",
+        statefilter: "",
+        Brokerfilter: ""
+      })
+      if (response.data.STATUS === 0) {
+        setBillDis(response.data.DATA);
+      } else {
+        setBillDis([]);
+      }
+    } catch (error) {
+      toast.error("Erro while fetching the record.");
+    }
+  };
+
+  const fetchUnbilledSales = async () => {
+    try {
+      const response = await axiosInstance.post("OrderDash/GetBillDashBoard", {
+        COBR_ID: cobrid,
+        FCYR_KEY: fcyr,
+        FROM_DT: "2025-04-01",
+        To_DT: "2026-01-30",
+        Flag: "BillDis",
+        PageNumber: 1,
+        PageSize: 10,
+        SearchText: "",
+        Brandfilter: "",
+        Partyfilter: "",
+        statefilter: "",
+        Brokerfilter: ""
+      });
+      if (response.data.STATUS === 0) {
+        setSaleUnbilled(response.data.DATA);
+      }
+    } catch (error) {
+      toast.error("Error while fetching the unbilled.");
+    }
+  };
 
   return (
     <Box sx={{ bgcolor: '#f0f4f8', minHeight: '100vh', py: { xs: 2, md: 2 } }}>
@@ -140,12 +198,9 @@ const Sales = () => {
             <Paper elevation={4} sx={{ p: 3, borderRadius: 3, bgcolor: '#fff', height: '100%' }}>
               <Stack direction="row" justifyContent="space-between">
                 <Box>
-                  <Typography variant="body2" color="text.secondary">Total Profit</Typography>
-                  <Typography variant="h4" fontWeight="bold" mt={1}>$110,450</Typography>
-                  <Stack direction="row" alignItems="center" mt={1}>
-                    <TrendingUp sx={{ color: '#4caf50', fontSize: 20 }} />
-                    <Typography variant="body2" color="#4caf50" ml={1}>+$10,250 this month</Typography>
-                  </Stack>
+                  <Typography variant="body2" color="text.secondary">Bill with order dispatch</Typography>
+                  <Typography variant="h6" fontWeight="bold">Value: {(billDis[0]?.AMOUNT / 100000).toFixed(2) + ' L'}</Typography>
+                  <Typography variant="h6" fontWeight="bold">Qty: {billDis[0]?.BILLITMDTL_QTY}</Typography>
                 </Box>
                 <AttachMoney sx={{ fontSize: 50, color: '#8cbbddff' }} />
               </Stack>
@@ -156,9 +211,10 @@ const Sales = () => {
             <Paper elevation={4} sx={{ p: 3, borderRadius: 3, bgcolor: '#fff', height: '100%' }}>
               <Stack direction="row" justifyContent="space-between">
                 <Box>
-                  <Typography variant="body2" color="text.secondary">Total Orders</Typography>
-                  <Typography variant="h4" fontWeight="bold" mt={1}>1,660</Typography>
-                  <Chip label="+4% from last month" color="success" size="small" sx={{ mt: 1 }} />
+                  <Typography variant="body2" color="text.secondary">UnBilled</Typography>
+                  <Typography variant="h6" fontWeight="bold">Value: {saleUnbilled[0]?.AMOUNT}</Typography>
+                  <Typography variant="h6" fontWeight="bold">Qty: {saleUnbilled[0]?.BILLITMDTL_QTY}</Typography>
+                  {/* <Chip label="+4% from last month" color="success" size="small" sx={{ mt: 1 }} /> */}
                 </Box>
                 <ShoppingCart sx={{ fontSize: 50, color: '#8bd191ff' }} />
               </Stack>
@@ -171,7 +227,7 @@ const Sales = () => {
                 <Box>
                   <Typography variant="body2" color="text.secondary">Total Revenue</Typography>
                   <Typography variant="h4" fontWeight="bold" mt={1}>$92,120</Typography>
-                  <Chip label="+2%" color="success" size="small" sx={{ mt: 1 }} />
+                  {/* <Chip label="+2%" color="success" size="small" sx={{ mt: 1 }} /> */}
                 </Box>
                 <AttachMoney sx={{ fontSize: 50, color: '#d3ae71ff' }} />
               </Stack>
@@ -184,7 +240,7 @@ const Sales = () => {
                 <Box>
                   <Typography variant="body2" color="text.secondary">Customers</Typography>
                   <Typography variant="h4" fontWeight="bold" mt={1}>842</Typography>
-                  <Chip label="+12%" color="success" size="small" sx={{ mt: 1 }} />
+                  {/* <Chip label="+12%" color="success" size="small" sx={{ mt: 1 }} /> */}
                 </Box>
                 <People sx={{ fontSize: 50, color: '#d486e0ff' }} />
               </Stack>
@@ -209,10 +265,9 @@ const Sales = () => {
             </Paper>
           </Grid>
 
-          {/* Sales Goal Gauge */}
           <Grid size={{ xs: 12, md: 4 }}>
             <Paper elevation={4} sx={{ borderRadius: 3, p: 3, bgcolor: '#fff', height: '100%' }}>
-              <Typography variant="h6" fontWeight="bold" gutterBottom>Sales Goal Achievement</Typography>
+              <Typography variant="h6" fontWeight="bold" gutterBottom>Target Achievement</Typography>
               <Box sx={{ position: 'relative', height: 280 }}>
                 <ResponsiveContainer width="100%" height="100%">
                   <RadialBarChart cx="50%" cy="50%" innerRadius="50%" outerRadius="90%" data={gaugeData}>
