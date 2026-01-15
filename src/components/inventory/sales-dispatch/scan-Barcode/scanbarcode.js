@@ -1734,6 +1734,33 @@ const ScanBarcode = () => {
   // Store style data for later use in payload
   const [currentStyleData, setCurrentStyleData] = useState(null);
 
+ 
+const [companyConfig, setCompanyConfig] = useState({
+  CO_ID: '',
+  COBR_ID: ''
+});
+
+
+useEffect(() => {
+  setIsClient(true);
+  
+
+  if (typeof window !== 'undefined') {
+    const storedCO_ID = localStorage.getItem('CO_ID') || '';
+    const storedCOBR_ID = localStorage.getItem('COBR_ID') || '';
+    
+    setCompanyConfig({
+      CO_ID: storedCO_ID,
+      COBR_ID: storedCOBR_ID
+    });
+    
+    console.log('Loaded company config from localStorage:', {
+      CO_ID: storedCO_ID,
+      COBR_ID: storedCOBR_ID
+    });
+  }
+}, []);
+
   const scannerRef = useRef(null);
   const qrCodeScannerRef = useRef(null);
   const barcodeInputRef = useRef(null);
@@ -1861,7 +1888,7 @@ const ScanBarcode = () => {
         "FLDNAME": "Ordbk_KEY",
         "NCOLLEN": 0,
         "CPREFIX": "",
-        "COBR_ID": "02",
+        "COBR_ID": companyConfig.COBR_ID,
         "FCYR_KEY": "25",
         "TRNSTYPE": "M",
         "SERIESID": 66,
@@ -1879,7 +1906,7 @@ const ScanBarcode = () => {
           "FLDNAME": "Ordbk_No",
           "NCOLLEN": 6,
           "CPREFIX": prefix,
-          "COBR_ID": "02",
+          "COBR_ID": companyConfig.COBR_ID,
           "FCYR_KEY": "25",
           "TRNSTYPE": "T",
           "SERIESID": 0,
@@ -1890,7 +1917,7 @@ const ScanBarcode = () => {
         
         if (orderResponse.data.DATA && orderResponse.data.DATA.length > 0) {
           const orderData = orderResponse.data.DATA[0];
-          const correctOrdbkKey = `2502${orderData.ID}`;
+          const correctOrdbkKey = `25${companyConfig.COBR_ID}${orderData.ID}`;
           
           setFormData(prev => ({
             ...prev,
@@ -2154,221 +2181,236 @@ const ScanBarcode = () => {
     }
   };
 
-  // Fetch style data by barcode - MODIFIED: Check for product change
-  const fetchStyleDataByBarcode = async (barcode) => {
-    if (!barcode || barcode.trim() === '') {
-      setScannerError('Please enter a barcode');
-      return;
-    }
+// Fetch style data by barcode - MODIFIED: Find exact barcode match
+const fetchStyleDataByBarcode = async (barcode) => {
+  if (!barcode || barcode.trim() === '') {
+    setScannerError('Please enter a barcode');
+    return;
+  }
+  
+  try {
+    setIsLoadingBarcode(true);
+    setScannerError('');
     
-    try {
-      setIsLoadingBarcode(true);
-      setScannerError('');
+    console.log('Fetching data for barcode:', barcode);
+    
+    const payload = {
+      "FGSTYLE_ID": "",
+      "FGPRD_KEY": "",
+      "FGSTYLE_CODE": "",
+      "ALT_BARCODE": barcode.trim(),
+      "FLAG": ""
+    };
+
+    const response = await axiosInstance.post('/FGSTYLE/GetFgstyleDrp', payload);
+    console.log('API Response:', response.data);
+
+    if (response.data.DATA && response.data.DATA.length > 0) {
+      // Find the exact barcode match from the response array
+      const exactMatch = response.data.DATA.find(item => 
+        item.ALT_BARCODE && item.ALT_BARCODE.toString() === barcode.trim()
+      );
       
-      console.log('Fetching data for barcode:', barcode);
+      // If exact match not found, use the first item (fallback)
+      const styleData = exactMatch || response.data.DATA[0];
       
-      const payload = {
-        "FGSTYLE_ID": "",
-        "FGPRD_KEY": "",
-        "FGSTYLE_CODE": "",
-        "ALT_BARCODE": barcode.trim(),
-        "FLAG": ""
+      console.log('Selected Style Data:', styleData);
+      console.log('Exact match found:', !!exactMatch);
+      
+      // Extract product key from response
+      const productKey = styleData.FGPRD_KEY || "";
+      
+      // Check if product is different from current
+      const isSameProduct = (
+        currentProductInfo.productKey === productKey &&
+        currentProductInfo.style === (styleData.FGSTYLE_CODE || styleData.FGSTYLE_NAME || '')
+      );
+      
+      // Update current product info with product key
+      const newProductInfo = {
+        barcode: styleData.ALT_BARCODE || styleData.STYSTKDTL_KEY || barcode,
+        style: styleData.FGSTYLE_CODE || styleData.FGSTYLE_NAME || '',
+        product: styleData.FGPRD_NAME || '',
+        productKey: productKey
       };
-
-      const response = await axiosInstance.post('/FGSTYLE/GetFgstyleDrp', payload);
-      console.log('API Response:', response.data);
-
-      if (response.data.DATA && response.data.DATA.length > 0) {
-        const styleData = response.data.DATA[0];
-        console.log('Style Data:', styleData);
-        
-        // NEW: Check if product has changed
-        const newProductInfo = {
-          barcode: styleData.ALT_BARCODE || styleData.STYSTKDTL_KEY || barcode,
-          style: styleData.FGSTYLE_CODE || styleData.FGSTYLE_NAME || '',
-          product: styleData.FGPRD_NAME || ''
-        };
-        
-        const productKey = generateProductKey(
-          newProductInfo.barcode, 
-          newProductInfo.style, 
-          newProductInfo.product
-        );
-        
-        // Check if product is different from current
-        const isSameProduct = (
-          currentProductInfo.barcode === newProductInfo.barcode &&
-          currentProductInfo.style === newProductInfo.style &&
-          currentProductInfo.product === newProductInfo.product
-        );
-        
-        // If product is different, show warning and clear ratio data
-        if (currentProductInfo.barcode && !isSameProduct) {
-          if (Object.keys(ratioData.ratios).length > 0) {
-            showSnackbar('Product has changed. Please enter new ratios for this product.', 'warning');
-          }
-          // Clear ratio data for new product
-          setRatioData({
-            totalQty: '',
-            ratios: {}
-          });
+      
+      setCurrentProductInfo(newProductInfo);
+      
+      // If product is different, show warning and clear ratio data
+      if (currentProductInfo.productKey && !isSameProduct) {
+        if (Object.keys(ratioData.ratios).length > 0) {
+          showSnackbar('Product has changed. Please enter new ratios for this product.', 'warning');
         }
-        
-        // Update current product info
-        setCurrentProductInfo(newProductInfo);
-        
+        // Clear ratio data for new product
+        setRatioData({
+          totalQty: '',
+          ratios: {}
+        });
+      } else {
         // Load saved ratio data for this product
         const savedRatioData = getRatioDataFromStorage(productKey);
         if (savedRatioData.ratios && Object.keys(savedRatioData.ratios).length > 0) {
           setRatioData(savedRatioData);
+          showSnackbar('Previous ratios loaded for this product', 'info');
         }
-        
-        // Store all available sizes from API response
-        setAvailableSizes(response.data.DATA);
-        setCurrentStyleData(styleData);
-        
-        const shadeValue = styleData.FGSHADE_NAME || '';
-        const sizeValue = styleData.STYSIZE_NAME || '';
-        
-        setNewItemData({
-          ...newItemData,
-          barcode: newProductInfo.barcode,
-          product: newProductInfo.product,
-          style: newProductInfo.style,
-          type: styleData.FGTYPE_NAME || '',
-          shade: shadeValue,
-          size: sizeValue,
-          mrp: styleData.MRP ? styleData.MRP.toString() : '0',
-          rate: styleData.SSP ? styleData.SSP.toString() : '0',
-          qty: '',
-          discount: '0',
-          sets: '1',
-          convFact: '1',
-          remark: ''
-        });
-        
-        // Fetch size details
-        await fetchSizeDetailsForStyle(styleData);
-        
-      } else {
-        setScannerError('No product found for this barcode. Please check the barcode and try again.');
-        showSnackbar('Product not found', 'warning');
       }
-    } catch (error) {
-      console.error('Error fetching style data:', error);
-      setScannerError('Error fetching product details. Please try again.');
-      showSnackbar('Error fetching product', 'error');
-    } finally {
-      setIsLoadingBarcode(false);
+      
+      // Store all available sizes from API response
+      // setAvailableSizes(response.data.DATA);
+      setCurrentStyleData(styleData);
+      
+      const shadeValue = styleData.FGSHADE_NAME || '';
+      const sizeValue = styleData.STYSIZE_NAME || '';
+      
+      setNewItemData({
+        ...newItemData,
+        barcode: newProductInfo.barcode,
+        product: newProductInfo.product,
+        style: newProductInfo.style,
+        type: styleData.FGTYPE_NAME || '',
+        shade: shadeValue,
+        size: sizeValue,
+        mrp: styleData.MRP ? styleData.MRP.toString() : '0',
+        rate: styleData.SSP ? styleData.SSP.toString() : '0',
+        qty: '',
+        discount: '0',
+        sets: '1',
+        convFact: '1',
+        remark: ''
+      });
+      
+      // Fetch size details
+      await fetchSizeDetailsForStyle(styleData);
+      
+    } else {
+      setScannerError('No product found for this barcode. Please check the barcode and try again.');
+      showSnackbar('Product not found', 'warning');
     }
-  };
+  } catch (error) {
+    console.error('Error fetching style data:', error);
+    setScannerError('Error fetching product details. Please try again.');
+    showSnackbar('Error fetching product', 'error');
+  } finally {
+    setIsLoadingBarcode(false);
+  }
+};
 
-  // Fetch style data by style code - MODIFIED: Check for product change
-  const fetchStyleDataByCode = async (styleCode) => {
-    if (!styleCode) return;
+// Fetch style data by style code - MODIFIED: Find exact barcode match
+const fetchStyleDataByCode = async (styleCode) => {
+  if (!styleCode) return;
 
-    try {
-      setIsLoadingStyleCode(true);
-      setScannerError('');
+  try {
+    setIsLoadingStyleCode(true);
+    setScannerError('');
+    
+    console.log('Fetching data for style code:', styleCode);
+    
+    const payload = {
+      "FGSTYLE_ID": "",
+      "FGPRD_KEY": "",
+      "FGSTYLE_CODE": styleCode.trim(),
+      "FLAG": ""
+    };
+
+    const response = await axiosInstance.post('/FGSTYLE/GetFgstyleDrp', payload);
+    console.log('API Response:', response.data);
+
+    if (response.data.DATA && response.data.DATA.length > 0) {
+      // For style code search, use the first item (since all will have same style)
+      const styleData = response.data.DATA[0];
       
-      console.log('Fetching data for style code:', styleCode);
-      
-      const payload = {
-        "FGSTYLE_ID": "",
-        "FGPRD_KEY": "",
-        "FGSTYLE_CODE": styleCode.trim(),
-        "FLAG": ""
-      };
-
-      const response = await axiosInstance.post('/FGSTYLE/GetFgstyleDrp', payload);
-      console.log('API Response:', response.data);
-
-      if (response.data.DATA && response.data.DATA.length > 0) {
-        const styleData = response.data.DATA[0];
-        console.log('Style Data:', styleData);
-        
-        // NEW: Check if product has changed
-        const newProductInfo = {
-          barcode: styleData.ALT_BARCODE || styleData.STYSTKDTL_KEY || '',
-          style: styleData.FGSTYLE_CODE || styleData.FGSTYLE_NAME || '',
-          product: styleData.FGPRD_NAME || ''
-        };
-        
-        const productKey = generateProductKey(
-          newProductInfo.barcode, 
-          newProductInfo.style, 
-          newProductInfo.product
+      // But if user entered a barcode in style code mode, try to find exact match
+      let selectedStyleData = styleData;
+      if (styleCodeInput && styleCodeInput.trim() !== '') {
+        const exactMatch = response.data.DATA.find(item => 
+          item.ALT_BARCODE && item.ALT_BARCODE.toString() === styleCodeInput.trim()
         );
-        
-        // Check if product is different from current
-        const isSameProduct = (
-          currentProductInfo.barcode === newProductInfo.barcode &&
-          currentProductInfo.style === newProductInfo.style &&
-          currentProductInfo.product === newProductInfo.product
-        );
-        
-        // If product is different, show warning and clear ratio data
-        if (currentProductInfo.barcode && !isSameProduct) {
-          if (Object.keys(ratioData.ratios).length > 0) {
-            showSnackbar('Product has changed. Please enter new ratios for this product.', 'warning');
-          }
-          // Clear ratio data for new product
-          setRatioData({
-            totalQty: '',
-            ratios: {}
-          });
+        if (exactMatch) {
+          selectedStyleData = exactMatch;
         }
-        
-        // Update current product info
-        setCurrentProductInfo(newProductInfo);
-        
+      }
+      
+      console.log('Selected Style Data:', selectedStyleData);
+      
+      // Extract product key from response
+      const productKey = selectedStyleData.FGPRD_KEY || "";
+      
+      // Check if product is different from current
+      const isSameProduct = (
+        currentProductInfo.productKey === productKey &&
+        currentProductInfo.style === (selectedStyleData.FGSTYLE_CODE || selectedStyleData.FGSTYLE_NAME || '')
+      );
+      
+      // Update current product info with product key
+      const newProductInfo = {
+        barcode: selectedStyleData.ALT_BARCODE || selectedStyleData.STYSTKDTL_KEY || '',
+        style: selectedStyleData.FGSTYLE_CODE || selectedStyleData.FGSTYLE_NAME || '',
+        product: selectedStyleData.FGPRD_NAME || '',
+        productKey: productKey
+      };
+      
+      setCurrentProductInfo(newProductInfo);
+      
+      // If product is different, show warning and clear ratio data
+      if (currentProductInfo.productKey && !isSameProduct) {
+        if (Object.keys(ratioData.ratios).length > 0) {
+          showSnackbar('Product has changed. Please enter new ratios for this product.', 'warning');
+        }
+        // Clear ratio data for new product
+        setRatioData({
+          totalQty: '',
+          ratios: {}
+        });
+      } else {
         // Load saved ratio data for this product
         const savedRatioData = getRatioDataFromStorage(productKey);
         if (savedRatioData.ratios && Object.keys(savedRatioData.ratios).length > 0) {
           setRatioData(savedRatioData);
+          showSnackbar('Previous ratios loaded for this product', 'info');
         }
-        
-        // Store all available sizes from API response
-        setAvailableSizes(response.data.DATA);
-        setCurrentStyleData(styleData);
-        
-        const shadeValue = styleData.FGSHADE_NAME || '';
-        const sizeValue = styleData.STYSIZE_NAME || '';
-        
-        setNewItemData({
-          ...newItemData,
-          barcode: newProductInfo.barcode,
-          product: newProductInfo.product,
-          style: newProductInfo.style,
-          type: styleData.FGTYPE_NAME || '',
-          shade: shadeValue,
-          size: sizeValue,
-          mrp: styleData.MRP ? styleData.MRP.toString() : '0',
-          rate: styleData.SSP ? styleData.SSP.toString() : '0',
-          qty: '',
-          discount: '0',
-          sets: '1',
-          convFact: '1',
-          remark: ''
-        });
-        
-        showSnackbar('Product found successfully by style code!');
-        
-        // Fetch size details
-        await fetchSizeDetailsForStyle(styleData);
-        
-      } else {
-        setScannerError('No product found for this style code. Please check the style code and try again.');
-        showSnackbar('Product not found', 'warning');
       }
-    } catch (error) {
-      console.error('Error fetching style data by code:', error);
-      setScannerError('Error fetching product details. Please try again.');
-      showSnackbar('Error fetching product', 'error');
-    } finally {
-      setIsLoadingStyleCode(false);
+      
+      // Store all available sizes from API response
+      // setAvailableSizes(response.data.DATA);
+      setCurrentStyleData(selectedStyleData);
+      
+      const shadeValue = selectedStyleData.FGSHADE_NAME || '';
+      const sizeValue = selectedStyleData.STYSIZE_NAME || '';
+      
+      setNewItemData({
+        ...newItemData,
+        barcode: newProductInfo.barcode,
+        product: newProductInfo.product,
+        style: newProductInfo.style,
+        type: selectedStyleData.FGTYPE_NAME || '',
+        shade: shadeValue,
+        size: sizeValue,
+        mrp: selectedStyleData.MRP ? selectedStyleData.MRP.toString() : '0',
+        rate: selectedStyleData.SSP ? selectedStyleData.SSP.toString() : '0',
+        qty: '',
+        discount: '0',
+        sets: '1',
+        convFact: '1',
+        remark: ''
+      });
+      
+      showSnackbar('Product found successfully by style code!');
+      
+      // Fetch size details
+      await fetchSizeDetailsForStyle(selectedStyleData);
+      
+    } else {
+      setScannerError('No product found for this style code. Please check the style code and try again.');
+      showSnackbar('Product not found', 'warning');
     }
-  };
+  } catch (error) {
+    console.error('Error fetching style data by code:', error);
+    setScannerError('Error fetching product details. Please try again.');
+    showSnackbar('Error fetching product', 'error');
+  } finally {
+    setIsLoadingStyleCode(false);
+  }
+};
 
   // Handle style code input change with debounce
   const handleStyleCodeInputChange = (e) => {
@@ -2397,72 +2439,77 @@ const ScanBarcode = () => {
   };
 
   // Fetch size details for style
-  const fetchSizeDetailsForStyle = async (styleData) => {
-    try {
-      const fgprdKey = styleData.FGPRD_KEY;
-      const fgstyleId = styleData.FGSTYLE_ID;
-      const fgtypeKey = styleData.FGTYPE_KEY || "";
-      const fgshadeKey = styleData.FGSHADE_KEY || "";
-      const fgptnKey = styleData.FGPTN_KEY || "";
+const fetchSizeDetailsForStyle = async (styleData) => {
+  try {
+    const fgprdKey = styleData.FGPRD_KEY;
+    const fgstyleId = styleData.FGSTYLE_ID;
+    const fgtypeKey = styleData.FGTYPE_KEY || "";
+    const fgshadeKey = styleData.FGSHADE_KEY || "";
+    const fgptnKey = styleData.FGPTN_KEY || "";
 
-      if (!fgprdKey || !fgstyleId) {
-        console.warn('Missing required data for size details');
-        return;
-      }
+    if (!fgprdKey || !fgstyleId) {
+      console.warn('Missing required data for size details');
+      return;
+    }
 
-      const payload = {
-        "FGSTYLE_ID": fgstyleId,
-        "FGPRD_KEY": fgprdKey,
-        "FGTYPE_KEY": fgtypeKey,
-        "FGSHADE_KEY": fgshadeKey,
-        "FGPTN_KEY": fgptnKey,
-        "MRP": parseFloat(styleData.MRP) || 0,
-        "SSP": parseFloat(styleData.SSP) || 0,
-        "PARTY_KEY": formData.PARTY_KEY || "",
-        "PARTYDTL_ID": formData.PARTYDTL_ID || 0,
-        "FLAG": "S"
-      };
+    const payload = {
+      "FGSTYLE_ID": fgstyleId,
+      "FGPRD_KEY": fgprdKey,
+      "FGTYPE_KEY": fgtypeKey,
+      "FGSHADE_KEY": fgshadeKey,
+      "FGPTN_KEY": fgptnKey,
+      "MRP": parseFloat(styleData.MRP) || 0,
+      "SSP": parseFloat(styleData.SSP) || 0,
+      "PARTY_KEY": formData.PARTY_KEY || "",
+      "PARTYDTL_ID": formData.PARTYDTL_ID || 0,
+      "FLAG": "S"
+    };
 
-      console.log('Fetching size details with payload:', payload);
+    console.log('Fetching size details with payload:', payload);
 
-      const response = await axiosInstance.post('/STYSIZE/AddSizeDetail', payload);
-      console.log('Size Details Response:', response.data);
+    const response = await axiosInstance.post('/STYSIZE/AddSizeDetail', payload);
+    console.log('Size Details Response:', response.data);
 
-      if (response.data.DATA && response.data.DATA.length > 0) {
-        const transformedSizeDetails = response.data.DATA.map((size, index) => ({
-          STYSIZE_ID: size.STYSIZE_ID || index + 1,
-          STYSIZE_NAME: size.STYSIZE_NAME || `Size ${index + 1}`,
-          FGSTYLE_ID: size.FGSTYLE_ID || fgstyleId,
-          QTY: 0,
-          ITM_AMT: 0,
-          ORDER_QTY: 0,
-          MRP: parseFloat(styleData.MRP) || 0,
-          RATE: parseFloat(styleData.SSP) || 0,
-          FGITEM_KEY: styleData.STYSTKDTL_KEY || ""
-        }));
-
-        setSizeDetailsData(transformedSizeDetails);
-        showSnackbar('Size details loaded! Enter quantities.');
-      } else {
-        // Use the STYSIZE_NAME from the original response
-        const stysizeName = styleData.STYSIZE_NAME || 'Default';
-        const stysizeId = styleData.STYSIZE_ID || 1;
-        
-        const defaultSizes = [
-          { 
-            STYSIZE_NAME: stysizeName,
-            STYSIZE_ID: stysizeId, 
-            QTY: 0, 
-            MRP: parseFloat(styleData.MRP) || 0, 
-            RATE: parseFloat(styleData.SSP) || 0 
-          }
-        ];
-        setSizeDetailsData(defaultSizes);
-      }
-    } catch (error) {
-      console.error('Error fetching size details:', error);
+    if (response.data.DATA && response.data.DATA.length > 0) {
+      // Extract STYSIZE_NAME from size details response
+      const sizeDetailsFromAPI = response.data.DATA;
       
-      // FALLBACK: Extract size info from the original style data
+      // Store available sizes for ratio section
+      const availableSizesForRatio = sizeDetailsFromAPI.map(size => ({
+        STYSIZE_ID: size.STYSIZE_ID,
+        STYSIZE_NAME: size.STYSIZE_NAME,
+        MRP: size.MRP,
+        WSP: size.WSP || size.RATE
+      }));
+      
+      setAvailableSizes(availableSizesForRatio);
+      
+      // Create transformed size details for table
+      const transformedSizeDetails = sizeDetailsFromAPI.map((size, index) => ({
+        STYSIZE_ID: size.STYSIZE_ID || index + 1,
+        STYSIZE_NAME: size.STYSIZE_NAME || `Size ${index + 1}`,
+        FGSTYLE_ID: size.FGSTYLE_ID || fgstyleId,
+        QTY: 0,
+        ITM_AMT: 0,
+        ORDER_QTY: 0,
+        MRP: parseFloat(size.MRP) || parseFloat(styleData.MRP) || 0,
+        RATE: parseFloat(size.WSP) || parseFloat(size.RATE) || parseFloat(styleData.SSP) || 0,
+        WSP: parseFloat(size.WSP) || parseFloat(size.RATE) || parseFloat(styleData.SSP) || 0,
+        FGITEM_KEY: styleData.STYSTKDTL_KEY || ""
+      }));
+
+      setSizeDetailsData(transformedSizeDetails);
+      showSnackbar('Size details loaded! Enter quantities.');
+      
+      // Clear any existing ratio data for this product
+      const productKey = styleData.FGPRD_KEY || "";
+      const savedRatioData = getRatioDataFromStorage(productKey);
+      if (savedRatioData.ratios && Object.keys(savedRatioData.ratios).length > 0) {
+        setRatioData(savedRatioData);
+        showSnackbar('Previous ratios loaded for this product', 'info');
+      }
+    } else {
+      // Use the STYSIZE_NAME from the original response
       const stysizeName = styleData.STYSIZE_NAME || 'Default';
       const stysizeId = styleData.STYSIZE_ID || 1;
       
@@ -2471,131 +2518,243 @@ const ScanBarcode = () => {
           STYSIZE_NAME: stysizeName,
           STYSIZE_ID: stysizeId, 
           QTY: 0, 
-          MRP: parseFloat(newItemData.mrp) || 0, 
-          RATE: parseFloat(newItemData.rate) || 0 
+          MRP: parseFloat(styleData.MRP) || 0, 
+          RATE: parseFloat(styleData.SSP) || 0,
+          WSP: parseFloat(styleData.SSP) || 0
         }
       ];
-      setSizeDetailsData(defaultSizes);
-      showSnackbar(`Using size: ${stysizeName}. Enter quantity.`, 'warning');
-    }
-  };
-
-  // Handle ratio change for each size - MODIFIED: Save to localStorage
-  const handleRatioChange = (sizeName, value) => {
-    const newRatioData = {
-      ...ratioData,
-      ratios: {
-        ...ratioData.ratios,
-        [sizeName]: value
-      }
-    };
-    
-    setRatioData(newRatioData);
-    
-    // Save to localStorage if we have a product key
-    if (currentProductInfo.barcode || currentProductInfo.style || currentProductInfo.product) {
-      const productKey = generateProductKey(
-        currentProductInfo.barcode,
-        currentProductInfo.style,
-        currentProductInfo.product
-      );
-      saveRatioDataToStorage(productKey, newRatioData);
-    }
-  };
-
-  // Handle total quantity change for ratio calculation - MODIFIED: Save to localStorage
-  const handleTotalQtyChange = (value) => {
-    const newRatioData = {
-      ...ratioData,
-      totalQty: value
-    };
-    
-    setRatioData(newRatioData);
-    
-    // Save to localStorage if we have a product key
-    if (currentProductInfo.barcode || currentProductInfo.style || currentProductInfo.product) {
-      const productKey = generateProductKey(
-        currentProductInfo.barcode,
-        currentProductInfo.style,
-        currentProductInfo.product
-      );
-      saveRatioDataToStorage(productKey, newRatioData);
-    }
-  };
-
-  // Calculate and fill quantities based on ratios
-  const fillQuantitiesByRatio = () => {
-    const totalQty = parseFloat(ratioData.totalQty);
-    if (!totalQty || totalQty <= 0) {
-      showSnackbar('Please enter a valid total quantity', 'error');
-      return;
-    }
-
-    const ratios = ratioData.ratios;
-    const sizeNames = Object.keys(ratios);
-    
-    // Check if all sizes have ratios
-    if (sizeNames.length === 0) {
-      showSnackbar('Please enter ratios for at least one size', 'error');
-      return;
-    }
-
-    // Calculate total ratio sum
-    const totalRatio = sizeNames.reduce((sum, sizeName) => {
-      const ratio = parseFloat(ratios[sizeName]) || 0;
-      return sum + ratio;
-    }, 0);
-
-    if (totalRatio === 0) {
-      showSnackbar('Total ratio cannot be zero', 'error');
-      return;
-    }
-
-    // Calculate quantities for each size and update sizeDetailsData
-    const updatedSizeDetails = [...sizeDetailsData];
-    let remainingQty = totalQty;
-    let allocatedQty = 0;
-
-    // First pass: allocate based on ratios
-    sizeNames.forEach((sizeName, index) => {
-      const ratio = parseFloat(ratios[sizeName]) || 0;
-      const exactQty = (ratio / totalRatio) * totalQty;
-      const roundedQty = Math.round(exactQty);
       
-      // Find the size in sizeDetailsData
-      const sizeIndex = updatedSizeDetails.findIndex(size => size.STYSIZE_NAME === sizeName);
-      if (sizeIndex !== -1) {
-        updatedSizeDetails[sizeIndex] = {
-          ...updatedSizeDetails[sizeIndex],
-          QTY: roundedQty
-        };
-        allocatedQty += roundedQty;
-      }
-    });
-
-    // Adjust for rounding differences
-    const difference = totalQty - allocatedQty;
-    if (difference !== 0) {
-      // Add/remove the difference from the first size
-      const firstSizeIndex = updatedSizeDetails.findIndex(size => 
-        sizeNames.includes(size.STYSIZE_NAME)
-      );
-      if (firstSizeIndex !== -1) {
-        updatedSizeDetails[firstSizeIndex] = {
-          ...updatedSizeDetails[firstSizeIndex],
-          QTY: updatedSizeDetails[firstSizeIndex].QTY + difference
-        };
-      }
+      setAvailableSizes(defaultSizes);
+      setSizeDetailsData(defaultSizes);
     }
+  } catch (error) {
+    console.error('Error fetching size details:', error);
+    
+    // FALLBACK: Extract size info from the original style data
+    const stysizeName = styleData.STYSIZE_NAME || 'Default';
+    const stysizeId = styleData.STYSIZE_ID || 1;
+    
+    const defaultSizes = [
+      { 
+        STYSIZE_NAME: stysizeName,
+        STYSIZE_ID: stysizeId, 
+        QTY: 0, 
+        MRP: parseFloat(newItemData.mrp) || 0, 
+        RATE: parseFloat(newItemData.rate) || 0,
+        WSP: parseFloat(newItemData.rate) || 0
+      }
+    ];
+    
+    setAvailableSizes(defaultSizes);
+    setSizeDetailsData(defaultSizes);
+    showSnackbar(`Using size: ${stysizeName}. Enter quantity.`, 'warning');
+  }
+};
 
-    setSizeDetailsData(updatedSizeDetails);
-    
-    // Update total quantity in newItemData
-    const newTotalQty = updatedSizeDetails.reduce((sum, size) => sum + (parseFloat(size.QTY) || 0), 0);
-    setNewItemData(prev => ({ ...prev, qty: newTotalQty.toString() }));
-    
-    showSnackbar(`Quantities filled successfully! Total: ${newTotalQty}`, 'success');
+ const handleRatioChange = (sizeName, value) => {
+  const newRatioData = {
+    ...ratioData,
+    ratios: {
+      ...ratioData.ratios,
+      [sizeName]: value
+    }
   };
+  
+  setRatioData(newRatioData);
+  
+  // Save to localStorage if we have a product key
+  if (currentProductInfo.productKey) {
+    saveRatioDataToStorage(currentProductInfo.productKey, newRatioData);
+  }
+};
+
+// Handle total quantity change for ratio calculation - MODIFIED: Save to localStorage
+const handleTotalQtyChange = (value) => {
+  const newRatioData = {
+    ...ratioData,
+    totalQty: value
+  };
+  
+  setRatioData(newRatioData);
+  
+  // Save to localStorage if we have a product key
+  if (currentProductInfo.productKey) {
+    saveRatioDataToStorage(currentProductInfo.productKey, newRatioData);
+  }
+};
+
+// Calculate and fill quantities based on ratios
+const fillQuantitiesByRatio = () => {
+  const totalQty = parseFloat(ratioData.totalQty);
+  if (!totalQty || totalQty <= 0) {
+    showSnackbar('Please enter a valid total quantity', 'error');
+    return;
+  }
+
+  const ratios = ratioData.ratios;
+  const sizeNames = Object.keys(ratios);
+  
+  // Check if all sizes have ratios
+  if (sizeNames.length === 0) {
+    showSnackbar('Please enter ratios for at least one size', 'error');
+    return;
+  }
+
+  // Calculate total ratio sum
+  const totalRatio = sizeNames.reduce((sum, sizeName) => {
+    const ratio = parseFloat(ratios[sizeName]) || 0;
+    return sum + ratio;
+  }, 0);
+
+  if (totalRatio === 0) {
+    showSnackbar('Total ratio cannot be zero', 'error');
+    return;
+  }
+
+  // Calculate quantities for each size and update sizeDetailsData
+  const updatedSizeDetails = [...sizeDetailsData];
+  let allocatedQty = 0;
+
+  // First pass: allocate based on ratios
+  sizeNames.forEach((sizeName, index) => {
+    const ratio = parseFloat(ratios[sizeName]) || 0;
+    const exactQty = (ratio / totalRatio) * totalQty;
+    const roundedQty = Math.round(exactQty);
+    
+    // Find the size in sizeDetailsData
+    const sizeIndex = updatedSizeDetails.findIndex(size => size.STYSIZE_NAME === sizeName);
+    if (sizeIndex !== -1) {
+      const wsp = updatedSizeDetails[sizeIndex].WSP || updatedSizeDetails[sizeIndex].RATE || 0;
+      const amount = roundedQty * wsp;
+      
+      updatedSizeDetails[sizeIndex] = {
+        ...updatedSizeDetails[sizeIndex],
+        QTY: roundedQty,
+        ITM_AMT: amount
+      };
+      allocatedQty += roundedQty;
+    }
+  });
+
+  // Adjust for rounding differences
+  const difference = totalQty - allocatedQty;
+  if (difference !== 0 && sizeNames.length > 0) {
+    // Add/remove the difference from the first size
+    const firstSizeName = sizeNames[0];
+    const firstSizeIndex = updatedSizeDetails.findIndex(size => size.STYSIZE_NAME === firstSizeName);
+    if (firstSizeIndex !== -1) {
+      const wsp = updatedSizeDetails[firstSizeIndex].WSP || updatedSizeDetails[firstSizeIndex].RATE || 0;
+      const newQty = updatedSizeDetails[firstSizeIndex].QTY + difference;
+      const newAmount = newQty * wsp;
+      
+      updatedSizeDetails[firstSizeIndex] = {
+        ...updatedSizeDetails[firstSizeIndex],
+        QTY: newQty,
+        ITM_AMT: newAmount
+      };
+    }
+  }
+
+  setSizeDetailsData(updatedSizeDetails);
+  
+  // Update total quantity in newItemData
+  const newTotalQty = updatedSizeDetails.reduce((sum, size) => sum + (parseFloat(size.QTY) || 0), 0);
+  const totalAmount = updatedSizeDetails.reduce((sum, size) => sum + (parseFloat(size.ITM_AMT) || 0), 0);
+  
+  setNewItemData(prev => ({ 
+    ...prev, 
+    qty: newTotalQty.toString(),
+    rate: newTotalQty > 0 ? (totalAmount / newTotalQty).toFixed(2) : prev.rate
+  }));
+  
+  showSnackbar(`Quantities filled successfully! Total: ${newTotalQty}`, 'success');
+};
+
+// Handle confirm button for adding item to order - MODIFIED: Clear ratio data
+const handleConfirmItem = () => {
+  if (!newItemData.product || !newItemData.style) {
+    showSnackbar("Please scan a valid barcode or enter style code first", 'error');
+    return;
+  }
+
+  const totalQty = calculateTotalQty();
+  if (totalQty === 0) {
+    showSnackbar("Please enter quantity in size details", 'error');
+    return;
+  }
+
+  const { amount, netAmount } = calculateAmount();
+
+  const newItem = {
+    id: Date.now(),
+    barcode: newItemData.barcode,
+    product: newItemData.product,
+    style: newItemData.style,
+    type: newItemData.type,
+    shade: newItemData.shade,
+    qty: totalQty,
+    mrp: parseFloat(newItemData.mrp) || 0,
+    rate: parseFloat(newItemData.rate) || 0,
+    amount: amount,
+    discAmt: parseFloat(newItemData.discount) || 0,
+    netAmt: netAmount,
+    sets: parseFloat(newItemData.sets) || 0,
+    varPer: parseFloat(newItemData.varPer) || 0,
+    remark: newItemData.remark,
+    sizeDetails: [...sizeDetailsData],
+    convFact: newItemData.convFact,
+    styleData: currentStyleData
+  };
+
+  // Add to table
+  setTableData(prev => [...prev, newItem]);
+
+  // Reset form
+  setNewItemData({
+    barcode: '',
+    product: '',
+    style: '',
+    type: '',
+    shade: '',
+    mrp: '',
+    rate: '',
+    qty: '',
+    discount: '0',
+    sets: '1',
+    convFact: '1',
+    remark: '',
+    varPer: '0',
+    stdQty: '',
+    setNo: '',
+    percent: '0',
+    rQty: '',
+    divDt: ''
+  });
+  
+  // Reset style code input if in style code mode
+  if (useStyleCodeMode) {
+    setStyleCodeInput('');
+  }
+  
+  // Clear current product info and ratio data
+  setCurrentProductInfo({
+    barcode: '',
+    style: '',
+    product: '',
+    productKey: ''
+  });
+  setCurrentStyleData(null);
+  setSizeDetailsData([]);
+  setAvailableSizes([]);
+  setFillByRatioMode(false);
+  setRatioData({
+    totalQty: '',
+    ratios: {}
+  });
+  setScannerError('');
+
+  showSnackbar('Item added to order! Go To Cart', 'success');
+};
 
   // Handle form field changes - MODIFIED: Auto-select related fields
   const handleFormChange = (field, value) => {
@@ -2735,90 +2894,7 @@ const ScanBarcode = () => {
     };
   };
 
-  // Handle confirm button for adding item to order - MODIFIED: Clear ratio data
-  const handleConfirmItem = () => {
-    if (!newItemData.product || !newItemData.style) {
-      showSnackbar("Please scan a valid barcode or enter style code first", 'error');
-      return;
-    }
-
-    const totalQty = calculateTotalQty();
-    if (totalQty === 0) {
-      showSnackbar("Please enter quantity in size details", 'error');
-      return;
-    }
-
-    const { amount, netAmount } = calculateAmount();
-
-    const newItem = {
-      id: Date.now(),
-      barcode: newItemData.barcode,
-      product: newItemData.product,
-      style: newItemData.style,
-      type: newItemData.type,
-      shade: newItemData.shade,
-      qty: totalQty,
-      mrp: parseFloat(newItemData.mrp) || 0,
-      rate: parseFloat(newItemData.rate) || 0,
-      amount: amount,
-      discAmt: parseFloat(newItemData.discount) || 0,
-      netAmt: netAmount,
-      sets: parseFloat(newItemData.sets) || 0,
-      varPer: parseFloat(newItemData.varPer) || 0,
-      remark: newItemData.remark,
-      sizeDetails: [...sizeDetailsData],
-      convFact: newItemData.convFact,
-      styleData: currentStyleData
-    };
-
-    // Add to table
-    setTableData(prev => [...prev, newItem]);
-
-    // Reset form
-    setNewItemData({
-      barcode: '',
-      product: '',
-      style: '',
-      type: '',
-      shade: '',
-      mrp: '',
-      rate: '',
-      qty: '',
-      discount: '0',
-      sets: '1',
-      convFact: '1',
-      remark: '',
-      varPer: '0',
-      stdQty: '',
-      setNo: '',
-      percent: '0',
-      rQty: '',
-      divDt: ''
-    });
-    
-    // Reset style code input if in style code mode
-    if (useStyleCodeMode) {
-      setStyleCodeInput('');
-    }
-    
-    // Clear current product info and ratio data
-    setCurrentProductInfo({
-      barcode: '',
-      style: '',
-      product: ''
-    });
-    setCurrentStyleData(null);
-    setSizeDetailsData([]);
-    setAvailableSizes([]);
-    setFillByRatioMode(false);
-    setRatioData({
-      totalQty: '',
-      ratios: {}
-    });
-    setScannerError('');
-
-    showSnackbar('Item added to order! Go To Cart', 'success');
-  };
+ 
 
   // Handle delete item from table
   const handleDeleteItem = (id) => {
@@ -2921,200 +2997,203 @@ const ScanBarcode = () => {
   };
 
   // Prepare submit payload with FIXED FGSTYLE_ID
-  const prepareSubmitPayload = () => {
-    const dbFlag = 'I';
-    const currentDate = new Date().toISOString().replace('T', ' ').split('.')[0];
-    
-    const userId = localStorage.getItem('USER_ID') || '1';
-    const userName = localStorage.getItem('USER_NAME') || 'Admin';
-    
-    console.log('User Info:', { userId, userName });
+ // Prepare submit payload with FIXED FGSTYLE_ID
+const prepareSubmitPayload = () => {
+  const dbFlag = 'I';
+  const currentDate = new Date().toISOString().replace('T', ' ').split('.')[0];
+  
+  const userId = localStorage.getItem('USER_ID') || '1';
+  const userName = localStorage.getItem('USER_NAME') || 'Admin';
+  
+  console.log('Company Config:', companyConfig);
+  console.log('User Info:', { userId, userName });
 
-    const getStatusValue = (status) => {
-      const statusMapping = {
-        'O': '1',
-        'C': '0',
-        'S': '5'
-      };
-      return statusMapping[status] || "1";
+  const getStatusValue = (status) => {
+    const statusMapping = {
+      'O': '1',
+      'C': '0',
+      'S': '5'
     };
+    return statusMapping[status] || "1";
+  };
 
-    const correctOrdbkKey = `2502${formData.ORDER_NO}`;
+  // Dynamic ORDBK_KEY generate करें
+  const correctOrdbkKey = `25${companyConfig.COBR_ID}${formData.ORDER_NO}`;
+  
+  console.log('Using ORDBK_KEY:', correctOrdbkKey);
+
+  const transformedOrdbkStyleList = tableData.map((item, index) => {
+    const tempId = Date.now() + index;
     
-    console.log('Using ORDBK_KEY:', correctOrdbkKey);
+    const fgstyleId = item.styleData?.FGSTYLE_ID || 0;
+    const fgprdKey = item.styleData?.FGPRD_KEY || '';
+    const fgtypeKey = item.styleData?.FGTYPE_KEY || '';
+    const fgshadeKey = item.styleData?.FGSHADE_KEY || '';
+    const fgptnKey = item.styleData?.FGPTN_KEY || '';
+    
+    console.log(`Item ${index} - FGSTYLE_ID: ${fgstyleId}, FGPRD_KEY: ${fgprdKey}`);
 
-    const transformedOrdbkStyleList = tableData.map((item, index) => {
-      const tempId = Date.now() + index;
-      
-      const fgstyleId = item.styleData?.FGSTYLE_ID || 0;
-      const fgprdKey = item.styleData?.FGPRD_KEY || '';
-      const fgtypeKey = item.styleData?.FGTYPE_KEY || '';
-      const fgshadeKey = item.styleData?.FGSHADE_KEY || '';
-      const fgptnKey = item.styleData?.FGPTN_KEY || '';
-      
-      console.log(`Item ${index} - FGSTYLE_ID: ${fgstyleId}, FGPRD_KEY: ${fgprdKey}`);
-
-      return {
+    return {
+      DBFLAG: 'I',
+      ORDBKSTY_ID: tempId,
+      ORDBK_KEY: correctOrdbkKey,
+      FGPRD_KEY: fgprdKey,
+      FGSTYLE_ID: fgstyleId,
+      FGSTYLE_CODE: item.style || '',
+      FGTYPE_KEY: fgtypeKey,
+      FGSHADE_KEY: fgshadeKey,
+      FGPTN_KEY: fgptnKey,
+      FGITEM_KEY: item.barcode || "",
+      QTY: parseFloat(item.qty) || 0,
+      STYCATRT_ID: 0,
+      FGITM_KEY: item.FGITM_KEY || "",
+      RATE: parseFloat(item.rate) || 0,
+      AMT: parseFloat(item.amount) || 0,
+      DLV_VAR_PERCENT: parseFloat(item.varPer) || 0,
+      DLV_VAR_QTY: 0,
+      OPEN_RATE: "",
+      TERM_KEY: "",
+      TERM_NAME: "",
+      TERM_PERCENT: 0,
+      TERM_FIX_AMT: 0,
+      TERM_RATE: 0,
+      TERM_PERQTY: 0,
+      DISC_AMT: parseFloat(item.discAmt) || 0,
+      NET_AMT: parseFloat(item.netAmt) || 0,
+      INIT_DT: "1900-01-01 00:00:00.000",
+      INIT_REMK: "",
+      INIT_QTY: 0,
+      DLV_DT: "1900-01-01 00:00:00.000",
+      BAL_QTY: parseFloat(item.qty) || 0,
+      STATUS: "1",
+      STYLE_PRN: "",
+      TYPE_PRN: "",
+      MRP_PRN: parseFloat(item.mrp) || 0,
+      REMK: item.remark || "",
+      QUOTEDTL_ID: 0,
+      SETQTY: parseFloat(item.sets) || 0,
+      RQTY: 0,
+      DISTBTR_KEY: "",
+      LOTNO: formData.CURR_SEASON_KEY || "",
+      WOBALQTY: parseFloat(item.qty) || 0,
+      REFORDBKSTY_ID: 0,
+      BOMSTY_ID: 0,
+      ISRMREQ: "N",
+      OP_QTY: 0,
+      ORDBKSTYSZLIST: (item.sizeDetails || []).map((sizeItem, sizeIndex) => ({
         DBFLAG: 'I',
-        ORDBKSTY_ID: tempId,
+        ORDBKSTYSZ_ID: sizeItem.STYSIZE_ID || (tempId * 100 + sizeIndex),
         ORDBK_KEY: correctOrdbkKey,
-        FGPRD_KEY: fgprdKey,
-        FGSTYLE_ID: fgstyleId,
-        FGSTYLE_CODE: item.style || '',
-        FGTYPE_KEY: fgtypeKey,
-        FGSHADE_KEY: fgshadeKey,
-        FGPTN_KEY: fgptnKey,
-        FGITEM_KEY: item.barcode || "",
-        QTY: parseFloat(item.qty) || 0,
-        STYCATRT_ID: 0,
-        FGITM_KEY: item.FGITM_KEY || "",
-        RATE: parseFloat(item.rate) || 0,
-        AMT: parseFloat(item.amount) || 0,
-        DLV_VAR_PERCENT: parseFloat(item.varPer) || 0,
-        DLV_VAR_QTY: 0,
-        OPEN_RATE: "",
-        TERM_KEY: "",
-        TERM_NAME: "",
-        TERM_PERCENT: 0,
-        TERM_FIX_AMT: 0,
-        TERM_RATE: 0,
-        TERM_PERQTY: 0,
-        DISC_AMT: parseFloat(item.discAmt) || 0,
-        NET_AMT: parseFloat(item.netAmt) || 0,
+        ORDBKSTY_ID: tempId,
+        STYSIZE_ID: sizeItem.STYSIZE_ID || 0,
+        STYSIZE_NAME: sizeItem.STYSIZE_NAME || "",
+        QTY: parseFloat(sizeItem.QTY) || 0,
         INIT_DT: "1900-01-01 00:00:00.000",
         INIT_REMK: "",
         INIT_QTY: 0,
-        DLV_DT: "1900-01-01 00:00:00.000",
-        BAL_QTY: parseFloat(item.qty) || 0,
-        STATUS: "1",
-        STYLE_PRN: "",
-        TYPE_PRN: "",
-        MRP_PRN: parseFloat(item.mrp) || 0,
-        REMK: item.remark || "",
-        QUOTEDTL_ID: 0,
-        SETQTY: parseFloat(item.sets) || 0,
+        BAL_QTY: parseFloat(sizeItem.QTY) || 0,
+        MRP: parseFloat(item.mrp) || 0,
+        WSP: parseFloat(item.rate) || 0,
         RQTY: 0,
-        DISTBTR_KEY: "",
-        LOTNO: formData.CURR_SEASON_KEY || "",
-        WOBALQTY: parseFloat(item.qty) || 0,
-        REFORDBKSTY_ID: 0,
-        BOMSTY_ID: 0,
-        ISRMREQ: "N",
+        WOBALQTY: parseFloat(sizeItem.QTY) || 0,
+        REFORDBKSTYSZ_ID: 0,
         OP_QTY: 0,
-        ORDBKSTYSZLIST: (item.sizeDetails || []).map((sizeItem, sizeIndex) => ({
-          DBFLAG: 'I',
-          ORDBKSTYSZ_ID: sizeItem.STYSIZE_ID || (tempId * 100 + sizeIndex),
-          ORDBK_KEY: correctOrdbkKey,
-          ORDBKSTY_ID: tempId,
-          STYSIZE_ID: sizeItem.STYSIZE_ID || 0,
-          STYSIZE_NAME: sizeItem.STYSIZE_NAME || "",
-          QTY: parseFloat(sizeItem.QTY) || 0,
-          INIT_DT: "1900-01-01 00:00:00.000",
-          INIT_REMK: "",
-          INIT_QTY: 0,
-          BAL_QTY: parseFloat(sizeItem.QTY) || 0,
-          MRP: parseFloat(item.mrp) || 0,
-          WSP: parseFloat(item.rate) || 0,
-          RQTY: 0,
-          WOBALQTY: parseFloat(sizeItem.QTY) || 0,
-          REFORDBKSTYSZ_ID: 0,
-          OP_QTY: 0,
-          HSNCODE_KEY: "IG001",
-          GST_RATE_SLAB_ID: 39,
-          ITM_AMT: parseFloat(sizeItem.ITM_AMT) || 0,
-          DISC_AMT: 0,
-          NET_AMT: parseFloat(sizeItem.ITM_AMT) || 0,
-          SGST_AMT: 0,
-          CGST_AMT: 0,
-          IGST_AMT: 0,
-          NET_SALE_RATE: 0,
-          OTHER_AMT: 0,
-          ADD_CESS_RATE: 0,
-          ADD_CESS_AMT: 0
-        }))
-      };
-    });
-
-    // Calculate totals
-    const totalQty = tableData.reduce((sum, item) => sum + (item.qty || 0), 0);
-    const totalAmount = tableData.reduce((sum, item) => sum + (item.amount || 0), 0);
-    const totalDiscount = tableData.reduce((sum, item) => sum + (item.discAmt || 0), 0);
-    const netAmount = totalAmount - totalDiscount;
-
-    // Base payload
-    const basePayload = {
-      DBFLAG: dbFlag,
-      FCYR_KEY: "25",
-      CO_ID: "02",
-      COBR_ID: "02",
-      ORDBK_NO: formData.ORDER_NO || "",
-      CURR_SEASON_KEY: formData.CURR_SEASON_KEY || "",
-      ORDBK_X: "",
-      ORDBK_TNA_TYPE: "I",
-      MERCHANDISER_ID: parseInt(formData.MERCHANDISER_ID) || 1,
-      ORD_EVENT_KEY: "",
-      ORG_DLV_DT: formatDateForAPI(formData.ORG_DLV_DT) || "1900-01-01T00:00:00",
-      PLANNING: "0",
-      STATUS: getStatusValue(formData.Status),
-      ORDBK_KEY: correctOrdbkKey,
-      ORDBK_DT: formatDateForAPI(formData.ORDER_DATE) || currentDate,
-      PORD_REF: formData.PARTY_ORD_NO || "",
-      PORD_DT: formatDateForAPI(formData.ORD_REF_DT) || "1900-01-01T00:00:00",
-      QUOTE_NO: formData.QUOTE_NO || "",
-      QUOTE_DT: formatDateForAPI(formData.ORDER_DATE) || currentDate,
-      PARTY_KEY: formData.PARTY_KEY || "",
-      PARTYDTL_ID: parseInt(formData.PARTYDTL_ID) || 0,
-      BROKER_KEY: formData.BROKER_KEY || "",
-      BROKER1_KEY: "",
-      BROKER_COMM: 0.00,
-      COMMON_DLV_DT_FLG: "0",
-      STK_FLG: formData.RACK_MIN || "0",
-      DLV_DT: formatDateForAPI(formData.DLV_DT) || "1900-01-01T00:00:00",
-      DLV_PLACE: formData.SHIPPING_PLACE || "",
-      TRSP_KEY: "",
-      ORDBK_AMT: parseFloat(totalAmount) || 0,
-      REMK: formData.REMARK_STATUS || "",
-      CURRN_KEY: "",
-      EX_RATE: 0,
-      IMP_ORDBK_KEY: "",
-      ORDBK_TYPE: formData.ORDBK_TYPE || "2",
-      ROUND_OFF_DESC: "",
-      ROUND_OFF: 0.00,
-      BOMSTY_ID: 0,
-      LOTWISE: formData.MAIN_DETAILS === "L" ? "Y" : "N",
-      IsWO: "0",
-      SuplKey: "",
-      KNIT_DT: "1900-01-01 00:00:00.000",
-      OrdBk_CoBr_Id: "02",
-      GR_AMT: parseFloat(totalAmount) || 0,
-      GST_APP: formData.GST_APPL || "N",
-      GST_TYPE: formData.GST_TYPE === "STATE" ? "S" : "I",
-      SHP_PARTY_KEY: formData.SHP_PARTY_KEY || formData.PARTY_KEY,
-      SHP_PARTYDTL_ID: parseInt(formData.SHP_PARTYDTL_ID) || parseInt(formData.PARTYDTL_ID) || 0,
-      STATE_CODE: "",
-      ORDBK_ITM_AMT: parseFloat(totalAmount) || 0,
-      ORDBK_SGST_AMT: 0,
-      ORDBK_CGST_AMT: 0,
-      ORDBK_IGST_AMT: 0,
-      ORDBK_ADD_CESS_AMT: 0,
-      ORDBK_GST_AMT: 0,
-      ORDBK_EXTRA_AMT: 0,
-      ORDBKSTYLIST: transformedOrdbkStyleList,
-      ORDBKTERMLIST: [],
-      ORDBKGSTLIST: [],
-      DISTBTR_KEY: "",
-      SALEPERSON1_KEY: formData.SALEPERSON1_KEY || "",
-      SALEPERSON2_KEY: formData.SALEPERSON2_KEY || "",
-      TRSP_KEY: "",
-      PRICELIST_KEY: "",
-      DESP_PORT: "",
-      CREATED_BY: parseInt(userId) || 1,
-      CREATED_DT: currentDate
+        HSNCODE_KEY: "IG001",
+        GST_RATE_SLAB_ID: 39,
+        ITM_AMT: parseFloat(sizeItem.ITM_AMT) || 0,
+        DISC_AMT: 0,
+        NET_AMT: parseFloat(sizeItem.ITM_AMT) || 0,
+        SGST_AMT: 0,
+        CGST_AMT: 0,
+        IGST_AMT: 0,
+        NET_SALE_RATE: 0,
+        OTHER_AMT: 0,
+        ADD_CESS_RATE: 0,
+        ADD_CESS_AMT: 0
+      }))
     };
+  });
 
-    console.log('Submit Payload:', JSON.stringify(basePayload, null, 2));
-    return basePayload;
+  // Calculate totals
+  const totalQty = tableData.reduce((sum, item) => sum + (item.qty || 0), 0);
+  const totalAmount = tableData.reduce((sum, item) => sum + (item.amount || 0), 0);
+  const totalDiscount = tableData.reduce((sum, item) => sum + (item.discAmt || 0), 0);
+  const netAmount = totalAmount - totalDiscount;
+
+  // Base payload with dynamic company IDs
+  const basePayload = {
+    DBFLAG: dbFlag,
+    FCYR_KEY: "25",
+    CO_ID: companyConfig.CO_ID,
+    COBR_ID: companyConfig.COBR_ID, 
+    ORDBK_NO: formData.ORDER_NO || "",
+    CURR_SEASON_KEY: formData.CURR_SEASON_KEY || "",
+    ORDBK_X: "",
+    ORDBK_TNA_TYPE: "I",
+    MERCHANDISER_ID: parseInt(formData.MERCHANDISER_ID) || 1,
+    ORD_EVENT_KEY: "",
+    ORG_DLV_DT: formatDateForAPI(formData.ORG_DLV_DT) || "1900-01-01T00:00:00",
+    PLANNING: "0",
+    STATUS: getStatusValue(formData.Status),
+    ORDBK_KEY: correctOrdbkKey,
+    ORDBK_DT: formatDateForAPI(formData.ORDER_DATE) || currentDate,
+    PORD_REF: formData.PARTY_ORD_NO || "",
+    PORD_DT: formatDateForAPI(formData.ORD_REF_DT) || "1900-01-01T00:00:00",
+    QUOTE_NO: formData.QUOTE_NO || "",
+    QUOTE_DT: formatDateForAPI(formData.ORDER_DATE) || currentDate,
+    PARTY_KEY: formData.PARTY_KEY || "",
+    PARTYDTL_ID: parseInt(formData.PARTYDTL_ID) || 0,
+    BROKER_KEY: formData.BROKER_KEY || "",
+    BROKER1_KEY: "",
+    BROKER_COMM: 0.00,
+    COMMON_DLV_DT_FLG: "0",
+    STK_FLG: formData.RACK_MIN || "0",
+    DLV_DT: formatDateForAPI(formData.DLV_DT) || "1900-01-01T00:00:00",
+    DLV_PLACE: formData.SHIPPING_PLACE || "",
+    TRSP_KEY: "",
+    ORDBK_AMT: parseFloat(totalAmount) || 0,
+    REMK: formData.REMARK_STATUS || "",
+    CURRN_KEY: "",
+    EX_RATE: 0,
+    IMP_ORDBK_KEY: "",
+    ORDBK_TYPE: formData.ORDBK_TYPE || "2",
+    ROUND_OFF_DESC: "",
+    ROUND_OFF: 0.00,
+    BOMSTY_ID: 0,
+    LOTWISE: formData.MAIN_DETAILS === "L" ? "Y" : "N",
+    IsWO: "0",
+    SuplKey: "",
+    KNIT_DT: "1900-01-01 00:00:00.000",
+    OrdBk_CoBr_Id: companyConfig.COBR_ID, // Dynamic COBR_ID
+    GR_AMT: parseFloat(totalAmount) || 0,
+    GST_APP: formData.GST_APPL || "N",
+    GST_TYPE: formData.GST_TYPE === "STATE" ? "S" : "I",
+    SHP_PARTY_KEY: formData.SHP_PARTY_KEY || formData.PARTY_KEY,
+    SHP_PARTYDTL_ID: parseInt(formData.SHP_PARTYDTL_ID) || parseInt(formData.PARTYDTL_ID) || 0,
+    STATE_CODE: "",
+    ORDBK_ITM_AMT: parseFloat(totalAmount) || 0,
+    ORDBK_SGST_AMT: 0,
+    ORDBK_CGST_AMT: 0,
+    ORDBK_IGST_AMT: 0,
+    ORDBK_ADD_CESS_AMT: 0,
+    ORDBK_GST_AMT: 0,
+    ORDBK_EXTRA_AMT: 0,
+    ORDBKSTYLIST: transformedOrdbkStyleList,
+    ORDBKTERMLIST: [],
+    ORDBKGSTLIST: [],
+    DISTBTR_KEY: "",
+    SALEPERSON1_KEY: formData.SALEPERSON1_KEY || "",
+    SALEPERSON2_KEY: formData.SALEPERSON2_KEY || "",
+    TRSP_KEY: "",
+    PRICELIST_KEY: "",
+    DESP_PORT: "",
+    CREATED_BY: parseInt(userId) || 1,
+    CREATED_DT: currentDate
   };
+
+  console.log('Submit Payload:', JSON.stringify(basePayload, null, 2));
+  return basePayload;
+};
 
   // Helper function to format date for API
   const formatDateForAPI = (dateString) => {
@@ -3151,9 +3230,10 @@ const ScanBarcode = () => {
       
       const payload = prepareSubmitPayload();
       const userName = localStorage.getItem('USER_NAME') || 'Admin';
-      const strCobrid = "02";
+      const strCobrid = companyConfig.COBR_ID;
       
       console.log('Submitting order with payload:', payload);
+       console.log('strCobrid:', strCobrid);
       
       const response = await axiosInstance.post(
         `/ORDBK/ApiMangeOrdbk?UserName=${userName}&strCobrid=${strCobrid}`, 
@@ -4062,78 +4142,78 @@ const ScanBarcode = () => {
                   />
                 </Box>
                 
-                {/* Horizontal Ratio Table */}
-                <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: '600' }}>
-                  Enter Ratios for Each Size:
-                </Typography>
-                
-                <Box sx={{ 
-                  overflowX: 'auto',
-                  backgroundColor: '#f8f9fa',
-                  borderRadius: 1,
-                  p: 1,
-                  mb: 0.7
-                }}>
-                  <table style={{ 
-                    width: '100%', 
-                    borderCollapse: 'collapse',
-                    minWidth: `${availableSizes.length * 50}px`
-                  }}>
-                    <thead>
-                      <tr style={{ backgroundColor: '#e9ecef' }}>
-                        {/* Size Headers */}
-                        {availableSizes.map((size) => (
-                          <th key={`th-${size.STYSIZE_ID}`} style={{ 
-                            padding: '10px',
-                            border: '1px solid #dee2e6', 
-                            textAlign: 'center',
-                            fontSize: '14px',
-                            fontWeight: '600',
-                            minWidth: '40px'
-                          }}>
-                            {size.STYSIZE_NAME}
-                          </th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr>
-                        {/* Ratio Inputs */}
-                        {availableSizes.map((size, index) => (
-                          <td key={`td-${size.STYSIZE_ID}`} style={{ 
-                            padding: '2px', 
-                            border: '1px solid #dee2e6',
-                            textAlign: 'center',
-                            backgroundColor: '#fff'
-                          }}>
-                            <TextField
-                              type="number"
-                              value={ratioData.ratios[size.STYSIZE_NAME] || ''}
-                              onChange={(e) => handleRatioChange(size.STYSIZE_NAME, e.target.value)}
-                              size="small"
-                              sx={{
-                                width: '50px',
-                                '& .MuiInputBase-root': {
-                                  height: '26px',
-                                  fontSize: '14px'
-                                },
-                                '& input': {
-                                  padding: '8px',
-                                  textAlign: 'center'
-                                }
-                              }}
-                              inputProps={{ 
-                                min: 0, 
-                                step: 0.1,
-                                style: { textAlign: 'center' }
-                              }}
-                            />
-                          </td>
-                        ))}
-                      </tr>
-                    </tbody>
-                  </table>
-                </Box>
+               {/* Horizontal Ratio Table */}
+<Typography variant="subtitle1" sx={{ mb: 1, fontWeight: '600' }}>
+  Enter Ratios for Each Size:
+</Typography>
+
+<Box sx={{ 
+  overflowX: 'auto',
+  backgroundColor: '#f8f9fa',
+  borderRadius: 1,
+  p: 1,
+  mb: 0.7
+}}>
+  <table style={{ 
+    width: '100%', 
+    borderCollapse: 'collapse',
+    minWidth: `${availableSizes.length * 50}px`
+  }}>
+    <thead>
+      <tr style={{ backgroundColor: '#e9ecef' }}>
+        {/* Size Headers */}
+        {availableSizes.map((size) => (
+          <th key={`th-${size.STYSIZE_ID}`} style={{ 
+            padding: '10px',
+            border: '1px solid #dee2e6', 
+            textAlign: 'center',
+            fontSize: '14px',
+            fontWeight: '600',
+            minWidth: '40px'
+          }}>
+            {size.STYSIZE_NAME}
+          </th>
+        ))}
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        {/* Ratio Inputs */}
+        {availableSizes.map((size, index) => (
+          <td key={`td-${size.STYSIZE_ID}`} style={{ 
+            padding: '2px', 
+            border: '1px solid #dee2e6',
+            textAlign: 'center',
+            backgroundColor: '#fff'
+          }}>
+            <TextField
+              type="number"
+              value={ratioData.ratios[size.STYSIZE_NAME] || ''}
+              onChange={(e) => handleRatioChange(size.STYSIZE_NAME, e.target.value)}
+              size="small"
+              sx={{
+                width: '50px',
+                '& .MuiInputBase-root': {
+                  height: '26px',
+                  fontSize: '14px'
+                },
+                '& input': {
+                  padding: '8px',
+                  textAlign: 'center'
+                }
+              }}
+              inputProps={{ 
+                min: 0, 
+                step: 0.1,
+                style: { textAlign: 'center' }
+              }}
+            />
+          </td>
+        ))}
+      </tr>
+    </tbody>
+  </table>
+</Box>
                 
                 {/* Fill Qty Button */}
                 <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
@@ -4262,7 +4342,7 @@ const ScanBarcode = () => {
                         border: '1px solid #dee2e6',
                         textAlign: 'right',
                         fontSize: '14px'
-                      }}>{size.RATE || 0}</td>
+                      }}>{size.WSP  || 0}</td>
                       <td style={{ 
                         padding: '10px', 
                         border: '1px solid #dee2e6',
@@ -4270,7 +4350,7 @@ const ScanBarcode = () => {
                         fontSize: '14px',
                         fontWeight: '500'
                       }}>
-                        ₹{(size.QTY || 0) * (size.RATE || 0)}
+                        ₹{(size.QTY || 0) * (size.WSP  || 0)}
                       </td>
                     </tr>
                   ))}
