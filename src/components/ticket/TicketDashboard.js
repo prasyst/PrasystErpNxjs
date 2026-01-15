@@ -262,14 +262,7 @@ const TicketDashboard = () => {
   ];
 
   const quickStats = [
-    {
-
-      title: 'Total Tickets',
-      value: totalTicket?.TOTALRECORDS || '0',
-      change: '+12%',
-      color: 'blue',
-      icon: MdList
-    },
+    
     {
       title: 'Open Tickets',
       value: tickets.filter(ticket => ticket.status == "open").length,
@@ -293,7 +286,7 @@ const TicketDashboard = () => {
     },
     {
       title: 'Total Tickets',
-      value: stats.total,
+      value: totalTicket?.TOTALRECORDS || '0',
       change: '+12%',
       color: 'blue',
       icon: MdList

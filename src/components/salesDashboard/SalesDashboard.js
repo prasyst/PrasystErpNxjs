@@ -82,7 +82,7 @@ const StyledCard2 = styled(Paper)(({ theme }) => ({
     display: 'flex',
     alignItems: 'center',
     padding: theme.spacing(2),
-    height: 400,
+    height: 300,
     borderRadius: '12px',
     backgroundColor: '#fff',
     color: '#000',
@@ -1428,6 +1428,98 @@ const SalesDashboard = () => {
                 </Grid>
             </Grid>
 
+            <Grid container spacing={2} mt={2}>
+                <Grid size={{ xs: 12, md: 6 }} sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                    <StyledCard2 sx={{ flex: 1, display: 'flex', flexDirection: 'column', p: 2 }}>
+                        <Typography variant="subtitle1" fontWeight="bold" align="center" gutterBottom>
+                            Top 10 Parties
+                        </Typography>
+                        <PieChart
+                            series={[
+                                {
+                                    data: top10PartiesByAmount,
+                                    innerRadius: 30,
+                                    outerRadius: 90,
+                                    paddingAngle: 3,
+                                    cornerRadius: 8,
+                                    highlightScope: { faded: 'global', highlighted: 'item' },
+                                    faded: { innerRadius: 30, additionalRadius: -30, color: 'gray' },
+                                },
+                            ]}
+                            height={200}
+                            slotProps={{
+                                legend: {
+                                    direction: 'column',
+                                    position: { vertical: 'middle', horizontal: 'start' },
+                                    padding: { left: 10 },
+                                    style: { color: 'black' },
+                                },
+                            }}
+                            onItemClick={(event, { dataIndex }) => {
+                                const clicked = top10PartiesByAmount[dataIndex];
+                                setSelectedParty(clicked?.fullPartyName || null);
+                            }}
+                        >
+                        </PieChart>
+                    </StyledCard2>
+                </Grid>
+
+                <Grid size={{ xs: 12, md: 6 }} sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                    <StyledCard2 sx={{ flex: 1, display: 'flex', flexDirection: 'column', p: 2 }}>
+                        <Typography variant="subtitle1" fontWeight="bold" align="center" gutterBottom>
+                            Top 10 States
+                        </Typography>
+                        {stateWise.length > 0 ? (
+                            <PieChart
+                                series={[
+                                    {
+                                        data: stateWise
+                                            .sort((a, b) => parseFloat(b.AMOUNT || 0) - parseFloat(a.AMOUNT || 0))
+                                            .slice(0, 10)
+                                            .map((item, index) => ({
+                                                id: index,
+                                                label: (item.STATE_NAME || "Unknown").slice(0, 18) + (item.STATE_NAME?.length > 18 ? '...' : ''),
+                                                // label: `${(item.STATE_NAME || "Unknown").slice(0, 18)}${item.STATE_NAME?.length > 18 ? '...' : ''} - ${parseFloat(item.AMOUNT || 0).toFixed(2)}`,
+                                                value: parseFloat(item.AMOUNT || 0),
+                                                color: `hsl(${index * 36}, 70%, 50%)`,
+                                                fullStateName: item.STATE_NAME || "Unknown",
+                                            })),
+                                        innerRadius: 20,
+                                        outerRadius: 90,
+                                        paddingAngle: 2,
+                                        cornerRadius: 2,
+                                        highlightScope: { faded: 'global', highlighted: 'item' },
+                                        faded: { innerRadius: 30, additionalRadius: -30, color: 'gray' },
+                                    },
+                                ]}
+                                height={230}
+                                slotProps={{
+                                    legend: {
+                                        direction: 'column',
+                                        position: { vertical: 'middle', horizontal: 'right' },
+                                        padding: { left: 10 },
+                                        style: { color: 'black' },
+                                    },
+                                }}
+                                onItemClick={(event, { dataIndex }) => {
+                                    const clickedItem = stateWise
+                                        .sort((a, b) => parseFloat(b.AMOUNT || 0) - parseFloat(a.AMOUNT || 0))
+                                        .slice(0, 10)[dataIndex];
+
+                                    const stateName = clickedItem?.STATE_NAME || null;
+                                    setSelectedState(stateName);
+                                }}
+                            >
+                            </PieChart>
+                        ) : (
+                            <Box display="flex" justifyContent="center" alignItems="center" height="100%">
+                                <Typography color="text.secondary">No state data available</Typography>
+                            </Box>
+                        )}
+                    </StyledCard2>
+                </Grid>
+            </Grid>
+
             {/* Recent Orders Table */}
             <Grid container spacing={2} sx={{ height: '100%', mt: 2 }}>
                 <Grid size={{ xs: 12, md: 12, lg: 12 }} sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
@@ -1489,7 +1581,7 @@ const SalesDashboard = () => {
                         </Box>
 
                         {/* Table Container */}
-                        <TableContainer sx={{ flexGrow: 1, maxHeight: 400, overflow: 'auto', position: 'relative' }}>
+                        <TableContainer sx={{ flexGrow: 1, maxHeight: 250, overflow: 'auto', position: 'relative' }}>
                             <Table stickyHeader size="small" sx={{ minWidth: 1100 }}>
                                 <TableHead>
                                     <TableRow>
@@ -1619,98 +1711,6 @@ const SalesDashboard = () => {
                 </Grid>
             </Grid>
 
-            <Grid container spacing={2} mt={2}>
-                <Grid size={{ xs: 12, md: 6 }} sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                    <StyledCard2 sx={{ flex: 1, display: 'flex', flexDirection: 'column', p: 2 }}>
-                        <Typography variant="subtitle1" fontWeight="bold" align="center" gutterBottom>
-                            Top 10 Parties by Order Amount
-                        </Typography>
-                        <PieChart
-                            series={[
-                                {
-                                    data: top10PartiesByAmount,
-                                    innerRadius: 30,
-                                    outerRadius: 90,
-                                    paddingAngle: 3,
-                                    cornerRadius: 8,
-                                    highlightScope: { faded: 'global', highlighted: 'item' },
-                                    faded: { innerRadius: 30, additionalRadius: -30, color: 'gray' },
-                                },
-                            ]}
-                            height={200}
-                            slotProps={{
-                                legend: {
-                                    direction: 'column',
-                                    position: { vertical: 'middle', horizontal: 'start' },
-                                    padding: { left: 10 },
-                                    style: { color: 'black' },
-                                },
-                            }}
-                            onItemClick={(event, { dataIndex }) => {
-                                const clicked = top10PartiesByAmount[dataIndex];
-                                setSelectedParty(clicked?.fullPartyName || null);
-                            }}
-                        >
-                        </PieChart>
-                    </StyledCard2>
-                </Grid>
-
-                <Grid size={{ xs: 12, md: 6 }} sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                    <StyledCard2 sx={{ flex: 1, display: 'flex', flexDirection: 'column', p: 2 }}>
-                        <Typography variant="subtitle1" fontWeight="bold" align="center" gutterBottom>
-                            Top 10 States by Order Amount
-                        </Typography>
-                        {stateWise.length > 0 ? (
-                            <PieChart
-                                series={[
-                                    {
-                                        data: stateWise
-                                            .sort((a, b) => parseFloat(b.AMOUNT || 0) - parseFloat(a.AMOUNT || 0))
-                                            .slice(0, 10)
-                                            .map((item, index) => ({
-                                                id: index,
-                                                label: (item.STATE_NAME || "Unknown").slice(0, 18) + (item.STATE_NAME?.length > 18 ? '...' : ''),
-                                                // label: `${(item.STATE_NAME || "Unknown").slice(0, 18)}${item.STATE_NAME?.length > 18 ? '...' : ''} - ${parseFloat(item.AMOUNT || 0).toFixed(2)}`,
-                                                value: parseFloat(item.AMOUNT || 0),
-                                                color: `hsl(${index * 36}, 70%, 50%)`,
-                                                fullStateName: item.STATE_NAME || "Unknown",
-                                            })),
-                                        innerRadius: 25,
-                                        outerRadius: 90,
-                                        paddingAngle: 3,
-                                        cornerRadius: 8,
-                                        highlightScope: { faded: 'global', highlighted: 'item' },
-                                        faded: { innerRadius: 30, additionalRadius: -30, color: 'gray' },
-                                    },
-                                ]}
-                                height={230}
-                                slotProps={{
-                                    legend: {
-                                        direction: 'column',
-                                        position: { vertical: 'middle', horizontal: 'right' },
-                                        padding: { left: 10 },
-                                        style: { color: 'black' },
-                                    },
-                                }}
-                                onItemClick={(event, { dataIndex }) => {
-                                    const clickedItem = stateWise
-                                        .sort((a, b) => parseFloat(b.AMOUNT || 0) - parseFloat(a.AMOUNT || 0))
-                                        .slice(0, 10)[dataIndex];
-
-                                    const stateName = clickedItem?.STATE_NAME || null;
-                                    setSelectedState(stateName);
-                                }}
-                            >
-                            </PieChart>
-                        ) : (
-                            <Box display="flex" justifyContent="center" alignItems="center" height="100%">
-                                <Typography color="text.secondary">No state data available</Typography>
-                            </Box>
-                        )}
-                    </StyledCard2>
-                </Grid>
-            </Grid>
-
             {/* Party Wise Orders Summary */}
             <Grid container spacing={2} sx={{ height: '100%', mt: 2 }}>
                 <Grid size={{ xs: 12, md: 12 }} sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
@@ -1753,7 +1753,7 @@ const SalesDashboard = () => {
                         </Box>
 
                         {/* Table Container with fixed height */}
-                        <TableContainer sx={{ flexGrow: 1, maxHeight: 400, overflowY: 'auto', overflowX: 'auto' }}>
+                        <TableContainer sx={{ flexGrow: 1, maxHeight: 250, overflowY: 'auto', overflowX: 'auto' }}>
                             <Table stickyHeader size="small" aria-label="recent orders">
                                 <TableHead>
                                     <TableRow>
@@ -1891,7 +1891,7 @@ const SalesDashboard = () => {
                             />
                         </Box>
 
-                        <TableContainer sx={{ flexGrow: 1, maxHeight: 320, overflow: 'auto' }}>
+                        <TableContainer sx={{ flexGrow: 1, maxHeight: 250, overflow: 'auto' }}>
                             <Table stickyHeader size="small" aria-label="state wise orders">
                                 <TableHead>
                                     <TableRow>
