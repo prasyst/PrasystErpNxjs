@@ -100,9 +100,10 @@ const CreateTicketPage = () => {
   const [zoomOpen, setZoomOpen] = useState(false);
   const [zoomSrc, setZoomSrc] = useState('');
   const [userName,setUserName]=useState()
-
+   console.log('seriesKey',seriesKey)
   useEffect(() => {
       const storedName = localStorage.getItem('EMP_NAME') || localStorage.getItem('USER_NAME');
+      console.log('storedName',storedName)
       const storedRole = localStorage.getItem('userRole');
       if (storedName) {
         const name=storedName.length>3 ? storedName.substring(0,11) + '..' :storedName
@@ -384,109 +385,145 @@ const CreateTicketPage = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async () => {
-    setLoading(true);
-    if (!validateForm()) {
-      toast.error("Please fill in all required fields.");
-      setLoading(false);
-      return;
-    }
-    try {
-      let newTktNo = "TK0001";
-      const isUpdate = !!TKTKEY;
-      let generatedTktKey = "";
-      if (isUpdate) {
-        generatedTktKey = TktKey;
-        newTktNo = TktNo;
-      } else {
-        if (seriesData.length > 0) {
-          const last = seriesData[0];
-          const numericPart = (last.ID || "0").replace(/\D/g, "");
-          const lastNumber = parseInt(numericPart, 10) || 0;
-          const nextNumber = lastNumber;
-          const paddedNumber = String(nextNumber).padStart(4, "0");
-          const prefix = (last.CPREFIX || "TK").toUpperCase();
+const handleSubmit = async () => {
+  setLoading(true);
+  
+  if (!validateForm()) {
+    toast.error("Please fill in all required fields.");
+    setLoading(false);
+    return;
+  }
+  
+  try {
+    const isUpdate = !!TKTKEY;
+    let generatedTktKey = "";
+    let newTktNo = "";
+
+    if (!isUpdate) {
+      try {
+        const seriesResponse = await axiosInstance.post('GetSeriesSettings/GetSeriesLastNewKey', {
+          MODULENAME: "TrnTkt",
+          TBLNAME: "TrnTkt",
+          FLDNAME: "TktNo",
+          NCOLLEN: 6,
+          CPREFIX: seriesKey?.CPREFIX || "TK",
+          COBR_ID: cobrId,
+          FCYR_KEY: fcyrKey,
+          TRNSTYPE: "M",
+          SERIESID: 0,
+          FLAG: ""
+        });
+        
+        if (seriesResponse.data.STATUS === 0 && Array.isArray(seriesResponse.data.DATA)) {
+          const seriesResult = seriesResponse.data.DATA[0];
+  
+          const prefix = (seriesKey?.CPREFIX || "TK").toUpperCase();
+          const numericPart = (seriesResult.ID || "001").replace(/\D/g, "");
+          const paddedNumber = String(numericPart).padStart(3, "0");
+          
           generatedTktKey = fcyrKey + cobrId + prefix + paddedNumber;
           newTktNo = prefix + paddedNumber;
-        }
-        else {
+        
+          setSeriesData(seriesResponse.data.DATA);
+        } else {
           const prefix = "TK";
-          const fallbackNum = "0001";
+          const fallbackNum = "001";
           generatedTktKey = fcyrKey + cobrId + prefix + fallbackNum;
           newTktNo = prefix + fallbackNum;
+          toast.warning("Using fallback ticket number.");
         }
+      } catch (seriesError) {
+        console.error("Error fetching series data:", seriesError);
+        // Fallback
+        const prefix = "TK";
+        const fallbackNum = "001";
+        generatedTktKey = fcyrKey + cobrId + prefix + fallbackNum;
+        newTktNo = prefix + fallbackNum;
+        toast.warning("Error fetching series. Using fallback ticket number.");
       }
-      let attachmentData = { TktImage: "", ImgName: "" };
-      if (attachments.length > 0) {
-        const file = attachments[0];
-        const base64String = file.fileData.split(",")[1];
-        attachmentData = {
-          TktImage: base64String,
-          ImgName: file.fileName,
-        };
-      }
-      const ticketData = {
-        FCYR_KEY: fcyrKey,
-        COBR_ID: cobrId,
-        TktKey: generatedTktKey,
-        TktNo: newTktNo,
-        RaiseBy_ID: USER_ID || EMP_KEY,
-        MobileNo: "",
-        RaiseByNm: USER_NAME || EMP_NAME,
-        TktDate: dayjs().format("YYYY-MM-DDTHH:mm:ss"),
-        TktTime: dayjs().format("HH:mm:ss"),
-        TktFor: ticketFor,
-        Machinery_Key: ticketFor === "M" ? formData.machineryKey : "",
-        CCN_Key: ticketFor === "C" ? formData.department : "",
-        TktServiceId: formData.service?.TKTSERVICEID,
-        TktSvrtyId: 1,
-        TktTypeId: 1,
-        TktTagId: 1,
-        TechEmp_Key: "",
-        EsclEmp_Key: "",
-        FrwdEmp_Key: "",
-        TktStatus: "O",
-        ReqFlg: "R",
-        Reason: formData.description,
-        RejDate: dayjs().format("YYYY-MM-DD"),
-        AcceptFlg: "N",
-        AssignFlg: "N",
-        AssignDt: dayjs().format("YYYY-MM-DD"),
-        TktDesc: formData.description,
-        Status: "1",
-        RslvRmrk: "testing Rslv",
-        Remark: formData.title,
-        TktImage: formData.TktImage,
-        ImgName: formData.ImgName,
-        trnTktDtlEntities: rowsSecondTable
-      };
-      if (isUpdate) {
-        ticketData.UpdatedBy = 0;
-      } else {
-        ticketData.CreatedBy = 0
-      }
-      const apiUrl = isUpdate
-        ? `TrnTkt/UpdateTrnTkt?UserName=${userName}&strCobrid=${cobrId}`
-        : `TrnTkt/InsertTrnTkt?UserName=${userName}&strCobrid=${cobrId}`;
-      const response = await axiosInstance.post(apiUrl, ticketData);
-      if (response.data.STATUS === 0) {
-        toast.success(
-          isUpdate
-            ? `Ticket ${newTktNo} updated successfully!`
-            : `Ticket ${newTktNo} created successfully!`
-        );
-        setTimeout(() => {
-          router.push("/emp-tickets/all-tickets");
-        }, 1500);
-      } else {
-        toast.error(response.data.MESSAGE || "Failed to save ticket.");
-      }
-    } catch (error) {
-      console.error("Failed to create ticket. Check console.");
-    } finally {
-      setLoading(false);
+    } else {
+      generatedTktKey = TktKey;
+      newTktNo = TktNo;
     }
-  };
+    
+    let attachmentData = { TktImage: "", ImgName: "" };
+    if (attachments.length > 0) {
+      const file = attachments[0];
+      const base64String = file.fileData.split(",")[1];
+      attachmentData = {
+        TktImage: base64String,
+        ImgName: file.fileName,
+      };
+    }
+    
+    const ticketData = {
+      FCYR_KEY: fcyrKey,
+      COBR_ID: cobrId,
+      TktKey: generatedTktKey,
+      TktNo: newTktNo,
+      RaiseBy_ID: USER_ID || EMP_KEY,
+      MobileNo: "",
+      RaiseByNm: USER_NAME || EMP_NAME,
+      TktDate: dayjs().format("YYYY-MM-DDTHH:mm:ss"),
+      TktTime: dayjs().format("HH:mm:ss"),
+      TktFor: ticketFor,
+      Machinery_Key: ticketFor === "M" ? formData.machineryKey : "",
+      CCN_Key: ticketFor === "C" ? formData.department : "",
+      TktServiceId: formData.service?.TKTSERVICEID,
+      TktSvrtyId: 1,
+      TktTypeId: 1,
+      TktTagId: 1,
+      TechEmp_Key: "",
+      EsclEmp_Key: "",
+      FrwdEmp_Key: "",
+      TktStatus: "O",
+      ReqFlg: "R",
+      Reason: formData.description,
+      RejDate: dayjs().format("YYYY-MM-DD"),
+      AcceptFlg: "N",
+      AssignFlg: "N",
+      AssignDt: dayjs().format("YYYY-MM-DD"),
+      TktDesc: formData.description,
+      Status: "1",
+      RslvRmrk: "testing Rslv",
+      Remark: formData.title,
+      TktImage: formData.TktImage,
+      ImgName: formData.ImgName,
+      trnTktDtlEntities: rowsSecondTable
+    };
+    
+    if (isUpdate) {
+      ticketData.UpdatedBy = USER_ID || EMP_KEY;
+    } else {
+      ticketData.CreatedBy = 0;
+    }
+    
+    const apiUrl = isUpdate
+      ? `TrnTkt/UpdateTrnTkt?UserName=${USER_NAME}&strCobrid=${cobrId}`
+      : `TrnTkt/InsertTrnTkt?UserName=${USER_NAME}&strCobrid=${cobrId}`;
+    
+    const response = await axiosInstance.post(apiUrl, ticketData);
+    
+    if (response.data.STATUS === 0) {
+      toast.success(
+        isUpdate
+          ? `Ticket ${newTktNo} updated successfully!`
+          : `Ticket ${newTktNo} created successfully!`
+      );
+      // setTimeout(() => {
+      //   router.push("/tickets/all-tickets");
+      // }, 1500);
+    } else {
+      toast.error(response.data.MESSAGE || "Failed to save ticket.");
+    }
+    
+  } catch (error) {
+    console.error("Failed to create ticket. Check console.", error);
+    toast.error("An error occurred while saving the ticket.");
+  } finally {
+    setLoading(false);
+  }
+};
   const handleFileChange = (event) => {
     const file = event.target.files[0];
     if (!file) return;
