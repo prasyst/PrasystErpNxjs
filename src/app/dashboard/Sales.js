@@ -4,20 +4,12 @@ import React, { useEffect, useState } from 'react';
 import {
   Box, Container, Typography, Grid, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Avatar, Chip, LinearProgress,
   Stack, Card, CardContent, useTheme, useMediaQuery, IconButton, Tooltip, TextField, Button, Dialog,
-  DialogTitle, DialogContent, DialogActions, Autocomplete
+  DialogTitle, DialogContent, DialogActions, Autocomplete,
+  CircularProgress
 } from '@mui/material';
 import { ShoppingCart, People, Refresh } from '@mui/icons-material';
 import {
-  ResponsiveContainer,
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip as ReTooltip,
-  RadialBarChart,
-  RadialBar,
-  PolarAngleAxis,
+  ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as ReTooltip,
 } from 'recharts';
 import { format } from 'date-fns';
 import axiosInstance from '@/lib/axios';
@@ -30,34 +22,6 @@ import FilterAltIcon from '@mui/icons-material/FilterAlt';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-
-const monthlyData = [
-  { name: 'Jan', value: 10000 },
-  { name: 'Feb', value: 45000 },
-  { name: 'Mar', value: 38000 },
-  { name: 'Apr', value: 52000 },
-  { name: 'May', value: 65000 },
-  { name: 'Jun', value: 70000 },
-  { name: 'Jul', value: 85000 },
-  { name: 'Aug', value: 92000 },
-  { name: 'Sep', value: 98000 },
-  { name: 'Oct', value: 105000 },
-  { name: 'Nov', value: 110450 },
-];
-
-const gaugeData = [{ name: 'Goal', value: 80, fill: '#4caf50' }];
-
-const topMarkets = [
-  { country: 'URBAN THINGS', sales: 505000, growth: 40, flag: '🇮🇩' },
-  { country: 'CMB', sales: 2808, growth: 23, flag: '🇩🇪' },
-  { country: 'Italy', sales: 19500, growth: 10, flag: '🇮🇹' },
-];
-
-const topProducts = [
-  { name: 'AeroPods Lite', sales: '12K sales', growth: 48, img: 'https://cdn.mos.cms.futurecdn.net/oWxxQ43VdwP7WN7tRynTXb.jpg' },
-  { name: 'HyperDrive SSD', sales: '7K sales', growth: 82, img: 'https://m.media-amazon.com/images/I/51czwFxVq5L._AC_UF894,1000_QL80_.jpg' },
-  { name: 'Laptop', sales: 'Mrp: 80K', growth: 92, img: 'https://m.media-amazon.com/images/I/513p8BwV-RL._SX679_.jpg' },
-];
 
 const Sales = () => {
   const theme = useTheme();
@@ -75,6 +39,9 @@ const Sales = () => {
   const [saleUnbilled, setSaleUnbilled] = useState([]);
   const [stateWise, setStateWise] = useState([]);
   const [openDialog, setOpenDialog] = useState(false);
+  const [filteredRecent, setFilteredRecent] = useState([]);
+  const [filteredStateWise, setFilteredStateWise] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     recentTransaction();
@@ -99,6 +66,7 @@ const Sales = () => {
   };
 
   const recentTransaction = async () => {
+    setIsLoading(true);
     try {
       const response = await axiosInstance.post("OrderDash/GetBillDashBoard", {
         COBR_ID: cobrid,
@@ -122,24 +90,58 @@ const Sales = () => {
       }
     } catch (error) {
       toast.error("Error while fetching recent transaction.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
   useEffect(() => {
+    setFilteredRecent(recentTran);
+  }, [recentTran]);
+
+  useEffect(() => {
+    setFilteredStateWise(stateWise);
+  }, [stateWise]);
+
+  useEffect(() => {
     handleSearch(searchQuery);
-  }, [searchQuery]);
+  }, [searchQuery, recentTran, stateWise]);
+
+  const clearSearch = () => {
+    setSearchQuery('');
+  };
 
   const handleSearch = debounce((query) => {
-    const lowerCaseQuery = query.toLowerCase();
-    const filtered = recentTran.filter((row) =>
-      row.BILL_NO.toLowerCase().includes(lowerCaseQuery) ||
-      row.PARTY_NAME.toLowerCase().includes(lowerCaseQuery) ||
-      row.BRAND_NAME.toLowerCase().includes(lowerCaseQuery) ||
-      row.BROKER_NAME.toLowerCase().includes(lowerCaseQuery) ||
-      String(row.AMOUNT).toLowerCase().includes(lowerCaseQuery)
-    );
-    setFilteredData(filtered.length > 0 ? filtered : recentTran);
-  }, 300);
+    const q = query.toLowerCase().trim();
+
+    // Filter recent transactions
+    if (q === '') {
+      setFilteredRecent(recentTran);
+    } else {
+      const filtered = recentTran.filter(row =>
+        row.BILL_NO?.toLowerCase().includes(q) ||
+        row.PARTY_NAME?.toLowerCase().includes(q) ||
+        row.BRAND_NAME?.toLowerCase().includes(q) ||
+        row.BROKER_NAME?.toLowerCase().includes(q) ||
+        row.CITY_NAME?.toLowerCase().includes(q) ||
+        row.STATE_NAME?.toLowerCase().includes(q) ||
+        String(row.AMOUNT || '').includes(q)
+      );
+      setFilteredRecent(filtered);
+    }
+
+    // Filter state wise
+    if (q === '') {
+      setFilteredStateWise(stateWise);
+    } else {
+      const filteredState = stateWise.filter(row =>
+        row.STATE_NAME?.toLowerCase().includes(q) ||
+        String(row.AMOUNT || '').includes(q) ||
+        String(row.BILLITMDTL_QTY || '').includes(q)
+      );
+      setFilteredStateWise(filteredState);
+    }
+  }, 350);
 
   const fetchBillDis = async () => {
     try {
@@ -219,6 +221,10 @@ const Sales = () => {
     name: state.STATE_NAME,
     qty: state.BILLITMDTL_QTY,
   }));
+
+  const topParties = filteredData.sort((a, b) => parseFloat(b.AMOUNT) - parseFloat(a.AMOUNT)).slice(0, 3);
+
+  const topBrokers = filteredData.sort((a, b) => parseFloat(b.AMOUNT) - parseFloat(a.AMOUNT)).slice(0, 4);
 
   return (
     <Box sx={{ bgcolor: '#f0f4f8', minHeight: '100vh', py: { xs: 2, md: 2 } }}>
@@ -314,10 +320,10 @@ const Sales = () => {
         {/* Key Metrics Cards */}
         <Grid container spacing={2} mb={3}>
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-            <Paper elevation={4} sx={{ p: 3, borderRadius: 3, bgcolor: '#fff', height: '100%' }}>
+            <Paper elevation={4} sx={{ p: 3, borderRadius: 3, bgcolor: '#4caf50', color: '#fff', height: '100%' }}>
               <Stack direction="row" justifyContent="space-between">
                 <Box>
-                  <Typography variant="body2" color="text.secondary">Bill with order dispatch</Typography>
+                  <Typography variant="h7">Bill with order dispatch</Typography>
                   <Typography variant="h6" fontWeight="bold">Value: {(billDis[0]?.AMOUNT / 100000).toFixed(2) + ' L'}</Typography>
                   <Typography variant="h6" fontWeight="bold">Qty: {billDis[0]?.BILLITMDTL_QTY}</Typography>
                 </Box>
@@ -327,10 +333,10 @@ const Sales = () => {
           </Grid>
 
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-            <Paper elevation={4} sx={{ p: 3, borderRadius: 3, bgcolor: '#fff', height: '100%' }}>
+            <Paper elevation={4} sx={{ p: 3, borderRadius: 3, bgcolor: '#ba68c8', color: '#fff', height: '100%' }}>
               <Stack direction="row" justifyContent="space-between">
                 <Box>
-                  <Typography variant="body2" color="text.secondary">UnBilled</Typography>
+                  <Typography variant="h7">UnBilled</Typography>
                   <Typography variant="h6" fontWeight="bold">Value: {saleUnbilled[0]?.AMOUNT}</Typography>
                   <Typography variant="h6" fontWeight="bold">Qty: {saleUnbilled[0]?.BILLITMDTL_QTY}</Typography>
                   {/* <Chip label="+4% from last month" color="success" size="small" sx={{ mt: 1 }} /> */}
@@ -341,10 +347,10 @@ const Sales = () => {
           </Grid>
 
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-            <Paper elevation={4} sx={{ p: 3, borderRadius: 3, bgcolor: '#fff', height: '100%' }}>
+            <Paper elevation={4} sx={{ p: 3, borderRadius: 3, bgcolor: '#42a5f5', color: '#fff', height: '100%' }}>
               <Stack direction="row" justifyContent="space-between">
                 <Box>
-                  <Typography variant="body2" color="text.secondary">Total Revenue(Dummy)</Typography>
+                  <Typography variant="h7">Total Revenue(Dummy)</Typography>
                   <Typography variant="h4" fontWeight="bold" mt={1}>92,120</Typography>
                   {/* <Chip label="+2%" color="success" size="small" sx={{ mt: 1 }} /> */}
                 </Box>
@@ -354,10 +360,10 @@ const Sales = () => {
           </Grid>
 
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-            <Paper elevation={4} sx={{ p: 3, borderRadius: 3, bgcolor: '#fff', height: '100%' }}>
+            <Paper elevation={4} sx={{ p: 3, borderRadius: 3, bgcolor: '#e57373', color: '#fff', height: '100%' }}>
               <Stack direction="row" justifyContent="space-between">
                 <Box>
-                  <Typography variant="body2" color="text.secondary">Customers(Dummy)</Typography>
+                  <Typography variant="h7">Customers(Dummy)</Typography>
                   <Typography variant="h4" fontWeight="bold" mt={1}>842</Typography>
                   {/* <Chip label="+12%" color="success" size="small" sx={{ mt: 1 }} /> */}
                 </Box>
@@ -370,7 +376,7 @@ const Sales = () => {
         {/* Charts Row */}
         <Grid container spacing={2} mb={3}>
           <Grid size={{ xs: 12, lg: 12 }}>
-            <Paper elevation={4} sx={{ borderRadius: 3, p: 3, bgcolor: '#fff' }}>
+            <Paper elevation={4} sx={{ borderRadius: 3, p: 2, bgcolor: '#fff' }}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                 <Typography variant="h6" fontWeight="bold">
                   Recent Transactions
@@ -378,55 +384,75 @@ const Sales = () => {
 
                 <TextField
                   variant="outlined"
-                  label="Search"
-                  placeholder='Search by Bill No, Party, Brand, Broker etc.'
+                  placeholder="Search by Bill No,Party etc."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   size="small"
                   sx={{
                     width: '200px',
-                    borderRadius: '5px',
                     '& .MuiOutlinedInput-root': {
-                      '&:hover fieldset': { borderColor: '#007bff' },
-                      '&.Mui-focused fieldset': { borderColor: '#007bff' },
+                      borderRadius: '20px',
+                    },
+                    '& .MuiOutlinedInput-notchedOutline': {
+                      borderRadius: '20px',
+                    },
+                    '& .MuiInputBase-input': {
+                      padding: '4.5px 14px',
                     },
                   }}
                 />
               </Box>
-              <TableContainer sx={{ mt: 2, height: '60vh', overflowY: 'auto' }}>
-                <Table>
-                  <TableHead>
-                    <TableRow sx={{ position: 'sticky', top: 0, backgroundColor: '#fafafa', zIndex: 1 }}>
-                      <TableCell sx={{ fontWeight: 'bold', fontSize: '14px', padding: '8px 12px', backgroundColor: '#f4f4f4' }}>Bill No</TableCell>
-                      <TableCell sx={{ fontWeight: 'bold', fontSize: '14px', padding: '8px 12px', backgroundColor: '#f4f4f4' }}>Bill Date</TableCell>
-                      <TableCell sx={{ fontWeight: 'bold', fontSize: '14px', padding: '8px 12px', backgroundColor: '#f4f4f4' }}>Party</TableCell>
-                      <TableCell sx={{ fontWeight: 'bold', fontSize: '14px', padding: '8px 12px', backgroundColor: '#f4f4f4' }}>City</TableCell>
-                      <TableCell sx={{ fontWeight: 'bold', fontSize: '14px', padding: '8px 12px', backgroundColor: '#f4f4f4' }}>State</TableCell>
-                      <TableCell sx={{ fontWeight: 'bold', fontSize: '14px', padding: '8px 12px', backgroundColor: '#f4f4f4' }}>seller</TableCell>
-                      <TableCell sx={{ fontWeight: 'bold', fontSize: '14px', padding: '8px 12px', backgroundColor: '#f4f4f4' }}>Brand</TableCell>
-                      <TableCell sx={{ fontWeight: 'bold', fontSize: '14px', padding: '8px 12px', backgroundColor: '#f4f4f4' }}>Broker</TableCell>
-                      <TableCell sx={{ fontWeight: 'bold', fontSize: '14px', padding: '8px 12px', backgroundColor: '#f4f4f4' }}>Qty</TableCell>
-                      <TableCell sx={{ fontWeight: 'bold', fontSize: '14px', padding: '8px 12px', backgroundColor: '#f4f4f4' }}>Amount</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {recentTran.map((row) => (
-                      <TableRow key={row.BILL_NO} sx={{ '&:hover': { backgroundColor: '#f5f5f5' }, borderBottom: '1px solid #e0e0e0' }}>
-                        <TableCell sx={{ padding: '6px 12px', fontSize: '14px' }}>{row.BILL_NO}</TableCell>
-                        <TableCell sx={{ padding: '6px 12px', fontSize: '14px' }}>{dayjs(row.BILL_DT).format('DD/MM/YYYY')}</TableCell>
-                        <TableCell sx={{ padding: '6px 12px', fontSize: '14px' }}>{row.PARTY_NAME}</TableCell>
-                        <TableCell sx={{ padding: '6px 12px', fontSize: '14px' }}>{row.CITY_NAME}</TableCell>
-                        <TableCell sx={{ padding: '6px 12px', fontSize: '14px' }}>{row.STATE_NAME}</TableCell>
-                        <TableCell sx={{ padding: '6px 12px', fontSize: '14px' }}>{row.SALEPERSON_NAME}</TableCell>
-                        <TableCell sx={{ padding: '6px 12px', fontSize: '14px' }}>{row.BRAND_NAME}</TableCell>
-                        <TableCell sx={{ padding: '6px 12px', fontSize: '14px' }}>{row.BROKER_NAME}</TableCell>
-                        <TableCell sx={{ padding: '6px 12px', fontSize: '14px' }}>{row.BILLITMDTL_QTY}</TableCell>
-                        <TableCell sx={{ padding: '6px 12px', fontSize: '14px' }}>{row.AMOUNT}</TableCell>
+              {isLoading ? (
+                <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', minHeight: '200px' }}>
+                  <CircularProgress size='3rem' />
+                  <Typography sx={{ marginTop: 2, color: '#047a2c' }} variant="body2">
+                    Loading Data...
+                  </Typography>
+                </Box>
+              ) : (
+                <TableContainer sx={{ mt: 2, height: '30vh', overflowY: 'auto' }}>
+                  <Table>
+                    <TableHead>
+                      <TableRow sx={{ position: 'sticky', top: 0, backgroundColor: '#fafafa', zIndex: 1 }}>
+                        <TableCell sx={{ fontWeight: 'bold', fontSize: '14px', padding: '4px 12px', backgroundColor: '#f4f4f4' }}>Bill No</TableCell>
+                        <TableCell sx={{ fontWeight: 'bold', fontSize: '14px', padding: '4px 12px', backgroundColor: '#f4f4f4' }}>Bill Date</TableCell>
+                        <TableCell sx={{ fontWeight: 'bold', fontSize: '14px', padding: '4px 12px', backgroundColor: '#f4f4f4' }}>Party</TableCell>
+                        <TableCell sx={{ fontWeight: 'bold', fontSize: '14px', padding: '4px 12px', backgroundColor: '#f4f4f4' }}>City</TableCell>
+                        <TableCell sx={{ fontWeight: 'bold', fontSize: '14px', padding: '4px 12px', backgroundColor: '#f4f4f4' }}>State</TableCell>
+                        <TableCell sx={{ fontWeight: 'bold', fontSize: '14px', padding: '4px 12px', backgroundColor: '#f4f4f4' }}>Seller</TableCell>
+                        <TableCell sx={{ fontWeight: 'bold', fontSize: '14px', padding: '4px 12px', backgroundColor: '#f4f4f4' }}>Brand</TableCell>
+                        <TableCell sx={{ fontWeight: 'bold', fontSize: '14px', padding: '4px 12px', backgroundColor: '#f4f4f4' }}>Broker</TableCell>
+                        <TableCell sx={{ fontWeight: 'bold', fontSize: '14px', padding: '4px 12px', backgroundColor: '#f4f4f4' }}>Qty</TableCell>
+                        <TableCell sx={{ fontWeight: 'bold', fontSize: '14px', padding: '4px 12px', backgroundColor: '#f4f4f4' }}>Amount</TableCell>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
+                    </TableHead>
+                    <TableBody>
+                      {filteredRecent.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={10} align="center">
+                            No matching transactions found
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        filteredRecent.map((row) => (
+                          <TableRow key={row.BILL_NO} sx={{ '&:hover': { backgroundColor: '#f5f5f5' }, borderBottom: '1px solid #e0e0e0' }}>
+                            <TableCell sx={{ padding: '2px 12px', fontSize: '14px' }}>{row.BILL_NO}</TableCell>
+                            <TableCell sx={{ padding: '2px 12px', fontSize: '14px' }}>{dayjs(row.BILL_DT).format('DD/MM/YYYY')}</TableCell>
+                            <TableCell sx={{ padding: '2px 12px', fontSize: '14px' }}>{row.PARTY_NAME}</TableCell>
+                            <TableCell sx={{ padding: '2px 12px', fontSize: '14px' }}>{row.CITY_NAME}</TableCell>
+                            <TableCell sx={{ padding: '2px 12px', fontSize: '14px' }}>{row.STATE_NAME}</TableCell>
+                            <TableCell sx={{ padding: '2px 12px', fontSize: '14px' }}>{row.SALEPERSON_NAME}</TableCell>
+                            <TableCell sx={{ padding: '2px 12px', fontSize: '14px' }}>{row.BRAND_NAME}</TableCell>
+                            <TableCell sx={{ padding: '2px 12px', fontSize: '14px' }}>{row.BROKER_NAME}</TableCell>
+                            <TableCell sx={{ padding: '2px 12px', fontSize: '14px' }}>{row.BILLITMDTL_QTY}</TableCell>
+                            <TableCell sx={{ padding: '2px 12px', fontSize: '14px' }}>{row.AMOUNT}</TableCell>
+                          </TableRow>
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              )}
             </Paper>
           </Grid>
 
@@ -451,24 +477,6 @@ const Sales = () => {
               </ResponsiveContainer>
             </Paper>
           </Grid>
-
-          {/* <Grid size={{ xs: 12, md: 4 }}>
-            <Paper elevation={4} sx={{ borderRadius: 3, p: 3, bgcolor: '#fff', height: '100%' }}>
-              <Typography variant="h6" fontWeight="bold" gutterBottom>Target Achievement</Typography>
-              <Box sx={{ position: 'relative', height: 280 }}>
-                <ResponsiveContainer width="100%" height="100%">
-                  <RadialBarChart cx="50%" cy="50%" innerRadius="50%" outerRadius="90%" data={gaugeData}>
-                    <PolarAngleAxis type="number" domain={[0, 100]} tick={false} />
-                    <RadialBar background={{ fill: '#eee' }} clockWise dataKey="value" cornerRadius={10} fill="#4caf50" />
-                  </RadialBarChart>
-                </ResponsiveContainer>
-                <Box sx={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', textAlign: 'center' }}>
-                  <Typography variant="h3" fontWeight="bold" color="#4caf50">80%</Typography>
-                  <Typography variant="body1" color="text.secondary">of annual target</Typography>
-                </Box>
-              </Box>
-            </Paper>
-          </Grid> */}
         </Grid>
 
         {/* Bottom Section */}
@@ -482,8 +490,7 @@ const Sales = () => {
 
                 <TextField
                   variant="outlined"
-                  label="Search"
-                  placeholder='Search by State, Amount etc.'
+                  placeholder='Search by State etc.'
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   size="small"
@@ -493,27 +500,42 @@ const Sales = () => {
                     '& .MuiOutlinedInput-root': {
                       '&:hover fieldset': { borderColor: '#007bff' },
                       '&.Mui-focused fieldset': { borderColor: '#007bff' },
+                      borderRadius: '20px',
+                    },
+                    '& .MuiOutlinedInput-notchedOutline': {
+                      borderRadius: '20px',
+                    },
+                    '& .MuiInputBase-input': {
+                      padding: '4.5px 14px',
                     },
                   }}
                 />
               </Box>
-              <TableContainer sx={{ mt: 2, height: '40vh', overflowY: 'auto' }}>
+              <TableContainer sx={{ mt: 2, height: '35vh', overflowY: 'auto' }}>
                 <Table>
                   <TableHead>
                     <TableRow sx={{ position: 'sticky', top: 0, backgroundColor: '#fafafa', zIndex: 1 }}>
-                      <TableCell sx={{ fontWeight: 'bold', fontSize: '14px', padding: '8px 12px', backgroundColor: '#f4f4f4' }}>State</TableCell>
-                      <TableCell sx={{ fontWeight: 'bold', fontSize: '14px', padding: '8px 12px', backgroundColor: '#f4f4f4' }}>Qty</TableCell>
-                      <TableCell sx={{ fontWeight: 'bold', fontSize: '14px', padding: '8px 12px', backgroundColor: '#f4f4f4' }}>Amount</TableCell>
+                      <TableCell sx={{ fontWeight: 'bold', fontSize: '14px', padding: '4px 12px', backgroundColor: '#f4f4f4' }}>State</TableCell>
+                      <TableCell sx={{ fontWeight: 'bold', fontSize: '14px', padding: '4px 12px', backgroundColor: '#f4f4f4' }}>Qty</TableCell>
+                      <TableCell sx={{ fontWeight: 'bold', fontSize: '14px', padding: '4px 12px', backgroundColor: '#f4f4f4' }}>Amount</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {stateWise.map((row) => (
-                      <TableRow key={row.STATE_NAME} sx={{ '&:hover': { backgroundColor: '#f5f5f5' }, borderBottom: '1px solid #e0e0e0' }}>
-                        <TableCell sx={{ padding: '6px 12px', fontSize: '14px' }}>{row.STATE_NAME}</TableCell>
-                        <TableCell sx={{ padding: '6px 12px', fontSize: '14px' }}>{row.BILLITMDTL_QTY}</TableCell>
-                        <TableCell sx={{ padding: '6px 12px', fontSize: '14px' }}>{row.AMOUNT}</TableCell>
+                    {filteredStateWise.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={3} align="center">
+                          No matching states
+                        </TableCell>
                       </TableRow>
-                    ))}
+                    ) : (
+                      filteredStateWise.map((row) => (
+                        <TableRow key={row.STATE_NAME} hover>
+                          <TableCell sx={{ padding: '2px 14px' }}>{row.STATE_NAME}</TableCell>
+                          <TableCell sx={{ padding: '2px 14px' }}>{row.BILLITMDTL_QTY}</TableCell>
+                          <TableCell sx={{ padding: '2px 14px' }}>{row.AMOUNT}</TableCell>
+                        </TableRow>
+                      ))
+                    )}
                   </TableBody>
                 </Table>
               </TableContainer>
@@ -522,21 +544,18 @@ const Sales = () => {
 
           <Grid size={{ xs: 12, lg: 4 }}>
             <Stack spacing={2}>
-              <Paper elevation={4} sx={{ borderRadius: 3, p: 3, bgcolor: '#fff' }}>
-                <Typography variant="h6" fontWeight="bold" gutterBottom>Top Brands</Typography>
-                {topMarkets.map((market, index) => (
+              <Paper elevation={4} sx={{ borderRadius: 3, px: 3, py: 2, bgcolor: '#fff' }}>
+                <Typography variant="h6" fontWeight="bold" gutterBottom>Top Broker</Typography>
+                {topBrokers.map((broker, index) => (
                   <Card key={index} variant="outlined" sx={{ mb: 1, borderRadius: 2 }}>
                     <CardContent>
                       <Stack direction="row" justifyContent="space-between" alignItems="center">
                         <Stack direction="row" spacing={3} alignItems="center">
-                          <Typography variant="h4">{market.flag}</Typography>
-                          <Box>
-                            <Typography variant="body1" fontWeight="medium">{market.country}</Typography>
-                          </Box>
+                          <Typography variant="body1" fontWeight="medium">{broker.BROKER_NAME}</Typography>
                         </Stack>
                         <Box textAlign="right">
-                          <Typography variant="body1" fontWeight="bold">{market.sales.toLocaleString()}</Typography>
-                          <Chip label={`+${market.growth}%`} color="success" size="small" />
+                          {/* <Typography variant="body1" fontWeight="bold">{broker.AMOUNT}</Typography> */}
+                          <Chip label={broker.AMOUNT} color="success" size="small" />
                         </Box>
                       </Stack>
                     </CardContent>
@@ -548,28 +567,22 @@ const Sales = () => {
 
           <Grid size={{ xs: 12, lg: 4 }}>
             <Stack spacing={2}>
-              <Paper elevation={4} sx={{ borderRadius: 3, p: 3, bgcolor: '#fff' }}>
-                <Typography variant="h6" fontWeight="bold" gutterBottom>Top Parties</Typography>
-                {topProducts.map((product, index) => (
+              <Paper elevation={4} sx={{ borderRadius: 3, px: 3, py: 2, bgcolor: '#fff' }}>
+                <Typography variant="h6" fontWeight="bold" gutterBottom>
+                  Top 3 Parties
+                </Typography>
+
+                {topParties.map((party, index) => (
                   <Card key={index} variant="outlined" sx={{ mb: 2, borderRadius: 2 }}>
                     <CardContent>
                       <Stack spacing={1}>
-                        <Stack direction="row" spacing={4} alignItems="center">
-                          <Avatar
-                            variant="rounded"
-                            src={product.img}
-                            alt={product.name}
-                            sx={{ width: 60, height: 60, objectFit: 'cover' }}
-                          />
-                          <Typography variant="body1" fontWeight="medium">{product.name}</Typography>
-                        </Stack>
                         <Stack direction="row" justifyContent="space-between" alignItems="center">
-                          <Typography variant="body2" color="text.secondary">{product.sales}</Typography>
-                          <Chip label={`+${product.growth}%`} color="success" size="small" />
+                          <Typography variant="body1" fontWeight="medium">{party.PARTY_NAME}</Typography>
+                          <Typography variant="body2">{party.AMOUNT}</Typography>
                         </Stack>
                         <LinearProgress
                           variant="determinate"
-                          value={product.growth}
+                          value={(parseFloat(party.AMOUNT) / Math.max(...filteredData.map(item => parseFloat(item.AMOUNT)))) * 100}
                           sx={{ height: 8, borderRadius: 4, bgcolor: '#e0e0e0' }}
                           color="success"
                         />
@@ -584,7 +597,7 @@ const Sales = () => {
       </Container>
 
       <Dialog open={openDialog} onClose={handleClose}>
-        <DialogTitle sx={{ padding: '8px 24px' }}>
+        <DialogTitle sx={{ padding: '4px 24px' }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span>Apply Filters</span>
             <IconButton onClick={handleClose} size="large">

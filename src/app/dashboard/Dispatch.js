@@ -412,6 +412,11 @@ const Dispatch = () => {
     }
   };
 
+  const chartData = stateOrd.map((state) => ({
+    name: state.STATE_NAME,
+    qty: state.PACKITMDTL_QTY,
+  }));
+
   return (
     <Box sx={{ bgcolor: '#f0f4f8', minHeight: '100vh', py: { xs: 2, md: 2 } }}>
       <ToastContainer />
@@ -622,7 +627,7 @@ const Dispatch = () => {
                   </Typography>
                 </Box>
               ) : (
-                <TableContainer component={Paper} sx={{ maxHeight: 400, overflow: 'auto' }}>
+                <TableContainer component={Paper} sx={{ maxHeight: 300, overflow: 'auto' }}>
                   <Table sx={{ minWidth: 650 }} size="small" aria-label="a dense table">
                     <TableHead sx={{ position: 'sticky', top: 0, backgroundColor: 'white', zIndex: 1 }}>
                       <TableRow>
@@ -717,7 +722,7 @@ const Dispatch = () => {
                   </Typography>
                 </Box>
               ) : (
-                <TableContainer component={Paper} sx={{ maxHeight: 400, overflow: 'auto' }}>
+                <TableContainer component={Paper} sx={{ maxHeight: 300, overflow: 'auto' }}>
                   <Table sx={{ minWidth: 650 }} size="small" aria-label="a dense table">
                     <TableHead sx={{ position: 'sticky', top: 0, backgroundColor: 'white', zIndex: 1 }}>
                       <TableRow>
@@ -843,7 +848,7 @@ const Dispatch = () => {
               <BarChart
                 xAxis={[{
                   scaleType: 'band',
-                  data: ['Delhi', 'Mumbai', 'Noida', 'London', 'Lucknow', 'Dadar', 'Bihar', 'Gurugram', 'Pune']
+                  data: ['Delhi', 'Mumbai', 'Noida', 'Surat', 'Lucknow', 'Tamilnadu', 'Bihar', 'Gurugram', 'Pune']
                 }]}
                 series={[
                   { data: [4, 3, 5, 6, 8, 4, 7, 4, 8] },
