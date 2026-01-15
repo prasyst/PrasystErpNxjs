@@ -238,6 +238,7 @@ const CreateTicketPage = () => {
       });
       if (response.data.STATUS === 0 && Array.isArray(response.data.DATA)) {
         setSeriesData(response.data.DATA);
+
       }
     } catch (error) {
       toast.error("Error while loading series.");
@@ -374,7 +375,7 @@ const CreateTicketPage = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async () => {
+const handleSubmit = async () => {
     setLoading(true);
     if (!validateForm()) {
       toast.error("Please fill in all required fields.");
@@ -477,6 +478,7 @@ const CreateTicketPage = () => {
       setLoading(false);
     }
   };
+
   const handleFileChange = (event) => {
     const file = event.target.files[0];
     if (!file) return;

@@ -103,6 +103,7 @@ const CreateTicketPage = () => {
 
   useEffect(() => {
       const storedName = localStorage.getItem('EMP_NAME') || localStorage.getItem('USER_NAME');
+      console.log('storedName',storedName)
       const storedRole = localStorage.getItem('userRole');
       if (storedName) {
         const name=storedName.length>3 ? storedName.substring(0,11) + '..' :storedName
@@ -384,7 +385,7 @@ const CreateTicketPage = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async () => {
+const handleSubmit = async () => {
     setLoading(true);
     if (!validateForm()) {
       toast.error("Please fill in all required fields.");
@@ -461,13 +462,13 @@ const CreateTicketPage = () => {
         trnTktDtlEntities: rowsSecondTable
       };
       if (isUpdate) {
-        ticketData.UpdatedBy = 0;
+        ticketData.UpdatedBy = USER_ID || EMP_KEY;
       } else {
-        ticketData.CreatedBy = 0
+        ticketData.CreatedBy = USER_ID || EMP_KEY;
       }
       const apiUrl = isUpdate
-        ? `TrnTkt/UpdateTrnTkt?UserName=${userName}&strCobrid=${cobrId}`
-        : `TrnTkt/InsertTrnTkt?UserName=${userName}&strCobrid=${cobrId}`;
+        ? `TrnTkt/UpdateTrnTkt?UserName=${USER_NAME}&strCobrid=${cobrId}`
+        : `TrnTkt/InsertTrnTkt?UserName=${USER_NAME}&strCobrid=${cobrId}`;
       const response = await axiosInstance.post(apiUrl, ticketData);
       if (response.data.STATUS === 0) {
         toast.success(
@@ -476,7 +477,7 @@ const CreateTicketPage = () => {
             : `Ticket ${newTktNo} created successfully!`
         );
         setTimeout(() => {
-          router.push("/emp-tickets/all-tickets");
+          router.push("/tickets/all-tickets");
         }, 1500);
       } else {
         toast.error(response.data.MESSAGE || "Failed to save ticket.");
