@@ -6,19 +6,14 @@ import {
 } from 'react-icons/md';
 import {
   ArrowBack as ArrowBackIcon,
-
   Comment as CommentIcon
 } from '@mui/icons-material';
 import {
-  Card, CardContent, Typography, Button, TableContainer, Table, TableHead, TableBody, TableRow, TableCell, Chip, Box, Grid,
-  IconButton, Stack, Paper, LinearProgress, Tooltip
-    Comment as CommentIcon,
-    Add as AddIcon,
-    Refresh  as RefreshIcon
+  Add as AddIcon, Refresh as RefreshIcon
 } from '@mui/icons-material';
 import {
-  Card, CardContent, Typography, Button, TableContainer, Table, TableHead, TableBody, TableRow, TableCell, Chip, Box, Grid,
-  IconButton, Stack, Paper, LinearProgress,Tooltip,useMediaQuery 
+  Card, Typography, Button, TableContainer, Table, TableHead, TableBody, TableRow, TableCell, Chip, Grid, Box, CardContent, IconButton,
+  Stack, Paper, LinearProgress, Tooltip, useMediaQuery
 } from '@mui/material';
 import axiosInstance from '@/lib/axios';
 import { FaExclamationTriangle, FaUsers, FaChartPie } from 'react-icons/fa';
@@ -36,8 +31,8 @@ const TicketDashboard = () => {
   const router = useRouter();
   const [activeModule, setActiveModule] = useState('overview');
   const [tickets, setTickets] = useState([]);
-  const [totalTicket,setTotalTicket]=useState()
- const isMobile = useMediaQuery('(max-width:600px)');
+  const [totalTicket, setTotalTicket] = useState()
+  const isMobile = useMediaQuery('(max-width:600px)');
   const [stats, setStats] = useState({
     total: 0,
     open: 0,
@@ -76,7 +71,7 @@ const TicketDashboard = () => {
           category: tkt.TKTSERVICENAME || "General",
           priority: tkt.TKTSVRTYNAME || "Medium",
           status: tkt.TKTSTATUS === "O" ? "open" :
-            (tkt.TKTSTATUS === "I" || tkt.TKTSTATUS === "H")  ? "in-progress" :
+            (tkt.TKTSTATUS === "I" || tkt.TKTSTATUS === "H") ? "in-progress" :
               tkt.TKTSTATUS === "R" ? "resolved" : "closed",
           assignee: tkt.TECHEMP_NAME || "Unassigned",
           reporter: tkt.RAISEBYNM || "Unknown",
