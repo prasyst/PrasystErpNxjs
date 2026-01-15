@@ -9,7 +9,9 @@ import {
     DialogContent, FormControlLabel, Checkbox, Badge, InputAdornment, Fade,
 } from "@mui/material";
 import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
-import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
+import HourglassEmptyIcon from '@mui/icons-material/HourglassEmpty';
+import WatchLaterIcon from '@mui/icons-material/WatchLater';
+import AccessAlarmIcon from '@mui/icons-material/AccessAlarm';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import dayjs from 'dayjs';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
@@ -30,8 +32,6 @@ import { PDFViewer } from "@react-pdf/renderer";
 import CloseIcon from '@mui/icons-material/Close';
 import ReceiptLongIcon from '@mui/icons-material/ReceiptLong';
 import SpeedDial from '@mui/material/SpeedDial';
-import SpeedDialIcon from '@mui/material/SpeedDialIcon';
-import SpeedDialAction from '@mui/material/SpeedDialAction';
 import GroupIcon from '@mui/icons-material/Group';
 import StorefrontIcon from '@mui/icons-material/Storefront';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
@@ -59,20 +59,22 @@ const CountUp = dynamic(
 const StyledCard = styled(Paper)(({ theme }) => ({
     display: 'flex',
     alignItems: 'center',
-    padding: theme.spacing(2),
+    paddingTop: theme.spacing(1),
+    paddingBottom: theme.spacing(1),
+    paddingLeft: theme.spacing(2),
+    paddingRight: theme.spacing(2),
     borderRadius: '12px',
-    background: 'linear-gradient(135deg, #2f3b52, #3d4a65)',
     color: '#fff',
     gap: theme.spacing(3),
     boxShadow: '0 6px 20px rgba(0, 0, 0, 0.15)',
     transition: 'transform 0.3s ease, box-shadow 0.3s ease, background 0.3s ease',
     '&:hover': {
-        transform: 'translateY(-2px)',
+        transform: 'translateY(-1px)',
         boxShadow: '0 12px 30px rgba(0, 0, 0, 0.25)',
-        background: 'linear-gradient(135deg, #3d4a65, #2f3b52)',
     },
     [theme.breakpoints.down('sm')]: {
-        padding: theme.spacing(2.5),
+        paddingTop: theme.spacing(1.5),
+        paddingBottom: theme.spacing(1.5),
     },
 }));
 
@@ -82,14 +84,15 @@ const StyledCard2 = styled(Paper)(({ theme }) => ({
     padding: theme.spacing(2),
     height: 400,
     borderRadius: '12px',
-    backgroundColor: '#4A6E8C',
-    color: '#fff',
+    backgroundColor: '#fff',
+    color: '#000',
 }));
 
 const headerCellStyle = {
     fontWeight: 'bold',
     color: '#fff',
     backgroundColor: '#69816bff',
+    padding: '2px 16px',
     position: 'sticky',
     top: 0,
     zIndex: 10,
@@ -763,7 +766,7 @@ const SalesDashboard = () => {
                             sx={{
                                 width: 150,
                                 '& .MuiPickersSectionList-root': {
-                                    padding: '9.5px 0',
+                                    padding: '7.5px 0',
                                 },
                             }}
                         />
@@ -776,12 +779,12 @@ const SalesDashboard = () => {
                             sx={{
                                 width: 150,
                                 '& .MuiPickersSectionList-root': {
-                                    padding: '9.5px 0',
+                                    padding: '7.5px 0',
                                 },
                             }}
                             className="custom-datepicker"
                         />
-                        <Button
+                        <Button size="small"
                             variant="contained"
                             onClick={handleFetchedData}
                             sx={{
@@ -795,6 +798,7 @@ const SalesDashboard = () => {
                             Get Data
                         </Button>
                         <Button
+                            size="small"
                             variant="contained"
                             onClick={() => setOpenDialog(true)}
                             startIcon={< FilterListIcon />}
@@ -1282,18 +1286,16 @@ const SalesDashboard = () => {
             <Grid container spacing={1} mb={2} gap={1}>
                 <Grid size={{ xs: 12, md: 3 }} sx={{ display: "flex" }}>
                     <Fade in={visible} timeout={500}>
-                        <StyledCard sx={{ width: "100%", position: "relative" }}>
+                        <StyledCard sx={{ width: "100%", position: "relative", bgcolor: '#64B5F6' }}>
                             <IconButton
                                 sx={{
                                     position: "absolute",
                                     top: 8,
                                     right: 8,
-                                    bgcolor: "#02020222",
-                                    color: "#4caf50",
+                                    bgcolor: "transparent",
+                                    color: "#003366",
                                     width: 60,
                                     height: 60,
-                                    boxShadow: "0 0 20px #4caf5066",
-                                    "&:hover": { bgcolor: "#4caf5044" },
                                 }}
                                 aria-label="Total Orders"
                             >
@@ -1316,18 +1318,16 @@ const SalesDashboard = () => {
 
                 <Grid size={{ xs: 12, md: 3 }} sx={{ display: "flex" }}>
                     <Fade in={visible} timeout={1000}>
-                        <StyledCard sx={{ width: "100%", position: 'relative' }}>
+                        <StyledCard sx={{ width: "100%", position: 'relative', bgcolor: '#7BBE9F' }}>
                             <IconButton
                                 sx={{
                                     position: "absolute",
                                     top: 8,
                                     right: 8,
-                                    bgcolor: "#2196f322",
-                                    color: "#2196f3",
+                                    bgcolor: "transparent",
+                                    color: "#1B5E20",
                                     width: 60,
                                     height: 60,
-                                    boxShadow: "0 0 20px #2196f366",
-                                    "&:hover": { bgcolor: "#2196f344" },
                                 }}
                                 aria-label="Dispatch"
                             >
@@ -1350,18 +1350,16 @@ const SalesDashboard = () => {
 
                 <Grid size={{ xs: 12, md: 3 }} sx={{ display: "flex" }}>
                     <Fade in={visible} timeout={1500}>
-                        <StyledCard sx={{ width: "100%", position: 'relative' }}>
+                        <StyledCard sx={{ width: "100%", position: 'relative', bgcolor: '#B197E6' }}>
                             <IconButton
                                 sx={{
                                     position: "absolute",
                                     top: 8,
                                     right: 8,
-                                    bgcolor: "#9c27b022",
-                                    color: "#9bb027ff",
+                                    bgcolor: "transparent",
+                                    color: "#4A148C",
                                     width: 60,
                                     height: 60,
-                                    boxShadow: "0 0 20px #2752b066",
-                                    "&:hover": { bgcolor: "#2789b044" },
                                 }}
                                 aria-label="Conversion %"
                             >
@@ -1376,9 +1374,9 @@ const SalesDashboard = () => {
                                 </Typography>
                                 <Box display="flex" alignItems="center" gap={0.5}>
                                     {totalConversion > 50 ? (
-                                        <ArrowUpwardIcon sx={{ color: '#4caf50' }} fontSize="small" />
+                                        <ArrowUpwardIcon sx={{ color: '#388E3C' }} fontSize="small" />
                                     ) : (
-                                        <ArrowDownwardIcon sx={{ color: '#f44336' }} fontSize="small" />
+                                        <ArrowDownwardIcon sx={{ color: '#D32F2F' }} fontSize="small" />
                                     )}
                                     <Typography variant="body2" color={totalConversion > 50 ? "success.main" : "error.main"} fontWeight={600}>
                                         {totalConversion.toFixed(0) ?? '0.00'}%
@@ -1388,7 +1386,7 @@ const SalesDashboard = () => {
                                     <LinearProgress
                                         variant="determinate"
                                         value={totalConversion}
-                                        sx={{ height: 10, borderRadius: 5, bgcolor: '#fff3e0' }}
+                                        sx={{ height: 10, borderRadius: 5, bgcolor: '#E1BEE7' }}
                                         color="success"
                                     />
                                 </Box>
@@ -1399,22 +1397,20 @@ const SalesDashboard = () => {
 
                 <Grid size={{ xs: 12, md: 3 }} sx={{ display: "flex" }}>
                     <Fade in={visible} timeout={2000}>
-                        <StyledCard sx={{ width: "100%", position: 'relative' }}>
+                        <StyledCard sx={{ width: "100%", position: 'relative', bgcolor: '#FF8C71' }}>
                             <IconButton
                                 sx={{
                                     position: "absolute",
                                     top: 8,
                                     right: 8,
-                                    bgcolor: "#ff980022",
-                                    color: "#ff9800",
+                                    bgcolor: "transparent",
+                                    color: "#6e3904",
                                     width: 60,
                                     height: 60,
-                                    boxShadow: "0 0 20px #ff980066",
-                                    "&:hover": { bgcolor: "#ff980044" },
                                 }}
                                 aria-label="Order Balance"
                             >
-                                <AccountBalanceIcon fontSize="large" />
+                                <AccessAlarmIcon fontSize="large" />
                             </IconButton>
                             <Box>
                                 <Typography variant="h6" fontWeight="bold" sx={{ mb: 1 }}>
@@ -1483,13 +1479,17 @@ const SalesDashboard = () => {
                                         borderRadius: '10px',
                                         bgcolor: '#f8fafc',
                                         fontSize: '0.875rem',
+                                        padding: '0px 14px'
+                                    },
+                                    '& .MuiInputBase-input': {
+                                        padding: '6.5px 0px',
                                     },
                                 }}
                             />
                         </Box>
 
                         {/* Table Container */}
-                        <TableContainer sx={{ flexGrow: 1, maxHeight: 450, overflow: 'auto', position: 'relative' }}>
+                        <TableContainer sx={{ flexGrow: 1, maxHeight: 400, overflow: 'auto', position: 'relative' }}>
                             <Table stickyHeader size="small" sx={{ minWidth: 1100 }}>
                                 <TableHead>
                                     <TableRow>
@@ -1507,6 +1507,7 @@ const SalesDashboard = () => {
                                                     '&:last-child': { borderRight: 'none' },
                                                     py: 0.5,
                                                     px: 1,
+                                                    padding: '0px 16px',
                                                 }}
                                             >
                                                 {header}
@@ -1530,7 +1531,7 @@ const SalesDashboard = () => {
                                                     },
                                                 }}
                                             >
-                                                <TableCell sx={{ borderRight: '1px solid #e2e8f0' }}>
+                                                <TableCell sx={{ borderRight: '1px solid #e2e8f0', padding: '0px 16px' }}>
                                                     <IconButton
                                                         size="small"
                                                         onClick={() => handleViewDocument(item)}
@@ -1539,31 +1540,31 @@ const SalesDashboard = () => {
                                                         <VisibilityIcon fontSize="small" />
                                                     </IconButton>
                                                 </TableCell>
-                                                <TableCell sx={{ borderRight: '1px solid #e2e8f0', fontSize: '0.875rem' }}>
+                                                <TableCell sx={{ borderRight: '1px solid #e2e8f0', fontSize: '0.875rem', padding: '0px 16px' }}>
                                                     {item.ORDBK_NO}
                                                 </TableCell>
-                                                <TableCell sx={{ borderRight: '1px solid #e2e8f0', fontSize: '0.875rem' }}>
+                                                <TableCell sx={{ borderRight: '1px solid #e2e8f0', fontSize: '0.875rem', padding: '0px 16px' }}>
                                                     {dayjs(item.ORDBK_DT).format('DD/MM/YYYY')}
                                                 </TableCell>
-                                                <TableCell sx={{ borderRight: '1px solid #e2e8f0', fontSize: '0.875rem' }}>
+                                                <TableCell sx={{ borderRight: '1px solid #e2e8f0', fontSize: '0.875rem', padding: '0px 16px' }}>
                                                     {item.PARTY_NAME}
                                                 </TableCell>
-                                                <TableCell sx={{ borderRight: '1px solid #e2e8f0', fontSize: '0.875rem' }}>
+                                                <TableCell sx={{ borderRight: '1px solid #e2e8f0', fontSize: '0.875rem', padding: '0px 16px' }}>
                                                     {item.CITY_NAME}
                                                 </TableCell>
-                                                <TableCell sx={{ borderRight: '1px solid #e2e8f0', fontSize: '0.875rem' }}>
+                                                <TableCell sx={{ borderRight: '1px solid #e2e8f0', fontSize: '0.875rem', padding: '0px 16px' }}>
                                                     {item.STATE_NAME}
                                                 </TableCell>
-                                                <TableCell sx={{ borderRight: '1px solid #e2e8f0', fontWeight: 700, fontSize: '0.875rem' }}>
+                                                <TableCell sx={{ borderRight: '1px solid #e2e8f0', fontWeight: 700, fontSize: '0.875rem', padding: '0px 16px' }}>
                                                     {item.QTY}
                                                 </TableCell>
-                                                <TableCell sx={{ borderRight: '1px solid #e2e8f0', fontSize: '0.875rem' }}>
+                                                <TableCell sx={{ borderRight: '1px solid #e2e8f0', fontSize: '0.875rem', padding: '0px 16px' }}>
                                                     {item.BROKER_NAME}
                                                 </TableCell>
-                                                <TableCell sx={{ borderRight: '1px solid #e2e8f0', fontSize: '0.875rem' }}>
+                                                <TableCell sx={{ borderRight: '1px solid #e2e8f0', fontSize: '0.875rem', padding: '0px 16px' }}>
                                                     {item.SALEPERSON_NAME}
                                                 </TableCell>
-                                                <TableCell>
+                                                <TableCell sx={{ padding: '0px 16px' }}>
                                                     <Chip
                                                         label={item.STATUS === 'CANL' ? 'Cancelled' : item.STATUS || 'Active'}
                                                         size="small"
@@ -1618,6 +1619,98 @@ const SalesDashboard = () => {
                 </Grid>
             </Grid>
 
+            <Grid container spacing={2} mt={2}>
+                <Grid size={{ xs: 12, md: 6 }} sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                    <StyledCard2 sx={{ flex: 1, display: 'flex', flexDirection: 'column', p: 2 }}>
+                        <Typography variant="subtitle1" fontWeight="bold" align="center" gutterBottom>
+                            Top 10 Parties by Order Amount
+                        </Typography>
+                        <PieChart
+                            series={[
+                                {
+                                    data: top10PartiesByAmount,
+                                    innerRadius: 30,
+                                    outerRadius: 90,
+                                    paddingAngle: 3,
+                                    cornerRadius: 8,
+                                    highlightScope: { faded: 'global', highlighted: 'item' },
+                                    faded: { innerRadius: 30, additionalRadius: -30, color: 'gray' },
+                                },
+                            ]}
+                            height={200}
+                            slotProps={{
+                                legend: {
+                                    direction: 'column',
+                                    position: { vertical: 'middle', horizontal: 'start' },
+                                    padding: { left: 10 },
+                                    style: { color: 'black' },
+                                },
+                            }}
+                            onItemClick={(event, { dataIndex }) => {
+                                const clicked = top10PartiesByAmount[dataIndex];
+                                setSelectedParty(clicked?.fullPartyName || null);
+                            }}
+                        >
+                        </PieChart>
+                    </StyledCard2>
+                </Grid>
+
+                <Grid size={{ xs: 12, md: 6 }} sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                    <StyledCard2 sx={{ flex: 1, display: 'flex', flexDirection: 'column', p: 2 }}>
+                        <Typography variant="subtitle1" fontWeight="bold" align="center" gutterBottom>
+                            Top 10 States by Order Amount
+                        </Typography>
+                        {stateWise.length > 0 ? (
+                            <PieChart
+                                series={[
+                                    {
+                                        data: stateWise
+                                            .sort((a, b) => parseFloat(b.AMOUNT || 0) - parseFloat(a.AMOUNT || 0))
+                                            .slice(0, 10)
+                                            .map((item, index) => ({
+                                                id: index,
+                                                label: (item.STATE_NAME || "Unknown").slice(0, 18) + (item.STATE_NAME?.length > 18 ? '...' : ''),
+                                                // label: `${(item.STATE_NAME || "Unknown").slice(0, 18)}${item.STATE_NAME?.length > 18 ? '...' : ''} - ${parseFloat(item.AMOUNT || 0).toFixed(2)}`,
+                                                value: parseFloat(item.AMOUNT || 0),
+                                                color: `hsl(${index * 36}, 70%, 50%)`,
+                                                fullStateName: item.STATE_NAME || "Unknown",
+                                            })),
+                                        innerRadius: 25,
+                                        outerRadius: 90,
+                                        paddingAngle: 3,
+                                        cornerRadius: 8,
+                                        highlightScope: { faded: 'global', highlighted: 'item' },
+                                        faded: { innerRadius: 30, additionalRadius: -30, color: 'gray' },
+                                    },
+                                ]}
+                                height={230}
+                                slotProps={{
+                                    legend: {
+                                        direction: 'column',
+                                        position: { vertical: 'middle', horizontal: 'right' },
+                                        padding: { left: 10 },
+                                        style: { color: 'black' },
+                                    },
+                                }}
+                                onItemClick={(event, { dataIndex }) => {
+                                    const clickedItem = stateWise
+                                        .sort((a, b) => parseFloat(b.AMOUNT || 0) - parseFloat(a.AMOUNT || 0))
+                                        .slice(0, 10)[dataIndex];
+
+                                    const stateName = clickedItem?.STATE_NAME || null;
+                                    setSelectedState(stateName);
+                                }}
+                            >
+                            </PieChart>
+                        ) : (
+                            <Box display="flex" justifyContent="center" alignItems="center" height="100%">
+                                <Typography color="text.secondary">No state data available</Typography>
+                            </Box>
+                        )}
+                    </StyledCard2>
+                </Grid>
+            </Grid>
+
             {/* Party Wise Orders Summary */}
             <Grid container spacing={2} sx={{ height: '100%', mt: 2 }}>
                 <Grid size={{ xs: 12, md: 12 }} sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
@@ -1651,7 +1744,7 @@ const SalesDashboard = () => {
                                     },
                                     '& .MuiInputLabel-root': {
                                         borderRadius: '9px',
-                                    }
+                                    },
                                 }}
                                 value={searchTermParty}
                                 onChange={(e) => setSearchTermParty(e.target.value)}
@@ -1704,15 +1797,15 @@ const SalesDashboard = () => {
                                                     },
                                                 }}
                                             >
-                                                <TableCell>{item.PARTY_NAME || '-'}</TableCell>
-                                                <TableCell>{item.CITY_NAME || '-'}</TableCell>
-                                                <TableCell>{item.STATE_NAME || '-'}</TableCell>
-                                                <TableCell>
+                                                <TableCell sx={{ padding: '2px 16px' }}>{item.PARTY_NAME || '-'}</TableCell>
+                                                <TableCell sx={{ padding: '2px 16px' }}>{item.CITY_NAME || '-'}</TableCell>
+                                                <TableCell sx={{ padding: '2px 16px' }}>{item.STATE_NAME || '-'}</TableCell>
+                                                <TableCell sx={{ padding: '2px 16px' }}>
                                                     {parseFloat(item.AMOUNT || 0).toLocaleString('en-IN', { maximumFractionDigits: 2 })}
                                                 </TableCell>
-                                                <TableCell>{parseFloat(item.QTY || 0).toLocaleString('en-IN')}</TableCell>
-                                                <TableCell>{item.BROKER_NAME || '-'}</TableCell>
-                                                <TableCell>{item.SALEPERSON_NAME || '-'}</TableCell>
+                                                <TableCell sx={{ padding: '2px 16px' }}>{parseFloat(item.QTY || 0).toLocaleString('en-IN')}</TableCell>
+                                                <TableCell sx={{ padding: '2px 16px' }}>{item.BROKER_NAME || '-'}</TableCell>
+                                                <TableCell sx={{ padding: '2px 16px' }}>{item.SALEPERSON_NAME || '-'}</TableCell>
                                             </TableRow>
                                         ))
                                     ) : (
@@ -1763,98 +1856,6 @@ const SalesDashboard = () => {
                 </Grid>
             </Grid>
 
-            <Grid container spacing={2} mt={2}>
-                <Grid size={{ xs: 12, md: 6 }} sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                    <StyledCard2 sx={{ flex: 1, display: 'flex', flexDirection: 'column', p: 2 }}>
-                        <Typography variant="subtitle1" fontWeight="bold" align="center" gutterBottom>
-                            Top 10 Parties by Order Amount
-                        </Typography>
-                        <PieChart
-                            series={[
-                                {
-                                    data: top10PartiesByAmount,
-                                    innerRadius: 30,
-                                    outerRadius: 90,
-                                    paddingAngle: 3,
-                                    cornerRadius: 8,
-                                    highlightScope: { faded: 'global', highlighted: 'item' },
-                                    faded: { innerRadius: 30, additionalRadius: -30, color: 'gray' },
-                                },
-                            ]}
-                            height={200}
-                            slotProps={{
-                                legend: {
-                                    direction: 'column',
-                                    position: { vertical: 'middle', horizontal: 'start' },
-                                    padding: { left: 10 },
-                                    style: { color: 'white' },
-                                },
-                            }}
-                            onItemClick={(event, { dataIndex }) => {
-                                const clicked = top10PartiesByAmount[dataIndex];
-                                setSelectedParty(clicked?.fullPartyName || null);
-                            }}
-                        >
-                        </PieChart>
-                    </StyledCard2>
-                </Grid>
-
-                <Grid size={{ xs: 12, md: 6 }} sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                    <StyledCard2 sx={{ flex: 1, display: 'flex', flexDirection: 'column', p: 2 }}>
-                        <Typography variant="subtitle1" fontWeight="bold" align="center" gutterBottom>
-                            Top 10 States by Order Amount
-                        </Typography>
-                        {stateWise.length > 0 ? (
-                            <PieChart
-                                series={[
-                                    {
-                                        data: stateWise
-                                            .sort((a, b) => parseFloat(b.AMOUNT || 0) - parseFloat(a.AMOUNT || 0))
-                                            .slice(0, 10)
-                                            .map((item, index) => ({
-                                                id: index,
-                                                label: (item.STATE_NAME || "Unknown").slice(0, 18) + (item.STATE_NAME?.length > 18 ? '...' : ''),
-                                                // label: `${(item.STATE_NAME || "Unknown").slice(0, 18)}${item.STATE_NAME?.length > 18 ? '...' : ''} - ${parseFloat(item.AMOUNT || 0).toFixed(2)}`,
-                                                value: parseFloat(item.AMOUNT || 0),
-                                                color: `hsl(${index * 36}, 70%, 50%)`,
-                                                fullStateName: item.STATE_NAME || "Unknown",
-                                            })),
-                                        innerRadius: 25,
-                                        outerRadius: 90,
-                                        paddingAngle: 3,
-                                        cornerRadius: 8,
-                                        highlightScope: { faded: 'global', highlighted: 'item' },
-                                        faded: { innerRadius: 30, additionalRadius: -30, color: 'gray' },
-                                    },
-                                ]}
-                                height={230}
-                                slotProps={{
-                                    legend: {
-                                        direction: 'column',
-                                        position: { vertical: 'middle', horizontal: 'right' },
-                                        padding: { left: 10 },
-                                        style: { color: 'white' },
-                                    },
-                                }}
-                                onItemClick={(event, { dataIndex }) => {
-                                    const clickedItem = stateWise
-                                        .sort((a, b) => parseFloat(b.AMOUNT || 0) - parseFloat(a.AMOUNT || 0))
-                                        .slice(0, 10)[dataIndex];
-
-                                    const stateName = clickedItem?.STATE_NAME || null;
-                                    setSelectedState(stateName);
-                                }}
-                            >
-                            </PieChart>
-                        ) : (
-                            <Box display="flex" justifyContent="center" alignItems="center" height="100%">
-                                <Typography color="text.secondary">No state data available</Typography>
-                            </Box>
-                        )}
-                    </StyledCard2>
-                </Grid>
-            </Grid>
-
             {/* State wise order summary */}
             <Grid container spacing={2} sx={{ height: '100%', mt: 2 }}>
                 <Grid size={{ xs: 12, md: 12 }} sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
@@ -1894,12 +1895,12 @@ const SalesDashboard = () => {
                             <Table stickyHeader size="small" aria-label="state wise orders">
                                 <TableHead>
                                     <TableRow>
-                                        <TableCell sx={{ fontWeight: 'bold', color: '#fff', backgroundColor: '#66a6afff' }}>State</TableCell>
-                                        <TableCell sx={{ fontWeight: 'bold', color: '#fff', backgroundColor: '#66a6afff' }}>Amount</TableCell>
-                                        <TableCell sx={{ fontWeight: 'bold', color: '#fff', backgroundColor: '#66a6afff' }}>Qty</TableCell>
-                                        <TableCell sx={{ fontWeight: 'bold', color: '#fff', backgroundColor: '#66a6afff' }}>BalQty</TableCell>
-                                        <TableCell sx={{ fontWeight: 'bold', color: '#fff', backgroundColor: '#66a6afff' }}>SaleQty</TableCell>
-                                        <TableCell sx={{ fontWeight: 'bold', color: '#fff', backgroundColor: '#66a6afff' }}>Qty%</TableCell>
+                                        <TableCell sx={{ fontWeight: 'bold', color: '#fff', backgroundColor: '#66a6afff', padding: '2px 16px' }}>State</TableCell>
+                                        <TableCell sx={{ fontWeight: 'bold', color: '#fff', backgroundColor: '#66a6afff', padding: '2px 16px' }}>Amount</TableCell>
+                                        <TableCell sx={{ fontWeight: 'bold', color: '#fff', backgroundColor: '#66a6afff', padding: '2px 16px' }}>Qty</TableCell>
+                                        <TableCell sx={{ fontWeight: 'bold', color: '#fff', backgroundColor: '#66a6afff', padding: '2px 16px' }}>BalQty</TableCell>
+                                        <TableCell sx={{ fontWeight: 'bold', color: '#fff', backgroundColor: '#66a6afff', padding: '2px 16px' }}>SaleQty</TableCell>
+                                        <TableCell sx={{ fontWeight: 'bold', color: '#fff', backgroundColor: '#66a6afff', padding: '2px 16px' }}>Qty%</TableCell>
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
@@ -1928,12 +1929,12 @@ const SalesDashboard = () => {
                                                         },
                                                     }}
                                                 >
-                                                    <TableCell>{item.STATE_NAME}</TableCell>
-                                                    <TableCell>{item.AMOUNT}</TableCell>
-                                                    <TableCell>{item.QTY}</TableCell>
-                                                    <TableCell>{item.BAL_QTY}</TableCell>
-                                                    <TableCell>{item.SALE_QTY}</TableCell>
-                                                    <TableCell>{qtyPercentage + "%"}</TableCell>
+                                                    <TableCell sx={{ padding: '2px 15px' }}>{item.STATE_NAME}</TableCell>
+                                                    <TableCell sx={{ padding: '2px 15px' }}>{item.AMOUNT}</TableCell>
+                                                    <TableCell sx={{ padding: '2px 15px' }}>{item.QTY}</TableCell>
+                                                    <TableCell sx={{ padding: '2px 15px' }}>{item.BAL_QTY}</TableCell>
+                                                    <TableCell sx={{ padding: '2px 15px' }}>{item.SALE_QTY}</TableCell>
+                                                    <TableCell sx={{ padding: '2px 15px' }}>{qtyPercentage + "%"}</TableCell>
                                                 </TableRow>
                                             );
                                         })
