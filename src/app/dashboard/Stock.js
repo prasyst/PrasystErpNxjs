@@ -543,15 +543,24 @@ const Stock = () => {
                         <Box sx={{ width: '100%', height: 400 }}>
                             <ResponsiveContainer width="100%" height="100%">
                                 <BarChart data={brandData} margin={{ right: 10, left: 10 }}>
+                                    <defs>
+                                        <linearGradient id="gradient1" x1="0%" y1="0%" x2="100%" y2="100%">
+                                            <stop offset="0%" stopColor="#635bff" />
+                                            <stop offset="20%" stopColor="#c51d1d" />
+                                            <stop offset="100%" stopColor="#00bcd4" />
+                                        </linearGradient>
+                                    </defs>
+
                                     <CartesianGrid strokeDasharray="3 3" />
                                     <XAxis dataKey="name" />
                                     <YAxis />
                                     <Tooltip />
                                     <Legend />
-                                    <Bar dataKey="qty" fill="#635bff" />
+                                    <Bar dataKey="qty" fill="url(#gradient1)" />
                                 </BarChart>
                             </ResponsiveContainer>
                         </Box>
+
                     </Paper>
                 </Grid>
 

@@ -6,6 +6,12 @@ import {
 } from 'react-icons/md';
 import {
   ArrowBack as ArrowBackIcon,
+
+  Comment as CommentIcon
+} from '@mui/icons-material';
+import {
+  Card, CardContent, Typography, Button, TableContainer, Table, TableHead, TableBody, TableRow, TableCell, Chip, Box, Grid,
+  IconButton, Stack, Paper, LinearProgress, Tooltip
     Comment as CommentIcon,
     Add as AddIcon,
     Refresh  as RefreshIcon
@@ -40,8 +46,8 @@ const TicketDashboard = () => {
     closed: 0,
     overdue: 0
   });
-  console.log('tickets',tickets)
-const [followupDialogOpen, setFollowupDialogOpen] = useState(false);
+  console.log('tickets', tickets)
+  const [followupDialogOpen, setFollowupDialogOpen] = useState(false);
   const [selectedTicketForFollowup, setSelectedTicketForFollowup] = useState(null);
   const [showCreateTicket, setShowCreateTicket] = useState(false);
   const [selectedTicket, setSelectedTicket] = useState(null);
@@ -91,7 +97,7 @@ const [followupDialogOpen, setFollowupDialogOpen] = useState(false);
       setLoading(false);
     }
   };
-    const handleQuickFollowup = (ticket) => {
+  const handleQuickFollowup = (ticket) => {
     setSelectedTicketForFollowup(ticket);
     setFollowupDialogOpen(true);
   };
@@ -100,7 +106,7 @@ const [followupDialogOpen, setFollowupDialogOpen] = useState(false);
     fetchRecentTickets();
   }, []);
 
-   const handleFollowupSuccess = () => {
+  const handleFollowupSuccess = () => {
     // fetchTicketDash();
   };
 
@@ -262,6 +268,7 @@ const [followupDialogOpen, setFollowupDialogOpen] = useState(false);
 
   const quickStats = [
     {
+
       title: 'Total Tickets',
       value: totalTicket?.TOTALRECORDS || '0',
       change: '+12%',
@@ -290,12 +297,19 @@ const [followupDialogOpen, setFollowupDialogOpen] = useState(false);
       icon: MdCheckCircleOutline
     },
     {
-      title: 'Overdue',
-      value: stats.overdue,
-      change: '+3%',
-      color: 'red',
-      icon: MdWarning
+      title: 'Total Tickets',
+      value: stats.total,
+      change: '+12%',
+      color: 'blue',
+      icon: MdList
     },
+    // {
+    //   title: 'Overdue',
+    //   value: stats.overdue,
+    //   change: '+3%',
+    //   color: 'red',
+    //   icon: MdWarning
+    // },
     {
       title: 'SLA Compliance',
       value: '92%',
@@ -679,7 +693,7 @@ const [followupDialogOpen, setFollowupDialogOpen] = useState(false);
                       }}>
                         Assignee
                       </TableCell>
-                        <TableCell sx={{
+                      <TableCell sx={{
                         fontSize: '0.75rem',
                         fontWeight: 600,
                         color: '#6b7280',
