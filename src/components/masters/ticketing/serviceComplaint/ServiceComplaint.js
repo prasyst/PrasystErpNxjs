@@ -147,25 +147,26 @@ const ServiceComplaint = () => {
 
     useEffect(() => {
         const fetchSubCat = async () => {
-              if (formData.TKTCATID) {
-            try {
-                const response = await axiosInstance.post(`TktsubCat/GetTktCatWiseSubCatDrp`,{ 
-                     TktCatId: formData.TKTCATID,  }
-                );
-                console.log("API response:", response.data.DATA);
-                if (
-                    response.data.STATUS === 0 &&
-                    response.data.RESPONSESTATUSCODE === 1
-                ) {
-                    setSCats(response.data.DATA);
-                } else {
-                    toast.error("Failed to fetch Ticket Sub Category Name");
+            if (formData.TKTCATID) {
+                try {
+                    const response = await axiosInstance.post(`TktsubCat/GetTktCatWiseSubCatDrp`, {
+                        TktCatId: formData.TKTCATID,
+                    }
+                    );
+                    console.log("API response:", response.data.DATA);
+                    if (
+                        response.data.STATUS === 0 &&
+                        response.data.RESPONSESTATUSCODE === 1
+                    ) {
+                        setSCats(response.data.DATA);
+                    } else {
+                        toast.error("Failed to fetch Ticket Sub Category Name");
+                    }
+                } catch (error) {
+                    console.error("Error fetching Ticket Sub Category Name", error);
+                    toast.error("Error fetching Ticket Sub Category Name. Please try again.");
                 }
-            } catch (error) {
-                console.error("Error fetching Ticket Sub Category Name", error);
-                toast.error("Error fetching Ticket Sub Category Name. Please try again.");
             }
-        }
         };
         fetchSubCat();
     }, [formData.TKTCATID]);
@@ -330,15 +331,18 @@ const ServiceComplaint = () => {
             TKTSVRTYID: formData?.TKTSVRTYID || '',
             TKTTYPEID: formData?.TKTTYPEID || '',
             TKTTAGID: formData?.TKTTAGID || '',
-            EMP_KEY: formData?.EMP_KEY || 'EP005',
+            EMP_KEY: formData?.EMP_KEY || '',
             LEADTIME: formData?.LEADTIME || '',
             DESCRIPTION: formData?.DESCRIPTION || '',
             STATUS: formData?.STATUS || 1,
             REMARK: formData?.REMARK || ''
         };
 
-        const userName = localStorage.getItem('Ankita');
-        const COBR_ID = "02";
+        // const userName = localStorage.getItem('Ankita');
+        // const COBR_ID = "02";
+
+        const COBR_ID = localStorage.getItem('COBR_ID');
+        const userName = localStorage.getItem('USER_NAME');
 
         let response;
         if (mode === 'edit') {
@@ -346,7 +350,6 @@ const ServiceComplaint = () => {
             payload.UPDATEDBY = 2;
             response = await axiosInstance.patch(`TktService/UpdateTktService?UserName=${(userName)}&strCobrid=${COBR_ID}`, payload);
 
-            console.log("payload", payload);
         } else {
             payload.CREATEDBY = 2;
             response = await axiosInstance.post(`TktService/InsertTktService?UserName=${(userName)}&strCobrid=${COBR_ID}`, payload);

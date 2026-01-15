@@ -1,9 +1,10 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Box, Container, Typography, Grid, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Avatar, Chip, LinearProgress,
   Stack, Card, CardContent, useTheme, useMediaQuery, IconButton, Tooltip,
+  TextField,
 } from '@mui/material';
 import {
   TrendingUp,
@@ -26,6 +27,10 @@ import {
   PolarAngleAxis,
 } from 'recharts';
 import { format } from 'date-fns';
+import axiosInstance from '@/lib/axios';
+import { toast, ToastContainer } from 'react-toastify';
+import dayjs from 'dayjs';
+import debounce from 'lodash.debounce';
 
 const monthlyData = [
   { name: 'Jan', value: 10000 },
@@ -43,15 +48,6 @@ const monthlyData = [
 
 const gaugeData = [{ name: 'Goal', value: 80, fill: '#4caf50' }];
 
-const recentTransactions = [
-  { id: 'TK-88421', product: 'NovaEar Pro ANC', img: 'https://i.rtings.com/assets/pages/PznfqYY1/best-airpods-alternatives-20240708-medium.jpg?format=auto', date: '19 Nov 2025, 10:32', customer: 'Ethan Clarke', price: 7900, status: 'Completed' },
-  { id: 'TK-88422', product: 'TekWatch Pulse', img: 'https://cdn.thewirecutter.com/wp-content/media/2023/06/fitnesstrackers-2048px-09819-3x2-1.jpg?auto=webp&quality=75&crop=1.91:1&width=1200', date: '19 Nov 2025, 11:05', customer: 'Ava Mitchell', price: 1500, status: 'Cancelled' },
-  { id: 'TK-88423', product: 'AeroPods Lite', img: 'https://www.apple.com/v/airpods/ab/images/overview/hero_startframe__f6btrn4bhpyu_large.jpg', date: '19 Nov 2025, 11:44', customer: 'Liam Parker', price: 550, status: 'Pending' },
-  { id: 'TK-88424', product: 'FluxCharge 85W', img: 'https://m.media-amazon.com/images/I/61RDnbG+-3L._AC_UF894,1000_QL80_.jpg', date: '19 Nov 2025, 12:10', customer: 'Sophia Hayes', price: 2100, status: 'Completed' },
-  { id: 'TK-88425', product: 'Nova Mini 8', img: 'https://cdn.shopify.com/s/files/1/0738/1499/9346/files/mini-pc-vs-aio-computer.jpg?v=1727249251', date: '19 Nov 2025, 12:40', customer: 'Noah Bennett', price: 19900, status: 'Completed' },
-  { id: 'TK-88426', product: 'Nova SmartCam 2K HDR', img: 'http://www.lorex.com/cdn/shop/files/eda0f09993fc76dd0463c6b6aaefef7daae56590580edeff369b889d8fdc8ce0.png?v=1748362529', date: '19 Nov 2025, 13:15', customer: 'Chloe Turner', price: 7100, status: 'Completed' },
-];
-
 const topMarkets = [
   { country: 'Indonesia', sales: 82100, growth: 40, flag: '🇮🇩' },
   { country: 'Germany', sales: 52400, growth: 23, flag: '🇩🇪' },
@@ -67,9 +63,116 @@ const topProducts = [
 const Sales = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const [cobrid, setCobrId] = useState(localStorage.getItem('COBR_ID'));
+  const [fcyr, setFcyr] = useState(localStorage.getItem('FCYR_KEY'));
+  const [recentTran, setRecentTran] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filteredData, setFilteredData] = useState([]);
+  const [billDis, setBillDis] = useState([]);
+  const [saleUnbilled, setSaleUnbilled] = useState([]);
+
+  useEffect(() => {
+    recentTransaction();
+    fetchBillDis();
+    fetchUnbilledSales();
+  }, [])
+
+  const recentTransaction = async () => {
+    try {
+      const response = await axiosInstance.post("OrderDash/GetBillDashBoard", {
+        COBR_ID: cobrid,
+        FCYR_KEY: fcyr,
+        FROM_DT: "2025-01-01",
+        To_DT: "2026-01-30",
+        Flag: "RECENT",
+        PageNumber: 1,
+        PageSize: 10,
+        SearchText: "",
+        Brandfilter: "",
+        Partyfilter: "",
+        statefilter: "",
+        Brokerfilter: ""
+      })
+      if (response.data.STATUS === 0) {
+        setRecentTran(response.data.DATA)
+        setFilteredData(response.data.DATA);
+      } else {
+        setRecentTran([]);
+      }
+    } catch (error) {
+      toast.error("Error while fetching recent transaction.");
+    }
+  };
+
+  useEffect(() => {
+    handleSearch(searchQuery);
+  }, [searchQuery]);
+
+  const handleSearch = debounce((query) => {
+    const lowerCaseQuery = query.toLowerCase();
+    const filtered = recentTran.filter((row) =>
+      row.BILL_NO.toLowerCase().includes(lowerCaseQuery) ||
+      row.PARTY_NAME.toLowerCase().includes(lowerCaseQuery) ||
+      row.BRAND_NAME.toLowerCase().includes(lowerCaseQuery) ||
+      row.BROKER_NAME.toLowerCase().includes(lowerCaseQuery) ||
+      String(row.AMOUNT).toLowerCase().includes(lowerCaseQuery)
+    );
+    setFilteredData(filtered.length > 0 ? filtered : recentTran);
+  }, 300);
+
+  const fetchBillDis = async () => {
+    try {
+      const response = await axiosInstance.post('OrderDash/GetBillDashBoard', {
+        COBR_ID: cobrid,
+        FCYR_KEY: fcyr,
+        FROM_DT: "2025-04-01",
+        To_DT: "2026-01-30",
+        Flag: "BillDis",
+        PageNumber: 1,
+        PageSize: 10,
+        SearchText: "",
+        Brandfilter: "",
+        Partyfilter: "",
+        statefilter: "",
+        Brokerfilter: ""
+      })
+      if (response.data.STATUS === 0) {
+        setBillDis(response.data.DATA);
+      } else {
+        setBillDis([]);
+      }
+    } catch (error) {
+      toast.error("Erro while fetching the record.");
+    }
+  };
+
+  const fetchUnbilledSales = async () => {
+    try {
+      const response = await axiosInstance.post("OrderDash/GetBillDashBoard", {
+        COBR_ID: cobrid,
+        FCYR_KEY: fcyr,
+        FROM_DT: "2025-04-01",
+        To_DT: "2026-01-30",
+        Flag: "BillDis",
+        PageNumber: 1,
+        PageSize: 10,
+        SearchText: "",
+        Brandfilter: "",
+        Partyfilter: "",
+        statefilter: "",
+        Brokerfilter: ""
+      });
+      if (response.data.STATUS === 0) {
+        setSaleUnbilled(response.data.DATA);
+      }
+    } catch (error) {
+      toast.error("Error while fetching the unbilled.");
+    }
+  };
 
   return (
     <Box sx={{ bgcolor: '#f0f4f8', minHeight: '100vh', py: { xs: 2, md: 2 } }}>
+      <ToastContainer />
       <Container maxWidth="xl">
         <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
           <Typography variant="h4" fontWeight="bold" color="#1a1a1a">
@@ -95,12 +198,9 @@ const Sales = () => {
             <Paper elevation={4} sx={{ p: 3, borderRadius: 3, bgcolor: '#fff', height: '100%' }}>
               <Stack direction="row" justifyContent="space-between">
                 <Box>
-                  <Typography variant="body2" color="text.secondary">Total Profit</Typography>
-                  <Typography variant="h4" fontWeight="bold" mt={1}>$110,450</Typography>
-                  <Stack direction="row" alignItems="center" mt={1}>
-                    <TrendingUp sx={{ color: '#4caf50', fontSize: 20 }} />
-                    <Typography variant="body2" color="#4caf50" ml={1}>+$10,250 this month</Typography>
-                  </Stack>
+                  <Typography variant="body2" color="text.secondary">Bill with order dispatch</Typography>
+                  <Typography variant="h6" fontWeight="bold">Value: {(billDis[0]?.AMOUNT / 100000).toFixed(2) + ' L'}</Typography>
+                  <Typography variant="h6" fontWeight="bold">Qty: {billDis[0]?.BILLITMDTL_QTY}</Typography>
                 </Box>
                 <AttachMoney sx={{ fontSize: 50, color: '#8cbbddff' }} />
               </Stack>
@@ -111,9 +211,10 @@ const Sales = () => {
             <Paper elevation={4} sx={{ p: 3, borderRadius: 3, bgcolor: '#fff', height: '100%' }}>
               <Stack direction="row" justifyContent="space-between">
                 <Box>
-                  <Typography variant="body2" color="text.secondary">Total Orders</Typography>
-                  <Typography variant="h4" fontWeight="bold" mt={1}>1,660</Typography>
-                  <Chip label="+4% from last month" color="success" size="small" sx={{ mt: 1 }} />
+                  <Typography variant="body2" color="text.secondary">UnBilled</Typography>
+                  <Typography variant="h6" fontWeight="bold">Value: {saleUnbilled[0]?.AMOUNT}</Typography>
+                  <Typography variant="h6" fontWeight="bold">Qty: {saleUnbilled[0]?.BILLITMDTL_QTY}</Typography>
+                  {/* <Chip label="+4% from last month" color="success" size="small" sx={{ mt: 1 }} /> */}
                 </Box>
                 <ShoppingCart sx={{ fontSize: 50, color: '#8bd191ff' }} />
               </Stack>
@@ -126,7 +227,7 @@ const Sales = () => {
                 <Box>
                   <Typography variant="body2" color="text.secondary">Total Revenue</Typography>
                   <Typography variant="h4" fontWeight="bold" mt={1}>$92,120</Typography>
-                  <Chip label="+2%" color="success" size="small" sx={{ mt: 1 }} />
+                  {/* <Chip label="+2%" color="success" size="small" sx={{ mt: 1 }} /> */}
                 </Box>
                 <AttachMoney sx={{ fontSize: 50, color: '#d3ae71ff' }} />
               </Stack>
@@ -139,7 +240,7 @@ const Sales = () => {
                 <Box>
                   <Typography variant="body2" color="text.secondary">Customers</Typography>
                   <Typography variant="h4" fontWeight="bold" mt={1}>842</Typography>
-                  <Chip label="+12%" color="success" size="small" sx={{ mt: 1 }} />
+                  {/* <Chip label="+12%" color="success" size="small" sx={{ mt: 1 }} /> */}
                 </Box>
                 <People sx={{ fontSize: 50, color: '#d486e0ff' }} />
               </Stack>
@@ -164,10 +265,9 @@ const Sales = () => {
             </Paper>
           </Grid>
 
-          {/* Sales Goal Gauge */}
           <Grid size={{ xs: 12, md: 4 }}>
             <Paper elevation={4} sx={{ borderRadius: 3, p: 3, bgcolor: '#fff', height: '100%' }}>
-              <Typography variant="h6" fontWeight="bold" gutterBottom>Sales Goal Achievement</Typography>
+              <Typography variant="h6" fontWeight="bold" gutterBottom>Target Achievement</Typography>
               <Box sx={{ position: 'relative', height: 280 }}>
                 <ResponsiveContainer width="100%" height="100%">
                   <RadialBarChart cx="50%" cy="50%" innerRadius="50%" outerRadius="90%" data={gaugeData}>
@@ -186,46 +286,59 @@ const Sales = () => {
 
         {/* Bottom Section */}
         <Grid container spacing={2}>
-          <Grid size={{ xs: 12, lg: 8 }}>
+          <Grid size={{ xs: 12, lg: 12 }}>
             <Paper elevation={4} sx={{ borderRadius: 3, p: 3, bgcolor: '#fff' }}>
-              <Typography variant="h6" fontWeight="bold" gutterBottom>Recent Transactions</Typography>
-              <TableContainer sx={{ mt: 2 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                <Typography variant="h6" fontWeight="bold">
+                  Recent Transactions
+                </Typography>
+
+                <TextField
+                  variant="outlined"
+                  label="Search"
+                  placeholder='Search by Bill No, Party, Brand, Broker etc.'
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  size="small"
+                  sx={{
+                    width: '200px',
+                    borderRadius: '5px',
+                    '& .MuiOutlinedInput-root': {
+                      '&:hover fieldset': { borderColor: '#007bff' },
+                      '&.Mui-focused fieldset': { borderColor: '#007bff' },
+                    },
+                  }}
+                />
+              </Box>
+              <TableContainer sx={{ mt: 2, height: '60vh', overflowY: 'auto' }}>
                 <Table>
                   <TableHead>
-                    <TableRow>
-                      <TableCell>Order ID</TableCell>
-                      <TableCell>Product</TableCell>
-                      <TableCell>Date & Time</TableCell>
-                      <TableCell>Customer</TableCell>
-                      <TableCell align="right">Price</TableCell>
-                      <TableCell align="center">Status</TableCell>
+                    <TableRow sx={{ position: 'sticky', top: 0, backgroundColor: '#fafafa', zIndex: 1 }}>
+                      <TableCell sx={{ fontWeight: 'bold', fontSize: '14px', padding: '8px 12px', backgroundColor: '#f4f4f4' }}>Bill No</TableCell>
+                      <TableCell sx={{ fontWeight: 'bold', fontSize: '14px', padding: '8px 12px', backgroundColor: '#f4f4f4' }}>Bill Date</TableCell>
+                      <TableCell sx={{ fontWeight: 'bold', fontSize: '14px', padding: '8px 12px', backgroundColor: '#f4f4f4' }}>Party</TableCell>
+                      <TableCell sx={{ fontWeight: 'bold', fontSize: '14px', padding: '8px 12px', backgroundColor: '#f4f4f4' }}>City</TableCell>
+                      <TableCell sx={{ fontWeight: 'bold', fontSize: '14px', padding: '8px 12px', backgroundColor: '#f4f4f4' }}>State</TableCell>
+                      <TableCell sx={{ fontWeight: 'bold', fontSize: '14px', padding: '8px 12px', backgroundColor: '#f4f4f4' }}>seller</TableCell>
+                      <TableCell sx={{ fontWeight: 'bold', fontSize: '14px', padding: '8px 12px', backgroundColor: '#f4f4f4' }}>Brand</TableCell>
+                      <TableCell sx={{ fontWeight: 'bold', fontSize: '14px', padding: '8px 12px', backgroundColor: '#f4f4f4' }}>Broker</TableCell>
+                      <TableCell sx={{ fontWeight: 'bold', fontSize: '14px', padding: '8px 12px', backgroundColor: '#f4f4f4' }}>Qty</TableCell>
+                      <TableCell sx={{ fontWeight: 'bold', fontSize: '14px', padding: '8px 12px', backgroundColor: '#f4f4f4' }}>Amount</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {recentTransactions.map((row) => (
-                      <TableRow key={row.id} hover>
-                        <TableCell>{row.id}</TableCell>
-                        <TableCell>
-                          <Stack direction="row" spacing={2} alignItems="center">
-                            <Avatar
-                              variant="rounded"
-                              src={row.img}
-                              alt={row.product}
-                              sx={{ width: 50, height: 50, objectFit: 'cover' }}
-                            />
-                            <Typography variant="body2">{row.product}</Typography>
-                          </Stack>
-                        </TableCell>
-                        <TableCell>{row.date}</TableCell>
-                        <TableCell>{row.customer}</TableCell>
-                        <TableCell align="right">${row.price.toLocaleString()}</TableCell>
-                        <TableCell align="center">
-                          <Chip
-                            label={row.status}
-                            color={row.status === 'Completed' ? 'success' : row.status === 'Pending' ? 'warning' : 'error'}
-                            size="small"
-                          />
-                        </TableCell>
+                    {recentTran.map((row) => (
+                      <TableRow key={row.id} sx={{ '&:hover': { backgroundColor: '#f5f5f5' }, borderBottom: '1px solid #e0e0e0' }}>
+                        <TableCell sx={{ padding: '6px 12px', fontSize: '14px' }}>{row.BILL_NO}</TableCell>
+                        <TableCell sx={{ padding: '6px 12px', fontSize: '14px' }}>{dayjs(row.BILL_DT).format('DD/MM/YYYY')}</TableCell>
+                        <TableCell sx={{ padding: '6px 12px', fontSize: '14px' }}>{row.PARTY_NAME}</TableCell>
+                        <TableCell sx={{ padding: '6px 12px', fontSize: '14px' }}>{row.CITY_NAME}</TableCell>
+                        <TableCell sx={{ padding: '6px 12px', fontSize: '14px' }}>{row.STATE_NAME}</TableCell>
+                        <TableCell sx={{ padding: '6px 12px', fontSize: '14px' }}>{row.SALEPERSON_NAME}</TableCell>
+                        <TableCell sx={{ padding: '6px 12px', fontSize: '14px' }}>{row.BRAND_NAME}</TableCell>
+                        <TableCell sx={{ padding: '6px 12px', fontSize: '14px' }}>{row.BROKER_NAME}</TableCell>
+                        <TableCell sx={{ padding: '6px 12px', fontSize: '14px' }}>{row.BILLITMDTL_QTY}</TableCell>
+                        <TableCell sx={{ padding: '6px 12px', fontSize: '14px' }}>{row.AMOUNT}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -234,11 +347,10 @@ const Sales = () => {
             </Paper>
           </Grid>
 
-          {/* Sidebar: Top Markets & Products */}
-          <Grid size={{ xs: 12, lg: 4 }}>
+          <Grid size={{ xs: 12, lg: 6 }}>
             <Stack spacing={2}>
               <Paper elevation={4} sx={{ borderRadius: 3, p: 3, bgcolor: '#fff' }}>
-                <Typography variant="h6" fontWeight="bold" gutterBottom>Top Markets</Typography>
+                <Typography variant="h6" fontWeight="bold" gutterBottom>Top Brands</Typography>
                 {topMarkets.map((market, index) => (
                   <Card key={index} variant="outlined" sx={{ mb: 1, borderRadius: 2 }}>
                     <CardContent>
@@ -258,9 +370,13 @@ const Sales = () => {
                   </Card>
                 ))}
               </Paper>
+            </Stack>
+          </Grid>
 
+          <Grid size={{ xs: 12, lg: 6 }}>
+            <Stack spacing={2}>
               <Paper elevation={4} sx={{ borderRadius: 3, p: 3, bgcolor: '#fff' }}>
-                <Typography variant="h6" fontWeight="bold" gutterBottom>Top Products</Typography>
+                <Typography variant="h6" fontWeight="bold" gutterBottom>Top Parties</Typography>
                 {topProducts.map((product, index) => (
                   <Card key={index} variant="outlined" sx={{ mb: 2, borderRadius: 2 }}>
                     <CardContent>

@@ -1639,6 +1639,7 @@ const Header = ({ isSidebarCollapsed, onMenuToggle, isMobile }) => {
   const [voiceSupported, setVoiceSupported] = useState(false);
   const [aiSpeaking, setAiSpeaking] = useState(false);
   const [voiceMessage, setVoiceMessage] = useState('');
+  const [clientId, setClientId] = useState('');
   const recognitionRef = useRef(null);
   const synthRef = useRef(null);
   
@@ -1870,40 +1871,59 @@ const Header = ({ isSidebarCollapsed, onMenuToggle, isMobile }) => {
   }, []);
 
   const fetchCompanyAndBranchNames = async () => {
-    try {
-      const coId = localStorage.getItem('CO_ID');
-      const cobrId = localStorage.getItem('COBR_ID');
+  try {
+    const coId = localStorage.getItem('CO_ID');
+    const cobrId = localStorage.getItem('COBR_ID');
 
-      if (coId && cobrId) {
-        const companyResponse = await axiosInstance.post('COMPANY/Getdrpcofill', {
-          CO_ID: "",
-          Flag: ""
-        });
-
-        if (companyResponse.data?.STATUS === 0 && Array.isArray(companyResponse.data.DATA)) {
-          const company = companyResponse.data.DATA.find(c => c.CO_ID === coId);
-          if (company) {
-            setCompanyName(company.CO_NAME);
+    if (coId && cobrId) {
+      // Fetch Client ID first
+      try {
+        const clientIdResponse = await axiosInstance.get('USERS/GetClientId');
+        console.log('Client ID Response:', clientIdResponse.data);
+        
+        if (clientIdResponse.data?.STATUS === 0 && clientIdResponse.data.DATA) {
+          // Extract number from "Client Id is 5102"
+          const clientIdMatch = clientIdResponse.data.DATA.match(/\d+/);
+          if (clientIdMatch) {
+            setClientId(clientIdMatch[0]);
+            console.log('Client ID Set:', clientIdMatch[0]);
           }
         }
+      } catch (error) {
+        console.error('Error fetching client ID:', error);
+      }
 
-        const branchResponse = await axiosInstance.post('COMPANY/Getdrpcobrfill', {
-          COBR_ID: "",
-          CO_ID: coId,
-          Flag: ""
-        });
+      // Fetch Company
+      const companyResponse = await axiosInstance.post('COMPANY/Getdrpcofill', {
+        CO_ID: "",
+        Flag: ""
+      });
 
-        if (branchResponse.data?.STATUS === 0 && Array.isArray(branchResponse.data.DATA)) {
-          const branch = branchResponse.data.DATA.find(b => b.COBR_ID === cobrId);
-          if (branch) {
-            setBranchName(branch.COBR_NAME);
-          }
+      if (companyResponse.data?.STATUS === 0 && Array.isArray(companyResponse.data.DATA)) {
+        const company = companyResponse.data.DATA.find(c => c.CO_ID === coId);
+        if (company) {
+          setCompanyName(company.CO_NAME);
         }
       }
-    } catch (error) {
-      console.error('Error fetching company/branch names:', error);
+
+      // Fetch Branch
+      const branchResponse = await axiosInstance.post('COMPANY/Getdrpcobrfill', {
+        COBR_ID: "",
+        CO_ID: coId,
+        Flag: ""
+      });
+
+      if (branchResponse.data?.STATUS === 0 && Array.isArray(branchResponse.data.DATA)) {
+        const branch = branchResponse.data.DATA.find(b => b.COBR_ID === cobrId);
+        if (branch) {
+          setBranchName(branch.COBR_NAME);
+        }
+      }
     }
-  };
+  } catch (error) {
+    console.error('Error fetching company/branch names:', error);
+  }
+};
 
   useEffect(() => {
     // Check if browser supports Web Speech API
@@ -2658,19 +2678,7 @@ const Header = ({ isSidebarCollapsed, onMenuToggle, isMobile }) => {
                     color: '#635bff',
                   }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
-                      {/* <span>🇮🇳</span>
-                      <strong>Indian Accent Examples:</strong>
-                    </div>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', fontSize: '0.7rem' }}>
-                      <span style={{ backgroundColor: '#e8e7ff', padding: '0.2rem 0.4rem', borderRadius: '4px' }}>
-                        "आरएम पर्चेज ऑर्डर" or "rm purchase"
-                      </span>
-                      <span style={{ backgroundColor: '#e8e7ff', padding: '0.2rem 0.4rem', borderRadius: '4px' }}>
-                        "सेल्स ऑर्डर" or "sales order"
-                      </span>
-                      <span style={{ backgroundColor: '#e8e7ff', padding: '0.2rem 0.4rem', borderRadius: '4px' }}>
-                        "डैशबोर्ड" or "dashboard"
-                      </span> */}
+                      
                     </div>
                   </div>
                 )}
@@ -2778,40 +2786,57 @@ const Header = ({ isSidebarCollapsed, onMenuToggle, isMobile }) => {
 
           {/* Company and Branch Name Display - ONLY for Desktop */}
           {!isMobile && (companyName || branchName) && (
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'flex-start',
-                marginLeft: '1rem',
-                padding: '0.5rem 1rem',
-                backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                borderRadius: '8px',
-                border: '1px solid rgba(255, 255, 255, 0.2)',
-                maxWidth: '300px',
-                flexShrink: 0,
-              }}
-            >
-              {branchName && (
-                <span
-                  style={{
-                    color: 'rgba(255, 255, 255, 0.9)',
-                    fontSize: '1rem',
-                    lineHeight: '1.2',
-                    marginTop: '0.1rem',
-                    whiteSpace: 'nowrap',
-                    fontWeight: '600',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    width: '100%',
-                  }}
-                  title={branchName}
-                >
-                  {branchName}
-                </span>
-              )}
-            </div>
-          )}
+  <div
+    style={{
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'flex-start',
+      marginLeft: '1rem',
+      padding: '0.5rem 1rem',
+      backgroundColor: 'rgba(255, 255, 255, 0.1)',
+      borderRadius: '8px',
+      border: '1px solid rgba(255, 255, 255, 0.2)',
+      maxWidth: '350px',
+      flexShrink: 0,
+    }}
+  >
+    {companyName && (
+      <span
+        style={{
+          color: 'rgba(255, 255, 255, 0.9)',
+          fontSize: '0.85rem',
+          lineHeight: '1.3',
+          whiteSpace: 'nowrap',
+          fontWeight: '500',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          width: '100%',
+        }}
+        title={`${companyName}${clientId ? ` (${clientId})` : ''}`}
+      >
+        {/* {companyName}{clientId && <span style={{ fontWeight: '600',fontSize: '1rem', color: 'rgba(255, 255, 255, 1)' }}> ({clientId})</span>} */}
+      </span>
+    )}
+    {branchName && (
+      <span
+        style={{
+          color: 'rgba(255, 255, 255, 0.95)',
+          fontSize: '1rem',
+          lineHeight: '1.3',
+          marginTop: '0.2rem',
+          whiteSpace: 'nowrap',
+          fontWeight: '600',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          width: '100%',
+        }}
+        title={branchName}
+      >
+        {companyName}{clientId && <span style={{ fontWeight: '600',fontSize: '1rem', color: 'rgba(255, 255, 255, 1)' }}> ({clientId})</span>}
+      </span>
+    )}
+  </div>
+)}
         </div>
 
         <div className="flex items-center gap-2 md:gap-3" style={{ flexShrink: 0 }}>
@@ -2862,232 +2887,224 @@ const Header = ({ isSidebarCollapsed, onMenuToggle, isMobile }) => {
               )}
             </button>
 
-            {isRecentlyVisitedOpen && (
-              <div style={{
-                position: 'absolute',
-                top: '100%',
-                right: isMobile ? 'auto' : 0,
-                left: isMobile ? '50%' : 'auto',
-                transform: isMobile ? 'translateX(-50%)' : 'none',
-                backgroundColor: 'white',
-                border: '1px solid #e0e0e0',
-                borderRadius: '12px',
-                width: isMobile ? 'calc(100vw - 32px)' : '320px',
-                maxWidth: isMobile ? '400px' : '320px',
-                maxHeight: isMobile ? '60vh' : '400px',
-                zIndex: 1000,
-                boxShadow: '0 8px 25px rgba(0,0,0,0.15)',
-                marginTop: '0.5rem',
-                marginLeft: isMobile ? '16px' : '0',
-                marginRight: isMobile ? '16px' : '0',
-              }}>
-                <div style={{
-                  padding: '1rem',
-                  borderBottom: '1px solid #f0f0f0',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                }}>
-                  <span style={{ fontWeight: '600', color: '#333' }}>
-                    Recently Visited
-                    {recentPaths.length > 0 && (
-                      <span style={{
-                        marginLeft: '0.5rem',
-                        fontSize: '0.8rem',
-                        backgroundColor: '#635bff',
-                        color: 'white',
-                        padding: '0.2rem 0.5rem',
-                        borderRadius: '10px',
-                        fontWeight: '500',
-                      }}>
-                        {recentPaths.length}
-                      </span>
-                    )}
-                  </span>
-                  {recentPaths.length > 0 && (
-                    <button
-                      onClick={clearRecentPaths}
-                      style={{
-                        background: 'none',
-                        border: 'none',
-                        color: '#635bff',
-                        fontSize: '0.8rem',
-                        cursor: 'pointer',
-                        fontWeight: '500',
-                      }}
-                    >
-                      Clear All
-                    </button>
-                  )}
-                </div>
+           {isRecentlyVisitedOpen && (
+  <div style={{
+    position: 'absolute',
+    top: '100%',
+    right: isMobile ? '0' : 0,
+    left: isMobile ? '0' : 'auto',
+    backgroundColor: 'white',
+    border: '1px solid #e0e0e0',
+    borderRadius: isMobile ? '8px' : '12px',
+    width: isMobile ? '250px' : '320px',
+    maxHeight: isMobile ? '50vh' : '400px',
+    zIndex: 1000,
+    boxShadow: '0 8px 25px rgba(0,0,0,0.15)',
+    marginTop: '0.5rem',
+    marginRight: isMobile ? '0.5rem' : '0',
+  }}>
+    <div style={{
+      padding: isMobile ? '0.6rem 0.75rem' : '1rem',
+      borderBottom: '1px solid #f0f0f0',
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      gap: '0.5rem',
+    }}>
+      <span style={{ 
+        fontWeight: '600', 
+        color: '#333',
+        fontSize: isMobile ? '0.85rem' : '1rem',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '0.4rem',
+      }}>
+        Recently Visited
+        {recentPaths.length > 0 && (
+          <span style={{
+            fontSize: isMobile ? '0.65rem' : '0.8rem',
+            backgroundColor: '#635bff',
+            color: 'white',
+            padding: isMobile ? '0.15rem 0.4rem' : '0.2rem 0.5rem',
+            borderRadius: '8px',
+            fontWeight: '500',
+          }}>
+            {recentPaths.length}
+          </span>
+        )}
+      </span>
+      {recentPaths.length > 0 && (
+        <button
+          onClick={clearRecentPaths}
+          style={{
+            background: 'none',
+            border: 'none',
+            color: '#635bff',
+            fontSize: isMobile ? '0.7rem' : '0.8rem',
+            cursor: 'pointer',
+            fontWeight: '500',
+            padding: isMobile ? '0.2rem' : '0',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          Clear All
+        </button>
+      )}
+    </div>
 
-                <div style={{ 
-                  maxHeight: isMobile ? 'calc(60vh - 120px)' : '300px', 
-                  overflowY: 'auto',
-                  scrollbarWidth: isMobile ? 'none' : 'thin',
-                  msOverflowStyle: isMobile ? 'none' : 'auto',
-                }}>
-                  {isMobile && (
-                    <style>
-                      {`
-                        @media (max-width: 768px) {
-                          div[style*="maxHeight"]::-webkit-scrollbar {
-                            display: none;
-                          }
-                        }
-                      `}
-                    </style>
-                  )}
-                  {recentPaths.length > 0 ? (
-                    recentPaths.map((item, index) => (
-                      <div
-                        key={item.id}
-                        style={{
-                          padding: '0.75rem 1rem',
-                          borderBottom: index < recentPaths.length - 1 ? '1px solid #f8f8f8' : 'none',
-                          cursor: 'pointer',
-                          backgroundColor: '#fff',
-                          transition: 'background-color 0.2s ease',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                        }}
-                        className="hover:bg-gray-50"
-                        onClick={() => handleRecentPathClick(item.path)}
-                        title={`Click to open "${item.name}" in new tab`}
-                      >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '0.5rem' : '0.75rem', flex: 1 }}>
-                          <div style={{
-                            width: '28px',
-                            height: '28px',
-                            borderRadius: '6px',
-                            backgroundColor: '#f0f2ff',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            color: '#635bff',
-                            fontSize: '0.8rem',
-                            fontWeight: '600',
-                            flexShrink: 0,
-                          }}>
-                            {index + 1}
-                          </div>
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{
-                              fontSize: isMobile ? '0.85rem' : '0.9rem',
-                              color: '#333',
-                              fontWeight: '500',
-                              lineHeight: '1.4',
-                              marginBottom: '0.2rem',
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '0.25rem',
-                            }}>
-                              <span style={{
-                                flex: 1,
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                                whiteSpace: 'nowrap',
-                              }}>
-                                {item.name}
-                              </span>
-                              <span style={{
-                                fontSize: '0.7rem',
-                                color: '#999',
-                                flexShrink: 0,
-                              }}>
-                                {formatTimeAgo(item.timestamp)}
-                              </span>
-                            </div>
-                            <div style={{
-                              fontSize: '0.7rem',
-                              color: '#999',
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '0.25rem',
-                            }}>
-                              <span style={{
-                                fontSize: '0.6rem',
-                                color: '#635bff',
-                                backgroundColor: '#f0f2ff',
-                                padding: '0.1rem 0.4rem',
-                                borderRadius: '4px',
-                                fontWeight: '500',
-                                flexShrink: 0,
-                              }}>
-                                New Tab
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            removeRecentPath(item.id);
-                          }}
-                          style={{
-                            background: 'none',
-                            border: 'none',
-                            color: '#999',
-                            cursor: 'pointer',
-                            fontSize: '1rem',
-                            padding: '0.25rem',
-                            borderRadius: '4px',
-                            transition: 'all 0.2s ease',
-                            flexShrink: 0,
-                            marginLeft: '0.5rem',
-                          }}
-                          className="hover:bg-gray-100 hover:text-red-500"
-                          title="Remove from history"
-                        >
-                          ×
-                        </button>
-                      </div>
-                    ))
-                  ) : (
-                    <div style={{
-                      padding: '2rem 1rem',
-                      textAlign: 'center',
-                      color: '#999',
-                      fontSize: isMobile ? '0.85rem' : '0.9rem',
-                    }}>
-                      <div style={{ fontSize: '2rem', marginBottom: '0.5rem', color: '#ccc' }}>
-                        <IoIosTime />
-                      </div>
-                      No recent visits
-                      <div style={{ fontSize: isMobile ? '0.75rem' : '0.8rem', color: '#ccc', marginTop: '0.5rem' }}>
-                        Visit pages to see them here
-                      </div>
-                    </div>
-                  )}
-                </div>
-                
-                {/* Footer with info */}
-                {recentPaths.length > 0 && (
-                  <div style={{
-                    padding: isMobile ? '0.75rem' : '0.75rem 1rem',
-                    borderTop: '1px solid #f0f0f0',
-                    fontSize: isMobile ? '0.7rem' : '0.75rem',
-                    color: '#999',
-                    textAlign: 'center',
-                    backgroundColor: '#f9f9f9',
-                    borderBottomLeftRadius: '12px',
-                    borderBottomRightRadius: '12px',
-                  }}>
-                    <span style={{ 
-                      display: 'flex', 
-                      alignItems: 'center', 
-                      justifyContent: 'center', 
-                      gap: '0.25rem',
-                      flexWrap: 'wrap',
-                    }}>
-                      <span style={{ color: '#635bff' }}>ℹ️</span>
-                      Click any item to open in new tab
-                    </span>
-                  </div>
-                )}
+    <div style={{ 
+      maxHeight: isMobile ? 'calc(50vh - 100px)' : '300px', 
+      overflowY: 'auto',
+      scrollbarWidth: isMobile ? 'none' : 'thin',
+      msOverflowStyle: isMobile ? 'none' : 'auto',
+    }}>
+      {isMobile && (
+        <style>
+          {`
+            @media (max-width: 768px) {
+              div[style*="maxHeight"]::-webkit-scrollbar {
+                display: none;
+              }
+            }
+          `}
+        </style>
+      )}
+      {recentPaths.length > 0 ? (
+        recentPaths.map((item, index) => (
+          <div
+            key={item.id}
+            style={{
+              padding: isMobile ? '0.5rem 0.6rem' : '0.75rem 1rem',
+              borderBottom: index < recentPaths.length - 1 ? '1px solid #f8f8f8' : 'none',
+              cursor: 'pointer',
+              backgroundColor: '#fff',
+              transition: 'background-color 0.2s ease',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '0.4rem',
+            }}
+            className="hover:bg-gray-50"
+            onClick={() => handleRecentPathClick(item.path)}
+            title={`Click to open "${item.name}" in new tab`}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '0.4rem' : '0.75rem', flex: 1, minWidth: 0 }}>
+              <div style={{
+                width: isMobile ? '20px' : '28px',
+                height: isMobile ? '20px' : '28px',
+                borderRadius: isMobile ? '4px' : '6px',
+                backgroundColor: '#f0f2ff',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: '#635bff',
+                fontSize: isMobile ? '0.65rem' : '0.8rem',
+                fontWeight: '600',
+                flexShrink: 0,
+              }}>
+                {index + 1}
               </div>
-            )}
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{
+                  fontSize: isMobile ? '0.75rem' : '0.9rem',
+                  color: '#333',
+                  fontWeight: '500',
+                  lineHeight: '1.3',
+                  marginBottom: isMobile ? '0.15rem' : '0.2rem',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                }}>
+                  {item.name}
+                </div>
+                <div style={{
+                  fontSize: isMobile ? '0.65rem' : '0.7rem',
+                  color: '#999',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.3rem',
+                }}>
+                  <span style={{
+                    fontSize: isMobile ? '0.6rem' : '0.65rem',
+                    color: '#635bff',
+                    backgroundColor: '#f0f2ff',
+                    padding: isMobile ? '0.05rem 0.3rem' : '0.1rem 0.4rem',
+                    borderRadius: '3px',
+                    fontWeight: '500',
+                  }}>
+                    New Tab
+                  </span>
+                  <span>•</span>
+                  <span>{formatTimeAgo(item.timestamp)}</span>
+                </div>
+              </div>
+            </div>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                removeRecentPath(item.id);
+              }}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: '#999',
+                cursor: 'pointer',
+                fontSize: isMobile ? '1.1rem' : '1.4rem',
+                padding: isMobile ? '0.15rem' : '0.25rem',
+                borderRadius: '4px',
+                transition: 'all 0.2s ease',
+                flexShrink: 0,
+                lineHeight: '1',
+              }}
+              className="hover:bg-gray-100 hover:text-red-500"
+              title="Remove"
+            >
+              ×
+            </button>
+          </div>
+        ))
+      ) : (
+        <div style={{
+          padding: isMobile ? '1.5rem 0.75rem' : '2rem 1rem',
+          textAlign: 'center',
+          color: '#999',
+          fontSize: isMobile ? '0.8rem' : '0.9rem',
+        }}>
+          <div style={{ fontSize: isMobile ? '1.5rem' : '2rem', marginBottom: '0.4rem', color: '#ccc' }}>
+            <IoIosTime />
+          </div>
+          No recent visits
+          <div style={{ fontSize: isMobile ? '0.7rem' : '0.8rem', color: '#ccc', marginTop: '0.4rem' }}>
+            Visit pages to see them here
+          </div>
+        </div>
+      )}
+    </div>
+    
+    {recentPaths.length > 0 && (
+      <div style={{
+        padding: isMobile ? '0.5rem 0.6rem' : '0.75rem 1rem',
+        borderTop: '1px solid #f0f0f0',
+        fontSize: isMobile ? '0.65rem' : '0.75rem',
+        color: '#999',
+        textAlign: 'center',
+        backgroundColor: '#f9f9f9',
+        borderBottomLeftRadius: isMobile ? '8px' : '12px',
+        borderBottomRightRadius: isMobile ? '8px' : '12px',
+      }}>
+        <span style={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'center', 
+          gap: '0.25rem',
+        }}>
+          <span style={{ color: '#635bff' }}>ℹ️</span>
+          Click to open in new tab
+        </span>
+      </div>
+    )}
+  </div>
+)}
           </div>
 
           {/* Pinned Modules */}
@@ -3187,123 +3204,132 @@ const Header = ({ isSidebarCollapsed, onMenuToggle, isMobile }) => {
             </button>
 
             {isNotificationsOpen && (
-              <div style={{
-                position: 'absolute',
-                top: '100%',
-                right: 0,
-                backgroundColor: 'white',
-                border: '1px solid #e0e0e0',
-                borderRadius: '12px',
-                width: isMobile ? 'calc(100vw - 32px)' : '320px',
-                maxWidth: isMobile ? '400px' : '320px',
-                maxHeight: isMobile ? '60vh' : '400px',
-                zIndex: 1000,
-                boxShadow: '0 8px 25px rgba(0,0,0,0.15)',
-                marginTop: '0.5rem',
-              }}>
-                <div style={{
-                  padding: '1rem',
-                  borderBottom: '1px solid #f0f0f0',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                }}>
-                  <span style={{ fontWeight: '600', color: '#333' }}>Notifications</span>
-                  {notifications.length > 0 && (
-                    <button
-                      onClick={clearAllNotifications}
-                      style={{
-                        background: 'none',
-                        border: 'none',
-                        color: '#635bff',
-                        fontSize: '0.8rem',
-                        cursor: 'pointer',
-                        fontWeight: '500',
-                      }}
-                    >
-                      Clear All
-                    </button>
-                  )}
-                </div>
+  <div style={{
+    position: 'absolute',
+    top: '100%',
+    right: isMobile ? '0' : 0,
+    left: isMobile ? '-100px' : 'auto',
+    backgroundColor: 'white',
+    border: '1px solid #e0e0e0',
+    borderRadius: isMobile ? '8px' : '12px',
+    width: isMobile ? '230px' : '320px',
+    maxHeight: isMobile ? '50vh' : '400px',
+    zIndex: 1000,
+    boxShadow: '0 8px 25px rgba(0,0,0,0.15)',
+    marginTop: '0.5rem',
+    marginRight: isMobile ? '0.5rem' : '0',
+  }}>
+    <div style={{
+      padding: isMobile ? '0.6rem 0.75rem' : '1rem',
+      borderBottom: '1px solid #f0f0f0',
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+    }}>
+      <span style={{ 
+        fontWeight: '600', 
+        color: '#333',
+        fontSize: isMobile ? '0.85rem' : '1rem',
+      }}>
+        Notifications
+      </span>
+      {notifications.length > 0 && (
+        <button
+          onClick={clearAllNotifications}
+          style={{
+            background: 'none',
+            border: 'none',
+            color: '#635bff',
+            fontSize: isMobile ? '0.7rem' : '0.8rem',
+            cursor: 'pointer',
+            fontWeight: '500',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          Clear All
+        </button>
+      )}
+    </div>
 
-                <div style={{ 
-                  maxHeight: isMobile ? 'calc(60vh - 120px)' : '300px', 
-                  overflowY: 'auto',
-                  scrollbarWidth: isMobile ? 'none' : 'thin',
-                  msOverflowStyle: isMobile ? 'none' : 'auto',
+    <div style={{ 
+      maxHeight: isMobile ? 'calc(50vh - 100px)' : '300px', 
+      overflowY: 'auto',
+      scrollbarWidth: isMobile ? 'none' : 'thin',
+      msOverflowStyle: isMobile ? 'none' : 'auto',
+    }}>
+      {isMobile && (
+        <style>
+          {`
+            @media (max-width: 768px) {
+              div[style*="maxHeight"]::-webkit-scrollbar {
+                display: none;
+              }
+            }
+          `}
+        </style>
+      )}
+      {notifications.length > 0 ? (
+        notifications.map((notification) => (
+          <div
+            key={notification.id}
+            style={{
+              padding: isMobile ? '0.6rem 0.7rem' : '0.875rem 1rem',
+              borderBottom: '1px solid #f8f8f8',
+              cursor: 'pointer',
+              backgroundColor: notification.read ? '#fff' : '#f8fbff',
+              transition: 'background-color 0.2s ease',
+            }}
+            className="hover:bg-gray-50"
+            onClick={() => markNotificationAsRead(notification.id)}
+          >
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: isMobile ? '0.4rem' : '0.75rem' }}>
+              <span style={{ fontSize: isMobile ? '0.9rem' : '1.2rem', flexShrink: 0, lineHeight: '1' }}>
+                {getNotificationIcon(notification.type)}
+              </span>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{
+                  fontSize: isMobile ? '0.75rem' : '0.9rem',
+                  color: '#333',
+                  fontWeight: notification.read ? '400' : '500',
+                  lineHeight: '1.3',
+                  wordBreak: 'break-word',
                 }}>
-                  {isMobile && (
-                    <style>
-                      {`
-                        @media (max-width: 768px) {
-                          div[style*="maxHeight"]::-webkit-scrollbar {
-                            display: none;
-                          }
-                        }
-                      `}
-                    </style>
-                  )}
-                  {notifications.length > 0 ? (
-                    notifications.map((notification) => (
-                      <div
-                        key={notification.id}
-                        style={{
-                          padding: '0.875rem 1rem',
-                          borderBottom: '1px solid #f8f8f8',
-                          cursor: 'pointer',
-                          backgroundColor: notification.read ? '#fff' : '#f8fbff',
-                          transition: 'background-color 0.2s ease',
-                        }}
-                        className="hover:bg-gray-50"
-                        onClick={() => markNotificationAsRead(notification.id)}
-                      >
-                        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
-                          <span style={{ fontSize: '1.2rem', flexShrink: 0 }}>
-                            {getNotificationIcon(notification.type)}
-                          </span>
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{
-                              fontSize: isMobile ? '0.85rem' : '0.9rem',
-                              color: '#333',
-                              fontWeight: notification.read ? '400' : '500',
-                              lineHeight: '1.4',
-                            }}>
-                              {notification.text}
-                            </div>
-                            <div style={{
-                              fontSize: '0.75rem',
-                              color: '#999',
-                              marginTop: '0.25rem',
-                            }}>
-                              {notification.time}
-                            </div>
-                          </div>
-                          {!notification.read && (
-                            <div style={{
-                              width: '8px',
-                              height: '8px',
-                              borderRadius: '50%',
-                              backgroundColor: '#635bff',
-                              marginTop: '0.5rem',
-                              flexShrink: 0,
-                            }} />
-                          )}
-                        </div>
-                      </div>
-                    ))
-                  ) : (
-                    <div style={{
-                      padding: '2rem 1rem',
-                      textAlign: 'center',
-                      color: '#999',
-                      fontSize: isMobile ? '0.85rem' : '0.9rem',
-                    }}>
-                      No notifications
-                    </div>
-                  )}
+                  {notification.text}
+                </div>
+                <div style={{
+                  fontSize: isMobile ? '0.65rem' : '0.75rem',
+                  color: '#999',
+                  marginTop: isMobile ? '0.2rem' : '0.25rem',
+                }}>
+                  {notification.time}
                 </div>
               </div>
-            )}
+              {!notification.read && (
+                <div style={{
+                  width: isMobile ? '5px' : '8px',
+                  height: isMobile ? '5px' : '8px',
+                  borderRadius: '50%',
+                  backgroundColor: '#635bff',
+                  marginTop: '0.4rem',
+                  flexShrink: 0,
+                }} />
+              )}
+            </div>
+          </div>
+        ))
+      ) : (
+        <div style={{
+          padding: isMobile ? '1.5rem 0.75rem' : '2rem 1rem',
+          textAlign: 'center',
+          color: '#999',
+          fontSize: isMobile ? '0.8rem' : '0.9rem',
+        }}>
+          No notifications
+        </div>
+      )}
+    </div>
+  </div>
+)}
           </div>
 
           {/* User Profile Dropdown */}
