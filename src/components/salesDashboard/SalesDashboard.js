@@ -9,8 +9,6 @@ import {
     DialogContent, FormControlLabel, Checkbox, Badge, InputAdornment, Fade,
 } from "@mui/material";
 import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
-import HourglassEmptyIcon from '@mui/icons-material/HourglassEmpty';
-import WatchLaterIcon from '@mui/icons-material/WatchLater';
 import AccessAlarmIcon from '@mui/icons-material/AccessAlarm';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import dayjs from 'dayjs';
@@ -39,14 +37,6 @@ import LocationOnIcon from '@mui/icons-material/LocationOn';
 import SearchIcon from '@mui/icons-material/Search';
 import ClearIcon from '@mui/icons-material/Clear';
 import FilterListIcon from '@mui/icons-material/FilterList';
-
-const GaugeComponent = dynamic(
-    async () => {
-        const mod = await import("react-gauge-component");
-        return mod.default ? mod.default : mod.GaugeComponent;
-    },
-    { ssr: false }
-);
 
 const CountUp = dynamic(
     async () => {
@@ -717,7 +707,7 @@ const SalesDashboard = () => {
         router.push(`/inverntory/stock-enquiry-table/`);
     };
 
-    // Top 10 Parties by Amount for Pie Chart
+    // Top 10 Parties
     const top10PartiesByAmount = [...partywise]
         .sort((a, b) => parseFloat(b.AMOUNT || 0) - parseFloat(a.AMOUNT || 0))
         .slice(0, 10)
@@ -1476,14 +1466,17 @@ const SalesDashboard = () => {
                                         data: stateWise
                                             .sort((a, b) => parseFloat(b.AMOUNT || 0) - parseFloat(a.AMOUNT || 0))
                                             .slice(0, 10)
-                                            .map((item, index) => ({
-                                                id: index,
-                                                label: (item.STATE_NAME || "Unknown").slice(0, 18) + (item.STATE_NAME?.length > 18 ? '...' : ''),
-                                                // label: `${(item.STATE_NAME || "Unknown").slice(0, 18)}${item.STATE_NAME?.length > 18 ? '...' : ''} - ${parseFloat(item.AMOUNT || 0).toFixed(2)}`,
-                                                value: parseFloat(item.AMOUNT || 0),
-                                                color: `hsl(${index * 36}, 70%, 50%)`,
-                                                fullStateName: item.STATE_NAME || "Unknown",
-                                            })),
+                                            .map((item, index) => {
+                                                const totalAmount = stateWise.reduce((sum, state) => sum + parseFloat(state.AMOUNT || 0), 0);
+                                                const percentage = ((parseFloat(item.AMOUNT || 0) / totalAmount) * 100).toFixed(2);
+                                                return {
+                                                    id: index,
+                                                    label: `${(item.STATE_NAME || "Unknown").slice(0, 18)}${item.STATE_NAME?.length > 18 ? '...' : ''} - ${percentage}%`,
+                                                    value: parseFloat(item.AMOUNT || 0),
+                                                    color: `hsl(${index * 36}, 70%, 50%)`,
+                                                    fullStateName: item.STATE_NAME || "Unknown",
+                                                };
+                                            }),
                                         innerRadius: 20,
                                         outerRadius: 90,
                                         paddingAngle: 2,
@@ -1727,13 +1720,19 @@ const SalesDashboard = () => {
                         }}
                     >
                         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-                            <Typography variant="h6" fontWeight="bold">
+                            <Typography variant="h6" fontWeight="bold"
+                                sx={{
+                                    background: 'linear-gradient(45deg, #dd2818, #670aa1)',
+                                    WebkitBackgroundClip: 'text',
+                                    color: 'transparent',
+                                    fontSize: '1.25rem',
+                                    letterSpacing: 0.5,
+                                }}
+                            >
                                 Party Wise Orders Summary
                             </Typography>
 
-                            {/* Search Box */}
                             <TextField
-                                label="Search Party Orders"
                                 variant="outlined"
                                 size="small"
                                 sx={{
@@ -1741,14 +1740,23 @@ const SalesDashboard = () => {
                                     borderRadius: '9px',
                                     '& .MuiOutlinedInput-root': {
                                         borderRadius: '20px',
+                                        padding: '4px 10px',
+                                        height: '32px',
                                     },
                                     '& .MuiInputLabel-root': {
                                         borderRadius: '9px',
+                                        fontSize: '0.875rem',
+                                        top: '-6px',
                                     },
                                 }}
                                 value={searchTermParty}
                                 onChange={(e) => setSearchTermParty(e.target.value)}
                                 placeholder="Search by Party, City, Amount, etc."
+                                InputProps={{
+                                    style: {
+                                        padding: '0px 10px',
+                                    },
+                                }}
                             />
                         </Box>
 
@@ -1872,22 +1880,45 @@ const SalesDashboard = () => {
                         }}
                     >
                         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-                            <Typography variant="h6" fontWeight="bold">
+                            <Typography
+                                variant="h6"
+                                fontWeight="bold"
+                                sx={{
+                                    background: 'linear-gradient(45deg, #076ec2, #05920a)',
+                                    WebkitBackgroundClip: 'text',
+                                    color: 'transparent',
+                                    fontSize: '1.25rem',
+                                    letterSpacing: 0.5,
+                                }}
+                            >
                                 State Wise Orders Summary
                             </Typography>
 
                             <TextField
-                                label="Search Orders"
                                 variant="outlined"
                                 size="small"
                                 sx={{
                                     width: 250,
                                     borderRadius: '9px',
-                                    '& .MuiOutlinedInput-root': { borderRadius: '20px' },
+                                    '& .MuiOutlinedInput-root': {
+                                        borderRadius: '20px',
+                                        padding: '4px 10px',
+                                        height: '32px',
+                                    },
+                                    '& .MuiInputLabel-root': {
+                                        borderRadius: '9px',
+                                        fontSize: '0.875rem',
+                                        top: '-6px',
+                                    },
                                 }}
                                 value={searchTermState}
                                 onChange={(e) => setSearchTermState(e.target.value)}
                                 placeholder="Search by State, Amount, Qty, etc."
+                                InputProps={{
+                                    style: {
+                                        padding: '0px 10px',
+                                    },
+                                }}
                             />
                         </Box>
 
@@ -2098,7 +2129,7 @@ const SalesDashboard = () => {
                             <ResponsiveContainer width="100%" height="100%">
                                 <AreaChart
                                     data={chartData}
-                                    margin={{ top: 10, right: 30, left: 20, bottom: 20 }}
+                                    margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
                                 >
                                     <defs>
                                         <linearGradient id="qtyGradient" x1="0" y1="0" x2="0" y2="1">

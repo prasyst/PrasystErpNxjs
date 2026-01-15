@@ -41,7 +41,7 @@ const TicketDashboard = () => {
     closed: 0,
     overdue: 0
   });
-  console.log('tickets', tickets)
+
   const [followupDialogOpen, setFollowupDialogOpen] = useState(false);
   const [selectedTicketForFollowup, setSelectedTicketForFollowup] = useState(null);
   const [showCreateTicket, setShowCreateTicket] = useState(false);
@@ -174,6 +174,17 @@ const TicketDashboard = () => {
     calculateStats(tickets);
   };
 
+  const calculateSLACompliance = () => {
+    const resolvedTickets = tickets.filter(ticket => ticket.status === "resolved").length;
+    const totalTickets = totalTicket?.TOTALRECORDS || 0;
+
+    if (totalTickets === 0) {
+      return 0;
+    }
+
+    return ((resolvedTickets / totalTickets) * 100).toFixed(2);
+  };
+
   const ticketModules = [
     {
       title: 'Create New Ticket',
@@ -262,7 +273,6 @@ const TicketDashboard = () => {
   ];
 
   const quickStats = [
-    
     {
       title: 'Open Tickets',
       value: tickets.filter(ticket => ticket.status == "open").length,
@@ -291,16 +301,9 @@ const TicketDashboard = () => {
       color: 'blue',
       icon: MdList
     },
-    // {
-    //   title: 'Overdue',
-    //   value: stats.overdue,
-    //   change: '+3%',
-    //   color: 'red',
-    //   icon: MdWarning
-    // },
     {
       title: 'SLA Compliance',
-      value: '92%',
+      value: `${calculateSLACompliance()}%`,
       change: '+2%',
       color: 'teal',
       icon: MdCheckCircle
@@ -889,55 +892,79 @@ const TicketDashboard = () => {
             </div>
           </div>
 
-
-          <div style={{
-            backgroundColor: '#f0f9ff',
-            borderRadius: '0.75rem',
-            boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
-            border: '1px solid #e5e7eb',
-            padding: '1.5rem'
-          }}>
-            <h3 style={{
-              fontSize: '1.125rem',
-              fontWeight: '600',
-              color: '#111827',
-              margin: '0 0 1rem 0'
-            }}>
+          <Box
+            sx={{
+              backgroundColor: '#f0f9ff',
+              borderRadius: '0.75rem',
+              padding: '1.5rem',
+              border: '1px solid #e5e7eb',
+            }}
+          >
+            <Typography
+              variant="h6"
+              sx={{ marginBottom: '1.2rem', fontWeight: 600 }}
+            >
               Recent Activity
-            </h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              {recentActivities.map((activity, index) => (
-                <div key={index} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
-                  <div style={{
-                    width: '8px',
-                    height: '8px',
-                    backgroundColor: '#2563eb',
-                    borderRadius: '50%',
-                    marginTop: '0.5rem',
-                    flexShrink: 0
-                  }}></div>
-                  <div style={{ flex: 1 }}>
-                    <p style={{
-                      fontSize: '0.875rem',
-                      color: '#111827',
-                      margin: '0 0 0.25rem 0',
-                      fontWeight: '500'
-                    }}>
-                      {activity.action}
-                    </p>
-                    <p style={{
-                      fontSize: '0.75rem',
-                      color: '#6b7280',
-                      margin: 0
-                    }}>
-                      {activity.time} by {activity.user}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+            </Typography>
 
+            <Stack spacing={1.8}>
+              {tickets.slice(0, 5).map((ticket) => (
+                <Box key={ticket.id} sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
+                  <Box
+                    sx={{
+                      width: 20,
+                      height: 20,
+                      borderRadius: '50%',
+                      backgroundColor: '#dbeafe',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <MdAdd size={15} color="#2563eb" />
+                  </Box>
+
+                  <Box sx={{ flex: 1 }}>
+                    <Typography
+                      sx={{ fontWeight: 500, fontSize: 15, color: '#111827' }}
+                    >
+                      {ticket.id} • {ticket.title.length > 45 ? ticket.title.substring(0, 42) + '...' : ticket.title}
+                    </Typography>
+                    <Box
+                      sx={{
+                        fontSize: '0.8125rem',
+                        color: '#6b7280',
+                        marginTop: '0.25rem',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.75rem',
+                      }}
+                    >
+                      <span>{ticket.TKTDATE}</span>
+                      <span>•</span>
+                      <span>by {ticket.reporter || 'Unknown'}</span>
+                      <Chip
+                        size="small"
+                        label={ticket.status}
+                        sx={{
+                          height: 20,
+                          fontSize: '0.6875rem',
+                          backgroundColor: `${getStatusColor(ticket.status)}15`,
+                          color: getStatusColor(ticket.status),
+                        }}
+                      />
+                    </Box>
+                  </Box>
+                </Box>
+              ))}
+
+              {tickets.length === 0 && (
+                <Box sx={{ textAlign: 'center', color: '#9ca3af', padding: '1.5rem 0' }}>
+                  No recent tickets
+                </Box>
+              )}
+            </Stack>
+          </Box>
 
           <Card
             sx={{
