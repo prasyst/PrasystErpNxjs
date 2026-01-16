@@ -1,10 +1,7 @@
-
-
 "use client"
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
 const TicketContext = createContext();
-
 
 export const TicketProvider = ({ children }) => {
   const [tickets, setTickets] = useState([]);
@@ -15,7 +12,6 @@ export const TicketProvider = ({ children }) => {
     { id: 4, name: 'Feature Request', description: 'New feature requests', color: '#10b981', active: true },
     { id: 5, name: 'Enhancement', description: 'Improvement suggestions', color: '#f59e0b', active: true }
   ]);
-  
   const [priorities, setPriorities] = useState([
     { id: 1, name: 'Low', color: '#10b981', responseTime: 72, resolutionTime: 168 },
     { id: 2, name: 'Medium', color: '#f59e0b', responseTime: 24, resolutionTime: 72 },
@@ -87,15 +83,15 @@ export const TicketProvider = ({ children }) => {
       ...comment,
       createdAt: new Date().toISOString()
     };
-    
+
     setTickets(prev =>
       prev.map(ticket =>
         ticket.id === ticketId
           ? {
-              ...ticket,
-              comments: [...(ticket.comments || []), newComment],
-              updatedAt: new Date().toISOString()
-            }
+            ...ticket,
+            comments: [...(ticket.comments || []), newComment],
+            updatedAt: new Date().toISOString()
+          }
           : ticket
       )
     );
@@ -143,7 +139,6 @@ export const TicketProvider = ({ children }) => {
     priorities,
     statuses,
     filters,
-    
     // Actions
     createTicket,
     updateTicket,

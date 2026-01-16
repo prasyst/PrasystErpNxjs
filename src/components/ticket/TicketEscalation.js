@@ -15,11 +15,9 @@ import {
     ArrowUpward as ArrowUpwardIcon,
     ExpandMore as ExpandMoreIcon,
     Send as SendIcon,
-
 } from '@mui/icons-material';
 import axiosInstance from '@/lib/axios';
-
-
+import { toast, ToastContainer } from 'react-toastify';
 
 const TicketEscalation = () => {
     const theme = useTheme();
@@ -38,7 +36,7 @@ const TicketEscalation = () => {
         priority: 'all',
     });
     const [page, setPage] = useState(0);
-    const [rowsPerPage, setRowsPerPage] = useState(10);
+    const [rowsPerPage, setRowsPerPage] = useState(100);
     const [employees, setEmployees] = useState([]);
     const [loadingEmployees, setLoadingEmployees] = useState(false);
 
@@ -48,10 +46,9 @@ const TicketEscalation = () => {
 
     const fetchTickets = async () => {
         try {
-            const response = await axiosInstance.post(
-                "TrnTkt/GetTrnTktDashBoard?currentPage=1&limit=50",
-                { SearchText: "" }
-            );
+            const response = await axiosInstance.post("TrnTkt/GetTrnTktDashBoard?currentPage=1&limit=50", {
+                SearchText: ""
+            });
 
             if (response.data.STATUS === 0 && Array.isArray(response.data.DATA)) {
                 const realTickets = response.data.DATA.map(tkt => ({
@@ -62,7 +59,7 @@ const TicketEscalation = () => {
                     category: tkt.TKTSERVICENAME || "General",
                     priority: tkt.TKTSVRTYNAME || "Medium",
                     status: tkt.TKTSTATUS === "O" ? "open" :
-                        tkt.TKTSTATUS === "P" ? "in-progress" :
+                        tkt.TKTSTATUS === "I" ? "in-progress" :
                             tkt.TKTSTATUS === "R" ? "resolved" : "closed",
                     assignee: tkt.TECHEMP_NAME || "Unassigned",
                     reporter: tkt.RAISEBYNM || "Unknown",
@@ -73,11 +70,10 @@ const TicketEscalation = () => {
                     escalationLevel: Math.floor(Math.random() * 3) + 1,
                     lastEscalated: new Date(Date.now() - Math.random() * 86400000).toISOString(),
                 }));
-
                 setTickets(realTickets);
             }
         } catch (error) {
-            console.error("Failed to load tickets:", error);
+            toast.error("Failed to load tickets:", error);
         }
     };
 
@@ -97,6 +93,7 @@ const TicketEscalation = () => {
             setSelectedTickets(prev => prev.filter(id => id !== ticketId));
         }
     };
+    
     const handleEscalationSubmit = async () => {
         if (!escalationDetails.level) {
             toast.error('Please select an employee to escalate to');
@@ -131,8 +128,7 @@ const TicketEscalation = () => {
                 throw new Error(response.data.MESSAGE || 'Escalation failed');
             }
         } catch (error) {
-            console.error('Escalation failed:', error);
-            alert(error.message || 'Failed to escalate tickets. Please try again.');
+            toast.error(error.message || 'Failed to escalate tickets. Please try again.');
         } finally {
             setLoading(false);
         }
@@ -162,7 +158,7 @@ const TicketEscalation = () => {
             case 'open': return 'error';
             case 'in-progress': return 'warning';
             case 'resolved': return 'success';
-            case 'closed': return 'default';
+            case 'closed': return 'secondary';
             default: return 'default';
         }
     };
@@ -195,7 +191,6 @@ const TicketEscalation = () => {
         setPage(0);
     };
 
-
     const filteredTickets = tickets.filter(ticket => {
         if (filter.search && !ticket.id.toLowerCase().includes(filter.search.toLowerCase()) &&
             !ticket.title.toLowerCase().includes(filter.search.toLowerCase()) &&
@@ -214,10 +209,9 @@ const TicketEscalation = () => {
     const fetchEmployees = async () => {
         try {
             setLoadingEmployees(true);
-            const response = await axiosInstance.post(
-                "Employee/GetEmployeeDrp",
-                { FLAG: "" }
-            );
+            const response = await axiosInstance.post("Employee/GetEmployeeDrp", {
+                FLAG: ""
+            });
 
             if (response.data.STATUS === 0 && Array.isArray(response.data.DATA)) {
                 const employeeList = response.data.DATA.map(emp => ({
@@ -236,27 +230,24 @@ const TicketEscalation = () => {
             }
             setLoadingEmployees(false);
         } catch (error) {
-            console.error("Failed to load employees:", error);
             setLoadingEmployees(false);
         }
     };
 
     const handleEscalate = () => {
         if (selectedTickets.length === 0) {
-            alert('Please select at least one ticket to escalate');
+            toast.warn('Please select at least one ticket to escalate');
             return;
         }
         setEscalationDialogOpen(true);
         fetchEmployees();
     };
 
-
     const paginatedTickets = filteredTickets.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
     return (
-        <Box sx={{
-            backgroundColor: 'grey.50',
-        }}>
+        <Box sx={{ backgroundColor: 'grey.50' }}>
+            <ToastContainer />
             <Container maxWidth="xl" sx={{ px: { xs: 1, sm: 2 } }}>
                 <Box sx={{ mb: 1 }}>
                     <Box display="flex" alignItems="center" justifyContent="space-between" gap={2}>
@@ -270,8 +261,8 @@ const TicketEscalation = () => {
                                     textTransform: 'none',
                                     borderRadius: '20px',
                                     minWidth: 'auto',
-                                    padding:'0px',
-                                    border:'0px'
+                                    padding: '0px',
+                                    border: '0px'
                                 }}
                                 variant="outlined"
                             >
@@ -334,13 +325,13 @@ const TicketEscalation = () => {
                     </Typography>
                 </Box>
 
-                <Grid container spacing={3}>
-                    <Grid item xs={12} lg={12}>
+                <Grid container spacing={2}>
+                    <Grid size={{ xs: 12, md: 12 }}>
                         <Card sx={{ boxShadow: 3, height: '100%', display: 'flex', flexDirection: 'column' }}>
-                            <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column', p: { xs: 1, sm: 2 } }}>
+                            <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column', p: { xs: 1, sm: 2 }, '&:last-child': { pb: 0.5 } }}>
                                 <Box sx={{ mb: 1 }}>
                                     <Grid container spacing={2} alignItems="center">
-                                        <Grid item xs={12} md={4}>
+                                        <Grid size={{ xs: 6, md: 3 }}>
                                             <TextField
                                                 fullWidth
                                                 placeholder="Search tickets..."
@@ -357,7 +348,7 @@ const TicketEscalation = () => {
                                             />
                                         </Grid>
 
-                                        <Grid item xs={6} md={4}>
+                                        <Grid size={{ xs: 6, md: 3 }}>
                                             <TextField
                                                 fullWidth
                                                 select
@@ -374,7 +365,7 @@ const TicketEscalation = () => {
                                             </TextField>
                                         </Grid>
 
-                                        <Grid item xs={6} md={4}>
+                                        <Grid size={{ xs: 6, md: 3 }}>
                                             <TextField
                                                 fullWidth
                                                 select
@@ -414,7 +405,7 @@ const TicketEscalation = () => {
                                     display: 'flex',
                                     flexDirection: 'column',
                                     maxHeight: 'calc(100vh - 500px)',
-                                    minHeight: '400px'
+                                    minHeight: '500px'
                                 }}>
 
                                     <Box sx={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
@@ -484,14 +475,14 @@ const TicketEscalation = () => {
                                                             />
                                                         </TableCell>
 
-                                                        <TableCell sx={{ width: '100px', minWidth: '100px', padding: '4px 8px' }}>Ticket No</TableCell>
-                                                        <TableCell sx={{ width: '180px', minWidth: '180px', padding: '4px 8px' }}>Title</TableCell>
-                                                        <TableCell sx={{ width: '100px', minWidth: '100px', padding: '4px 8px' }}>Escalation</TableCell>
-                                                        <TableCell sx={{ width: '80px', minWidth: '80px', padding: '4px 8px' }}>Priority</TableCell>
-                                                        <TableCell sx={{ width: '80px', minWidth: '80px', padding: '4px 8px' }}>Status</TableCell>
-                                                        <TableCell sx={{ width: '100px', minWidth: '100px', padding: '4px 8px' }}>Assignee</TableCell>
-                                                        <TableCell sx={{ width: '80px', minWidth: '80px', padding: '4px 8px' }}>Created</TableCell>
-                                                        <TableCell sx={{ width: '100px', minWidth: '100px', padding: '4px 8px' }}>Last Escalated</TableCell>
+                                                        <TableCell sx={{ width: '100px', minWidth: '100px', padding: '4px 8px', }}>Ticket No</TableCell>
+                                                        <TableCell sx={{ width: '180px', minWidth: '180px', padding: '4px 8px', }}>Title</TableCell>
+                                                        <TableCell sx={{ width: '100px', minWidth: '100px', padding: '4px 8px', }}>Escalation</TableCell>
+                                                        <TableCell sx={{ width: '80px', minWidth: '80px', padding: '4px 8px', }}>Priority</TableCell>
+                                                        <TableCell sx={{ width: '80px', minWidth: '80px', padding: '4px 8px', }}>Status</TableCell>
+                                                        <TableCell sx={{ width: '100px', minWidth: '100px', padding: '4px 8px', }}>Assignee</TableCell>
+                                                        <TableCell sx={{ width: '80px', minWidth: '80px', padding: '4px 8px', }}>Created</TableCell>
+                                                        <TableCell sx={{ width: '100px', minWidth: '100px', padding: '4px 8px', }}>Last Escalated</TableCell>
                                                     </TableRow>
                                                 </TableHead>
 
@@ -740,7 +731,7 @@ const TicketEscalation = () => {
 
                                         {filteredTickets.length > 0 && (
                                             <TablePagination
-                                                rowsPerPageOptions={[5, 10, 25, 50]}
+                                                rowsPerPageOptions={[50, 100, 300, 500]}
                                                 component="div"
                                                 count={filteredTickets.length}
                                                 rowsPerPage={rowsPerPage}
@@ -750,7 +741,7 @@ const TicketEscalation = () => {
                                                 sx={{
                                                     mt: 0.5,
                                                     '& .MuiTablePagination-toolbar': {
-                                                        minHeight: '52px',
+                                                        minHeight: '22px',
                                                         padding: '0 8px'
                                                     },
                                                     '& .MuiTablePagination-selectLabel, & .MuiTablePagination-displayedRows': {
@@ -764,8 +755,8 @@ const TicketEscalation = () => {
                             </CardContent>
                         </Card>
                     </Grid>
-
                 </Grid>
+
                 <Dialog
                     open={escalationDialogOpen}
                     onClose={() => !loading && setEscalationDialogOpen(false)}

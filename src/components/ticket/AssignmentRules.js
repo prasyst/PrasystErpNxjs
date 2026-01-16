@@ -3,46 +3,9 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import {
-  Box,
-  Container,
-  Card,
-  CardContent,
-  Typography,
-  Button,
-  TextField,
-  MenuItem,
-  IconButton,
-  Chip,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
-  Stack,
-  InputAdornment,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  useMediaQuery,
-  useTheme,
-  Grid,
-  Avatar,
-  Divider,
-  Tooltip,
-  Switch,
-  FormControlLabel,
-  FormGroup,
-  Checkbox,
-  FormControl,
-  InputLabel,
-  Select,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
-  alpha
+  Box, Container, Card, CardContent, Typography, Button, TextField, MenuItem, IconButton, Chip, Table, TableBody, TableCell, TableContainer,
+  TableHead, TableRow, Paper, Stack, InputAdornment, Dialog, DialogTitle, DialogContent, DialogActions, useMediaQuery, useTheme, Grid,
+  Divider, Tooltip, Switch, FormControlLabel, FormGroup, Checkbox, FormControl, InputLabel, Select, Accordion, AccordionSummary, AccordionDetails, alpha
 } from '@mui/material';
 import {
   ArrowBack as ArrowBackIcon,
@@ -77,7 +40,6 @@ const AssignmentRules = () => {
   const [ruleToDelete, setRuleToDelete] = useState(null);
   const [newRuleDialogOpen, setNewRuleDialogOpen] = useState(false);
 
-
   const [newRule, setNewRule] = useState({
     name: '',
     description: '',
@@ -97,7 +59,7 @@ const AssignmentRules = () => {
   ];
 
   const allUsers = [
-    'John Doe', 'Jane Smith', 'Mike Wilson', 'Sarah Johnson', 
+    'John Doe', 'Jane Smith', 'Mike Wilson', 'Sarah Johnson',
     'David Brown', 'Emma Wilson'
   ];
 
@@ -191,7 +153,7 @@ const AssignmentRules = () => {
     }
 
     if (statusFilter !== 'all') {
-      filtered = filtered.filter(rule => 
+      filtered = filtered.filter(rule =>
         statusFilter === 'active' ? rule.isActive : !rule.isActive
       );
     }
@@ -200,7 +162,7 @@ const AssignmentRules = () => {
   };
 
   const handleToggleRule = (ruleId) => {
-    setRules(prev => prev.map(rule => 
+    setRules(prev => prev.map(rule =>
       rule.id === ruleId ? { ...rule, isActive: !rule.isActive } : rule
     ));
   };
@@ -232,7 +194,7 @@ const AssignmentRules = () => {
       triggerCount: 0,
       successRate: 0
     };
-    
+
     setRules(prev => [newRuleData, ...prev]);
     setNewRuleDialogOpen(false);
     resetNewRuleForm();
@@ -291,10 +253,9 @@ const AssignmentRules = () => {
     });
   };
 
-
   const MobileRuleCard = ({ rule }) => (
-    <Card 
-      sx={{ 
+    <Card
+      sx={{
         mb: 2,
         border: '2px solid',
         borderColor: rule.isActive ? 'success.light' : 'error.light',
@@ -330,11 +291,11 @@ const AssignmentRules = () => {
             label=""
           />
         </Box>
-        
+
         <Typography variant="h6" fontWeight="600" gutterBottom>
           {rule.name}
         </Typography>
-        
+
         <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
           {rule.description}
         </Typography>
@@ -399,8 +360,8 @@ const AssignmentRules = () => {
         <Divider sx={{ my: 1 }} />
 
         <Box display="flex" justifyContent="space-between" alignItems="center">
-          <Button 
-            size="small" 
+          <Button
+            size="small"
             variant="outlined"
             startIcon={<EditIcon />}
             onClick={() => handleEditRule(rule)}
@@ -409,8 +370,8 @@ const AssignmentRules = () => {
           </Button>
           <Box display="flex" gap={0.5}>
             <Tooltip title={rule.isActive ? "Deactivate" : "Activate"}>
-              <IconButton 
-                size="small" 
+              <IconButton
+                size="small"
                 color={rule.isActive ? "warning" : "success"}
                 onClick={() => handleToggleRule(rule.id)}
               >
@@ -418,8 +379,8 @@ const AssignmentRules = () => {
               </IconButton>
             </Tooltip>
             <Tooltip title="Delete">
-              <IconButton 
-                size="small" 
+              <IconButton
+                size="small"
                 color="error"
                 onClick={() => handleDeleteClick(rule)}
               >
@@ -449,10 +410,10 @@ const AssignmentRules = () => {
         </TableHead>
         <TableBody>
           {filteredRules.map((rule) => (
-            <TableRow 
+            <TableRow
               key={rule.id}
               hover
-              sx={{ 
+              sx={{
                 backgroundColor: rule.isActive ? alpha(theme.palette.success.main, 0.04) : 'inherit'
               }}
             >
@@ -517,12 +478,12 @@ const AssignmentRules = () => {
                 </Box>
               </TableCell>
               <TableCell>
-                <Box 
-                  sx={{ 
+                <Box
+                  sx={{
                     textAlign: 'center',
                     p: 1,
                     borderRadius: 1,
-                    backgroundColor: rule.successRate >= 90 
+                    backgroundColor: rule.successRate >= 90
                       ? alpha(theme.palette.success.main, 0.1)
                       : alpha(theme.palette.warning.main, 0.1)
                   }}
@@ -537,8 +498,8 @@ const AssignmentRules = () => {
               <TableCell align="center">
                 <Box display="flex" justifyContent="center" gap={1}>
                   <Tooltip title="Edit">
-                    <IconButton 
-                      size="small" 
+                    <IconButton
+                      size="small"
                       color="primary"
                       onClick={() => handleEditRule(rule)}
                     >
@@ -546,8 +507,8 @@ const AssignmentRules = () => {
                     </IconButton>
                   </Tooltip>
                   <Tooltip title={rule.isActive ? "Deactivate" : "Activate"}>
-                    <IconButton 
-                      size="small" 
+                    <IconButton
+                      size="small"
                       color={rule.isActive ? "warning" : "success"}
                       onClick={() => handleToggleRule(rule.id)}
                     >
@@ -555,8 +516,8 @@ const AssignmentRules = () => {
                     </IconButton>
                   </Tooltip>
                   <Tooltip title="Delete">
-                    <IconButton 
-                      size="small" 
+                    <IconButton
+                      size="small"
                       color="error"
                       onClick={() => handleDeleteClick(rule)}
                     >
@@ -572,7 +533,6 @@ const AssignmentRules = () => {
     </TableContainer>
   );
 
-
   const stats = {
     total: rules.length,
     active: rules.filter(r => r.isActive).length,
@@ -582,38 +542,41 @@ const AssignmentRules = () => {
   return (
     <Box sx={{ minHeight: '100vh', backgroundColor: 'grey.50', py: 2 }}>
       <Container maxWidth="xl">
-     
-        <Box sx={{ mb: 4 }}>
-          <Button 
-            startIcon={<ArrowBackIcon />}
-            onClick={() => router.push('/tickets/ticket-dashboard/')}
-            sx={{ mb: 2 }}
-            variant="outlined"
-          >
-            Back to Dashboard
-          </Button>
-          
-          <Box 
-            sx={{ 
+        <Box sx={{ mb: 2 }}>
+          <Box
+            sx={{
               backgroundColor: 'primary.main',
               borderRadius: 2,
               p: 1,
               color: 'white',
-              textAlign: 'center'
+              textAlign: 'center',
             }}
           >
             <Typography variant="h5" component="h5" fontWeight="bold" gutterBottom>
               🎯 Assignment Rules
             </Typography>
-            <Typography variant="p">
-              Automatically assign tickets based on conditions and rules
-            </Typography>
+
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Typography variant="body2" sx={{ flex: 1 }}>
+                Automatically assign tickets based on conditions and rules
+              </Typography>
+
+              <Box sx={{ display: 'flex', gap: 1 }}>
+                <Button
+                  color="error"
+                  startIcon={<ArrowBackIcon />}
+                  onClick={() => router.push('/tickets/ticket-dashboard/')}
+                  variant="contained"
+                >
+                  Dashboard
+                </Button>
+              </Box>
+            </Box>
           </Box>
         </Box>
 
-
-        <Grid container spacing={2} sx={{ mb: 4 }}>
-          <Grid item xs={12} sm={4}>
+        <Grid container spacing={2} sx={{ mb: 2 }}>
+          <Grid size={{ xs: 12, sm: 4, md: 4 }}>
             <Card sx={{ textAlign: 'center', backgroundColor: 'primary.main', color: 'white' }}>
               <CardContent>
                 <Typography variant="h3" fontWeight="bold">
@@ -623,7 +586,7 @@ const AssignmentRules = () => {
               </CardContent>
             </Card>
           </Grid>
-          <Grid item xs={12} sm={4}>
+          <Grid size={{ xs: 12, sm: 4, md: 4 }}>
             <Card sx={{ textAlign: 'center', backgroundColor: 'success.main', color: 'white' }}>
               <CardContent>
                 <Typography variant="h3" fontWeight="bold">
@@ -633,7 +596,7 @@ const AssignmentRules = () => {
               </CardContent>
             </Card>
           </Grid>
-          <Grid item xs={12} sm={4}>
+          <Grid size={{ xs: 12, sm: 4, md: 4 }}>
             <Card sx={{ textAlign: 'center', backgroundColor: 'error.main', color: 'white' }}>
               <CardContent>
                 <Typography variant="h3" fontWeight="bold">
@@ -645,74 +608,74 @@ const AssignmentRules = () => {
           </Grid>
         </Grid>
 
-       <Card sx={{ mb: 3, p: 1.5 }}>
-  <Grid container spacing={1.5} alignItems="center">
-    <Grid item xs={12} md={6}>
-      <TextField
-        fullWidth
-        size="small"
-        placeholder="Search assignment rules..."
-        value={searchTerm}
-        onChange={(e) => setSearchTerm(e.target.value)}
-        InputProps={{
-          startAdornment: (
-            <InputAdornment position="start">
-              <SearchIcon fontSize="small" />
-            </InputAdornment>
-          ),
-          sx: {
-            fontSize: '0.875rem',
-            '& .MuiInputBase-input': {
-              height: '1.5rem',
-              padding: '6px 8px'
-            }
-          }
-        }}
-      />
-    </Grid>
-    
-    <Grid item xs={12} sm={6} md={3}>
-      <TextField
-        fullWidth
-        select
-        size="small"
-        label="Status Filter"
-        value={statusFilter}
-        onChange={(e) => setStatusFilter(e.target.value)}
-        InputProps={{
-          sx: {
-            fontSize: '0.875rem',
-            '& .MuiSelect-select': {
-              height: '1.5rem',
-              padding: '6px 8px'
-            }
-          }
-        }}
-      >
-        <MenuItem value="all" sx={{ fontSize: '0.875rem' }}>All Status</MenuItem>
-        <MenuItem value="active" sx={{ fontSize: '0.875rem' }}>Active</MenuItem>
-        <MenuItem value="inactive" sx={{ fontSize: '0.875rem' }}>Inactive</MenuItem>
-      </TextField>
-    </Grid>
+        <Card sx={{ mb: 3, p: 1.5 }}>
+          <Grid container spacing={1.5} alignItems="center">
+            <Grid size={{ xs: 12, sm: 6, md: 6 }}>
+              <TextField
+                fullWidth
+                size="small"
+                placeholder="Search assignment rules..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchIcon fontSize="small" />
+                    </InputAdornment>
+                  ),
+                  sx: {
+                    fontSize: '0.875rem',
+                    '& .MuiInputBase-input': {
+                      height: '1.5rem',
+                      padding: '6px 8px'
+                    }
+                  }
+                }}
+              />
+            </Grid>
 
-    <Grid item xs={12} sm={6} md={3}>
-      <Button
-        fullWidth
-        variant="contained"
-        size="small"
-        startIcon={<AddIcon fontSize="small" />}
-        onClick={() => setNewRuleDialogOpen(true)}
-        sx={{
-          fontSize: '0.875rem',
-          py: 0.75,
-          minHeight: '2.25rem'
-        }}
-      >
-        Create New Rule
-      </Button>
-    </Grid>
-  </Grid>
-</Card>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+              <TextField
+                fullWidth
+                select
+                size="small"
+                label="Status Filter"
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                InputProps={{
+                  sx: {
+                    fontSize: '0.875rem',
+                    '& .MuiSelect-select': {
+                      height: '1.5rem',
+                      padding: '6px 8px'
+                    }
+                  }
+                }}
+              >
+                <MenuItem value="all" sx={{ fontSize: '0.875rem' }}>All Status</MenuItem>
+                <MenuItem value="active" sx={{ fontSize: '0.875rem' }}>Active</MenuItem>
+                <MenuItem value="inactive" sx={{ fontSize: '0.875rem' }}>Inactive</MenuItem>
+              </TextField>
+            </Grid>
+
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+              <Button
+                fullWidth
+                variant="contained"
+                size="small"
+                startIcon={<AddIcon fontSize="small" />}
+                onClick={() => setNewRuleDialogOpen(true)}
+                sx={{
+                  fontSize: '0.875rem',
+                  py: 0.75,
+                  minHeight: '2.25rem'
+                }}
+              >
+                Create New Rule
+              </Button>
+            </Grid>
+          </Grid>
+        </Card>
 
         {isMobile ? (
           <Box>
@@ -734,7 +697,7 @@ const AssignmentRules = () => {
               <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
                 Create your first assignment rule to automate ticket routing.
               </Typography>
-              <Button 
+              <Button
                 variant="contained"
                 startIcon={<AddIcon />}
                 onClick={() => setNewRuleDialogOpen(true)}
@@ -763,7 +726,7 @@ const AssignmentRules = () => {
                 onChange={(e) => setNewRule(prev => ({ ...prev, name: e.target.value }))}
                 placeholder="Enter rule name"
               />
-              
+
               <TextField
                 fullWidth
                 label="Description"
@@ -775,7 +738,7 @@ const AssignmentRules = () => {
               />
 
               <Grid container spacing={2}>
-                <Grid item xs={12} sm={6}>
+                <Grid size={{ xs: 12, sm: 3 }}>
                   <TextField
                     fullWidth
                     select
@@ -788,7 +751,7 @@ const AssignmentRules = () => {
                     <MenuItem value="Low">Low</MenuItem>
                   </TextField>
                 </Grid>
-                <Grid item xs={12} sm={6}>
+                <Grid size={{ xs: 12, sm: 6 }}>
                   <FormControl fullWidth>
                     <InputLabel>Assignment Method</InputLabel>
                     <Select
@@ -811,7 +774,7 @@ const AssignmentRules = () => {
                 <FormGroup>
                   <Grid container spacing={1}>
                     {conditions.map((condition, index) => (
-                      <Grid item xs={12} sm={6} key={index}>
+                      <Grid size={{ xs: 12, sm: 6 }} key={index}>
                         <FormControlLabel
                           control={
                             <Checkbox
@@ -834,7 +797,7 @@ const AssignmentRules = () => {
                 <FormGroup>
                   <Grid container spacing={1}>
                     {actions.map((action, index) => (
-                      <Grid item xs={12} sm={6} key={index}>
+                      <Grid size={{ xs: 12, sm: 6 }} key={index}>
                         <FormControlLabel
                           control={
                             <Checkbox
@@ -872,7 +835,6 @@ const AssignmentRules = () => {
           </DialogActions>
         </Dialog>
 
-
         <Dialog
           open={deleteDialogOpen}
           onClose={() => setDeleteDialogOpen(false)}
@@ -882,7 +844,7 @@ const AssignmentRules = () => {
           </DialogTitle>
           <DialogContent>
             <Typography>
-              Are you sure you want to delete rule <strong>{ruleToDelete?.id}</strong>? 
+              Are you sure you want to delete rule <strong>{ruleToDelete?.id}</strong>?
               This action cannot be undone.
             </Typography>
           </DialogContent>
@@ -895,7 +857,6 @@ const AssignmentRules = () => {
             </Button>
           </DialogActions>
         </Dialog>
-
       </Container>
     </Box>
   );

@@ -103,13 +103,19 @@ const DashboardTabs = () => {
     setSelectedTab(newValue);
   };
 
-  const StyledTabs = styled(Tabs)(({
+  const StyledTabs = styled(Tabs)(({ theme }) => ({
     backgroundColor: '#e1e7ef',
     borderRadius: '10px',
     padding: '4px',
     minHeight: '36px',
+    position: 'sticky',
+    top: 0,
+    zIndex: 100,
     '& .MuiTabs-indicator': {
       display: 'none',
+    },
+    [theme.breakpoints.down('sm')]: {
+      overflowX: 'auto',
     },
   }));
 
@@ -124,7 +130,11 @@ const DashboardTabs = () => {
     '&.Mui-selected': {
       color: '#fff',
       backgroundColor: '#635bff',
-    }
+    },
+    [theme.breakpoints.down('sm')]: {
+      fontSize: '12px',
+      padding: '5px 10px',
+    },
   }));
 
   const renderTabContent = () => {
@@ -158,7 +168,7 @@ const DashboardTabs = () => {
         },
       }}
     >
-      <StyledTabs value={selectedTab} onChange={handleChange}>
+      <StyledTabs value={selectedTab} onChange={handleChange} variant='scrollable' scrollButtons='auto'>
         <StyledTab label="Overview" />
         <StyledTab label="Order" />
         <StyledTab label="Dispatch" />

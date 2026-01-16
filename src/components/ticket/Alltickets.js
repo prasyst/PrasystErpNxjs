@@ -23,7 +23,7 @@ import {
 } from '@mui/icons-material';
 import axiosInstance from '@/lib/axios';
 import TicketDetailsDialog from './ViewTicketDetailsDialog/TicketDetailsDialog';
-import FollowupDialog from './FollowupDialog'; 
+import FollowupDialog from './FollowupDialog';
 import { toast } from 'react-toastify';
 
 const AllTicketsPage = () => {
@@ -43,11 +43,11 @@ const AllTicketsPage = () => {
   const [selectedTicketId, setSelectedTicketId] = useState(null);
   const [ticketDetailsOpen, setTicketDetailsOpen] = useState(false);
   const [selectedRows, setSelectedRows] = useState([]);
-  const [viewMode, setViewMode] = useState('table'); 
+  const [viewMode, setViewMode] = useState('table');
 
   const [followupDialogOpen, setFollowupDialogOpen] = useState(false);
   const [selectedTicketForFollowup, setSelectedTicketForFollowup] = useState(null);
-console.log('filteredTickets',filteredTickets)
+
   useEffect(() => {
     fetchTicketDash();
   }, []);
@@ -70,8 +70,10 @@ console.log('filteredTickets',filteredTickets)
           category: tkt.TKTSERVICENAME || "General",
           priority: tkt.TKTSVRTYNAME || "Medium",
           status: tkt.TKTSTATUS === "O" ? "open" :
-            (tkt.TKTSTATUS === "I" || tkt.TKTSTATUS === "H") ? "in-progress" :
-              tkt.TKTSTATUS === "R" ? "resolved" : "closed",
+            tkt.TKTSTATUS === "I" ? "in-progress" :
+              tkt.TKTSTATUS === "H" ? "hold" :
+                tkt.TKTSTATUS === "R" ? "resolved" :
+                  tkt.TKTSTATUS === "C" ? "closed" : 'Unknown',
           assignee: tkt.TECHEMP_NAME || "Unassigned",
           reporter: tkt.RAISEBYNM || "Unknown",
           createdAt: tkt.TKTDATE,
@@ -117,6 +119,7 @@ console.log('filteredTickets',filteredTickets)
       case 'open': return 'error';
       case 'in-progress': return 'warning';
       case 'resolved': return 'success';
+      case 'hold': return 'info';
       case 'closed': return 'default';
       default: return 'default';
     }
@@ -299,11 +302,11 @@ console.log('filteredTickets',filteredTickets)
   );
 
   const DesktopTableView = () => (
-    <TableContainer 
-      component={Paper} 
-      sx={{ 
-        boxShadow: 2, 
-        maxHeight: 500, 
+    <TableContainer
+      component={Paper}
+      sx={{
+        boxShadow: 2,
+        maxHeight: 500,
         overflow: 'auto',
         '&::-webkit-scrollbar': {
           width: '6px',
@@ -361,9 +364,9 @@ console.log('filteredTickets',filteredTickets)
       >
         <TableHead>
           <TableRow>
-            <TableCell 
-              padding="checkbox" 
-              sx={{ 
+            <TableCell
+              padding="checkbox"
+              sx={{
                 backgroundColor: 'primary.main',
                 width: '40px',
                 minWidth: '40px',
@@ -384,7 +387,6 @@ console.log('filteredTickets',filteredTickets)
                 }}
               />
             </TableCell>
-
             <TableCell sx={{ width: '100px', minWidth: '100px' }}>Ticket No</TableCell>
             <TableCell sx={{ width: '180px', minWidth: '180px' }}>Title</TableCell>
             <TableCell sx={{ width: '120px', minWidth: '120px' }}>Category</TableCell>
@@ -418,9 +420,9 @@ console.log('filteredTickets',filteredTickets)
                   }
                 }}
               >
-                <TableCell 
-                  padding="checkbox" 
-                  sx={{ 
+                <TableCell
+                  padding="checkbox"
+                  sx={{
                     width: '40px',
                     minWidth: '40px',
                     maxWidth: '40px'
@@ -432,7 +434,7 @@ console.log('filteredTickets',filteredTickets)
                     color="primary"
                     checked={isSelected}
                     onChange={(e) => handleRowSelect(e, ticket.TKTKEY)}
-                    sx={{ 
+                    sx={{
                       padding: '2px',
                       '& .MuiSvgIcon-root': {
                         fontSize: '1rem'
@@ -442,11 +444,11 @@ console.log('filteredTickets',filteredTickets)
                 </TableCell>
 
                 <TableCell>
-                  <Typography 
-                    variant="body2" 
-                    fontWeight="600" 
+                  <Typography
+                    variant="body2"
+                    fontWeight="600"
                     color="primary"
-                    sx={{ 
+                    sx={{
                       fontSize: '0.75rem',
                       overflow: 'hidden',
                       textOverflow: 'ellipsis'
@@ -457,10 +459,10 @@ console.log('filteredTickets',filteredTickets)
                 </TableCell>
 
                 <TableCell sx={{ maxWidth: '180px' }}>
-                  <Typography 
-                    variant="subtitle2" 
-                    fontWeight="600" 
-                    sx={{ 
+                  <Typography
+                    variant="subtitle2"
+                    fontWeight="600"
+                    sx={{
                       fontSize: '0.75rem',
                       overflow: 'hidden',
                       textOverflow: 'ellipsis',
@@ -472,26 +474,26 @@ console.log('filteredTickets',filteredTickets)
                 </TableCell>
 
                 <TableCell>
-                  <Chip 
-                    label={ticket.category} 
-                    size="small" 
-                    variant="outlined" 
-                    color="primary" 
-                    sx={{ 
+                  <Chip
+                    label={ticket.category}
+                    size="small"
+                    variant="outlined"
+                    color="primary"
+                    sx={{
                       fontSize: '0.7rem',
                       height: '22px',
                       '& .MuiChip-label': {
                         px: 1,
                         py: 0.5
                       }
-                    }} 
+                    }}
                   />
                 </TableCell>
 
                 <TableCell>
-                  <Typography 
-                    variant="body2" 
-                    sx={{ 
+                  <Typography
+                    variant="body2"
+                    sx={{
                       fontSize: '0.75rem',
                       color: 'text.secondary'
                     }}
@@ -501,11 +503,11 @@ console.log('filteredTickets',filteredTickets)
                 </TableCell>
 
                 <TableCell>
-                  <Chip 
-                    label={ticket.priority} 
-                    size="small" 
-                    color={getPriorityColor(ticket.priority)} 
-                    sx={{ 
+                  <Chip
+                    label={ticket.priority}
+                    size="small"
+                    color={getPriorityColor(ticket.priority)}
+                    sx={{
                       fontSize: '0.7rem',
                       height: '22px',
                       minWidth: '60px',
@@ -513,7 +515,7 @@ console.log('filteredTickets',filteredTickets)
                         px: 1,
                         py: 0.5
                       }
-                    }} 
+                    }}
                   />
                 </TableCell>
 
@@ -521,13 +523,14 @@ console.log('filteredTickets',filteredTickets)
                   <Chip
                     label={
                       ticket.status === 'open' ? 'Open' :
-                      ticket.status === 'in-progress' ? 'In Progress' :
-                      ticket.status === 'resolved' ? 'Resolved' : 'Closed'
+                        ticket.status === 'in-progress' ? 'In Progress' :
+                          ticket.status === 'hold' ? 'Hold' :
+                            ticket.status === 'resolved' ? 'Resolved' : 'Closed'
                     }
                     size="small"
                     color={getStatusColor(ticket.status)}
                     variant="filled"
-                    sx={{ 
+                    sx={{
                       fontSize: '0.7rem',
                       height: '22px',
                       minWidth: '70px',
@@ -540,9 +543,9 @@ console.log('filteredTickets',filteredTickets)
                 </TableCell>
 
                 <TableCell>
-                  <Typography 
-                    variant="body2" 
-                    sx={{ 
+                  <Typography
+                    variant="body2"
+                    sx={{
                       fontSize: '0.75rem',
                       fontWeight: 500
                     }}
@@ -552,10 +555,10 @@ console.log('filteredTickets',filteredTickets)
                 </TableCell>
 
                 <TableCell>
-                  <Typography 
-                    variant="body2" 
+                  <Typography
+                    variant="body2"
                     color="text.secondary"
-                    sx={{ 
+                    sx={{
                       fontSize: '0.7rem'
                     }}
                   >
@@ -566,11 +569,11 @@ console.log('filteredTickets',filteredTickets)
                 <TableCell onClick={(e) => e.stopPropagation()}>
                   <Box display="flex" justifyContent="center" gap={0.5}>
                     <Tooltip title="View" arrow>
-                      <IconButton 
-                        size="small" 
-                        color="primary" 
+                      <IconButton
+                        size="small"
+                        color="primary"
                         onClick={() => handleViewTicket(ticket)}
-                        sx={{ 
+                        sx={{
                           padding: '3px',
                           '& .MuiSvgIcon-root': {
                             fontSize: '1rem'
@@ -580,17 +583,17 @@ console.log('filteredTickets',filteredTickets)
                         <VisibilityIcon />
                       </IconButton>
                     </Tooltip>
-                  
+
                     <Tooltip title="Add Followup" arrow>
-                      <IconButton 
-                        size="small" 
+                      <IconButton
+                        size="small"
                         color="info"
                         onClick={(e) => {
                           e.stopPropagation();
                           handleQuickFollowup(ticket);
                         }}
-                        disabled={ticket.status == "closed" ||ticket.status == "resolved"}
-                        sx={{ 
+                        disabled={ticket.status == "closed" || ticket.status == "resolved"}
+                        sx={{
                           padding: '3px',
                           '& .MuiSvgIcon-root': { fontSize: '1rem' }
                         }}
@@ -599,11 +602,11 @@ console.log('filteredTickets',filteredTickets)
                       </IconButton>
                     </Tooltip>
                     <Tooltip title="Edit" arrow>
-                      <IconButton 
-                        size="small" 
-                        color="secondary" 
+                      <IconButton
+                        size="small"
+                        color="secondary"
                         onClick={() => handleEditTicket(ticket)}
-                        sx={{ 
+                        sx={{
                           padding: '3px',
                           '& .MuiSvgIcon-root': {
                             fontSize: '1rem'
@@ -614,11 +617,11 @@ console.log('filteredTickets',filteredTickets)
                       </IconButton>
                     </Tooltip>
                     <Tooltip title="Delete" arrow>
-                      <IconButton 
-                        size="small" 
-                        color="error" 
+                      <IconButton
+                        size="small"
+                        color="error"
                         onClick={() => handleDeleteClick(ticket)}
-                        sx={{ 
+                        sx={{
                           padding: '3px',
                           '& .MuiSvgIcon-root': {
                             fontSize: '1rem'
@@ -648,7 +651,6 @@ console.log('filteredTickets',filteredTickets)
     </TableContainer>
   );
 
-
   const CompactGridView = () => (
     <Box
       sx={{
@@ -660,7 +662,7 @@ console.log('filteredTickets',filteredTickets)
           lg: 'repeat(4, 1fr)'
         },
         gap: 2,
-        overflowY:'auto',
+        overflowY: 'auto',
         p: 1,
         '&::-webkit-scrollbar': {
           width: '6px',
@@ -704,7 +706,7 @@ console.log('filteredTickets',filteredTickets)
                 {ticket.id}
               </Typography>
               <Chip
-                label={ticket.status === 'open' ? 'Open' : ticket.status === 'in-progress' ? 'In Progress' : ticket.status}
+                label={ticket.status === 'open' ? 'Open' : ticket.status === 'in-progress' ? 'In Progress' : ticket.status === 'hold' ? 'Hold' : ticket.status === 'closed' ? 'Closed' : ticket.status}
                 size="small"
                 color={getStatusColor(ticket.status)}
                 sx={{ height: '20px', fontSize: '0.6rem' }}
@@ -765,12 +767,12 @@ console.log('filteredTickets',filteredTickets)
 
 
   const GridViewControls = () => (
-    <Box sx={{mb:1, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+    <Box sx={{ mb: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
       <Typography variant="h6">
         Tickets ({filteredTickets.length})
       </Typography>
       <Box display="flex" gap={1}>
-         <Tooltip title="Table View">
+        <Tooltip title="Table View">
           <IconButton
             size="small"
             onClick={() => setViewMode('table')}
@@ -788,8 +790,8 @@ console.log('filteredTickets',filteredTickets)
             <GridOnIcon fontSize="small" />
           </IconButton>
         </Tooltip>
-      
-       
+
+
       </Box>
     </Box>
   );
@@ -888,6 +890,7 @@ console.log('filteredTickets',filteredTickets)
                   <MenuItem value="open">Open</MenuItem>
                   <MenuItem value="in-progress">In Progress</MenuItem>
                   <MenuItem value="resolved">Resolved</MenuItem>
+                  <MenuItem value="resolved">Hold</MenuItem>
                   <MenuItem value="closed">Closed</MenuItem>
                 </TextField>
               </Grid>

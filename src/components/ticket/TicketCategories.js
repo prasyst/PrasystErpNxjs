@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
-import {useTicket} from '../../../src/app/context/TicketContext'
+import { useTicket } from '../../../src/app/context/TicketContext'
 import { MdAdd, MdEdit, MdDelete, MdClose, MdCheck } from 'react-icons/md';
+import { Box, Button, IconButton, Typography } from '@mui/material';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import { useRouter } from 'next/navigation';
 
 const TicketCategories = () => {
   const { categories, addCategory, updateCategory } = useTicket();
@@ -12,16 +15,17 @@ const TicketCategories = () => {
     color: '#3b82f6'
   });
 
+  const router = useRouter();
+
   const handleSubmit = (e) => {
     e.preventDefault();
-    
+
     if (editingCategory) {
       updateCategory(editingCategory.id, formData);
       setEditingCategory(null);
     } else {
       addCategory(formData);
     }
-    
     setFormData({ name: '', description: '', color: '#3b82f6' });
     setShowAddForm(false);
   };
@@ -49,64 +53,69 @@ const TicketCategories = () => {
       boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
       border: '1px solid #e5e7eb'
     }}>
-      {/* Header */}
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
+      <Box sx={{
+        display: 'flex',
+        justifyContent: 'space-between',
         alignItems: 'center',
         padding: '1.5rem',
         borderBottom: '1px solid #e5e7eb'
       }}>
-        <div>
-          <h2 style={{ 
-            fontSize: '1.25rem', 
-            fontWeight: '600', 
+        <Box>
+          <Typography sx={{
+            fontSize: '1.25rem',
+            fontWeight: '600',
             color: '#111827',
             margin: 0,
             marginBottom: '0.25rem'
           }}>
             Ticket Categories
-          </h2>
-          <p style={{ 
-            fontSize: '0.875rem', 
+          </Typography>
+          <p style={{
+            fontSize: '0.875rem',
             color: '#6b7280',
             margin: 0
           }}>
             Manage ticket categories and their properties
           </p>
-        </div>
-        <button
-          onClick={() => setShowAddForm(true)}
-          style={{
-            padding: '0.5rem 1rem',
-            backgroundColor: '#2563eb',
-            color: 'white',
-            border: 'none',
-            borderRadius: '0.5rem',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.5rem',
-            fontSize: '0.875rem',
-            fontWeight: '500'
-          }}
-        >
-          <MdAdd size={16} />
-          Add Category
-        </button>
-      </div>
+        </Box>
+
+        <Box sx={{ display: 'flex', gap: '0.5rem' }}>
+          <Button size='small' variant='contained'
+            onClick={() => setShowAddForm(true)}
+            sx={{
+              padding: '0.2rem 0.75rem',
+              borderRadius: '3rem',
+              gap: '0.5rem',
+            }}
+          >
+            <MdAdd size={16} />
+            New
+          </Button>
+          <IconButton onClick={() => router.push('/dashboard')}
+            sx={{
+              bgcolor: '#3b82f6',
+              color: 'white',
+              '&:hover': {
+                bgcolor: '#2563eb',
+              },
+            }}
+          >
+            <ArrowBackIcon size={16} />
+          </IconButton>
+        </Box>
+      </Box>
 
       {/* Add/Edit Form */}
       {showAddForm && (
-        <div style={{ 
-          padding: '1.5rem', 
+        <div style={{
+          padding: '1.5rem',
           borderBottom: '1px solid #e5e7eb',
           backgroundColor: '#f9fafb'
         }}>
           <form onSubmit={handleSubmit}>
-            <div style={{ 
-              display: 'grid', 
-              gridTemplateColumns: '1fr 1fr auto', 
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: '1fr 1fr auto',
               gap: '1rem',
               alignItems: 'end'
             }}>
@@ -182,11 +191,11 @@ const TicketCategories = () => {
                       cursor: 'pointer'
                     }}
                   />
-                  <div style={{ 
-                    width: '24px', 
-                    height: '24px', 
+                  <div style={{
+                    width: '24px',
+                    height: '24px',
                     borderRadius: '0.25rem',
-                    backgroundColor: formData.color 
+                    backgroundColor: formData.color
                   }} />
                 </div>
               </div>
@@ -238,9 +247,9 @@ const TicketCategories = () => {
 
       {/* Categories List */}
       <div style={{ padding: '1.5rem' }}>
-        <div style={{ 
-          display: 'grid', 
-          gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', 
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
           gap: '1rem'
         }}>
           {categories.map((category) => (
@@ -255,25 +264,25 @@ const TicketCategories = () => {
                 gap: '1rem'
               }}
             >
-              <div style={{ 
-                width: '16px', 
-                height: '16px', 
+              <div style={{
+                width: '16px',
+                height: '16px',
                 borderRadius: '0.25rem',
                 backgroundColor: category.color,
                 flexShrink: 0,
                 marginTop: '0.25rem'
               }} />
               <div style={{ flex: 1 }}>
-                <h3 style={{ 
-                  fontSize: '1rem', 
-                  fontWeight: '600', 
+                <h3 style={{
+                  fontSize: '1rem',
+                  fontWeight: '600',
                   color: '#111827',
                   margin: '0 0 0.25rem 0'
                 }}>
                   {category.name}
                 </h3>
-                <p style={{ 
-                  fontSize: '0.875rem', 
+                <p style={{
+                  fontSize: '0.875rem',
                   color: '#6b7280',
                   margin: '0 0 0.5rem 0'
                 }}>
