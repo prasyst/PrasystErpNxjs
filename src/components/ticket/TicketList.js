@@ -8,7 +8,7 @@ import {
   MdVisibility,
   MdEdit,
   MdRefresh,
-   MdArrowBack
+  MdArrowBack
 } from 'react-icons/md';
 import {
   Paper,
@@ -138,9 +138,9 @@ const TicketList = ({ onViewTicket, onEditTicket, onCreateTicket }) => {
       {/* Header */}
       <Box sx={{ p: '1.5rem', borderBottom: '1px solid #e5e7eb' }}>
         <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2}>
-           <IconButton onClick={() => router.back()} sx={{ color: "#6b7280" }}>
-                          <MdArrowBack />
-                        </IconButton>
+          <IconButton onClick={() => router.back()} sx={{ color: "#6b7280" }}>
+            <MdArrowBack />
+          </IconButton>
           <Typography
             variant="h6"
             sx={{
@@ -267,7 +267,7 @@ const TicketList = ({ onViewTicket, onEditTicket, onCreateTicket }) => {
       </Box>
 
       {/* Table - Only Real API Data */}
-      <TableContainer sx={{ overflowX: 'auto' }}>
+      <TableContainer sx={{ overflowX: 'auto', maxHeight: 500 }}>
         <Table sx={{ minWidth: 650 }}>
           <TableHead>
             <TableRow
@@ -278,25 +278,27 @@ const TicketList = ({ onViewTicket, onEditTicket, onCreateTicket }) => {
                   p: '0.5rem 0.75rem',
                   fontSize: '0.6875rem',
                   fontWeight: 600,
-                  color: '#6b7280',
+                  color: '#000',
                   textTransform: 'uppercase',
                   letterSpacing: '0.05em',
                   lineHeight: 1.2,
-                  borderBottom: '1px solid #e5e7eb'
+                  borderBottom: '1px solid #e5e7eb',
+                  textTransform: 'none'
                 }
               }}
             >
               <TableCell>Ticket No</TableCell>
-              <TableCell sx={{ textTransform: 'none' }}>Ticket Key</TableCell>
-              <TableCell sx={{ textTransform: 'none' }}>Time</TableCell>
-              <TableCell sx={{ textTransform: 'none' }}>Title</TableCell>
-              <TableCell sx={{ textTransform: 'none' }}>CCN</TableCell>
-              <TableCell sx={{ textTransform: 'none' }}>Category</TableCell>
-              <TableCell sx={{ textTransform: 'none' }}>Mobile</TableCell>
-              <TableCell sx={{ textTransform: 'none' }}>Priority</TableCell>
-              <TableCell sx={{ textTransform: 'none' }}>Status</TableCell>
-              <TableCell sx={{ textTransform: 'none' }}>Machine</TableCell>
-              <TableCell sx={{ textTransform: 'none' }}>Actions</TableCell>
+              <TableCell>Ticket Key</TableCell>
+              <TableCell>Time</TableCell>
+              <TableCell>Title</TableCell>
+              <TableCell>CCN</TableCell>
+              <TableCell>Category</TableCell>
+              <TableCell>RaisedBy</TableCell>
+              <TableCell>Mobile</TableCell>
+              <TableCell>Priority</TableCell>
+              <TableCell>Status</TableCell>
+              <TableCell>Machine</TableCell>
+              <TableCell>Actions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -351,6 +353,10 @@ const TicketList = ({ onViewTicket, onEditTicket, onCreateTicket }) => {
 
                   <TableCell>
                     <Chip label={ticket.TKTTYPENAME || '—'} size="small" sx={{ fontSize: '0.75rem', height: 24 }} />
+                  </TableCell>
+
+                  <TableCell>
+                    <Chip label={ticket.RAISEBYNM || '—'} size="small" sx={{ fontSize: '0.75rem', height: 24, bgcolor: 'yellow' }} />
                   </TableCell>
 
                   <TableCell sx={{ fontWeight: 600, color: '#057928ff', fontSize: '0.875rem' }}>

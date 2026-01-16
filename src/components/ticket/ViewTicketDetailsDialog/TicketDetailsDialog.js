@@ -87,7 +87,7 @@ const TicketDetailsDialog = ({
                     priority: ticketData.TktSvrtyName || "Medium",
                     status: ticketData.TktStatus === "O" ? "open" :
                         ticketData.TktStatus === "P" ? "in-progress" :
-                            ticketData.TktStatus === "R" ? "resolved" : "closed",
+                            ticketData.TktStatus === "R" ? "resolved" : ticketData.TktStatus === "H" ? "Hold" : "closed",
                     assignee: ticketData.TechEMP_NAME || "Unassigned",
                     reporter: ticketData.RaiseByNm || "Unknown",
                     createdAt: ticketData.TktDate,
@@ -161,7 +161,6 @@ const TicketDetailsDialog = ({
                 toast.error(response.data.MESSAGE || "Failed to update ticket");
             }
         } catch (error) {
-            console.error("Error during update:", error);
             toast.error("Error updating ticket");
         } finally {
             setUpdating(false);
@@ -437,42 +436,42 @@ const TicketDetailsDialog = ({
                                             Basic Information
                                         </Typography>
                                         <Grid container spacing={2}>
-                                            <Grid item size={{ xs: 12, md: 2 }}>
+                                            <Grid size={{ xs: 12, md: 2 }}>
                                                 <InfoRow
                                                     icon={<PersonIcon fontSize="small" />}
                                                     label="Ticket ID"
                                                     value={ticketDetails.id}
                                                 />
                                             </Grid>
-                                            <Grid item size={{ xs: 12, md: 2 }}>
+                                            <Grid size={{ xs: 12, md: 2 }}>
                                                 <InfoRow
                                                     icon={<CategoryIcon fontSize="small" />}
                                                     label="Type"
                                                     value={ticketDetails.tktType}
                                                 />
                                             </Grid>
-                                            <Grid item size={{ xs: 12, md: 2 }}>
+                                            <Grid size={{ xs: 12, md: 2 }}>
                                                 <InfoRow
                                                     icon={<BuildIcon fontSize="small" />}
                                                     label="Tag"
                                                     value={ticketDetails.tktTag}
                                                 />
                                             </Grid>
-                                            <Grid item size={{ xs: 12, md: 3 }}>
+                                            <Grid size={{ xs: 12, md: 4 }}>
                                                 <InfoRow
                                                     icon={<CalendarIcon fontSize="small" />}
                                                     label="Created Date"
                                                     value={formatDateTime(ticketDetails.createdAt)}
                                                 />
                                             </Grid>
-                                            <Grid item size={{ xs: 12, Md: 3 }}>
+                                            <Grid size={{ xs: 12, md: 3 }}>
                                                 <InfoRow
                                                     icon={<CalendarIcon fontSize="small" />}
                                                     label="Due Date"
                                                     value={formatDate(ticketDetails.dueDate)}
                                                 />
                                             </Grid>
-                                            <Grid item size={{ xs: 12, Md: 3 }}>
+                                            <Grid size={{ xs: 12, md: 3 }}>
                                                 <InfoRow
                                                     icon={<PersonIcon fontSize="small" />}
                                                     label="Reporter"
@@ -757,7 +756,7 @@ const TicketDetailsDialog = ({
                 <Button
                     onClick={onClose}
                     variant="outlined"
-                    color="inherit"
+                    color="error"
                     sx={{
                         fontSize: {
                             xs: '0.65rem',

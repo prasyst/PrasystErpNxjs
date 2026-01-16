@@ -251,13 +251,13 @@ const Overdue = () => {
   // Enhanced Mobile Card View
   const MobileOverdueTicketCard = ({ ticket }) => {
     const overdueSeverity = getOverdueSeverity(ticket.overdueDays);
-    
+
     return (
-      <Card 
-        sx={{ 
+      <Card
+        sx={{
           mb: 2,
           cursor: 'pointer',
-          background: ticket.slaBreach 
+          background: ticket.slaBreach
             ? `linear-gradient(135deg, ${theme.palette.error.main}20 0%, ${theme.palette.error.light}20 100%)`
             : `linear-gradient(135deg, ${theme.palette.warning.main}10 0%, ${theme.palette.warning.light}10 100%)`,
           border: `2px solid ${ticket.slaBreach ? theme.palette.error.main : theme.palette.warning.main}30`,
@@ -282,8 +282,8 @@ const Overdue = () => {
                 label={ticket.category}
                 size="small"
                 variant="filled"
-                sx={{ 
-                  backgroundColor: 'primary.main', 
+                sx={{
+                  backgroundColor: 'primary.main',
                   color: 'white',
                   fontWeight: '600',
                   fontSize: '0.7rem',
@@ -291,8 +291,8 @@ const Overdue = () => {
                 }}
               />
             </Box>
-            <Badge 
-              badgeContent={ticket.overdueDays} 
+            <Badge
+              badgeContent={ticket.overdueDays}
               color="error"
               sx={{
                 '& .MuiBadge-badge': {
@@ -312,12 +312,12 @@ const Overdue = () => {
               />
             </Badge>
           </Box>
-          
+
           {/* Title and Description */}
-          <Typography 
-            variant="h6" 
-            fontWeight="700" 
-            sx={{ 
+          <Typography
+            variant="h6"
+            fontWeight="700"
+            sx={{
               mb: 1.5,
               background: `linear-gradient(45deg, ${theme.palette.text.primary}, ${theme.palette.primary.main})`,
               backgroundClip: 'text',
@@ -328,12 +328,12 @@ const Overdue = () => {
           >
             {ticket.title}
           </Typography>
-          
-          <Typography 
-            variant="body2" 
-            color="text.secondary" 
-            sx={{ 
-              mb: 2, 
+
+          <Typography
+            variant="body2"
+            color="text.secondary"
+            sx={{
+              mb: 2,
               lineHeight: 1.5,
               display: '-webkit-box',
               WebkitLineClamp: 2,
@@ -365,10 +365,10 @@ const Overdue = () => {
           {/* Assignee and Due Date */}
           <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
             <Box display="flex" alignItems="center" gap={1}>
-              <Avatar 
-                sx={{ 
-                  width: 28, 
-                  height: 28, 
+              <Avatar
+                sx={{
+                  width: 28,
+                  height: 28,
                   fontSize: '0.7rem',
                   fontWeight: 'bold',
                   backgroundColor: 'primary.main'
@@ -392,11 +392,11 @@ const Overdue = () => {
 
           {/* SLA Breach Warning */}
           {ticket.slaBreach && (
-            <Alert 
-              severity="error" 
-              sx={{ 
-                mt: 1.5, 
-                py: 0.5, 
+            <Alert
+              severity="error"
+              sx={{
+                mt: 1.5,
+                py: 0.5,
                 borderRadius: 2,
                 fontSize: '0.75rem',
                 fontWeight: '600',
@@ -412,15 +412,15 @@ const Overdue = () => {
 
           {/* Actions */}
           <Box display="flex" justifyContent="space-between" alignItems="center">
-            <Button 
-              size="small" 
+            <Button
+              size="small"
               variant="outlined"
               startIcon={<VisibilityIcon />}
               onClick={(e) => {
                 e.stopPropagation();
                 handleViewTicket(ticket);
               }}
-              sx={{ 
+              sx={{
                 borderRadius: 2,
                 fontWeight: '600',
                 textTransform: 'none'
@@ -430,9 +430,9 @@ const Overdue = () => {
             </Button>
             <Box display="flex" gap={0.5}>
               <Tooltip title="Escalate">
-                <IconButton 
-                  size="small" 
-                  sx={{ 
+                <IconButton
+                  size="small"
+                  sx={{
                     backgroundColor: 'warning.main',
                     color: 'white',
                     '&:hover': { backgroundColor: 'warning.dark' }
@@ -446,9 +446,9 @@ const Overdue = () => {
                 </IconButton>
               </Tooltip>
               <Tooltip title="Edit">
-                <IconButton 
-                  size="small" 
-                  sx={{ 
+                <IconButton
+                  size="small"
+                  sx={{
                     backgroundColor: 'primary.main',
                     color: 'white',
                     '&:hover': { backgroundColor: 'primary.dark' }
@@ -462,9 +462,9 @@ const Overdue = () => {
                 </IconButton>
               </Tooltip>
               <Tooltip title="Delete">
-                <IconButton 
-                  size="small" 
-                  sx={{ 
+                <IconButton
+                  size="small"
+                  sx={{
                     backgroundColor: 'error.main',
                     color: 'white',
                     '&:hover': { backgroundColor: 'error.dark' }
@@ -484,11 +484,10 @@ const Overdue = () => {
     );
   };
 
-
   const DesktopOverdueTableView = () => (
-    <TableContainer 
-      component={Paper} 
-      sx={{ 
+    <TableContainer
+      component={Paper}
+      sx={{
         borderRadius: 3,
         border: `1px solid ${theme.palette.error.light}`,
         background: `linear-gradient(135deg, ${theme.palette.background.paper} 0%, ${alpha(theme.palette.error.light, 0.02)} 100%)`,
@@ -497,7 +496,7 @@ const Overdue = () => {
     >
       <Table sx={{ minWidth: 800 }}>
         <TableHead>
-          <TableRow sx={{ 
+          <TableRow sx={{
             background: `linear-gradient(45deg, ${theme.palette.error.main} 0%, ${theme.palette.error.dark} 100%)`,
             '& th': {
               border: 0,
@@ -522,20 +521,20 @@ const Overdue = () => {
         <TableBody>
           {filteredTickets.map((ticket, index) => {
             const overdueSeverity = getOverdueSeverity(ticket.overdueDays);
-            
+
             return (
-              <TableRow 
+              <TableRow
                 key={index}
                 hover
-                sx={{ 
+                sx={{
                   cursor: 'pointer',
                   '&:last-child td': { border: 0 },
-                  backgroundColor: ticket.slaBreach 
+                  backgroundColor: ticket.slaBreach
                     ? alpha(theme.palette.error.main, 0.04)
                     : 'inherit',
                   transition: 'all 0.2s ease',
                   '&:hover': {
-                    backgroundColor: ticket.slaBreach 
+                    backgroundColor: ticket.slaBreach
                       ? alpha(theme.palette.error.main, 0.08)
                       : alpha(theme.palette.warning.main, 0.04),
                     transform: 'scale(1.002)'
@@ -549,8 +548,8 @@ const Overdue = () => {
                       sx={{
                         p: 0.5,
                         borderRadius: 1,
-                        backgroundColor: overdueSeverity.color === 'error' 
-                          ? alpha(theme.palette.error.main, 0.1) 
+                        backgroundColor: overdueSeverity.color === 'error'
+                          ? alpha(theme.palette.error.main, 0.1)
                           : alpha(theme.palette.warning.main, 0.1),
                         display: 'flex',
                         alignItems: 'center',
@@ -569,7 +568,7 @@ const Overdue = () => {
                     <Typography variant="subtitle2" fontWeight="700" noWrap sx={{ mb: 0.5 }}>
                       {ticket.title}
                     </Typography>
-                    <Typography variant="body2" color="text.secondary" sx={{ 
+                    <Typography variant="body2" color="text.secondary" sx={{
                       display: '-webkit-box',
                       WebkitLineClamp: 2,
                       WebkitBoxOrient: 'vertical',
@@ -617,9 +616,9 @@ const Overdue = () => {
                 </TableCell>
                 <TableCell>
                   <Box display="flex" alignItems="center" gap={1.5}>
-                    <Avatar sx={{ 
-                      width: 32, 
-                      height: 32, 
+                    <Avatar sx={{
+                      width: 32,
+                      height: 32,
                       fontSize: '0.8rem',
                       fontWeight: 'bold',
                       backgroundColor: 'primary.main'
@@ -646,9 +645,9 @@ const Overdue = () => {
                 <TableCell align="center">
                   <Box display="flex" justifyContent="center" gap={0.5}>
                     <Tooltip title="View Details">
-                      <IconButton 
-                        size="small" 
-                        sx={{ 
+                      <IconButton
+                        size="small"
+                        sx={{
                           backgroundColor: 'primary.main',
                           color: 'white',
                           '&:hover': { backgroundColor: 'primary.dark' }
@@ -662,9 +661,9 @@ const Overdue = () => {
                       </IconButton>
                     </Tooltip>
                     <Tooltip title="Escalate">
-                      <IconButton 
-                        size="small" 
-                        sx={{ 
+                      <IconButton
+                        size="small"
+                        sx={{
                           backgroundColor: 'warning.main',
                           color: 'white',
                           '&:hover': { backgroundColor: 'warning.dark' }
@@ -678,9 +677,9 @@ const Overdue = () => {
                       </IconButton>
                     </Tooltip>
                     <Tooltip title="Edit">
-                      <IconButton 
-                        size="small" 
-                        sx={{ 
+                      <IconButton
+                        size="small"
+                        sx={{
                           backgroundColor: 'secondary.main',
                           color: 'white',
                           '&:hover': { backgroundColor: 'secondary.dark' }
@@ -703,10 +702,9 @@ const Overdue = () => {
     </TableContainer>
   );
 
-
   const StatCard = ({ value, label, color, icon }) => (
-    <Card 
-      sx={{ 
+    <Card
+      sx={{
         textAlign: 'center',
         background: `linear-gradient(135deg, ${theme.palette[color].main} 0%, ${theme.palette[color].dark} 100%)`,
         color: 'white',
@@ -736,18 +734,17 @@ const Overdue = () => {
   );
 
   return (
-    <Box sx={{ 
-      minHeight: '100vh', 
+    <Box sx={{
+      minHeight: '100vh',
       background: `linear-gradient(135deg, ${theme.palette.background.default} 0%, ${alpha(theme.palette.error.light, 0.05)} 100%)`,
       py: 3
     }}>
       <Container maxWidth="xl" sx={{ px: { xs: 1.5, sm: 2 } }}>
-    
         <Box sx={{ mb: 4 }}>
-          <Button 
+          <Button
             startIcon={<ArrowBackIcon />}
             onClick={() => router.push('/tickets/ticket-dashboard')}
-            sx={{ 
+            sx={{
               mb: 2,
               borderRadius: 2,
               fontWeight: '600',
@@ -757,9 +754,9 @@ const Overdue = () => {
           >
             Back to Dashboard
           </Button>
-          
-          <Box 
-            sx={{ 
+
+          <Box
+            sx={{
               background: `linear-gradient(45deg, ${theme.palette.error.main} 0%, ${theme.palette.warning.main} 100%)`,
               borderRadius: 3,
               p: 1,
@@ -768,12 +765,12 @@ const Overdue = () => {
               mb: 1
             }}
           >
-            <Typography 
-              variant="h3" 
-              component="h5" 
-              fontWeight="800" 
+            <Typography
+              variant="h3"
+              component="h5"
+              fontWeight="800"
               gutterBottom
-              sx={{ 
+              sx={{
                 textShadow: '2px 2px 4px rgba(0,0,0,0.3)',
                 fontSize: { xs: '.5rem', md: '1rem' }
               }}
@@ -787,52 +784,51 @@ const Overdue = () => {
         </Box>
 
         <Grid container spacing={2} sx={{ mb: 4 }}>
-          <Grid item xs={6} md={2.4}>
-            <StatCard 
-              value={overdueStats.total} 
-              label="Total Overdue" 
+          <Grid size={{ xs: 6, md: 2.4 }}>
+            <StatCard
+              value={overdueStats.total}
+              label="Total Overdue"
               color="error"
               icon={<NotificationsActiveIcon sx={{ fontSize: '2rem' }} />}
             />
           </Grid>
-          <Grid item xs={6} md={2.4}>
-            <StatCard 
-              value={overdueStats.critical} 
-              label="Critical" 
+          <Grid size={{ xs: 6, md: 2.4 }}>
+            <StatCard
+              value={overdueStats.critical}
+              label="Critical"
               color="error"
               icon={<WhatshotIcon sx={{ fontSize: '2rem' }} />}
             />
           </Grid>
-          <Grid item xs={6} md={2.4}>
-            <StatCard 
-              value={overdueStats.high} 
-              label="High Priority" 
+          <Grid size={{ xs: 6, md: 2.4 }}>
+            <StatCard
+              value={overdueStats.high}
+              label="High Priority"
               color="warning"
               icon={<ErrorIcon sx={{ fontSize: '2rem' }} />}
             />
           </Grid>
-          <Grid item xs={6} md={2.4}>
-            <StatCard 
-              value={overdueStats.medium} 
-              label="Medium Priority" 
+          <Grid size={{ xs: 6, md: 2.4 }}>
+            <StatCard
+              value={overdueStats.medium}
+              label="Medium Priority"
               color="info"
               icon={<WarningIcon sx={{ fontSize: '2rem' }} />}
             />
           </Grid>
-          <Grid item xs={6} md={2.4}>
-            <StatCard 
-              value={overdueStats.slaBreached} 
-              label="SLA Breached" 
+          <Grid size={{ xs: 6, md: 2.4 }}>
+            <StatCard
+              value={overdueStats.slaBreached}
+              label="SLA Breached"
               color="secondary"
               icon={<PriorityHighIcon sx={{ fontSize: '2rem' }} />}
             />
           </Grid>
         </Grid>
 
-     
-        <Card 
-          sx={{ 
-            mb: 4, 
+        <Card
+          sx={{
+            mb: 4,
             borderRadius: 3,
             background: `linear-gradient(135deg, ${theme.palette.background.paper} 0%, ${alpha(theme.palette.primary.light, 0.05)} 100%)`,
             border: `1px solid ${alpha(theme.palette.primary.main, 0.1)}`,
@@ -855,7 +851,7 @@ const Overdue = () => {
                 }}
               />
             </Grid>
-            
+
             <Grid item xs={12} sm={6} md={3}>
               <TextField
                 fullWidth
@@ -885,7 +881,7 @@ const Overdue = () => {
                 color="error"
                 startIcon={<FilterListIcon />}
                 size="small"
-                sx={{ 
+                sx={{
                   borderRadius: 2,
                   fontWeight: '700',
                   textTransform: 'none',
@@ -910,10 +906,10 @@ const Overdue = () => {
         )}
 
         {filteredTickets.length === 0 && (
-          <Card 
-            sx={{ 
-              textAlign: 'center', 
-              py: 8, 
+          <Card
+            sx={{
+              textAlign: 'center',
+              py: 8,
               borderRadius: 3,
               background: `linear-gradient(135deg, ${theme.palette.success.light}10 0%, ${theme.palette.success.main}10 100%)`,
               border: `2px solid ${theme.palette.success.main}30`
@@ -930,11 +926,11 @@ const Overdue = () => {
                   : 'Excellent! All tickets are currently on schedule.'
                 }
               </Typography>
-              <Button 
+              <Button
                 variant="contained"
                 color="success"
                 size="large"
-                sx={{ 
+                sx={{
                   borderRadius: 2,
                   fontWeight: '700',
                   textTransform: 'none',
@@ -984,23 +980,23 @@ const Overdue = () => {
           </DialogTitle>
           <DialogContent sx={{ p: 3 }}>
             <Typography variant="body1" fontWeight="500">
-              Are you sure you want to delete overdue ticket <strong>{ticketToDelete?.id}</strong>? 
+              Are you sure you want to delete overdue ticket <strong>{ticketToDelete?.id}</strong>?
             </Typography>
             <Alert severity="error" sx={{ mt: 2, borderRadius: 2 }}>
               This action cannot be undone!
             </Alert>
           </DialogContent>
           <DialogActions sx={{ p: 3, gap: 1 }}>
-            <Button 
+            <Button
               onClick={() => setDeleteDialogOpen(false)}
               variant="outlined"
               sx={{ borderRadius: 2, fontWeight: '600' }}
             >
               Cancel
             </Button>
-            <Button 
-              onClick={handleDeleteConfirm} 
-              color="error" 
+            <Button
+              onClick={handleDeleteConfirm}
+              color="error"
               variant="contained"
               sx={{ borderRadius: 2, fontWeight: '600' }}
             >
@@ -1009,7 +1005,7 @@ const Overdue = () => {
           </DialogActions>
         </Dialog>
 
- 
+
       </Container>
     </Box>
   );

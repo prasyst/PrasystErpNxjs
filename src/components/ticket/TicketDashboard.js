@@ -71,8 +71,9 @@ const TicketDashboard = () => {
           category: tkt.TKTSERVICENAME || "General",
           priority: tkt.TKTSVRTYNAME || "Medium",
           status: tkt.TKTSTATUS === "O" ? "open" :
-            (tkt.TKTSTATUS === "I" || tkt.TKTSTATUS === "H") ? "in-progress" :
-              tkt.TKTSTATUS === "R" ? "resolved" : "closed",
+            tkt.TKTSTATUS === "I" ? "in-progress" :
+              tkt.TKTSTATUS === "H" ? "Hold" :
+                tkt.TKTSTATUS === "R" ? "resolved" : "closed",
           assignee: tkt.TECHEMP_NAME || "Unassigned",
           reporter: tkt.RAISEBYNM || "Unknown",
           createdAt: tkt.TKTDATE,
@@ -272,50 +273,43 @@ const TicketDashboard = () => {
     }
   ];
 
+  const totalTicketsCount = tickets.length;
   const quickStats = [
     {
       title: 'Open Tickets',
       value: tickets.filter(ticket => ticket.status == "open").length,
-      change: '+5%',
+      percent: totalTicketsCount > 0 ? ((tickets.filter(ticket => ticket.status == "open").length / totalTicketsCount) * 100).toFixed(2) + ' %' : '0',
       color: 'orange',
       icon: MdNotifications
     },
     {
       title: 'In Progress',
       value: tickets.filter(ticket => ticket.status == "in-progress").length,
-      change: '-2%',
+      percent: totalTicketsCount > 0 ? ((tickets.filter(ticket => ticket.status == "in-progress").length / totalTicketsCount) * 100).toFixed(2) + ' %' : '0',
       color: 'purple',
       icon: MdSchedule
     },
     {
       title: 'Resolved',
       value: tickets.filter(ticket => ticket.status == "resolved").length,
-      change: '+8%',
+      percent: totalTicketsCount > 0 ? ((tickets.filter(ticket => ticket.status == "resolved").length / totalTicketsCount) * 100).toFixed(2) + ' %' : '0',
       color: 'green',
       icon: MdCheckCircleOutline
     },
     {
       title: 'Total Tickets',
       value: totalTicket?.TOTALRECORDS || '0',
-      change: '+12%',
+      percent: '100 %',
       color: 'blue',
       icon: MdList
     },
     {
-      title: 'SLA Compliance',
+      title: 'Solvancy %',
       value: `${calculateSLACompliance()}%`,
-      change: '+2%',
+      percent: `${calculateSLACompliance()}%`,
       color: 'teal',
       icon: MdCheckCircle
     }
-  ];
-
-  const recentActivities = [
-    { action: 'Ticket TKT-001 created', time: '2 mins ago', user: 'John Doe', type: 'create' },
-    { action: 'Ticket TKT-045 resolved', time: '15 mins ago', user: 'Jane Smith', type: 'resolve' },
-    { action: 'New category "Billing" added', time: '1 hour ago', user: 'Admin', type: 'category' },
-    { action: 'SLA policy updated', time: '2 hours ago', user: 'System', type: 'sla' },
-    { action: 'Ticket TKT-012 assigned to Mike', time: '3 hours ago', user: 'System', type: 'assignment' }
   ];
 
   const getStatusColor = (status) => {
@@ -376,103 +370,119 @@ const TicketDashboard = () => {
 
   const renderOverview = () => (
     <>
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))',
-        gap: '1rem',
-        marginBottom: '1.5rem'
-      }}>
-        {quickStats.map((stat, index) => {
-          const IconComponent = stat.icon;
-          return (
-            <div key={index} style={{
-              background:
-                stat.color === 'green' ? 'linear-gradient(135deg, #dcfce7, #66c7a3)' :
-                  stat.color === 'red' ? 'linear-gradient(135deg, #fecaca, #f79c92)' :
-                    stat.color === 'blue' ? 'linear-gradient(135deg, #dbeafe, #92c9f3)' :
-                      stat.color === 'orange' ? 'linear-gradient(135deg, #fed7aa, #fdbf7f)' :
-                        stat.color === 'purple' ? 'linear-gradient(135deg, #e9d5ff, #d2a8f5)' :
-                          'linear-gradient(135deg, #ccfbf1, #a0e0d3)',
+      <Box sx={{ marginBottom: '1.5rem' }}>
+        <Grid container spacing={2}>
+          {quickStats.map((stat, index) => {
+            const IconComponent = stat.icon;
+            return (
+              <Grid size={{ xs: 12, md: 2.4 }} key={index}>
+                <Box
+                  sx={{
+                    background:
+                      stat.color === 'green'
+                        ? 'linear-gradient(135deg, #dcfce7, #66c7a3)'
+                        : stat.color === 'red'
+                          ? 'linear-gradient(135deg, #fecaca, #f79c92)'
+                          : stat.color === 'blue'
+                            ? 'linear-gradient(135deg, #dbeafe, #92c9f3)'
+                            : stat.color === 'orange'
+                              ? 'linear-gradient(135deg, #fed7aa, #fdbf7f)'
+                              : stat.color === 'purple'
+                                ? 'linear-gradient(135deg, #e9d5ff, #d2a8f5)'
+                                : 'linear-gradient(135deg, #ccfbf1, #a0e0d3)',
+                    borderRadius: '0.75rem',
+                    boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
+                    border: '1px solid #e5e7eb',
+                    padding: '1rem',
+                    transition: 'all 0.3s ease',
+                    ':hover': {
+                      transform: 'translateY(-1px)',
+                      boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+                    },
+                  }}
+                >
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <Box>
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 1,
+                          mb: 2,
+                        }}
+                      >
+                        <Box
+                          sx={{
+                            p: 0.5,
+                            borderRadius: '0.5rem',
+                            backgroundColor: '#ffffff',
+                            color:
+                              stat.color === 'green'
+                                ? '#166534'
+                                : stat.color === 'red'
+                                  ? '#991b1b'
+                                  : stat.color === 'blue'
+                                    ? '#1e40af'
+                                    : stat.color === 'orange'
+                                      ? '#9a3412'
+                                      : stat.color === 'purple'
+                                        ? '#7e22ce'
+                                        : '#0f766e',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            flexShrink: 0,
+                          }}
+                        >
+                          <IconComponent size={18} />
+                        </Box>
+                      </Box>
+                      <Typography sx={{ fontSize: '0.875rem', fontWeight: 500, color: '#000', margin: 0 }}>
+                        {stat.title}
+                      </Typography>
+                    </Box>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+                      <Box
+                        sx={{
+                          fontSize: '0.75rem',
+                          fontWeight: 600,
+                          padding: '0.25rem 0.5rem',
+                          borderRadius: '9999px',
+                          backgroundColor: stat.percent.startsWith('+') ? '#dcfce7' : '#fecaca',
+                          color: stat.percent.startsWith('+') ? '#166534' : '#991b1b',
+                        }}
+                      >
+                        {stat.percent}
+                      </Box>
+                      <Typography
+                        sx={{
+                          fontSize: '1.875rem',
+                          fontWeight: 'bold',
+                          color: '#111827',
+                          margin: '0.25rem 0 0 0',
+                        }}
+                      >
+                        {stat.value}
+                      </Typography>
+                    </Box>
+                  </Box>
+                </Box>
+              </Grid>
+            );
+          })}
+        </Grid>
+      </Box>
 
-              borderRadius: '0.75rem',
-              boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
-              border: '1px solid #e5e7eb',
-              padding: '1.25rem',
-              transition: 'all 0.3s ease',
-              ':hover': {
-                transform: 'translateY(-2px)',
-                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
-              },
-            }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                <div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
-                    <div style={{
-                      padding: '0.5rem',
-                      borderRadius: '0.5rem',
-                      backgroundColor:
-                        stat.color === 'green' ? '#ffffffff' :
-                          stat.color === 'red' ? '#ffffffff' :
-                            stat.color === 'blue' ? '#ffffffff' :
-                              stat.color === 'orange' ? '#ffffffff' :
-                                stat.color === 'purple' ? '#ffffffff' :
-                                  '#ffffffff',
-                      color:
-                        stat.color === 'green' ? '#166534' :
-                          stat.color === 'red' ? '#991b1b' :
-                            stat.color === 'blue' ? '#1e40af' :
-                              stat.color === 'orange' ? '#9a3412' :
-                                stat.color === 'purple' ? '#7e22ce' :
-                                  '#0f766e'
-                    }}>
-                      <IconComponent size={20} />
-                    </div>
-                  </div>
-                  <p style={{
-                    fontSize: '0.875rem',
-                    fontWeight: '500',
-                    color: '#6b7280',
-                    margin: 0
-                  }}>
-                    {stat.title}
-                  </p>
-                  <p style={{
-                    fontSize: '1.875rem',
-                    fontWeight: 'bold',
-                    color: '#111827',
-                    margin: '0.25rem 0 0 0'
-                  }}>
-                    {stat.value}
-                  </p>
-                </div>
-                <span style={{
-                  fontSize: '0.75rem',
-                  fontWeight: '600',
-                  padding: '0.25rem 0.5rem',
-                  borderRadius: '9999px',
-                  backgroundColor:
-                    stat.change.startsWith('+') ? '#dcfce7' : '#fecaca',
-                  color:
-                    stat.change.startsWith('+') ? '#166534' : '#991b1b'
-                }}>
-                  {stat.change}
-                </span>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1.5rem' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-          <div style={{
+      <Box sx={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1.5rem' }}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+          <Box sx={{
             backgroundColor: 'white',
             borderRadius: '0.75rem',
             boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
             border: '1px solid #e5e7eb'
           }}>
-            <div style={{ padding: '1rem' }}>
-              <div style={{
+            <Box sx={{ padding: '1rem' }}>
+              <Box sx={{
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
@@ -485,7 +495,7 @@ const TicketDashboard = () => {
                 }}>
                   Ticket Management Modules
                 </Typography>
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <Box sx={{ display: 'flex', gap: '0.5rem' }}>
                   <button style={{
                     padding: '0.5rem',
                     color: '#6b7280',
@@ -508,77 +518,75 @@ const TicketDashboard = () => {
                   }}>
                     <MdFilterList size={20} />
                   </button>
-                </div>
-              </div>
+                </Box>
+              </Box>
 
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-                gap: '1rem'
-              }}>
+              <Grid container spacing={2}>
                 {ticketModules.map((module, index) => {
                   const IconComponent = module.icon;
                   return (
-                    <div
-                      key={index}
-                      style={{
-                        border: '1px solid #e5e7eb',
-                        borderRadius: '0.75rem',
-                        padding: '1.25rem',
-                        cursor: 'pointer',
-                        transition: 'all 0.3s ease',
-                        backgroundColor: `${module.color}15`
-                      }}
-                      onMouseOver={(e) => {
-                        e.currentTarget.style.transform = 'translateY(-4px)';
-                        e.currentTarget.style.boxShadow = '0 8px 25px rgba(0, 0, 0, 0.15)';
-                        e.currentTarget.style.borderColor = module.color;
-                      }}
-                      onMouseOut={(e) => {
-                        e.currentTarget.style.transform = 'translateY(0)';
-                        e.currentTarget.style.boxShadow = '0 1px 3px 0 rgba(0, 0, 0, 0.1)';
-                        e.currentTarget.style.borderColor = '#e5e7eb';
-                      }}
-                      onClick={() => handleModuleClick(module.path)} hai
-                    >
-                      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem' }}>
-                        <div style={{
-                          padding: '0.75rem',
+                    <Grid size={{ xs: 12, md: 6 }} key={index}>
+                      <Box
+                        sx={{
+                          border: '1px solid #e5e7eb',
                           borderRadius: '0.75rem',
-                          backgroundColor: module.color,
-                          color: 'white',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          flexShrink: 0
-                        }}>
-                          <IconComponent size={24} />
-                        </div>
-                        <div style={{ flex: 1 }}>
-                          <h3 style={{
-                            fontSize: '1rem',
-                            fontWeight: '600',
-                            color: '#111827',
-                            margin: '0 0 0.5rem 0'
-                          }}>
-                            {module.title}
-                          </h3>
-                          <p style={{
-                            fontSize: '0.875rem',
-                            color: '#6b7280',
-                            margin: 0,
-                            lineHeight: '1.4'
-                          }}>
-                            {module.description}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
+                          padding: '1.25rem',
+                          cursor: 'pointer',
+                          transition: 'all 0.3s ease',
+                          backgroundColor: `${module.color}15`,
+                          '&:hover': {
+                            transform: 'translateY(-1px)',
+                            boxShadow: '0 8px 25px rgba(0, 0, 0, 0.15)',
+                            borderColor: module.color,
+                          },
+                        }}
+                        onClick={() => handleModuleClick(module.path)}
+                      >
+                        <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: '1rem' }}>
+                          <Box
+                            sx={{
+                              padding: '0.75rem',
+                              borderRadius: '0.75rem',
+                              backgroundColor: module.color,
+                              color: 'white',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              flexShrink: 0,
+                            }}
+                          >
+                            <IconComponent size={24} />
+                          </Box>
+                          <Box sx={{ flex: 1 }}>
+                            <Typography
+                              sx={{
+                                fontSize: '1rem',
+                                fontWeight: '600',
+                                color: '#111827',
+                                margin: '0 0 0.5rem 0',
+                              }}
+                            >
+                              {module.title}
+                            </Typography>
+                            <Typography
+                              sx={{
+                                fontSize: '0.875rem',
+                                color: '#6b7280',
+                                margin: 0,
+                                lineHeight: '1.4',
+                              }}
+                            >
+                              {module.description}
+                            </Typography>
+                          </Box>
+                        </Box>
+                      </Box>
+                    </Grid>
                   );
                 })}
-              </div>
-            </div>
-          </div>
+              </Grid>
+            </Box>
+          </Box>
 
           <Card
             variant="outlined"
@@ -624,82 +632,16 @@ const TicketDashboard = () => {
                 <Table>
                   <TableHead>
                     <TableRow sx={{ borderBottom: '1px solid #e5e7eb' }}>
-                      <TableCell sx={{
-                        fontSize: '0.75rem',
-                        fontWeight: 600,
-                        color: '#6b7280',
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.05em',
-                        py: 1,
-                        px: 1,
-                        border: 'none'
-                      }}>
-                        Ticket No
-                      </TableCell>
-                      <TableCell sx={{
-                        fontSize: '0.75rem',
-                        fontWeight: 600,
-                        color: '#6b7280',
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.05em',
-                        py: 1.5,
-                        px: 1,
-                        border: 'none'
-                      }}>
-                        Title
-                      </TableCell>
-                      <TableCell sx={{
-                        fontSize: '0.75rem',
-                        fontWeight: 600,
-                        color: '#6b7280',
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.05em',
-                        py: 1.5,
-                        px: 1,
-                        border: 'none'
-                      }}>
-                        Priority
-                      </TableCell>
-                      <TableCell sx={{
-                        fontSize: '0.75rem',
-                        fontWeight: 600,
-                        color: '#6b7280',
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.05em',
-                        py: 1.5,
-                        px: 1,
-                        border: 'none'
-                      }}>
-                        Status
-                      </TableCell>
-                      <TableCell sx={{
-                        fontSize: '0.75rem',
-                        fontWeight: 600,
-                        color: '#6b7280',
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.05em',
-                        py: 1.5,
-                        px: 1,
-                        border: 'none'
-                      }}>
-                        Assignee
-                      </TableCell>
-                      <TableCell sx={{
-                        fontSize: '0.75rem',
-                        fontWeight: 600,
-                        color: '#6b7280',
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.05em',
-                        py: 1.5,
-                        px: 1,
-                        border: 'none'
-                      }}>
-                        Action
-                      </TableCell>
+                      <TableCell sx={{ fontSize: '0.75rem', fontWeight: 600, py: 0.5, px: 1 }} >Ticket No</TableCell>
+                      <TableCell sx={{ fontSize: '0.75rem', fontWeight: 600, py: 0.5, px: 1 }}> Title</TableCell>
+                      <TableCell sx={{ fontSize: '0.75rem', fontWeight: 600, py: 0.5, px: 1 }}> Priority </TableCell>
+                      <TableCell sx={{ fontSize: '0.75rem', fontWeight: 600, py: 0.5, px: 1 }}>Status</TableCell>
+                      <TableCell sx={{ fontSize: '0.75rem', fontWeight: 600, py: 0.5, px: 1 }}> Assignee</TableCell>
+                      <TableCell sx={{ fontSize: '0.75rem', fontWeight: 600, py: 0.5, px: 1 }}>Action </TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {tickets.slice(0, 3).map((ticket, index) => (
+                    {tickets.slice(0, 5).map((ticket, index) => (
                       <TableRow
                         key={index}
                         sx={{
@@ -711,33 +653,15 @@ const TicketDashboard = () => {
                         }}
                         onClick={() => setSelectedTicket(ticket)}
                       >
-                        <TableCell
-                          sx={{
-                            fontSize: '0.875rem',
-                            fontWeight: 600,
-                            color: '#2563eb',
-                            py: 1,
-                            px: 1,
-                            border: 'none'
-                          }}
-                        >
+                        <TableCell sx={{ fontSize: '0.875rem', fontWeight: 600, color: '#2563eb', py: 0.5, px: 1 }} >
                           {ticket?.id}
                         </TableCell>
 
-                        <TableCell
-                          sx={{
-                            fontSize: '0.875rem',
-                            fontWeight: 500,
-                            color: '#111827',
-                            py: 1,
-                            px: 1,
-                            border: 'none'
-                          }}
-                        >
+                        <TableCell sx={{ fontSize: '0.875rem', fontWeight: 500, color: '#111827', py: 0.5, px: 1, border: 'none' }}>
                           {ticket.title}
                         </TableCell>
 
-                        <TableCell sx={{ py: 1, px: 1, border: 'none' }}>
+                        <TableCell sx={{ py: 0.5, px: 1, border: 'none' }}>
                           <Chip
                             label={ticket.priority}
                             size="small"
@@ -751,7 +675,7 @@ const TicketDashboard = () => {
                           />
                         </TableCell>
 
-                        <TableCell sx={{ py: 1, px: 1, border: 'none' }}>
+                        <TableCell sx={{ py: 0.5, px: 1, border: 'none' }}>
                           <Chip
                             label={ticket.status.replace('-', ' ')}
                             size="small"
@@ -766,19 +690,11 @@ const TicketDashboard = () => {
                           />
                         </TableCell>
 
-                        <TableCell
-                          sx={{
-                            fontSize: '0.875rem',
-                            color: '#6b7280',
-                            py: 1,
-                            px: 1,
-                            border: 'none'
-                          }}
-                        >
+                        <TableCell sx={{ fontSize: '0.875rem', color: '#6b7280', py: 1, border: 'none' }}>
                           {ticket.assignee}
                         </TableCell>
 
-                        <TableCell sx={{ py: 1, px: 1, border: 'none' }}>
+                        <TableCell sx={{ py: 0.5, px: 1, border: 'none' }}>
                           <Tooltip title="Add Followup" arrow>
                             <IconButton
                               size="small"
@@ -804,9 +720,9 @@ const TicketDashboard = () => {
               </TableContainer>
             </CardContent>
           </Card>
-        </div>
+        </Box>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           <div style={{
             backgroundColor: 'white',
             borderRadius: '0.75rem',
@@ -974,7 +890,7 @@ const TicketDashboard = () => {
               boxShadow: 1,
               border: '1px solid',
               borderColor: 'grey.200',
-              p: 3
+              p: 2
             }}
           >
             <Typography
@@ -1041,8 +957,8 @@ const TicketDashboard = () => {
               ))}
             </Stack>
           </Card>
-        </div>
-      </div>
+        </Box>
+      </Box>
     </>
   );
 
