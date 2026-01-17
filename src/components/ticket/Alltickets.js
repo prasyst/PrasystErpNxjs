@@ -18,12 +18,13 @@ import {
   Close as CloseIcon,
   Comment as CommentIcon,
   GridOn as GridOnIcon,
-  ViewCompact as ViewCompactIcon,
   TableChart as TableChartIcon,
+  History as HistoryIcon
 } from '@mui/icons-material';
 import axiosInstance from '@/lib/axios';
 import TicketDetailsDialog from './ViewTicketDetailsDialog/TicketDetailsDialog';
 import FollowupDialog from './FollowupDialog';
+import FollowupHistoryDialog from './FollowupHistoryDialog'
 import { toast } from 'react-toastify';
 
 const AllTicketsPage = () => {
@@ -37,14 +38,14 @@ const AllTicketsPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [priorityFilter, setPriorityFilter] = useState('all');
-  const [selectedTicket, setSelectedTicket] = useState(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [ticketToDelete, setTicketToDelete] = useState(null);
   const [selectedTicketId, setSelectedTicketId] = useState(null);
   const [ticketDetailsOpen, setTicketDetailsOpen] = useState(false);
   const [selectedRows, setSelectedRows] = useState([]);
   const [viewMode, setViewMode] = useState('table');
-
+  const [followupHistoryDialogOpen, setFollowupHistoryDialogOpen] = useState(false);
+  const [selectedTicketForHistory, setSelectedTicketForHistory] = useState(null);
   const [followupDialogOpen, setFollowupDialogOpen] = useState(false);
   const [selectedTicketForFollowup, setSelectedTicketForFollowup] = useState(null);
 
@@ -94,7 +95,6 @@ const AllTicketsPage = () => {
 
   useEffect(() => {
     let filtered = ticketData;
-
     if (searchTerm) {
       filtered = filtered.filter(t =>
         t.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -199,6 +199,10 @@ const AllTicketsPage = () => {
       setSelectedRows(prev => prev.filter(rowId => rowId !== id));
     }
   };
+  const handleViewFollowupHistory = (ticket) => {
+    setSelectedTicketForHistory(ticket);
+    setFollowupHistoryDialogOpen(true);
+  }
 
   const MobileTicketCard = ({ ticket }) => (
     <Card sx={{ mb: 2, cursor: 'pointer' }} onClick={() => handleViewTicket(ticket)}>
@@ -250,9 +254,7 @@ const AllTicketsPage = () => {
             {formatDate(ticket.createdAt)}
           </Typography>
         </Box>
-
         <Divider sx={{ my: 1 }} />
-
         <Box display="flex" justifyContent="space-between" alignItems="center">
           <Button
             size="small"
@@ -274,6 +276,16 @@ const AllTicketsPage = () => {
               }}
             >
               <CommentIcon fontSize="small" />
+            </IconButton>
+            <IconButton
+              size="small"
+              color="info"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleViewFollowupHistory(ticket);
+              }}
+            >
+              <HistoryIcon fontSize="small" />
             </IconButton>
             <IconButton
               size="small"
@@ -601,6 +613,22 @@ const AllTicketsPage = () => {
                         <CommentIcon />
                       </IconButton>
                     </Tooltip>
+                    <Tooltip title="View Followup History" arrow>
+                      <IconButton
+                        size="small"
+                        color="info"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleViewFollowupHistory(ticket);
+                        }}
+                        sx={{
+                          padding: '3px',
+                          '& .MuiSvgIcon-root': { fontSize: '1rem' }
+                        }}
+                      >
+                        <HistoryIcon />
+                      </IconButton>
+                    </Tooltip>
                     <Tooltip title="Edit" arrow>
                       <IconButton
                         size="small"
@@ -811,9 +839,9 @@ const AllTicketsPage = () => {
       px: { xs: 1, sm: 2 }
     }}>
       <Container maxWidth="xl" sx={{ px: { xs: 1, sm: 2 } }}>
-        <Box sx={{ mb: 2 }}>
-          <Box display="flex" justifyContent="space-between" alignItems={{ xs: 'flex-start', sm: 'center' }} flexDirection={{ xs: 'column', sm: 'row' }} gap={2}>
-            <Box>
+        <Card sx={{ mb: 2, boxShadow: 2 }}>
+          <CardContent sx={{ p: { xs: 2, sm: 2 } }}>
+            <Grid container spacing={2} alignItems="flex-end">
               <Tooltip title='Go to ticket dashboard' arrow>
                 <Button
                   startIcon={<ArrowBackIcon />}
@@ -826,27 +854,8 @@ const AllTicketsPage = () => {
                   }}
                   variant="outlined"
                 >
-                  Dashboard
                 </Button>
               </Tooltip>
-            </Box>
-            <Tooltip title='Create New Ticket' arrow>
-              <Button
-                variant="contained"
-                startIcon={<AddIcon />}
-                onClick={() => router.push('/tickets/create-tickets')}
-                size={isSmallMobile ? "small" : "medium"}
-                sx={{ textTransform: 'none', borderRadius: '20px', backgroundColor: '#615ec9ff' }}
-              >
-                {isSmallMobile ? 'New' : 'New Ticket'}
-              </Button>
-            </Tooltip>
-          </Box>
-        </Box>
-
-        <Card sx={{ mb: 2, boxShadow: 2 }}>
-          <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
-            <Grid container spacing={2} alignItems="flex-end">
               <Typography
                 variant={isSmallMobile ? "h6" : "h5"}
                 component="h1"
@@ -910,11 +919,6 @@ const AllTicketsPage = () => {
                   <MenuItem value="Low">Low</MenuItem>
                 </TextField>
               </Grid>
-              <Grid item xs={12} md={2}>
-                <Typography variant="body2" color="text.secondary" align="center">
-                  {filteredTickets.length} tickets found
-                </Typography>
-              </Grid>
 
               <Typography>Selected Rows: {selectedRows.length}</Typography>
 
@@ -925,6 +929,17 @@ const AllTicketsPage = () => {
                   sx={{ textTransform: 'none', borderRadius: '20px', backgroundColor: '#615ec9ff' }}
                 >
                   {isSmallMobile ? 'Bulk' : 'Bulk Update'}
+                </Button>
+              </Tooltip>
+              <Tooltip title='Create New Ticket' arrow>
+                <Button
+                  variant="contained"
+                  startIcon={<AddIcon />}
+                  onClick={() => router.push('/tickets/create-tickets')}
+                  size={isSmallMobile ? "small" : "medium"}
+                  sx={{ textTransform: 'none', borderRadius: '20px', backgroundColor: '#615ec9ff' }}
+                >
+                  {isSmallMobile ? 'New' : 'New Ticket'}
                 </Button>
               </Tooltip>
             </Grid>
@@ -1032,6 +1047,11 @@ const AllTicketsPage = () => {
             handleCloseTicketDetails();
             handleEditTicket(ticket);
           }}
+        />
+        <FollowupHistoryDialog
+          open={followupHistoryDialogOpen}
+          onClose={() => setFollowupHistoryDialogOpen(false)}
+          ticket={selectedTicketForHistory}
         />
       </Container>
     </Box>
