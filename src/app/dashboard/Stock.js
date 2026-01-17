@@ -24,17 +24,9 @@ import { AllCommunityModule, ModuleRegistry } from "ag-grid-community";
 import "ag-grid-community/styles/ag-theme-quartz.css";
 ModuleRegistry.registerModules([AllCommunityModule]);
 
-const dataPie = [
-    { name: 'Brand A', value: 400 },
-    { name: 'Brand B', value: 300 },
-    { name: 'Brand C', value: 300 },
-    { name: 'Brand D', value: 200 },
-    { name: 'Brand E', value: 600 },
-    { name: 'Brand F', value: 500 },
-    { name: 'Brand G', value: 100 },
-];
-
 const COLORS = ['#4a6eb1', '#67a968', '#ffbb33', '#ff4444', '#635bff', '#555', '#222'];
+
+const prodColors = ['#FF5733', '#33FF57', '#3357FF', '#F1C40F', '#9B59B6', '#E74C3C'];
 
 const Stock = () => {
     const currentYear = dayjs().year();
@@ -57,6 +49,8 @@ const Stock = () => {
     const [TypeOption, setTypeOption] = useState([]);
     const [ShadeOption, setShadeOption] = useState([]);
     const [PtnOption, setPtnOption] = useState([]);
+    const [dataPie, setDataPie] = useState([]);
+    const [productPie, setProductPie] = useState([]);
     const [stockFilter, setStockFilter] = useState({
         Brandfilter: [],
         Catfilter: [],
@@ -134,6 +128,22 @@ const Stock = () => {
         fetchShade();
         fetchFgPtn();
     }, []);
+
+    useEffect(() => {
+        if (brandData.length > 0) {
+            const sortedData = [...brandData].sort((a, b) => b.qty - a.qty);
+            const top5Data = sortedData.slice(0, 5);
+            setDataPie(top5Data);
+        }
+    }, [brandData]);
+
+    useEffect(() => {
+        if (productWise.length > 0) {
+            const sortedData = [...productWise].sort((a, b) => b.prodQty - a.prodQty);
+            const top5ProdData = sortedData.slice(0, 5);
+            setProductPie(top5ProdData);
+        }
+    }, [brandData]);
 
     const handleGetData = () => {
         fetchTotalStock();
@@ -462,7 +472,7 @@ const Stock = () => {
                         <Stack direction="row" justifyContent="space-between">
                             <Box>
                                 <Typography variant="h6" fontWeight='bold'>Stock Value</Typography>
-                                <Typography variant="h6" fontWeight='bold'>Qty: {(totalStck[0]?.TOT_AMT / 100000).toFixed(2) + ' L' || 0}</Typography>
+                                <Typography variant="h6" fontWeight='bold'>{(totalStck[0]?.TOT_AMT / 100000).toFixed(2) + ' L' || 0}</Typography>
                             </Box>
                             <CurrencyRupeeIcon sx={{ fontSize: 50, color: '#d3ae71ff' }} />
                         </Stack>
@@ -473,8 +483,8 @@ const Stock = () => {
                         <Stack direction="row" justifyContent="space-between">
                             <Box>
                                 <Typography variant="body1" fontWeight='bold'>Total Stock Qty</Typography>
-                                <Typography variant="body1" fontWeight='bold'>Qty: {(totalStck[0]?.QTY / 100000).toFixed(2) + 'L' || 0}</Typography>
-                                <Typography variant="body1" fontWeight='bold'>Value: {(totalStck[0]?.TOT_AMT / 100000).toFixed(2) + 'L' || 0}</Typography>
+                                <Typography variant="body1" fontWeight='bold'>Qty: {totalStck[0]?.QTY}</Typography>
+                                <Typography variant="body1" fontWeight='bold'>Value: {(totalStck[0]?.TOT_AMT / 100000).toFixed(2) + ' L' || 0}</Typography>
                             </Box>
                             <InventoryIcon sx={{ fontSize: 50, color: '#8cbbddff' }} />
                         </Stack>
@@ -614,18 +624,18 @@ const Stock = () => {
                                 fontSize: '1.25rem',
                             }}
                         >
-                            Brand A Distribution
+                            Top Brand Distributions
                         </Typography>
                         <Box sx={{ width: '100%', height: 400 }}>
                             <ResponsiveContainer width="100%" height="100%">
                                 <PieChart>
                                     <Pie
                                         data={dataPie}
-                                        dataKey="value"
+                                        dataKey="qty"
                                         nameKey="name"
                                         cx="50%"
                                         cy="50%"
-                                        outerRadius={120}
+                                        outerRadius={140}
                                         fill="#8884d8"
                                         paddingAngle={5}
                                     >
@@ -656,23 +666,23 @@ const Stock = () => {
                                 fontSize: '1.25rem',
                             }}
                         >
-                            Brand B Distribution
+                            Top Product Distributions
                         </Typography>
                         <Box sx={{ width: '100%', height: 400 }}>
                             <ResponsiveContainer width="100%" height="100%">
                                 <PieChart>
                                     <Pie
-                                        data={dataPie}
-                                        dataKey="value"
+                                        data={productPie}
+                                        dataKey="prodQty"
                                         nameKey="name"
                                         cx="50%"
                                         cy="50%"
-                                        outerRadius={120}
+                                        outerRadius={140}
                                         fill="#8884d8"
                                         paddingAngle={5}
                                     >
-                                        {dataPie.map((entry, index) => (
-                                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                        {productPie.map((entry, index) => (
+                                            <Cell key={`cell-${index}`} fill={prodColors[index % prodColors.length]} />
                                         ))}
                                     </Pie>
                                     <Tooltip />

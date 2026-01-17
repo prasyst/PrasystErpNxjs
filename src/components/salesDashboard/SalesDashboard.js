@@ -276,6 +276,20 @@ const SalesDashboard = () => {
         }
     }, [ordTrend]);
 
+    const handleApplyFilter = () => {
+        handleDialogClose();
+        handleFetchedData();
+    };
+
+    const handleClearAll = () => {
+        setSelectedOptions({ Brand: [], Party: [], Broker: [], State: [] });
+        setSearchBrand('');
+        setSearchParty('');
+        setSearchBroker('');
+        setSearchState('');
+        handleFetchedData();
+    };
+
     // Filters payload
     const buildFilterPayload = () => ({
         Brandfilter: selectedOptions.Brand.join(','),
@@ -293,7 +307,7 @@ const SalesDashboard = () => {
                 FCYR_KEY: fcyr,
                 FROM_DT: dayjs(dateFrom).format('YYYY-MM-DD'),
                 To_DT: dayjs(dateTo).format('YYYY-MM-DD'),
-                Flag: "",
+                Flag: "RECENT",
                 PageNumber: 1,
                 PageSize: 10,
                 SearchText: "",
@@ -845,9 +859,13 @@ const SalesDashboard = () => {
                                     textAlign: 'center',
                                     fontWeight: 'bold',
                                     fontSize: '1.6rem',
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
+                                    alignItems: 'center',
+                                    px: 2,
                                 }}
                             >
-                                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                                     <Typography variant="h5">Selected Filters</Typography>
 
                                     {Object.values(selectedOptions).flat().length > 0 && (
@@ -862,6 +880,39 @@ const SalesDashboard = () => {
                                             }}
                                         />
                                     )}
+                                </Box>
+
+                                <Box sx={{ display: 'flex', gap: 1 }}>
+                                    <Button
+                                        variant="contained"
+                                        size="small"
+                                        onClick={handleApplyFilter}
+                                        sx={{
+                                            backgroundColor: '#635bff',
+                                            '&:hover': { backgroundColor: '#5548d9' },
+                                            boxShadow: '0 6px 20px rgba(99,91,255,0.3)'
+                                        }}
+                                    >
+                                        Apply Filters
+                                    </Button>
+                                    <Button
+                                        variant="contained"
+                                        size="small"
+                                        onClick={handleClearAll}
+                                        startIcon={<ClearIcon />}
+                                        color="error"
+                                    >
+                                        Clear All
+                                    </Button>
+                                    <IconButton
+                                        variant="contained"
+                                        color="error"
+                                        size="small"
+                                        onClick={handleDialogClose}
+                                        sx={{ mr: 2 }}
+                                    >
+                                        <CloseIcon />
+                                    </IconButton>
                                 </Box>
                             </DialogTitle>
 
@@ -1223,50 +1274,6 @@ const SalesDashboard = () => {
                                     </Grid>
                                 </Grid>
                             </DialogContent>
-
-                            {/* Footer */}
-                            <DialogActions sx={{
-                                p: 1,
-                                backgroundColor: '#f0f2ff',
-                                justifyContent: 'space-between',
-                                borderTop: '1px solid #ddd'
-                            }}>
-                                <Button size="small"
-                                    onClick={() => {
-                                        setSelectedOptions({ Brand: [], Party: [], Broker: [], State: [] });
-                                        setSearchBrand('');
-                                        setSearchParty('');
-                                        setSearchBroker('');
-                                        setSearchState('');
-                                    }}
-                                    startIcon={<ClearIcon />}
-                                    color="error"
-                                >
-                                    Clear All
-                                </Button>
-
-                                <Box>
-                                    <Button color="error" size="small" onClick={handleDialogClose} sx={{ mr: 2 }}>
-                                        Cancel
-                                    </Button>
-                                    <Button
-                                        variant="contained"
-                                        size="small"
-                                        onClick={() => {
-                                            handleDialogClose();
-                                            handleFetchedData();
-                                            toast.success("Filters applied.");
-                                        }}
-                                        sx={{
-                                            backgroundColor: '#635bff',
-                                            '&:hover': { backgroundColor: '#5548d9' },
-                                            boxShadow: '0 6px 20px rgba(99,91,255,0.3)'
-                                        }}
-                                    >
-                                        Apply Filters
-                                    </Button>
-                                </Box>
-                            </DialogActions>
                         </Dialog>
                     </Box>
                 </LocalizationProvider>
@@ -1422,7 +1429,7 @@ const SalesDashboard = () => {
                 <Grid size={{ xs: 12, md: 6 }} sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                     <StyledCard2 sx={{ flex: 1, display: 'flex', flexDirection: 'column', p: 2 }}>
                         <Typography variant="subtitle1" fontWeight="bold" align="center" gutterBottom>
-                            Top 10 Parties
+                            Top 10 Party Wise Order %
                         </Typography>
                         <PieChart
                             series={[
@@ -1457,7 +1464,7 @@ const SalesDashboard = () => {
                 <Grid size={{ xs: 12, md: 6 }} sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                     <StyledCard2 sx={{ flex: 1, display: 'flex', flexDirection: 'column', p: 2 }}>
                         <Typography variant="subtitle1" fontWeight="bold" align="center" gutterBottom>
-                            Top 10 States
+                            Top 10 States Wise Order %
                         </Typography>
                         {stateWise.length > 0 ? (
                             <PieChart
@@ -1578,7 +1585,7 @@ const SalesDashboard = () => {
                             <Table stickyHeader size="small" sx={{ minWidth: 1100 }}>
                                 <TableHead>
                                     <TableRow>
-                                        {['View', 'OrderNo', 'Date', 'Party', 'City', 'State', 'Qty', 'Broker', 'Salesman', 'Status'].map((header) => (
+                                        {['View', 'OrderNo', 'Date', 'Party', 'City', 'State', 'Broker', 'Salesman', 'Qty', 'BalQty', 'INIT_QTY', 'SaleQTY', 'Status'].map((header) => (
                                             <TableCell
                                                 key={header}
                                                 sx={{
@@ -1640,20 +1647,30 @@ const SalesDashboard = () => {
                                                 <TableCell sx={{ borderRight: '1px solid #e2e8f0', fontSize: '0.875rem', padding: '0px 16px' }}>
                                                     {item.STATE_NAME}
                                                 </TableCell>
-                                                <TableCell sx={{ borderRight: '1px solid #e2e8f0', fontWeight: 700, fontSize: '0.875rem', padding: '0px 16px' }}>
-                                                    {item.QTY}
-                                                </TableCell>
                                                 <TableCell sx={{ borderRight: '1px solid #e2e8f0', fontSize: '0.875rem', padding: '0px 16px' }}>
                                                     {item.BROKER_NAME}
                                                 </TableCell>
                                                 <TableCell sx={{ borderRight: '1px solid #e2e8f0', fontSize: '0.875rem', padding: '0px 16px' }}>
                                                     {item.SALEPERSON_NAME}
                                                 </TableCell>
+                                                <TableCell sx={{ borderRight: '1px solid #e2e8f0', fontWeight: 700, fontSize: '0.875rem', padding: '0px 16px' }}>
+                                                    {item.QTY}
+                                                </TableCell>
+                                                <TableCell sx={{ borderRight: '1px solid #e2e8f0', fontWeight: 700, fontSize: '0.875rem', padding: '0px 16px' }}>
+                                                    {item.BAL_QTY}
+                                                </TableCell>
+                                                <TableCell sx={{ borderRight: '1px solid #e2e8f0', fontWeight: 700, fontSize: '0.875rem', padding: '0px 16px' }}>
+                                                    {item.INIT_QTY}
+                                                </TableCell>
+                                                <TableCell sx={{ borderRight: '1px solid #e2e8f0', fontWeight: 700, fontSize: '0.875rem', padding: '0px 16px' }}>
+                                                    {item.SALE_QTY}
+                                                </TableCell>
+
                                                 <TableCell sx={{ padding: '0px 16px' }}>
                                                     <Chip
                                                         label={item.STATUS === 'CANL' ? 'Cancelled' : item.STATUS || 'Active'}
                                                         size="small"
-                                                        color={item.STATUS === 'CANL' ? 'error' : 'success'}
+                                                        color={item.STATUS === 'SH_CLOSE' ? 'error' : 'success'}
                                                         sx={{
                                                             fontSize: '0.75rem',
                                                             height: 20,
@@ -1768,10 +1785,15 @@ const SalesDashboard = () => {
                                         <TableCell sx={headerCellStyle}>Party</TableCell>
                                         <TableCell sx={headerCellStyle}>City</TableCell>
                                         <TableCell sx={headerCellStyle}>State</TableCell>
-                                        <TableCell sx={headerCellStyle}>Amount</TableCell>
-                                        <TableCell sx={headerCellStyle}>Qty</TableCell>
                                         <TableCell sx={headerCellStyle}>Broker</TableCell>
                                         <TableCell sx={headerCellStyle}> SalesMan</TableCell>
+                                        <TableCell sx={headerCellStyle}>Amount</TableCell>
+                                        <TableCell sx={headerCellStyle}>Qty</TableCell>
+                                        <TableCell sx={headerCellStyle}>BalQty</TableCell>
+                                        <TableCell sx={headerCellStyle}>INIT_QTY</TableCell>
+                                        <TableCell sx={headerCellStyle}>SaleQTY</TableCell>
+                                        <TableCell sx={headerCellStyle}>Pend(%)</TableCell>
+                                        <TableCell sx={headerCellStyle}>Sale(%)</TableCell>
                                     </TableRow>
                                 </TableHead>
 
@@ -1808,12 +1830,18 @@ const SalesDashboard = () => {
                                                 <TableCell sx={{ padding: '2px 16px' }}>{item.PARTY_NAME || '-'}</TableCell>
                                                 <TableCell sx={{ padding: '2px 16px' }}>{item.CITY_NAME || '-'}</TableCell>
                                                 <TableCell sx={{ padding: '2px 16px' }}>{item.STATE_NAME || '-'}</TableCell>
+                                                <TableCell sx={{ padding: '2px 16px' }}>{item.BROKER_NAME || '-'}</TableCell>
+                                                <TableCell sx={{ padding: '2px 16px' }}>{item.SALEPERSON_NAME || '-'}</TableCell>
                                                 <TableCell sx={{ padding: '2px 16px' }}>
                                                     {parseFloat(item.AMOUNT || 0).toLocaleString('en-IN', { maximumFractionDigits: 2 })}
                                                 </TableCell>
                                                 <TableCell sx={{ padding: '2px 16px' }}>{parseFloat(item.QTY || 0).toLocaleString('en-IN')}</TableCell>
-                                                <TableCell sx={{ padding: '2px 16px' }}>{item.BROKER_NAME || '-'}</TableCell>
-                                                <TableCell sx={{ padding: '2px 16px' }}>{item.SALEPERSON_NAME || '-'}</TableCell>
+                                                <TableCell sx={{ padding: '2px 16px' }}>{parseFloat(item.BAL_QTY || 0).toLocaleString('en-IN')}</TableCell>
+                                                <TableCell sx={{ padding: '2px 16px' }}>{parseFloat(item.INIT_QTY || 0).toLocaleString('en-IN')}</TableCell>
+                                                <TableCell sx={{ padding: '2px 16px' }}>{parseFloat(item.SALE_QTY || 0).toLocaleString('en-IN')}</TableCell>
+                                                <TableCell sx={{ padding: '2px 16px' }}>{(parseFloat(item.BAL_QTY / item.QTY) * 100).toFixed(2)}</TableCell>
+                                                <TableCell sx={{ padding: '2px 16px' }}>{(parseFloat(item.SALE_QTY / item.QTY) * 100).toFixed(2)}</TableCell>
+
                                             </TableRow>
                                         ))
                                     ) : (
@@ -1842,7 +1870,7 @@ const SalesDashboard = () => {
                                             },
                                         }}
                                     >
-                                        <TableCell colSpan={3} align="left" sx={{ fontWeight: 'bold', color: '#000' }}>
+                                        <TableCell colSpan={5} align="left" sx={{ fontWeight: 'bold', color: '#000' }}>
                                             Total
                                         </TableCell>
                                         <TableCell sx={{ fontWeight: 'bold', color: '#000' }}>
@@ -1853,6 +1881,21 @@ const SalesDashboard = () => {
                                         <TableCell sx={{ fontWeight: 'bold', color: '#000' }}>
                                             {filteredPartyWise
                                                 .reduce((sum, item) => sum + parseFloat(item.QTY || 0), 0)
+                                                .toLocaleString('en-IN')}
+                                        </TableCell>
+                                        <TableCell sx={{ fontWeight: 'bold', color: '#000' }}>
+                                            {filteredPartyWise
+                                                .reduce((sum, item) => sum + parseFloat(item.BAL_QTY || 0), 0)
+                                                .toLocaleString('en-IN')}
+                                        </TableCell>
+                                        <TableCell sx={{ fontWeight: 'bold', color: '#000' }}>
+                                            {filteredPartyWise
+                                                .reduce((sum, item) => sum + parseFloat(item.INIT_QTY || 0), 0)
+                                                .toLocaleString('en-IN')}
+                                        </TableCell>
+                                        <TableCell sx={{ fontWeight: 'bold', color: '#000' }}>
+                                            {filteredPartyWise
+                                                .reduce((sum, item) => sum + parseFloat(item.SALE_QTY || 0), 0)
                                                 .toLocaleString('en-IN')}
                                         </TableCell>
                                         <TableCell colSpan={2} />
@@ -1931,7 +1974,9 @@ const SalesDashboard = () => {
                                         <TableCell sx={{ fontWeight: 'bold', color: '#fff', backgroundColor: '#66a6afff', padding: '2px 16px' }}>Qty</TableCell>
                                         <TableCell sx={{ fontWeight: 'bold', color: '#fff', backgroundColor: '#66a6afff', padding: '2px 16px' }}>BalQty</TableCell>
                                         <TableCell sx={{ fontWeight: 'bold', color: '#fff', backgroundColor: '#66a6afff', padding: '2px 16px' }}>SaleQty</TableCell>
-                                        <TableCell sx={{ fontWeight: 'bold', color: '#fff', backgroundColor: '#66a6afff', padding: '2px 16px' }}>Qty%</TableCell>
+                                        <TableCell sx={{ fontWeight: 'bold', color: '#fff', backgroundColor: '#66a6afff', padding: '2px 16px' }}>Pend(%)</TableCell>
+                                        <TableCell sx={{ fontWeight: 'bold', color: '#fff', backgroundColor: '#66a6afff', padding: '2px 16px' }}>Sale(%)</TableCell>
+                                        <TableCell sx={{ fontWeight: 'bold', color: '#fff', backgroundColor: '#66a6afff', padding: '2px 16px' }}>Order(%)</TableCell>
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
@@ -1965,6 +2010,8 @@ const SalesDashboard = () => {
                                                     <TableCell sx={{ padding: '2px 15px' }}>{item.QTY}</TableCell>
                                                     <TableCell sx={{ padding: '2px 15px' }}>{item.BAL_QTY}</TableCell>
                                                     <TableCell sx={{ padding: '2px 15px' }}>{item.SALE_QTY}</TableCell>
+                                                    <TableCell sx={{ padding: '2px 15px' }}>{((item.BAL_QTY / item.QTY) * 100).toFixed(2)}</TableCell>
+                                                    <TableCell sx={{ padding: '2px 15px' }}>{((item.SALE_QTY / item.QTY) * 100).toFixed(2)}</TableCell>
                                                     <TableCell sx={{ padding: '2px 15px' }}>{qtyPercentage + "%"}</TableCell>
                                                 </TableRow>
                                             );
@@ -2015,7 +2062,7 @@ const SalesDashboard = () => {
                 <Grid size={{ xs: 12, md: 12 }}>
                     <Paper elevation={5} sx={{ p: 2, borderRadius: 2, height: 300 }}>
                         <Typography variant="h6" gutterBottom fontWeight="bold">
-                            Order vs Sales
+                            Sales Person Wise Order
                         </Typography>
                         <Box sx={{ width: '100%', height: '100%' }}>
                             <ResponsiveContainer width="100%" height="90%">
@@ -2110,7 +2157,7 @@ const SalesDashboard = () => {
                                     WebkitTextFillColor: 'transparent',
                                 }}
                             >
-                                Orders Trend
+                                Orders Trend(Monthly)
                             </Typography>
 
                             {/* Animated Total Quantity */}

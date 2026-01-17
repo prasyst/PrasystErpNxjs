@@ -503,14 +503,13 @@ const Overdue = () => {
               fontWeight: '800',
               color: 'white',
               fontSize: '0.9rem',
-              py: 2,
-              textTransform: 'uppercase',
+              py: 1,
               letterSpacing: '0.5px'
             }
           }}>
             <TableCell>Ticket ID</TableCell>
             <TableCell>Title & Description</TableCell>
-            <TableCell>Overdue Days</TableCell>
+            <TableCell>Overdues</TableCell>
             <TableCell>Priority</TableCell>
             <TableCell>Status</TableCell>
             <TableCell>Assignee</TableCell>
@@ -716,7 +715,7 @@ const Overdue = () => {
         justifyContent: 'center',
         transition: 'all 0.3s ease',
         '&:hover': {
-          transform: 'translateY(-4px)',
+          transform: 'translateY(-2px)',
           boxShadow: `0 8px 25px ${alpha(theme.palette[color].main, 0.3)}`
         }
       }}
@@ -735,12 +734,11 @@ const Overdue = () => {
 
   return (
     <Box sx={{
-      minHeight: '100vh',
+      minHeight: '100vh', py: 3,
       background: `linear-gradient(135deg, ${theme.palette.background.default} 0%, ${alpha(theme.palette.error.light, 0.05)} 100%)`,
-      py: 3
     }}>
       <Container maxWidth="xl" sx={{ px: { xs: 1.5, sm: 2 } }}>
-        <Box sx={{ mb: 4 }}>
+        <Box sx={{ mb: 2 }}>
           <Button
             startIcon={<ArrowBackIcon />}
             onClick={() => router.push('/tickets/ticket-dashboard')}
@@ -762,7 +760,6 @@ const Overdue = () => {
               p: 1,
               color: 'white',
               textAlign: 'center',
-              mb: 1
             }}
           >
             <Typography
@@ -783,7 +780,7 @@ const Overdue = () => {
           </Box>
         </Box>
 
-        <Grid container spacing={2} sx={{ mb: 4 }}>
+        <Grid container spacing={2} sx={{ mb: 2 }}>
           <Grid size={{ xs: 6, md: 2.4 }}>
             <StatCard
               value={overdueStats.total}
@@ -828,7 +825,7 @@ const Overdue = () => {
 
         <Card
           sx={{
-            mb: 4,
+            mb: 2,
             borderRadius: 3,
             background: `linear-gradient(135deg, ${theme.palette.background.paper} 0%, ${alpha(theme.palette.primary.light, 0.05)} 100%)`,
             border: `1px solid ${alpha(theme.palette.primary.main, 0.1)}`,
@@ -836,7 +833,7 @@ const Overdue = () => {
           }}
         >
           <Grid container spacing={2} alignItems="center">
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 6, md: 6 }}>
               <TextField
                 fullWidth
                 placeholder="🔍 Search overdue tickets..."
@@ -852,7 +849,7 @@ const Overdue = () => {
               />
             </Grid>
 
-            <Grid item xs={12} sm={6} md={3}>
+            <Grid size={{ xs: 6, sm: 6, md: 3 }}>
               <TextField
                 fullWidth
                 select
@@ -874,7 +871,7 @@ const Overdue = () => {
               </TextField>
             </Grid>
 
-            <Grid item xs={12} sm={6} md={3}>
+            <Grid size={{ xs: 6, sm: 6, md: 3 }}>
               <Button
                 fullWidth
                 variant="contained"
