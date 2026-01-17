@@ -33,8 +33,8 @@ const Production = () => {
         </Box>
 
         {/* Optional: Display a card for more details or as a placeholder */}
-        <Grid container spacing={4} justifyContent="center">
-          <Grid item xs={12} sm={6} md={4}>
+        <Grid container spacing={2} justifyContent="center">
+          <Grid size={{ xs: 12, sm: 6, md: 6 }}>
             <Card sx={{ backgroundColor: '#fff', borderRadius: '8px', boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)' }}>
               <CardContent sx={{ textAlign: 'center', padding: '32px' }}>
                 <Image

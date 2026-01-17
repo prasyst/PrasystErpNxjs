@@ -292,7 +292,7 @@ const TicketList = ({ onViewTicket, onEditTicket, onCreateTicket }) => {
               <TableCell>Time</TableCell>
               <TableCell>Title</TableCell>
               <TableCell>CCN</TableCell>
-              <TableCell>Category</TableCell>
+              <TableCell>Type</TableCell>
               <TableCell>RaisedBy</TableCell>
               <TableCell>Mobile</TableCell>
               <TableCell>Priority</TableCell>
