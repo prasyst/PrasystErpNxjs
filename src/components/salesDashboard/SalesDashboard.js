@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import {
     Box, Typography, Grid, Paper, IconButton, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Button,
     styled, useTheme, TextField, DialogTitle, DialogActions, Dialog, LinearProgress, Chip, TableFooter, CircularProgress,
-    DialogContent, FormControlLabel, Checkbox, Badge, InputAdornment, Fade,
+    DialogContent, FormControlLabel, Checkbox, Badge, InputAdornment, Fade, Card, CardContent, Stack
 } from "@mui/material";
 import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
 import AccessAlarmIcon from '@mui/icons-material/AccessAlarm';
@@ -640,7 +640,7 @@ const SalesDashboard = () => {
 
             if (response.data.STATUS === 0 && Array.isArray(response.data.DATA)) {
                 const transformedData = response.data.DATA.map((item) => ({
-                    month: item.SALEPERSON_NAME,
+                    month: item.SALEPERSON_NAME || 'Direct Sale',
                     amt: item.AMT / 100000,
                     qty: item.QTY / 100000
                 }));
@@ -848,6 +848,7 @@ const SalesDashboard = () => {
                                     maxWidth: 'none',
                                     width: 1000,
                                     height: 500,
+                                    pb: 2
                                 }
                             }}
                         >
@@ -858,7 +859,7 @@ const SalesDashboard = () => {
                                     py: 1,
                                     textAlign: 'center',
                                     fontWeight: 'bold',
-                                    fontSize: '1.6rem',
+                                    fontSize: '1.4rem',
                                     display: 'flex',
                                     justifyContent: 'space-between',
                                     alignItems: 'center',
@@ -866,52 +867,86 @@ const SalesDashboard = () => {
                                 }}
                             >
                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                                    <Typography variant="h5">Selected Filters</Typography>
+                                    <Typography variant="h5" sx={{ fontSize: '1.2rem' }}>
+                                        Selected Filters
+                                    </Typography>
 
                                     {Object.values(selectedOptions).flat().length > 0 && (
                                         <Chip
                                             label={`${Object.values(selectedOptions).flat().length} selected`}
-                                            size="medium"
+                                            size="small"
                                             sx={{
                                                 backgroundColor: 'rgba(255, 0, 119, 0.7)',
                                                 color: 'white',
                                                 fontWeight: 'bold',
                                                 backdropFilter: 'blur(6px)',
+                                                fontSize: '0.8rem',
                                             }}
                                         />
                                     )}
                                 </Box>
 
+                                {/* Action buttons */}
                                 <Box sx={{ display: 'flex', gap: 1 }}>
                                     <Button
                                         variant="contained"
                                         size="small"
                                         onClick={handleApplyFilter}
                                         sx={{
-                                            backgroundColor: '#635bff',
-                                            '&:hover': { backgroundColor: '#5548d9' },
-                                            boxShadow: '0 6px 20px rgba(99,91,255,0.3)'
+                                            background: 'linear-gradient(135deg, #5548d9 0%, #635bff 100%)',
+                                            color: 'white',
+                                            borderRadius: '20px',
+                                            boxShadow: '0 4px 6px rgba(99,91,255,0.2)',
+                                            padding: '4px 10px',
+                                            fontSize: '0.75rem',
+                                            '&:hover': {
+                                                background: 'linear-gradient(135deg, #5548d9 0%, #635bff 100%)',
+                                                boxShadow: '0 6px 12px rgba(99,91,255,0.4)',
+                                            },
+                                            transition: 'all 0.3s ease',
                                         }}
                                     >
-                                        Apply Filters
+                                        Apply
                                     </Button>
+
                                     <Button
                                         variant="contained"
                                         size="small"
                                         onClick={handleClearAll}
-                                        startIcon={<ClearIcon />}
                                         color="error"
+                                        sx={{
+                                            background: 'linear-gradient(135deg, #ff1a5d 0%, #ff4d6d 100%)',
+                                            color: 'white',
+                                            borderRadius: '20px',
+                                            boxShadow: '0 4px 6px rgba(255, 77, 109, 0.2)',
+                                            padding: '4px 10px',
+                                            fontSize: '0.75rem',
+                                            '&:hover': {
+                                                background: 'linear-gradient(135deg, #ff1a5d 0%, #ff4d6d 100%)',
+                                                boxShadow: '0 6px 12px rgba(255, 77, 109, 0.4)',
+                                            },
+                                            transition: 'all 0.3s ease',
+                                        }}
                                     >
-                                        Clear All
+                                        Clear
                                     </Button>
+
                                     <IconButton
                                         variant="contained"
                                         color="error"
                                         size="small"
                                         onClick={handleDialogClose}
-                                        sx={{ mr: 2 }}
+                                        sx={{
+                                            background: 'linear-gradient(135deg, #ff4d6d 0%, #ff1a5d 100%)',
+                                            '&:hover': {
+                                                background: 'linear-gradient(135deg, #ff1a5d 0%, #ff4d6d 100%)',
+                                            },
+                                            padding: '6px', // Slightly larger padding for the icon button
+                                            boxShadow: '0 4px 6px rgba(255, 77, 109, 0.2)',
+                                            transition: 'all 0.3s ease',
+                                        }}
                                     >
-                                        <CloseIcon />
+                                        <CloseIcon sx={{ fontSize: 20, color: 'white' }} />
                                     </IconButton>
                                 </Box>
                             </DialogTitle>
@@ -937,33 +972,45 @@ const SalesDashboard = () => {
                                             <Chip label={selectedOptions.Party.length} size="small" color="primary" sx={{ mt: 0.5 }} />
                                         </Box>
 
-                                        <TextField
-                                            fullWidth
-                                            size="small"
-                                            placeholder="Parties..."
-                                            value={searchParty}
-                                            onChange={(e) => setSearchParty(e.target.value)}
-                                            InputProps={{
-                                                startAdornment: <SearchIcon fontSize="small" sx={{ color: 'action.active', mr: 1 }} />,
-                                                endAdornment: searchParty && (
-                                                    <IconButton size="small" onClick={() => setSearchParty('')}>
-                                                        <ClearIcon fontSize="small" />
-                                                    </IconButton>
-                                                ),
-                                            }}
+                                        <Box
                                             sx={{
-                                                mb: 3,
-                                                borderRadius: '50px',
-                                                maxWidth: 200,
-                                                height: 20,
-                                                '& .MuiInputBase-input': {
-                                                    padding: '4.5px 0px',
-                                                },
-                                                '& .MuiOutlinedInput-notchedOutline': {
-                                                    borderRadius: '50px',
-                                                },
+                                                position: 'sticky',
+                                                top: 50,
+                                                zIndex: 5,
+                                                backgroundColor: '#fafbff',
+                                                paddingTop: 0.5,
                                             }}
-                                        />
+                                        >
+                                            <TextField
+                                                fullWidth
+                                                size="small"
+                                                placeholder="Parties..."
+                                                value={searchParty}
+                                                onChange={(e) => setSearchParty(e.target.value)}
+                                                InputProps={{
+                                                    startAdornment: (
+                                                        <SearchIcon fontSize="small" sx={{ color: 'action.active', mr: 1 }} />
+                                                    ),
+                                                    endAdornment: searchParty && (
+                                                        <IconButton size="small" onClick={() => setSearchParty('')}>
+                                                            <ClearIcon fontSize="small" />
+                                                        </IconButton>
+                                                    ),
+                                                }}
+                                                sx={{
+                                                    mb: 3,
+                                                    borderRadius: '50px',
+                                                    maxWidth: 200,
+                                                    height: 20,
+                                                    '& .MuiInputBase-input': {
+                                                        padding: '4.5px 0px',
+                                                    },
+                                                    '& .MuiOutlinedInput-notchedOutline': {
+                                                        borderRadius: '50px',
+                                                    },
+                                                }}
+                                            />
+                                        </Box>
 
                                         <Box sx={{ display: 'flex', flexDirection: 'column' }}>
                                             {partyDrp
@@ -1022,33 +1069,43 @@ const SalesDashboard = () => {
                                             <Chip label={selectedOptions.Broker.length} size="small" color="primary" sx={{ mt: 0.5 }} />
                                         </Box>
 
-                                        <TextField
-                                            fullWidth
-                                            size="small"
-                                            placeholder="Brokers..."
-                                            value={searchBroker}
-                                            onChange={(e) => setSearchBroker(e.target.value)}
-                                            InputProps={{
-                                                startAdornment: <SearchIcon fontSize="small" sx={{ color: 'action.active', mr: 1 }} />,
-                                                endAdornment: searchBroker && (
-                                                    <IconButton size="small" onClick={() => setSearchBroker('')}>
-                                                        <ClearIcon fontSize="small" />
-                                                    </IconButton>
-                                                ),
-                                            }}
+                                        <Box
                                             sx={{
-                                                mb: 3,
-                                                borderRadius: '50px',
-                                                maxWidth: 150,
-                                                height: 20,
-                                                '& .MuiInputBase-input': {
-                                                    padding: '4.5px 0px',
-                                                },
-                                                '& .MuiOutlinedInput-notchedOutline': {
-                                                    borderRadius: '50px',
-                                                },
+                                                position: 'sticky',
+                                                top: 50,
+                                                zIndex: 5,
+                                                backgroundColor: '#fafbff',
+                                                paddingTop: 0.5,
                                             }}
-                                        />
+                                        >
+                                            <TextField
+                                                fullWidth
+                                                size="small"
+                                                placeholder="Brokers..."
+                                                value={searchBroker}
+                                                onChange={(e) => setSearchBroker(e.target.value)}
+                                                InputProps={{
+                                                    startAdornment: <SearchIcon fontSize="small" sx={{ color: 'action.active', mr: 1 }} />,
+                                                    endAdornment: searchBroker && (
+                                                        <IconButton size="small" onClick={() => setSearchBroker('')}>
+                                                            <ClearIcon fontSize="small" />
+                                                        </IconButton>
+                                                    ),
+                                                }}
+                                                sx={{
+                                                    mb: 3,
+                                                    borderRadius: '50px',
+                                                    maxWidth: 150,
+                                                    height: 20,
+                                                    '& .MuiInputBase-input': {
+                                                        padding: '4.5px 0px',
+                                                    },
+                                                    '& .MuiOutlinedInput-notchedOutline': {
+                                                        borderRadius: '50px',
+                                                    },
+                                                }}
+                                            />
+                                        </Box>
 
                                         <Box sx={{ display: 'flex', flexDirection: 'column' }}>
                                             {brokerDrp
@@ -1113,33 +1170,43 @@ const SalesDashboard = () => {
                                             />
                                         </Box>
 
-                                        <TextField
-                                            fullWidth
-                                            size="small"
-                                            placeholder="States..."
-                                            value={searchState}
-                                            onChange={(e) => setSearchState(e.target.value)}
-                                            InputProps={{
-                                                startAdornment: <SearchIcon fontSize="small" sx={{ color: 'action.active', mr: 1 }} />,
-                                                endAdornment: searchState && (
-                                                    <IconButton size="small" onClick={() => setSearchState('')}>
-                                                        <ClearIcon fontSize="small" />
-                                                    </IconButton>
-                                                ),
-                                            }}
+                                        <Box
                                             sx={{
-                                                mb: 3,
-                                                borderRadius: '50px',
-                                                maxWidth: 150,
-                                                height: 20,
-                                                '& .MuiInputBase-input': {
-                                                    padding: '4.5px 0px',
-                                                },
-                                                '& .MuiOutlinedInput-notchedOutline': {
-                                                    borderRadius: '50px',
-                                                },
+                                                position: 'sticky',
+                                                top: 50,
+                                                zIndex: 5,
+                                                backgroundColor: '#fafbff',
+                                                paddingTop: 0.5,
                                             }}
-                                        />
+                                        >
+                                            <TextField
+                                                fullWidth
+                                                size="small"
+                                                placeholder="States..."
+                                                value={searchState}
+                                                onChange={(e) => setSearchState(e.target.value)}
+                                                InputProps={{
+                                                    startAdornment: <SearchIcon fontSize="small" sx={{ color: 'action.active', mr: 1 }} />,
+                                                    endAdornment: searchState && (
+                                                        <IconButton size="small" onClick={() => setSearchState('')}>
+                                                            <ClearIcon fontSize="small" />
+                                                        </IconButton>
+                                                    ),
+                                                }}
+                                                sx={{
+                                                    mb: 3,
+                                                    borderRadius: '50px',
+                                                    maxWidth: 150,
+                                                    height: 20,
+                                                    '& .MuiInputBase-input': {
+                                                        padding: '4.5px 0px',
+                                                    },
+                                                    '& .MuiOutlinedInput-notchedOutline': {
+                                                        borderRadius: '50px',
+                                                    },
+                                                }}
+                                            />
+                                        </Box>
 
                                         <Box sx={{ display: 'flex', flexDirection: 'column' }}>
                                             {stateDrp
@@ -1204,33 +1271,43 @@ const SalesDashboard = () => {
                                             />
                                         </Box>
 
-                                        <TextField
-                                            fullWidth
-                                            size="small"
-                                            placeholder="Brands..."
-                                            value={searchBrand}
-                                            onChange={(e) => setSearchBrand(e.target.value)}
-                                            InputProps={{
-                                                startAdornment: <SearchIcon fontSize="small" sx={{ color: 'action.active', mr: 1 }} />,
-                                                endAdornment: searchBrand && (
-                                                    <IconButton size="small" onClick={() => setSearchBrand('')}>
-                                                        <ClearIcon fontSize="small" />
-                                                    </IconButton>
-                                                ),
-                                            }}
+                                        <Box
                                             sx={{
-                                                mb: 3,
-                                                borderRadius: '50px',
-                                                maxWidth: 150,
-                                                height: 20,
-                                                '& .MuiInputBase-input': {
-                                                    padding: '4.5px 0px',
-                                                },
-                                                '& .MuiOutlinedInput-notchedOutline': {
-                                                    borderRadius: '50px',
-                                                },
+                                                position: 'sticky',
+                                                top: 50,
+                                                zIndex: 5,
+                                                backgroundColor: '#fafbff',
+                                                paddingTop: 0.5,
                                             }}
-                                        />
+                                        >
+                                            <TextField
+                                                fullWidth
+                                                size="small"
+                                                placeholder="Brands..."
+                                                value={searchBrand}
+                                                onChange={(e) => setSearchBrand(e.target.value)}
+                                                InputProps={{
+                                                    startAdornment: <SearchIcon fontSize="small" sx={{ color: 'action.active', mr: 1 }} />,
+                                                    endAdornment: searchBrand && (
+                                                        <IconButton size="small" onClick={() => setSearchBrand('')}>
+                                                            <ClearIcon fontSize="small" />
+                                                        </IconButton>
+                                                    ),
+                                                }}
+                                                sx={{
+                                                    mb: 3,
+                                                    borderRadius: '50px',
+                                                    maxWidth: 150,
+                                                    height: 20,
+                                                    '& .MuiInputBase-input': {
+                                                        padding: '4.5px 0px',
+                                                    },
+                                                    '& .MuiOutlinedInput-notchedOutline': {
+                                                        borderRadius: '50px',
+                                                    },
+                                                }}
+                                            />
+                                        </Box>
 
                                         <Box sx={{ display: 'flex', flexDirection: 'column' }}>
                                             {brandDrp
@@ -1280,149 +1357,279 @@ const SalesDashboard = () => {
             </Box>
 
             {/* Cards Data */}
-            <Grid container spacing={1} mb={2} gap={1}>
-                <Grid size={{ xs: 12, md: 3 }} sx={{ display: "flex" }}>
-                    <Fade in={visible} timeout={500}>
-                        <StyledCard sx={{ width: "100%", position: "relative", bgcolor: '#64B5F6' }}>
-                            <IconButton
+            <Grid container spacing={{ xs: 1, sm: 2 }}>
+                {[
+                    {
+                        title: "Total Orders",
+                        value: `₹${(summaryData.AMOUNT / 100000).toFixed(2)} L`,
+                        qty: summaryData.QTY || 0,
+                        extra: `- ${summaryData.ROWNUM || 0}`,
+                        gradient: 'linear-gradient(135deg, #64B5F6 0%, #1565C0 100%)',
+                        icon: <ReceiptLongIcon />,
+                        trend: 'up',
+                        iconBg: 'rgba(33, 150, 243, 0.18)',
+                        color: '#1565C0'
+                    },
+                    {
+                        title: "Dispatch",
+                        value: `₹${(dispOrd.AMOUNT / 100000).toFixed(2)} L`,
+                        qty: dispOrd.QTY || 0,
+                        extra: null,
+                        gradient: 'linear-gradient(135deg, #7BBE9F 0%, #2E7D32 100%)',
+                        icon: <ShoppingCartIcon />,
+                        trend: 'up',
+                        iconBg: 'rgba(76, 175, 80, 0.15)',
+                        color: '#2E7D32'
+                    },
+                    {
+                        title: "Conversion Ratio",
+                        value: `${totalConversion.toFixed(2)} %`,
+                        qty: null,
+                        extra: null,
+                        gradient: 'linear-gradient(135deg, #B197E6 0%, #6A1B9A 100%)',
+                        icon: <PercentIcon />,
+                        trend: totalConversion > 50 ? 'up' : 'down',
+                        iconBg: 'rgba(171, 71, 188, 0.18)',
+                        color: '#6A1B9A',
+                        progress: true,
+                        progressValue: totalConversion,
+                        progressColor: totalConversion > 50 ? 'success' : 'error'
+                    },
+                    {
+                        title: "Pending Order",
+                        value: `₹${(balOrd.AMOUNT / 100000).toFixed(2)} L`,
+                        qty: balOrd.QTY || 0,
+                        can: `${canOrd.QTY || 0}`,
+                        gradient: 'linear-gradient(135deg, #FF8C71 0%, #D84315 100%)',
+                        icon: <AccessAlarmIcon />,
+                        trend: 'down',
+                        iconBg: 'rgba(244, 67, 54, 0.15)',
+                        color: '#D84315'
+                    }
+                ].map((metric, index) => (
+                    <Grid key={index} size={{ xs: 12, sm: 6, md: 3 }}>
+                        <Fade in={visible} timeout={500 + index * 500}>
+                            <Card
+                                elevation={0}
                                 sx={{
-                                    position: "absolute",
-                                    top: 8,
-                                    right: 8,
-                                    bgcolor: "transparent",
-                                    color: "#003366",
-                                    width: 60,
-                                    height: 60,
+                                    background: metric.gradient,
+                                    borderRadius: 3,
+                                    height: '100%',
+                                    position: 'relative',
+                                    overflow: 'hidden',
+                                    transition: 'all 0.3s ease-in-out',
+                                    cursor: 'pointer',
+                                    '&:hover': {
+                                        transform: 'translateY(-1px)',
+                                        boxShadow: '0 12px 24px rgba(0,0,0,0.15)',
+                                        '& .metric-icon': {
+                                            transform: 'scale(1.01) rotate(5deg)'
+                                        }
+                                    },
+                                    '&:before': {
+                                        content: '""',
+                                        position: 'absolute',
+                                        top: -50,
+                                        right: -50,
+                                        width: '120px',
+                                        height: '120px',
+                                        borderRadius: '50%',
+                                        background: 'rgba(255, 255, 255, 0.1)',
+                                        zIndex: 0
+                                    },
+                                    '&:after': {
+                                        content: '""',
+                                        position: 'absolute',
+                                        bottom: -30,
+                                        left: -30,
+                                        width: '80px',
+                                        height: '80px',
+                                        borderRadius: '50%',
+                                        background: 'rgba(255, 255, 255, 0.05)',
+                                        zIndex: 0
+                                    }
                                 }}
-                                aria-label="Total Orders"
                             >
-                                <ReceiptLongIcon fontSize="large" />
-                            </IconButton>
-                            <Box>
-                                <Typography variant="h6" fontWeight="bold" sx={{ mb: 1 }}>
-                                    Total Orders - {summaryData.ROWNUM}
-                                </Typography>
-                                <Typography variant="h6" fontWeight="bold">
-                                    Value: ₹ {(summaryData.AMOUNT / 100000).toFixed(2)} L
-                                </Typography>
-                                <Typography variant="h6" fontWeight="bold" sx={{ mt: 0.5 }}>
-                                    Qty: {summaryData.QTY}
-                                </Typography>
-                            </Box>
-                        </StyledCard>
-                    </Fade>
-                </Grid>
+                                <CardContent
+                                    sx={{
+                                        p: { xs: 1.5, sm: 2 },
+                                        position: 'relative',
+                                        zIndex: 1,
+                                        height: '100%',
+                                        display: 'flex',
+                                        flexDirection: 'column'
+                                    }}
+                                >
+                                    <Stack direction="row" justifyContent="space-between" alignItems="flex-start" sx={{ mb: 1 }}>
+                                        <Box sx={{ flex: 1 }}>
+                                            <Typography
+                                                variant="h5"
+                                                sx={{
+                                                    fontSize: { xs: '0.65rem', sm: '0.7rem', md: '1rem' },
+                                                    fontWeight: 'bold',
+                                                    display: 'block',
+                                                    mb: 0.5,
+                                                    color: '#fff',
+                                                    textTransform: 'uppercase',
+                                                    letterSpacing: '0.5px'
+                                                }}
+                                            >
+                                                {metric.title} {metric.extra}
+                                            </Typography>
 
-                <Grid size={{ xs: 12, md: 3 }} sx={{ display: "flex" }}>
-                    <Fade in={visible} timeout={1000}>
-                        <StyledCard sx={{ width: "100%", position: 'relative', bgcolor: '#7BBE9F' }}>
-                            <IconButton
-                                sx={{
-                                    position: "absolute",
-                                    top: 8,
-                                    right: 8,
-                                    bgcolor: "transparent",
-                                    color: "#1B5E20",
-                                    width: 60,
-                                    height: 60,
-                                }}
-                                aria-label="Dispatch"
-                            >
-                                <ShoppingCartIcon fontSize="large" />
-                            </IconButton>
-                            <Box>
-                                <Typography variant="h6" fontWeight="bold" sx={{ mb: 1 }}>
-                                    Dispatch
-                                </Typography>
-                                <Typography variant="h6" fontWeight="bold">
-                                    Value: ₹{(dispOrd.AMOUNT / 100000).toFixed(2)} L
-                                </Typography>
-                                <Typography variant="h6" fontWeight="bold">
-                                    Qty: {dispOrd.QTY}
-                                </Typography>
-                            </Box>
-                        </StyledCard>
-                    </Fade>
-                </Grid>
+                                            <Typography
+                                                variant="h5"
+                                                fontWeight="bold"
+                                                sx={{
+                                                    fontSize: { xs: '1.1rem', sm: '1.4rem', md: '1.65rem' },
+                                                    mb: metric.qty !== null ? 0.5 : 0,
+                                                    color: 'white',
+                                                    textShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                                                }}
+                                            >
+                                                {metric.value}
+                                            </Typography>
 
-                <Grid size={{ xs: 12, md: 3 }} sx={{ display: "flex" }}>
-                    <Fade in={visible} timeout={1500}>
-                        <StyledCard sx={{ width: "100%", position: 'relative', bgcolor: '#B197E6' }}>
-                            <IconButton
-                                sx={{
-                                    position: "absolute",
-                                    top: 8,
-                                    right: 8,
-                                    bgcolor: "transparent",
-                                    color: "#4A148C",
-                                    width: 60,
-                                    height: 60,
-                                }}
-                                aria-label="Conversion %"
-                            >
-                                <PercentIcon fontSize="large" />
-                            </IconButton>
-                            <Box>
-                                <Typography variant="h6" fontWeight="bold" sx={{ mb: 1 }}>
-                                    Conversion Ratio
-                                </Typography>
-                                <Typography variant="h6" fontWeight="bold" letterSpacing={1}>
-                                    {totalConversion.toFixed(2)}%
-                                </Typography>
-                                <Box display="flex" alignItems="center" gap={0.5}>
-                                    {totalConversion > 50 ? (
-                                        <ArrowUpwardIcon sx={{ color: '#388E3C' }} fontSize="small" />
-                                    ) : (
-                                        <ArrowDownwardIcon sx={{ color: '#D32F2F' }} fontSize="small" />
-                                    )}
-                                    <Typography variant="body2" color={totalConversion > 50 ? "success.main" : "error.main"} fontWeight={600}>
-                                        {totalConversion.toFixed(0) ?? '0.00'}%
-                                    </Typography>
-                                </Box>
-                                <Box>
-                                    <LinearProgress
-                                        variant="determinate"
-                                        value={totalConversion}
-                                        sx={{ height: 10, borderRadius: 5, bgcolor: '#E1BEE7' }}
-                                        color="success"
-                                    />
-                                </Box>
-                            </Box>
-                        </StyledCard>
-                    </Fade>
-                </Grid>
+                                            {metric.qty !== null || metric.extra ? (
+                                                <Typography
+                                                    variant="caption"
+                                                    sx={{
+                                                        fontSize: { xs: '0.75rem', sm: '0.85rem' },
+                                                        color: 'rgba(255, 255, 255, 0.9)',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        gap: 1,
+                                                        fontWeight: 500
+                                                    }}
+                                                >
+                                                    {/* Qty */}
+                                                    {metric.qty !== null && (
+                                                        <>
+                                                            <Box
+                                                                component="span"
+                                                                sx={{
+                                                                    width: 6,
+                                                                    height: 6,
+                                                                    borderRadius: '50%',
+                                                                    bgcolor: 'rgba(255, 255, 255, 0.75)'
+                                                                }}
+                                                            />
+                                                            <span>Qty: <strong>{metric.qty.toLocaleString()}</strong></span>
+                                                        </>
+                                                    )}
 
-                <Grid size={{ xs: 12, md: 3 }} sx={{ display: "flex" }}>
-                    <Fade in={visible} timeout={2000}>
-                        <StyledCard sx={{ width: "100%", position: 'relative', bgcolor: '#FF8C71' }}>
-                            <IconButton
-                                sx={{
-                                    position: "absolute",
-                                    top: 8,
-                                    right: 8,
-                                    bgcolor: "transparent",
-                                    color: "#6e3904",
-                                    width: 60,
-                                    height: 60,
+                                                    {/* Cancel Qty */}
+                                                    {metric.can && (
+                                                        <>
+                                                            <Box
+                                                                component="span"
+                                                                sx={{
+                                                                    width: 6,
+                                                                    height: 6,
+                                                                    borderRadius: '50%',
+                                                                    bgcolor: 'rgba(255, 255, 255, 0.75)'
+                                                                }}
+                                                            />
+                                                            {/* <span>{metric.title.includes("Pending") ? "Cancel Qty:" : ""} <strong>{metric.can}</strong></span> */}
+                                                            <span>Cancel Qty: <strong>{metric.can}</strong></span>
+                                                        </>
+                                                    )}
+                                                </Typography>
+                                            ) : null}
+
+                                            {metric.progress && (
+                                                <Box sx={{ mt: 1.8, width: '90%' }}>
+                                                    <LinearProgress
+                                                        variant="determinate"
+                                                        value={metric.progressValue}
+                                                        color={metric.progressColor}
+                                                        sx={{
+                                                            height: 8,
+                                                            borderRadius: 4,
+                                                            bgcolor: 'rgba(255,255,255,0.25)',
+                                                            '& .MuiLinearProgress-bar': {
+                                                                // Optional: stronger white highlight when needed
+                                                                // backgroundColor: 'rgba(255,255,255,0.95) !important'
+                                                            }
+                                                        }}
+                                                    />
+                                                </Box>
+                                            )}
+                                        </Box>
+
+                                        <Box
+                                            className="metric-icon"
+                                            sx={{
+                                                width: { xs: 44, sm: 52 },
+                                                height: { xs: 44, sm: 52 },
+                                                borderRadius: '14px',
+                                                background: metric.iconBg,
+                                                backdropFilter: 'blur(10px)',
+                                                border: '1px solid rgba(255, 255, 255, 0.18)',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                transition: 'all 0.3s ease',
+                                                flexShrink: 0,
+                                                ml: 1.5
+                                            }}
+                                        >
+                                            {React.cloneElement(metric.icon, {
+                                                sx: {
+                                                    color: 'white',
+                                                    fontSize: { xs: 22, sm: 26 },
+                                                    filter: 'drop-shadow(0 2px 6px rgba(0,0,0,0.3))'
+                                                }
+                                            })}
+                                        </Box>
+                                    </Stack>
+
+                                    <Box
+                                        sx={{
+                                            position: 'absolute',
+                                            top: 12,
+                                            right: 68,
+                                            fontSize: '2rem',
+                                            fontWeight: 'bold',
+                                            opacity: 0.11,
+                                            color: 'white',
+                                            pointerEvents: 'none',
+                                            lineHeight: 1
+                                        }}
+                                    >
+                                        {metric.trend === 'up' ? '↗' : '↘'}
+                                    </Box>
+                                </CardContent>
+
+                                {/* Bottom shine animation */}
+                                <Box sx={{
+                                    position: 'absolute',
+                                    bottom: 0,
+                                    left: 0,
+                                    width: '100%',
+                                    height: 3,
+                                    bgcolor: 'rgba(255, 255, 255, 0.2)',
+                                    overflow: 'hidden',
+                                    '&:after': {
+                                        content: '""',
+                                        position: 'absolute',
+                                        top: 0,
+                                        left: 0,
+                                        width: '100%',
+                                        height: '100%',
+                                        background: 'rgba(255, 255, 255, 0.4)',
+                                        animation: 'progress 2s ease-in-out infinite alternate'
+                                    },
+                                    '@keyframes progress': {
+                                        '0%': { transform: 'translateX(-100%)' },
+                                        '100%': { transform: 'translateX(100%)' }
+                                    }
                                 }}
-                                aria-label="Order Balance"
-                            >
-                                <AccessAlarmIcon fontSize="large" />
-                            </IconButton>
-                            <Box>
-                                <Typography variant="h6" fontWeight="bold" sx={{ mb: 1 }}>
-                                    Pending Order
-                                </Typography>
-                                <Typography variant="h6" fontWeight="bold">
-                                    Value: ₹ {(balOrd.AMOUNT / 100000).toFixed(2)} L
-                                </Typography>
-                                <Typography variant="h6" fontWeight="bold">
-                                    Qty: {balOrd.QTY} |  Cancel Qty: {canOrd.QTY}
-                                </Typography>
-                            </Box>
-                        </StyledCard>
-                    </Fade>
-                </Grid>
+                                />
+                            </Card>
+                        </Fade>
+                    </Grid>
+                ))}
             </Grid>
 
             <Grid container spacing={2} mt={2}>
@@ -1431,33 +1638,50 @@ const SalesDashboard = () => {
                         <Typography variant="subtitle1" fontWeight="bold" align="center" gutterBottom>
                             Top 10 Party Wise Order %
                         </Typography>
-                        <PieChart
-                            series={[
-                                {
-                                    data: top10PartiesByAmount,
-                                    innerRadius: 30,
-                                    outerRadius: 90,
-                                    paddingAngle: 3,
-                                    cornerRadius: 8,
-                                    highlightScope: { faded: 'global', highlighted: 'item' },
-                                    faded: { innerRadius: 30, additionalRadius: -30, color: 'gray' },
-                                },
-                            ]}
-                            height={200}
-                            slotProps={{
-                                legend: {
-                                    direction: 'column',
-                                    position: { vertical: 'middle', horizontal: 'start' },
-                                    padding: { left: 10 },
-                                    style: { color: 'black' },
-                                },
-                            }}
-                            onItemClick={(event, { dataIndex }) => {
-                                const clicked = top10PartiesByAmount[dataIndex];
-                                setSelectedParty(clicked?.fullPartyName || null);
-                            }}
-                        >
-                        </PieChart>
+
+                        {top10PartiesByAmount.length > 0 ? (
+                            <PieChart
+                                series={[
+                                    {
+                                        data: top10PartiesByAmount.map((item, index) => {
+                                            const totalAmount = top10PartiesByAmount.reduce((sum, i) => sum + i.value, 0);
+                                            const percentage = totalAmount > 0 ? ((item.value / totalAmount) * 100).toFixed(2) : 0;
+
+                                            return {
+                                                id: index,
+                                                label: `${item.label} - ${percentage}%`,
+                                                value: item.value,
+                                                color: item.color,
+                                                fullPartyName: item.fullPartyName,
+                                            };
+                                        }),
+                                        innerRadius: 30,
+                                        outerRadius: 90,
+                                        paddingAngle: 3,
+                                        cornerRadius: 8,
+                                        highlightScope: { faded: 'global', highlighted: 'item' },
+                                        faded: { innerRadius: 30, additionalRadius: -30, color: 'gray' },
+                                    },
+                                ]}
+                                height={200}
+                                slotProps={{
+                                    legend: {
+                                        direction: 'column',
+                                        position: { vertical: 'middle', horizontal: 'start' },
+                                        padding: { left: 10 },
+                                        style: { color: 'black' },
+                                    },
+                                }}
+                                onItemClick={(event, { dataIndex }) => {
+                                    const clicked = top10PartiesByAmount[dataIndex];
+                                    setSelectedParty(clicked?.fullPartyName || null);
+                                }}
+                            />
+                        ) : (
+                            <Box display="flex" justifyContent="center" alignItems="center" height="100%">
+                                <Typography color="text.secondary">No party data available</Typography>
+                            </Box>
+                        )}
                     </StyledCard2>
                 </Grid>
 
@@ -1585,7 +1809,7 @@ const SalesDashboard = () => {
                             <Table stickyHeader size="small" sx={{ minWidth: 1100 }}>
                                 <TableHead>
                                     <TableRow>
-                                        {['View', 'OrderNo', 'Date', 'Party', 'City', 'State', 'Broker', 'Salesman', 'Qty', 'BalQty', 'INIT_QTY', 'SaleQTY', 'Status'].map((header) => (
+                                        {['View', 'OrderNo', 'Date', 'Party', 'City', 'State', 'Broker', 'Salesman', 'Qty', 'BalQty', 'InitQty', 'SaleQty', 'Status'].map((header) => (
                                             <TableCell
                                                 key={header}
                                                 sx={{
@@ -1746,7 +1970,7 @@ const SalesDashboard = () => {
                                     letterSpacing: 0.5,
                                 }}
                             >
-                                Party Wise Orders Summary
+                                Party Wise Summary
                             </Typography>
 
                             <TextField
@@ -1934,7 +2158,7 @@ const SalesDashboard = () => {
                                     letterSpacing: 0.5,
                                 }}
                             >
-                                State Wise Orders Summary
+                                State Wise Summary
                             </Typography>
 
                             <TextField
@@ -2036,6 +2260,12 @@ const SalesDashboard = () => {
                                         </TableCell>
                                         <TableCell align="left">
                                             {filteredStateWise.reduce((sum, item) => sum + parseFloat(item.SALE_QTY || 0), 0).toLocaleString('en-IN')}
+                                        </TableCell>
+                                        <TableCell align="left">
+
+                                        </TableCell>
+                                        <TableCell align="left">
+
                                         </TableCell>
                                         <TableCell align="left">100.00%</TableCell>
                                     </TableRow>
