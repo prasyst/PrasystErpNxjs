@@ -174,6 +174,28 @@ const SalesOrderOffline = () => {
 
   const searchParams = useSearchParams();
   const ordbkKey = searchParams.get("ordbkKey");
+  const [companyConfig, setCompanyConfig] = useState({
+  CO_ID: '',
+  COBR_ID: ''
+});
+
+// Add this useEffect after other useEffect declarations
+useEffect(() => {
+  if (typeof window !== 'undefined') {
+    const storedCO_ID = localStorage.getItem('CO_ID') || '02'; // Default fallback
+    const storedCOBR_ID = localStorage.getItem('COBR_ID') || '02'; // Default fallback
+    
+    setCompanyConfig({
+      CO_ID: storedCO_ID,
+      COBR_ID: storedCOBR_ID
+    });
+    
+    console.log('SalesOrderOffline - Loaded company config from localStorage:', {
+      CO_ID: storedCO_ID,
+      COBR_ID: storedCOBR_ID
+    });
+  }
+}, []);
 
   const showSnackbar = (message, severity = 'success') => {
     setSnackbar({ open: true, message, severity });
@@ -451,7 +473,7 @@ const prepareSubmitPayload = () => {
     };
     return statusMapping[status] || "1";
   };
-
+const correctOrdbkKey = formData.ORDBK_KEY || `25${companyConfig.COBR_ID}${formData.ORDER_NO}`;
   const partyKey = formData.PARTY_KEY;
   const branchId = formData.PARTYDTL_ID || 0;
   const brokerKey = formData.BROKER_KEY || "";
@@ -482,8 +504,7 @@ const prepareSubmitPayload = () => {
   // Get ORDBKSTYLIST from formData
   const ordbkStyleList = formData.apiResponseData?.ORDBKSTYLIST || [];
   
-  // CORRECT ORDBK_KEY generation
-  const correctOrdbkKey = formData.ORDBK_KEY || `2502${formData.ORDER_NO}`;
+
   
   console.log('Using ORDBK_KEY:', correctOrdbkKey);
 
@@ -697,8 +718,8 @@ const prepareSubmitPayload = () => {
   const basePayload = {
     DBFLAG: dbFlag,
     FCYR_KEY: "25",
-    CO_ID: "02",
-    COBR_ID: "02",
+     CO_ID: companyConfig.CO_ID, 
+    COBR_ID: companyConfig.COBR_ID, 
     ORDBK_NO: formData.ORDER_NO || "",
     CURR_SEASON_KEY: seasonKey,
     ORDBK_X: "",
@@ -1080,7 +1101,7 @@ const handleNextClick = async () => {
         "FLDNAME": "Ordbk_KEY",
         "NCOLLEN": 0,
         "CPREFIX": "",
-        "COBR_ID": "02",
+        "COBR_ID": companyConfig.COBR_ID,
         "FCYR_KEY": "25",
         "TRNSTYPE": "M",
         "SERIESID": 66,
@@ -1144,7 +1165,7 @@ const handleNextClick = async () => {
       setSubmitLoading(true);
       
       const userName = localStorage.getItem('USER_NAME') || 'ankita';
-      const strCobrid = "02";
+      const strCobrid = companyConfig.COBR_ID;
       
       const payload = prepareSubmitPayload();
       
@@ -1181,7 +1202,7 @@ const handleNextClick = async () => {
         "FLDNAME": "Ordbk_No",
         "NCOLLEN": 6,
         "CPREFIX": prefix,
-        "COBR_ID": "02",
+         "COBR_ID": companyConfig.COBR_ID,
         "FCYR_KEY": "25",
         "TRNSTYPE": "T",
         "SERIESID": 0,
@@ -1494,7 +1515,7 @@ const handleNextClick = async () => {
         "ORDBK_KEY": "",
         "FLAG": "ORDTYPE",
         "FCYR_KEY": "25",
-        "COBR_ID": "02",
+         "COBR_ID": companyConfig.COBR_ID,
         "PageNumber": 1,
         "PageSize": 25,
         "SearchText": "",
@@ -2004,6 +2025,7 @@ if (loading || isDataLoading) {
             onPrev={handlePrev} 
             showSnackbar={showSnackbar}
             showValidationErrors={showValidationErrors}
+            companyConfig={companyConfig} 
           />
         ) : (
           <Stepper3 

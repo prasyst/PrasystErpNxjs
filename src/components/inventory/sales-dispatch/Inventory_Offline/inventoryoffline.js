@@ -51,6 +51,29 @@ const SalesOrderOffline = () => {
   const [orderTypeMapping, setOrderTypeMapping] = useState({});
   const [merchandiserMapping, setMerchandiserMapping] = useState({});
   const [showValidationErrors, setShowValidationErrors] = useState(false);
+    const [companyConfig, setCompanyConfig] = useState({
+    CO_ID: '',
+    COBR_ID: ''
+  });
+  
+  // Add this useEffect after other useEffect declarations
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const storedCO_ID = localStorage.getItem('CO_ID') || '02'; // Default fallback
+      const storedCOBR_ID = localStorage.getItem('COBR_ID') || '02'; // Default fallback
+      
+      setCompanyConfig({
+        CO_ID: storedCO_ID,
+        COBR_ID: storedCOBR_ID
+      });
+      
+      console.log('SalesOrderOffline - Loaded company config from localStorage:', {
+        CO_ID: storedCO_ID,
+        COBR_ID: storedCOBR_ID
+      });
+    }
+  }, []);
+  
 
   const [formData, setFormData] = useState({
     ORDER_NO: "",
@@ -480,6 +503,8 @@ const prepareSubmitPayload = () => {
     };
     return statusMapping[status] || "1";
   };
+  const correctOrdbkKey = formData.ORDBK_KEY || `25${companyConfig.COBR_ID}${formData.ORDER_NO}`;
+
 
   const partyKey = formData.PARTY_KEY;
   const branchId = formData.PARTYDTL_ID || 0;
@@ -512,7 +537,7 @@ const prepareSubmitPayload = () => {
   const ordbkStyleList = formData.apiResponseData?.ORDBKSTYLIST || [];
   
   // CORRECT ORDBK_KEY generation
-  const correctOrdbkKey = formData.ORDBK_KEY || `2502${formData.ORDER_NO}`;
+ 
   
   console.log('Using ORDBK_KEY:', correctOrdbkKey);
 
@@ -797,8 +822,8 @@ const prepareSubmitPayload = () => {
   const basePayload = {
     DBFLAG: dbFlag,
     FCYR_KEY: "25",
-    CO_ID: "02",
-    COBR_ID: "02",
+    CO_ID: companyConfig.CO_ID, 
+    COBR_ID: companyConfig.COBR_ID, 
     ORDBK_NO: formData.ORDER_NO || "",
     CURR_SEASON_KEY: seasonKey,
     ORDBK_X: "",
@@ -1180,7 +1205,7 @@ const handleNextClick = async () => {
         "FLDNAME": "Ordbk_KEY",
         "NCOLLEN": 0,
         "CPREFIX": "",
-        "COBR_ID": "02",
+        "COBR_ID": companyConfig.COBR_ID,
         "FCYR_KEY": "25",
         "TRNSTYPE": "M",
         "SERIESID": 66,
@@ -1281,7 +1306,7 @@ const handleNextClick = async () => {
         "FLDNAME": "Ordbk_No",
         "NCOLLEN": 6,
         "CPREFIX": prefix,
-        "COBR_ID": "02",
+        "COBR_ID": companyConfig.COBR_ID,
         "FCYR_KEY": "25",
         "TRNSTYPE": "T",
         "SERIESID": 0,
@@ -1594,7 +1619,7 @@ const handleDelete = async () => {
         "ORDBK_KEY": "",
         "FLAG": "ORDTYPE",
         "FCYR_KEY": "25",
-        "COBR_ID": "02",
+        "COBR_ID": companyConfig.COBR_ID,
         "PageNumber": 1,
         "PageSize": 25,
         "SearchText": "",
@@ -2186,61 +2211,7 @@ if (loading || isDataLoading) {
         </Grid>
       )}
 
-      {/* {(tabIndex === 1 || tabIndex === 2) && (
-      <Grid xs={12} sx={{ display: "flex", justifyContent: "end", mr: '4.5%', gap: 1, mt: 2 }}>
-        {tabIndex === 1 && (
-          <>
-            <Button
-              variant="contained"
-              color="primary"
-              sx={{
-                margin: { xs: '0 4px', sm: '0 6px' },
-                backgroundColor: '#39ace2',
-                color: '#fff',
-                minWidth: { xs: 40, sm: 46, md: 60 },
-                height: { xs: 40, sm: 46, md: 30 },
-              }}
-              onClick={handlePrev}
-              disabled={mode === 'view'}
-            >
-              Previous
-            </Button>
-            <Button
-              variant="contained"
-              color="primary"
-              sx={{
-                margin: { xs: '0 4px', sm: '0 6px' },
-                backgroundColor: '#39ace2',
-                color: '#fff',
-                minWidth: { xs: 40, sm: 46, md: 60 },
-                height: { xs: 40, sm: 46, md: 30 },
-              }}
-              onClick={handleNext}
-              disabled={mode === 'view'}
-            >
-              Next
-            </Button>
-          </>
-        )}
-        {tabIndex === 2 && (
-          <Button
-            variant="contained"
-            color="primary"
-            sx={{
-              margin: { xs: '0 4px', sm: '0 6px' },
-              backgroundColor: '#39ace2',
-              color: '#fff',
-              minWidth: { xs: 40, sm: 46, md: 60 },
-              height: { xs: 40, sm: 46, md: 30 },
-            }}
-            onClick={handlePrev}
-            disabled={mode === 'view'}
-          >
-            Previous
-          </Button>
-        )}
-      </Grid>
-    )} */}
+      
     </Box>
   );
 };
