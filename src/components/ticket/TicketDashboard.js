@@ -9,7 +9,7 @@ import {
   Comment as CommentIcon
 } from '@mui/icons-material';
 import {
-  Add as AddIcon, Refresh as RefreshIcon
+  Add as AddIcon, Refresh as RefreshIcon,History as HistoryIcon
 } from '@mui/icons-material';
 import {
   Card, Typography, Button, TableContainer, Table, TableHead, TableBody, TableRow, TableCell, Chip, Grid, Box, CardContent, IconButton,
@@ -26,6 +26,7 @@ import TicketStatus from './TicketStatus';
 import TicketReports from './TicketReports';
 import { useRouter } from 'next/navigation';
 import FollowupDialog from './FollowupDialog';
+import FollowupHistoryDialog from './FollowupHistoryDialog';
 
 const TicketDashboard = () => {
   const router = useRouter();
@@ -49,6 +50,8 @@ const TicketDashboard = () => {
   const [editingTicket, setEditingTicket] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [followupHistoryDialogOpen, setFollowupHistoryDialogOpen] = useState(false);
+    const [selectedTicketForHistory, setSelectedTicketForHistory] = useState(null);
 
   const fetchRecentTickets = async () => {
     setLoading(true);
@@ -185,6 +188,11 @@ const TicketDashboard = () => {
 
     return ((resolvedTickets / totalTickets) * 100).toFixed(2);
   };
+
+    const handleViewFollowupHistory = (ticket) => {
+    setSelectedTicketForHistory(ticket);
+    setFollowupHistoryDialogOpen(true);
+  }
 
   const ticketModules = [
     {
@@ -712,6 +720,22 @@ const TicketDashboard = () => {
                               <CommentIcon />
                             </IconButton>
                           </Tooltip>
+                           <Tooltip title="View Followup History" arrow>
+                                                <IconButton
+                                                  size="small"
+                                                  color="info"
+                                                  onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleViewFollowupHistory(ticket);
+                                                  }}
+                                                  sx={{
+                                                    padding: '3px',
+                                                    '& .MuiSvgIcon-root': { fontSize: '1rem' }
+                                                  }}
+                                                >
+                                                  <HistoryIcon />
+                                                </IconButton>
+                                              </Tooltip>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -1154,6 +1178,12 @@ const TicketDashboard = () => {
         ticket={selectedTicketForFollowup}
         onSuccess={handleFollowupSuccess}
       />
+      <FollowupHistoryDialog
+          open={followupHistoryDialogOpen}
+          onClose={() => setFollowupHistoryDialogOpen(false)}
+          ticket={selectedTicketForHistory}
+        />
+
     </div>
   );
 };
