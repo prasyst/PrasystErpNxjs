@@ -1573,6 +1573,12 @@ import {
   Paper,
   Modal,
   Fade,
+  Select,
+  MenuItem,
+  InputLabel,
+  FormControl,
+  Chip,
+  OutlinedInput
 } from '@mui/material';
 import { 
   CameraAlt as CameraIcon, 
@@ -1597,20 +1603,26 @@ import { useRouter } from 'next/navigation';
 import { TbListSearch } from "react-icons/tb";
 
 const ScanBarcode = () => {
-  // Main state
+  
   const [showAdvancedFields, setShowAdvancedFields] = useState(false);
   const [useStyleCodeMode, setUseStyleCodeMode] = useState(false);
-  const [fillByRatioMode, setFillByRatioMode] = useState(false);
+  const [fillByRatioMode, setFillByRatioMode] = useState(true); 
+  const [fillByShadeMode, setFillByShadeMode] = useState(true); 
   const [showOrderModal, setShowOrderModal] = useState(false);
   
-  // NEW: Store current product info to track product changes
+  
+  const [availableShades, setAvailableShades] = useState([]);
+  const [selectedShades, setSelectedShades] = useState([]);
+  const [shadeViewMode, setShadeViewMode] = useState('allocated'); // 'allocated' or 'all'
+  
+ 
   const [currentProductInfo, setCurrentProductInfo] = useState({
     barcode: '',
     style: '',
     product: ''
   });
   
-  // NEW: Store ratio data in localStorage with product key
+  // Store ratio data in localStorage with product key
   const [ratioData, setRatioData] = useState({
     totalQty: '',
     ratios: {}
@@ -1682,7 +1694,7 @@ const ScanBarcode = () => {
     divDt: ''
   });
 
-  // State for style code input
+
   const [styleCodeInput, setStyleCodeInput] = useState('');
   const [isLoadingStyleCode, setIsLoadingStyleCode] = useState(false);
   const styleCodeTimeoutRef = useRef(null);
@@ -1690,10 +1702,10 @@ const ScanBarcode = () => {
   const [sizeDetailsData, setSizeDetailsData] = useState([]);
   const [tableData, setTableData] = useState([]);
   
-  // Store available sizes from API response for ratio calculation
+
   const [availableSizes, setAvailableSizes] = useState([]);
 
-  // State for dropdowns
+  
   const [partyOptions, setPartyOptions] = useState([]);
   const [branchOptions, setBranchOptions] = useState([]);
   const [shippingPartyOptions, setShippingPartyOptions] = useState([]);
@@ -1731,35 +1743,32 @@ const ScanBarcode = () => {
     severity: 'success' 
   });
 
-  // Store style data for later use in payload
+  
   const [currentStyleData, setCurrentStyleData] = useState(null);
 
- 
-const [companyConfig, setCompanyConfig] = useState({
-  CO_ID: '',
-  COBR_ID: ''
-});
+  const [companyConfig, setCompanyConfig] = useState({
+    CO_ID: '',
+    COBR_ID: ''
+  });
 
-
-useEffect(() => {
-  setIsClient(true);
-  
-
-  if (typeof window !== 'undefined') {
-    const storedCO_ID = localStorage.getItem('CO_ID') || '';
-    const storedCOBR_ID = localStorage.getItem('COBR_ID') || '';
+  useEffect(() => {
+    setIsClient(true);
     
-    setCompanyConfig({
-      CO_ID: storedCO_ID,
-      COBR_ID: storedCOBR_ID
-    });
-    
-    console.log('Loaded company config from localStorage:', {
-      CO_ID: storedCO_ID,
-      COBR_ID: storedCOBR_ID
-    });
-  }
-}, []);
+    if (typeof window !== 'undefined') {
+      const storedCO_ID = localStorage.getItem('CO_ID') || '';
+      const storedCOBR_ID = localStorage.getItem('COBR_ID') || '';
+      
+      setCompanyConfig({
+        CO_ID: storedCO_ID,
+        COBR_ID: storedCOBR_ID
+      });
+      
+      console.log('Loaded company config from localStorage:', {
+        CO_ID: storedCO_ID,
+        COBR_ID: storedCOBR_ID
+      });
+    }
+  }, []);
 
   const scannerRef = useRef(null);
   const qrCodeScannerRef = useRef(null);
@@ -1824,7 +1833,7 @@ useEffect(() => {
     },
   };
 
-  // NEW: Get ratio data from localStorage for current product
+  // Get ratio data from localStorage for current product
   const getRatioDataFromStorage = (productKey) => {
     if (!isClient || !productKey) return { totalQty: '', ratios: {} };
     
@@ -1839,7 +1848,7 @@ useEffect(() => {
     return { totalQty: '', ratios: {} };
   };
 
-  // NEW: Save ratio data to localStorage for current product
+  // Save ratio data to localStorage for current product
   const saveRatioDataToStorage = (productKey, data) => {
     if (!isClient || !productKey) return;
     
@@ -1850,9 +1859,83 @@ useEffect(() => {
     }
   };
 
-  // NEW: Generate unique product key for localStorage
+  // Generate unique product key for localStorage
   const generateProductKey = (barcode, style, product) => {
     return `${barcode || ''}_${style || ''}_${product || ''}`.trim();
+  };
+
+  // NEW: Fetch shades for a style
+  const fetchShadesForStyle = async (fgstyleId, mode = 'allocated') => {
+    try {
+      const payload = {
+        "FGSTYLE_ID": mode === 'allocated' ? fgstyleId.toString() : "",
+        "FLAG": ""
+      };
+
+      const response = await axiosInstance.post('/Fgshade/GetFgshadedrp', payload);
+      console.log('Shades API Response:', response.data);
+      
+      if (response.data.DATA && Array.isArray(response.data.DATA)) {
+        const shades = response.data.DATA.map(item => ({
+          FGSHADE_NAME: item.FGSHADE_NAME || '',
+          FGSHADE_KEY: item.FGSHADE_KEY || '',
+          FGSTYLE_ID: item.FGSTYLE_ID || fgstyleId
+        }));
+        
+        setAvailableShades(shades);
+        
+        // If in allocated mode, auto-select the first shade
+        if (mode === 'allocated' && shades.length > 0) {
+          const firstShade = shades[0].FGSHADE_NAME;
+          setSelectedShades([firstShade]);
+          
+          // Also update the newItemData shade field
+          setNewItemData(prev => ({
+            ...prev,
+            shade: firstShade
+          }));
+        } else if (mode === 'all') {
+          // For all mode, don't auto-select any shade
+          setSelectedShades([]);
+        }
+        
+        return shades;
+      } else {
+        console.warn('No shades data received');
+        setAvailableShades([]);
+        setSelectedShades([]);
+        return [];
+      }
+    } catch (error) {
+      console.error('Error fetching shades:', error);
+      showSnackbar('Error fetching shades', 'error');
+      setAvailableShades([]);
+      setSelectedShades([]);
+      return [];
+    }
+  };
+
+  // NEW: Handle shade selection change
+  const handleShadeSelectionChange = (event) => {
+    const {
+      target: { value },
+    } = event;
+    
+    setSelectedShades(
+      typeof value === 'string' ? value.split(',') : value,
+    );
+  };
+
+  // NEW: Handle All button click
+  const handleAllShadesClick = async () => {
+    setShadeViewMode('all');
+    await fetchShadesForStyle(currentStyleData?.FGSTYLE_ID || 0, 'all');
+  };
+
+  // NEW: Handle Allocated button click
+  const handleAllocatedShadesClick = async () => {
+    setShadeViewMode('allocated');
+    await fetchShadesForStyle(currentStyleData?.FGSTYLE_ID || 0, 'allocated');
   };
 
   // Check if window is available
@@ -1936,12 +2019,11 @@ useEffect(() => {
     }
   };
 
-  // Fetch initial dropdown data - MODIFIED: Auto-select first party
+  // Fetch initial dropdown data
   const fetchInitialData = async () => {
     try {
       setIsLoadingData(true);
       
-      // Fetch all data in parallel
       await Promise.all([
         fetchPartiesByName(),
         fetchBrokerData(),
@@ -1958,7 +2040,7 @@ useEffect(() => {
     }
   };
 
-  // Fetch party data - MODIFIED: Auto-select first party
+  // Fetch party data
   const fetchPartiesByName = async (name = "") => {
     try {
       const response = await axiosInstance.post("Party/GetParty_By_Name", {
@@ -1977,12 +2059,10 @@ useEffect(() => {
         });
         setPartyMapping(mapping);
         
-        // NEW: Auto-select first party if no party is selected
         if (parties.length > 0 && !formData.Party) {
           const firstParty = parties[0];
           const firstPartyKey = mapping[firstParty];
           
-          // Update form data with first party
           setFormData(prev => ({
             ...prev,
             Party: firstParty,
@@ -1991,7 +2071,6 @@ useEffect(() => {
             SHP_PARTY_KEY: firstPartyKey
           }));
           
-          // Fetch branches for the first party
           fetchPartyDetails(firstPartyKey);
         }
       }
@@ -2001,7 +2080,7 @@ useEffect(() => {
     }
   };
 
-  // Fetch party branches - MODIFIED: Auto-select first branch
+  // Fetch party branches
   const fetchPartyDetails = async (partyKey, isShippingParty = false) => {
     if (!partyKey) return;
     
@@ -2024,7 +2103,6 @@ useEffect(() => {
           setShippingPlaceOptions(branches);
           setShippingBranchMapping(mapping);
           
-          // Auto-select first shipping branch
           if (branches.length > 0 && !formData.SHIPPING_PLACE) {
             const firstBranch = branches[0];
             const firstBranchId = mapping[firstBranch];
@@ -2039,7 +2117,6 @@ useEffect(() => {
           setBranchOptions(branches);
           setBranchMapping(mapping);
           
-          // Auto-select first branch for main party
           if (branches.length > 0 && !formData.Branch) {
             const firstBranch = branches[0];
             const firstBranchId = mapping[firstBranch];
@@ -2048,7 +2125,6 @@ useEffect(() => {
               ...prev,
               Branch: firstBranch,
               PARTYDTL_ID: firstBranchId,
-              // Also set shipping place to same branch if not already set
               ...(!prev.SHIPPING_PLACE && {
                 SHIPPING_PLACE: firstBranch,
                 SHP_PARTYDTL_ID: firstBranchId
@@ -2181,236 +2257,231 @@ useEffect(() => {
     }
   };
 
-// Fetch style data by barcode - MODIFIED: Find exact barcode match
-const fetchStyleDataByBarcode = async (barcode) => {
-  if (!barcode || barcode.trim() === '') {
-    setScannerError('Please enter a barcode');
-    return;
-  }
-  
-  try {
-    setIsLoadingBarcode(true);
-    setScannerError('');
-    
-    console.log('Fetching data for barcode:', barcode);
-    
-    const payload = {
-      "FGSTYLE_ID": "",
-      "FGPRD_KEY": "",
-      "FGSTYLE_CODE": "",
-      "ALT_BARCODE": barcode.trim(),
-      "FLAG": ""
-    };
-
-    const response = await axiosInstance.post('/FGSTYLE/GetFgstyleDrp', payload);
-    console.log('API Response:', response.data);
-
-    if (response.data.DATA && response.data.DATA.length > 0) {
-      // Find the exact barcode match from the response array
-      const exactMatch = response.data.DATA.find(item => 
-        item.ALT_BARCODE && item.ALT_BARCODE.toString() === barcode.trim()
-      );
-      
-      // If exact match not found, use the first item (fallback)
-      const styleData = exactMatch || response.data.DATA[0];
-      
-      console.log('Selected Style Data:', styleData);
-      console.log('Exact match found:', !!exactMatch);
-      
-      // Extract product key from response
-      const productKey = styleData.FGPRD_KEY || "";
-      
-      // Check if product is different from current
-      const isSameProduct = (
-        currentProductInfo.productKey === productKey &&
-        currentProductInfo.style === (styleData.FGSTYLE_CODE || styleData.FGSTYLE_NAME || '')
-      );
-      
-      // Update current product info with product key
-      const newProductInfo = {
-        barcode: styleData.ALT_BARCODE || styleData.STYSTKDTL_KEY || barcode,
-        style: styleData.FGSTYLE_CODE || styleData.FGSTYLE_NAME || '',
-        product: styleData.FGPRD_NAME || '',
-        productKey: productKey
-      };
-      
-      setCurrentProductInfo(newProductInfo);
-      
-      // If product is different, show warning and clear ratio data
-      if (currentProductInfo.productKey && !isSameProduct) {
-        if (Object.keys(ratioData.ratios).length > 0) {
-          showSnackbar('Product has changed. Please enter new ratios for this product.', 'warning');
-        }
-        // Clear ratio data for new product
-        setRatioData({
-          totalQty: '',
-          ratios: {}
-        });
-      } else {
-        // Load saved ratio data for this product
-        const savedRatioData = getRatioDataFromStorage(productKey);
-        if (savedRatioData.ratios && Object.keys(savedRatioData.ratios).length > 0) {
-          setRatioData(savedRatioData);
-          showSnackbar('Previous ratios loaded for this product', 'info');
-        }
-      }
-      
-      // Store all available sizes from API response
-      // setAvailableSizes(response.data.DATA);
-      setCurrentStyleData(styleData);
-      
-      const shadeValue = styleData.FGSHADE_NAME || '';
-      const sizeValue = styleData.STYSIZE_NAME || '';
-      
-      setNewItemData({
-        ...newItemData,
-        barcode: newProductInfo.barcode,
-        product: newProductInfo.product,
-        style: newProductInfo.style,
-        type: styleData.FGTYPE_NAME || '',
-        shade: shadeValue,
-        size: sizeValue,
-        mrp: styleData.MRP ? styleData.MRP.toString() : '0',
-        rate: styleData.SSP ? styleData.SSP.toString() : '0',
-        qty: '',
-        discount: '0',
-        sets: '1',
-        convFact: '1',
-        remark: ''
-      });
-      
-      // Fetch size details
-      await fetchSizeDetailsForStyle(styleData);
-      
-    } else {
-      setScannerError('No product found for this barcode. Please check the barcode and try again.');
-      showSnackbar('Product not found', 'warning');
+  // Fetch style data by barcode
+  const fetchStyleDataByBarcode = async (barcode) => {
+    if (!barcode || barcode.trim() === '') {
+      setScannerError('Please enter a barcode');
+      return;
     }
-  } catch (error) {
-    console.error('Error fetching style data:', error);
-    setScannerError('Error fetching product details. Please try again.');
-    showSnackbar('Error fetching product', 'error');
-  } finally {
-    setIsLoadingBarcode(false);
-  }
-};
-
-// Fetch style data by style code - MODIFIED: Find exact barcode match
-const fetchStyleDataByCode = async (styleCode) => {
-  if (!styleCode) return;
-
-  try {
-    setIsLoadingStyleCode(true);
-    setScannerError('');
     
-    console.log('Fetching data for style code:', styleCode);
-    
-    const payload = {
-      "FGSTYLE_ID": "",
-      "FGPRD_KEY": "",
-      "FGSTYLE_CODE": styleCode.trim(),
-      "FLAG": ""
-    };
-
-    const response = await axiosInstance.post('/FGSTYLE/GetFgstyleDrp', payload);
-    console.log('API Response:', response.data);
-
-    if (response.data.DATA && response.data.DATA.length > 0) {
-      // For style code search, use the first item (since all will have same style)
-      const styleData = response.data.DATA[0];
+    try {
+      setIsLoadingBarcode(true);
+      setScannerError('');
       
-      // But if user entered a barcode in style code mode, try to find exact match
-      let selectedStyleData = styleData;
-      if (styleCodeInput && styleCodeInput.trim() !== '') {
+      console.log('Fetching data for barcode:', barcode);
+      
+      const payload = {
+        "FGSTYLE_ID": "",
+        "FGPRD_KEY": "",
+        "FGSTYLE_CODE": "",
+        "ALT_BARCODE": barcode.trim(),
+        "FLAG": ""
+      };
+
+      const response = await axiosInstance.post('/FGSTYLE/GetFgstyleDrp', payload);
+      console.log('API Response:', response.data);
+
+      if (response.data.DATA && response.data.DATA.length > 0) {
         const exactMatch = response.data.DATA.find(item => 
-          item.ALT_BARCODE && item.ALT_BARCODE.toString() === styleCodeInput.trim()
+          item.ALT_BARCODE && item.ALT_BARCODE.toString() === barcode.trim()
         );
-        if (exactMatch) {
-          selectedStyleData = exactMatch;
+        
+        const styleData = exactMatch || response.data.DATA[0];
+        
+        console.log('Selected Style Data:', styleData);
+        
+        const productKey = styleData.FGPRD_KEY || "";
+        
+        const isSameProduct = (
+          currentProductInfo.productKey === productKey &&
+          currentProductInfo.style === (styleData.FGSTYLE_CODE || styleData.FGSTYLE_NAME || '')
+        );
+        
+        const newProductInfo = {
+          barcode: styleData.ALT_BARCODE || styleData.STYSTKDTL_KEY || barcode,
+          style: styleData.FGSTYLE_CODE || styleData.FGSTYLE_NAME || '',
+          product: styleData.FGPRD_NAME || '',
+          productKey: productKey
+        };
+        
+        setCurrentProductInfo(newProductInfo);
+        
+        if (currentProductInfo.productKey && !isSameProduct) {
+          if (Object.keys(ratioData.ratios).length > 0) {
+            showSnackbar('Product has changed. Please enter new ratios for this product.', 'warning');
+          }
+          setRatioData({
+            totalQty: '',
+            ratios: {}
+          });
+        } else {
+          const savedRatioData = getRatioDataFromStorage(productKey);
+          if (savedRatioData.ratios && Object.keys(savedRatioData.ratios).length > 0) {
+            setRatioData(savedRatioData);
+            showSnackbar('Previous ratios loaded for this product', 'info');
+          }
         }
-      }
-      
-      console.log('Selected Style Data:', selectedStyleData);
-      
-      // Extract product key from response
-      const productKey = selectedStyleData.FGPRD_KEY || "";
-      
-      // Check if product is different from current
-      const isSameProduct = (
-        currentProductInfo.productKey === productKey &&
-        currentProductInfo.style === (selectedStyleData.FGSTYLE_CODE || selectedStyleData.FGSTYLE_NAME || '')
-      );
-      
-      // Update current product info with product key
-      const newProductInfo = {
-        barcode: selectedStyleData.ALT_BARCODE || selectedStyleData.STYSTKDTL_KEY || '',
-        style: selectedStyleData.FGSTYLE_CODE || selectedStyleData.FGSTYLE_NAME || '',
-        product: selectedStyleData.FGPRD_NAME || '',
-        productKey: productKey
-      };
-      
-      setCurrentProductInfo(newProductInfo);
-      
-      // If product is different, show warning and clear ratio data
-      if (currentProductInfo.productKey && !isSameProduct) {
-        if (Object.keys(ratioData.ratios).length > 0) {
-          showSnackbar('Product has changed. Please enter new ratios for this product.', 'warning');
-        }
-        // Clear ratio data for new product
-        setRatioData({
-          totalQty: '',
-          ratios: {}
+        
+        setCurrentStyleData(styleData);
+        
+        const shadeValue = styleData.FGSHADE_NAME || '';
+        const sizeValue = styleData.STYSIZE_NAME || '';
+        
+        setNewItemData({
+          ...newItemData,
+          barcode: newProductInfo.barcode,
+          product: newProductInfo.product,
+          style: newProductInfo.style,
+          type: styleData.FGTYPE_NAME || '',
+          shade: shadeValue,
+          size: sizeValue,
+          mrp: styleData.MRP ? styleData.MRP.toString() : '0',
+          rate: styleData.SSP ? styleData.SSP.toString() : '0',
+          qty: '',
+          discount: '0',
+          sets: '1',
+          convFact: '1',
+          remark: ''
         });
-      } else {
-        // Load saved ratio data for this product
-        const savedRatioData = getRatioDataFromStorage(productKey);
-        if (savedRatioData.ratios && Object.keys(savedRatioData.ratios).length > 0) {
-          setRatioData(savedRatioData);
-          showSnackbar('Previous ratios loaded for this product', 'info');
+        
+        // Fetch size details
+        await fetchSizeDetailsForStyle(styleData);
+        
+        // Fetch shades for this style
+        if (styleData.FGSTYLE_ID) {
+          await fetchShadesForStyle(styleData.FGSTYLE_ID, shadeViewMode);
         }
+        
+        // Keep fillByRatioMode enabled
+        setFillByRatioMode(true);
+        
+      } else {
+        setScannerError('No product found for this barcode. Please check the barcode and try again.');
+        showSnackbar('Product not found', 'warning');
       }
-      
-      // Store all available sizes from API response
-      // setAvailableSizes(response.data.DATA);
-      setCurrentStyleData(selectedStyleData);
-      
-      const shadeValue = selectedStyleData.FGSHADE_NAME || '';
-      const sizeValue = selectedStyleData.STYSIZE_NAME || '';
-      
-      setNewItemData({
-        ...newItemData,
-        barcode: newProductInfo.barcode,
-        product: newProductInfo.product,
-        style: newProductInfo.style,
-        type: selectedStyleData.FGTYPE_NAME || '',
-        shade: shadeValue,
-        size: sizeValue,
-        mrp: selectedStyleData.MRP ? selectedStyleData.MRP.toString() : '0',
-        rate: selectedStyleData.SSP ? selectedStyleData.SSP.toString() : '0',
-        qty: '',
-        discount: '0',
-        sets: '1',
-        convFact: '1',
-        remark: ''
-      });
-      
-      showSnackbar('Product found successfully by style code!');
-      
-      // Fetch size details
-      await fetchSizeDetailsForStyle(selectedStyleData);
-      
-    } else {
-      setScannerError('No product found for this style code. Please check the style code and try again.');
-      showSnackbar('Product not found', 'warning');
+    } catch (error) {
+      console.error('Error fetching style data:', error);
+      setScannerError('Error fetching product details. Please try again.');
+      showSnackbar('Error fetching product', 'error');
+    } finally {
+      setIsLoadingBarcode(false);
     }
-  } catch (error) {
-    console.error('Error fetching style data by code:', error);
-    setScannerError('Error fetching product details. Please try again.');
-    showSnackbar('Error fetching product', 'error');
-  } finally {
-    setIsLoadingStyleCode(false);
-  }
-};
+  };
+
+  // Fetch style data by style code
+  const fetchStyleDataByCode = async (styleCode) => {
+    if (!styleCode) return;
+
+    try {
+      setIsLoadingStyleCode(true);
+      setScannerError('');
+      
+      console.log('Fetching data for style code:', styleCode);
+      
+      const payload = {
+        "FGSTYLE_ID": "",
+        "FGPRD_KEY": "",
+        "FGSTYLE_CODE": styleCode.trim(),
+        "FLAG": ""
+      };
+
+      const response = await axiosInstance.post('/FGSTYLE/GetFgstyleDrp', payload);
+      console.log('API Response:', response.data);
+
+      if (response.data.DATA && response.data.DATA.length > 0) {
+        const styleData = response.data.DATA[0];
+        
+        let selectedStyleData = styleData;
+        if (styleCodeInput && styleCodeInput.trim() !== '') {
+          const exactMatch = response.data.DATA.find(item => 
+            item.ALT_BARCODE && item.ALT_BARCODE.toString() === styleCodeInput.trim()
+          );
+          if (exactMatch) {
+            selectedStyleData = exactMatch;
+          }
+        }
+        
+        console.log('Selected Style Data:', selectedStyleData);
+        
+        const productKey = selectedStyleData.FGPRD_KEY || "";
+        
+        const isSameProduct = (
+          currentProductInfo.productKey === productKey &&
+          currentProductInfo.style === (selectedStyleData.FGSTYLE_CODE || selectedStyleData.FGSTYLE_NAME || '')
+        );
+        
+        const newProductInfo = {
+          barcode: selectedStyleData.ALT_BARCODE || selectedStyleData.STYSTKDTL_KEY || '',
+          style: selectedStyleData.FGSTYLE_CODE || selectedStyleData.FGSTYLE_NAME || '',
+          product: selectedStyleData.FGPRD_NAME || '',
+          productKey: productKey
+        };
+        
+        setCurrentProductInfo(newProductInfo);
+        
+        if (currentProductInfo.productKey && !isSameProduct) {
+          if (Object.keys(ratioData.ratios).length > 0) {
+            showSnackbar('Product has changed. Please enter new ratios for this product.', 'warning');
+          }
+          setRatioData({
+            totalQty: '',
+            ratios: {}
+          });
+        } else {
+          const savedRatioData = getRatioDataFromStorage(productKey);
+          if (savedRatioData.ratios && Object.keys(savedRatioData.ratios).length > 0) {
+            setRatioData(savedRatioData);
+            showSnackbar('Previous ratios loaded for this product', 'info');
+          }
+        }
+        
+        setCurrentStyleData(selectedStyleData);
+        
+        const shadeValue = selectedStyleData.FGSHADE_NAME || '';
+        const sizeValue = selectedStyleData.STYSIZE_NAME || '';
+        
+        setNewItemData({
+          ...newItemData,
+          barcode: newProductInfo.barcode,
+          product: newProductInfo.product,
+          style: newProductInfo.style,
+          type: selectedStyleData.FGTYPE_NAME || '',
+          shade: shadeValue,
+          size: sizeValue,
+          mrp: selectedStyleData.MRP ? selectedStyleData.MRP.toString() : '0',
+          rate: selectedStyleData.SSP ? selectedStyleData.SSP.toString() : '0',
+          qty: '',
+          discount: '0',
+          sets: '1',
+          convFact: '1',
+          remark: ''
+        });
+        
+        showSnackbar('Product found successfully by style code!');
+        
+        // Fetch size details
+        await fetchSizeDetailsForStyle(selectedStyleData);
+        
+        // Fetch shades for this style
+        if (selectedStyleData.FGSTYLE_ID) {
+          await fetchShadesForStyle(selectedStyleData.FGSTYLE_ID, shadeViewMode);
+        }
+        
+        // Keep fillByRatioMode enabled
+        setFillByRatioMode(true);
+        
+      } else {
+        setScannerError('No product found for this style code. Please check the style code and try again.');
+        showSnackbar('Product not found', 'warning');
+      }
+    } catch (error) {
+      console.error('Error fetching style data by code:', error);
+      setScannerError('Error fetching product details. Please try again.');
+      showSnackbar('Error fetching product', 'error');
+    } finally {
+      setIsLoadingStyleCode(false);
+    }
+  };
 
   // Handle style code input change with debounce
   const handleStyleCodeInputChange = (e) => {
@@ -2439,77 +2510,92 @@ const fetchStyleDataByCode = async (styleCode) => {
   };
 
   // Fetch size details for style
-const fetchSizeDetailsForStyle = async (styleData) => {
-  try {
-    const fgprdKey = styleData.FGPRD_KEY;
-    const fgstyleId = styleData.FGSTYLE_ID;
-    const fgtypeKey = styleData.FGTYPE_KEY || "";
-    const fgshadeKey = styleData.FGSHADE_KEY || "";
-    const fgptnKey = styleData.FGPTN_KEY || "";
+  const fetchSizeDetailsForStyle = async (styleData) => {
+    try {
+      const fgprdKey = styleData.FGPRD_KEY;
+      const fgstyleId = styleData.FGSTYLE_ID;
+      const fgtypeKey = styleData.FGTYPE_KEY || "";
+      const fgshadeKey = styleData.FGSHADE_KEY || "";
+      const fgptnKey = styleData.FGPTN_KEY || "";
 
-    if (!fgprdKey || !fgstyleId) {
-      console.warn('Missing required data for size details');
-      return;
-    }
-
-    const payload = {
-      "FGSTYLE_ID": fgstyleId,
-      "FGPRD_KEY": fgprdKey,
-      "FGTYPE_KEY": fgtypeKey,
-      "FGSHADE_KEY": fgshadeKey,
-      "FGPTN_KEY": fgptnKey,
-      "MRP": parseFloat(styleData.MRP) || 0,
-      "SSP": parseFloat(styleData.SSP) || 0,
-      "PARTY_KEY": formData.PARTY_KEY || "",
-      "PARTYDTL_ID": formData.PARTYDTL_ID || 0,
-      "FLAG": "S"
-    };
-
-    console.log('Fetching size details with payload:', payload);
-
-    const response = await axiosInstance.post('/STYSIZE/AddSizeDetail', payload);
-    console.log('Size Details Response:', response.data);
-
-    if (response.data.DATA && response.data.DATA.length > 0) {
-      // Extract STYSIZE_NAME from size details response
-      const sizeDetailsFromAPI = response.data.DATA;
-      
-      // Store available sizes for ratio section
-      const availableSizesForRatio = sizeDetailsFromAPI.map(size => ({
-        STYSIZE_ID: size.STYSIZE_ID,
-        STYSIZE_NAME: size.STYSIZE_NAME,
-        MRP: size.MRP,
-        WSP: size.WSP || size.RATE
-      }));
-      
-      setAvailableSizes(availableSizesForRatio);
-      
-      // Create transformed size details for table
-      const transformedSizeDetails = sizeDetailsFromAPI.map((size, index) => ({
-        STYSIZE_ID: size.STYSIZE_ID || index + 1,
-        STYSIZE_NAME: size.STYSIZE_NAME || `Size ${index + 1}`,
-        FGSTYLE_ID: size.FGSTYLE_ID || fgstyleId,
-        QTY: 0,
-        ITM_AMT: 0,
-        ORDER_QTY: 0,
-        MRP: parseFloat(size.MRP) || parseFloat(styleData.MRP) || 0,
-        RATE: parseFloat(size.WSP) || parseFloat(size.RATE) || parseFloat(styleData.SSP) || 0,
-        WSP: parseFloat(size.WSP) || parseFloat(size.RATE) || parseFloat(styleData.SSP) || 0,
-        FGITEM_KEY: styleData.STYSTKDTL_KEY || ""
-      }));
-
-      setSizeDetailsData(transformedSizeDetails);
-      showSnackbar('Size details loaded! Enter quantities.');
-      
-      // Clear any existing ratio data for this product
-      const productKey = styleData.FGPRD_KEY || "";
-      const savedRatioData = getRatioDataFromStorage(productKey);
-      if (savedRatioData.ratios && Object.keys(savedRatioData.ratios).length > 0) {
-        setRatioData(savedRatioData);
-        showSnackbar('Previous ratios loaded for this product', 'info');
+      if (!fgprdKey || !fgstyleId) {
+        console.warn('Missing required data for size details');
+        return;
       }
-    } else {
-      // Use the STYSIZE_NAME from the original response
+
+      const payload = {
+        "FGSTYLE_ID": fgstyleId,
+        "FGPRD_KEY": fgprdKey,
+        "FGTYPE_KEY": fgtypeKey,
+        "FGSHADE_KEY": fgshadeKey,
+        "FGPTN_KEY": fgptnKey,
+        "MRP": parseFloat(styleData.MRP) || 0,
+        "SSP": parseFloat(styleData.SSP) || 0,
+        "PARTY_KEY": formData.PARTY_KEY || "",
+        "PARTYDTL_ID": formData.PARTYDTL_ID || 0,
+        "FLAG": "S"
+      };
+
+      console.log('Fetching size details with payload:', payload);
+
+      const response = await axiosInstance.post('/STYSIZE/AddSizeDetail', payload);
+      console.log('Size Details Response:', response.data);
+
+      if (response.data.DATA && response.data.DATA.length > 0) {
+        const sizeDetailsFromAPI = response.data.DATA;
+        
+        const availableSizesForRatio = sizeDetailsFromAPI.map(size => ({
+          STYSIZE_ID: size.STYSIZE_ID,
+          STYSIZE_NAME: size.STYSIZE_NAME,
+          MRP: size.MRP,
+          WSP: size.WSP || size.RATE
+        }));
+        
+        setAvailableSizes(availableSizesForRatio);
+        
+        const transformedSizeDetails = sizeDetailsFromAPI.map((size, index) => ({
+          STYSIZE_ID: size.STYSIZE_ID || index + 1,
+          STYSIZE_NAME: size.STYSIZE_NAME || `Size ${index + 1}`,
+          FGSTYLE_ID: size.FGSTYLE_ID || fgstyleId,
+          QTY: 0,
+          ITM_AMT: 0,
+          ORDER_QTY: 0,
+          MRP: parseFloat(size.MRP) || parseFloat(styleData.MRP) || 0,
+          RATE: parseFloat(size.WSP) || parseFloat(size.RATE) || parseFloat(styleData.SSP) || 0,
+          WSP: parseFloat(size.WSP) || parseFloat(size.RATE) || parseFloat(styleData.SSP) || 0,
+          FGITEM_KEY: styleData.STYSTKDTL_KEY || ""
+        }));
+
+        setSizeDetailsData(transformedSizeDetails);
+        showSnackbar('Size details loaded! Enter quantities.');
+        
+        const productKey = styleData.FGPRD_KEY || "";
+        const savedRatioData = getRatioDataFromStorage(productKey);
+        if (savedRatioData.ratios && Object.keys(savedRatioData.ratios).length > 0) {
+          setRatioData(savedRatioData);
+          showSnackbar('Previous ratios loaded for this product', 'info');
+        }
+      } else {
+        const stysizeName = styleData.STYSIZE_NAME || 'Default';
+        const stysizeId = styleData.STYSIZE_ID || 1;
+        
+        const defaultSizes = [
+          { 
+            STYSIZE_NAME: stysizeName,
+            STYSIZE_ID: stysizeId, 
+            QTY: 0, 
+            MRP: parseFloat(styleData.MRP) || 0, 
+            RATE: parseFloat(styleData.SSP) || 0,
+            WSP: parseFloat(styleData.SSP) || 0
+          }
+        ];
+        
+        setAvailableSizes(defaultSizes);
+        setSizeDetailsData(defaultSizes);
+      }
+    } catch (error) {
+      console.error('Error fetching size details:', error);
+      
       const stysizeName = styleData.STYSIZE_NAME || 'Default';
       const stysizeId = styleData.STYSIZE_ID || 1;
       
@@ -2518,73 +2604,49 @@ const fetchSizeDetailsForStyle = async (styleData) => {
           STYSIZE_NAME: stysizeName,
           STYSIZE_ID: stysizeId, 
           QTY: 0, 
-          MRP: parseFloat(styleData.MRP) || 0, 
-          RATE: parseFloat(styleData.SSP) || 0,
-          WSP: parseFloat(styleData.SSP) || 0
+          MRP: parseFloat(newItemData.mrp) || 0, 
+          RATE: parseFloat(newItemData.rate) || 0,
+          WSP: parseFloat(newItemData.rate) || 0
         }
       ];
       
       setAvailableSizes(defaultSizes);
       setSizeDetailsData(defaultSizes);
+      showSnackbar(`Using size: ${stysizeName}. Enter quantity.`, 'warning');
     }
-  } catch (error) {
-    console.error('Error fetching size details:', error);
-    
-    // FALLBACK: Extract size info from the original style data
-    const stysizeName = styleData.STYSIZE_NAME || 'Default';
-    const stysizeId = styleData.STYSIZE_ID || 1;
-    
-    const defaultSizes = [
-      { 
-        STYSIZE_NAME: stysizeName,
-        STYSIZE_ID: stysizeId, 
-        QTY: 0, 
-        MRP: parseFloat(newItemData.mrp) || 0, 
-        RATE: parseFloat(newItemData.rate) || 0,
-        WSP: parseFloat(newItemData.rate) || 0
+  };
+
+  const handleRatioChange = (sizeName, value) => {
+    const newRatioData = {
+      ...ratioData,
+      ratios: {
+        ...ratioData.ratios,
+        [sizeName]: value
       }
-    ];
+    };
     
-    setAvailableSizes(defaultSizes);
-    setSizeDetailsData(defaultSizes);
-    showSnackbar(`Using size: ${stysizeName}. Enter quantity.`, 'warning');
-  }
-};
-
- const handleRatioChange = (sizeName, value) => {
-  const newRatioData = {
-    ...ratioData,
-    ratios: {
-      ...ratioData.ratios,
-      [sizeName]: value
+    setRatioData(newRatioData);
+    
+    if (currentProductInfo.productKey) {
+      saveRatioDataToStorage(currentProductInfo.productKey, newRatioData);
     }
   };
-  
-  setRatioData(newRatioData);
-  
-  // Save to localStorage if we have a product key
-  if (currentProductInfo.productKey) {
-    saveRatioDataToStorage(currentProductInfo.productKey, newRatioData);
-  }
-};
 
-// Handle total quantity change for ratio calculation - MODIFIED: Save to localStorage
-const handleTotalQtyChange = (value) => {
-  const newRatioData = {
-    ...ratioData,
-    totalQty: value
+  // Handle total quantity change for ratio calculation
+  const handleTotalQtyChange = (value) => {
+    const newRatioData = {
+      ...ratioData,
+      totalQty: value
+    };
+    
+    setRatioData(newRatioData);
+    
+    if (currentProductInfo.productKey) {
+      saveRatioDataToStorage(currentProductInfo.productKey, newRatioData);
+    }
   };
-  
-  setRatioData(newRatioData);
-  
-  // Save to localStorage if we have a product key
-  if (currentProductInfo.productKey) {
-    saveRatioDataToStorage(currentProductInfo.productKey, newRatioData);
-  }
-};
 
-// Calculate and fill quantities based on ratios
-const fillQuantitiesByRatio = () => {
+  const fillQuantitiesByRatio = () => {
   const totalQty = parseFloat(ratioData.totalQty);
   if (!totalQty || totalQty <= 0) {
     showSnackbar('Please enter a valid total quantity', 'error');
@@ -2594,13 +2656,11 @@ const fillQuantitiesByRatio = () => {
   const ratios = ratioData.ratios;
   const sizeNames = Object.keys(ratios);
   
-  // Check if all sizes have ratios
   if (sizeNames.length === 0) {
     showSnackbar('Please enter ratios for at least one size', 'error');
     return;
   }
 
-  // Calculate total ratio sum
   const totalRatio = sizeNames.reduce((sum, sizeName) => {
     const ratio = parseFloat(ratios[sizeName]) || 0;
     return sum + ratio;
@@ -2611,17 +2671,15 @@ const fillQuantitiesByRatio = () => {
     return;
   }
 
-  // Calculate quantities for each size and update sizeDetailsData
   const updatedSizeDetails = [...sizeDetailsData];
   let allocatedQty = 0;
 
-  // First pass: allocate based on ratios
-  sizeNames.forEach((sizeName, index) => {
+  // Calculate quantities for each size
+  sizeNames.forEach((sizeName) => {
     const ratio = parseFloat(ratios[sizeName]) || 0;
     const exactQty = (ratio / totalRatio) * totalQty;
     const roundedQty = Math.round(exactQty);
     
-    // Find the size in sizeDetailsData
     const sizeIndex = updatedSizeDetails.findIndex(size => size.STYSIZE_NAME === sizeName);
     if (sizeIndex !== -1) {
       const wsp = updatedSizeDetails[sizeIndex].WSP || updatedSizeDetails[sizeIndex].RATE || 0;
@@ -2639,7 +2697,6 @@ const fillQuantitiesByRatio = () => {
   // Adjust for rounding differences
   const difference = totalQty - allocatedQty;
   if (difference !== 0 && sizeNames.length > 0) {
-    // Add/remove the difference from the first size
     const firstSizeName = sizeNames[0];
     const firstSizeIndex = updatedSizeDetails.findIndex(size => size.STYSIZE_NAME === firstSizeName);
     if (firstSizeIndex !== -1) {
@@ -2657,7 +2714,6 @@ const fillQuantitiesByRatio = () => {
 
   setSizeDetailsData(updatedSizeDetails);
   
-  // Update total quantity in newItemData
   const newTotalQty = updatedSizeDetails.reduce((sum, size) => sum + (parseFloat(size.QTY) || 0), 0);
   const totalAmount = updatedSizeDetails.reduce((sum, size) => sum + (parseFloat(size.ITM_AMT) || 0), 0);
   
@@ -2667,109 +2723,153 @@ const fillQuantitiesByRatio = () => {
     rate: newTotalQty > 0 ? (totalAmount / newTotalQty).toFixed(2) : prev.rate
   }));
   
-  showSnackbar(`Quantities filled successfully! Total: ${newTotalQty}`, 'success');
+  // Update message to show per-shade quantity
+  if (fillByShadeMode && selectedShades.length > 0) {
+    const perShadeQty = newTotalQty; // Full quantity for each shade
+    showSnackbar(`Quantities filled successfully! Each shade will get: ${perShadeQty}`, 'success');
+  } else {
+    showSnackbar(`Quantities filled successfully! Total: ${newTotalQty}`, 'success');
+  }
 };
 
-// Handle confirm button for adding item to order - MODIFIED: Clear ratio data
-const handleConfirmItem = () => {
-  if (!newItemData.product || !newItemData.style) {
-    showSnackbar("Please scan a valid barcode or enter style code first", 'error');
-    return;
+  // Handle confirm button for adding item to order - MODIFIED for multi-shade
+  const handleConfirmItem = () => {
+    if (!newItemData.product || !newItemData.style) {
+      showSnackbar("Please scan a valid barcode or enter style code first", 'error');
+      return;
+    }
+
+    const totalQty = calculateTotalQty();
+    if (totalQty === 0) {
+      showSnackbar("Please enter quantity in size details", 'error');
+      return;
+    }
+
+    const { amount, netAmount } = calculateAmount();
+
+    if (fillByShadeMode && selectedShades.length > 0) {
+    // Create one item for EACH selected shade with FULL quantity
+    const newItems = selectedShades.map(shade => {
+      // EACH shade gets FULL quantity (not divided)
+      const shadeAmount = amount; // Full amount for each shade
+      const shadeQty = totalQty; 
+        
+        return {
+        id: Date.now() + Math.random(),
+        barcode: newItemData.barcode,
+        product: newItemData.product,
+        style: newItemData.style,
+        type: newItemData.type,
+        shade: shade,
+        qty: shadeQty,
+        mrp: parseFloat(newItemData.mrp) || 0,
+        rate: parseFloat(newItemData.rate) || 0,
+        amount: shadeAmount,
+        discAmt: parseFloat(newItemData.discount) || 0,
+        netAmt: netAmount, // Full net amount for each shade
+        sets: parseFloat(newItemData.sets) || 0,
+        varPer: parseFloat(newItemData.varPer) || 0,
+        remark: newItemData.remark,
+        sizeDetails: [...sizeDetailsData], // Same size details for all shades
+        convFact: newItemData.convFact,
+        styleData: currentStyleData
+      };
+    });
+
+      // Add all items to table
+      setTableData(prev => [...prev, ...newItems]);
+
+    } else {
+      // Original single item logic
+      const newItem = {
+      id: Date.now(),
+      barcode: newItemData.barcode,
+      product: newItemData.product,
+      style: newItemData.style,
+      type: newItemData.type,
+      shade: newItemData.shade,
+      qty: totalQty,
+      mrp: parseFloat(newItemData.mrp) || 0,
+      rate: parseFloat(newItemData.rate) || 0,
+      amount: amount,
+      discAmt: parseFloat(newItemData.discount) || 0,
+      netAmt: netAmount,
+      sets: parseFloat(newItemData.sets) || 0,
+      varPer: parseFloat(newItemData.varPer) || 0,
+      remark: newItemData.remark,
+      sizeDetails: [...sizeDetailsData],
+      convFact: newItemData.convFact,
+      styleData: currentStyleData
+    };
+
+      // Add to table
+      setTableData(prev => [...prev, newItem]);
+    }
+
+    // Reset form
+    setNewItemData({
+      barcode: '',
+      product: '',
+      style: '',
+      type: '',
+      shade: '',
+      mrp: '',
+      rate: '',
+      qty: '',
+      discount: '0',
+      sets: '1',
+      convFact: '1',
+      remark: '',
+      varPer: '0',
+      stdQty: '',
+      setNo: '',
+      percent: '0',
+      rQty: '',
+      divDt: ''
+    });
+    
+    if (useStyleCodeMode) {
+      setStyleCodeInput('');
+    }
+    
+    setCurrentProductInfo({
+      barcode: '',
+      style: '',
+      product: '',
+      productKey: ''
+    });
+    setCurrentStyleData(null);
+    setSizeDetailsData([]);
+    setAvailableSizes([]);
+    setAvailableShades([]);
+    setSelectedShades([]);
+    setFillByRatioMode(true); // Keep enabled
+    setFillByShadeMode(true); // Keep enabled
+    setRatioData({
+      totalQty: '',
+      ratios: {}
+    });
+    setScannerError('');
+
+    if (fillByShadeMode && selectedShades.length > 1) {
+    showSnackbar(`${selectedShades.length} items added to order (${totalQty} each)! Go To Cart`, 'success');
+  } else {
+    showSnackbar('Item added to order! Go To Cart', 'success');
   }
-
-  const totalQty = calculateTotalQty();
-  if (totalQty === 0) {
-    showSnackbar("Please enter quantity in size details", 'error');
-    return;
-  }
-
-  const { amount, netAmount } = calculateAmount();
-
-  const newItem = {
-    id: Date.now(),
-    barcode: newItemData.barcode,
-    product: newItemData.product,
-    style: newItemData.style,
-    type: newItemData.type,
-    shade: newItemData.shade,
-    qty: totalQty,
-    mrp: parseFloat(newItemData.mrp) || 0,
-    rate: parseFloat(newItemData.rate) || 0,
-    amount: amount,
-    discAmt: parseFloat(newItemData.discount) || 0,
-    netAmt: netAmount,
-    sets: parseFloat(newItemData.sets) || 0,
-    varPer: parseFloat(newItemData.varPer) || 0,
-    remark: newItemData.remark,
-    sizeDetails: [...sizeDetailsData],
-    convFact: newItemData.convFact,
-    styleData: currentStyleData
-  };
-
-  // Add to table
-  setTableData(prev => [...prev, newItem]);
-
-  // Reset form
-  setNewItemData({
-    barcode: '',
-    product: '',
-    style: '',
-    type: '',
-    shade: '',
-    mrp: '',
-    rate: '',
-    qty: '',
-    discount: '0',
-    sets: '1',
-    convFact: '1',
-    remark: '',
-    varPer: '0',
-    stdQty: '',
-    setNo: '',
-    percent: '0',
-    rQty: '',
-    divDt: ''
-  });
-  
-  // Reset style code input if in style code mode
-  if (useStyleCodeMode) {
-    setStyleCodeInput('');
-  }
-  
-  // Clear current product info and ratio data
-  setCurrentProductInfo({
-    barcode: '',
-    style: '',
-    product: '',
-    productKey: ''
-  });
-  setCurrentStyleData(null);
-  setSizeDetailsData([]);
-  setAvailableSizes([]);
-  setFillByRatioMode(false);
-  setRatioData({
-    totalQty: '',
-    ratios: {}
-  });
-  setScannerError('');
-
-  showSnackbar('Item added to order! Go To Cart', 'success');
 };
 
-  // Handle form field changes - MODIFIED: Auto-select related fields
+  // Handle form field changes
   const handleFormChange = (field, value) => {
     const updatedFormData = {
       ...formData,
       [field]: value
     };
     
-    // Handle key mappings
     if (field === 'Party' && partyMapping[value]) {
       updatedFormData.PARTY_KEY = partyMapping[value];
       updatedFormData.SHIPPING_PARTY = value;
       updatedFormData.SHP_PARTY_KEY = partyMapping[value];
       
-      // Also clear shipping place if party changes
       updatedFormData.SHIPPING_PLACE = '';
       updatedFormData.SHP_PARTYDTL_ID = '';
       
@@ -2784,7 +2884,6 @@ const handleConfirmItem = () => {
     
     if (field === 'Branch' && branchMapping[value]) {
       updatedFormData.PARTYDTL_ID = branchMapping[value];
-      // Auto-set shipping place to same branch if not already set
       if (!updatedFormData.SHIPPING_PLACE) {
         updatedFormData.SHIPPING_PLACE = value;
         updatedFormData.SHP_PARTYDTL_ID = branchMapping[value];
@@ -2872,7 +2971,6 @@ const handleConfirmItem = () => {
 
     setSizeDetailsData(updatedSizeDetails);
     
-    // Update total quantity
     const totalQty = updatedSizeDetails.reduce((sum, size) => sum + (parseFloat(size.QTY) || 0), 0);
     setNewItemData(prev => ({ ...prev, qty: totalQty.toString() }));
   };
@@ -2893,8 +2991,6 @@ const handleConfirmItem = () => {
       netAmount: amount - discount
     };
   };
-
- 
 
   // Handle delete item from table
   const handleDeleteItem = (id) => {
@@ -2997,203 +3093,201 @@ const handleConfirmItem = () => {
   };
 
   // Prepare submit payload with FIXED FGSTYLE_ID
- // Prepare submit payload with FIXED FGSTYLE_ID
-const prepareSubmitPayload = () => {
-  const dbFlag = 'I';
-  const currentDate = new Date().toISOString().replace('T', ' ').split('.')[0];
-  
-  const userId = localStorage.getItem('USER_ID') || '1';
-  const userName = localStorage.getItem('USER_NAME') || 'Admin';
-  
-  console.log('Company Config:', companyConfig);
-  console.log('User Info:', { userId, userName });
+  const prepareSubmitPayload = () => {
+    const dbFlag = 'I';
+    const currentDate = new Date().toISOString().replace('T', ' ').split('.')[0];
+    
+    const userId = localStorage.getItem('USER_ID') || '1';
+    const userName = localStorage.getItem('USER_NAME') || 'Admin';
+    
+    console.log('Company Config:', companyConfig);
+    console.log('User Info:', { userId, userName });
 
-  const getStatusValue = (status) => {
-    const statusMapping = {
-      'O': '1',
-      'C': '0',
-      'S': '5'
+    const getStatusValue = (status) => {
+      const statusMapping = {
+        'O': '1',
+        'C': '0',
+        'S': '5'
+      };
+      return statusMapping[status] || "1";
     };
-    return statusMapping[status] || "1";
-  };
 
-  // Dynamic ORDBK_KEY generate करें
-  const correctOrdbkKey = `25${companyConfig.COBR_ID}${formData.ORDER_NO}`;
-  
-  console.log('Using ORDBK_KEY:', correctOrdbkKey);
-
-  const transformedOrdbkStyleList = tableData.map((item, index) => {
-    const tempId = Date.now() + index;
+    const correctOrdbkKey = `25${companyConfig.COBR_ID}${formData.ORDER_NO}`;
     
-    const fgstyleId = item.styleData?.FGSTYLE_ID || 0;
-    const fgprdKey = item.styleData?.FGPRD_KEY || '';
-    const fgtypeKey = item.styleData?.FGTYPE_KEY || '';
-    const fgshadeKey = item.styleData?.FGSHADE_KEY || '';
-    const fgptnKey = item.styleData?.FGPTN_KEY || '';
-    
-    console.log(`Item ${index} - FGSTYLE_ID: ${fgstyleId}, FGPRD_KEY: ${fgprdKey}`);
+    console.log('Using ORDBK_KEY:', correctOrdbkKey);
 
-    return {
-      DBFLAG: 'I',
-      ORDBKSTY_ID: tempId,
-      ORDBK_KEY: correctOrdbkKey,
-      FGPRD_KEY: fgprdKey,
-      FGSTYLE_ID: fgstyleId,
-      FGSTYLE_CODE: item.style || '',
-      FGTYPE_KEY: fgtypeKey,
-      FGSHADE_KEY: fgshadeKey,
-      FGPTN_KEY: fgptnKey,
-      FGITEM_KEY: item.barcode || "",
-      QTY: parseFloat(item.qty) || 0,
-      STYCATRT_ID: 0,
-      FGITM_KEY: item.FGITM_KEY || "",
-      RATE: parseFloat(item.rate) || 0,
-      AMT: parseFloat(item.amount) || 0,
-      DLV_VAR_PERCENT: parseFloat(item.varPer) || 0,
-      DLV_VAR_QTY: 0,
-      OPEN_RATE: "",
-      TERM_KEY: "",
-      TERM_NAME: "",
-      TERM_PERCENT: 0,
-      TERM_FIX_AMT: 0,
-      TERM_RATE: 0,
-      TERM_PERQTY: 0,
-      DISC_AMT: parseFloat(item.discAmt) || 0,
-      NET_AMT: parseFloat(item.netAmt) || 0,
-      INIT_DT: "1900-01-01 00:00:00.000",
-      INIT_REMK: "",
-      INIT_QTY: 0,
-      DLV_DT: "1900-01-01 00:00:00.000",
-      BAL_QTY: parseFloat(item.qty) || 0,
-      STATUS: "1",
-      STYLE_PRN: "",
-      TYPE_PRN: "",
-      MRP_PRN: parseFloat(item.mrp) || 0,
-      REMK: item.remark || "",
-      QUOTEDTL_ID: 0,
-      SETQTY: parseFloat(item.sets) || 0,
-      RQTY: 0,
-      DISTBTR_KEY: "",
-      LOTNO: formData.CURR_SEASON_KEY || "",
-      WOBALQTY: parseFloat(item.qty) || 0,
-      REFORDBKSTY_ID: 0,
-      BOMSTY_ID: 0,
-      ISRMREQ: "N",
-      OP_QTY: 0,
-      ORDBKSTYSZLIST: (item.sizeDetails || []).map((sizeItem, sizeIndex) => ({
+    const transformedOrdbkStyleList = tableData.map((item, index) => {
+      const tempId = Date.now() + index;
+      
+      const fgstyleId = item.styleData?.FGSTYLE_ID || 0;
+      const fgprdKey = item.styleData?.FGPRD_KEY || '';
+      const fgtypeKey = item.styleData?.FGTYPE_KEY || '';
+      const fgshadeKey = availableShades.find(shade => shade.FGSHADE_NAME === item.shade)?.FGSHADE_KEY || item.styleData?.FGSHADE_KEY || '';
+      const fgptnKey = item.styleData?.FGPTN_KEY || '';
+      
+      console.log(`Item ${index} - FGSTYLE_ID: ${fgstyleId}, FGPRD_KEY: ${fgprdKey}, Shade: ${item.shade}, FGSHADE_KEY: ${fgshadeKey}`);
+
+      return {
         DBFLAG: 'I',
-        ORDBKSTYSZ_ID: sizeItem.STYSIZE_ID || (tempId * 100 + sizeIndex),
-        ORDBK_KEY: correctOrdbkKey,
         ORDBKSTY_ID: tempId,
-        STYSIZE_ID: sizeItem.STYSIZE_ID || 0,
-        STYSIZE_NAME: sizeItem.STYSIZE_NAME || "",
-        QTY: parseFloat(sizeItem.QTY) || 0,
+        ORDBK_KEY: correctOrdbkKey,
+        FGPRD_KEY: fgprdKey,
+        FGSTYLE_ID: fgstyleId,
+        FGSTYLE_CODE: item.style || '',
+        FGTYPE_KEY: fgtypeKey,
+        FGSHADE_KEY: fgshadeKey,
+        FGPTN_KEY: fgptnKey,
+        FGITEM_KEY: item.barcode || "",
+        QTY: parseFloat(item.qty) || 0,
+        STYCATRT_ID: 0,
+        FGITM_KEY: item.FGITM_KEY || "",
+        RATE: parseFloat(item.rate) || 0,
+        AMT: parseFloat(item.amount) || 0,
+        DLV_VAR_PERCENT: parseFloat(item.varPer) || 0,
+        DLV_VAR_QTY: 0,
+        OPEN_RATE: "",
+        TERM_KEY: "",
+        TERM_NAME: "",
+        TERM_PERCENT: 0,
+        TERM_FIX_AMT: 0,
+        TERM_RATE: 0,
+        TERM_PERQTY: 0,
+        DISC_AMT: parseFloat(item.discAmt) || 0,
+        NET_AMT: parseFloat(item.netAmt) || 0,
         INIT_DT: "1900-01-01 00:00:00.000",
         INIT_REMK: "",
         INIT_QTY: 0,
-        BAL_QTY: parseFloat(sizeItem.QTY) || 0,
-        MRP: parseFloat(item.mrp) || 0,
-        WSP: parseFloat(item.rate) || 0,
+        DLV_DT: "1900-01-01 00:00:00.000",
+        BAL_QTY: parseFloat(item.qty) || 0,
+        STATUS: "1",
+        STYLE_PRN: "",
+        TYPE_PRN: "",
+        MRP_PRN: parseFloat(item.mrp) || 0,
+        REMK: item.remark || "",
+        QUOTEDTL_ID: 0,
+        SETQTY: parseFloat(item.sets) || 0,
         RQTY: 0,
-        WOBALQTY: parseFloat(sizeItem.QTY) || 0,
-        REFORDBKSTYSZ_ID: 0,
+        DISTBTR_KEY: "",
+        LOTNO: formData.CURR_SEASON_KEY || "",
+        WOBALQTY: parseFloat(item.qty) || 0,
+        REFORDBKSTY_ID: 0,
+        BOMSTY_ID: 0,
+        ISRMREQ: "N",
         OP_QTY: 0,
-        HSNCODE_KEY: "IG001",
-        GST_RATE_SLAB_ID: 39,
-        ITM_AMT: parseFloat(sizeItem.ITM_AMT) || 0,
-        DISC_AMT: 0,
-        NET_AMT: parseFloat(sizeItem.ITM_AMT) || 0,
-        SGST_AMT: 0,
-        CGST_AMT: 0,
-        IGST_AMT: 0,
-        NET_SALE_RATE: 0,
-        OTHER_AMT: 0,
-        ADD_CESS_RATE: 0,
-        ADD_CESS_AMT: 0
-      }))
+        ORDBKSTYSZLIST: (item.sizeDetails || []).map((sizeItem, sizeIndex) => ({
+          DBFLAG: 'I',
+          ORDBKSTYSZ_ID: sizeItem.STYSIZE_ID || (tempId * 100 + sizeIndex),
+          ORDBK_KEY: correctOrdbkKey,
+          ORDBKSTY_ID: tempId,
+          STYSIZE_ID: sizeItem.STYSIZE_ID || 0,
+          STYSIZE_NAME: sizeItem.STYSIZE_NAME || "",
+          QTY: parseFloat(sizeItem.QTY) || 0,
+          INIT_DT: "1900-01-01 00:00:00.000",
+          INIT_REMK: "",
+          INIT_QTY: 0,
+          BAL_QTY: parseFloat(sizeItem.QTY) || 0,
+          MRP: parseFloat(item.mrp) || 0,
+          WSP: parseFloat(item.rate) || 0,
+          RQTY: 0,
+          WOBALQTY: parseFloat(sizeItem.QTY) || 0,
+          REFORDBKSTYSZ_ID: 0,
+          OP_QTY: 0,
+          HSNCODE_KEY: "IG001",
+          GST_RATE_SLAB_ID: 39,
+          ITM_AMT: parseFloat(sizeItem.ITM_AMT) || 0,
+          DISC_AMT: 0,
+          NET_AMT: parseFloat(sizeItem.ITM_AMT) || 0,
+          SGST_AMT: 0,
+          CGST_AMT: 0,
+          IGST_AMT: 0,
+          NET_SALE_RATE: 0,
+          OTHER_AMT: 0,
+          ADD_CESS_RATE: 0,
+          ADD_CESS_AMT: 0
+        }))
+      };
+    });
+
+    // Calculate totals
+    const totalQty = tableData.reduce((sum, item) => sum + (item.qty || 0), 0);
+    const totalAmount = tableData.reduce((sum, item) => sum + (item.amount || 0), 0);
+    const totalDiscount = tableData.reduce((sum, item) => sum + (item.discAmt || 0), 0);
+    const netAmount = totalAmount - totalDiscount;
+
+    // Base payload with dynamic company IDs
+    const basePayload = {
+      DBFLAG: dbFlag,
+      FCYR_KEY: "25",
+      CO_ID: companyConfig.CO_ID,
+      COBR_ID: companyConfig.COBR_ID, 
+      ORDBK_NO: formData.ORDER_NO || "",
+      CURR_SEASON_KEY: formData.CURR_SEASON_KEY || "",
+      ORDBK_X: "",
+      ORDBK_TNA_TYPE: "I",
+      MERCHANDISER_ID: parseInt(formData.MERCHANDISER_ID) || 1,
+      ORD_EVENT_KEY: "",
+      ORG_DLV_DT: formatDateForAPI(formData.ORG_DLV_DT) || "1900-01-01T00:00:00",
+      PLANNING: "0",
+      STATUS: getStatusValue(formData.Status),
+      ORDBK_KEY: correctOrdbkKey,
+      ORDBK_DT: formatDateForAPI(formData.ORDER_DATE) || currentDate,
+      PORD_REF: formData.PARTY_ORD_NO || "",
+      PORD_DT: formatDateForAPI(formData.ORD_REF_DT) || "1900-01-01T00:00:00",
+      QUOTE_NO: formData.QUOTE_NO || "",
+      QUOTE_DT: formatDateForAPI(formData.ORDER_DATE) || currentDate,
+      PARTY_KEY: formData.PARTY_KEY || "",
+      PARTYDTL_ID: parseInt(formData.PARTYDTL_ID) || 0,
+      BROKER_KEY: formData.BROKER_KEY || "",
+      BROKER1_KEY: "",
+      BROKER_COMM: 0.00,
+      COMMON_DLV_DT_FLG: "0",
+      STK_FLG: formData.RACK_MIN || "0",
+      DLV_DT: formatDateForAPI(formData.DLV_DT) || "1900-01-01T00:00:00",
+      DLV_PLACE: formData.SHIPPING_PLACE || "",
+      TRSP_KEY: "",
+      ORDBK_AMT: parseFloat(totalAmount) || 0,
+      REMK: formData.REMARK_STATUS || "",
+      CURRN_KEY: "",
+      EX_RATE: 0,
+      IMP_ORDBK_KEY: "",
+      ORDBK_TYPE: formData.ORDBK_TYPE || "2",
+      ROUND_OFF_DESC: "",
+      ROUND_OFF: 0.00,
+      BOMSTY_ID: 0,
+      LOTWISE: formData.MAIN_DETAILS === "L" ? "Y" : "N",
+      IsWO: "0",
+      SuplKey: "",
+      KNIT_DT: "1900-01-01 00:00:00.000",
+      OrdBk_CoBr_Id: companyConfig.COBR_ID,
+      GR_AMT: parseFloat(totalAmount) || 0,
+      GST_APP: formData.GST_APPL || "N",
+      GST_TYPE: formData.GST_TYPE === "STATE" ? "S" : "I",
+      SHP_PARTY_KEY: formData.SHP_PARTY_KEY || formData.PARTY_KEY,
+      SHP_PARTYDTL_ID: parseInt(formData.SHP_PARTYDTL_ID) || parseInt(formData.PARTYDTL_ID) || 0,
+      STATE_CODE: "",
+      ORDBK_ITM_AMT: parseFloat(totalAmount) || 0,
+      ORDBK_SGST_AMT: 0,
+      ORDBK_CGST_AMT: 0,
+      ORDBK_IGST_AMT: 0,
+      ORDBK_ADD_CESS_AMT: 0,
+      ORDBK_GST_AMT: 0,
+      ORDBK_EXTRA_AMT: 0,
+      ORDBKSTYLIST: transformedOrdbkStyleList,
+      ORDBKTERMLIST: [],
+      ORDBKGSTLIST: [],
+      DISTBTR_KEY: "",
+      SALEPERSON1_KEY: formData.SALEPERSON1_KEY || "",
+      SALEPERSON2_KEY: formData.SALEPERSON2_KEY || "",
+      TRSP_KEY: "",
+      PRICELIST_KEY: "",
+      DESP_PORT: "",
+      CREATED_BY: parseInt(userId) || 1,
+      CREATED_DT: currentDate
     };
-  });
 
-  // Calculate totals
-  const totalQty = tableData.reduce((sum, item) => sum + (item.qty || 0), 0);
-  const totalAmount = tableData.reduce((sum, item) => sum + (item.amount || 0), 0);
-  const totalDiscount = tableData.reduce((sum, item) => sum + (item.discAmt || 0), 0);
-  const netAmount = totalAmount - totalDiscount;
-
-  // Base payload with dynamic company IDs
-  const basePayload = {
-    DBFLAG: dbFlag,
-    FCYR_KEY: "25",
-    CO_ID: companyConfig.CO_ID,
-    COBR_ID: companyConfig.COBR_ID, 
-    ORDBK_NO: formData.ORDER_NO || "",
-    CURR_SEASON_KEY: formData.CURR_SEASON_KEY || "",
-    ORDBK_X: "",
-    ORDBK_TNA_TYPE: "I",
-    MERCHANDISER_ID: parseInt(formData.MERCHANDISER_ID) || 1,
-    ORD_EVENT_KEY: "",
-    ORG_DLV_DT: formatDateForAPI(formData.ORG_DLV_DT) || "1900-01-01T00:00:00",
-    PLANNING: "0",
-    STATUS: getStatusValue(formData.Status),
-    ORDBK_KEY: correctOrdbkKey,
-    ORDBK_DT: formatDateForAPI(formData.ORDER_DATE) || currentDate,
-    PORD_REF: formData.PARTY_ORD_NO || "",
-    PORD_DT: formatDateForAPI(formData.ORD_REF_DT) || "1900-01-01T00:00:00",
-    QUOTE_NO: formData.QUOTE_NO || "",
-    QUOTE_DT: formatDateForAPI(formData.ORDER_DATE) || currentDate,
-    PARTY_KEY: formData.PARTY_KEY || "",
-    PARTYDTL_ID: parseInt(formData.PARTYDTL_ID) || 0,
-    BROKER_KEY: formData.BROKER_KEY || "",
-    BROKER1_KEY: "",
-    BROKER_COMM: 0.00,
-    COMMON_DLV_DT_FLG: "0",
-    STK_FLG: formData.RACK_MIN || "0",
-    DLV_DT: formatDateForAPI(formData.DLV_DT) || "1900-01-01T00:00:00",
-    DLV_PLACE: formData.SHIPPING_PLACE || "",
-    TRSP_KEY: "",
-    ORDBK_AMT: parseFloat(totalAmount) || 0,
-    REMK: formData.REMARK_STATUS || "",
-    CURRN_KEY: "",
-    EX_RATE: 0,
-    IMP_ORDBK_KEY: "",
-    ORDBK_TYPE: formData.ORDBK_TYPE || "2",
-    ROUND_OFF_DESC: "",
-    ROUND_OFF: 0.00,
-    BOMSTY_ID: 0,
-    LOTWISE: formData.MAIN_DETAILS === "L" ? "Y" : "N",
-    IsWO: "0",
-    SuplKey: "",
-    KNIT_DT: "1900-01-01 00:00:00.000",
-    OrdBk_CoBr_Id: companyConfig.COBR_ID, // Dynamic COBR_ID
-    GR_AMT: parseFloat(totalAmount) || 0,
-    GST_APP: formData.GST_APPL || "N",
-    GST_TYPE: formData.GST_TYPE === "STATE" ? "S" : "I",
-    SHP_PARTY_KEY: formData.SHP_PARTY_KEY || formData.PARTY_KEY,
-    SHP_PARTYDTL_ID: parseInt(formData.SHP_PARTYDTL_ID) || parseInt(formData.PARTYDTL_ID) || 0,
-    STATE_CODE: "",
-    ORDBK_ITM_AMT: parseFloat(totalAmount) || 0,
-    ORDBK_SGST_AMT: 0,
-    ORDBK_CGST_AMT: 0,
-    ORDBK_IGST_AMT: 0,
-    ORDBK_ADD_CESS_AMT: 0,
-    ORDBK_GST_AMT: 0,
-    ORDBK_EXTRA_AMT: 0,
-    ORDBKSTYLIST: transformedOrdbkStyleList,
-    ORDBKTERMLIST: [],
-    ORDBKGSTLIST: [],
-    DISTBTR_KEY: "",
-    SALEPERSON1_KEY: formData.SALEPERSON1_KEY || "",
-    SALEPERSON2_KEY: formData.SALEPERSON2_KEY || "",
-    TRSP_KEY: "",
-    PRICELIST_KEY: "",
-    DESP_PORT: "",
-    CREATED_BY: parseInt(userId) || 1,
-    CREATED_DT: currentDate
+    console.log('Submit Payload:', JSON.stringify(basePayload, null, 2));
+    return basePayload;
   };
-
-  console.log('Submit Payload:', JSON.stringify(basePayload, null, 2));
-  return basePayload;
-};
 
   // Helper function to format date for API
   const formatDateForAPI = (dateString) => {
@@ -3233,7 +3327,7 @@ const prepareSubmitPayload = () => {
       const strCobrid = companyConfig.COBR_ID;
       
       console.log('Submitting order with payload:', payload);
-       console.log('strCobrid:', strCobrid);
+      console.log('strCobrid:', strCobrid);
       
       const response = await axiosInstance.post(
         `/ORDBK/ApiMangeOrdbk?UserName=${userName}&strCobrid=${strCobrid}`, 
@@ -3313,13 +3407,15 @@ const prepareSubmitPayload = () => {
         setCurrentStyleData(null);
         setSizeDetailsData([]);
         setAvailableSizes([]);
-        setFillByRatioMode(false);
+        setAvailableShades([]);
+        setSelectedShades([]);
+        setFillByRatioMode(true); // Keep enabled
+        setFillByShadeMode(true); // Keep enabled
         setRatioData({
           totalQty: '',
           ratios: {}
         });
         
-        // Generate new order number
         await generateOrderNumber();
         
       } else {
@@ -3437,7 +3533,6 @@ const prepareSubmitPayload = () => {
             width: '30px',
             height: '30px',
             cursor: 'pointer',
-            
           }}
         />
         
@@ -4092,7 +4187,7 @@ const prepareSubmitPayload = () => {
         </Card>
       )}
 
-      {/* Fill by Ratio Section */}
+      {/* Fill by Ratio Section - MODIFIED for shade selection */}
       {availableSizes.length > 0 && (
         <Card elevation={0.5} sx={{ mb: 0 }}>
           <CardContent>
@@ -4100,28 +4195,127 @@ const prepareSubmitPayload = () => {
               display: 'flex', 
               alignItems: 'center', 
               justifyContent: 'space-between',
-              mb: 0.1 
+              mb: 0.1,
+              flexWrap: 'wrap'
             }}>
               <Typography variant="h6" sx={{ fontSize: '1.1rem' }}>
                 Fill By Ratio
               </Typography>
               
-              <FormGroup>
-                <FormControlLabel
-                  control={
-                    <Checkbox
-                      checked={fillByRatioMode}
-                      onChange={(e) => setFillByRatioMode(e.target.checked)}
-                      size="small"
-                    />
-                  }
-                  label="Enable Ratio Fill"
-                />
-              </FormGroup>
+              <Box sx={{ display: 'flex', gap: 2 }}>
+                <FormGroup>
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        checked={fillByRatioMode}
+                        onChange={(e) => setFillByRatioMode(e.target.checked)}
+                        size="small"
+                        defaultChecked
+                      />
+                    }
+                    label="Ratio Fill"
+                  />
+                </FormGroup>
+                
+                <FormGroup>
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        checked={fillByShadeMode}
+                        onChange={(e) => setFillByShadeMode(e.target.checked)}
+                        size="small"
+                        defaultChecked
+                      />
+                    }
+                    label="By Shade"
+                  />
+                </FormGroup>
+              </Box>
             </Box>
             
             {fillByRatioMode && (
               <Box>
+                {/* Shade Selection for Fill by Shade Mode */}
+                {fillByShadeMode && availableShades.length > 0 && (
+                  <Box sx={{ mb: 2 }}>
+                    <Box sx={{ 
+                      display: 'flex', 
+                      flexDirection: { xs: 'column', sm: 'row' },
+                      alignItems: { xs: 'stretch', sm: 'center' },
+                      gap: 1,
+                      mb: 1
+                    }}>
+                      <Box sx={{ 
+                        display: 'flex', 
+                        gap: 1,
+                        alignItems: 'center'
+                      }}>
+                        <Button
+                          variant={shadeViewMode === 'all' ? 'contained' : 'outlined'}
+                          onClick={handleAllShadesClick}
+                          size="small"
+                          sx={{ 
+                            minWidth: '60px',
+                            backgroundColor: shadeViewMode === 'all' ? '#1976d2' : 'transparent',
+                            color: shadeViewMode === 'all' ? 'white' : '#1976d2',
+                            borderColor: '#1976d2',
+                            '&:hover': {
+                              backgroundColor: shadeViewMode === 'all' ? '#1565c0' : 'rgba(25, 118, 210, 0.04)'
+                            }
+                          }}
+                        >
+                          All
+                        </Button>
+                        <Button
+                          variant={shadeViewMode === 'allocated' ? 'contained' : 'outlined'}
+                          onClick={handleAllocatedShadesClick}
+                          size="small"
+                          sx={{ 
+                            minWidth: '80px',
+                            backgroundColor: shadeViewMode === 'allocated' ? '#1976d2' : 'transparent',
+                            color: shadeViewMode === 'allocated' ? 'white' : '#1976d2',
+                            borderColor: '#1976d2',
+                            '&:hover': {
+                              backgroundColor: shadeViewMode === 'allocated' ? '#1565c0' : 'rgba(25, 118, 210, 0.04)'
+                            }
+                          }}
+                        >
+                          Allocated
+                        </Button>
+                      </Box>
+                      
+                      <FormControl sx={{ 
+                        flex: 1,
+                        minWidth: { xs: '100%', sm: '200px' }
+                      }}>
+                        <InputLabel id="shade-select-label">Select Shades</InputLabel>
+                        <Select
+                          labelId="shade-select-label"
+                          id="shade-select"
+                          multiple
+                          value={selectedShades}
+                          onChange={handleShadeSelectionChange}
+                          input={<OutlinedInput label="Select Shades" />}
+                          renderValue={(selected) => (
+                            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                              {selected.map((value) => (
+                                <Chip key={value} label={value} size="small" />
+                              ))}
+                            </Box>
+                          )}
+                          size="small"
+                        >
+                          {availableShades.map((shade) => (
+                            <MenuItem key={shade.FGSHADE_NAME} value={shade.FGSHADE_NAME}>
+                              {shade.FGSHADE_NAME}
+                            </MenuItem>
+                          ))}
+                        </Select>
+                      </FormControl>
+                    </Box>
+                  </Box>
+                )}
+                
                 {/* Total Quantity Input */}
                 <Box sx={{ mb: 2 }}>
                   <TextField
@@ -4142,78 +4336,76 @@ const prepareSubmitPayload = () => {
                   />
                 </Box>
                 
-               {/* Horizontal Ratio Table */}
-<Typography variant="subtitle1" sx={{ mb: 1, fontWeight: '600' }}>
-  Enter Ratios for Each Size:
-</Typography>
+                {/* Horizontal Ratio Table */}
+                <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: '600' }}>
+                  Enter Ratios for Each Size:
+                </Typography>
 
-<Box sx={{ 
-  overflowX: 'auto',
-  backgroundColor: '#f8f9fa',
-  borderRadius: 1,
-  p: 1,
-  mb: 0.7
-}}>
-  <table style={{ 
-    width: '100%', 
-    borderCollapse: 'collapse',
-    minWidth: `${availableSizes.length * 50}px`
-  }}>
-    <thead>
-      <tr style={{ backgroundColor: '#e9ecef' }}>
-        {/* Size Headers */}
-        {availableSizes.map((size) => (
-          <th key={`th-${size.STYSIZE_ID}`} style={{ 
-            padding: '10px',
-            border: '1px solid #dee2e6', 
-            textAlign: 'center',
-            fontSize: '14px',
-            fontWeight: '600',
-            minWidth: '40px'
-          }}>
-            {size.STYSIZE_NAME}
-          </th>
-        ))}
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        {/* Ratio Inputs */}
-        {availableSizes.map((size, index) => (
-          <td key={`td-${size.STYSIZE_ID}`} style={{ 
-            padding: '2px', 
-            border: '1px solid #dee2e6',
-            textAlign: 'center',
-            backgroundColor: '#fff'
-          }}>
-            <TextField
-              type="number"
-              value={ratioData.ratios[size.STYSIZE_NAME] || ''}
-              onChange={(e) => handleRatioChange(size.STYSIZE_NAME, e.target.value)}
-              size="small"
-              sx={{
-                width: '50px',
-                '& .MuiInputBase-root': {
-                  height: '26px',
-                  fontSize: '14px'
-                },
-                '& input': {
-                  padding: '8px',
-                  textAlign: 'center'
-                }
-              }}
-              inputProps={{ 
-                min: 0, 
-                step: 0.1,
-                style: { textAlign: 'center' }
-              }}
-            />
-          </td>
-        ))}
-      </tr>
-    </tbody>
-  </table>
-</Box>
+                <Box sx={{ 
+                  overflowX: 'auto',
+                  backgroundColor: '#f8f9fa',
+                  borderRadius: 1,
+                  p: 1,
+                  mb: 0.7
+                }}>
+                  <table style={{ 
+                    width: '100%', 
+                    borderCollapse: 'collapse',
+                    minWidth: `${availableSizes.length * 50}px`
+                  }}>
+                    <thead>
+                      <tr style={{ backgroundColor: '#e9ecef' }}>
+                        {availableSizes.map((size) => (
+                          <th key={`th-${size.STYSIZE_ID}`} style={{ 
+                            padding: '10px',
+                            border: '1px solid #dee2e6', 
+                            textAlign: 'center',
+                            fontSize: '14px',
+                            fontWeight: '600',
+                            minWidth: '40px'
+                          }}>
+                            {size.STYSIZE_NAME}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        {availableSizes.map((size, index) => (
+                          <td key={`td-${size.STYSIZE_ID}`} style={{ 
+                            padding: '2px', 
+                            border: '1px solid #dee2e6',
+                            textAlign: 'center',
+                            backgroundColor: '#fff'
+                          }}>
+                            <TextField
+                              type="number"
+                              value={ratioData.ratios[size.STYSIZE_NAME] || ''}
+                              onChange={(e) => handleRatioChange(size.STYSIZE_NAME, e.target.value)}
+                              size="small"
+                              sx={{
+                                width: '50px',
+                                '& .MuiInputBase-root': {
+                                  height: '26px',
+                                  fontSize: '14px'
+                                },
+                                '& input': {
+                                  padding: '8px',
+                                  textAlign: 'center'
+                                }
+                              }}
+                              inputProps={{ 
+                                min: 0, 
+                                step: 0.1,
+                                style: { textAlign: 'center' }
+                              }}
+                            />
+                          </td>
+                        ))}
+                      </tr>
+                    </tbody>
+                  </table>
+                </Box>
                 
                 {/* Fill Qty Button */}
                 <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
@@ -4373,6 +4565,11 @@ const prepareSubmitPayload = () => {
                 <Typography variant="body2" sx={{ color: 'text.secondary' }}>
                   Amount: ₹{calculateAmount().amount.toFixed(2)}
                 </Typography>
+                {fillByShadeMode && selectedShades.length > 1 && (
+                  <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                    Selected Shades: {selectedShades.length} (Total will be divided equally)
+                  </Typography>
+                )}
               </Box>
               
               <Button
@@ -4653,25 +4850,6 @@ const prepareSubmitPayload = () => {
                 </>
               )}
             </Box>
-
-            {/* Modal Footer */}
-            {/* <Box sx={{ 
-              p: 2, 
-              borderTop: '1px solid #e0e0e0',
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center'
-            }}>
-              <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                {tableData.length} item{tableData.length !== 1 ? 's' : ''} in order
-              </Typography>
-              <Button 
-                variant="outlined" 
-                onClick={() => setShowOrderModal(false)}
-              >
-                Close
-              </Button>
-            </Box> */}
           </Box>
         </Fade>
       </Modal>
