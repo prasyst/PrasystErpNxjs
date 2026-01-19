@@ -20,7 +20,12 @@ import {
   Snackbar,
   FormControlLabel,
   Checkbox,
-  Alert
+  Alert, FormControl,
+  Select,
+  MenuItem,
+  InputLabel,
+  OutlinedInput,
+  Chip,
 } from '@mui/material';
 import AutoVibe from '../../../../GlobalFunction/CustomAutoComplete/AutoVibe';
 import axiosInstance from '../../../../lib/axios';
@@ -36,7 +41,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 
 const FORM_MODE = getFormMode();
 
-const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCancel, onNext,onPrev, showSnackbar, showValidationErrors }) => {
+const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit,companyConfig, onCancel, onNext,onPrev, showSnackbar, showValidationErrors }) => {
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [selectedStyle, setSelectedStyle] = useState(null);
   const [selectedRow, setSelectedRow] = useState(null);
@@ -52,6 +57,10 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
   const [typeOptions, setTypeOptions] = useState([]);
   const [shadeOptions, setShadeOptions] = useState([]);
   const [lotNoOptions, setLotNoOptions] = useState([]);
+
+  const [availableShades, setAvailableShades] = useState([]);
+const [selectedShades, setSelectedShades] = useState([]);
+const [shadeViewMode, setShadeViewMode] = useState('allocated');
   
   // State for storing mappings
   const [productMapping, setProductMapping] = useState({});
@@ -441,127 +450,242 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
     }
   };
 
-  // Fetch style data by style code
-  const fetchStyleDataByCode = async (styleCode) => {
-    if (!styleCode) return;
+ // Fetch style data by style code
+const fetchStyleDataByCode = async (styleCode) => {
+  if (!styleCode) return;
 
-    try {
-      setIsLoadingStyleCode(true);
-      setDataSource('styleCode');
+  try {
+    setIsLoadingStyleCode(true);
+    setDataSource('styleCode');
+    
+    const payload = {
+      "FGSTYLE_ID": "",
+      "FGPRD_KEY": "",
+      "FGSTYLE_CODE": styleCode,
+      "FLAG": ""
+    };
+
+    const response = await axiosInstance.post('/FGSTYLE/GetFgstyleDrp', payload);
+
+    if (response.data.DATA && response.data.DATA.length > 0) {
+      const styleData = response.data.DATA[0];
       
-      const payload = {
-        "FGSTYLE_ID": "",
-        "FGPRD_KEY": "",
-        "FGSTYLE_CODE": styleCode,
-        "FLAG": ""
-      };
-
-      const response = await axiosInstance.post('/FGSTYLE/GetFgstyleDrp', payload);
-
-      if (response.data.DATA && response.data.DATA.length > 0) {
-        const styleData = response.data.DATA[0];
-        
-        if (isAddingNew || isEditingSize) {
-          setNewItemData(prev => ({
-            ...prev,
-            product: styleData.FGPRD_NAME || '',
-            style: styleData.FGSTYLE_CODE || styleData.FGSTYLE_NAME || '',
-            type: styleData.FGTYPE_NAME || '',
-            mrp: styleData.MRP ? styleData.MRP.toString() : '',
-            rate: styleData.SSP ? styleData.SSP.toString() : ''
-          }));
-          
-          if (styleData.FGPRD_NAME && styleData.FGPRD_KEY) {
-            setProductMapping(prev => ({
-              ...prev,
-              [styleData.FGPRD_NAME]: styleData.FGPRD_KEY
-            }));
-          }
-          
-          if ((styleData.FGSTYLE_CODE || styleData.FGSTYLE_NAME) && styleData.FGSTYLE_ID) {
-            setStyleMapping(prev => ({
-              ...prev,
-              [styleData.FGSTYLE_CODE || styleData.FGSTYLE_NAME]: styleData.FGSTYLE_ID
-            }));
-          }
-          
-          if (styleData.FGSTYLE_ID) {
-            await fetchTypeData(styleData.FGSTYLE_ID);
-            await fetchShadeData(styleData.FGSTYLE_ID);
-            await fetchLotNoData(styleData.FGSTYLE_ID);
-          }
-        }
+      // Fetch shades for this style
+      if (styleData.FGSTYLE_ID) {
+        await fetchShadesForStyle(styleData.FGSTYLE_ID, shadeViewMode);
       }
-    } catch (error) {
-      console.error('Error fetching style data by code:', error);
-    } finally {
-      setIsLoadingStyleCode(false);
+      
+      if (isAddingNew || isEditingSize) {
+        setNewItemData(prev => ({
+          ...prev,
+          product: styleData.FGPRD_NAME || '',
+          style: styleData.FGSTYLE_CODE || styleData.FGSTYLE_NAME || '',
+          type: styleData.FGTYPE_NAME || '',
+          mrp: styleData.MRP ? styleData.MRP.toString() : '',
+          rate: styleData.SSP ? styleData.SSP.toString() : '',
+          // Set shade to first selected shade
+          shade: selectedShades.length > 0 ? selectedShades[0] : ''
+        }));
+        
+        if (styleData.FGPRD_NAME && styleData.FGPRD_KEY) {
+          setProductMapping(prev => ({
+            ...prev,
+            [styleData.FGPRD_NAME]: styleData.FGPRD_KEY
+          }));
+        }
+        
+        if ((styleData.FGSTYLE_CODE || styleData.FGSTYLE_NAME) && styleData.FGSTYLE_ID) {
+          setStyleMapping(prev => ({
+            ...prev,
+            [styleData.FGSTYLE_CODE || styleData.FGSTYLE_NAME]: styleData.FGSTYLE_ID
+          }));
+        }
+        
+        if (styleData.FGSTYLE_ID) {
+          await fetchTypeData(styleData.FGSTYLE_ID);
+          await fetchLotNoData(styleData.FGSTYLE_ID);
+        }
+        
+        // Fetch size details automatically
+        await fetchSizeDetailsForStyle(styleData);
+      }
     }
-  };
+  } catch (error) {
+    console.error('Error fetching style data by code:', error);
+  } finally {
+    setIsLoadingStyleCode(false);
+  }
+};
+
+const fetchShadesForStyle = async (fgstyleId, mode = 'allocated') => {
+  try {
+    const payload = {
+      "FGSTYLE_ID": mode === 'allocated' ? fgstyleId.toString() : "",
+      "FLAG": ""
+    };
+
+    const response = await axiosInstance.post('/Fgshade/GetFgshadedrp', payload);
+    console.log('Shades API Response:', response.data);
+    
+    if (response.data.DATA && Array.isArray(response.data.DATA)) {
+      const shades = response.data.DATA.map(item => ({
+        FGSHADE_NAME: item.FGSHADE_NAME || '',
+        FGSHADE_KEY: item.FGSHADE_KEY || '',
+        FGSTYLE_ID: item.FGSTYLE_ID || fgstyleId
+      }));
+      
+      // Build shade mapping
+      const shadeMap = {};
+      response.data.DATA.forEach(item => {
+        if (item.FGSHADE_NAME && item.FGSHADE_KEY) {
+          shadeMap[item.FGSHADE_NAME] = item.FGSHADE_KEY;
+        }
+      });
+      setShadeMapping(shadeMap);
+      
+      setAvailableShades(shades);
+      
+      // If in allocated mode, auto-select the first shade
+      if (mode === 'allocated' && shades.length > 0) {
+        const firstShade = shades[0].FGSHADE_NAME;
+        setSelectedShades([firstShade]);
+        
+        // Also update the newItemData shade field
+        setNewItemData(prev => ({
+          ...prev,
+          shade: firstShade
+        }));
+      } else if (mode === 'all') {
+        // For all mode, don't auto-select any shade
+        setSelectedShades([]);
+      }
+      
+      return shades;
+    } else {
+      console.warn('No shades data received');
+      setAvailableShades([]);
+      setSelectedShades([]);
+      return [];
+    }
+  } catch (error) {
+    console.error('Error fetching shades:', error);
+    showSnackbar('Error fetching shades', 'error');
+    setAvailableShades([]);
+    setSelectedShades([]);
+    return [];
+  }
+};
+
+// NEW: Handle shade selection change
+const handleShadeSelectionChange = (event) => {
+  const {
+    target: { value },
+  } = event;
+  
+  setSelectedShades(
+    typeof value === 'string' ? value.split(',') : value,
+  );
+  
+  // Update newItemData shade field with first selected shade
+  if (value && value.length > 0) {
+    const firstShade = typeof value === 'string' ? value.split(',')[0] : value[0];
+    setNewItemData(prev => ({
+      ...prev,
+      shade: firstShade
+    }));
+  }
+};
+
+// NEW: Handle All button click
+const handleAllShadesClick = async () => {
+  const currentStyleId = styleMapping[newItemData.style] || styleMapping[selectedStyle];
+  if (!currentStyleId) {
+      showSnackbar('Please select a style first', 'warning');
+    return;
+  }
+  setShadeViewMode('all');
+  await fetchShadesForStyle(currentStyleId, 'all');
+};
+
+// NEW: Handle Allocated button click
+const handleAllocatedShadesClick = async () => {
+  const currentStyleId = styleMapping[newItemData.style] || styleMapping[selectedStyle];
+  if (!currentStyleId) {
+      showSnackbar('Please select a style first', 'warning');
+    return;
+  }
+  setShadeViewMode('allocated');
+  await fetchShadesForStyle(currentStyleId, 'allocated');
+};
 
   // Fetch style data by barcode
-  const fetchStyleDataByBarcode = async (barcode) => {
-    if (!barcode) return;
+const fetchStyleDataByBarcode = async (barcode) => {
+  if (!barcode) return;
 
-    try {
-      setIsLoadingBarcode(true);
-      setDataSource('barcode');
+  try {
+    setIsLoadingBarcode(true);
+    setDataSource('barcode');
+    
+    const payload = {
+      "FGSTYLE_ID": "",
+      "FGPRD_KEY": "",
+      "FGSTYLE_CODE": "",
+      "ALT_BARCODE": barcode,
+      "FLAG": ""
+    };
+
+    const response = await axiosInstance.post('/FGSTYLE/GetFgstyleDrp', payload);
+
+    if (response.data.DATA && response.data.DATA.length > 0) {
+      const styleData = response.data.DATA[0];
+      const barcodeValue = styleData.ALT_BARCODE || styleData.STYSTKDTL_KEY || '';
       
-      const payload = {
-        "FGSTYLE_ID": "",
-        "FGPRD_KEY": "",
-        "FGSTYLE_CODE": "",
-        "ALT_BARCODE": barcode,
-        "FLAG": ""
-      };
-
-      const response = await axiosInstance.post('/FGSTYLE/GetFgstyleDrp', payload);
-
-      if (response.data.DATA && response.data.DATA.length > 0) {
-        const styleData = response.data.DATA[0];
-        const barcodeValue = styleData.ALT_BARCODE || styleData.STYSTKDTL_KEY || '';
-        
-        if (isAddingNew || isEditingSize) {
-          setNewItemData(prev => ({
-            ...prev,
-            product: styleData.FGPRD_NAME || '',
-            style: styleData.FGSTYLE_CODE || styleData.FGSTYLE_NAME || '',
-            type: styleData.FGTYPE_NAME || '',
-            mrp: styleData.MRP ? styleData.MRP.toString() : '',
-            rate: styleData.SSP ? styleData.SSP.toString() : '',
-            barcode: barcodeValue
-          }));
-          
-          if (styleData.FGPRD_NAME && styleData.FGPRD_KEY) {
-            setProductMapping(prev => ({
-              ...prev,
-              [styleData.FGPRD_NAME]: styleData.FGPRD_KEY
-            }));
-          }
-          
-          if ((styleData.FGSTYLE_CODE || styleData.FGSTYLE_NAME) && styleData.FGSTYLE_ID) {
-            setStyleMapping(prev => ({
-              ...prev,
-              [styleData.FGSTYLE_CODE || styleData.FGSTYLE_NAME]: styleData.FGSTYLE_ID
-            }));
-          }
-          
-          if (styleData.FGSTYLE_ID) {
-            await fetchTypeData(styleData.FGSTYLE_ID);
-            await fetchShadeData(styleData.FGSTYLE_ID);
-            await fetchLotNoData(styleData.FGSTYLE_ID);
-          }
-          
-          await fetchSizeDetailsForStyle(styleData);
-        }
+      // Fetch shades for this style
+      if (styleData.FGSTYLE_ID) {
+        await fetchShadesForStyle(styleData.FGSTYLE_ID, shadeViewMode);
       }
-    } catch (error) {
-      console.error('Error fetching style data by barcode:', error);
-    } finally {
-      setIsLoadingBarcode(false);
+      
+      if (isAddingNew || isEditingSize) {
+        setNewItemData(prev => ({
+          ...prev,
+          product: styleData.FGPRD_NAME || '',
+          style: styleData.FGSTYLE_CODE || styleData.FGSTYLE_NAME || '',
+          type: styleData.FGTYPE_NAME || '',
+          mrp: styleData.MRP ? styleData.MRP.toString() : '',
+          rate: styleData.SSP ? styleData.SSP.toString() : '',
+          barcode: barcodeValue,
+          // Set shade to first selected shade
+          shade: selectedShades.length > 0 ? selectedShades[0] : ''
+        }));
+        
+        if (styleData.FGPRD_NAME && styleData.FGPRD_KEY) {
+          setProductMapping(prev => ({
+            ...prev,
+            [styleData.FGPRD_NAME]: styleData.FGPRD_KEY
+          }));
+        }
+        
+        if ((styleData.FGSTYLE_CODE || styleData.FGSTYLE_NAME) && styleData.FGSTYLE_ID) {
+          setStyleMapping(prev => ({
+            ...prev,
+            [styleData.FGSTYLE_CODE || styleData.FGSTYLE_NAME]: styleData.FGSTYLE_ID
+          }));
+        }
+        
+        if (styleData.FGSTYLE_ID) {
+          await fetchTypeData(styleData.FGSTYLE_ID);
+          await fetchLotNoData(styleData.FGSTYLE_ID);
+        }
+        
+        await fetchSizeDetailsForStyle(styleData);
+      }
     }
-  };
-
+  } catch (error) {
+    console.error('Error fetching style data by barcode:', error);
+  } finally {
+    setIsLoadingBarcode(false);
+  }
+};
   // Auto-load size details for style data (used ONLY for barcode)
   const fetchSizeDetailsForStyle = async (styleData) => {
     try {
@@ -1025,62 +1149,69 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
     setLotNoOptions([]);
   };
 
-  // Handle Confirm Add - FIXED with proper Type, Shade, Pattern handling
-  const handleConfirmAdd = () => {
-    // Validation
-    if (!newItemData.product || !newItemData.style) {
-      showSnackbar("Please fill required fields: Product and Style", 'error');
-      return;
-    }
+// Handle Confirm Add - MODIFIED for multi-shade
+const handleConfirmAdd = () => {
+  // Validation
+  if (!newItemData.product || !newItemData.style) {
+    showSnackbar("Please fill required fields: Product and Style", 'error');
+    return;
+  }
 
-    if (sizeDetailsData.length === 0) {
-      showSnackbar("Please load size details first", 'error');
-      return;
-    }
+  if (sizeDetailsData.length === 0) {
+    showSnackbar("Please load size details first", 'error');
+    return;
+  }
 
-    // At least one size should have quantity > 0
-    const sizesWithQty = sizeDetailsData.filter(size => size.QTY && size.QTY > 0);
-    if (sizesWithQty.length === 0) {
-      showSnackbar("Please enter quantity for at least one size before confirming", 'error');
-      return;
-    }
+  // At least one size should have quantity > 0
+  const sizesWithQty = sizeDetailsData.filter(size => size.QTY && size.QTY > 0);
+  if (sizesWithQty.length === 0) {
+    showSnackbar("Please enter quantity for at least one size before confirming", 'error');
+    return;
+  }
 
-    const fgprdKey = productMapping[newItemData.product] || productMapping[newItemData.style] || "";
-    const fgstyleId = styleMapping[newItemData.style] || "";
+  const fgprdKey = productMapping[newItemData.product] || productMapping[newItemData.style] || "";
+  const fgstyleId = styleMapping[newItemData.style] || "";
+  
+  const totalQty = sizesWithQty.reduce((sum, size) => sum + (parseFloat(size.QTY) || 0), 0);
+  const mrp = parseFloat(newItemData.mrp) || 0;
+  const rate = parseFloat(newItemData.rate) || 0;
+  const totalAmount = sizesWithQty.reduce((sum, size) => {
+    const sizeQty = parseFloat(size.QTY) || 0;
+    return sum + (sizeQty * rate);
+  }, 0);
+  const discount = parseFloat(newItemData.discount) || 0;
+  const netAmount = totalAmount - discount;
+
+  const tempId = Date.now();
+
+  const updatedSizeDetails = sizeDetailsData.map(size => ({
+    ...size,
+    QTY: parseFloat(size.QTY) || 0,
+    ITM_AMT: (parseFloat(size.QTY) || 0) * rate
+  }));
+
+  // Create items for EACH selected shade with FULL quantity
+  const newItems = selectedShades.map((shade, shadeIndex) => {
+    // Each shade gets full quantity (not divided)
+    const shadeAmount = totalAmount;
+    const shadeQty = totalQty;
+    
+    const fgshadeKey = shadeMapping[shade] || "";
     const fgtypeKey = typeMapping[newItemData.type] || "";
-    const fgshadeKey = shadeMapping[newItemData.shade] || "";
     const fgptnKey = lotNoMapping[newItemData.lotNo] || "";
 
-    const totalQty = sizesWithQty.reduce((sum, size) => sum + (parseFloat(size.QTY) || 0), 0);
-    const mrp = parseFloat(newItemData.mrp) || 0;
-    const rate = parseFloat(newItemData.rate) || 0;
-    const totalAmount = sizesWithQty.reduce((sum, size) => {
-      const sizeQty = parseFloat(size.QTY) || 0;
-      return sum + (sizeQty * rate);
-    }, 0);
-    const discount = parseFloat(newItemData.discount) || 0;
-    const netAmount = totalAmount - discount;
-
-    const tempId = Date.now();
-
-    const updatedSizeDetails = sizeDetailsData.map(size => ({
-      ...size,
-      QTY: parseFloat(size.QTY) || 0,
-      ITM_AMT: (parseFloat(size.QTY) || 0) * rate
-    }));
-
-    const newItem = {
-      id: tempId,
+    return {
+      id: tempId + shadeIndex,
       BarCode: newItemData.barcode || "-",
       product: newItemData.product,
       style: newItemData.style || "-",
       type: newItemData.type || "-",
-      shade: newItemData.shade || "-",
+      shade: shade || "-",
       lotNo: newItemData.lotNo || "-",
-      qty: totalQty,
+      qty: shadeQty,
       mrp: mrp,
       rate: rate,
-      amount: totalAmount,
+      amount: shadeAmount,
       varPer: parseFloat(newItemData.varPer) || 0,
       varQty: 0,
       varAmt: 0,
@@ -1089,17 +1220,17 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
       distributer: "-",
       set: parseFloat(newItemData.sets) || 0,
       originalData: {
-        ORDBKSTY_ID: tempId,
+        ORDBKSTY_ID: tempId + shadeIndex,
         FGITEM_KEY: newItemData.barcode || "-",
         PRODUCT: newItemData.product,
         STYLE: newItemData.style,
         TYPE: newItemData.type || "-",
-        SHADE: newItemData.shade || "-",
+        SHADE: shade || "-",
         PATTERN: newItemData.lotNo || "-",
-        ITMQTY: totalQty,
+        ITMQTY: shadeQty,
         MRP: mrp,
         ITMRATE: rate,
-        ITMAMT: totalAmount,
+        ITMAMT: shadeAmount,
         DLV_VAR_PERC: parseFloat(newItemData.varPer) || 0,
         DLV_VAR_QTY: 0,
         DISC_AMT: discount,
@@ -1113,89 +1244,150 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
         FGPRD_KEY: fgprdKey,
         FGSTYLE_ID: fgstyleId,
         FGTYPE_KEY: fgtypeKey,
-        FGSHADE_KEY: fgshadeKey,
+        FGSHADE_KEY: fgshadeKey, // IMPORTANT: FGSHADE_KEY pass karna
         FGPTN_KEY: fgptnKey,
         DBFLAG: mode === 'add' ? 'I' : 'I'
       },
       FGSTYLE_ID: fgstyleId,
       FGPRD_KEY: fgprdKey,
       FGTYPE_KEY: fgtypeKey,
-      FGSHADE_KEY: fgshadeKey,
+      FGSHADE_KEY: fgshadeKey, // Store shade key
       FGPTN_KEY: fgptnKey
     };
+  });
 
-    const newTableData = [...tableData, newItem];
-    setUpdatedTableData(newTableData);
-
-    // Update formData
-    const newOrdbkStyleItem = {
+  // If no shades selected, create single item with current shade
+  const finalNewItems = selectedShades.length > 0 ? newItems : [{
+    id: tempId,
+    BarCode: newItemData.barcode || "-",
+    product: newItemData.product,
+    style: newItemData.style || "-",
+    type: newItemData.type || "-",
+    shade: newItemData.shade || "-",
+    lotNo: newItemData.lotNo || "-",
+    qty: totalQty,
+    mrp: mrp,
+    rate: rate,
+    amount: totalAmount,
+    varPer: parseFloat(newItemData.varPer) || 0,
+    varQty: 0,
+    varAmt: 0,
+    discAmt: discount,
+    netAmt: netAmount,
+    distributer: "-",
+    set: parseFloat(newItemData.sets) || 0,
+    originalData: {
       ORDBKSTY_ID: tempId,
-      FGITEM_KEY: newItem.BarCode,
-      PRODUCT: newItem.product,
-      STYLE: newItem.style,
-      TYPE: newItem.type,
-      SHADE: newItem.shade,
-      PATTERN: newItem.lotNo,
-      ITMQTY: newItem.qty,
-      MRP: newItem.mrp,
-      ITMRATE: newItem.rate,
-      ITMAMT: newItem.amount,
-      DLV_VAR_PERC: newItem.varPer,
-      DLV_VAR_QTY: newItem.varQty,
-      DISC_AMT: newItem.discAmt,
-      NET_AMT: newItem.netAmt,
-      DISTBTR: newItem.distributer,
-      SETQTY: newItem.set,
+      FGITEM_KEY: newItemData.barcode || "-",
+      PRODUCT: newItemData.product,
+      STYLE: newItemData.style,
+      TYPE: newItemData.type || "-",
+      SHADE: newItemData.shade || "-",
+      PATTERN: newItemData.lotNo || "-",
+      ITMQTY: totalQty,
+      MRP: mrp,
+      ITMRATE: rate,
+      ITMAMT: totalAmount,
+      DLV_VAR_PERC: parseFloat(newItemData.varPer) || 0,
+      DLV_VAR_QTY: 0,
+      DISC_AMT: discount,
+      NET_AMT: netAmount,
+      DISTBTR: "-",
+      SETQTY: parseFloat(newItemData.sets) || 0,
       ORDBKSTYSZLIST: updatedSizeDetails.map(size => ({
         ...size,
         ORDBKSTYSZ_ID: 0
       })),
-      FGSTYLE_ID: newItem.FGSTYLE_ID,
       FGPRD_KEY: fgprdKey,
-      FGTYPE_KEY: fgtypeKey,
-      FGSHADE_KEY: fgshadeKey,
-      FGPTN_KEY: fgptnKey,
+      FGSTYLE_ID: fgstyleId,
+      FGTYPE_KEY: typeMapping[newItemData.type] || "",
+      FGSHADE_KEY: shadeMapping[newItemData.shade] || "", // Shade key
+      FGPTN_KEY: lotNoMapping[newItemData.lotNo] || "",
       DBFLAG: mode === 'add' ? 'I' : 'I'
-    };
+    },
+    FGSTYLE_ID: fgstyleId,
+    FGPRD_KEY: fgprdKey,
+    FGTYPE_KEY: typeMapping[newItemData.type] || "",
+    FGSHADE_KEY: shadeMapping[newItemData.shade] || "", // Store shade key
+    FGPTN_KEY: lotNoMapping[newItemData.lotNo] || ""
+  }];
 
-    setFormData(prev => ({
-      ...prev,
-      apiResponseData: {
-        ...prev.apiResponseData,
-        ORDBKSTYLIST: [...(prev.apiResponseData?.ORDBKSTYLIST || []), newOrdbkStyleItem]
-      }
-    }));
+  const newTableData = [...tableData, ...finalNewItems];
+  setUpdatedTableData(newTableData);
 
-    setIsAddingNew(false);
-    setIsSizeDetailsLoaded(false);
-    setNewItemData({
-      product: '',
-      barcode: '',
-      style: '',
-      type: '',
-      shade: '',
-      qty: '',
-      mrp: '',
-      rate: '',
-      setNo: '',
-      varPer: '',
-      stdQty: '',
-      convFact: '',
-      lotNo: '',
-      discount: '',
-      percent: '',
-      remark: '',
-      divDt: '',
-      rQty: '',
-      sets: ''
-    });
-    setStyleCodeInput('');
-    setBarcodeInput('');
-    setSizeDetailsData([]);
-    setDataSource(null);
+  // Update formData with all items
+  const newOrdbkStyleItems = finalNewItems.map(item => ({
+    ORDBKSTY_ID: item.id,
+    FGITEM_KEY: item.BarCode,
+    PRODUCT: item.product,
+    STYLE: item.style,
+    TYPE: item.type,
+    SHADE: item.shade,
+    PATTERN: item.lotNo,
+    ITMQTY: item.qty,
+    MRP: item.mrp,
+    ITMRATE: item.rate,
+    ITMAMT: item.amount,
+    DLV_VAR_PERC: item.varPer,
+    DLV_VAR_QTY: item.varQty,
+    DISC_AMT: item.discAmt,
+    NET_AMT: item.netAmt,
+    DISTBTR: item.distributer,
+    SETQTY: item.set,
+    ORDBKSTYSZLIST: updatedSizeDetails.map(size => ({
+      ...size,
+      ORDBKSTYSZ_ID: 0
+    })),
+    FGSTYLE_ID: item.FGSTYLE_ID,
+    FGPRD_KEY: item.FGPRD_KEY,
+    FGTYPE_KEY: item.FGTYPE_KEY,
+    FGSHADE_KEY: item.FGSHADE_KEY, // Include FGSHADE_KEY
+    FGPTN_KEY: item.FGPTN_KEY,
+    DBFLAG: mode === 'add' ? 'I' : 'I'
+  }));
 
-    showSnackbar("Item added successfully!");
-  };
+  setFormData(prev => ({
+    ...prev,
+    apiResponseData: {
+      ...prev.apiResponseData,
+      ORDBKSTYLIST: [...(prev.apiResponseData?.ORDBKSTYLIST || []), ...newOrdbkStyleItems]
+    }
+  }));
+
+  setIsAddingNew(false);
+  setIsSizeDetailsLoaded(false);
+  setNewItemData({
+    product: '',
+    barcode: '',
+    style: '',
+    type: '',
+    shade: '',
+    qty: '',
+    mrp: '',
+    rate: '',
+    setNo: '',
+    varPer: '',
+    stdQty: '',
+    convFact: '',
+    lotNo: '',
+    discount: '',
+    percent: '',
+    remark: '',
+    divDt: '',
+    rQty: '',
+    sets: ''
+  });
+  setStyleCodeInput('');
+  setBarcodeInput('');
+  setSizeDetailsData([]);
+  setDataSource(null);
+  setSelectedShades([]);
+  setAvailableShades([]);
+
+  showSnackbar(selectedShades.length > 1 ? 
+    `${selectedShades.length} items added to order (${totalQty} each)!` : 
+    "Item added successfully!");
+};
 
   const handleEditItem = () => {
   if (!selectedRow) {
@@ -1785,7 +1977,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
                 }}
                 // helperText={isLoadingBarcode ? "Loading..." : "Type barcode"}
               />
-              <Box sx={{ 
+              {/* <Box sx={{ 
     display: 'flex', 
     flexDirection: 'row', 
     gap: 0.5,
@@ -1871,7 +2063,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
         }
       }}
     />
-  </Box>
+  </Box> */}
               
               {/* <AutoVibe
                 id="Product"
@@ -1929,17 +2121,123 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
                 onChange={handleTypeChange}
                 sx={DropInputSx}
               />
-              <AutoVibe
-                id="Shade"
-                disabled={shouldDisableFields()}
-                getOptionLabel={(option) => option || ''}
-                options={shadeOptions}
-                label="Shade"
-                name="shade"
-                value={isAddingNew || isEditingSize ? newItemData.shade : ''}
-                onChange={handleShadeChange}
-                sx={DropInputSx}
-              />
+             
+
+{/* Shade Selection Section */}
+<Box sx={{ 
+  display: 'flex', 
+  gap: 1,
+  alignItems: 'center'
+}}>
+  <Button
+    variant={shadeViewMode === 'all' ? 'contained' : 'outlined'}
+    onClick={handleAllShadesClick}
+    size="small"
+    disabled={shouldDisableFields()}
+    sx={{ 
+      minWidth: '60px',
+      backgroundColor: shadeViewMode === 'all' ? '#1976d2' : 'transparent',
+      color: shadeViewMode === 'all' ? 'white' : '#1976d2',
+      borderColor: '#1976d2',
+      '&:hover': {
+        backgroundColor: shadeViewMode === 'all' ? '#1565c0' : 'rgba(25, 118, 210, 0.04)'
+      },
+      '&.Mui-disabled': {
+        borderColor: '#cccccc',
+        color: '#666666',
+        backgroundColor: 'transparent'
+      }
+    }}
+  >
+    All
+  </Button>
+  <Button
+    variant={shadeViewMode === 'allocated' ? 'contained' : 'outlined'}
+    onClick={handleAllocatedShadesClick}
+    size="small"
+    disabled={shouldDisableFields()}
+    sx={{ 
+      minWidth: '80px',
+      backgroundColor: shadeViewMode === 'allocated' ? '#1976d2' : 'transparent',
+      color: shadeViewMode === 'allocated' ? 'white' : '#1976d2',
+      borderColor: '#1976d2',
+      '&:hover': {
+        backgroundColor: shadeViewMode === 'allocated' ? '#1565c0' : 'rgba(25, 118, 210, 0.04)'
+      },
+      '&.Mui-disabled': {
+        borderColor: '#cccccc',
+        color: '#666666',
+        backgroundColor: 'transparent'
+      }
+    }}
+  >
+    Allocated
+  </Button>
+</Box>
+
+{/* Shade Multi-Select Dropdown */}
+<FormControl sx={{ width: '100%' }}>
+  <Select
+    labelId="shade-select-label"
+    id="shade-select"
+    multiple
+    value={selectedShades}
+    onChange={handleShadeSelectionChange}
+    disabled={shouldDisableFields()}
+    input={<OutlinedInput />}
+    renderValue={(selected) => (
+      <Box
+        sx={{
+          display: 'flex',
+          flexWrap: 'nowrap',
+          gap: 0.5,
+          overflowX: 'auto',
+          overflowY: 'hidden',
+          maxWidth: '100%',
+          alignItems: 'center',
+          '&::-webkit-scrollbar': {
+            height: '3px',
+          },
+        }}
+      >
+        {selected.map((value) => (
+          <Chip
+            key={value}
+            label={value}
+            size="small"
+            sx={{
+              height: '24px',
+              fontSize: '0.75rem'
+            }}
+          />
+        ))}
+      </Box>
+    )}
+    size="small"
+    sx={{
+      '& .MuiOutlinedInput-root': {
+        minHeight: '36px',
+        padding: '0px',
+      },
+      '& .MuiSelect-select': {
+        padding: '4px 8px',
+        display: 'flex',
+        alignItems: 'center',
+        overflow: 'hidden',
+      },
+    }}
+  >
+    {availableShades.map((shade) => (
+      <MenuItem key={shade.FGSHADE_NAME} value={shade.FGSHADE_NAME}>
+        {shade.FGSHADE_NAME}
+      </MenuItem>
+    ))}
+  </Select>
+</FormControl>
+
+  
+
+
               <TextField 
                 label="Qty" 
                 variant="filled" 
