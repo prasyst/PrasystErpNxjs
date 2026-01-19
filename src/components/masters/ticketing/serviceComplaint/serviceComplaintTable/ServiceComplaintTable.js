@@ -1,9 +1,6 @@
 'use client';
 import React, { useState, useEffect, useCallback } from "react";
 import axiosInstance from '../../../../../lib/axios';
-import {
-  Button, Stack, Box
-} from '@mui/material';
 import ReusableTable, { getCustomDateFilter } from '@/components/datatable/ReusableTable';
 import { useRouter } from 'next/navigation';
 
@@ -23,6 +20,15 @@ const columnDefs = [
 
   //   headerClass: 'checkbox-header'
   // },
+  {
+    field: "ROWNUM",
+    headerName: "Sr.No",
+    filter: 'agSetColumnFilter',
+    filterParams: {
+      defaultToNothingSelected: true,
+    },
+    sortable: true
+  },
   {
     field: "TKTCATNAME",
     headerName: "Category",
@@ -53,6 +59,15 @@ const columnDefs = [
   {
     field: "TKTSVRTYNAME",
     headerName: "Severity",
+    filter: 'agSetColumnFilter',
+    filterParams: {
+      defaultToNothingSelected: true,
+    },
+    sortable: true
+  },
+  {
+    field: "LEADTIME",
+    headerName: "Lead Time",
     filter: 'agSetColumnFilter',
     filterParams: {
       defaultToNothingSelected: true,
@@ -122,7 +137,6 @@ export default function ServiceComplaintTable() {
     const selectedNodes = event.api.getSelectedNodes();
     const selectedData = selectedNodes.map(node => node.data);
     setSelectedRows(selectedData);
-    console.log('Selected rows:', selectedData);
   }, []);
 
   return (

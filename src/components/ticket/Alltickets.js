@@ -68,7 +68,7 @@ const AllTicketsPage = () => {
           id: tkt.TKTNO,
           title: tkt.REMARK || "No Title",
           description: tkt.TKTDESC || tkt.REASON || "No description",
-          category: tkt.TKTSERVICENAME || "General",
+          category: tkt.TKTCATNAME || "General",
           priority: tkt.TKTSVRTYNAME || "Medium",
           status: tkt.TKTSTATUS === "O" ? "open" :
             tkt.TKTSTATUS === "I" ? "in-progress" :
@@ -78,6 +78,7 @@ const AllTicketsPage = () => {
           assignee: tkt.TECHEMP_NAME || "Unassigned",
           reporter: tkt.RAISEBYNM || "Unknown",
           createdAt: tkt.TKTDATE,
+          raisedBy: tkt.RAISEBYNM,
           dueDate: tkt.ASSIGNDT || tkt.TKTDATE,
           tktFor: tkt.TKTFOR === "M" ? "Machine" : "Department",
           ccnName: tkt.CCN_NAME || "",
@@ -406,6 +407,7 @@ const AllTicketsPage = () => {
             <TableCell sx={{ width: '90px', minWidth: '90px' }}>Priority</TableCell>
             <TableCell sx={{ width: '100px', minWidth: '100px' }}>Status</TableCell>
             <TableCell sx={{ width: '80px', minWidth: '80px' }}>TKTFOR</TableCell>
+            <TableCell sx={{ width: '100px', minWidth: '100px' }}>RaisedBy</TableCell>
             <TableCell sx={{ width: '100px', minWidth: '100px' }}>Raised At</TableCell>
             <TableCell sx={{ width: '110px', minWidth: '110px', textAlign: 'center' }}>Actions</TableCell>
           </TableRow>
@@ -563,6 +565,18 @@ const AllTicketsPage = () => {
                     }}
                   >
                     {ticket.tktFor}
+                  </Typography>
+                </TableCell>
+
+                <TableCell>
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      fontSize: '0.75rem',
+                      fontWeight: 500
+                    }}
+                  >
+                    {ticket.raisedBy}
                   </Typography>
                 </TableCell>
 
@@ -869,7 +883,7 @@ const AllTicketsPage = () => {
               >
                 Tickets
               </Typography>
-              <Grid item xs={12} md={4}>
+              <Grid size={{ xs: 12, md: 2 }}>
                 <TextField
                   fullWidth
                   placeholder="Search tickets..."
@@ -886,7 +900,7 @@ const AllTicketsPage = () => {
                 />
               </Grid>
 
-              <Grid item xs={6} sm={4} md={2}>
+              <Grid size={{ xs: 12, md: 2 }}>
                 <TextField
                   fullWidth
                   select
@@ -904,7 +918,7 @@ const AllTicketsPage = () => {
                 </TextField>
               </Grid>
 
-              <Grid item xs={6} sm={4} md={2}>
+              <Grid size={{ xs: 12, md: 2 }}>
                 <TextField
                   fullWidth
                   select

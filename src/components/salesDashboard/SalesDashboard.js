@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import {
     Box, Typography, Grid, Paper, IconButton, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Button,
     styled, useTheme, TextField, DialogTitle, DialogActions, Dialog, LinearProgress, Chip, TableFooter, CircularProgress,
-    DialogContent, FormControlLabel, Checkbox, Badge, InputAdornment, Fade, Card, CardContent, Stack
+    DialogContent, FormControlLabel, Checkbox, Badge, InputAdornment, Fade, Card, CardContent, Stack, Tooltip, useMediaQuery
 } from "@mui/material";
 import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
 import AccessAlarmIcon from '@mui/icons-material/AccessAlarm';
@@ -14,13 +14,12 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import dayjs from 'dayjs';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
-import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
+import FilterAltIcon from '@mui/icons-material/FilterAlt';
+import CurrencyRupeeIcon from '@mui/icons-material/CurrencyRupee';
 import PercentIcon from '@mui/icons-material/Percent';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import {
-    ResponsiveContainer, ComposedChart, Area, AreaChart, BarChart, Bar, XAxis, YAxis, Tooltip, LineChart,
-    Line, CartesianGrid, Legend
+    ResponsiveContainer, ComposedChart, Area, AreaChart, Bar, XAxis, YAxis, Tooltip as RechartsTooltip, Line, CartesianGrid, Legend
 } from "recharts";
 import axiosInstance from "@/lib/axios";
 import { toast, ToastContainer } from "react-toastify";
@@ -29,14 +28,9 @@ import OrderDocument from "./OrderDocument";
 import { PDFViewer } from "@react-pdf/renderer";
 import CloseIcon from '@mui/icons-material/Close';
 import ReceiptLongIcon from '@mui/icons-material/ReceiptLong';
-import SpeedDial from '@mui/material/SpeedDial';
-import GroupIcon from '@mui/icons-material/Group';
-import StorefrontIcon from '@mui/icons-material/Storefront';
-import AccountCircleIcon from '@mui/icons-material/AccountCircle';
-import LocationOnIcon from '@mui/icons-material/LocationOn';
 import SearchIcon from '@mui/icons-material/Search';
 import ClearIcon from '@mui/icons-material/Clear';
-import FilterListIcon from '@mui/icons-material/FilterList';
+import debounce from 'lodash.debounce';
 
 const CountUp = dynamic(
     async () => {
@@ -45,28 +39,6 @@ const CountUp = dynamic(
     },
     { ssr: false }
 );
-
-const StyledCard = styled(Paper)(({ theme }) => ({
-    display: 'flex',
-    alignItems: 'center',
-    paddingTop: theme.spacing(1),
-    paddingBottom: theme.spacing(1),
-    paddingLeft: theme.spacing(2),
-    paddingRight: theme.spacing(2),
-    borderRadius: '12px',
-    color: '#fff',
-    gap: theme.spacing(3),
-    boxShadow: '0 6px 20px rgba(0, 0, 0, 0.15)',
-    transition: 'transform 0.3s ease, box-shadow 0.3s ease, background 0.3s ease',
-    '&:hover': {
-        transform: 'translateY(-1px)',
-        boxShadow: '0 12px 30px rgba(0, 0, 0, 0.25)',
-    },
-    [theme.breakpoints.down('sm')]: {
-        paddingTop: theme.spacing(1.5),
-        paddingBottom: theme.spacing(1.5),
-    },
-}));
 
 const StyledCard2 = styled(Paper)(({ theme }) => ({
     display: 'flex',
@@ -77,42 +49,6 @@ const StyledCard2 = styled(Paper)(({ theme }) => ({
     backgroundColor: '#fff',
     color: '#000',
 }));
-
-const headerCellStyle = {
-    fontWeight: 'bold',
-    color: '#fff',
-    backgroundColor: '#69816bff',
-    padding: '2px 16px',
-    position: 'sticky',
-    top: 0,
-    zIndex: 10,
-};
-
-// const StyledSpeedDial = styled(SpeedDial)(({ theme }) => ({
-//     position: 'absolute',
-//     '&.MuiSpeedDial-directionUp, &.MuiSpeedDial-directionLeft': {
-//         bottom: theme.spacing(2),
-//         right: theme.spacing(2),
-//     },
-//     '&.MuiSpeedDial-directionDown, &.MuiSpeedDial-directionRight': {
-//         top: theme.spacing(2),
-//         left: theme.spacing(2),
-//     },
-// }));
-
-const StyledSpeedDial = styled(SpeedDial)(({ theme }) => ({
-    position: 'fixed',
-    top: theme.spacing(7),
-    right: theme.spacing(2),
-    zIndex: 1000,
-}));
-
-const actions = [
-    { icon: <StorefrontIcon />, name: 'Brand' },
-    { icon: <GroupIcon />, name: 'Party' },
-    { icon: <AccountCircleIcon />, name: 'Broker' },
-    { icon: <LocationOnIcon />, name: 'State' },
-];
 
 const SalesDashboard = () => {
     const theme = useTheme();
@@ -127,6 +63,7 @@ const SalesDashboard = () => {
     const [selectedOrder, setSelectedOrder] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [recentLoading, setRecentLoading] = useState(false);
+    const isMobile = useMediaQuery('(max-width:600px)');
     const [summaryData, setSummaryData] = useState({
         QTY: 0,
         BAL_QTY: 0,
@@ -805,7 +742,7 @@ const SalesDashboard = () => {
                             size="small"
                             variant="contained"
                             onClick={() => setOpenDialog(true)}
-                            startIcon={< FilterListIcon />}
+                            startIcon={< FilterAltIcon />}
                             sx={{
                                 borderRadius: '20px',
                                 backgroundColor: '#635bff',
@@ -816,23 +753,6 @@ const SalesDashboard = () => {
                         >
                             Filters
                         </Button>
-                        {/* <StyledSpeedDial ariaLabel="Filters" direction="down" icon={<SpeedDialIcon />}>
-                            {actions.map((action) => {
-                                const count = selectedOptions[action.name]?.length || 0;
-                                return (
-                                    <SpeedDialAction
-                                        key={action.name}
-                                        icon={
-                                            <Badge badgeContent={count} color="primary" invisible={count === 0}>
-                                                {action.icon}
-                                            </Badge>
-                                        }
-                                        tooltipTitle={`${action.name} (${count} selected)`}
-                                        onClick={() => setOpenDialog(true)}
-                                    />
-                                );
-                            })}
-                        </StyledSpeedDial> */}
 
                         {/* Dialog to show checkboxes */}
                         <Dialog
@@ -1460,7 +1380,7 @@ const SalesDashboard = () => {
                                         flexDirection: 'column'
                                     }}
                                 >
-                                    <Stack direction="row" justifyContent="space-between" alignItems="flex-start" sx={{ mb: 1 }}>
+                                    <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
                                         <Box sx={{ flex: 1 }}>
                                             <Typography
                                                 variant="h5"
@@ -1761,7 +1681,7 @@ const SalesDashboard = () => {
                             position: 'relative',
                         }}
                     >
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                        <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
                             <Typography
                                 variant="h5"
                                 fontWeight="700"
@@ -1770,13 +1690,13 @@ const SalesDashboard = () => {
                                     WebkitBackgroundClip: 'text',
                                     color: 'transparent',
                                     letterSpacing: '0.5px',
+                                    mb: { xs: 1, sm: 0 }
                                 }}
                             >
                                 Recent Orders
                             </Typography>
 
                             <TextField
-                                label="Search Orders"
                                 variant="outlined"
                                 size="small"
                                 value={searchTerm}
@@ -1790,7 +1710,7 @@ const SalesDashboard = () => {
                                     ),
                                 }}
                                 sx={{
-                                    width: 250,
+                                    width: { xs: '100%', sm: 250 },
                                     '& .MuiOutlinedInput-root': {
                                         borderRadius: '10px',
                                         bgcolor: '#f8fafc',
@@ -1805,7 +1725,7 @@ const SalesDashboard = () => {
                         </Box>
 
                         {/* Table Container */}
-                        <TableContainer sx={{ flexGrow: 1, maxHeight: 250, overflow: 'auto', position: 'relative' }}>
+                        <TableContainer sx={{ flexGrow: 1, maxHeight: 300, overflow: 'auto', position: 'relative' }}>
                             <Table stickyHeader size="small" sx={{ minWidth: 1100 }}>
                                 <TableHead>
                                     <TableRow>
@@ -1863,7 +1783,17 @@ const SalesDashboard = () => {
                                                     {dayjs(item.ORDBK_DT).format('DD/MM/YYYY')}
                                                 </TableCell>
                                                 <TableCell sx={{ borderRight: '1px solid #e2e8f0', fontSize: '0.875rem', padding: '0px 16px' }}>
-                                                    {item.PARTY_NAME}
+                                                    <Tooltip title={item.PARTY_NAME} placement="top-start" arrow>
+                                                        <Typography sx={{
+                                                            fontSize: 'inherit',
+                                                            overflow: 'hidden',
+                                                            textOverflow: 'ellipsis',
+                                                            whiteSpace: 'nowrap',
+                                                            maxWidth: 100
+                                                        }}>
+                                                            {item.PARTY_NAME}
+                                                        </Typography>
+                                                    </Tooltip>
                                                 </TableCell>
                                                 <TableCell sx={{ borderRight: '1px solid #e2e8f0', fontSize: '0.875rem', padding: '0px 16px' }}>
                                                     {item.CITY_NAME}
@@ -1945,7 +1875,7 @@ const SalesDashboard = () => {
                 </Grid>
             </Grid>
 
-            {/* Party Wise Orders Summary */}
+            {/* Party Wise Summary */}
             <Grid container spacing={2} sx={{ height: '100%', mt: 2 }}>
                 <Grid size={{ xs: 12, md: 12 }} sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
                     <Paper
@@ -1960,14 +1890,23 @@ const SalesDashboard = () => {
                             height: '100%',
                         }}
                     >
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-                            <Typography variant="h6" fontWeight="bold"
+                        <Box sx={{
+                            display: 'flex',
+                            flexDirection: { xs: 'column', sm: 'row' },
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            mb: 1
+                        }}>
+                            <Typography
+                                variant="h6"
+                                fontWeight="bold"
                                 sx={{
                                     background: 'linear-gradient(45deg, #dd2818, #670aa1)',
                                     WebkitBackgroundClip: 'text',
                                     color: 'transparent',
                                     fontSize: '1.25rem',
                                     letterSpacing: 0.5,
+                                    mb: { xs: 1, sm: 0 }
                                 }}
                             >
                                 Party Wise Summary
@@ -1976,57 +1915,91 @@ const SalesDashboard = () => {
                             <TextField
                                 variant="outlined"
                                 size="small"
-                                sx={{
-                                    width: 250,
-                                    borderRadius: '9px',
-                                    '& .MuiOutlinedInput-root': {
-                                        borderRadius: '20px',
-                                        padding: '4px 10px',
-                                        height: '32px',
-                                    },
-                                    '& .MuiInputLabel-root': {
-                                        borderRadius: '9px',
-                                        fontSize: '0.875rem',
-                                        top: '-6px',
-                                    },
-                                }}
                                 value={searchTermParty}
                                 onChange={(e) => setSearchTermParty(e.target.value)}
                                 placeholder="Search by Party, City, Amount, etc."
                                 InputProps={{
-                                    style: {
-                                        padding: '0px 10px',
+                                    startAdornment: (
+                                        <InputAdornment position="start">
+                                            <SearchIcon fontSize="small" />
+                                        </InputAdornment>
+                                    ),
+                                }}
+                                sx={{
+                                    width: { xs: '100%', sm: 250 },
+                                    '& .MuiOutlinedInput-root': {
+                                        borderRadius: '10px',
+                                        bgcolor: '#f8fafc',
+                                        fontSize: '0.875rem',
+                                        padding: '0px 14px'
+                                    },
+                                    '& .MuiInputBase-input': {
+                                        padding: '6.5px 0px',
                                     },
                                 }}
                             />
                         </Box>
 
                         {/* Table Container with fixed height */}
-                        <TableContainer sx={{ flexGrow: 1, maxHeight: 250, overflowY: 'auto', overflowX: 'auto' }}>
-                            <Table stickyHeader size="small" aria-label="recent orders">
+                        <TableContainer
+                            sx={{
+                                maxHeight: { xs: 320, md: 300 },
+                                mt: 0.5,
+                                '&::-webkit-scrollbar': {
+                                    width: 4,
+                                    height: 4
+                                },
+                                '&::-webkit-scrollbar-track': {
+                                    bgcolor: '#f5f5f5',
+                                    borderRadius: 2
+                                },
+                                '&::-webkit-scrollbar-thumb': {
+                                    bgcolor: '#ccc',
+                                    borderRadius: 2
+                                }
+                            }}
+                        >
+                            <Table stickyHeader size="small" sx={{
+                                '& .MuiTableCell-root': {
+                                    py: 0.375,
+                                    px: 1,
+                                    borderBottom: '1px solid',
+                                    borderColor: 'divider',
+                                    '&:first-of-type': { pl: 1.25 },
+                                    '&:last-child': { pr: 1.25 }
+                                }
+                            }}>
                                 <TableHead>
-                                    <TableRow>
-                                        <TableCell sx={headerCellStyle}>Party</TableCell>
-                                        <TableCell sx={headerCellStyle}>City</TableCell>
-                                        <TableCell sx={headerCellStyle}>State</TableCell>
-                                        <TableCell sx={headerCellStyle}>Broker</TableCell>
-                                        <TableCell sx={headerCellStyle}> SalesMan</TableCell>
-                                        <TableCell sx={headerCellStyle}>Amount</TableCell>
-                                        <TableCell sx={headerCellStyle}>Qty</TableCell>
-                                        <TableCell sx={headerCellStyle}>BalQty</TableCell>
-                                        <TableCell sx={headerCellStyle}>INIT_QTY</TableCell>
-                                        <TableCell sx={headerCellStyle}>SaleQTY</TableCell>
-                                        <TableCell sx={headerCellStyle}>Pend(%)</TableCell>
-                                        <TableCell sx={headerCellStyle}>Sale(%)</TableCell>
+                                    <TableRow sx={{
+                                        '& th': {
+                                            bgcolor: '#fafafa',
+                                            fontWeight: 600,
+                                            py: 0.75,
+                                            borderBottom: '2px solid',
+                                            borderColor: 'divider',
+                                            whiteSpace: 'nowrap'
+                                        }
+                                    }}>
+                                        <TableCell sx={{ fontSize: { xs: '0.7rem', sm: '0.75rem' }, width: '18%' }}>Party</TableCell>
+                                        <TableCell sx={{ fontSize: { xs: '0.7rem', sm: '0.75rem' }, width: '12%' }}>City</TableCell>
+                                        <TableCell sx={{ fontSize: { xs: '0.7rem', sm: '0.75rem' }, width: '12%' }}>State</TableCell>
+                                        <TableCell sx={{ fontSize: { xs: '0.7rem', sm: '0.75rem' }, width: '15%' }}>Broker</TableCell>
+                                        <TableCell sx={{ fontSize: { xs: '0.7rem', sm: '0.75rem' }, width: '15%' }}>SalesMan</TableCell>
+                                        <TableCell sx={{ fontSize: { xs: '0.7rem', sm: '0.75rem' }, width: '10%' }}>Amount</TableCell>
+                                        <TableCell sx={{ fontSize: { xs: '0.7rem', sm: '0.75rem' }, width: '10%' }}>Qty</TableCell>
+                                        <TableCell sx={{ fontSize: { xs: '0.7rem', sm: '0.75rem' }, width: '10%' }}>BalQty</TableCell>
+                                        <TableCell sx={{ fontSize: { xs: '0.7rem', sm: '0.75rem' }, width: '10%' }}>InitQty</TableCell>
+                                        <TableCell sx={{ fontSize: { xs: '0.7rem', sm: '0.75rem' }, width: '10%' }}>SaleQty</TableCell>
+                                        <TableCell sx={{ fontSize: { xs: '0.7rem', sm: '0.75rem' }, width: '10%' }}>Pend(%)</TableCell>
+                                        <TableCell sx={{ fontSize: { xs: '0.7rem', sm: '0.75rem' }, width: '10%', pr: 1.25 }}>Sale(%)</TableCell>
                                     </TableRow>
                                 </TableHead>
 
-                                {/* Body */}
                                 <TableBody>
                                     {isLoading ? (
                                         <TableRow>
-                                            <TableCell colSpan={7} align="center" sx={{ py: 4 }}>
-                                                <CircularProgress size='3rem' />
+                                            <TableCell colSpan={12} align="center" sx={{ py: 4 }}>
+                                                <CircularProgress size="3rem" />
                                                 <Typography variant="body2" sx={{ marginTop: 2 }}>
                                                     Loading party data...
                                                 </Typography>
@@ -2051,26 +2024,97 @@ const SalesDashboard = () => {
                                                     },
                                                 }}
                                             >
-                                                <TableCell sx={{ padding: '2px 16px' }}>{item.PARTY_NAME || '-'}</TableCell>
-                                                <TableCell sx={{ padding: '2px 16px' }}>{item.CITY_NAME || '-'}</TableCell>
-                                                <TableCell sx={{ padding: '2px 16px' }}>{item.STATE_NAME || '-'}</TableCell>
+                                                <TableCell sx={{ padding: '2px 16px' }}>
+                                                    <Tooltip title={item.PARTY_NAME} placement="top-start" arrow>
+                                                        <Typography sx={{
+                                                            fontSize: 'inherit',
+                                                            overflow: 'hidden',
+                                                            textOverflow: 'ellipsis',
+                                                            whiteSpace: 'nowrap',
+                                                            maxWidth: 120
+                                                        }}>
+                                                            {item.PARTY_NAME || '-'}
+                                                        </Typography>
+                                                    </Tooltip>
+                                                </TableCell>
+                                                <TableCell sx={{ padding: '2px 16px' }}>
+                                                    <Chip
+                                                        label={item.CITY_NAME || '-'}
+                                                        size="small"
+                                                        sx={{
+                                                            fontSize: { xs: '0.65rem', sm: '0.7rem' },
+                                                            height: 20,
+                                                            bgcolor: '#3b82f610',
+                                                            color: '#3b82f6',
+                                                            border: `1px solid #3b82f630`,
+                                                            fontWeight: 500,
+                                                            '& .MuiChip-label': { px: 0.75 }
+                                                        }}
+                                                    />
+                                                </TableCell>
+                                                <TableCell sx={{ padding: '2px 16px' }}>
+                                                    <Chip
+                                                        label={item.STATE_NAME || '-'}
+                                                        size="small"
+                                                        sx={{
+                                                            fontSize: { xs: '0.65rem', sm: '0.7rem' },
+                                                            height: 20,
+                                                            bgcolor: '#10b98115',
+                                                            color: '#10b981',
+                                                            border: `1px solid #10b98130`,
+                                                            fontWeight: 500,
+                                                            '& .MuiChip-label': { px: 0.75 }
+                                                        }}
+                                                    />
+                                                </TableCell>
                                                 <TableCell sx={{ padding: '2px 16px' }}>{item.BROKER_NAME || '-'}</TableCell>
                                                 <TableCell sx={{ padding: '2px 16px' }}>{item.SALEPERSON_NAME || '-'}</TableCell>
                                                 <TableCell sx={{ padding: '2px 16px' }}>
-                                                    {parseFloat(item.AMOUNT || 0).toLocaleString('en-IN', { maximumFractionDigits: 2 })}
+                                                    <Box sx={{
+                                                        display: 'inline-flex',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'center',
+                                                        minWidth: 60,
+                                                        height: 22,
+                                                        bgcolor: '#10b98115',
+                                                        borderRadius: 1,
+                                                        border: '1px solid #10b98130',
+                                                        px: 0.75,
+                                                        gap: 0.25
+                                                    }}>
+                                                        <CurrencyRupeeIcon sx={{ fontSize: 10, color: '#10b981' }} />
+                                                        <Typography sx={{
+                                                            fontSize: { xs: '0.75rem', sm: '0.8rem' },
+                                                            fontWeight: 700,
+                                                            color: '#10b981'
+                                                        }}>
+                                                            {parseFloat(item.AMOUNT || 0).toLocaleString('en-IN', { maximumFractionDigits: 2 })}
+                                                        </Typography>
+                                                    </Box>
                                                 </TableCell>
-                                                <TableCell sx={{ padding: '2px 16px' }}>{parseFloat(item.QTY || 0).toLocaleString('en-IN')}</TableCell>
-                                                <TableCell sx={{ padding: '2px 16px' }}>{parseFloat(item.BAL_QTY || 0).toLocaleString('en-IN')}</TableCell>
-                                                <TableCell sx={{ padding: '2px 16px' }}>{parseFloat(item.INIT_QTY || 0).toLocaleString('en-IN')}</TableCell>
-                                                <TableCell sx={{ padding: '2px 16px' }}>{parseFloat(item.SALE_QTY || 0).toLocaleString('en-IN')}</TableCell>
-                                                <TableCell sx={{ padding: '2px 16px' }}>{(parseFloat(item.BAL_QTY / item.QTY) * 100).toFixed(2)}</TableCell>
-                                                <TableCell sx={{ padding: '2px 16px' }}>{(parseFloat(item.SALE_QTY / item.QTY) * 100).toFixed(2)}</TableCell>
-
+                                                <TableCell sx={{ padding: '2px 16px' }}>
+                                                    {parseFloat(item.QTY || 0).toLocaleString('en-IN')}
+                                                </TableCell>
+                                                <TableCell sx={{ padding: '2px 16px' }}>
+                                                    {parseFloat(item.BAL_QTY || 0).toLocaleString('en-IN')}
+                                                </TableCell>
+                                                <TableCell sx={{ padding: '2px 16px' }}>
+                                                    {parseFloat(item.INIT_QTY || 0).toLocaleString('en-IN')}
+                                                </TableCell>
+                                                <TableCell sx={{ padding: '2px 16px' }}>
+                                                    {parseFloat(item.SALE_QTY || 0).toLocaleString('en-IN')}
+                                                </TableCell>
+                                                <TableCell sx={{ padding: '2px 16px' }}>
+                                                    {(parseFloat(item.BAL_QTY / item.QTY) * 100).toFixed(2)}
+                                                </TableCell>
+                                                <TableCell sx={{ padding: '2px 16px' }}>
+                                                    {(parseFloat(item.SALE_QTY / item.QTY) * 100).toFixed(2)}
+                                                </TableCell>
                                             </TableRow>
                                         ))
                                     ) : (
                                         <TableRow>
-                                            <TableCell colSpan={7} align="center" sx={{ py: 4 }}>
+                                            <TableCell colSpan={12} align="center" sx={{ py: 4 }}>
                                                 <Typography variant="body2" color="text.secondary">
                                                     {searchTermParty ? 'No matching parties found.' : 'No party data available.'}
                                                 </Typography>
@@ -2131,7 +2175,7 @@ const SalesDashboard = () => {
                 </Grid>
             </Grid>
 
-            {/* State wise order summary */}
+            {/* State wise summary */}
             <Grid container spacing={2} sx={{ height: '100%', mt: 2 }}>
                 <Grid size={{ xs: 12, md: 12 }} sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
                     <Paper
@@ -2146,7 +2190,7 @@ const SalesDashboard = () => {
                             height: '100%',
                         }}
                     >
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                        <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
                             <Typography
                                 variant="h6"
                                 fontWeight="bold"
@@ -2156,6 +2200,7 @@ const SalesDashboard = () => {
                                     color: 'transparent',
                                     fontSize: '1.25rem',
                                     letterSpacing: 0.5,
+                                    mb: { xs: 1, sm: 0 }
                                 }}
                             >
                                 State Wise Summary
@@ -2164,109 +2209,209 @@ const SalesDashboard = () => {
                             <TextField
                                 variant="outlined"
                                 size="small"
-                                sx={{
-                                    width: 250,
-                                    borderRadius: '9px',
-                                    '& .MuiOutlinedInput-root': {
-                                        borderRadius: '20px',
-                                        padding: '4px 10px',
-                                        height: '32px',
-                                    },
-                                    '& .MuiInputLabel-root': {
-                                        borderRadius: '9px',
-                                        fontSize: '0.875rem',
-                                        top: '-6px',
-                                    },
-                                }}
                                 value={searchTermState}
                                 onChange={(e) => setSearchTermState(e.target.value)}
                                 placeholder="Search by State, Amount, Qty, etc."
                                 InputProps={{
-                                    style: {
-                                        padding: '0px 10px',
+                                    startAdornment: (
+                                        <InputAdornment position="start">
+                                            <SearchIcon fontSize="small" />
+                                        </InputAdornment>
+                                    ),
+                                }}
+                                sx={{
+                                    width: { xs: '100%', sm: 250 },
+                                    '& .MuiOutlinedInput-root': {
+                                        borderRadius: '10px',
+                                        bgcolor: '#f8fafc',
+                                        fontSize: '0.875rem',
+                                        padding: '0px 14px'
+                                    },
+                                    '& .MuiInputBase-input': {
+                                        padding: '6.5px 0px',
                                     },
                                 }}
                             />
                         </Box>
 
-                        <TableContainer sx={{ flexGrow: 1, maxHeight: 250, overflow: 'auto' }}>
-                            <Table stickyHeader size="small" aria-label="state wise orders">
+                        <TableContainer
+                            sx={{
+                                maxHeight: { xs: 320, md: 300 },
+                                mt: 0.5,
+                                '&::-webkit-scrollbar': {
+                                    width: 4,
+                                    height: 4
+                                },
+                                '&::-webkit-scrollbar-track': {
+                                    bgcolor: '#f5f5f5',
+                                    borderRadius: 2
+                                },
+                                '&::-webkit-scrollbar-thumb': {
+                                    bgcolor: '#ccc',
+                                    borderRadius: 2
+                                }
+                            }}
+                        >
+                            <Table stickyHeader size="small" sx={{
+                                '& .MuiTableCell-root': {
+                                    py: 0.375,
+                                    px: 1,
+                                    borderBottom: '1px solid',
+                                    borderColor: 'divider',
+                                    '&:first-of-type': { pl: 1.25 },
+                                    '&:last-child': { pr: 1.25 }
+                                }
+                            }}>
                                 <TableHead>
-                                    <TableRow>
-                                        <TableCell sx={{ fontWeight: 'bold', color: '#fff', backgroundColor: '#66a6afff', padding: '2px 16px' }}>State</TableCell>
-                                        <TableCell sx={{ fontWeight: 'bold', color: '#fff', backgroundColor: '#66a6afff', padding: '2px 16px' }}>Amount</TableCell>
-                                        <TableCell sx={{ fontWeight: 'bold', color: '#fff', backgroundColor: '#66a6afff', padding: '2px 16px' }}>Qty</TableCell>
-                                        <TableCell sx={{ fontWeight: 'bold', color: '#fff', backgroundColor: '#66a6afff', padding: '2px 16px' }}>BalQty</TableCell>
-                                        <TableCell sx={{ fontWeight: 'bold', color: '#fff', backgroundColor: '#66a6afff', padding: '2px 16px' }}>SaleQty</TableCell>
-                                        <TableCell sx={{ fontWeight: 'bold', color: '#fff', backgroundColor: '#66a6afff', padding: '2px 16px' }}>Pend(%)</TableCell>
-                                        <TableCell sx={{ fontWeight: 'bold', color: '#fff', backgroundColor: '#66a6afff', padding: '2px 16px' }}>Sale(%)</TableCell>
-                                        <TableCell sx={{ fontWeight: 'bold', color: '#fff', backgroundColor: '#66a6afff', padding: '2px 16px' }}>Order(%)</TableCell>
+                                    <TableRow sx={{
+                                        '& th': {
+                                            bgcolor: '#fafafa',
+                                            fontWeight: 600,
+                                            py: 0.75,
+                                            borderBottom: '2px solid',
+                                            borderColor: 'divider',
+                                            whiteSpace: 'nowrap'
+                                        }
+                                    }}>
+                                        <TableCell sx={{ fontSize: { xs: '0.7rem', sm: '0.75rem' }, width: '18%' }}>State</TableCell>
+                                        <TableCell sx={{ fontSize: { xs: '0.7rem', sm: '0.75rem' }, width: '12%' }}>Amount</TableCell>
+                                        <TableCell sx={{ fontSize: { xs: '0.7rem', sm: '0.75rem' }, width: '12%' }}>Qty</TableCell>
+                                        <TableCell sx={{ fontSize: { xs: '0.7rem', sm: '0.75rem' }, width: '15%' }}>BalQty</TableCell>
+                                        <TableCell sx={{ fontSize: { xs: '0.7rem', sm: '0.75rem' }, width: '15%' }}>SaleQty</TableCell>
+                                        <TableCell sx={{ fontSize: { xs: '0.7rem', sm: '0.75rem' }, width: '10%' }}>Pend(%)</TableCell>
+                                        <TableCell sx={{ fontSize: { xs: '0.7rem', sm: '0.75rem' }, width: '10%' }}>Sale(%)</TableCell>
+                                        <TableCell sx={{ fontSize: { xs: '0.7rem', sm: '0.75rem' }, width: '10%' }}>Order(%)</TableCell>
                                     </TableRow>
                                 </TableHead>
+
                                 <TableBody>
                                     {filteredStateWise.length > 0 ? (
-                                        filteredStateWise.map((item) => {
+                                        filteredStateWise.map((item, index) => {
                                             const totalQty = filteredStateWise.reduce((sum, i) => sum + parseFloat(i.QTY || 0), 0);
-                                            const qtyPercentage = totalQty > 0
-                                                ? ((parseFloat(item.QTY || 0) / totalQty) * 100).toFixed(2)
-                                                : "0.00";
+                                            const qtyPercentage = totalQty > 0 ? ((parseFloat(item.QTY || 0) / totalQty) * 100).toFixed(2) : "0.00";
 
                                             return (
                                                 <TableRow
-                                                    // key={item.ORDBK_NO}
-                                                    key={item.STATE_NAME || index}
+                                                    key={item.STATE_NAME || `${item.STATE_NAME}-${index}`}
                                                     hover
                                                     onDoubleClick={() => handleRowDoubleClick(item)}
                                                     sx={{
+                                                        cursor: 'pointer',
                                                         backgroundColor: item.STATE_NAME === selectedState
-                                                            ? '#bbdefb'
+                                                            ? '#dce4daff'
                                                             : 'inherit',
                                                         transition: 'background-color 0.3s ease',
                                                         '&:hover': {
                                                             backgroundColor: item.STATE_NAME === selectedState
-                                                                ? '#90caf9'
+                                                                ? '#d4dad3ff'
                                                                 : 'rgba(0, 0, 0, 0.04)',
                                                         },
                                                     }}
                                                 >
-                                                    <TableCell sx={{ padding: '2px 15px' }}>{item.STATE_NAME}</TableCell>
-                                                    <TableCell sx={{ padding: '2px 15px' }}>{item.AMOUNT}</TableCell>
-                                                    <TableCell sx={{ padding: '2px 15px' }}>{item.QTY}</TableCell>
-                                                    <TableCell sx={{ padding: '2px 15px' }}>{item.BAL_QTY}</TableCell>
-                                                    <TableCell sx={{ padding: '2px 15px' }}>{item.SALE_QTY}</TableCell>
-                                                    <TableCell sx={{ padding: '2px 15px' }}>{((item.BAL_QTY / item.QTY) * 100).toFixed(2)}</TableCell>
-                                                    <TableCell sx={{ padding: '2px 15px' }}>{((item.SALE_QTY / item.QTY) * 100).toFixed(2)}</TableCell>
-                                                    <TableCell sx={{ padding: '2px 15px' }}>{qtyPercentage + "%"}</TableCell>
+                                                    <TableCell sx={{ padding: '2px 16px' }}>{item.STATE_NAME}</TableCell>
+                                                    <TableCell sx={{ padding: '2px 16px' }}>
+                                                        <Box sx={{
+                                                            display: 'inline-flex',
+                                                            alignItems: 'center',
+                                                            justifyContent: 'center',
+                                                            minWidth: 60,
+                                                            height: 22,
+                                                            bgcolor: '#10b98115',
+                                                            borderRadius: 1,
+                                                            border: '1px solid #10b98130',
+                                                            px: 0.75,
+                                                            gap: 0.25
+                                                        }}>
+                                                            <CurrencyRupeeIcon sx={{ fontSize: 10, color: '#10b981' }} />
+                                                            <Typography sx={{
+                                                                fontSize: { xs: '0.75rem', sm: '0.8rem' },
+                                                                fontWeight: 700,
+                                                                color: '#079e6c'
+                                                            }}>
+                                                                {parseFloat(item.AMOUNT || 0).toLocaleString('en-IN', { maximumFractionDigits: 2 })}
+                                                            </Typography>
+                                                        </Box>
+                                                    </TableCell>
+                                                    <TableCell sx={{ padding: '2px 16px' }}>
+                                                        {parseFloat(item.QTY || 0).toLocaleString('en-IN')}
+                                                    </TableCell>
+                                                    <TableCell sx={{ padding: '2px 16px' }}>
+                                                        {parseFloat(item.BAL_QTY || 0).toLocaleString('en-IN')}
+                                                    </TableCell>
+                                                    <TableCell sx={{ padding: '2px 16px' }}>
+                                                        {parseFloat(item.SALE_QTY || 0).toLocaleString('en-IN')}
+                                                    </TableCell>
+                                                    <TableCell sx={{ padding: '2px 16px' }}>
+                                                        {(parseFloat(item.BAL_QTY / item.QTY) * 100).toFixed(2)}
+                                                    </TableCell>
+                                                    <TableCell sx={{ padding: '2px 16px' }}>
+                                                        {(parseFloat(item.SALE_QTY / item.QTY) * 100).toFixed(2)}
+                                                    </TableCell>
+                                                    <TableCell sx={{ padding: '2px 16px' }}>
+                                                        <Chip
+                                                            label={`${qtyPercentage}%`}
+                                                            size="small"
+                                                            sx={{
+                                                                fontSize: { xs: '0.75rem', sm: '0.85rem' },
+                                                                height: 20,
+                                                                bgcolor: '#7baf7d',
+                                                                color: '#fff',
+                                                                borderRadius: 1,
+                                                                border: `1px solid #388e3c`,
+                                                                fontWeight: 600,
+                                                                '& .MuiChip-label': { px: 1.05 }
+                                                            }}
+                                                        />
+                                                    </TableCell>
                                                 </TableRow>
                                             );
                                         })
                                     ) : (
                                         <TableRow>
-                                            <TableCell colSpan={6} align="center">No records found.</TableCell>
+                                            <TableCell colSpan={8} align="center" sx={{ py: 4 }}>
+                                                <Typography variant="body2" color="text.secondary">
+                                                    {searchTermParty ? 'No matching states found.' : 'No state data available.'}
+                                                </Typography>
+                                            </TableCell>
                                         </TableRow>
                                     )}
                                 </TableBody>
+
                                 <TableFooter>
-                                    <TableRow sx={{ position: 'sticky', bottom: 0, zIndex: 9, '& > td': { fontWeight: 'bold', borderTop: '1px solid #8e90a8', py: 0.2, color: '#000', bgcolor: '#c0bcbcff' } }}>
+                                    <TableRow
+                                        sx={{
+                                            position: 'sticky',
+                                            bottom: 0,
+                                            zIndex: 9,
+                                            backgroundColor: 'rgba(200, 202, 204, 1)',
+                                            '& > td': {
+                                                fontWeight: 'bold',
+                                                borderTop: '1px solid #8e90a8',
+                                                py: 0.2,
+                                                color: '#000',
+                                                bgcolor: '#c0bcbcff'
+                                            },
+                                        }}
+                                    >
                                         <TableCell colSpan={1} align="left" sx={{ fontWeight: 'bold' }}>Total</TableCell>
                                         <TableCell align="left">
-                                            {filteredStateWise.reduce((sum, item) => sum + parseFloat(item.AMOUNT || 0), 0).toLocaleString('en-IN', { maximumFractionDigits: 2 })}
+                                            {filteredStateWise.reduce((sum, item) => sum + parseFloat(item.AMOUNT || 0), 0)
+                                                .toLocaleString('en-IN', { maximumFractionDigits: 2 })}
                                         </TableCell>
                                         <TableCell align="left">
-                                            {filteredStateWise.reduce((sum, item) => sum + parseFloat(item.QTY || 0), 0).toLocaleString('en-IN')}
+                                            {filteredStateWise.reduce((sum, item) => sum + parseFloat(item.QTY || 0), 0)
+                                                .toLocaleString('en-IN')}
                                         </TableCell>
                                         <TableCell align="left">
-                                            {filteredStateWise.reduce((sum, item) => sum + parseFloat(item.BAL_QTY || 0), 0).toLocaleString('en-IN')}
+                                            {filteredStateWise.reduce((sum, item) => sum + parseFloat(item.BAL_QTY || 0), 0)
+                                                .toLocaleString('en-IN')}
                                         </TableCell>
                                         <TableCell align="left">
-                                            {filteredStateWise.reduce((sum, item) => sum + parseFloat(item.SALE_QTY || 0), 0).toLocaleString('en-IN')}
+                                            {filteredStateWise.reduce((sum, item) => sum + parseFloat(item.SALE_QTY || 0), 0)
+                                                .toLocaleString('en-IN')}
                                         </TableCell>
-                                        <TableCell align="left">
-
-                                        </TableCell>
-                                        <TableCell align="left">
-
-                                        </TableCell>
+                                        <TableCell align="left"></TableCell>
+                                        <TableCell align="left"></TableCell>
                                         <TableCell align="left">100.00%</TableCell>
                                     </TableRow>
                                 </TableFooter>
@@ -2320,7 +2465,7 @@ const SalesDashboard = () => {
                                             position: 'insideRight'
                                         }}
                                     />
-                                    <Tooltip
+                                    <RechartsTooltip
                                         formatter={(value, name) => {
                                             if (name === 'amt') {
                                                 return [value.toLocaleString('en-US') + ' L', 'Amount (L)'];
@@ -2438,7 +2583,7 @@ const SalesDashboard = () => {
                                         }
                                     />
 
-                                    <Tooltip
+                                    <RechartsTooltip
                                         formatter={(value) => `${Number(value).toLocaleString('en-IN')}`}
                                         labelFormatter={(label) => `Month: ${label}`}
                                         contentStyle={{
