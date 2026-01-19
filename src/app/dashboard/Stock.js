@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import {
     Autocomplete, Box, Button, Checkbox, Chip, CircularProgress, Dialog, DialogActions, DialogContent, TextField,
-    DialogTitle, Grid, ListItemText, Paper, Stack, Typography, IconButton
+    DialogTitle, Grid, ListItemText, Paper, Stack, Typography, IconButton, Card, CardContent
 } from '@mui/material';
 import { ShoppingCart } from '@mui/icons-material';
 import axiosInstance from '@/lib/axios';
@@ -16,7 +16,7 @@ import {
 import CloseIcon from '@mui/icons-material/Close';
 import ShowChartIcon from '@mui/icons-material/ShowChart';
 import InventoryIcon from '@mui/icons-material/Inventory';
-import FilterListIcon from '@mui/icons-material/FilterList';
+import FilterAltIcon from '@mui/icons-material/FilterAlt';
 import CurrencyRupeeIcon from '@mui/icons-material/CurrencyRupee';
 import { FixedSizeList as List } from 'react-window';
 import { AgGridReact } from "ag-grid-react";
@@ -50,6 +50,7 @@ const Stock = () => {
     const [ShadeOption, setShadeOption] = useState([]);
     const [PtnOption, setPtnOption] = useState([]);
     const [dataPie, setDataPie] = useState([]);
+    const [categoryPie, setCategoryPie] = useState([]);
     const [productPie, setProductPie] = useState([]);
     const [stockFilter, setStockFilter] = useState({
         Brandfilter: [],
@@ -140,8 +141,8 @@ const Stock = () => {
     useEffect(() => {
         if (productWise.length > 0) {
             const sortedData = [...productWise].sort((a, b) => b.prodQty - a.prodQty);
-            const top5ProdData = sortedData.slice(0, 5);
-            setProductPie(top5ProdData);
+            const top5CatData = sortedData.slice(0, 5);
+            setCategoryPie(top5CatData);
         }
     }, [brandData]);
 
@@ -234,7 +235,8 @@ const Stock = () => {
             if (response.data.STATUS === 0 && Array.isArray(response.data.DATA)) {
                 let prodChart = response.data.DATA.map(item => ({
                     name: item.FGCAT_NAME,
-                    prodQty: item.QTY
+                    prodQty: item.QTY,
+                    proData: item.FGPRD_NAME,
                 }))
                 setProductWise(prodChart);
             } else {
@@ -425,7 +427,7 @@ const Stock = () => {
                 <Button
                     variant="contained"
                     size="small"
-                    startIcon={<FilterListIcon />}
+                    startIcon={<FilterAltIcon />}
                     onClick={handleOpenDialog}
                     sx={{
                         borderRadius: '20px',
@@ -444,52 +446,167 @@ const Stock = () => {
                 </Button>
             </Box>
 
-            <Grid container spacing={2} mb={2}>
-                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                    <Paper elevation={4} sx={{ p: 3, borderRadius: 3, bgcolor: '#e3f2fd', height: '100%' }}>
-                        <Stack direction="row" justifyContent="space-between">
-                            <Box>
-                                <Typography variant="h6" fontWeight='bold'>Opening Stock</Typography>
-                                <Typography variant="h5" fontWeight="bold">{totalStck[0]?.OP_QTY || 0}</Typography>
-                            </Box>
-                            <ShowChartIcon sx={{ fontSize: 50, color: '#d486e0ff' }} />
-                        </Stack>
-                    </Paper>
-                </Grid>
-                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                    <Paper elevation={4} sx={{ p: 3, borderRadius: 3, bgcolor: '#c8e6c9', height: '100%' }}>
-                        <Stack direction="row" justifyContent="space-between">
-                            <Box>
-                                <Typography variant="h6" fontWeight='bold'>Closing Stock</Typography>
-                                <Typography variant="h5" fontWeight="bold">{totalStck[0]?.QTY || 0}</Typography>
-                            </Box>
-                            <ShoppingCart sx={{ fontSize: 50, color: '#8bd191ff' }} />
-                        </Stack>
-                    </Paper>
-                </Grid>
-                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                    <Paper elevation={4} sx={{ p: 3, borderRadius: 3, bgcolor: '#f8bbd0', height: '100%' }}>
-                        <Stack direction="row" justifyContent="space-between">
-                            <Box>
-                                <Typography variant="h6" fontWeight='bold'>Stock Value</Typography>
-                                <Typography variant="h6" fontWeight='bold'>{(totalStck[0]?.TOT_AMT / 100000).toFixed(2) + ' L' || 0}</Typography>
-                            </Box>
-                            <CurrencyRupeeIcon sx={{ fontSize: 50, color: '#d3ae71ff' }} />
-                        </Stack>
-                    </Paper>
-                </Grid>
-                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                    <Paper elevation={4} sx={{ p: 3, borderRadius: 3, bgcolor: '#fff3e0', height: '100%' }}>
-                        <Stack direction="row" justifyContent="space-between">
-                            <Box>
-                                <Typography variant="body1" fontWeight='bold'>Total Stock Qty</Typography>
-                                <Typography variant="body1" fontWeight='bold'>Qty: {totalStck[0]?.QTY}</Typography>
-                                <Typography variant="body1" fontWeight='bold'>Value: {(totalStck[0]?.TOT_AMT / 100000).toFixed(2) + ' L' || 0}</Typography>
-                            </Box>
-                            <InventoryIcon sx={{ fontSize: 50, color: '#8cbbddff' }} />
-                        </Stack>
-                    </Paper>
-                </Grid>
+            <Grid container spacing={2} sx={{ mb: 2, mt: 1 }}>
+                {[
+                    {
+                        title: "Opening Stock",
+                        value: totalStck[0]?.OP_QTY || 0,
+                        gradient: 'linear-gradient(135deg, #64B5F6 0%, #1565C0 100%)',
+                        icon: <ShowChartIcon />,
+                        iconBg: 'rgba(33, 150, 243, 0.2)',
+                        trend: 'up'
+                    },
+                    {
+                        title: "Closing Stock",
+                        value: totalStck[0]?.QTY || 0,
+                        gradient: 'linear-gradient(135deg, #7BBE9F 0%, #2E7D32 100%)',
+                        icon: <ShoppingCart />,
+                        iconBg: 'rgba(76, 175, 80, 0.2)',
+                        trend: 'up'
+                    },
+                    {
+                        title: "Stock Value",
+                        value: (totalStck[0]?.TOT_AMT / 100000).toFixed(2) + ' L' || '0.00 L',
+                        gradient: 'linear-gradient(135deg, #FF8C71 0%, #D84315 100%)',
+                        icon: <CurrencyRupeeIcon />,
+                        iconBg: 'rgba(244, 67, 54, 0.2)',
+                        trend: 'down'
+                    },
+                    {
+                        title: "Total Stock Qty",
+                        value: totalStck[0]?.QTY || 0,
+                        qty: (totalStck[0]?.TOT_AMT / 100000).toFixed(2) + ' L' || '0.00 L',
+                        gradient: 'linear-gradient(135deg, #FFC107 0%, #FF9800 100%)',
+                        icon: <InventoryIcon />,
+                        iconBg: 'rgba(255, 193, 7, 0.2)',
+                        trend: 'up'
+                    }
+                ].map((metric, index) => (
+                    <Grid size={{ xs: 12, sm: 6, md: 3 }} key={index}>
+                        <Card
+                            elevation={0}
+                            sx={{
+                                background: metric.gradient,
+                                borderRadius: 3,
+                                height: '100%',
+                                position: 'relative',
+                                overflow: 'hidden',
+                                transition: 'all 0.3s ease-in-out',
+                                cursor: 'pointer',
+                                '&:hover': {
+                                    transform: 'translateY(-2px)',
+                                    boxShadow: '0 12px 24px rgba(0,0,0,0.15)',
+                                    '& .metric-icon': {
+                                        transform: 'scale(1.1) rotate(5deg)'
+                                    }
+                                }
+                            }}
+                        >
+                            <CardContent sx={{
+                                p: { xs: 1.5, sm: 2 },
+                                position: 'relative',
+                                zIndex: 1,
+                                height: '100%',
+                                display: 'flex',
+                                flexDirection: 'column'
+                            }}>
+                                <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
+                                    <Box>
+                                        <Typography
+                                            variant="caption"
+                                            sx={{
+                                                fontSize: { xs: '0.65rem', sm: '1rem' },
+                                                fontWeight: 500,
+                                                display: 'block',
+                                                mb: 0.5,
+                                                color: '#fff',
+                                                textTransform: 'uppercase',
+                                                letterSpacing: '0.5px'
+                                            }}
+                                        >
+                                            {metric.title}
+                                        </Typography>
+                                        <Typography
+                                            variant="h5"
+                                            fontWeight="bold"
+                                            sx={{
+                                                fontSize: { xs: '1.1rem', sm: '1.5rem', md: '1.75rem' },
+                                                mb: 0.5,
+                                                color: 'white',
+                                                textShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                                            }}
+                                        >
+                                            {metric.title === "Total Stock Qty" ? (
+                                                <div>
+                                                    <span style={{ fontWeight: 'bold', fontSize: '1.1rem' }}>
+                                                        Qty: {metric.value}
+                                                    </span>
+                                                    <span style={{ fontWeight: 'normal', fontSize: '1rem', marginLeft: '8px', marginRight: '8px' }}>
+                                                        |
+                                                    </span>
+                                                    <span style={{ fontWeight: 'bold', fontSize: '1.1rem' }}>
+                                                        Value: {metric.qty}
+                                                    </span>
+                                                </div>
+                                            ) : metric.value}
+                                        </Typography>
+                                    </Box>
+
+                                    <Box sx={{
+                                        width: { xs: 36, sm: 44 },
+                                        height: { xs: 36, sm: 44 },
+                                        borderRadius: '12px',
+                                        background: metric.iconBg,
+                                        backdropFilter: 'blur(10px)',
+                                        border: '1px solid rgba(255, 255, 255, 0.2)',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        transition: 'all 0.3s ease',
+                                        className: 'metric-icon'
+                                    }}>
+                                        {React.cloneElement(metric.icon, {
+                                            sx: {
+                                                color: 'white',
+                                                fontSize: { xs: 18, sm: 22 },
+                                                filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))'
+                                            }
+                                        })}
+                                    </Box>
+                                </Stack>
+
+                                <Box sx={{ position: 'absolute', top: 8, right: 8, opacity: 0.1, zIndex: 0 }}>
+                                    {metric.trend === 'up' ? '↗' : '↘'}
+                                </Box>
+                            </CardContent>
+
+                            {/* Bottom shine animation */}
+                            <Box sx={{
+                                position: 'absolute',
+                                bottom: 0,
+                                left: 0,
+                                width: '100%',
+                                height: 3,
+                                bgcolor: 'rgba(255, 255, 255, 0.2)',
+                                overflow: 'hidden',
+                                '&:after': {
+                                    content: '""',
+                                    position: 'absolute',
+                                    top: 0,
+                                    left: 0,
+                                    width: '100%',
+                                    height: '100%',
+                                    background: 'rgba(255, 255, 255, 0.4)',
+                                    animation: 'progress 2s ease-in-out infinite alternate'
+                                },
+                                '@keyframes progress': {
+                                    '0%': { transform: 'translateX(-100%)' },
+                                    '100%': { transform: 'translateX(100%)' }
+                                }
+                            }} />
+                        </Card>
+                    </Grid>
+                ))}
             </Grid>
 
             <Grid container rowSpacing={0} columnSpacing={1}>
@@ -666,13 +783,13 @@ const Stock = () => {
                                 fontSize: '1.25rem',
                             }}
                         >
-                            Top Product Distributions
+                            Top Category Wise
                         </Typography>
                         <Box sx={{ width: '100%', height: 400 }}>
                             <ResponsiveContainer width="100%" height="100%">
                                 <PieChart>
                                     <Pie
-                                        data={productPie}
+                                        data={categoryPie}
                                         dataKey="prodQty"
                                         nameKey="name"
                                         cx="50%"
@@ -681,7 +798,7 @@ const Stock = () => {
                                         fill="#8884d8"
                                         paddingAngle={5}
                                     >
-                                        {productPie.map((entry, index) => (
+                                        {categoryPie.map((entry, index) => (
                                             <Cell key={`cell-${index}`} fill={prodColors[index % prodColors.length]} />
                                         ))}
                                     </Pie>
