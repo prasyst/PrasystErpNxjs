@@ -249,7 +249,6 @@ useEffect(() => {
     }
   };
 
-// Function to populate form data from API response - FIXED branch selection
 // Function to populate form data from API response - FIXED branch and shipping party selection
 const populateFormData = async (orderData) => {
   try {
@@ -330,12 +329,12 @@ const populateFormData = async (orderData) => {
       gstTypeValue
     });
 
-    // FIXED: Also process ORDBKSTYLIST to preserve Type and Pattern keys
+    // FIXED: Also process ORDBKSTYLIST to preserve Type, Shade and Pattern keys
     const processedOrdbkStyleList = orderData.ORDBKSTYLIST ? orderData.ORDBKSTYLIST.map(item => ({
       ...item,
-      // Preserve Type and Pattern keys
+      // Preserve Type, Shade and Pattern keys
       FGTYPE_KEY: item.FGTYPE_KEY || "",
-      FGSHADE_KEY: item.FGSHADE_KEY || "",
+      FGSHADE_KEY: item.FGSHADE_KEY || "", // IMPORTANT: Preserve shade key
       FGPTN_KEY: item.FGPTN_KEY || "",
       // Ensure other required fields
       FGPRD_KEY: item.FGPRD_KEY || "",
@@ -451,7 +450,6 @@ const populateFormData = async (orderData) => {
 
   } catch (error) {
     console.error('Error populating form data:', error);
-    // showSnackbar('Error populating form data', 'error');
   }
 };
 
@@ -473,7 +471,8 @@ const prepareSubmitPayload = () => {
     };
     return statusMapping[status] || "1";
   };
-const correctOrdbkKey = formData.ORDBK_KEY || `25${companyConfig.COBR_ID}${formData.ORDER_NO}`;
+  
+  const correctOrdbkKey = formData.ORDBK_KEY || `25${companyConfig.COBR_ID}${formData.ORDER_NO}`;
   const partyKey = formData.PARTY_KEY;
   const branchId = formData.PARTYDTL_ID || 0;
   const brokerKey = formData.BROKER_KEY || "";
@@ -504,8 +503,6 @@ const correctOrdbkKey = formData.ORDBK_KEY || `25${companyConfig.COBR_ID}${formD
   // Get ORDBKSTYLIST from formData
   const ordbkStyleList = formData.apiResponseData?.ORDBKSTYLIST || [];
   
-
-  
   console.log('Using ORDBK_KEY:', correctOrdbkKey);
 
   // Transform ORDBKSTYLIST for API with proper keys handling
@@ -525,7 +522,7 @@ const correctOrdbkKey = formData.ORDBK_KEY || `25${companyConfig.COBR_ID}${formD
       }
     }
 
-    // FIXED: Preserve original Type and Pattern keys for existing items in edit mode
+    // FIXED: Preserve original Type, Shade, and Pattern keys for existing items in edit mode
     let fgtypeKey, fgshadeKey, fgptnKey;
     
     if (mode === 'edit' && item.ORDBKSTY_ID && item.ORDBKSTY_ID > 0) {
@@ -549,7 +546,7 @@ const correctOrdbkKey = formData.ORDBK_KEY || `25${companyConfig.COBR_ID}${formD
       FGSTYLE_CODE: item.FGSTYLE_CODE || "",
       // FIXED: Preserve these keys properly in all modes
       FGTYPE_KEY: fgtypeKey,
-      FGSHADE_KEY: fgshadeKey,
+      FGSHADE_KEY: fgshadeKey, // IMPORTANT: FGSHADE_KEY include karna
       FGPTN_KEY: fgptnKey,
       FGITM_KEY: item.FGITM_KEY || "",
       QTY: parseFloat(item.QTY || item.ITMQTY) || 0,
@@ -718,7 +715,7 @@ const correctOrdbkKey = formData.ORDBK_KEY || `25${companyConfig.COBR_ID}${formD
   const basePayload = {
     DBFLAG: dbFlag,
     FCYR_KEY: "25",
-     CO_ID: companyConfig.CO_ID, 
+    CO_ID: companyConfig.CO_ID, 
     COBR_ID: companyConfig.COBR_ID, 
     ORDBK_NO: formData.ORDER_NO || "",
     CURR_SEASON_KEY: seasonKey,
@@ -772,7 +769,7 @@ const correctOrdbkKey = formData.ORDBK_KEY || `25${companyConfig.COBR_ID}${formD
     ORDBK_ADD_CESS_AMT: 0,
     ORDBK_GST_AMT: parseFloat(formData.ORDBK_GST_AMT) || 0,
     ORDBK_EXTRA_AMT: 0,
-    ORDBKSTYLIST: transformedOrdbkStyleList,
+    ORDBKSTYLIST: transformedOrdbkStyleList, // This now contains FGSHADE_KEY
     ORDBKTERMLIST: ordbkTermList,
     ORDBKGSTLIST: ordbkGstList, // Will be empty array if GST_APPL = "N"
     DISTBTR_KEY: consigneeKey,
@@ -799,7 +796,7 @@ const correctOrdbkKey = formData.ORDBK_KEY || `25${companyConfig.COBR_ID}${formD
 
   // Rest of your existing functions remain the same...
   const handleTable = () => {
-    router.push('/inverntory/stock-enquiry-table');
+    router.push('/inverntory/barcodetable');
   };
 
   const handlePrev = () => {
