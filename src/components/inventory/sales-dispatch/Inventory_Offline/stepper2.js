@@ -18,7 +18,12 @@ import {
   InputAdornment,
   Divider,
   Snackbar,
-  Alert
+  Alert, FormControl,
+  Select,
+  MenuItem,
+  InputLabel,
+  OutlinedInput,
+  Chip,
 } from '@mui/material';
 import AutoVibe from '../../../../GlobalFunction/CustomAutoComplete/AutoVibe';
 import axiosInstance from '../../../../lib/axios';
@@ -34,7 +39,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 
 const FORM_MODE = getFormMode();
 
-const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCancel, onNext,onPrev, showSnackbar, showValidationErrors }) => {
+const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, companyConfig, onCancel, onNext, onPrev, showSnackbar, showValidationErrors }) => {
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [selectedStyle, setSelectedStyle] = useState(null);
   const [selectedRow, setSelectedRow] = useState(null);
@@ -50,6 +55,10 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
   const [typeOptions, setTypeOptions] = useState([]);
   const [shadeOptions, setShadeOptions] = useState([]);
   const [lotNoOptions, setLotNoOptions] = useState([]);
+
+  const [availableShades, setAvailableShades] = useState([]);
+  const [selectedShades, setSelectedShades] = useState([]);
+  const [shadeViewMode, setShadeViewMode] = useState('allocated');
   
   // State for storing mappings
   const [productMapping, setProductMapping] = useState({});
@@ -58,7 +67,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
   const [shadeMapping, setShadeMapping] = useState({});
   const [lotNoMapping, setLotNoMapping] = useState({});
   
-  // NEW: State for style code and barcode text input
+  // State for style code and barcode text input
   const [styleCodeInput, setStyleCodeInput] = useState('');
   const [isLoadingStyleCode, setIsLoadingStyleCode] = useState(false);
   const styleCodeTimeoutRef = useRef(null);
@@ -67,10 +76,10 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
   const [isLoadingBarcode, setIsLoadingBarcode] = useState(false);
   const barcodeTimeoutRef = useRef(null);
 
-  // NEW: Track source of data loading
+  // Track source of data loading
   const [dataSource, setDataSource] = useState(null);
   
-  // NEW: State for size details loading
+  // State for size details loading
   const [isSizeDetailsLoaded, setIsSizeDetailsLoaded] = useState(false);
 
   // State for table filters
@@ -120,7 +129,6 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
   // State for updated table data
   const [updatedTableData, setUpdatedTableData] = useState([]);
 
-  // Updated textInputSx with white background for disabled state
   const textInputSx = {
     '& .MuiInputBase-root': {
       height: 36,
@@ -154,7 +162,6 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
     }
   };
 
-  // Updated DropInputSx with white background for disabled state
   const DropInputSx = {
     '& .MuiInputBase-root': {
       height: 36,
@@ -194,39 +201,15 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
     }
   };
 
-  const datePickerSx = {
-    "& .MuiInputBase-root": {
-      height: "32px",
-    },
-    "& .MuiInputBase-input": {
-      padding: "4px 8px",
-      fontSize: "12px",
-    },
-    "& .MuiInputLabel-root": {
-      top: "-6px",
-      fontSize: "12px",
-    },
-    "& .MuiInputBase-root.Mui-disabled": {
-      backgroundColor: '#ffffff',
-      '& .MuiFilledInput-root': {
-        backgroundColor: '#ffffff',
-      }
-    },
-    "& .MuiFilledInput-root.Mui-disabled": {
-      backgroundColor: '#ffffff',
-    }
-  };
-
-  // Parse ORDBKSTYLIST data for table - FIXED for Type, Shade, Pattern
+  // Parse ORDBKSTYLIST data for table
   const initialTableData = formData.apiResponseData?.ORDBKSTYLIST ? formData.apiResponseData.ORDBKSTYLIST.map((item, index) => ({
     id: item.ORDBKSTY_ID || index + 1,
     BarCode: item.FGITEM_KEY || "-",
     product: item.PRODUCT || "-",
     style: item.STYLE || "-",
-    // FIXED: Use TYPE, SHADE, PATTERN from API response
     type: item.TYPE || "-",
     shade: item.SHADE || "-",
-    lotNo: item.PATTERN || formData.SEASON || "-", // PATTERN is Lot No
+    lotNo: item.PATTERN || formData.SEASON || "-",
     qty: parseFloat(item.ITMQTY) || 0,
     mrp: parseFloat(item.MRP) || 0,
     rate: parseFloat(item.ITMRATE) || 0,
@@ -246,27 +229,21 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
     FGPTN_KEY: item.FGPTN_KEY || ""
   })) : [];
 
-  // Use updatedTableData if available, otherwise use initial data
   const tableData = updatedTableData.length > 0 ? updatedTableData : initialTableData;
 
-  // Filter table data based on filters
   const filteredTableData = tableData.filter(row => {
     return Object.keys(tableFilters).every(key => {
       if (!tableFilters[key]) return true;
-      
       const filterValue = tableFilters[key].toString().toLowerCase();
       const rowValue = row[key]?.toString().toLowerCase() || '';
-      
       return rowValue.includes(filterValue);
     });
   });
 
-  // Update hasRecords when tableData changes
   useEffect(() => {
     setHasRecords(tableData.length > 0);
   }, [tableData]);
 
-  // Calculate totals from table data
   const calculateTotals = () => {
     const totalQty = tableData.reduce((sum, row) => sum + (row.qty || 0), 0);
     const totalAmount = tableData.reduce((sum, row) => sum + (row.amount || 0), 0);
@@ -284,12 +261,10 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
     }));
   };
 
-  // Calculate totals whenever tableData changes
   useEffect(() => {
     calculateTotals();
   }, [tableData]);
 
-  // Cleanup timeout on component unmount
   useEffect(() => {
     return () => {
       if (styleCodeTimeoutRef.current) {
@@ -301,7 +276,6 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
     };
   }, []);
 
-  // Initialize with first row's size details when component loads
   useEffect(() => {
     if (tableData.length > 0 && !selectedRow) {
       const firstRow = tableData[0];
@@ -311,16 +285,13 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
     }
   }, [tableData, selectedRow]);
 
-  // Load product and other dropdown data when component mounts or formData changes
   useEffect(() => {
     fetchProductData();
   }, []);
 
-  // Populate product and other fields when formData has data
   useEffect(() => {
     if (formData.apiResponseData?.ORDBKSTYLIST && formData.apiResponseData.ORDBKSTYLIST.length > 0) {
       const firstItem = formData.apiResponseData.ORDBKSTYLIST[0];
-      
       if (firstItem.PRODUCT) {
         setSelectedProduct(firstItem.PRODUCT);
       }
@@ -338,7 +309,6 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
     }));
   };
 
-  // Clear all filters
   const clearAllFilters = () => {
     setTableFilters({
       BarCode: '',
@@ -454,6 +424,11 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
       if (response.data.DATA && response.data.DATA.length > 0) {
         const styleData = response.data.DATA[0];
         
+        // Fetch shades for this style
+        if (styleData.FGSTYLE_ID) {
+          await fetchShadesForStyle(styleData.FGSTYLE_ID, shadeViewMode);
+        }
+        
         if (isAddingNew || isEditingSize) {
           setNewItemData(prev => ({
             ...prev,
@@ -461,7 +436,8 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
             style: styleData.FGSTYLE_CODE || styleData.FGSTYLE_NAME || '',
             type: styleData.FGTYPE_NAME || '',
             mrp: styleData.MRP ? styleData.MRP.toString() : '',
-            rate: styleData.SSP ? styleData.SSP.toString() : ''
+            rate: styleData.SSP ? styleData.SSP.toString() : '',
+            shade: selectedShades.length > 0 ? selectedShades[0] : ''
           }));
           
           if (styleData.FGPRD_NAME && styleData.FGPRD_KEY) {
@@ -480,9 +456,10 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
           
           if (styleData.FGSTYLE_ID) {
             await fetchTypeData(styleData.FGSTYLE_ID);
-            await fetchShadeData(styleData.FGSTYLE_ID);
             await fetchLotNoData(styleData.FGSTYLE_ID);
           }
+          
+          await fetchSizeDetailsForStyle(styleData);
         }
       }
     } catch (error) {
@@ -490,6 +467,108 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
     } finally {
       setIsLoadingStyleCode(false);
     }
+  };
+
+  // Fetch shades for style - UPDATED FUNCTION
+  const fetchShadesForStyle = async (fgstyleId, mode = 'allocated') => {
+    try {
+      const payload = {
+        "FGSTYLE_ID": mode === 'allocated' ? fgstyleId.toString() : "",
+        "FLAG": ""
+      };
+
+      const response = await axiosInstance.post('/Fgshade/GetFgshadedrp', payload);
+      console.log('Shades API Response for FGSTYLE_ID:', fgstyleId, response.data);
+      
+      if (response.data.DATA && Array.isArray(response.data.DATA)) {
+        const shades = response.data.DATA.map(item => ({
+          FGSHADE_NAME: item.FGSHADE_NAME || '',
+          FGSHADE_KEY: item.FGSHADE_KEY || '',
+          FGSTYLE_ID: item.FGSTYLE_ID || fgstyleId
+        }));
+        
+        // Build shade mapping
+        const shadeMap = {};
+        response.data.DATA.forEach(item => {
+          if (item.FGSHADE_NAME && item.FGSHADE_KEY) {
+            shadeMap[item.FGSHADE_NAME] = item.FGSHADE_KEY;
+          }
+        });
+        setShadeMapping(shadeMap);
+        
+        setAvailableShades(shades);
+        
+        // If in allocated mode, auto-select the first shade
+        if (mode === 'allocated' && shades.length > 0) {
+          const firstShade = shades[0].FGSHADE_NAME;
+          setSelectedShades([firstShade]);
+          
+          // Also update the newItemData shade field
+          setNewItemData(prev => ({
+            ...prev,
+            shade: firstShade
+          }));
+        } else if (mode === 'all') {
+          // For all mode, don't auto-select any shade
+          setSelectedShades([]);
+        }
+        
+        return shades;
+      } else {
+        console.warn('No shades data received');
+        setAvailableShades([]);
+        setSelectedShades([]);
+        return [];
+      }
+    } catch (error) {
+      console.error('Error fetching shades:', error);
+      showSnackbar('Error fetching shades', 'error');
+      setAvailableShades([]);
+      setSelectedShades([]);
+      return [];
+    }
+  };
+
+  // Handle shade selection change
+  const handleShadeSelectionChange = (event) => {
+    const {
+      target: { value },
+    } = event;
+    
+    setSelectedShades(
+      typeof value === 'string' ? value.split(',') : value,
+    );
+    
+    // Update newItemData shade field with first selected shade
+    if (value && value.length > 0) {
+      const firstShade = typeof value === 'string' ? value.split(',')[0] : value[0];
+      setNewItemData(prev => ({
+        ...prev,
+        shade: firstShade
+      }));
+    }
+  };
+
+  // Handle All button click
+  const handleAllShadesClick = async () => {
+    const currentStyleId = styleMapping[newItemData.style] || styleMapping[selectedStyle];
+    if (!currentStyleId) {
+      showSnackbar('Please select a style first', 'warning');
+      return;
+    }
+    setShadeViewMode('all');
+    await fetchShadesForStyle(currentStyleId, 'all');
+  };
+
+  // Handle Allocated button click
+  const handleAllocatedShadesClick = async () => {
+    const currentStyleId = styleMapping[newItemData.style] || styleMapping[selectedStyle];
+    if (!currentStyleId) {
+      showSnackbar('Please select a style first', 'warning');
+      return;
+    }
+    setShadeViewMode('allocated');
+    await fetchShadesForStyle(currentStyleId, 'allocated');
   };
 
   // Fetch style data by barcode
@@ -514,6 +593,11 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
         const styleData = response.data.DATA[0];
         const barcodeValue = styleData.ALT_BARCODE || styleData.STYSTKDTL_KEY || '';
         
+        // Fetch shades for this style
+        if (styleData.FGSTYLE_ID) {
+          await fetchShadesForStyle(styleData.FGSTYLE_ID, shadeViewMode);
+        }
+        
         if (isAddingNew || isEditingSize) {
           setNewItemData(prev => ({
             ...prev,
@@ -522,7 +606,8 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
             type: styleData.FGTYPE_NAME || '',
             mrp: styleData.MRP ? styleData.MRP.toString() : '',
             rate: styleData.SSP ? styleData.SSP.toString() : '',
-            barcode: barcodeValue
+            barcode: barcodeValue,
+            shade: selectedShades.length > 0 ? selectedShades[0] : ''
           }));
           
           if (styleData.FGPRD_NAME && styleData.FGPRD_KEY) {
@@ -541,7 +626,6 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
           
           if (styleData.FGSTYLE_ID) {
             await fetchTypeData(styleData.FGSTYLE_ID);
-            await fetchShadeData(styleData.FGSTYLE_ID);
             await fetchLotNoData(styleData.FGSTYLE_ID);
           }
           
@@ -555,7 +639,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
     }
   };
 
-  // Auto-load size details for style data (used ONLY for barcode)
+  // Auto-load size details for style data
   const fetchSizeDetailsForStyle = async (styleData) => {
     try {
       const fgprdKey = styleData.FGPRD_KEY;
@@ -641,40 +725,6 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
     }
   };
 
-  // Fetch Shade dropdown data
-  const fetchShadeData = async (fgstyleId) => {
-    if (!fgstyleId) return;
-
-    try {
-      const payload = {
-        "FGSTYLE_ID": fgstyleId,
-        "FLAG": ""
-      };
-
-      const response = await axiosInstance.post('/Fgshade/GetFgshadedrp', payload);
-
-      if (response.data.DATA) {
-        const shades = response.data.DATA.map(item => item.FGSHADE_NAME || '');
-        setShadeOptions(shades);
-        
-        const mapping = {};
-        response.data.DATA.forEach(item => {
-          if (item.FGSHADE_NAME && item.FGSHADE_KEY) {
-            mapping[item.FGSHADE_NAME] = item.FGSHADE_KEY;
-          }
-        });
-        setShadeMapping(mapping);
-      } else {
-        setShadeOptions([]);
-        setShadeMapping({});
-      }
-    } catch (error) {
-      console.error('Error fetching shade data:', error);
-      setShadeOptions([]);
-      setShadeMapping({});
-    }
-  };
-
   // Fetch Lot No dropdown data
   const fetchLotNoData = async (fgstyleId) => {
     if (!fgstyleId) return;
@@ -756,7 +806,6 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
 
         setSizeDetailsData(transformedSizeDetails);
         setIsSizeDetailsLoaded(true);
-        // showSnackbar("Size details loaded successfully! Please enter quantities for each size.");
       } else {
         showSnackbar("No size details found for the selected combination.", 'warning');
         setSizeDetailsData([]);
@@ -821,17 +870,19 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
           lotNo: ''
         }));
         setTypeOptions([]);
-        setShadeOptions([]);
         setLotNoOptions([]);
         setSizeDetailsData([]);
         setIsSizeDetailsLoaded(false);
+        setAvailableShades([]);
+        setSelectedShades([]);
       } else {
         setStyleOptions([]);
         setTypeOptions([]);
-        setShadeOptions([]);
         setLotNoOptions([]);
         setSizeDetailsData([]);
         setIsSizeDetailsLoaded(false);
+        setAvailableShades([]);
+        setSelectedShades([]);
       }
     }
   };
@@ -851,13 +902,17 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
         lotNo: ''
       }));
       setTypeOptions([]);
-      setShadeOptions([]);
       setLotNoOptions([]);
       setSizeDetailsData([]);
       setIsSizeDetailsLoaded(false);
+      setAvailableShades([]);
+      setSelectedShades([]);
       
       if (value && styleMapping[value]) {
         const fgstyleId = styleMapping[value];
+        
+        // Fetch shades for the selected style
+        await fetchShadesForStyle(fgstyleId, shadeViewMode);
         
         const payload = {
           "FGSTYLE_ID": fgstyleId,
@@ -884,7 +939,6 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
         }
         
         await fetchTypeData(fgstyleId);
-        await fetchShadeData(fgstyleId);
         await fetchLotNoData(fgstyleId);
       }
     }
@@ -894,15 +948,6 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
   const handleTypeChange = (event, value) => {
     if (isAddingNew || isEditingSize) {
       setNewItemData(prev => ({ ...prev, type: value }));
-      setSizeDetailsData([]);
-      setIsSizeDetailsLoaded(false);
-    }
-  };
-
-  // Handle shade selection change
-  const handleShadeChange = (event, value) => {
-    if (isAddingNew || isEditingSize) {
-      setNewItemData(prev => ({ ...prev, shade: value }));
       setSizeDetailsData([]);
       setIsSizeDetailsLoaded(false);
     }
@@ -920,7 +965,6 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
   // Handle row click
   const handleRowClick = (row) => {
     setSelectedRow(row.id);
-    
     const sizeDetails = row.originalData?.ORDBKSTYSZLIST || [];
     setSizeDetailsData(sizeDetails);
 
@@ -930,37 +974,37 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
   };
 
   const populateFormFields = (row) => {
-  setEditingRowData(row);
-  
-  const totalSizeQty = row.originalData?.ORDBKSTYSZLIST?.reduce((sum, size) => sum + (parseFloat(size.QTY) || 0), 0) || row.qty;
-  const convFact = totalSizeQty / (parseFloat(row.qty) || 1);
-  
-  setNewItemData({
-    product: row.product || '',
-    barcode: row.BarCode || '',
-    style: row.style || '',
-    type: row.type || '',
-    shade: row.shade || '',
-    qty: row.qty?.toString() || '',
-    mrp: row.mrp?.toString() || '',
-    rate: row.rate?.toString() || '',
-    setNo: '',
-    varPer: row.varPer?.toString() || '',
-    stdQty: '',
-    convFact: convFact.toString() || '1',
-    lotNo: row.lotNo || '',
-    discount: row.discAmt?.toString() || '',
-    percent: '',
-    remark: '',
-    divDt: '',
-    rQty: '',
-    sets: row.set?.toString() || ''
-  });
-  
-  // Also update style code and barcode input fields
-  setStyleCodeInput(row.style || '');
-  setBarcodeInput(row.BarCode || '');
-};
+    setEditingRowData(row);
+    
+    const totalSizeQty = row.originalData?.ORDBKSTYSZLIST?.reduce((sum, size) => sum + (parseFloat(size.QTY) || 0), 0) || row.qty;
+    const convFact = totalSizeQty / (parseFloat(row.qty) || 1);
+    
+    setNewItemData({
+      product: row.product || '',
+      barcode: row.BarCode || '',
+      style: row.style || '',
+      type: row.type || '',
+      shade: row.shade || '',
+      qty: row.qty?.toString() || '',
+      mrp: row.mrp?.toString() || '',
+      rate: row.rate?.toString() || '',
+      setNo: '',
+      varPer: row.varPer?.toString() || '',
+      stdQty: '',
+      convFact: convFact.toString() || '1',
+      lotNo: row.lotNo || '',
+      discount: row.discAmt?.toString() || '',
+      percent: '',
+      remark: '',
+      divDt: '',
+      rQty: '',
+      sets: row.set?.toString() || ''
+    });
+    
+    // Also update style code and barcode input fields
+    setStyleCodeInput(row.style || '');
+    setBarcodeInput(row.BarCode || '');
+  };
 
   const handleNewItemChange = (e) => {
     const { name, value } = e.target;
@@ -985,6 +1029,8 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
     setSizeDetailsData([]);
     setIsSizeDetailsLoaded(false);
     setDataSource(null);
+    setAvailableShades([]);
+    setSelectedShades([]);
     
     await fetchProductData();
     
@@ -1014,11 +1060,10 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
     setBarcodeInput('');
     setStyleOptions([]);
     setTypeOptions([]);
-    setShadeOptions([]);
     setLotNoOptions([]);
   };
 
-  // Handle Confirm Add - FIXED with proper Type, Shade, Pattern handling
+  // Handle Confirm Add - UPDATED for multi-shade
   const handleConfirmAdd = () => {
     // Validation
     if (!newItemData.product || !newItemData.style) {
@@ -1040,10 +1085,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
 
     const fgprdKey = productMapping[newItemData.product] || productMapping[newItemData.style] || "";
     const fgstyleId = styleMapping[newItemData.style] || "";
-    const fgtypeKey = typeMapping[newItemData.type] || "";
-    const fgshadeKey = shadeMapping[newItemData.shade] || "";
-    const fgptnKey = lotNoMapping[newItemData.lotNo] || "";
-
+    
     const totalQty = sizesWithQty.reduce((sum, size) => sum + (parseFloat(size.QTY) || 0), 0);
     const mrp = parseFloat(newItemData.mrp) || 0;
     const rate = parseFloat(newItemData.rate) || 0;
@@ -1062,7 +1104,74 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
       ITM_AMT: (parseFloat(size.QTY) || 0) * rate
     }));
 
-    const newItem = {
+    // Create items for EACH selected shade with FULL quantity
+    const newItems = selectedShades.map((shade, shadeIndex) => {
+      // Each shade gets full quantity (not divided)
+      const shadeAmount = totalAmount;
+      const shadeQty = totalQty;
+      
+      const fgshadeKey = shadeMapping[shade] || "";
+      const fgtypeKey = typeMapping[newItemData.type] || "";
+      const fgptnKey = lotNoMapping[newItemData.lotNo] || "";
+
+      return {
+        id: tempId + shadeIndex,
+        BarCode: newItemData.barcode || "-",
+        product: newItemData.product,
+        style: newItemData.style || "-",
+        type: newItemData.type || "-",
+        shade: shade || "-",
+        lotNo: newItemData.lotNo || "-",
+        qty: shadeQty,
+        mrp: mrp,
+        rate: rate,
+        amount: shadeAmount,
+        varPer: parseFloat(newItemData.varPer) || 0,
+        varQty: 0,
+        varAmt: 0,
+        discAmt: discount,
+        netAmt: netAmount,
+        distributer: "-",
+        set: parseFloat(newItemData.sets) || 0,
+        originalData: {
+          ORDBKSTY_ID: tempId + shadeIndex,
+          FGITEM_KEY: newItemData.barcode || "-",
+          PRODUCT: newItemData.product,
+          STYLE: newItemData.style,
+          TYPE: newItemData.type || "-",
+          SHADE: shade || "-",
+          PATTERN: newItemData.lotNo || "-",
+          ITMQTY: shadeQty,
+          MRP: mrp,
+          ITMRATE: rate,
+          ITMAMT: shadeAmount,
+          DLV_VAR_PERC: parseFloat(newItemData.varPer) || 0,
+          DLV_VAR_QTY: 0,
+          DISC_AMT: discount,
+          NET_AMT: netAmount,
+          DISTBTR: "-",
+          SETQTY: parseFloat(newItemData.sets) || 0,
+          ORDBKSTYSZLIST: updatedSizeDetails.map(size => ({
+            ...size,
+            ORDBKSTYSZ_ID: 0
+          })),
+          FGPRD_KEY: fgprdKey,
+          FGSTYLE_ID: fgstyleId,
+          FGTYPE_KEY: fgtypeKey,
+          FGSHADE_KEY: fgshadeKey, // IMPORTANT: FGSHADE_KEY pass karna
+          FGPTN_KEY: fgptnKey,
+          DBFLAG: mode === 'add' ? 'I' : 'I'
+        },
+        FGSTYLE_ID: fgstyleId,
+        FGPRD_KEY: fgprdKey,
+        FGTYPE_KEY: fgtypeKey,
+        FGSHADE_KEY: fgshadeKey, // Store shade key
+        FGPTN_KEY: fgptnKey
+      };
+    });
+
+    // If no shades selected, create single item with current shade
+    const finalNewItems = selectedShades.length > 0 ? newItems : [{
       id: tempId,
       BarCode: newItemData.barcode || "-",
       product: newItemData.product,
@@ -1105,57 +1214,57 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
         })),
         FGPRD_KEY: fgprdKey,
         FGSTYLE_ID: fgstyleId,
-        FGTYPE_KEY: fgtypeKey,
-        FGSHADE_KEY: fgshadeKey,
-        FGPTN_KEY: fgptnKey,
+        FGTYPE_KEY: typeMapping[newItemData.type] || "",
+        FGSHADE_KEY: shadeMapping[newItemData.shade] || "", // Shade key
+        FGPTN_KEY: lotNoMapping[newItemData.lotNo] || "",
         DBFLAG: mode === 'add' ? 'I' : 'I'
       },
       FGSTYLE_ID: fgstyleId,
       FGPRD_KEY: fgprdKey,
-      FGTYPE_KEY: fgtypeKey,
-      FGSHADE_KEY: fgshadeKey,
-      FGPTN_KEY: fgptnKey
-    };
+      FGTYPE_KEY: typeMapping[newItemData.type] || "",
+      FGSHADE_KEY: shadeMapping[newItemData.shade] || "", // Store shade key
+      FGPTN_KEY: lotNoMapping[newItemData.lotNo] || ""
+    }];
 
-    const newTableData = [...tableData, newItem];
+    const newTableData = [...tableData, ...finalNewItems];
     setUpdatedTableData(newTableData);
 
-    // Update formData
-    const newOrdbkStyleItem = {
-      ORDBKSTY_ID: tempId,
-      FGITEM_KEY: newItem.BarCode,
-      PRODUCT: newItem.product,
-      STYLE: newItem.style,
-      TYPE: newItem.type,
-      SHADE: newItem.shade,
-      PATTERN: newItem.lotNo,
-      ITMQTY: newItem.qty,
-      MRP: newItem.mrp,
-      ITMRATE: newItem.rate,
-      ITMAMT: newItem.amount,
-      DLV_VAR_PERC: newItem.varPer,
-      DLV_VAR_QTY: newItem.varQty,
-      DISC_AMT: newItem.discAmt,
-      NET_AMT: newItem.netAmt,
-      DISTBTR: newItem.distributer,
-      SETQTY: newItem.set,
+    // Update formData with all items
+    const newOrdbkStyleItems = finalNewItems.map(item => ({
+      ORDBKSTY_ID: item.id,
+      FGITEM_KEY: item.BarCode,
+      PRODUCT: item.product,
+      STYLE: item.style,
+      TYPE: item.type,
+      SHADE: item.shade,
+      PATTERN: item.lotNo,
+      ITMQTY: item.qty,
+      MRP: item.mrp,
+      ITMRATE: item.rate,
+      ITMAMT: item.amount,
+      DLV_VAR_PERC: item.varPer,
+      DLV_VAR_QTY: item.varQty,
+      DISC_AMT: item.discAmt,
+      NET_AMT: item.netAmt,
+      DISTBTR: item.distributer,
+      SETQTY: item.set,
       ORDBKSTYSZLIST: updatedSizeDetails.map(size => ({
         ...size,
         ORDBKSTYSZ_ID: 0
       })),
-      FGSTYLE_ID: newItem.FGSTYLE_ID,
-      FGPRD_KEY: fgprdKey,
-      FGTYPE_KEY: fgtypeKey,
-      FGSHADE_KEY: fgshadeKey,
-      FGPTN_KEY: fgptnKey,
+      FGSTYLE_ID: item.FGSTYLE_ID,
+      FGPRD_KEY: item.FGPRD_KEY,
+      FGTYPE_KEY: item.FGTYPE_KEY,
+      FGSHADE_KEY: item.FGSHADE_KEY, // Include FGSHADE_KEY
+      FGPTN_KEY: item.FGPTN_KEY,
       DBFLAG: mode === 'add' ? 'I' : 'I'
-    };
+    }));
 
     setFormData(prev => ({
       ...prev,
       apiResponseData: {
         ...prev.apiResponseData,
-        ORDBKSTYLIST: [...(prev.apiResponseData?.ORDBKSTYLIST || []), newOrdbkStyleItem]
+        ORDBKSTYLIST: [...(prev.apiResponseData?.ORDBKSTYLIST || []), ...newOrdbkStyleItems]
       }
     }));
 
@@ -1186,138 +1295,142 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
     setBarcodeInput('');
     setSizeDetailsData([]);
     setDataSource(null);
+    setSelectedShades([]);
+    setAvailableShades([]);
 
-    // showSnackbar("Item added successfully!");
+    showSnackbar(selectedShades.length > 1 ? 
+      `${selectedShades.length} items added to order (${totalQty} each)!` : 
+      "Item added successfully!");
   };
 
   const handleEditItem = () => {
-  if (!selectedRow) {
-    showSnackbar("Please select an item to edit", 'error');
-    return;
-  }
-  
-  if (isEditingSize) {
-    // SAVE CHANGES LOGIC
-    const updatedTable = tableData.map(row => {
-      if (row.id === selectedRow) {
-        const totalSizeQty = sizeDetailsData.reduce((sum, size) => sum + (parseFloat(size.QTY) || 0), 0);
-        const rate = parseFloat(newItemData.rate) || 0;
-        const amount = sizeDetailsData.reduce((sum, size) => {
-          const sizeQty = parseFloat(size.QTY) || 0;
-          return sum + (sizeQty * rate);
-        }, 0);
-        const discount = parseFloat(newItemData.discount) || 0;
-        const netAmount = amount - discount;
-
-        const originalDbFlag = row.originalData?.DBFLAG || 'U';
-
-        return {
-          ...row,
-          qty: totalSizeQty,
-          mrp: parseFloat(newItemData.mrp) || 0,
-          rate: rate,
-          amount: amount,
-          discAmt: discount,
-          netAmt: netAmount,
-          originalData: {
-            ...row.originalData,
-            ORDBKSTYSZLIST: sizeDetailsData,
-            ITMQTY: totalSizeQty,
-            MRP: parseFloat(newItemData.mrp) || 0,
-            ITMRATE: rate,
-            ITMAMT: amount,
-            DISC_AMT: discount,
-            NET_AMT: netAmount,
-            DBFLAG: originalDbFlag
-          }
-        };
-      }
-      return row;
-    });
+    if (!selectedRow) {
+      showSnackbar("Please select an item to edit", 'error');
+      return;
+    }
     
-    setUpdatedTableData(updatedTable);
-    
-    setFormData(prev => ({
-      ...prev,
-      apiResponseData: {
-        ...prev.apiResponseData,
-        ORDBKSTYLIST: prev.apiResponseData?.ORDBKSTYLIST?.map(item => {
-          if (item.ORDBKSTY_ID === selectedRow) {
-            const totalSizeQty = sizeDetailsData.reduce((sum, size) => sum + (parseFloat(size.QTY) || 0), 0);
-            const rate = parseFloat(newItemData.rate) || 0;
-            const amount = sizeDetailsData.reduce((sum, size) => {
-              const sizeQty = parseFloat(size.QTY) || 0;
-              return sum + (sizeQty * rate);
-            }, 0);
-            const discount = parseFloat(newItemData.discount) || 0;
-            const netAmount = amount - discount;
+    if (isEditingSize) {
+      // SAVE CHANGES LOGIC
+      const updatedTable = tableData.map(row => {
+        if (row.id === selectedRow) {
+          const totalSizeQty = sizeDetailsData.reduce((sum, size) => sum + (parseFloat(size.QTY) || 0), 0);
+          const rate = parseFloat(newItemData.rate) || 0;
+          const amount = sizeDetailsData.reduce((sum, size) => {
+            const sizeQty = parseFloat(size.QTY) || 0;
+            return sum + (sizeQty * rate);
+          }, 0);
+          const discount = parseFloat(newItemData.discount) || 0;
+          const netAmount = amount - discount;
 
-            const originalDbFlag = item.DBFLAG || 'U';
+          const originalDbFlag = row.originalData?.DBFLAG || 'U';
 
-            return {
-              ...item,
+          return {
+            ...row,
+            qty: totalSizeQty,
+            mrp: parseFloat(newItemData.mrp) || 0,
+            rate: rate,
+            amount: amount,
+            discAmt: discount,
+            netAmt: netAmount,
+            originalData: {
+              ...row.originalData,
+              ORDBKSTYSZLIST: sizeDetailsData,
               ITMQTY: totalSizeQty,
               MRP: parseFloat(newItemData.mrp) || 0,
               ITMRATE: rate,
               ITMAMT: amount,
               DISC_AMT: discount,
               NET_AMT: netAmount,
-              ORDBKSTYSZLIST: sizeDetailsData,
               DBFLAG: originalDbFlag
-            };
-          }
-          return item;
-        }) || []
-      }
-    }));
-    
-    setIsEditingSize(false);
-    setIsSizeDetailsLoaded(false);
-    // showSnackbar("Changes saved successfully!");
-  } else {
-    // ENTERING EDIT MODE: Populate form fields with selected row data
-    const selectedRowData = tableData.find(row => row.id === selectedRow);
-    if (selectedRowData) {
-      // First populate form fields
-      populateFormFields(selectedRowData);
-      
-      // Then fetch size details for the selected item
-      const sizeDetails = selectedRowData.originalData?.ORDBKSTYSZLIST || [];
-      setSizeDetailsData(sizeDetails);
-      setIsSizeDetailsLoaded(true); // Mark size details as loaded
-      
-      // Set editing mode to true
-      setIsEditingSize(true);
-      
-      // Set data source to indicate we're loading existing data
-      setDataSource('edit');
-      
-      // Fetch product and style data for dropdowns if needed
-      if (selectedRowData.FGPRD_KEY && !productOptions.includes(selectedRowData.product)) {
-        // If product not in dropdown, fetch it
-        fetchProductData();
-      }
-      
-      if (selectedRowData.FGSTYLE_ID && !styleOptions.includes(selectedRowData.style)) {
-        // If style not in dropdown, fetch styles for this product
-        if (selectedRowData.FGPRD_KEY) {
-          fetchStyleData(selectedRowData.FGPRD_KEY);
+            }
+          };
         }
-      }
+        return row;
+      });
       
-      // Fetch type, shade, lotNo data for this style
-      if (selectedRowData.FGSTYLE_ID) {
-        fetchTypeData(selectedRowData.FGSTYLE_ID);
-        fetchShadeData(selectedRowData.FGSTYLE_ID);
-        fetchLotNoData(selectedRowData.FGSTYLE_ID);
-      }
+      setUpdatedTableData(updatedTable);
       
-      // showSnackbar('Edit mode enabled for selected item. Make changes and click Confirm.');
-    }
-  }
-};
+      setFormData(prev => ({
+        ...prev,
+        apiResponseData: {
+          ...prev.apiResponseData,
+          ORDBKSTYLIST: prev.apiResponseData?.ORDBKSTYLIST?.map(item => {
+            if (item.ORDBKSTY_ID === selectedRow) {
+              const totalSizeQty = sizeDetailsData.reduce((sum, size) => sum + (parseFloat(size.QTY) || 0), 0);
+              const rate = parseFloat(newItemData.rate) || 0;
+              const amount = sizeDetailsData.reduce((sum, size) => {
+                const sizeQty = parseFloat(size.QTY) || 0;
+                return sum + (sizeQty * rate);
+              }, 0);
+              const discount = parseFloat(newItemData.discount) || 0;
+              const netAmount = amount - discount;
 
-  // FIXED: Handle Delete Item (Row immediately removed from table)
+              const originalDbFlag = item.DBFLAG || 'U';
+
+              return {
+                ...item,
+                ITMQTY: totalSizeQty,
+                MRP: parseFloat(newItemData.mrp) || 0,
+                ITMRATE: rate,
+                ITMAMT: amount,
+                DISC_AMT: discount,
+                NET_AMT: netAmount,
+                ORDBKSTYSZLIST: sizeDetailsData,
+                DBFLAG: originalDbFlag
+              };
+            }
+            return item;
+          }) || []
+        }
+      }));
+      
+      setIsEditingSize(false);
+      setIsSizeDetailsLoaded(false);
+      showSnackbar("Changes saved successfully!");
+    } else {
+      // ENTERING EDIT MODE: Populate form fields with selected row data
+      const selectedRowData = tableData.find(row => row.id === selectedRow);
+      if (selectedRowData) {
+        // First populate form fields
+        populateFormFields(selectedRowData);
+        
+        // Then fetch size details for the selected item
+        const sizeDetails = selectedRowData.originalData?.ORDBKSTYSZLIST || [];
+        setSizeDetailsData(sizeDetails);
+        setIsSizeDetailsLoaded(true); // Mark size details as loaded
+        
+        // Set editing mode to true
+        setIsEditingSize(true);
+        
+        // Set data source to indicate we're loading existing data
+        setDataSource('edit');
+        
+        // Fetch product and style data for dropdowns if needed
+        if (selectedRowData.FGPRD_KEY && !productOptions.includes(selectedRowData.product)) {
+          // If product not in dropdown, fetch it
+          fetchProductData();
+        }
+        
+        if (selectedRowData.FGSTYLE_ID && !styleOptions.includes(selectedRowData.style)) {
+          // If style not in dropdown, fetch styles for this product
+          if (selectedRowData.FGPRD_KEY) {
+            fetchStyleData(selectedRowData.FGPRD_KEY);
+          }
+        }
+        
+        // Fetch type, shade, lotNo data for this style
+        if (selectedRowData.FGSTYLE_ID) {
+          fetchTypeData(selectedRowData.FGSTYLE_ID);
+          fetchShadesForStyle(selectedRowData.FGSTYLE_ID, shadeViewMode);
+          fetchLotNoData(selectedRowData.FGSTYLE_ID);
+        }
+        
+        showSnackbar('Edit mode enabled for selected item. Make changes and click Confirm.');
+      }
+    }
+  };
+
+  // Handle Delete Item
   const handleDeleteItem = () => {
     if (!selectedRow) {
       showSnackbar("Please select an item to delete", 'error');
@@ -1363,7 +1476,6 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
       setSizeDetailsData([]);
       setStyleOptions([]);
       setTypeOptions([]);
-      setShadeOptions([]);
       setLotNoOptions([]);
     }
 
@@ -1398,6 +1510,8 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
     setBarcodeInput('');
     setSizeDetailsData([]);
     setDataSource(null);
+    setSelectedShades([]);
+    setAvailableShades([]);
   };
 
   const handleEditCancel = () => {
@@ -1428,6 +1542,8 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
     setStyleCodeInput('');
     setBarcodeInput('');
     setDataSource(null);
+    setSelectedShades([]);
+    setAvailableShades([]);
   };
 
   const handleSizeQtyChange = (index, newQty) => {
@@ -1446,43 +1562,12 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
     setSizeDetailsData(updatedSizeDetails);
   };
 
-  const handleDateChange = (date, fieldName) => {
-    if (date) {
-      const formattedDate = format(date, "dd/MM/yyyy");
-      setFormData(prev => ({
-        ...prev,
-        [fieldName]: formattedDate
-      }));
-    } else {
-      setFormData(prev => ({
-        ...prev,
-        [fieldName]: null
-      }));
-    }
-  };
-
   const shouldDisableFields = () => {
     return !(isAddingNew || isEditingSize);
   };
 
-  const getFieldError = (fieldName) => {
-    if (!showValidationErrors) return '';
-    
-    const requiredFields = {};
-
-    if (requiredFields[fieldName] && !newItemData[fieldName]) {
-      return `${requiredFields[fieldName]} is required`;
-    }
-    
-    if (fieldName === 'qty' && newItemData.qty && parseFloat(newItemData.qty) <= 0) {
-      return 'Quantity must be greater than 0';
-    }
-
-    return '';
-  };
-
   const columns = [
-    // { id: 'BarCode', label: 'BarCode', minWidth: 120 },
+  
     { id: 'product', label: 'Product', minWidth: 120 },
     { id: 'style', label: 'Style', minWidth: 80 },
     { id: 'type', label: 'Type', minWidth: 80 },
@@ -1686,7 +1771,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
             variant="contained"
             startIcon={<EditIcon />}
             onClick={handleEditItem}
-             disabled={isFormDisabled || isEditingSize || isAddingNew}
+            disabled={isFormDisabled || isEditingSize || isAddingNew}
             sx={{
               backgroundColor: '#39ace2',
               color: 'white',
@@ -1762,8 +1847,12 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
           {/* LEFT: Text Fields Section */}
           <Box sx={{ flex: '0 0 60%' }}>
             <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 1 }}>
+              
+             
+              
+              {/* Style Code Field */}
               <TextField 
-                label="Type style code" 
+                label="Type style code Here" 
                 variant="filled" 
                 disabled={shouldDisableFields()}
                 name="styleCode"
@@ -1774,9 +1863,9 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
                 inputProps={{ 
                   style: { padding: '6px 8px', fontSize: '12px' }
                 }}
-                // helperText={isLoadingStyleCode ? "Loading..." : "Type style code"}
               />
 
+              {/* Product Dropdown */}
               <AutoVibe
                 id="Product"
                 disabled={shouldDisableFields()}
@@ -1802,25 +1891,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
                 sx={DropInputSx}
               />
               
-              {/* Style Code Text Field */}
-              
-
-              {/* Barcode Text Field */}
-              {/* <TextField 
-                label="BarCode" 
-                variant="filled" 
-                disabled={shouldDisableFields()}
-                name="barcode"
-                value={barcodeInput}
-                onChange={handleBarcodeInputChange}
-                placeholder="Type barcode"
-                sx={textInputSx} 
-                inputProps={{ 
-                  style: { padding: '6px 8px', fontSize: '12px' }
-                }}
-                helperText={isLoadingBarcode ? "Loading..." : "Type barcode"}
-              /> */}
-              
+              {/* Type Dropdown */}
               <AutoVibe
                 id="Type"
                 disabled={shouldDisableFields()}
@@ -1832,28 +1903,149 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
                 onChange={handleTypeChange}
                 sx={DropInputSx}
               />
-              <AutoVibe
-                id="Shade"
-                disabled={shouldDisableFields()}
-                getOptionLabel={(option) => option || ''}
-                options={shadeOptions}
-                label="Shade"
-                name="shade"
-                value={isAddingNew || isEditingSize ? newItemData.shade : ''}
-                onChange={handleShadeChange}
-                sx={DropInputSx}
-              />
-              <TextField 
-                label="Qty" 
-                variant="filled" 
-                disabled={true}
-                name="qty"
-                value={isAddingNew || isEditingSize ? newItemData.qty : ''}
-                onChange={handleNewItemChange}
-                sx={textInputSx} 
-                inputProps={{ style: { padding: '6px 8px', fontSize: '12px' } }} 
-              />
-              
+
+              {/* Qty Field with All/Allocated Buttons - UPDATED LAYOUT */}
+              <Box sx={{ 
+                display: 'flex', 
+                gap: 0.5,
+                alignItems: 'center'
+              }}>
+                <TextField 
+                  label="Qty" 
+                  variant="filled" 
+                  disabled={true}
+                  name="qty"
+                  value={isAddingNew || isEditingSize ? newItemData.qty : ''}
+                  onChange={handleNewItemChange}
+                  sx={{ 
+                    ...textInputSx, 
+                    flex: 1,
+                    '& .MuiInputBase-input': {
+                      padding: '6px 8px !important',
+                      fontSize: '12px !important'
+                    }
+                  }} 
+                  inputProps={{ style: { padding: '6px 8px', fontSize: '12px' } }} 
+                />
+                <Box sx={{ 
+                  display: 'flex', 
+                  flexDirection: 'column',
+                  gap: 0.5
+                }}>
+                  <Button
+                    variant={shadeViewMode === 'all' ? 'contained' : 'outlined'}
+                    onClick={handleAllShadesClick}
+                    size="small"
+                    disabled={shouldDisableFields()}
+                    sx={{ 
+                      minWidth: '40px',
+                      height: '18px',
+                      fontSize: '10px',
+                      padding: '2px 4px',
+                      backgroundColor: shadeViewMode === 'all' ? '#1976d2' : 'transparent',
+                      color: shadeViewMode === 'all' ? 'white' : '#1976d2',
+                      borderColor: '#1976d2',
+                      '&:hover': {
+                        backgroundColor: shadeViewMode === 'all' ? '#1565c0' : 'rgba(25, 118, 210, 0.04)'
+                      },
+                      '&.Mui-disabled': {
+                        borderColor: '#cccccc',
+                        color: '#666666',
+                        backgroundColor: 'transparent'
+                      }
+                    }}
+                  >
+                    All
+                  </Button>
+                  <Button
+                    variant={shadeViewMode === 'allocated' ? 'contained' : 'outlined'}
+                    onClick={handleAllocatedShadesClick}
+                    size="small"
+                    disabled={shouldDisableFields()}
+                    sx={{ 
+                      minWidth: '40px',
+                      height: '18px',
+                      fontSize: '10px',
+                      padding: '2px 4px',
+                      backgroundColor: shadeViewMode === 'allocated' ? '#1976d2' : 'transparent',
+                      color: shadeViewMode === 'allocated' ? 'white' : '#1976d2',
+                      borderColor: '#1976d2',
+                      '&:hover': {
+                        backgroundColor: shadeViewMode === 'allocated' ? '#1565c0' : 'rgba(25, 118, 210, 0.04)'
+                      },
+                      '&.Mui-disabled': {
+                        borderColor: '#cccccc',
+                        color: '#666666',
+                        backgroundColor: 'transparent'
+                      }
+                    }}
+                  >
+                    Aloc
+                  </Button>
+                </Box>
+              </Box>
+
+              {/* Shade Multi-Select Dropdown */}
+              <FormControl sx={{ width: '100%' }}>
+                <Select
+                  labelId="shade-select-label"
+                  id="shade-select"
+                  multiple
+                  value={selectedShades}
+                  onChange={handleShadeSelectionChange}
+                  disabled={shouldDisableFields()}
+                  input={<OutlinedInput />}
+                  renderValue={(selected) => (
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        flexWrap: 'nowrap',
+                        gap: 0.5,
+                        overflowX: 'auto',
+                        overflowY: 'hidden',
+                        maxWidth: '100%',
+                        alignItems: 'center',
+                        '&::-webkit-scrollbar': {
+                          height: '3px',
+                        },
+                      }}
+                    >
+                      {selected.map((value) => (
+                        <Chip
+                          key={value}
+                          label={value}
+                          size="small"
+                          sx={{
+                            height: '24px',
+                            fontSize: '0.75rem'
+                          }}
+                        />
+                      ))}
+                    </Box>
+                  )}
+                  size="small"
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      minHeight: '36px',
+                      padding: '0px',
+                    },
+                    '& .MuiSelect-select': {
+                      padding: '4px 8px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      overflow: 'hidden',
+                    },
+                  }}
+                >
+                  {availableShades.map((shade) => (
+                    <MenuItem key={shade.FGSHADE_NAME} value={shade.FGSHADE_NAME}>
+                      {shade.FGSHADE_NAME}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+
+              {/* MRP Field */}
               <TextField 
                 label="MRP" 
                 variant="filled" 
@@ -1886,6 +2078,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
                   min: '0'
                 }} 
               />
+              
               <TextField 
                 label="Set No" 
                 variant="filled" 
@@ -1907,6 +2100,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
                 sx={textInputSx} 
                 inputProps={{ style: { padding: '6px 8px', fontSize: '12px' } }} 
               />
+              
               <TextField 
                 label="Conv Fact" 
                 variant="filled" 
@@ -1917,6 +2111,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
                 sx={textInputSx} 
                 inputProps={{ style: { padding: '6px 8px', fontSize: '12px' } }} 
               />
+              
               <AutoVibe
                 id="LotNo"
                 disabled={shouldDisableFields()}
@@ -1928,6 +2123,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
                 onChange={handleLotNoChange}
                 sx={DropInputSx}
               />
+              
               <AutoVibe
                 id="Discount"
                 disabled={shouldDisableFields()}
@@ -1943,6 +2139,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
                 }}
                 sx={DropInputSx}
               />
+              
               <TextField 
                 label="Percent" 
                 variant="filled" 
@@ -1959,6 +2156,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
                   max: '100'
                 }} 
               />
+              
               <TextField 
                 label="Remark" 
                 variant="filled" 
@@ -1998,6 +2196,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
                   }}
                 />
               </LocalizationProvider>
+              
               <TextField 
                 label="RQty" 
                 variant="filled" 
@@ -2013,90 +2212,90 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
                   min: '0'
                 }} 
               />
-             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-  <TextField 
-    label="Sets" 
-    variant="filled" 
-    disabled={shouldDisableFields()}
-    name="sets"
-    value={isAddingNew || isEditingSize ? newItemData.sets : ''}
-    onChange={handleNewItemChange}
-    sx={{ ...textInputSx, flex: 1 }} 
-    inputProps={{ style: { padding: '6px 8px', fontSize: '12px' } }} 
-  />
-  {(isAddingNew || isEditingSize) && (
-    <>
-      {/* FIXED: Show "Add Qty" only when size details are not loaded AND we're in add mode */}
-      {!isSizeDetailsLoaded && isAddingNew && (
-        <Button
-          variant="contained"
-          color="primary"
-          onClick={fetchSizeDetails}
-          disabled={!newItemData.product || !newItemData.style || dataSource === 'barcode'}
-          sx={{ minWidth: '80px', height: '36px' }}
-        >
-          Add Qty
-        </Button>
-      )}
-      
-      
-      {(isSizeDetailsLoaded || isEditingSize) && (
-        <Button
-          variant="contained"
-          color="primary"
-          onClick={isAddingNew ? handleConfirmAdd : handleEditItem}
-          disabled={isAddingNew && sizeDetailsData.length === 0}
-          sx={{ minWidth: '80px', height: '36px' }}
-        >
-          {isAddingNew ? 'Confirm' : 'Confirm'}
-        </Button>
-      )}
-      
-      <Button
-        variant="outlined"
-        color="secondary"
-        onClick={isAddingNew ? handleCancelAdd : () => {
-          setIsEditingSize(false);
-          setIsSizeDetailsLoaded(false);
-          setNewItemData({
-            product: '',
-            barcode: '',
-            style: '',
-            type: '',
-            shade: '',
-            qty: '',
-            mrp: '',
-            rate: '',
-            setNo: '',
-            varPer: '',
-            stdQty: '',
-            convFact: '',
-            lotNo: '',
-            discount: '',
-            percent: '',
-            remark: '',
-            divDt: '',
-            rQty: '',
-            sets: ''
-          });
-          setStyleCodeInput('');
-          setBarcodeInput('');
-          setDataSource(null);
-          
-          // Reset size details to original row's data
-          const selectedRowData = tableData.find(row => row.id === selectedRow);
-          if (selectedRowData) {
-            const sizeDetails = selectedRowData.originalData?.ORDBKSTYSZLIST || [];
-            setSizeDetailsData(sizeDetails);
-          }
-        }}
-        sx={{ minWidth: '60px', height: '36px' }}
-      >
-        Cancel
-      </Button>
-    </>
-  )}
-</Box>
+              
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <TextField 
+                  label="Sets" 
+                  variant="filled" 
+                  disabled={shouldDisableFields()}
+                  name="sets"
+                  value={isAddingNew || isEditingSize ? newItemData.sets : ''}
+                  onChange={handleNewItemChange}
+                  sx={{ ...textInputSx, flex: 1 }} 
+                  inputProps={{ style: { padding: '6px 8px', fontSize: '12px' } }} 
+                />
+                {(isAddingNew || isEditingSize) && (
+                  <>
+                    {/* Show "Add Qty" only when size details are not loaded AND we're in add mode */}
+                    {!isSizeDetailsLoaded && isAddingNew && (
+                      <Button
+                        variant="contained"
+                        color="primary"
+                        onClick={fetchSizeDetails}
+                        disabled={!newItemData.product || !newItemData.style || dataSource === 'barcode'}
+                        sx={{ minWidth: '80px', height: '36px' }}
+                      >
+                        Add Qty
+                      </Button>
+                    )}
+                    
+                    {(isSizeDetailsLoaded || isEditingSize) && (
+                      <Button
+                        variant="contained"
+                        color="primary"
+                        onClick={isAddingNew ? handleConfirmAdd : handleEditItem}
+                        disabled={isAddingNew && sizeDetailsData.length === 0}
+                        sx={{ minWidth: '80px', height: '36px' }}
+                      >
+                        {isAddingNew ? 'Confirm' : 'Confirm'}
+                      </Button>
+                    )}
+                    
+                    <Button
+                      variant="outlined"
+                      color="secondary"
+                      onClick={isAddingNew ? handleCancelAdd : () => {
+                        setIsEditingSize(false);
+                        setIsSizeDetailsLoaded(false);
+                        setNewItemData({
+                          product: '',
+                          barcode: '',
+                          style: '',
+                          type: '',
+                          shade: '',
+                          qty: '',
+                          mrp: '',
+                          rate: '',
+                          setNo: '',
+                          varPer: '',
+                          stdQty: '',
+                          convFact: '',
+                          lotNo: '',
+                          discount: '',
+                          percent: '',
+                          remark: '',
+                          divDt: '',
+                          rQty: '',
+                          sets: ''
+                        });
+                        setStyleCodeInput('');
+                        setBarcodeInput('');
+                        setDataSource(null);
+                        
+                        // Reset size details to original row's data
+                        const selectedRowData = tableData.find(row => row.id === selectedRow);
+                        if (selectedRowData) {
+                          const sizeDetails = selectedRowData.originalData?.ORDBKSTYSZLIST || [];
+                          setSizeDetailsData(sizeDetails);
+                        }
+                      }}
+                      sx={{ minWidth: '60px', height: '36px' }}
+                    >
+                      Cancel
+                    </Button>
+                  </>
+                )}
+              </Box>
             </Box>
           </Box>
 
@@ -2124,7 +2323,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
                       <TableCell sx={{ fontWeight: 'bold', fontSize: '0.8rem', padding: '6px 8px', backgroundColor: "#f5f5f5", borderBottom: "1px solid #ddd" }}>MRP</TableCell>
                       <TableCell sx={{ fontWeight: 'bold', fontSize: '0.8rem', padding: '6px 8px', backgroundColor: "#f5f5f5", borderBottom: "1px solid #ddd" }}>Rate</TableCell>
                       <TableCell sx={{ fontWeight: 'bold', fontSize: '0.8rem', padding: '6px 8px', backgroundColor: "#f5f5f5", borderBottom: "1px solid #ddd" }}>Amount</TableCell>
-                      {/* <TableCell sx={{ fontWeight: 'bold', fontSize: '0.8rem', padding: '6px 8px', backgroundColor: "#f5f5f5", borderBottom: "1px solid #ddd" }}>Barcode</TableCell> */}
+                      <TableCell sx={{ fontWeight: 'bold', fontSize: '0.8rem', padding: '6px 8px', backgroundColor: "#f5f5f5", borderBottom: "1px solid #ddd" }}>Barcode</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -2156,7 +2355,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
                             {size.RATE || newItemData.rate || 0}
                           </TableCell>
                           <TableCell sx={{ fontSize: '0.75rem', padding: '6px 8px' }}>{size.ITM_AMT || 0}</TableCell>
-                          {/* <TableCell sx={{ fontSize: '0.75rem', padding: '6px 8px' }}>{size.FGSTYLE_ID || "-"}</TableCell> */}
+                          <TableCell sx={{ fontSize: '0.75rem', padding: '6px 8px' }}>{size.FGSTYLE_ID || "-"}</TableCell>
                         </TableRow>
                       ))
                     ) : (
@@ -2181,55 +2380,21 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
 
         {/* Final Action Buttons */}
         <Stack direction="row" spacing={2} sx={{ m: 3, justifyContent: 'flex-end' }}>
-          {/* <Button 
-            variant="contained" 
+          <Button 
+            variant="outlined" 
             color="primary" 
-            onClick={isAddingNew ? handleConfirmAdd : (isEditingSize ? handleEditItem : null)}
-            disabled={!(isAddingNew || isEditingSize)}
+            onClick={onPrev}
             sx={{ 
               minWidth: '60px', 
               height: '36px',
               backgroundColor: '#39ace2',
-              '&:disabled': {
-                backgroundColor: '#cccccc',
-                color: '#666666'
-              }
-            }}
-          >
-            {isAddingNew ? 'Confirm' : (isEditingSize ? 'Save' : 'Confirm')}
-          </Button>
-          <Button 
-            variant="outlined" 
-            color="secondary" 
-            onClick={isAddingNew ? handleCancelAdd : (isEditingSize ? handleEditCancel : onCancel)}
-            disabled={!(isAddingNew || isEditingSize)}
-            sx={{ 
-              minWidth: '60px', 
-              height: '36px',
+              color: 'white',
               '&:disabled': {
                 borderColor: '#cccccc',
                 color: '#666666'
               }
             }}
           >
-            Cancel
-          </Button> */}
-          <Button 
-            variant="contained" 
-            color="primary" 
-            onClick={onPrev}
-            disabled={!hasRecords || isAddingNew || isEditingSize}
-             sx={{ 
-              minWidth: '60px', 
-              height: '36px',
-              backgroundColor: '#39ace2',
-              '&:disabled': {
-                backgroundColor: '#cccccc',
-                color: '#666666'
-              }
-            }}
-          >
-          
             Previous
           </Button>
 
@@ -2237,7 +2402,6 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onCan
             variant="contained" 
             color="primary" 
             onClick={onNext}
-            disabled={!hasRecords || isAddingNew || isEditingSize}
             sx={{ 
               minWidth: '60px', 
               height: '36px',

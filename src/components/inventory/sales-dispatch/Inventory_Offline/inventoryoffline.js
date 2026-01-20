@@ -250,7 +250,7 @@ const SalesOrderOffline = () => {
     }
   };
 
-// Function to populate form data from API response - FIXED branch and shipping party selection
+// Function to populate form data from API response - UPDATED for shade keys
 const populateFormData = async (orderData) => {
   try {
     console.log('Order Data received:', orderData);
@@ -286,7 +286,7 @@ const populateFormData = async (orderData) => {
     // Get display names from mappings using the actual API response keys
     const partyName = partyMapping[orderData.PARTY_KEY] || await getDisplayNameWithRetry(getPartyNameByKey, orderData.PARTY_KEY);
     
-    // FIXED: Get branch name by actual ID from API response - Use PLACE from ORDBKList
+    // Get branch name by actual ID from API response
     const branchName = orderData.PLACE || await getDisplayNameWithRetry(getBranchNameById, orderData.PARTYDTL_ID);
     
     const brokerName = brokerMapping[orderData.BROKER_KEY] || await getDisplayNameWithRetry(getBrokerNameByKey, orderData.BROKER_KEY);
@@ -297,45 +297,19 @@ const populateFormData = async (orderData) => {
     const seasonName = seasonMapping[orderData.CURR_SEASON_KEY] || await getDisplayNameWithRetry(getSeasonNameByKey, orderData.CURR_SEASON_KEY);
     const transporterName = transporterMapping[orderData.TRSP_KEY] || await getDisplayNameWithRetry(getTransporterNameByKey, orderData.TRSP_KEY);
     
-    // FIXED: Use SHIPPARTY and SHIPPLACE from API response directly
+    // Use SHIPPARTY and SHIPPLACE from API response directly
     const shippingPartyName = orderData.SHIPPARTY || partyMapping[orderData.SHP_PARTY_KEY] || await getDisplayNameWithRetry(getPartyNameByKey, orderData.SHP_PARTY_KEY) || partyName;
     const shippingPlaceName = orderData.SHIPPLACE || orderData.DLV_PLACE || branchName;
     
     const orderTypeName = await getDisplayNameWithRetry(getOrderTypeNameByKey, orderData.ORDBK_TYPE);
     const merchandiserName = merchandiserMapping[orderData.MERCHANDISER_ID] || await getDisplayNameWithRetry(getMerchandiserNameById, orderData.MERCHANDISER_ID);
 
-    // Handle GST Type from API response
-    let gstTypeValue = 'state';
-    if (orderData.GST_TYPE === "S") {
-      gstTypeValue = 'state';
-    } else if (orderData.GST_TYPE === "I") {
-      gstTypeValue = 'igst';
-    }
-
-    console.log('Mapped names:', {
-      partyName,
-      branchName,
-      brokerName,
-      broker1Name,
-      salesperson1Name,
-      salesperson2Name,
-      consigneeName,
-      seasonName,
-      transporterName,
-      shippingPartyName,
-      shippingPlaceName,
-      orderTypeName,
-      merchandiserName,
-      gstType: orderData.GST_TYPE,
-      gstTypeValue
-    });
-
-    // FIXED: Also process ORDBKSTYLIST to preserve Type and Pattern keys
+    // Process ORDBKSTYLIST to preserve Type, Shade and Pattern keys
     const processedOrdbkStyleList = orderData.ORDBKSTYLIST ? orderData.ORDBKSTYLIST.map(item => ({
       ...item,
-      // Preserve Type and Pattern keys
+      // CRITICAL: Preserve Type, Shade and Pattern keys
       FGTYPE_KEY: item.FGTYPE_KEY || "",
-      FGSHADE_KEY: item.FGSHADE_KEY || "",
+      FGSHADE_KEY: item.FGSHADE_KEY || "", // IMPORTANT: Preserve shade key
       FGPTN_KEY: item.FGPTN_KEY || "",
       // Ensure other required fields
       FGPRD_KEY: item.FGPRD_KEY || "",
@@ -344,40 +318,13 @@ const populateFormData = async (orderData) => {
       DBFLAG: item.DBFLAG || "R"
     })) : [];
 
-    // FIXED: Process ORDBKGSTLIST to remove duplicates and add FGSTYLE_ID
-    let processedOrdbkGstList = [];
-    if (orderData.ORDBKGSTLIST && orderData.ORDBKGSTLIST.length > 0) {
-      const uniqueGstItems = new Map();
-      
-      orderData.ORDBKGSTLIST.forEach(gstItem => {
-        const key = `${gstItem.FGSTYLE_ID || 0}_${gstItem.HSN_CODE}`;
-        if (!uniqueGstItems.has(key)) {
-          // Add FGSTYLE_ID if missing
-          if (!gstItem.FGSTYLE_ID && processedOrdbkStyleList.length > 0) {
-            // Try to find corresponding FGSTYLE_ID from ORDBKSTYLIST
-            const matchingStyle = processedOrdbkStyleList.find(style => 
-              style.HSNCODE_KEY === gstItem.HSNCODE_KEY
-            );
-            if (matchingStyle) {
-              gstItem.FGSTYLE_ID = matchingStyle.FGSTYLE_ID;
-            }
-          }
-          uniqueGstItems.set(key, {
-            ...gstItem,
-            DBFLAG: gstItem.DBFLAG || "R" // Use "R" for retrieved items
-          });
-        }
-      });
-      
-      processedOrdbkGstList = Array.from(uniqueGstItems.values());
-      console.log('Processed ORDBKGSTLIST (duplicates removed):', processedOrdbkGstList.length, 'items');
-    }
+    console.log('Processed ORDBKSTYLIST with shade keys:', processedOrdbkStyleList.length, 'items');
+    console.log('Sample item shade key:', processedOrdbkStyleList[0]?.FGSHADE_KEY);
 
     const formattedData = {
       apiResponseData: {
         ...orderData,
-        ORDBKSTYLIST: processedOrdbkStyleList,
-        ORDBKGSTLIST: processedOrdbkGstList // Use processed GST list
+        ORDBKSTYLIST: processedOrdbkStyleList // Contains FGSHADE_KEY
       },
       ORDER_NO: orderData.ORDBK_NO || "",
       ORDER_DATE: orderData.ORDBK_DT ? formatDateForDisplay(orderData.ORDBK_DT) : "",
@@ -390,7 +337,6 @@ const populateFormData = async (orderData) => {
       SHIPPING_PARTY: shippingPartyName,
       DIV_PLACE: orderData.DESP_PORT || "",
       AR_SALES: orderData.SALEPERSON1_KEY || "",
-      // FIXED: Use the actual shipping place from API response
       SHIPPING_PLACE: shippingPlaceName,
       PRICE_LIST: orderData.PRICELIST_KEY || "",
       BROKER_TRANSPORTER: brokerName || "",
@@ -407,7 +353,6 @@ const populateFormData = async (orderData) => {
       REMARK_STATUS: orderData.REMK || "",
       MAIN_DETAILS: orderData.LotWise === "Y" ? "L" : "G",
       GST_APPL: orderData.GST_APP || "N",
-      // Add GST_TYPE to formData
       GST_TYPE: orderData.GST_TYPE === "S" ? "STATE" : "IGST",
       RACK_MIN: orderData.STK_FLG || "0",
       REGISTERED_DEALER: "0",
@@ -415,7 +360,6 @@ const populateFormData = async (orderData) => {
       READY_SI: orderData.READY_SI || "0",
       LAST_ORD_NO: orderData.LAST_ORD_NO || "",
       SERIES: orderData.SERIES || "",
-      // Additional fields that might be useful
       ORD_EVENT_KEY: orderData.ORD_EVENT_KEY || "",
       ORG_DLV_DT: orderData.ORG_DLV_DT ? formatDateForDisplay(orderData.ORG_DLV_DT) : "",
       PLANNING: orderData.PLANNING || "0",
@@ -428,11 +372,9 @@ const populateFormData = async (orderData) => {
       CURRN_KEY: orderData.CURRN_KEY || "",
       EX_RATE: orderData.EX_RATE || "",
       DLV_DT: orderData.DLV_DT ? formatDateForDisplay(orderData.DLV_DT) : "",
-      // Dropdown display values - CRITICAL FIX: Use the resolved names
       Party: partyName || "",
       Branch: branchName || "",
       Broker: brokerName || "",
-      // API specific fields - PRESERVE TYPE AND PATTERN KEYS
       CURR_SEASON_KEY: orderData.CURR_SEASON_KEY || "",
       PRICELIST_KEY: orderData.PRICELIST_KEY || "",
       BROKER1_KEY: orderData.BROKER1_KEY || "",
@@ -442,31 +384,27 @@ const populateFormData = async (orderData) => {
       SALEPERSON2_KEY: orderData.SALEPERSON2_KEY || "",
       DISTBTR_KEY: orderData.DISTBTR_KEY || "",
       TRSP_KEY: orderData.TRSP_KEY || "",
-      // Branch and shipping details - Use actual IDs from API
       PARTYDTL_ID: orderData.PARTYDTL_ID || 0,
       SHP_PARTYDTL_ID: orderData.SHP_PARTYDTL_ID || orderData.PARTYDTL_ID || 0,
-      // New fields for Order Type and Merchandiser
       Order_Type: orderTypeName || "",
       MERCHANDISER_ID: orderData.MERCHANDISER_ID || "",
       MERCHANDISER_NAME: merchandiserName || "",
-      // Default selections
       Delivery_Shedule: "comman",
       Order_TNA: "ItemWise", 
       Status: getDisplayStatus(orderData.STATUS),
       ORDBK_TYPE: orderData.ORDBK_TYPE || "0",
-      // Calculate totals from ORDBKSTYLIST
       TOTAL_QTY: calculateTotalQty(orderData.ORDBKSTYLIST),
       TOTAL_AMOUNT: orderData.ORDBK_AMT || 0,
       NET_AMOUNT: (orderData.ORDBK_AMT || 0) - (orderData.ORDBK_DISC_AMT || 0),
       DISCOUNT: orderData.ORDBK_DISC_AMT || 0
     };
 
-    console.log('Populating form with data:', formattedData);
+    console.log('Populating form with data including shade keys');
     
     // Set form data
     setFormData(formattedData);
     
-    // FIXED: Fetch branches with the correct branch ID from API response
+    // Fetch branches with the correct branch ID from API response
     if (orderData.PARTY_KEY && orderData.PARTYDTL_ID) {
       await fetchPartyDetails(orderData.PARTY_KEY, orderData.PARTYDTL_ID);
     }
@@ -481,11 +419,10 @@ const populateFormData = async (orderData) => {
 
   } catch (error) {
     console.error('Error populating form data:', error);
-    // showSnackbar('Error populating form data', 'error');
   }
 };
 
-// Function to prepare payload for submission - FIXED with proper Type and Pattern keys preservation
+// Function to prepare payload for submission - UPDATED for multi-shade support
 const prepareSubmitPayload = () => {
   const dbFlag = mode === 'add' ? 'I' : 'U';
   const currentDate = new Date().toISOString().replace('T', ' ').split('.')[0];
@@ -503,9 +440,8 @@ const prepareSubmitPayload = () => {
     };
     return statusMapping[status] || "1";
   };
+  
   const correctOrdbkKey = formData.ORDBK_KEY || `25${companyConfig.COBR_ID}${formData.ORDER_NO}`;
-
-
   const partyKey = formData.PARTY_KEY;
   const branchId = formData.PARTYDTL_ID || 0;
   const brokerKey = formData.BROKER_KEY || "";
@@ -533,11 +469,8 @@ const prepareSubmitPayload = () => {
     merchandiserId
   });
 
-  // Get ORDBKSTYLIST from formData
+  // Get ORDBKSTYLIST from formData - IMPORTANT: Contains FGSHADE_KEY for each shade
   const ordbkStyleList = formData.apiResponseData?.ORDBKSTYLIST || [];
-  
-  // CORRECT ORDBK_KEY generation
- 
   
   console.log('Using ORDBK_KEY:', correctOrdbkKey);
 
@@ -558,18 +491,18 @@ const prepareSubmitPayload = () => {
       }
     }
 
-    // FIXED: Preserve original Type and Pattern keys for existing items in edit mode
+    // CRITICAL: Preserve all keys including FGSHADE_KEY for multi-shade support
     let fgtypeKey, fgshadeKey, fgptnKey;
     
     if (mode === 'edit' && item.ORDBKSTY_ID && item.ORDBKSTY_ID > 0) {
       // For existing items in edit mode, preserve original keys
       fgtypeKey = item.FGTYPE_KEY || "";
-      fgshadeKey = item.FGSHADE_KEY || "";
+      fgshadeKey = item.FGSHADE_KEY || ""; // Preserve shade key
       fgptnKey = item.FGPTN_KEY || "";
     } else {
       // For new items or add mode, use current values
       fgtypeKey = item.FGTYPE_KEY || "";
-      fgshadeKey = item.FGSHADE_KEY || "";
+      fgshadeKey = item.FGSHADE_KEY || ""; // Use FGSHADE_KEY from Stepper2
       fgptnKey = item.FGPTN_KEY || "";
     }
 
@@ -580,9 +513,9 @@ const prepareSubmitPayload = () => {
       FGPRD_KEY: item.FGPRD_KEY || "",
       FGSTYLE_ID: item.FGSTYLE_ID || 0,
       FGSTYLE_CODE: item.FGSTYLE_CODE || "",
-      // FIXED: Preserve these keys properly in all modes
+      // CRITICAL: Preserve these keys properly for multi-shade
       FGTYPE_KEY: fgtypeKey,
-      FGSHADE_KEY: fgshadeKey,
+      FGSHADE_KEY: fgshadeKey, // THIS IS CRITICAL FOR MULTI-SHADE
       FGPTN_KEY: fgptnKey,
       FGITM_KEY: item.FGITM_KEY || "",
       QTY: parseFloat(item.QTY || item.ITMQTY) || 0,
@@ -654,28 +587,27 @@ const prepareSubmitPayload = () => {
     };
   });
 
-  console.log('Transformed ORDBKSTYLIST with proper keys:', transformedOrdbkStyleList);
+  console.log('Transformed ORDBKSTYLIST with shade keys:', transformedOrdbkStyleList);
+  console.log('Sample item shade key:', transformedOrdbkStyleList[0]?.FGSHADE_KEY);
 
   // Get ORDBKTERMLIST from formData
   const ordbkTermList = formData.apiResponseData?.ORDBKTERMLIST || [];
   
-  // FIXED: Generate ORDBKGSTLIST only if GST_APPL is "Y"
+  // Generate ORDBKGSTLIST only if GST_APPL is "Y"
   let ordbkGstList = [];
   
   if (formData.GST_APPL === "Y") {
     if (formData.apiResponseData?.ORDBKGSTLIST && formData.apiResponseData.ORDBKGSTLIST.length > 0) {
-      // FIXED: Use existing GST list without creating duplicates
       ordbkGstList = formData.apiResponseData.ORDBKGSTLIST.map(gstItem => {
         let gstDbFlag;
         
         if (mode === 'add') {
           gstDbFlag = 'I';
         } else {
-          // FIXED: For edit mode, check if item exists in original response
           const hasOriginalId = gstItem.ORDBK_GST_ID && gstItem.ORDBK_GST_ID > 0;
           gstDbFlag = hasOriginalId ? 'U' : 'I';
         }
-
+        
         if (gstItem.DBFLAG === 'D') {
           gstDbFlag = 'D';
         }
@@ -705,118 +637,49 @@ const prepareSubmitPayload = () => {
           OTHER_AMT: parseFloat(gstItem.OTHER_AMT) || 0,
           PARTYDTL_ID: parseInt(branchId) || 106634,
           ADD_CESS_RATE: parseFloat(gstItem.ADD_CESS_RATE) || 0,
-          ADD_CESS_AMT: parseFloat(gstItem.ADD_CESS_AMT) || 0,
-          FGSTYLE_ID: gstItem.FGSTYLE_ID || 0  // Add FGSTYLE_ID to track items
+          ADD_CESS_AMT: parseFloat(gstItem.ADD_CESS_AMT) || 0
         };
       });
-      
-      console.log('Using existing ORDBKGSTLIST:', ordbkGstList.length, 'items');
     } else {
       // Generate GST list from items if GST is enabled but no GST data exists
-      // FIXED: Create unique GST items based on HSN_CODE and FGSTYLE_ID combination
-      const processedItems = new Set();
-      
       transformedOrdbkStyleList.forEach(item => {
         if (item.DBFLAG !== 'D') {
-          const key = `${item.FGSTYLE_ID}_${item.HSNCODE_KEY || "IG001"}`;
-          
-          // Check if we already processed this FGSTYLE_ID + HSNCODE_KEY combination
-          if (!processedItems.has(key)) {
-            processedItems.add(key);
-            
-            // Calculate item totals for this FGSTYLE_ID
-            const itemsForStyle = transformedOrdbkStyleList.filter(
-              styleItem => styleItem.FGSTYLE_ID === item.FGSTYLE_ID && 
-                          styleItem.HSNCODE_KEY === item.HSNCODE_KEY
-            );
-            
-            const totalQty = itemsForStyle.reduce((sum, styleItem) => 
-              sum + (styleItem.QTY || 0), 0
-            );
-            
-            const totalItemAmount = itemsForStyle.reduce((sum, styleItem) => 
-              sum + (styleItem.AMT || 0), 0
-            );
-            
-            // Calculate discount proportionally
-            const discountFromTerms = totalDiscountFromTerms || 0;
-            const totalOrderAmount = orderAmount || formData.TOTAL_AMOUNT || 0;
-            const itemDiscount = totalOrderAmount > 0 ? 
-              (totalItemAmount / totalOrderAmount) * discountFromTerms : 0;
-            
-            const netAmount = Math.max(0, totalItemAmount - itemDiscount);
-            
-            // Calculate GST amounts
-            const gstType = formData.GST_TYPE === "STATE" ? "S" : "I";
-            let sgstAmount = 0, cgstAmount = 0, igstAmount = 0;
-            
-            if (gstType === "I") {
-              const igstRate = 5; // Default IGST rate
-              igstAmount = (netAmount * igstRate) / 100;
-            } else {
-              const sgstRate = 2.5; // Default SGST rate
-              const cgstRate = 2.5; // Default CGST rate
-              sgstAmount = (netAmount * sgstRate) / 100;
-              cgstAmount = (netAmount * cgstRate) / 100;
-            }
-            
-            const gstItem = {
-              DBFLAG: mode === 'add' ? 'I' : 'I',
-              ORDBK_GST_ID: 0,
-              GSTTIN_NO: "URD",
-              ORDBK_KEY: correctOrdbkKey,
-              ORDBK_DT: formatDateForAPI(formData.ORDER_DATE)?.replace('T', ' ') || currentDate,
-              GST_TYPE: gstType,
-              HSNCODE_KEY: item.HSNCODE_KEY || "IG001",
-              HSN_CODE: item.HSN_CODE || "64021010",
-              QTY: totalQty,
-              UNIT_KEY: "UN005",
-              GST_RATE_SLAB_ID: 39,
-              ITM_AMT: totalItemAmount,
-              DISC_AMT: itemDiscount,
-              NET_AMT: netAmount,
-              SGST_RATE: gstType === "S" ? 2.5 : 0,
-              SGST_AMT: sgstAmount,
-              CGST_RATE: gstType === "S" ? 2.5 : 0,
-              CGST_AMT: cgstAmount,
-              IGST_RATE: gstType === "I" ? 5 : 0,
-              IGST_AMT: igstAmount,
-              ROUND_OFF: 0,
-              OTHER_AMT: 0,
-              PARTYDTL_ID: parseInt(branchId) || 106634,
-              ADD_CESS_RATE: 0,
-              ADD_CESS_AMT: 0,
-              FGSTYLE_ID: item.FGSTYLE_ID || 0
-            };
-            
-            ordbkGstList.push(gstItem);
-          }
+          const gstItem = {
+            DBFLAG: mode === 'add' ? 'I' : 'I',
+            ORDBK_GST_ID: 0,
+            GSTTIN_NO: "URD",
+            ORDBK_KEY: correctOrdbkKey,
+            ORDBK_DT: formatDateForAPI(formData.ORDER_DATE)?.replace('T', ' ') || currentDate,
+            GST_TYPE: formData.GST_TYPE === "STATE" ? "S" : "I",
+            HSNCODE_KEY: "IG001",
+            HSN_CODE: "64021010",
+            QTY: item.QTY || 0,
+            UNIT_KEY: "UN005",
+            GST_RATE_SLAB_ID: 39,
+            ITM_AMT: item.AMT || 0,
+            DISC_AMT: item.DISC_AMT || 0,
+            NET_AMT: item.NET_AMT || 0,
+            SGST_RATE: formData.GST_TYPE === "STATE" ? 2.5 : 0,
+            SGST_AMT: formData.GST_TYPE === "STATE" ? (item.NET_AMT * 0.025) : 0,
+            CGST_RATE: formData.GST_TYPE === "STATE" ? 2.5 : 0,
+            CGST_AMT: formData.GST_TYPE === "STATE" ? (item.NET_AMT * 0.025) : 0,
+            IGST_RATE: formData.GST_TYPE === "I" ? 5 : 0,
+            IGST_AMT: formData.GST_TYPE === "I" ? (item.NET_AMT * 0.05) : 0,
+            ROUND_OFF: 0,
+            OTHER_AMT: 0,
+            PARTYDTL_ID: parseInt(branchId) || 106634,
+            ADD_CESS_RATE: 0,
+            ADD_CESS_AMT: 0
+          };
+          ordbkGstList.push(gstItem);
         }
       });
-      
-      console.log('Generated new ORDBKGSTLIST with unique items:', ordbkGstList.length, 'items');
     }
   } else {
     // GST_APPL is "N" - send empty array
     ordbkGstList = [];
     console.log('GST_APPL is "N", sending empty ORDBKGSTLIST');
   }
-
-  // FIXED: Remove duplicate GST entries based on FGSTYLE_ID + HSN_CODE combination
-  const uniqueGstList = [];
-  const gstItemKeys = new Set();
-  
-  ordbkGstList.forEach(gstItem => {
-    const key = `${gstItem.FGSTYLE_ID}_${gstItem.HSN_CODE}`;
-    if (!gstItemKeys.has(key)) {
-      gstItemKeys.add(key);
-      uniqueGstList.push(gstItem);
-    } else {
-      console.log(`Removing duplicate GST entry for FGSTYLE_ID: ${gstItem.FGSTYLE_ID}, HSN_CODE: ${gstItem.HSN_CODE}`);
-    }
-  });
-
-  console.log('Final unique ORDBKGSTLIST:', uniqueGstList.length, 'items');
 
   // Base payload for both insert and update
   const basePayload = {
@@ -876,9 +739,9 @@ const prepareSubmitPayload = () => {
     ORDBK_ADD_CESS_AMT: 0,
     ORDBK_GST_AMT: parseFloat(formData.ORDBK_GST_AMT) || 0,
     ORDBK_EXTRA_AMT: 0,
-    ORDBKSTYLIST: transformedOrdbkStyleList,
+    ORDBKSTYLIST: transformedOrdbkStyleList, // Contains FGSHADE_KEY for each shade
     ORDBKTERMLIST: ordbkTermList,
-    ORDBKGSTLIST: uniqueGstList, // Use unique GST list
+    ORDBKGSTLIST: ordbkGstList,
     DISTBTR_KEY: consigneeKey,
     SALEPERSON1_KEY: salesperson1Key,
     SALEPERSON2_KEY: salesperson2Key,
@@ -896,8 +759,10 @@ const prepareSubmitPayload = () => {
     basePayload.UPDATED_DT = currentDate;
   }
 
-  console.log('Final Payload with GST_APPL:', formData.GST_APPL, 'ORDBKGSTLIST length:', uniqueGstList.length);
-  console.log('Final Payload:', JSON.stringify(basePayload, null, 2));
+  console.log('Final Payload with multi-shade support');
+  console.log('Total items in ORDBKSTYLIST:', transformedOrdbkStyleList.length);
+  console.log('Sample item check - has FGSHADE_KEY?:', transformedOrdbkStyleList[0]?.FGSHADE_KEY ? 'YES' : 'NO');
+  
   return basePayload;
 };
 
