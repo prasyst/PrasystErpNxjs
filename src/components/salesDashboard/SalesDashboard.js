@@ -93,6 +93,14 @@ const SalesDashboard = () => {
         AMOUNT: 0,
     });
 
+    const [exInit, setExInit] = useState({
+        QTY: 0,
+    });
+
+    const [canInit, setCanInit] = useState({
+        QTY: 0,
+    });
+
     const [shortOrd, setShortOrd] = useState({
         QTY: 0,
         BAL_QTY: 0,
@@ -154,9 +162,10 @@ const SalesDashboard = () => {
         setOpenDialog(false);
     };
 
-    const totalConversion = !isNaN(dispOrd.QTY) && !isNaN(summaryData.QTY) && parseFloat(summaryData.QTY) !== 0
-        ? (parseFloat(dispOrd.QTY) / parseFloat(summaryData.QTY)) * 100
-        : 0;
+    const totalConversion =
+        !isNaN(dispOrd.QTY) && !isNaN(exInit.QTY) && !isNaN(summaryData.QTY) && (parseFloat(exInit.QTY) + parseFloat(summaryData.QTY)) !== 0
+            ? (parseFloat(dispOrd.QTY) / (parseFloat(exInit.QTY) + parseFloat(summaryData.QTY))) * 100
+            : 0;
 
     useEffect(() => {
         setVisible(true);
@@ -178,6 +187,8 @@ const SalesDashboard = () => {
             fetchOderBalance();
             fetchOderDispatch();
             fetchOderShortClose();
+            fetchExtraInit();
+            fetchCancelInit();
             stateWiseParty();
             fetchBrandDrp();
             fetchPartyDrp();
@@ -236,6 +247,7 @@ const SalesDashboard = () => {
     });
 
     const showTableData = async () => {
+        setTableData([]);
         setRecentLoading(true);
         try {
             const filters = buildFilterPayload();
@@ -295,6 +307,95 @@ const SalesDashboard = () => {
         }
     };
 
+    const fetchExtraInit = async () => {
+        try {
+            const filters = buildFilterPayload();
+            const response = await axiosInstance.post('OrderDash/GetOrderDashBoard', {
+                COBR_ID: cobrId,
+                FCYR_KEY: fcyr,
+                FROM_DT: dayjs(dateFrom).format('YYYY-MM-DD'),
+                To_DT: dayjs(dateTo).format('YYYY-MM-DD'),
+                Flag: "EXTRAINIT",
+                PageNumber: 1,
+                PageSize: 10,
+                SearchText: "",
+                ...filters
+            });
+            if (response.data.STATUS === 0 && Array.isArray(response.data.DATA)) {
+                const extraIn = response.data.DATA[0];
+                setExInit({
+                    QTY: extraIn.QTY || 0
+                });
+            } else {
+                setExInit([]);
+            }
+        } catch (error) {
+            toast.error("Error while fetching the response.");
+        }
+    };
+
+    const fetchCancelInit = async () => {
+        try {
+            const filters = buildFilterPayload();
+            const response = await axiosInstance.post('OrderDash/GetOrderDashBoard', {
+                COBR_ID: cobrId,
+                FCYR_KEY: fcyr,
+                FROM_DT: dayjs(dateFrom).format('YYYY-MM-DD'),
+                To_DT: dayjs(dateTo).format('YYYY-MM-DD'),
+                Flag: "CANINIT",
+                PageNumber: 1,
+                PageSize: 10,
+                SearchText: "",
+                ...filters
+            });
+            if (response.data.STATUS === 0 && Array.isArray(response.data.DATA)) {
+                const canIn = response.data.DATA[0];
+                setCanInit({
+                    QTY: canIn.QTY || 0
+                });
+            } else {
+                setCanInit([]);
+            }
+        } catch (error) {
+            toast.error("Error while fetching the response.");
+        }
+    };
+
+
+    const fetchOderShortClose = async () => {
+        setIsLoading(true);
+        try {
+            const filters = buildFilterPayload();
+            const response = await axiosInstance.post("OrderDash/GetOrderDashBoard", {
+                COBR_ID: cobrId,
+                FCYR_KEY: fcyr,
+                FROM_DT: dayjs(dateFrom).format('YYYY-MM-DD'),
+                To_DT: dayjs(dateTo).format('YYYY-MM-DD'),
+                Flag: "ShortOrd",
+                PageNumber: 1,
+                PageSize: 10,
+                SearchText: "",
+                ...filters,
+            });
+
+            if (response.data.STATUS === 0 && Array.isArray(response.data.DATA)) {
+                const disp = response.data.DATA[0];
+
+                setShortOrd({
+                    AMOUNT: disp.AMOUNT || 0,
+                    QTY: disp.QTY || 0,
+                    BAL_QTY: disp.BAL_QTY || 0,
+                    INIT_QTY: disp.INIT_QTY || 0,
+                    ROWNUM: disp.ROWNUM || 0,
+                });
+            }
+        } catch (error) {
+            toast.error("Error from API response.");
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     const fetchCancelOrder = async () => {
         setIsLoading(true);
         try {
@@ -327,6 +428,10 @@ const SalesDashboard = () => {
         } finally {
             setIsLoading(false);
         }
+    };
+
+    const getTotalCancelQty = () => {
+        return canInit.QTY + shortOrd.QTY + canOrd.QTY;
     };
 
     const fetchOderBalance = async () => {
@@ -383,40 +488,6 @@ const SalesDashboard = () => {
                 const disp = response.data.DATA[0];
 
                 setDispOrd({
-                    AMOUNT: disp.AMOUNT || 0,
-                    QTY: disp.QTY || 0,
-                    BAL_QTY: disp.BAL_QTY || 0,
-                    INIT_QTY: disp.INIT_QTY || 0,
-                    ROWNUM: disp.ROWNUM || 0,
-                });
-            }
-        } catch (error) {
-            toast.error("Error from API response.");
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    const fetchOderShortClose = async () => {
-        setIsLoading(true);
-        try {
-            const filters = buildFilterPayload();
-            const response = await axiosInstance.post("OrderDash/GetOrderDashBoard", {
-                COBR_ID: cobrId,
-                FCYR_KEY: fcyr,
-                FROM_DT: dayjs(dateFrom).format('YYYY-MM-DD'),
-                To_DT: dayjs(dateTo).format('YYYY-MM-DD'),
-                Flag: "ShortOrd",
-                PageNumber: 1,
-                PageSize: 10,
-                SearchText: "",
-                ...filters,
-            });
-
-            if (response.data.STATUS === 0 && Array.isArray(response.data.DATA)) {
-                const disp = response.data.DATA[0];
-
-                setShortOrd({
                     AMOUNT: disp.AMOUNT || 0,
                     QTY: disp.QTY || 0,
                     BAL_QTY: disp.BAL_QTY || 0,
@@ -554,7 +625,9 @@ const SalesDashboard = () => {
             });
             if (response.data.STATUS === 0 && Array.isArray(response.data.DATA)) {
                 setOrdTrend(response.data.DATA);
-            };
+            } else {
+                setOrdTrend([]);
+            }
         } catch (error) {
             toast.error("Error while fetching monthly trends.");
         }
@@ -582,6 +655,8 @@ const SalesDashboard = () => {
                     qty: item.QTY / 100000
                 }));
                 setSalesPerson(transformedData);
+            } else {
+                setSalesPerson([]);
             }
         } catch (error) {
             toast.error("Error while fetching sales person.");
@@ -596,6 +671,8 @@ const SalesDashboard = () => {
         fetchOderBalance();
         fetchOderDispatch();
         fetchOderShortClose();
+        fetchExtraInit();
+        fetchCancelInit();
         stateWiseParty();
         fetchOrderTrends();
         fetchSalesPerson();
@@ -707,7 +784,7 @@ const SalesDashboard = () => {
                             sx={{
                                 width: 150,
                                 '& .MuiPickersSectionList-root': {
-                                    padding: '7.5px 0',
+                                    padding: '6.5px 0',
                                 },
                             }}
                         />
@@ -720,7 +797,7 @@ const SalesDashboard = () => {
                             sx={{
                                 width: 150,
                                 '& .MuiPickersSectionList-root': {
-                                    padding: '7.5px 0',
+                                    padding: '6.5px 0',
                                 },
                             }}
                             className="custom-datepicker"
@@ -1284,6 +1361,7 @@ const SalesDashboard = () => {
                         value: `₹${(summaryData.AMOUNT / 100000).toFixed(2)} L`,
                         qty: summaryData.QTY || 0,
                         extra: `- ${summaryData.ROWNUM || 0}`,
+                        init: exInit.QTY || 0,
                         gradient: 'linear-gradient(135deg, #64B5F6 0%, #1565C0 100%)',
                         icon: <ReceiptLongIcon />,
                         trend: 'up',
@@ -1438,6 +1516,22 @@ const SalesDashboard = () => {
                                                         </>
                                                     )}
 
+                                                    {/* Extra Init (Show after Qty) */}
+                                                    {(metric.init !== undefined || metric.init === 0) && metric.title === "Total Orders" && (
+                                                        <>
+                                                            <Box
+                                                                component="span"
+                                                                sx={{
+                                                                    width: 6,
+                                                                    height: 6,
+                                                                    borderRadius: '50%',
+                                                                    bgcolor: 'rgba(255, 255, 255, 0.75)',
+                                                                }}
+                                                            />
+                                                            <span>Extra: <strong>{metric.init.toLocaleString()}</strong></span>
+                                                        </>
+                                                    )}
+
                                                     {/* Cancel Qty */}
                                                     {metric.can && (
                                                         <>
@@ -1450,8 +1544,7 @@ const SalesDashboard = () => {
                                                                     bgcolor: 'rgba(255, 255, 255, 0.75)'
                                                                 }}
                                                             />
-                                                            {/* <span>{metric.title.includes("Pending") ? "Cancel Qty:" : ""} <strong>{metric.can}</strong></span> */}
-                                                            <span>Cancel Qty: <strong>{metric.can}</strong></span>
+                                                            <span>Cancel Qty: <strong>{getTotalCancelQty()}</strong></span>
                                                         </>
                                                     )}
                                                 </Typography>
@@ -1467,10 +1560,6 @@ const SalesDashboard = () => {
                                                             height: 8,
                                                             borderRadius: 4,
                                                             bgcolor: 'rgba(255,255,255,0.25)',
-                                                            '& .MuiLinearProgress-bar': {
-                                                                // Optional: stronger white highlight when needed
-                                                                // backgroundColor: 'rgba(255,255,255,0.95) !important'
-                                                            }
                                                         }}
                                                     />
                                                 </Box>
@@ -1544,13 +1633,13 @@ const SalesDashboard = () => {
                                         '0%': { transform: 'translateX(-100%)' },
                                         '100%': { transform: 'translateX(100%)' }
                                     }
-                                }}
-                                />
+                                }} />
                             </Card>
                         </Fade>
                     </Grid>
                 ))}
             </Grid>
+
 
             <Grid container spacing={2} mt={2}>
                 <Grid size={{ xs: 12, md: 6 }} sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
