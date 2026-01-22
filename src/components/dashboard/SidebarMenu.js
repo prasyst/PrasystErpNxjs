@@ -620,59 +620,33 @@
 //   {
 //     name: 'UserPermission',
 //     icon: MdAccountBalance,
-    
+
 //     path: '/userpermission',
-    
+
 //   },
 
 // ];
 
 
 
-
-
-
-
-
-
-
-
 import {
-  MdDashboard, MdSearch, MdOutlineApartment, MdClose, MdMenu, MdChevronRight,
-  MdDomain, MdMap, MdOutlineGroupWork, MdCategory, MdWarehouse, MdWork,
-  MdAccountBox, MdEmojiPeople, MdAccessibility, MdLocalShipping, MdPeople,
-  MdPersonAdd, MdClass, MdLocalOffer, MdStars, MdRateReview, MdBuild,
-  MdLocalMall, MdCollectionsBookmark, MdStraighten, MdBrandingWatermark,
-  MdReceipt, MdGavel, MdAssignment, MdAttachMoney, MdEvent, MdAnalytics,
-  MdSettings, MdInventory, MdAccountBalance, MdPayments, MdSummarize,
-  MdPushPin, MdOutlinePushPin, MdOutlineInventory, MdCalendarToday,
+  MdDashboard, MdSearch, MdOutlineApartment, MdClose, MdMenu, MdChevronRight, MdDomain, MdMap, MdOutlineGroupWork, MdCategory, MdWarehouse, MdWork,
+  MdAccountBox, MdEmojiPeople, MdAccessibility, MdLocalShipping, MdPeople, MdPersonAdd, MdClass, MdLocalOffer, MdStars, MdRateReview, MdBuild,
+  MdLocalMall, MdCollectionsBookmark, MdStraighten, MdBrandingWatermark, MdReceipt, MdGavel, MdAssignment, MdAttachMoney, MdEvent, MdAnalytics,
+  MdSettings, MdInventory, MdAccountBalance, MdPayments, MdSummarize, MdPushPin, MdOutlinePushPin, MdOutlineInventory, MdCalendarToday,
   MdSubdirectoryArrowRight, MdSupervisorAccount, MdAnchor, MdPercent, MdPayment, MdSettingsSuggest, MdHowToReg, MdRuleFolder,
-  MdAssignmentTurnedIn,
-  MdSupport, MdSupportAgent,
-  MdAddTask,
+  MdAssignmentTurnedIn, MdSupport, MdSupportAgent, MdAddTask,
 } from 'react-icons/md';
 import {
-  MdFactCheck,
-  MdPlaylistAddCheck,
-  MdTune,
-  MdScience,
-  MdOutlineScience
+  MdFactCheck, MdPlaylistAddCheck, MdTune, MdScience, MdOutlineScience
 } from "react-icons/md";
 import {
   RiFileList3Line, RiScissors2Line, RiLoopLeftLine, RiUserSharedLine, RiCheckboxBlankCircleLine,
-  RiFileList2Line,
-  RiToolsLine, RiShoppingBag3Line, RiShoppingBasket2Line,
-  RiBarcodeLine, RiInboxArchiveLine, RiFileShield2Line,
-  RiImageAddLine, RiDownload2Line, RiShareForwardLine, RiSettings4Line,
-  RiPriceTag3Line, RiExchangeLine,
-  RiStackLine, RiBriefcase2Line,
-  RiSearchLine, RiPlayListAddLine,
-  RiUserSearchLine, RiShoppingCart2Line,
-  RiTaskLine, RiTruckLine,
-  RiTimer2Line, RiBuilding4Line,
-  RiDraftLine, RiTestTubeLine,
-  RiCheckboxCircleLine,
-  RiArchiveStackLine
+  RiFileList2Line, RiToolsLine, RiShoppingBag3Line, RiShoppingBasket2Line,
+  RiBarcodeLine, RiInboxArchiveLine, RiFileShield2Line, RiImageAddLine, RiDownload2Line, RiShareForwardLine, RiSettings4Line,
+  RiPriceTag3Line, RiExchangeLine, RiStackLine, RiBriefcase2Line, RiSearchLine, RiPlayListAddLine,
+  RiUserSearchLine, RiShoppingCart2Line, RiTaskLine, RiTruckLine, RiTimer2Line, RiBuilding4Line,
+  RiDraftLine, RiTestTubeLine, RiCheckboxCircleLine, RiArchiveStackLine, RiTicket2Line, RiTicket2Fill
 } from 'react-icons/ri';
 
 import { TiTicket } from "react-icons/ti";
@@ -691,14 +665,16 @@ export const sidebarMenuItems = [
     children: [
       {
         name: 'Company',
-        icon: FaBuilding, 
+        icon: FaBuilding,
         // MOD_NAME: "mnuMstCompany",
         // MOD_NAME: "mnuCompany",
         path: '/masterpage?activeTab=company',
         children: [
-          { name: 'Company', icon: MdDomain,
+          {
+            name: 'Company', icon: MdDomain,
             // MOD_NAME: "mnuMstCompany",
-             path: '/masters/company/company' },
+            path: '/masters/company/company'
+          },
           { name: 'Company Area', icon: MdMap, path: '#' },
           { name: 'Company Division', icon: MdOutlineGroupWork, path: '#' },
           { name: 'Stock Type', icon: MdCategory, path: '#' },
@@ -719,15 +695,17 @@ export const sidebarMenuItems = [
       },
       {
         name: 'Vendors',
-        icon: MdLocalShipping, 
+        icon: MdLocalShipping,
         // MOD_NAME: "mnuVendors",
         path: '/masterpage?activeTab=vendors',
         children: [
           { name: 'Broker', icon: FaHandshake, path: '#' },
           { name: 'Transporter', icon: MdLocalShipping, path: '#' },
-          { name: 'Creditors/Suppliers',
+          {
+            name: 'Creditors/Suppliers',
             // MOD_NAME: "mnuMstSuppliers",
-             icon: FaUserTag, path: '/masters/vendors' },
+            icon: FaUserTag, path: '/masters/vendors'
+          },
         ],
       },
       {
@@ -736,9 +714,11 @@ export const sidebarMenuItems = [
         // MOD_NAME: "mnuParty",
         path: '/masterpage?activeTab=customers',
         children: [
-          { name: 'Debtors/Customers', 
+          {
+            name: 'Debtors/Customers',
             // MOD_NAME: "mnuMstrClient",
-             icon: MdPeople, path: '/masters/customers' },
+            icon: MdPeople, path: '/masters/customers'
+          },
           { name: 'Category (For Rate)', icon: MdCategory, path: '#' },
           { name: 'Customer Group', icon: AiOutlineUsergroupAdd, path: '#' },
           { name: 'Consignee', icon: MdPersonAdd, path: '#' },
@@ -757,53 +737,75 @@ export const sidebarMenuItems = [
       },
       {
         name: 'Products',
-        icon: FaBoxOpen, 
+        icon: FaBoxOpen,
         // MOD_NAME: "mnuMstrProduct",
         path: '/masterpage?activeTab=products',
         children: [
-          { name: 'Category Master', 
+          {
+            name: 'Category Master',
             // MOD_NAME: "mnuMstrFinishPrdCateg",
-             icon: MdCategory, path: '/masters/products/category' },
+            icon: MdCategory, path: '/masters/products/category'
+          },
 
-          { name: 'Product Group',
+          {
+            name: 'Product Group',
             // MOD_NAME: "mnuProdGrp", 
-            icon: AiOutlineNodeIndex, path: '/masters/products/productgrp' },
+            icon: AiOutlineNodeIndex, path: '/masters/products/productgrp'
+          },
 
-          { name: 'Product Master', 
+          {
+            name: 'Product Master',
             // MOD_NAME: "ToolStripMenuItem20", 
-            icon: MdLocalMall, path: '/masters/products/product' },
+            icon: MdLocalMall, path: '/masters/products/product'
+          },
 
-          { name: 'Style Master',
+          {
+            name: 'Style Master',
             // MOD_NAME: "mnuMstStyleRate",
-             icon: MdCollectionsBookmark, path: '#' },
+            icon: MdCollectionsBookmark, path: '#'
+          },
 
-          { name: 'Type Master',
+          {
+            name: 'Type Master',
             //  MOD_NAME: "mnuMstStyleRate",
-              icon: MdCategory, path: '/masters/products/type' },
+            icon: MdCategory, path: '/masters/products/type'
+          },
 
-          { name: 'Shade Master',
+          {
+            name: 'Shade Master',
             // MOD_NAME: "mnuRmShadeMast",
-             icon: MdBrandingWatermark, path: '/masters/products/shade' },
+            icon: MdBrandingWatermark, path: '/masters/products/shade'
+          },
 
-          { name: 'Pattern Master', 
+          {
+            name: 'Pattern Master',
             // MOD_NAME: "PatternMasterToolStripMenuItem", 
-            icon: MdCollectionsBookmark, path: '/masters/products/pattern' },
+            icon: MdCollectionsBookmark, path: '/masters/products/pattern'
+          },
 
-          { name: 'Brand Master',
+          {
+            name: 'Brand Master',
             // MOD_NAME: "mnuMstrBrand",
-             icon: MdBrandingWatermark, path: '/masters/products/brand' },
+            icon: MdBrandingWatermark, path: '/masters/products/brand'
+          },
 
-          { name: 'Unit Master',  
+          {
+            name: 'Unit Master',
             //  MOD_NAME: "mnuMstrUnit",
-             icon: MdStraighten, path: '/masters/products/unit' },
+            icon: MdStraighten, path: '/masters/products/unit'
+          },
 
-          { name: 'Web Collection', 
+          {
+            name: 'Web Collection',
             // MOD_NAME: "mnuWebCollection",
-             icon: MdCollectionsBookmark, path: '/masters/products/webcollection' },
+            icon: MdCollectionsBookmark, path: '/masters/products/webcollection'
+          },
 
-          { name: 'Quality',
+          {
+            name: 'Quality',
             // MOD_NAME: "mnuQuality", 
-            icon: MdBrandingWatermark, path: '/masters/products/quality' },
+            icon: MdBrandingWatermark, path: '/masters/products/quality'
+          },
 
           { name: 'RackMst', icon: MdBuild, path: '/masters/products/rack' },
           { name: 'Prod Series', icon: MdAssignment, path: '/masters/products/prodseries' },
@@ -960,17 +962,17 @@ export const sidebarMenuItems = [
 
         ],
       },
-      {
-        name: 'Ticketing',
-        icon: TiTicket,
-        path: '/masterpage?activeTab=ticketing',
-        children: [
-          { name: 'Ticket Category', icon: MdCategory, path: '/masters/ticketing/ticketCategory' },
-          { name: 'Ticket SubCategory', icon: MdSubdirectoryArrowRight, path: '/masters/ticketing/ticketSubCat' },
-          { name: 'Service/Complaint', icon: MdSupport, path: '/masters/ticketing/serviceComplaint' },
-          { name: 'Raise Service Ticket', icon: MdAddTask, path: '/masters/ticketing/raiseTicket' },
-        ],
-      },
+      // {
+      //   name: 'Ticketing',
+      //   icon: TiTicket,
+      //   path: '/masterpage?activeTab=ticketing',
+      //   children: [
+      //     { name: 'Ticket Category', icon: MdCategory, path: '/masters/ticketing/ticketCategory' },
+      //     { name: 'Ticket SubCategory', icon: MdSubdirectoryArrowRight, path: '/masters/ticketing/ticketSubCat' },
+      //     { name: 'Service/Complaint', icon: MdSupport, path: '/masters/ticketing/serviceComplaint' },
+      //     { name: 'Raise Service Ticket', icon: MdAddTask, path: '/masters/ticketing/raiseTicket' },
+      //   ],
+      // },
     ],
   },
 
@@ -1173,12 +1175,16 @@ export const sidebarMenuItems = [
         // MOD_NAME: "mnuTrnSales",
         path: '/inventorypage?activeTab=sales-dispatch',
         children: [
-          { name: 'Order Booking (Hide Stock/FOB/WO)',
+          {
+            name: 'Order Booking (Hide Stock/FOB/WO)',
             // MOD_NAME: "mnuTrnSalesOrderWOStk",
-             icon: RiShoppingCart2Line, path: '/inverntory/inventory-offline/' },
-          { name: 'Order Booking (Only BarCode)',
+            icon: RiShoppingCart2Line, path: '/inverntory/inventory-offline/'
+          },
+          {
+            name: 'Order Booking (Only BarCode)',
             // MOD_NAME: "mnuonlybarcode",
-             icon: RiShoppingCart2Line, path: '/inverntory/salesorderbarcode' },
+            icon: RiShoppingCart2Line, path: '/inverntory/salesorderbarcode'
+          },
           { name: 'Scan Barcode', icon: RiShoppingCart2Line, path: '/inverntory/scan-Barcode' },
         ],
       },
@@ -1221,6 +1227,8 @@ export const sidebarMenuItems = [
         ],
       },
       { name: 'Raise Ticket', icon: MdPayments, path: '/tickets/create-tickets/' },
+      { name: 'Ticket Escalation', icon: RiTicket2Fill, path: '/tickets/ticket-esclation' },
+      { name: 'Ticket Status', icon: RiTicket2Line, path: '/tickets/all-tickets' },
     ],
   },
   {
@@ -1305,7 +1313,7 @@ export const sidebarMenuItems = [
 // Function to get all menu items with their paths (flattened structure)
 export const getAllMenuItemsWithPaths = () => {
   const allItems = [];
-  
+
   const flattenMenuItems = (items) => {
     items.forEach(item => {
       // Add the item if it has a valid path
@@ -1316,14 +1324,14 @@ export const getAllMenuItemsWithPaths = () => {
           icon: item.icon,
         });
       }
-      
+
       // Recursively process children
       if (item.children) {
         flattenMenuItems(item.children);
       }
     });
   };
-  
+
   flattenMenuItems(sidebarMenuItems);
   return allItems;
 };
@@ -1338,9 +1346,9 @@ export const getIconComponent = (Icon) => {
 export const getIndianVariations = (text) => {
   const variations = new Set();
   const lowerText = text.toLowerCase();
-  
+
   variations.add(lowerText);
-  
+
   // Common Indian mispronunciations and variations
   const transformations = [
     // RM Purchase Order variations
@@ -1348,11 +1356,11 @@ export const getIndianVariations = (text) => {
     (str) => str.replace(/rm purchase order/gi, 'ar em purchase order'),
     (str) => str.replace(/rm purchase/gi, 'आरएम पर्चेज'),
     (str) => str.replace(/purchase order/gi, 'पर्चेज ऑर्डर'),
-    
+
     // Sales Order variations
     (str) => str.replace(/sales order/gi, 'सेल्स ऑर्डर'),
     (str) => str.replace(/sales order/gi, 'सेल ऑर्डर'),
-    
+
     // General variations
     (str) => str.replace(/inventory/gi, 'इन्वेंटरी'),
     (str) => str.replace(/inventory/gi, 'इनवेंटरी'),
@@ -1361,16 +1369,16 @@ export const getIndianVariations = (text) => {
     (str) => str.replace(/master/gi, 'मास्टर'),
     (str) => str.replace(/company/gi, 'कंपनी'),
     (str) => str.replace(/property/gi, 'प्रॉपर्टी'),
-    
+
     // Remove spaces for fuzzy matching
     (str) => str.replace(/\s+/g, ''),
     (str) => str.replace(/\s+/g, ' ').trim(),
-    
+
     // Abbreviations
     (str) => str.replace(/raw material/gi, 'आरएम'),
     (str) => str.replace(/raw material/gi, 'rm'),
   ];
-  
+
   transformations.forEach(transform => {
     try {
       const variation = transform(lowerText);
@@ -1381,7 +1389,7 @@ export const getIndianVariations = (text) => {
       // Ignore errors
     }
   });
-  
+
   // Add common partial queries
   if (lowerText.includes('rm') && lowerText.includes('purchase') && lowerText.includes('order')) {
     variations.add('rm purchase');
@@ -1390,21 +1398,21 @@ export const getIndianVariations = (text) => {
     variations.add('rmpo');
     variations.add('आरएमपीओ');
   }
-  
+
   return Array.from(variations);
 };
 
 // Function to find module by voice input (Indian accent aware)
 export const findModuleByVoiceInput = (voiceInput, modules) => {
   const input = voiceInput.toLowerCase().trim();
-  
+
   // First try exact match
-  let exactMatch = modules.find(module => 
+  let exactMatch = modules.find(module =>
     module.name.toLowerCase() === input
   );
-  
+
   if (exactMatch) return exactMatch;
-  
+
   // Try with Indian variations
   for (const module of modules) {
     const variations = getIndianVariations(module.name);
@@ -1412,41 +1420,41 @@ export const findModuleByVoiceInput = (voiceInput, modules) => {
       return module;
     }
   }
-  
+
   // Try partial matches
   for (const module of modules) {
     const moduleName = module.name.toLowerCase();
-    
+
     // Check if input contains module name or vice versa
     if (moduleName.includes(input) || input.includes(moduleName)) {
       return module;
     }
-    
+
     // Check word-wise matching
     const inputWords = input.split(/\s+/);
     const moduleWords = moduleName.split(/\s+/);
-    
+
     // Check if all input words are in module
     const allWordsMatch = inputWords.every(inputWord =>
       moduleWords.some(moduleWord => moduleWord.includes(inputWord))
     );
-    
+
     if (allWordsMatch) {
       return module;
     }
-    
+
     // Check if any word matches significantly
     const significantMatch = inputWords.some(inputWord => {
       if (inputWord.length < 3) return false;
-      return moduleWords.some(moduleWord => 
+      return moduleWords.some(moduleWord =>
         moduleWord.includes(inputWord) || inputWord.includes(moduleWord)
       );
     });
-    
+
     if (significantMatch) {
       return module;
     }
   }
-  
+
   return null;
 };
