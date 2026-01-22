@@ -98,7 +98,7 @@ const Stock = () => {
     const recentStockColumns = [
         { field: "FGCAT_NAME", headerName: "Category", width: 180, filter: 'agSetColumnFilter' },
         { field: "FGPRD_NAME", headerName: "Product", width: 220 },
-        { field: "FGSTYLE_CODE", headerName: "Code", width: 200 },
+        { field: "FGSTYLE_CODE", headerName: "Style", width: 200 },
         { field: "FGTYPE_NAME", headerName: "Type", width: 150 },
         { field: "FGSHADE_NAME", headerName: "Shade", width: 150 },
         { field: "BRAND_NAME", headerName: "Brand", width: 150 },

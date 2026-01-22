@@ -2,11 +2,9 @@
 
 import React, { useEffect, useState, useMemo } from 'react';
 import {
-  Box, Container, Typography, Grid, Paper, Table, TableBody, TableCell, TableContainer,
-  TableHead, TableRow, Avatar, Chip, LinearProgress, Stack, Card, CardContent,
-  useTheme, useMediaQuery, IconButton, Tooltip, TextField, Button, Dialog,
-  DialogTitle, DialogContent, DialogActions, FormControl, Select, MenuItem,
-  CircularProgress, alpha, ToggleButtonGroup, ToggleButton
+  Box, Container, Typography, Grid, Paper, Table, TableBody, TableCell, TableContainer, CircularProgress, alpha,
+  TableHead, TableRow, Avatar, Chip, LinearProgress, Stack, Card, CardContent, useTheme, useMediaQuery, IconButton, ToggleButtonGroup,
+  Tooltip, TextField, Button, Dialog, DialogTitle, DialogContent, DialogActions, FormControl, Select, MenuItem, ToggleButton
 } from '@mui/material';
 import {
   ShoppingCart, People, Refresh, CurrencyRupee, FilterAlt, Close,
@@ -17,7 +15,6 @@ import {
   BarChart, Bar, PieChart, Pie, Cell, LineChart, Line, Legend
 } from 'recharts';
 import dayjs from 'dayjs';
-import debounce from 'lodash.debounce';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
@@ -48,7 +45,6 @@ const Sales = () => {
   const [chartType, setChartType] = useState('area');
   const [timeRange, setTimeRange] = useState('month');
 
-
   const chartColors = {
     primary: ['#635bff', '#4caf50', '#42a5f5', '#e57373'],
     gradient: ['#8884d8', '#82ca9d', '#ffc658', '#ff8042'],
@@ -78,7 +74,6 @@ const Sales = () => {
       String(row.BILLITMDTL_QTY || '').includes(q)
     );
   }, [searchQuery, stateWise]);
-
 
   const chartData = useMemo(() =>
     stateWise.slice(0, 8).map((state, index) => ({
@@ -456,7 +451,7 @@ const Sales = () => {
               qty: saleUnbilled[0]?.BILLITMDTL_QTY || 0,
               gradient: 'linear-gradient(135deg, #BA68C8 0%, #8E24AA 100%)',
               icon: <CurrencyRupee />,
-             
+
               trend: 'down',
               iconBg: 'rgba(186, 104, 200, 0.15)'
             },
@@ -466,7 +461,7 @@ const Sales = () => {
               qty: null,
               gradient: 'linear-gradient(135deg, #42A5F5 0%, #1565C0 100%)',
               icon: <CurrencyRupee />,
-              
+
               trend: 'up',
               iconBg: 'rgba(66, 165, 245, 0.15)'
             },
@@ -764,9 +759,9 @@ const Sales = () => {
                 <Box sx={{
                   flex: 1,
                   height: {
-                    xs: 235,   
-                    sm: 280,  
-                    md: 330    
+                    xs: 235,
+                    sm: 280,
+                    md: 330
                   },
                   position: 'relative',
                   minHeight: 220
@@ -1017,8 +1012,8 @@ const Sales = () => {
                       size="small"
                       sx={{
                         '& .MuiTableCell-root': {
-                          py: 0.375, 
-                          px: 1, 
+                          py: 0.375,
+                          px: 1,
                           borderBottom: '1px solid',
                           borderColor: 'divider',
                           '&:first-of-type': { pl: 1.25 },
@@ -1031,7 +1026,7 @@ const Sales = () => {
                           '& th': {
                             bgcolor: '#fafafa',
                             fontWeight: 600,
-                            py: 0.75, 
+                            py: 0.75,
                             borderBottom: '2px solid',
                             borderColor: 'divider',
                             whiteSpace: 'nowrap'
@@ -1101,10 +1096,10 @@ const Sales = () => {
                                 '&:last-child td': { borderBottom: 0 },
                                 cursor: 'pointer',
                                 transition: 'background-color 0.15s',
-                                height: 30 
+                                height: 30
                               }}
                             >
-                           
+
                               <TableCell sx={{
                                 fontSize: { xs: '0.75rem', sm: '0.8rem' },
                                 pl: 1.25,
@@ -1419,7 +1414,7 @@ const Sales = () => {
                         </TableRow>
                       </TableHead>
                       <TableBody>
-                        {filteredStateWise.slice(0, 8).map((row, index) => (
+                        {filteredStateWise.map((row, index) => (
                           <TableRow key={index} hover sx={{ '&:hover': { bgcolor: '#f8fafc' } }}>
                             <TableCell sx={{ fontSize: '0.75rem' }}>
                               <Stack direction="row" spacing={0.5} alignItems="center">
