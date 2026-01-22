@@ -10,8 +10,7 @@ import axiosInstance from '@/lib/axios';
 import { toast, ToastContainer } from 'react-toastify';
 import dayjs from 'dayjs';
 import {
-    BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line, PieChart, Pie,
-    Cell, AreaChart, Area
+    BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell, AreaChart, Area
 } from 'recharts';
 import CloseIcon from '@mui/icons-material/Close';
 import ShowChartIcon from '@mui/icons-material/ShowChart';
@@ -51,7 +50,7 @@ const Stock = () => {
     const [PtnOption, setPtnOption] = useState([]);
     const [dataPie, setDataPie] = useState([]);
     const [categoryPie, setCategoryPie] = useState([]);
-    const [productPie, setProductPie] = useState([]);
+    const [topProductsPie, setTopProductsPie] = useState([]);
     const [stockFilter, setStockFilter] = useState({
         Brandfilter: [],
         Catfilter: [],
@@ -131,20 +130,31 @@ const Stock = () => {
     }, []);
 
     useEffect(() => {
-        if (brandData.length > 0) {
-            const sortedData = [...brandData].sort((a, b) => b.qty - a.qty);
-            const top5Data = sortedData.slice(0, 5);
-            setDataPie(top5Data);
-        }
+        if (!brandData?.length) return;
+        const sorted = [...brandData].sort((a, b) => b.qty - a.qty);
+        setDataPie(sorted.slice(0, 5));
     }, [brandData]);
 
     useEffect(() => {
-        if (productWise.length > 0) {
-            const sortedData = [...productWise].sort((a, b) => b.prodQty - a.prodQty);
-            const top5CatData = sortedData.slice(0, 5);
-            setCategoryPie(top5CatData);
-        }
-    }, [brandData]);
+        if (!productWise?.length) return;
+
+        const sorted = [...productWise].sort((a, b) => b.prodQty - a.prodQty);
+        const top5 = sorted.slice(0, 5);
+
+        setCategoryPie(
+            top5.map(item => ({
+                name: item.name || item.FGCAT_NAME || "Unknown",
+                prodQty: item.prodQty || 0
+            }))
+        );
+
+        setTopProductsPie(
+            top5.map(item => ({
+                name: item.proData || item.FGPRD_NAME || "Unknown",
+                value: item.prodQty || 0
+            }))
+        );
+    }, [productWise]);
 
     const handleGetData = () => {
         fetchTotalStock();
@@ -824,22 +834,21 @@ const Stock = () => {
                                 fontSize: '1.25rem',
                             }}
                         >
-                            Brand C Distribution
+                            Product Distribution
                         </Typography>
                         <Box sx={{ width: '100%', height: 400 }}>
                             <ResponsiveContainer width="100%" height="100%">
                                 <PieChart>
                                     <Pie
-                                        data={dataPie}
+                                        data={topProductsPie}
                                         dataKey="value"
                                         nameKey="name"
                                         cx="50%"
                                         cy="50%"
                                         outerRadius={120}
-                                        fill="#8884d8"
                                         paddingAngle={5}
                                     >
-                                        {dataPie.map((entry, index) => (
+                                        {topProductsPie.map((entry, index) => (
                                             <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                         ))}
                                     </Pie>

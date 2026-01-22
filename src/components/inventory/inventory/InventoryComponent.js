@@ -56,7 +56,7 @@ export default function InventoryComponent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { addRecentPath } = useRecentPaths();
-  
+
   // Get permissions from Redux
   const permissions = useSelector(state => state.permission.userPermissions);
 
@@ -119,25 +119,25 @@ export default function InventoryComponent() {
   // Helper function to check if a module has any permission
   const hasAnyPermission = (moduleName) => {
     if (!moduleName) return true; // If no MOD_NAME, show by default
-    
+
     const modulePermissions = permissions && permissions[moduleName];
     if (!modulePermissions) return false;
-    
+
     return modulePermissions.ADD_PRIV === "1" ||
-           modulePermissions.EDIT_PRIV === "1" ||
-           modulePermissions.DELETE_PRIV === "1" ||
-           modulePermissions.SELECT_PRIV === "1";
+      modulePermissions.EDIT_PRIV === "1" ||
+      modulePermissions.DELETE_PRIV === "1" ||
+      modulePermissions.SELECT_PRIV === "1";
   };
 
   // Check if any child in a tab has permission
   const tabHasVisibleChildren = (tab) => {
     if (!tab.children || tab.children.length === 0) return false;
-    
+
     // Check if tab itself has MOD_NAME and permission
     if (tab.MOD_NAME && hasAnyPermission(tab.MOD_NAME)) {
       return true;
     }
-    
+
     // Check if any child has permission
     return tab.children.some(child => {
       if (child.MOD_NAME) {
@@ -153,7 +153,7 @@ export default function InventoryComponent() {
     return inventoryData.filter(tab => {
       // If tab has no MOD_NAME, always show it
       if (!tab.MOD_NAME) return true;
-      
+
       // Check if tab or any of its children should be shown
       return tabHasVisibleChildren(tab);
     });
@@ -162,11 +162,11 @@ export default function InventoryComponent() {
   // Filter children within a tab based on permissions
   const getFilteredChildren = (children) => {
     if (!children || children.length === 0) return [];
-    
+
     return children.filter(child => {
       // If child has no MOD_NAME, always show it
       if (!child.MOD_NAME) return true;
-      
+
       // Check if child has permission
       return hasAnyPermission(child.MOD_NAME);
     });
@@ -297,12 +297,16 @@ export default function InventoryComponent() {
       // MOD_NAME: "mnuTrnSales",
       children: [
         // { name: 'Stock Enquiry', icon: SearchIcon, path: '/dashboard/stock-enquiry-table' },
-        {name: 'Order Booking (Hide Stock/FOB/WO)',
+        {
+          name: 'Order Booking (Hide Stock/FOB/WO)',
           // MOD_NAME: "mnuTrnSalesOrderWOStk",
-           icon: ShoppingIcon, path: '/inverntory/inventory-offline' },
-        { name: 'Order Booking (Only BarCode)',
+          icon: ShoppingIcon, path: '/inverntory/inventory-offline'
+        },
+        {
+          name: 'Order Booking (Only BarCode)',
           // MOD_NAME: "mnuonlybarcode", 
-          icon: ShoppingIcon, path: '/inverntory/salesorderbarcode' },
+          icon: ShoppingIcon, path: '/inverntory/salesorderbarcode'
+        },
         { name: 'Scan Barcode', icon: ShoppingIcon, path: '/inverntory/scan-Barcode' },
         // { name: 'Packaging/Barcode', icon: InventoryIcon, path: '/inverntory/packeging-barcode/' },
       ],
@@ -318,8 +322,8 @@ export default function InventoryComponent() {
     }
   ];
 
- const filteredInventoryData = getFilteredInventoryData();
-  
+  const filteredInventoryData = getFilteredInventoryData();
+
   // Adjust active tab if current tab is filtered out
   useEffect(() => {
     if (filteredInventoryData.length > 0) {
@@ -363,15 +367,25 @@ export default function InventoryComponent() {
           value={activeFilteredTabIndex}
           onChange={handleFilteredTabChange}
           variant="scrollable"
+          scrollButtons='auto'
           TabIndicatorProps={{ style: { display: 'none' } }}
           sx={{
             '& .MuiTabs-flexContainer': {
-              flexWrap: 'wrap',
+              flexWrap: 'nowrap',
               gap: '4px',
               paddingInline: '2px'
             },
             '& .MuiTabs-scroller': {
-              overflow: 'visible !important',
+              overflowX: 'auto !important', // Make sure the scroller is horizontally scrollable
+              display: 'flex', // Ensure it uses flexbox layout for scroll behavior
+              flexWrap: 'nowrap', // Prevent wrapping of tabs
+            },
+            // Customizing the width of the scroll buttons
+            '& .MuiTabs-scrollButtons': {
+              width: '25px', // Set the width of the scroll buttons
+              '&.Mui-disabled': {
+                opacity: 0.3, // Optional: Lower opacity when buttons are disabled
+              },
             },
           }}
         >
@@ -383,7 +397,7 @@ export default function InventoryComponent() {
 
       {filteredInventoryData.map((tab, index) => {
         const filteredChildren = getFilteredChildren(tab.children);
-        
+
         return (
           <TabPanel key={tab.id} value={activeFilteredTabIndex} index={index}>
             {filteredChildren.length > 0 ? (
@@ -396,9 +410,9 @@ export default function InventoryComponent() {
                         sx={{
                           cursor: item.path !== '#' ? 'pointer' : 'default',
                           transition: 'all 0.3s ease',
-                          width: { xs: 150, sm: 180 }, 
+                          width: { xs: 150, sm: 180 },
                           minWidth: { xs: 150, sm: 180 },
-                          maxWidth: { xs: 150, sm: 180 }, 
+                          maxWidth: { xs: 150, sm: 180 },
                           height: 100,
                           background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
                           border: '1px solid #e0e0e0',
@@ -437,10 +451,10 @@ export default function InventoryComponent() {
                 })}
               </Grid>
             ) : (
-              <Box sx={{ 
-                display: 'flex', 
-                justifyContent: 'center', 
-                alignItems: 'center', 
+              <Box sx={{
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
                 height: '200px',
                 flexDirection: 'column',
                 color: '#666'
