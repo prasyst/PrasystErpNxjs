@@ -430,7 +430,7 @@ const Stock = () => {
                         userSelect: "none",
                     }}
                 >
-                    Order Stock
+                    Stock Overview
                 </Typography>
 
 
@@ -485,7 +485,7 @@ const Stock = () => {
                     {
                         title: "Total Stock Qty",
                         value: totalStck[0]?.QTY || 0,
-                        qty: (totalStck[0]?.TOT_AMT / 100000).toFixed(2) + ' L' || '0.00 L',
+                        qty: (totalStck[0]?.TOT_AMT / 100000).toFixed(2) + ' L' || '0.00',
                         gradient: 'linear-gradient(135deg, #FFC107 0%, #FF9800 100%)',
                         icon: <InventoryIcon />,
                         iconBg: 'rgba(255, 193, 7, 0.2)',

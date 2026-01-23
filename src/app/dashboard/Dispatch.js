@@ -627,19 +627,68 @@ const Dispatch = () => {
                   </Typography>
                 </Box>
               ) : (
-                <TableContainer component={Paper} sx={{ maxHeight: 300, overflow: 'auto' }}>
-                  <Table sx={{ minWidth: 650 }} size="small" aria-label="a dense table">
-                    <TableHead sx={{ position: 'sticky', top: 0, backgroundColor: 'white', zIndex: 1 }}>
-                      <TableRow>
-                        <TableCell align="left">Party</TableCell>
-                        <TableCell align="left">PackNo</TableCell>
-                        <TableCell align="left">PactDt</TableCell>
-                        <TableCell align="left">City</TableCell>
-                        <TableCell align="left">State</TableCell>
-                        <TableCell align="left">Saleperson</TableCell>
-                        <TableCell align="left">Broker</TableCell>
-                        <TableCell align="left">Qty</TableCell>
-                        <TableCell align="left">Amount</TableCell>
+                <TableContainer component={Paper}
+                  sx={{
+                    maxHeight: { xs: 320, md: 300 },
+                    mt: 0.5,
+                    '&::-webkit-scrollbar': {
+                      width: 4,
+                      height: 4
+                    },
+                    '&::-webkit-scrollbar-track': {
+                      bgcolor: '#f5f5f5',
+                      borderRadius: 2
+                    },
+                    '&::-webkit-scrollbar-thumb': {
+                      bgcolor: '#ccc',
+                      borderRadius: 2
+                    }
+                  }}
+                >
+                  <Table stickyHeader size="small"
+                    sx={{
+                      '& .MuiTableCell-root': {
+                        py: 0.375,
+                        px: 1,
+                        borderBottom: '1px solid',
+                        borderColor: 'divider',
+                        '&:first-of-type': { pl: 1.25 },
+                        '&:last-child': { pr: 1.25 },
+                        borderRight: '1px solid #e0e0e0',
+                        '&:last-child': {
+                          borderRight: 'none',
+                        },
+                      },
+                      minWidth: 650
+                    }}
+                  >
+                    <TableHead>
+                      <TableRow sx={{
+                        '& th': {
+                          bgcolor: '#e3f2fd',
+                          fontWeight: 600,
+                          fontSize: { xs: '0.75rem', sm: '0.8rem' },
+                          letterSpacing: '1px',
+                          PY: 0.75,
+                          borderBottom: '2px solid #90caf9',
+                          borderColor: 'divider',
+                          whiteSpace: 'nowrap',
+                          textTransform: 'uppercase',
+                          '&:hover': {
+                            bgcolor: '#bbdefb',
+                            cursor: 'pointer',
+                          }
+                        }
+                      }}>
+                        <TableCell sx={{ fontSize: { xs: '0.7rem', sm: '0.75rem' }, width: '20%' }}>Party</TableCell>
+                        <TableCell sx={{ fontSize: { xs: '0.7rem', sm: '0.75rem' }, width: '8%' }}>PackNo</TableCell>
+                        <TableCell sx={{ fontSize: { xs: '0.7rem', sm: '0.75rem' }, width: '10%' }}>PactDt</TableCell>
+                        <TableCell sx={{ fontSize: { xs: '0.7rem', sm: '0.75rem' }, width: '12%' }}>City</TableCell>
+                        <TableCell sx={{ fontSize: { xs: '0.7rem', sm: '0.75rem' }, width: '10%' }}>State</TableCell>
+                        <TableCell sx={{ fontSize: { xs: '0.7rem', sm: '0.75rem' }, width: '17%' }}>Saleperson</TableCell>
+                        <TableCell sx={{ fontSize: { xs: '0.7rem', sm: '0.75rem' }, width: '10%' }}>Broker</TableCell>
+                        <TableCell align='center' sx={{ fontSize: { xs: '0.7rem', sm: '0.75rem' }, width: '8%' }}>Qty</TableCell>
+                        <TableCell align='center' sx={{ fontSize: { xs: '0.7rem', sm: '0.75rem' }, width: '12%' }}>Amount</TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
@@ -654,13 +703,45 @@ const Dispatch = () => {
                           <TableRow key={row.PACK_NO ? row.PACK_NO : `recent-${index}`} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
                             <TableCell align="left">{row.PARTY_NAME}</TableCell>
                             <TableCell align="left">{row.PACK_NO}</TableCell>
-                            <TableCell align="left">{row.PACK_DT ? dayjs(row.PACK_DT).format('YYYY-MM-DD') : ''}</TableCell>
+                            <TableCell align="left">{row.PACK_DT ? dayjs(row.PACK_DT).format('DD-MM-YYYY') : ''}</TableCell>
                             <TableCell align="left">{row.CITY_NAME}</TableCell>
                             <TableCell align="left">{row.STATE_NAME}</TableCell>
                             <TableCell align="left">{row.SALEPERSON_NAME}</TableCell>
                             <TableCell align="left">{row.BROKER_NAME}</TableCell>
-                            <TableCell align="left">{row.PACKITMDTL_QTY}</TableCell>
-                            <TableCell align="left">{row.AMOUNT}</TableCell>
+                            <TableCell align="center">
+                              <Chip size='small'
+                                label={row.PACKITMDTL_QTY}
+                                sx={{
+                                  fontSize: '0.75rem',
+                                  backgroundColor: '#e3f2fd',
+                                  color: '#635bff',
+                                  border: '1px solid #635bff',
+                                  fontWeight: 600,
+                                  height: 20,
+                                  paddingY: '2px',
+                                  '& .MuiChip-label': {
+                                    px: 1
+                                  }
+                                }}
+                              />
+                            </TableCell>
+                            <TableCell align="center">
+                              <Chip
+                                label={row.AMOUNT}
+                                sx={{
+                                  fontSize: '0.75rem',
+                                  backgroundColor: '#e3f2fd',
+                                  color: '#008000',
+                                  border: '1px solid #008000',
+                                  fontWeight: 600,
+                                  height: 20,
+                                  paddingY: '2px',
+                                  '& .MuiChip-label': {
+                                    px: 1
+                                  }
+                                }}
+                              />
+                            </TableCell>
                           </TableRow>
                         ))
                       )}
@@ -722,16 +803,67 @@ const Dispatch = () => {
                   </Typography>
                 </Box>
               ) : (
-                <TableContainer component={Paper} sx={{ maxHeight: 300, overflow: 'auto' }}>
-                  <Table sx={{ minWidth: 650 }} size="small" aria-label="a dense table">
-                    <TableHead sx={{ position: 'sticky', top: 0, backgroundColor: 'white', zIndex: 1 }}>
-                      <TableRow>
-                        <TableCell align="left">Party</TableCell>
-                        <TableCell align="left">City</TableCell>
-                        <TableCell align="left">State</TableCell>
-                        <TableCell align="left">Saleperson</TableCell>
-                        <TableCell align="left">Broker</TableCell>
-                        <TableCell align="left">Qty</TableCell>
+                <TableContainer component={Paper}
+                  sx={{
+                    maxHeight: { xs: 320, md: 300 },
+                    mt: 0.5,
+                    '&::-webkit-scrollbar': {
+                      width: 4,
+                      height: 4
+                    },
+                    '&::-webkit-scrollbar-track': {
+                      bgcolor: '#f5f5f5',
+                      borderRadius: 2
+                    },
+                    '&::-webkit-scrollbar-thumb': {
+                      bgcolor: '#ccc',
+                      borderRadius: 2
+                    }
+                  }}
+                >
+                  <Table stickyHeader size="small"
+                    sx={{
+                      '& .MuiTableCell-root': {
+                        py: 0.375,
+                        px: 1,
+                        borderBottom: '1px solid',
+                        borderColor: 'divider',
+                        '&:first-of-type': { pl: 1.25 },
+                        '&:last-child': { pr: 1.25 },
+                        borderRight: '1px solid #e0e0e0',
+                        '&:last-child': {
+                          borderRight: 'none',
+                        }
+                      },
+                      minWidth: 650
+                    }}
+                  >
+                    <TableHead>
+                      <TableRow
+                        sx={{
+                          '& th': {
+                            bgcolor: '#e3f2fd',
+                            fontWeight: 600,
+                            fontSize: { xs: '0.75rem', sm: '0.8rem' },
+                            letterSpacing: '1px',
+                            py: 0.75,
+                            borderBottom: '2px solid #90caf9',
+                            borderColor: 'divider',
+                            whiteSpace: 'nowrap',
+                            textTransform: 'uppercase',
+                            '&:hover': {
+                              bgcolor: '#bbdefb',
+                              cursor: 'pointer',
+                            }
+                          }
+                        }}
+                      >
+                        <TableCell sx={{ fontSize: { xs: '0.7rem', sm: '0.75rem' }, width: '25%' }}>Party</TableCell>
+                        <TableCell sx={{ fontSize: { xs: '0.7rem', sm: '0.75rem' }, width: '15%' }}>City</TableCell>
+                        <TableCell sx={{ fontSize: { xs: '0.7rem', sm: '0.75rem' }, width: '15%' }}>State</TableCell>
+                        <TableCell sx={{ fontSize: { xs: '0.7rem', sm: '0.75rem' }, width: '20%' }}>Saleperson</TableCell>
+                        <TableCell sx={{ fontSize: { xs: '0.7rem', sm: '0.75rem' }, width: '15%' }}>Broker</TableCell>
+                        <TableCell align='center' sx={{ fontSize: { xs: '0.7rem', sm: '0.75rem' }, width: '25%' }}>Qty</TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
@@ -749,7 +881,24 @@ const Dispatch = () => {
                             <TableCell align="left">{row.STATE_NAME}</TableCell>
                             <TableCell align="left">{row.SALEPERSON_NAME}</TableCell>
                             <TableCell align="left">{row.BROKER_NAME}</TableCell>
-                            <TableCell align="left">{row.PACKITMDTL_QTY}</TableCell>
+                            <TableCell align="center">
+                              <Chip
+                                label={row.PACKITMDTL_QTY}
+                                size="small"
+                                sx={{
+                                  fontSize: '0.75rem',
+                                  backgroundColor: '#e3f2fd',
+                                  color: '#0288d1',
+                                  border: '1px solid #81d4fa',
+                                  fontWeight: 600,
+                                  height: 20,
+                                  paddingY: '2px',
+                                  '& .MuiChip-label': {
+                                    px: 1,
+                                  },
+                                }}
+                              />
+                            </TableCell>
                           </TableRow>
                         ))
                       )}
@@ -811,28 +960,110 @@ const Dispatch = () => {
                   </Typography>
                 </Box>
               ) : (
-                <TableContainer component={Paper} sx={{ maxHeight: 300, overflow: 'auto' }}>
-                  <Table sx={{ minWidth: 500 }} size="small" aria-label="a dense table">
-                    <TableHead sx={{ position: 'sticky', top: 0, backgroundColor: 'white', zIndex: 1 }}>
-                      <TableRow>
-                        <TableCell align="left">State</TableCell>
-                        <TableCell align="left">Amount</TableCell>
-                        <TableCell align="left">Qty</TableCell>
+                <TableContainer component={Paper}
+                  sx={{
+                    maxHeight: { xs: 320, md: 300 },
+                    '&::-webkit-scrollbar': {
+                      width: 4,
+                      height: 4
+                    },
+                    '&::-webkit-scrollbar-track': {
+                      bgcolor: '#f5f5f5',
+                      borderRadius: 2
+                    },
+                    '&::-webkit-scrollbar-thumb': {
+                      bgcolor: '#ccc',
+                      borderRadius: 2
+                    }
+                  }}
+                >
+                  <Table stickyHeader size='small'
+                    sx={{
+                      '& .MuiTableCell-root': {
+                        py: 0.375,
+                        px: 1,
+                        borderBottom: '1px solid',
+                        borderColor: 'divider',
+                        '&:first-of-type': { pl: 1.25 },
+                        '&:last-child': { pr: 1.25 },
+                        borderRight: '1px solid #e0e0e0',
+                        '&:last-child': {
+                          borderRight: 'none',
+                        }
+                      },
+                      minWidth: 650
+                    }}
+                  >
+                    <TableHead>
+                      <TableRow
+                        sx={{
+                          '& th': {
+                            bgcolor: '#e3f2fd',
+                            fontWeight: 600,
+                            fontSize: { xs: '0.75rem', sm: '0.8rem' },
+                            letterSpacing: '1px',
+                            py: 0.75,
+                            borderBottom: '2px solid #90caf9',
+                            borderColor: 'divider',
+                            whiteSpace: 'nowrap',
+                            textTransform: 'uppercase',
+                            '&:hover': {
+                              bgcolor: '#bbdefb',
+                              cursor: 'pointer',
+                            }
+                          }
+                        }}
+                      >
+                        <TableCell sx={{ fontSize: { xs: '0.7rem', sm: '0.75rem' }, width: '30%' }}>State</TableCell>
+                        <TableCell align="center" sx={{ fontSize: { xs: '0.7rem', sm: '0.75rem' }, width: '30%' }}>Amount</TableCell>
+                        <TableCell align="center" sx={{ fontSize: { xs: '0.7rem', sm: '0.75rem' }, width: '30%' }}>Qty</TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
                       {filterState.length === 0 ? (
                         <TableRow>
                           <TableCell colSpan={9} align='center' sx={{ color: 'gray', fontWeight: 'bold' }}>
-                            No data found...
+                            No state found...
                           </TableCell>
                         </TableRow>
                       ) : (
                         filterState.map((row) => (
                           <TableRow key={row.STATE_NAME || `state-${index}`} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
                             <TableCell align="left">{row.STATE_NAME}</TableCell>
-                            <TableCell align="left">{row.AMOUNT}</TableCell>
-                            <TableCell align="left">{row.PACKITMDTL_QTY}</TableCell>
+                            <TableCell align="center">
+                              <Chip size="small"
+                                label={row.AMOUNT}
+                                sx={{
+                                  fontSize: '0.75rem',
+                                  backgroundColor: '#e3f2fd',
+                                  color: '#008000',
+                                  border: '1px solid #008000',
+                                  fontWeight: 600,
+                                  height: 20,
+                                  paddingY: '2px',
+                                  '& .MuiChip-label': {
+                                    px: 1,
+                                  },
+                                }}
+                              />
+                            </TableCell>
+                            <TableCell align="center">
+                              <Chip size='small'
+                                label={row.PACKITMDTL_QTY}
+                                sx={{
+                                  fontSize: '0.75rem',
+                                  bgcolor: '#e3f2fd',
+                                  color: '#333',
+                                  border: '1px solid #333',
+                                  fontWeight: 600,
+                                  height: 20,
+                                  paddingY: '2px',
+                                  '& .MuiChip-label': {
+                                    px: 1
+                                  }
+                                }}
+                              />
+                            </TableCell>
                           </TableRow>
                         ))
                       )}

@@ -431,7 +431,7 @@ const SalesDashboard = () => {
     };
 
     const getTotalCancelQty = () => {
-        return canInit.QTY + shortOrd.QTY + canOrd.QTY;
+        return (canInit.QTY || 0) + (shortOrd.QTY || 0) + (canOrd.QTY || 0);
     };
 
     const fetchOderBalance = async () => {
@@ -1640,7 +1640,6 @@ const SalesDashboard = () => {
                 ))}
             </Grid>
 
-
             <Grid container spacing={2} mt={2}>
                 <Grid size={{ xs: 12, md: 6 }} sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                     <StyledCard2 sx={{ flex: 1, display: 'flex', flexDirection: 'column', p: 2 }}>
@@ -1648,7 +1647,14 @@ const SalesDashboard = () => {
                             Top 10 Party Wise Order %
                         </Typography>
 
-                        {top10PartiesByAmount.length > 0 ? (
+                        {isLoading ? (
+                            <Box display="flex" justifyContent="center" alignItems="center" height="100%">
+                                <CircularProgress size='3rem' />
+                                <Typography variant="body1" sx={{ mt: 2, color: '#334155', fontWeight: 500 }}>
+                                    Loading data...
+                                </Typography>
+                            </Box>
+                        ) : top10PartiesByAmount.length > 0 ? (
                             <PieChart
                                 series={[
                                     {
@@ -1664,7 +1670,7 @@ const SalesDashboard = () => {
                                                 fullPartyName: item.fullPartyName,
                                             };
                                         }),
-                                        innerRadius: 30,
+                                        innerRadius: 20,
                                         outerRadius: 90,
                                         paddingAngle: 3,
                                         cornerRadius: 8,
@@ -1822,17 +1828,24 @@ const SalesDashboard = () => {
                                             <TableCell
                                                 key={header}
                                                 sx={{
-                                                    bgcolor: '#f1f5f9',
-                                                    color: '#334155',
+                                                    bgcolor: '#e3f2fd',
+                                                    color: '#0d47a1',
                                                     fontWeight: 700,
                                                     fontSize: '0.8125rem',
                                                     letterSpacing: '0.8px',
-                                                    borderBottom: '2px solid #cbd5e1',
-                                                    borderRight: '1px solid #e2e8f0',
+                                                    borderBottom: '3px solid #90caf9',
+                                                    borderRight: '1px solid #bbdefb',
                                                     '&:last-child': { borderRight: 'none' },
                                                     py: 0.5,
                                                     px: 1,
                                                     padding: '0px 16px',
+                                                    textAlign: 'center',
+                                                    textTransform: 'uppercase',
+                                                    boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+                                                    '&:hover': {
+                                                        bgcolor: '#bbdefb',
+                                                        cursor: 'pointer',
+                                                    },
                                                 }}
                                             >
                                                 {header}
@@ -1844,7 +1857,7 @@ const SalesDashboard = () => {
                                     {filteredData.length > 0 ? (
                                         filteredData.map((item, index) => (
                                             <TableRow
-                                                key={item.ORDBK_NO}
+                                                key={`${item.ORDBK_NO}-${index}`}
                                                 hover
                                                 onDoubleClick={() => handleRowDoubleClick(item)}
                                                 sx={{
@@ -2055,18 +2068,30 @@ const SalesDashboard = () => {
                                     borderBottom: '1px solid',
                                     borderColor: 'divider',
                                     '&:first-of-type': { pl: 1.25 },
-                                    '&:last-child': { pr: 1.25 }
+                                    '&:last-child': { pr: 1.25 },
+                                    borderRight: '1px solid #e0e0e0',
+                                    '&:last-child': {
+                                        borderRight: 'none',
+                                    },
                                 }
                             }}>
                                 <TableHead>
                                     <TableRow sx={{
                                         '& th': {
-                                            bgcolor: '#fafafa',
+                                            bgcolor: '#e3f2fd',
                                             fontWeight: 600,
+                                            fontSize: { xs: '0.75rem', sm: '0.8rem' },
+                                            letterSpacing: '1px',
                                             py: 0.75,
-                                            borderBottom: '2px solid',
+                                            borderBottom: '2px solid #90caf9',
                                             borderColor: 'divider',
-                                            whiteSpace: 'nowrap'
+                                            whiteSpace: 'nowrap',
+                                            textTransform: 'uppercase',
+                                            boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+                                            '&:hover': {
+                                                bgcolor: '#bbdefb',
+                                                cursor: 'pointer',
+                                            },
                                         }
                                     }}>
                                         <TableCell sx={{ fontSize: { xs: '0.7rem', sm: '0.75rem' }, width: '18%' }}>Party</TableCell>
@@ -2348,18 +2373,29 @@ const SalesDashboard = () => {
                                     borderBottom: '1px solid',
                                     borderColor: 'divider',
                                     '&:first-of-type': { pl: 1.25 },
-                                    '&:last-child': { pr: 1.25 }
+                                    '&:last-child': { pr: 1.25 },
+                                    borderRight: '1px solid #e0e0e0',
+                                    '&:last-child': {
+                                        borderRight: 'none',
+                                    },
                                 }
                             }}>
                                 <TableHead>
                                     <TableRow sx={{
                                         '& th': {
-                                            bgcolor: '#fafafa',
+                                            bgcolor: '#e3f2fd',
                                             fontWeight: 600,
+                                            fontSize: { xs: '0.75rem', sm: '0.8rem' },
+                                            letterSpacing: '1px',
                                             py: 0.75,
-                                            borderBottom: '2px solid',
+                                            borderBottom: '2px solid #90caf9',
                                             borderColor: 'divider',
-                                            whiteSpace: 'nowrap'
+                                            whiteSpace: 'nowrap',
+                                            textTransform: 'uppercase',
+                                            '&:hover': {
+                                                bgcolor: '#bbdefb',
+                                                cursor: 'pointer',
+                                            }
                                         }
                                     }}>
                                         <TableCell sx={{ fontSize: { xs: '0.7rem', sm: '0.75rem' }, width: '18%' }}>State</TableCell>
