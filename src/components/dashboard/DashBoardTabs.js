@@ -78,6 +78,7 @@ import Sales from '@/app/dashboard/Sales';
 import Production from '@/app/dashboard/Production';
 import Stock from '@/app/dashboard/Stock';
 import TicketDashboard from '../ticket/TicketDashboard';
+import TNADashboard from '../time&action_plan/time_action_plan';
 
 const DashboardTabs = () => {
   const [selectedTab, setSelectedTab] = useState(null);
@@ -151,8 +152,10 @@ const DashboardTabs = () => {
         return <Production />;
       case 5:
         return <Stock />;
+        case 6:
+        return <TicketDashboard />;
       default:
-        return <TicketDashboard />
+        return <TNADashboard />
     }
   };
 
@@ -175,7 +178,9 @@ const DashboardTabs = () => {
         <StyledTab label="Sales" />
         <StyledTab label="Production" />
         <StyledTab label="Stock" />
+        
         <StyledTab label="Ticket" />
+        <StyledTab label="TNA" />
       </StyledTabs>
 
       <Box sx={{ mt: 2 }}>
