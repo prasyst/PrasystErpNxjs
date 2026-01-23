@@ -401,12 +401,12 @@ const fetchTRimData = async () => {
   return (
     <Box sx={{ backgroundColor: '#f8fafc',  p: 1 }}>
       <Card sx={{
-        mb: 2,
+        mb: 1,
         boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
         borderRadius: 3,
         overflow: 'hidden'
       }}>
-        <CardContent sx={{ p: 1 }}>
+        <CardContent >
           <Box sx={{
             backgroundColor: '#f1f5f9',
             p: 1,
@@ -792,7 +792,8 @@ const fetchTRimData = async () => {
               borderRadius: '12px 12px 0 0',
               border: '1px solid',
               borderBottom: 0,
-              borderColor: 'divider'
+              borderColor: 'divider',
+              marginTop: '8px'
             }}>
               <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <Tabs
@@ -836,6 +837,7 @@ const fetchTRimData = async () => {
                 </Box>
               </Box>
             </Box>
+
             <Paper
               sx={{
                 borderRadius: '0 0 12px 12px',
@@ -845,39 +847,87 @@ const fetchTRimData = async () => {
               }}
             >
               {activeTab === 0 && (
-                <TableContainer
-                  sx={{
-                    height: 250,
-                    overflowY: 'auto',
-                    scrollbarWidth: 'thin',
+                <Box>
+                  <TableContainer
+                    component={Paper}
+                    sx={{
+                      height: 220,
+                      overflowY: 'auto',
+                      scrollbarWidth: 'thin',
+                      borderRadius: 2,
+                      border: '1px solid',
+                      borderColor: 'divider',
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(9, minmax(140px, 1fr))',
+                        minWidth: '100%',
+                        width: '100%',
+                        // height: '18px',
+                        fontSize: '15px',
+                      }}
+                    >
+                      <Box sx={{
+                        display: 'contents',
+                        position: 'sticky',
+                        top: 0,
+                        zIndex: 1,
+                      }}>
+                        {['PROSTGGRP_NAME', 'PROSTG_NAME', 'DAYS', 'PLAN_DT', 'EST_DT', 'ACT_DT', 'REMK', 'PROD_OUT_QTY', 'BAL_QTY'].map((header, idx) => (
+                          <Box
+                            key={header}
+                            sx={{
+                              gridColumn: `${idx + 1}`,
+                              p: 0.8,
+                              textAlign: 'center',
+                              fontWeight: 600,
+                              color: 'rgba(0, 0, 0, 0.87)',
+                              backgroundColor: '#f1f5f9',
+                              borderRight: idx === 8 ? 'none' : '1px solid',
+                              borderBottom: '1px solid',
+                              borderColor: 'divider',
+                              whiteSpace: 'nowrap',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              wordBreak: 'break-word',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                            }}
+                          >
+                            {header}
+                          </Box>
+                        ))}
+                      </Box>
 
-                  }}
-                >
-                  <Table size="small">
-                    <TableHead>
-                      <TableRow sx={{ backgroundColor: '#f8fafc' }}>
-                        <TableCell sx={{ fontWeight: 600, py: .5 }}>PROSTGGRP_NAME</TableCell>
-                        <TableCell sx={{ fontWeight: 600, py: .5 }}>PROSTG_NAME</TableCell>
-                        <TableCell sx={{ fontWeight: 600, py: .5 }}>DAYS</TableCell>
-                        <TableCell sx={{ fontWeight: 600, py: .5 }}>PLAN_DT</TableCell>
-                        <TableCell sx={{ fontWeight: 600, py: .5 }}>EST_DT</TableCell>
-                        <TableCell sx={{ fontWeight: 600, py: .5 }}>ACT_DT</TableCell>
-                        <TableCell sx={{ fontWeight: 600, py: .5 }}>REMK</TableCell>
-                        <TableCell sx={{ fontWeight: 600, py: .5 }}>PROD_OUT_QTY</TableCell>
-                        <TableCell sx={{ fontWeight: 600, py: .5 }}>BAL_QTY</TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
                       {routingData.map((row, index) => (
-                        <TableRow
+                        <Box
                           key={index}
                           sx={{
-                            '&:nth-of-type(even)': { backgroundColor: '#f8fafc' },
-                            '&:hover': { backgroundColor: '#f1f5f9' },
-                            '& td': { py: 0.5 }
+                            display: 'contents',
+                            '& > div': {
+                              borderRight: '1px solid',
+                              borderBottom: '1px solid',
+                              borderColor: 'divider',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              minHeight: '30px',
+                            },
+                            '& > div:last-child': {
+                              borderRight: 'none',
+                            },
+                            '&:nth-of-type(even) > div': {
+                              backgroundColor: '#f8fafc',
+                            },
+                            '&:hover > div': {
+                              backgroundColor: '#f1f5f9',
+                            },
                           }}
                         >
-                          <TableCell>
+                          <Box sx={{ px: 1 }}>
                             <Chip
                               label={row.PROSTGGRP_NAME}
                               size="small"
@@ -887,67 +937,158 @@ const fetchTRimData = async () => {
                                 fontWeight: 500
                               }}
                             />
-                          </TableCell>
-                          <TableCell>{row.PROSTG_NAME}</TableCell>
-                          <TableCell>
+                          </Box>
+                          <Box sx={{ px: 1 }}>
+                            <Tooltip title={row.PROSTG_NAME} arrow>
+                              <Box sx={{
+                                width: '100%',
+                                maxWidth: '100%',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap',
+                                textAlign: 'center',
+                              }}>
+                                {row.PROSTG_NAME}
+                              </Box>
+                            </Tooltip>
+                          </Box>
+                          <Box>
                             <Chip
                               label={row.DAYS}
                               size="small"
                               sx={{
+                                fontWeight: 600,
                                 backgroundColor: '#fef3c7',
                                 color: '#92400e',
-                                fontWeight: 600
                               }}
                             />
-                          </TableCell>
-                          <TableCell>{row.PLAN_DT ?  formatDate(row.PLAN_DT) : '-'}</TableCell>
-                          <TableCell>{row.EST_DT ?  formatDate(row.EST_DT) : '-'}</TableCell>
-                          <TableCell>{row.ACT_DT ?  formatDate(row.ACT_DT) : '-'}</TableCell>
-                          <TableCell></TableCell>
-                          <TableCell sx={{ fontWeight: 600 }}>{row.PROD_OUT_QTY}</TableCell>
-                          <TableCell sx={{ fontWeight: 600 }}>{row.BAL_QTY}</TableCell>
-                        </TableRow>
+                          </Box>
+                          <Box sx={{ px: 1 }}>
+                            {row.PLAN_DT ? formatDate(row.PLAN_DT) : '-'}
+                          </Box>
+                          <Box sx={{ px: 1 }}>
+                            {row.EST_DT ? formatDate(row.EST_DT) : '-'}
+                          </Box>
+                          <Box sx={{ px: 1 }}>
+                            {row.ACT_DT ? formatDate(row.ACT_DT) : '-'}
+                          </Box>
+                          <Box sx={{ px: 1 }}>-</Box>
+                          <Box sx={{ px: 1, fontWeight: 600 }}>
+                            <Tooltip title={row.PROD_OUT_QTY} arrow>
+                              <Box sx={{
+                                width: '100%',
+                                maxWidth: '100%',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap',
+                                textAlign: 'center',
+                              }}>
+                                {row.PROD_OUT_QTY}
+                              </Box>
+                            </Tooltip>
+                          </Box>
+                          <Box sx={{ px: 1, fontWeight: 600 }}>
+                            <Tooltip title={row.BAL_QTY} arrow>
+                              <Box sx={{
+                                width: '100%',
+                                maxWidth: '100%',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap',
+                                textAlign: 'center',
+                              }}>
+                                {row.BAL_QTY}
+                              </Box>
+                            </Tooltip>
+                          </Box>
+                        </Box>
                       ))}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
+                    </Box>
+                  </TableContainer>
+                </Box>
               )}
 
               {activeTab === 1 && (
-               <TableContainer
-                  sx={{
-                    height: 250,
-                    overflowY: 'auto',
-                    scrollbarWidth: 'thin',
+                <Box >
+                  <TableContainer
+                    component={Paper}
+                    sx={{
+                      height: 220,
+                      overflowY: 'auto',
+                      scrollbarWidth: 'thin',
+                      borderRadius: 2,
+                      border: '1px solid',
+                      borderColor: 'divider',
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(10, minmax(140px, 1fr))',
+                        minWidth: '100%',
+                        width: '100%',
+                        fontSize: '15px',
+                      }}
+                    >
+                      <Box sx={{
+                        display: 'contents',
+                        position: 'sticky',
+                        top: 0,
+                        zIndex: 1,
+                      }}>
+                        {['FAB_NAME', 'DESIGN', 'QUANTITY', 'RATE', 'AMOUNT', 'REMK', 'BAL_QTY', 'PO_QTY', 'GRN_QTY', 'STK_QTY'].map((header, idx) => (
+                          <Box
+                            key={header}
+                            sx={{
+                              gridColumn: `${idx + 1}`,
+                              p: 0.8,
+                              textAlign: 'center',
+                              fontWeight: 600,
+                              color: 'rgba(0, 0, 0, 0.87)',
+                              backgroundColor: '#f1f5f9',
+                              borderRight: idx === 9 ? 'none' : '1px solid',
+                              borderBottom: '1px solid',
+                              borderColor: 'divider',
+                              whiteSpace: 'nowrap',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              wordBreak: 'break-word',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                            }}
+                          >
+                            {header}
+                          </Box>
+                        ))}
+                      </Box>
 
-                  }}
-                >
-                  <Table size="small">
-                    <TableHead>
-                      <TableRow sx={{ backgroundColor: '#f8fafc' }}>
-                        <TableCell sx={{ fontWeight: 600, py: .5 }}>FAB_NAME</TableCell>
-                        <TableCell sx={{ fontWeight: 600, py: .5 }}>DESIGN</TableCell>
-                        <TableCell sx={{ fontWeight: 600, py: .5 }}>QUENTITY</TableCell>
-                        <TableCell sx={{ fontWeight: 600, py: .5 }}>RATE</TableCell>
-                        <TableCell sx={{ fontWeight: 600, py: .5 }}>AMOUNT</TableCell>
-                        <TableCell sx={{ fontWeight: 600, py: .5 }}>REMK</TableCell>
-                        <TableCell sx={{ fontWeight: 600, py: .5 }}>BAL_QTY</TableCell>
-                          <TableCell sx={{ fontWeight: 600, py: .5 }}>PO_QTY</TableCell>
-                          <TableCell sx={{ fontWeight: 600, py: .5 }}>GRN_QTY</TableCell>
-                          <TableCell sx={{ fontWeight: 600, py: .5 }}>STK_QTY</TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
                       {rmData.map((row, index) => (
-                        <TableRow
+                        <Box
                           key={index}
                           sx={{
-                            '&:nth-of-type(even)': { backgroundColor: '#f8fafc' },
-                            '&:hover': { backgroundColor: '#f1f5f9' },
-                            '& td': { py: 0.5 }
+                            display: 'contents',
+                            '& > div': {
+                              borderRight: '1px solid',
+                              borderBottom: '1px solid',
+                              borderColor: 'divider',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              minHeight: '30px',
+                            },
+                            '& > div:last-child': {
+                              borderRight: 'none',
+                            },
+                            '&:nth-of-type(even) > div': {
+                              backgroundColor: '#f8fafc',
+                            },
+                            '&:hover > div': {
+                              backgroundColor: '#f1f5f9',
+                            },
                           }}
                         >
-                          <TableCell>
+                          <Box sx={{ px: 1 }}>
                             <Chip
                               label={row.FAB_NAME}
                               size="small"
@@ -957,71 +1098,206 @@ const fetchTRimData = async () => {
                                 fontWeight: 500
                               }}
                             />
-                          </TableCell>
-                          <TableCell>{row.DESIGN}</TableCell>
-                          <TableCell>
+                          </Box>
+                          <Box sx={{ px: 1 }}>
+                            <Tooltip title={row.DESIGN} arrow>
+                              <Box sx={{
+                                width: '100%',
+                                maxWidth: '100%',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap',
+                                textAlign: 'center',
+                              }}>
+                                {row.DESIGN}
+                              </Box>
+                            </Tooltip>
+                          </Box>
+                          <Box>
                             <Chip
                               label={row.QUANTITY}
                               size="small"
                               sx={{
+                                fontWeight: 600,
                                 backgroundColor: '#fef3c7',
                                 color: '#92400e',
-                                fontWeight: 600
                               }}
                             />
-                          </TableCell>
-                          <TableCell>{row.RATE}</TableCell>
-                          <TableCell>{row.AMOUNT}</TableCell>
-                          <TableCell>{'-'}</TableCell>
-                          <TableCell>{row.BAL_QTY}</TableCell>
-                          <TableCell sx={{ fontWeight: 600 }}>{row.PO_QTY}</TableCell>
-                            <TableCell sx={{ fontWeight: 600 }}>{row.GRN_QTY}</TableCell>
-                          <TableCell sx={{ fontWeight: 600 }}>{row.STK_QTY}</TableCell>
-                        </TableRow>
+                          </Box>
+                          <Box sx={{ px: 1 }}>
+                            <Tooltip title={row.RATE} arrow>
+                              <Box sx={{
+                                width: '100%',
+                                maxWidth: '100%',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap',
+                                textAlign: 'center',
+                              }}>
+                                {row.RATE}
+                              </Box>
+                            </Tooltip>
+                          </Box>
+                          <Box sx={{ px: 1 }}>
+                            <Tooltip title={row.AMOUNT} arrow>
+                              <Box sx={{
+                                width: '100%',
+                                maxWidth: '100%',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap',
+                                textAlign: 'center',
+                              }}>
+                                {row.AMOUNT}
+                              </Box>
+                            </Tooltip>
+                          </Box>
+                          <Box sx={{ px: 1 }}>-</Box>
+                          <Box sx={{ px: 1 }}>
+                            <Tooltip title={row.BAL_QTY} arrow>
+                              <Box sx={{
+                                width: '100%',
+                                maxWidth: '100%',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap',
+                                textAlign: 'center',
+                              }}>
+                                {row.BAL_QTY}
+                              </Box>
+                            </Tooltip>
+                          </Box>
+                          <Box sx={{ px: 1, fontWeight: 600 }}>
+                            <Tooltip title={row.PO_QTY} arrow>
+                              <Box sx={{
+                                width: '100%',
+                                maxWidth: '100%',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap',
+                                textAlign: 'center',
+                              }}>
+                                {row.PO_QTY}
+                              </Box>
+                            </Tooltip>
+                          </Box>
+                          <Box sx={{ px: 1, fontWeight: 600 }}>
+                            <Tooltip title={row.GRN_QTY} arrow>
+                              <Box sx={{
+                                width: '100%',
+                                maxWidth: '100%',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap',
+                                textAlign: 'center',
+                              }}>
+                                {row.GRN_QTY}
+                              </Box>
+                            </Tooltip>
+                          </Box>
+                          <Box sx={{ px: 1, fontWeight: 600 }}>
+                            <Tooltip title={row.STK_QTY} arrow>
+                              <Box sx={{
+                                width: '100%',
+                                maxWidth: '100%',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap',
+                                textAlign: 'center',
+                              }}>
+                                {row.STK_QTY}
+                              </Box>
+                            </Tooltip>
+                          </Box>
+                        </Box>
                       ))}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
+                    </Box>
+                  </TableContainer>
+                </Box>
               )}
 
               {activeTab === 2 && (
+                <Box >
                   <TableContainer
-                  sx={{
-                    height: 250,
-                    overflowY: 'auto',
-                    scrollbarWidth: 'thin',
+                    component={Paper}
+                    sx={{
+                      height: 220,
+                      overflowY: 'auto',
+                      scrollbarWidth: 'thin',
+                      borderRadius: 2,
+                      border: '1px solid',
+                      borderColor: 'divider',
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(13, minmax(140px, 1fr))',
+                        minWidth: '100%',
+                        width: '100%',
+                        // height: '18px',
+                        fontSize: '15px',
+                      }}
+                    >
+                      <Box sx={{
+                        display: 'contents',
+                        position: 'sticky',
+                        top: 0,
+                        zIndex: 1,
+                      }}>
+                        {['ITM_DETAIL', 'ITM_SUBGROUP', 'QUANTITY', 'RATE', 'AMOUNT', 'ACCSHADE_NAME', 'ACCSIZE_NAME', 'REMK', 'BAL_QTY', 'PO_QTY', 'GRN_QTY', 'STK_QTY', 'MIN_QTY'].map((header, idx) => (
+                          <Box
+                            key={header}
+                            sx={{
+                              gridColumn: `${idx + 1}`,
+                              p: 0.8,
+                              textAlign: 'center',
+                              fontWeight: 600,
+                              color: 'rgba(0, 0, 0, 0.87)',
+                              backgroundColor: '#f1f5f9',
+                              borderRight: idx === 12 ? 'none' : '1px solid',
+                              borderBottom: '1px solid',
+                              borderColor: 'divider',
+                              whiteSpace: 'nowrap',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              wordBreak: 'break-word',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                            }}
+                          >
+                            {header}
+                          </Box>
+                        ))}
+                      </Box>
 
-                  }}
-                >
-                  <Table size="small">
-                    <TableHead>
-                      <TableRow sx={{ backgroundColor: '#f8fafc' }}>
-                        <TableCell sx={{ fontWeight: 600, py: .5 }}>ITM_DETAIL</TableCell>
-                        <TableCell sx={{ fontWeight: 600, py: .5 }}>ITM_SUBGROUP</TableCell>
-                        <TableCell sx={{ fontWeight: 600, py: .5 }}>QUENTITY</TableCell>
-                        <TableCell sx={{ fontWeight: 600, py: .5 }}>RATE</TableCell>
-                        <TableCell sx={{ fontWeight: 600, py: .5 }}>AMOUNT</TableCell>
-                        <TableCell sx={{ fontWeight: 600, py: .5 }}>ACCSHADE_NAME</TableCell>
-                        <TableCell sx={{ fontWeight: 600, py: .5 }}>ACCSIZE_NAME</TableCell>
-                        <TableCell sx={{ fontWeight: 600, py: .5 }}>REMK</TableCell>
-                        <TableCell sx={{ fontWeight: 600, py: .5 }}>BAL_QTY</TableCell>
-                        <TableCell sx={{ fontWeight: 600, py: .5 }}>PO_QTY</TableCell>
-                        <TableCell sx={{ fontWeight: 600, py: .5 }}>GRN_QTY</TableCell>
-                        <TableCell sx={{ fontWeight: 600, py: .5 }}>STK_QTY</TableCell>
-                        <TableCell sx={{ fontWeight: 600, py: .5 }}>MIN_QTY</TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
                       {trimData.map((row, index) => (
-                        <TableRow
+                        <Box
                           key={index}
                           sx={{
-                            '&:nth-of-type(even)': { backgroundColor: '#f8fafc' },
-                            '&:hover': { backgroundColor: '#f1f5f9' },
-                            '& td': { py: 0.5 }
+                            display: 'contents',
+                            '& > div': {
+                              borderRight: '1px solid',
+                              borderBottom: '1px solid',
+                              borderColor: 'divider',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              minHeight: '30px',
+                            },
+                            '& > div:last-child': {
+                              borderRight: 'none',
+                            },
+                            '&:nth-of-type(even) > div': {
+                              backgroundColor: '#f8fafc',
+                            },
+                            '&:hover > div': {
+                              backgroundColor: '#f1f5f9',
+                            },
                           }}
                         >
-                          <TableCell>
+                          <Box sx={{ px: 1 }}>
                             <Chip
                               label={row.ITM_DETAIL}
                               size="small"
@@ -1031,34 +1307,164 @@ const fetchTRimData = async () => {
                                 fontWeight: 500
                               }}
                             />
-                          </TableCell>
-                          <TableCell>{row.ITMSUBGRP_NAME}</TableCell>
-                          <TableCell>
+                          </Box>
+                          <Box sx={{ px: 1 }}>
+                            <Tooltip title={row.ITMSUBGRP_NAME} arrow>
+                              <Box sx={{
+                                width: '100%',
+                                maxWidth: '100%',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap',
+                                textAlign: 'center',
+                              }}>
+                                {row.ITMSUBGRP_NAME}
+                              </Box>
+                            </Tooltip>
+                          </Box>
+                          <Box>
                             <Chip
                               label={row.QUANTITY}
                               size="small"
                               sx={{
+                                fontWeight: 600,
                                 backgroundColor: '#fef3c7',
                                 color: '#92400e',
-                                fontWeight: 600
                               }}
                             />
-                          </TableCell>
-                          <TableCell>{row.RATE}</TableCell>
-                          <TableCell>{row.AMOUNT}</TableCell>
-                          <TableCell>{row.ACT_DT ?  formatDate(row.ACT_DT) : '-'}</TableCell>
-                          <TableCell></TableCell>
-                          <TableCell sx={{ fontWeight: 600 }}>{row.REMK}</TableCell>
-                          <TableCell sx={{ fontWeight: 600 }}>{row.BAL_QTY}</TableCell>
-                          <TableCell sx={{ fontWeight: 600 }}>{row.PO_QTY}</TableCell>
-                          <TableCell sx={{ fontWeight: 600 }}>{row.GRN_QTY}</TableCell>
-                          <TableCell sx={{ fontWeight: 600 }}>{row.STK_QTY}</TableCell>
-                          <TableCell sx={{ fontWeight: 600 }}>{row.BAL_QTY}</TableCell>
-                        </TableRow>
+                          </Box>
+                          <Box sx={{ px: 1 }}>
+                            <Tooltip title={row.RATE} arrow>
+                              <Box sx={{
+                                width: '100%',
+                                maxWidth: '100%',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap',
+                                textAlign: 'center',
+                              }}>
+                                {row.RATE}
+                              </Box>
+                            </Tooltip>
+                          </Box>
+                          <Box sx={{ px: 1 }}>
+                            <Tooltip title={row.AMOUNT} arrow>
+                              <Box sx={{
+                                width: '100%',
+                                maxWidth: '100%',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap',
+                                textAlign: 'center',
+                              }}>
+                                {row.AMOUNT}
+                              </Box>
+                            </Tooltip>
+                          </Box>
+                          <Box sx={{ px: 1 }}>
+                            <Tooltip title={row.ACCSHADE_NAME} arrow>
+                              <Box sx={{
+                                width: '100%',
+                                maxWidth: '100%',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap',
+                                textAlign: 'center',
+                              }}>
+                                {row.ACCSHADE_NAME || '-'}
+                              </Box>
+                            </Tooltip>
+                          </Box>
+                          <Box sx={{ px: 1 }}>
+                            <Tooltip title={row.ACCSIZE_NAME} arrow>
+                              <Box sx={{
+                                width: '100%',
+                                maxWidth: '100%',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap',
+                                textAlign: 'center',
+                              }}>
+                                {row.ACCSIZE_NAME || '-'}
+                              </Box>
+                            </Tooltip>
+                          </Box>
+                          <Box sx={{ px: 1 }}>{row.REMK || '-'}</Box>
+                          <Box sx={{ px: 1 }}>
+                            <Tooltip title={row.BAL_QTY} arrow>
+                              <Box sx={{
+                                width: '100%',
+                                maxWidth: '100%',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap',
+                                textAlign: 'center',
+                              }}>
+                                {row.BAL_QTY}
+                              </Box>
+                            </Tooltip>
+                          </Box>
+                          <Box sx={{ px: 1, fontWeight: 600 }}>
+                            <Tooltip title={row.PO_QTY} arrow>
+                              <Box sx={{
+                                width: '100%',
+                                maxWidth: '100%',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap',
+                                textAlign: 'center',
+                              }}>
+                                {row.PO_QTY}
+                              </Box>
+                            </Tooltip>
+                          </Box>
+                          <Box sx={{ px: 1, fontWeight: 600 }}>
+                            <Tooltip title={row.GRN_QTY} arrow>
+                              <Box sx={{
+                                width: '100%',
+                                maxWidth: '100%',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap',
+                                textAlign: 'center',
+                              }}>
+                                {row.GRN_QTY}
+                              </Box>
+                            </Tooltip>
+                          </Box>
+                          <Box sx={{ px: 1, fontWeight: 600 }}>
+                            <Tooltip title={row.STK_QTY} arrow>
+                              <Box sx={{
+                                width: '100%',
+                                maxWidth: '100%',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap',
+                                textAlign: 'center',
+                              }}>
+                                {row.STK_QTY}
+                              </Box>
+                            </Tooltip>
+                          </Box>
+                          <Box sx={{ px: 1, fontWeight: 600 }}>
+                            <Tooltip title={row.MIN_STK} arrow>
+                              <Box sx={{
+                                width: '100%',
+                                maxWidth: '100%',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap',
+                                textAlign: 'center',
+                              }}>
+                                {row.MIN_STK}
+                              </Box>
+                            </Tooltip>
+                          </Box>
+                        </Box>
                       ))}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
+                    </Box>
+                  </TableContainer>
+                </Box>
               )}
             </Paper>
           </Box>
@@ -1066,7 +1472,7 @@ const fetchTRimData = async () => {
             display: 'flex',
             justifyContent: 'flex-end',
             gap: 2,
-            mt: 1,
+          
             pt: 1,
             borderTop: '1px solid',
             borderTopColor: 'divider'
