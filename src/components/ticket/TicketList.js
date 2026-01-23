@@ -136,7 +136,7 @@ const TicketList = ({ onViewTicket, onEditTicket, onCreateTicket }) => {
       }}
     >
       {/* Header */}
-      <Box sx={{ p: '1.5rem', borderBottom: '1px solid #e5e7eb' }}>
+      <Box sx={{ p: '1rem', borderBottom: '1px solid #e5e7eb' }}>
         <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2}>
           <IconButton onClick={() => router.back()} sx={{ color: "#6b7280" }}>
             <MdArrowBack />

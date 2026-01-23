@@ -1886,6 +1886,7 @@ const Header = ({ isSidebarCollapsed, onMenuToggle, isMobile }) => {
           const clientIdMatch = clientIdResponse.data.DATA.match(/\d+/);
           if (clientIdMatch) {
             setClientId(clientIdMatch[0]);
+             localStorage.setItem('CLIENT_ID', clientIdMatch[0]);
             console.log('Client ID Set:', clientIdMatch[0]);
           }
         }
