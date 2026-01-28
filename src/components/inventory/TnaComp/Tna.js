@@ -21,9 +21,9 @@ import {
   Autocomplete,
   Tabs,
   Tab,
-  Radio,
+  Radio,Checkbox,
   Tooltip,
-  useTheme
+  useTheme,FormControl,FormLabel,RadioGroup,FormControlLabel
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import SaveIcon from '@mui/icons-material/Save';
@@ -33,6 +33,7 @@ import FilterListIcon from '@mui/icons-material/FilterList';
 import ViewWeekIcon from '@mui/icons-material/ViewWeek';
 import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
 import axiosInstance from '../../../lib/axios';
+import { toast, ToastContainer } from 'react-toastify';
 
 const Tna = () => {
   const [selectedParty, setSelectedParty] = useState(null);
@@ -42,21 +43,29 @@ const Tna = () => {
   const [branchName, setBranchName] = useState([]);
   const [orderNo, setOrderNo] = useState([]);
   const [activeTab, setActiveTab] = useState(0);
-   const [cobrid, setCobrid] = useState(''); 
-  const [fcyr, setFcyr] = useState(''); 
+  const [cobrid, setCobrid] = useState('');
+  const [fcyr, setFcyr] = useState('');
   const [clientId, setClientId] = useState('')
   const [data, setData] = useState([]);
-  const [routingData,setRoutingData]=useState([])
-  const [rmData,setRmData]=useState([])
-  const [trimData,setTrimData]=useState([])
+  const [routingData, setRoutingData] = useState([])
+  const [rmData, setRmData] = useState([])
+  const [trimData, setTrimData] = useState([])
   const [selectedRowId, setSelectedRowId] = useState(null);
-  const [isClient, setIsClient] = useState(false); 
+  const [isClient, setIsClient] = useState(false);
+  const [userId,setUserId]=useState()
+  const [editableRoutingData, setEditableRoutingData] = useState([]);
+  const [editableRmData, setEditableRmData] = useState([]);
+  const [editableTrimData, setEditableTrimData] = useState([]);
+  const [selectedRows, setSelectedRows] = useState({});
+   const [currentTnaKey, setCurrentTnaKey] = useState(null); 
+  const [currentTnaNo, setCurrentTnaNo] = useState('')
 
-   useEffect(() => {
+  useEffect(() => {
     setIsClient(true);
     setCobrid(localStorage.getItem('COBR_ID') || '');
     setFcyr(localStorage.getItem('FCYR_KEY') || '');
     setClientId(localStorage.getItem('CLIENT_ID') || '');
+    setUserId(localStorage.getItem('USER_ID') || '')
   }, []);
 
   useEffect(() => {
@@ -99,12 +108,12 @@ const Tna = () => {
       }))
       setBranchName(result)
       if (result.length > 0) {
-      setSelectedBranch(result[0]);
-    } else {
-      setSelectedBranch(null);
-      setSelectedOrder(null);
-      setOrderNo([]);
-    }
+        setSelectedBranch(result[0]);
+      } else {
+        setSelectedBranch(null);
+        setSelectedOrder(null);
+        setOrderNo([]);
+      }
     } catch (error) {
       console.error('Error fetching branches:', error);
       return [];
@@ -131,11 +140,11 @@ const Tna = () => {
         ORDBK_KEY: item.ORDBK_KEY,
       }))
       setOrderNo(result)
-     if (result.length > 0) {
-      setSelectedOrder(result[0]);
-    } else {
-      setSelectedOrder(null);
-    }
+      if (result.length > 0) {
+        setSelectedOrder(result[0]);
+      } else {
+        setSelectedOrder(null);
+      }
     } catch (error) {
       console.error('Error fetching orders:', error);
       return [];
@@ -146,27 +155,28 @@ const Tna = () => {
     getPartyName()
   }, [])
 
- useEffect(() => {
-  if (selectedParty?.PARTY_KEY) {
-    getBranchName(selectedParty.PARTY_KEY);
-    // setData([]);
-  } else {
-    setSelectedBranch(null);
-    setSelectedOrder(null);
-    setBranchName([]);
-    setOrderNo([]);
-    // setData([]);
-  }
-}, [selectedParty])
+  useEffect(() => {
+    if (selectedParty?.PARTY_KEY) {
+      getBranchName(selectedParty.PARTY_KEY);
+      // setData([]);
+    } else {
+      setSelectedBranch(null);
+      setSelectedOrder(null);
+      setBranchName([]);
+      setOrderNo([]);
+      setCurrentTnaKey(null);
+      // setData([]);
+    }
+  }, [selectedParty])
 
   useEffect(() => {
     if (selectedBranch?.PARTYDTL_ID && selectedParty?.PARTY_KEY) {
       getOrderNo(selectedParty.PARTY_KEY, selectedBranch.PARTYDTL_ID);
     }
-     else {
-    setSelectedOrder(null);
-    setOrderNo([]);
-  }
+    else {
+      setSelectedOrder(null);
+      setOrderNo([]);
+    }
   }, [selectedBranch, selectedParty])
 
   const handleGetData = async () => {
@@ -199,185 +209,221 @@ const Tna = () => {
         DLV_DT: item.DLV_DT,
         DAYS_CAL: item.DAYS_CAL,
         PORD_REF: item.PORD_REF,
-        ORDBKSTY_ID:item.ORDBKSTY_ID,
-        FGSTYLE_CODE:item.FGSTYLE_CODE,
-        STYSIZE_NAME:item.STYSIZE_NAME,
-        FGSHADE_NAME:item.FGSHADE_NAME,
-        FGPTN_NAME:item.FGPTN_NAME,
-        ORDBKSTYSZ_ID:item.ORDBKSTYSZ_ID
+        ORDBKSTY_ID: item.ORDBKSTY_ID,
+        ORDBKSTYSZ_ID: item.ORDBKSTYSZ_ID,
+        FGSTYLE_CODE: item.FGSTYLE_CODE,
+        STYSIZE_NAME: item.STYSIZE_NAME,
+        FGSHADE_NAME: item.FGSHADE_NAME,
+        FGPTN_NAME: item.FGPTN_NAME,
+        ORDBKSTYSZ_ID: item.ORDBKSTYSZ_ID,
+        FGSHADE_KEY: item.FGSHADE_KEY,
+        STYSIZE_ID: item.STYSIZE_ID,
+        FGSTYLE_ID: item.FGSTYLE_ID,
+        ORDBK_KEY: item.ORDBK_KEY,
+        TNA_KEY:item.TNA_KEY,
+        FGPTN_KEY:item.FGPTN_KEY,
+        FGTYPE_KEY:item.FGTYPE_KEY
       }))
       setData(result)
       // setSelectedRowId(null);
       setTrimData([]);
       if (result.length > 0) {
-      const firstRow = result[0];
-      setSelectedRowId(firstRow.ORDBKSTYSZ_ID);
-      await handleRadioChange(firstRow);
-    } else {
-      setSelectedRowId(null);
-      setRoutingData([]);
-      setRmData([]);
-      setTrimData([]);
-    }
+        const firstRow = result[0];
+        if (firstRow.TNA_KEY) {
+          setCurrentTnaKey(firstRow.TNA_KEY);
+          setCurrentTnaNo(firstRow.TNA_NO || '');
+        } else {
+          setCurrentTnaKey(null);
+          setCurrentTnaNo('');
+        }
+        setSelectedRowId(firstRow.ORDBKSTYSZ_ID);
+        await handleRadioChange(firstRow);
+      } else {
+        setSelectedRowId(null);
+        setRoutingData([]);
+        setRmData([]);
+        setTrimData([]);
+      }
     } catch (error) {
       console.error('Error fetching orders:', error);
       return [];
     }
   }
 
-const handleRadioChange = async (row) => {
-  setSelectedRowId(row.ORDBKSTYSZ_ID);
-   setRmData([]);
-  setTrimData([]);
-
-  setActiveTab(0);
-  try {
-    const payload = {
-      "PageNumber": 1,
-      "PageSize": 25,
-      "SearchText": "",
-      "FLAG": "Routing",
-      "FCYR_KEY": fcyr,
-      "COBR_ID": cobrid,
-      "PARTY_KEY": selectedParty?.PARTY_KEY,
-      "PARTYDTL_ID": selectedBranch?.PARTYDTL_ID,
-      "CWHAER": selectedOrder?.ORDBK_KEY,
-      "TNA_KEY": "",
-      "ORDBKSTYSZ_ID": row?.ORDBKSTYSZ_ID,
-      "DBFLAG": "S",
-      "CLIENT_ID": clientId,
-      "NAME": "Routing"
-    };
-
-    const response = await axiosInstance.post('/TNA/GetTNAProstg?currentPage=1&limit=25', payload);
-    const result = response.data.DATA.map((item) => ({
-      REC_DOZ: item.REC_DOZ,
-      PLAN_DT: item.PLAN_DT,
-      EST_DT: item.EST_DT,
-      ACT_DT: item.ACT_DT,
-      BAL_QTY: item.BAL_QTY,
-      ORDBK_DT: item.ORDBK_DT,
-      DLV_DT: item.DLV_DT,
-      REC_QTY: item.REC_QTY,
-      PORD_REF: item.PORD_REF,
-      ORDBKSTY_ID: item.ORDBKSTY_ID,
-      PROD_OUT_QTY:item.PROD_OUT_QTY,
-      BAL_QTY:item.BAL_QTY,
-      PROSTG_NAME:item.PROSTG_NAME,
-      DAYS:item.DAYS,
-      PROSTGGRP_NAME:item.PROSTGGRP_NAME
-    }));
-
-    setRoutingData(result)
+  const handleRadioChange = async (row) => {
+    setSelectedRowId(row.ORDBKSTYSZ_ID);
     setRmData([]);
-  } catch (error) {
-    console.error('Error fetching routing data:', error);
-  }
-};
-const fetchRmData = async () => {
-  if (!selectedRowId) {
-    setRmData([]);
-    return;
-  }
-  try {
-    const payload = {
-      "PageNumber": 1,
-      "PageSize": 25,
-      "SearchText": "",
-      "FLAG": "RM",
-      "FCYR_KEY": fcyr,
-      "COBR_ID": cobrid,
-      "PARTY_KEY": selectedParty?.PARTY_KEY,
-      "PARTYDTL_ID": selectedBranch?.PARTYDTL_ID,
-      "CWHAER": '',
-      "TNA_KEY": "",
-      "ORDBKSTYSZ_ID": selectedRowId,
-      "DBFLAG": "S",
-      "CLIENT_ID": clientId,
-      "NAME": "RM"
-    };
-
-    const response = await axiosInstance.post('/TNA/GetTNARM?currentPage=1&limit=25', payload);
-    const result = response.data.DATA?.map((item) => ({
-      FAB_NAME: item.FAB_NAME,
-      DESIGN: item.DESIGN,
-      QUANTITY: item.QUANTITY,
-      RATE: item.RATE,
-      AMOUNT: item.AMOUNT,
-      REMK: item.REMK,
-      BAL_QTY: item.BAL_QTY,
-      PO_QTY: item.PO_QTY,
-      GRN_QTY: item.GRN_QTY,
-      STK_QTY: item.STK_QTY
-    })) || [];
-    
-    setRmData(result);
-  } catch (error) {
-    console.error('Error fetching RM data:', error);
-    setRmData([]);
-  } finally {
-    
-  }
-};
-const fetchTRimData = async () => {
-  if (!selectedRowId) {
     setTrimData([]);
-    return;
-  }
-  try {
-    const payload = {
-      "PageNumber": 1,
-      "PageSize": 25,
-      "SearchText": "",
-      "FLAG": "TRIM",
-      "FCYR_KEY": fcyr,
-      "COBR_ID": cobrid,
-      "PARTY_KEY": selectedParty?.PARTY_KEY,
-      "PARTYDTL_ID": selectedBranch?.PARTYDTL_ID,
-      "CWHAER": '',
-      "TNA_KEY": "",
-      "ORDBKSTYSZ_ID": selectedRowId,
-      "DBFLAG": "S",
-      "CLIENT_ID":clientId,
-      "NAME": "TRIM"
-    };
 
-    const response = await axiosInstance.post('/TNA/GetTNATRIM?currentPage=1&limit=25', payload);
-    const result = response.data.DATA?.map((item) => ({
-      ITM_DETAIL: item.ITM_DETAIL,
-      ITMSUBGRP_NAME: item.ITMSUBGRP_NAME,
-      QUANTITY: item.QUANTITY,
-      RATE: item.RATE,
-      AMOUNT: item.AMOUNT,
-      REMK: item.REMK,
-      BAL_QTY: item.BAL_QTY,
-      PO_QTY: item.PO_QTY,
-      GRN_QTY: item.GRN_QTY,
-      STK_QTY: item.STK_QTY,
-      ACCSHADE_NAME:item.ACCSHADE_NAME,
-      ACCSIZE_NAME:item.ACCSIZE_NAME,
-      STK_QTY:item.STK_QTY,
-      MIN_STK:item.MIN_STK,
-      PO_QTY:item.PO_QTY,
-      GRN_QTY:item.GRN_QTY
-    })) || [];
-    
-    setTrimData(result);
-  } catch (error) {
-    console.error('Error fetching RM data:', error);
-    setTrimData([]);
-  } finally {
-    
-  }
-};
+    setActiveTab(0);
+    if (row.TNA_KEY) {
+      setCurrentTnaKey(row.TNA_KEY);
+      setCurrentTnaNo(row.TNA_NO || '');
+    } else {
+      setCurrentTnaKey(null);
+      setCurrentTnaNo('');
+    }
+    try {
+      const payload = {
+        "PageNumber": 1,
+        "PageSize": 25,
+        "SearchText": "",
+        "FLAG": "Routing",
+        "FCYR_KEY": fcyr,
+        "COBR_ID": cobrid,
+        "PARTY_KEY": selectedParty?.PARTY_KEY,
+        "PARTYDTL_ID": selectedBranch?.PARTYDTL_ID,
+        "CWHAER": selectedOrder?.ORDBK_KEY,
+        "TNA_KEY": row.TNA_KEY || "",
+        "ORDBKSTYSZ_ID": row?.ORDBKSTYSZ_ID,
+        "DBFLAG": "S",
+        "CLIENT_ID": clientId,
+        "NAME": "Routing"
+      };
+
+      const response = await axiosInstance.post('/TNA/GetTNAProstg?currentPage=1&limit=25', payload);
+      const result = response.data.DATA.map((item) => ({
+        REC_DOZ: item.REC_DOZ,
+        PLAN_DT: item.PLAN_DT,
+        EST_DT: item.EST_DT,
+        ACT_DT: item.ACT_DT,
+        BAL_QTY: item.BAL_QTY,
+        ORDBK_DT: item.ORDBK_DT,
+        DLV_DT: item.DLV_DT,
+        REC_QTY: item.REC_QTY,
+        PORD_REF: item.PORD_REF,
+        ORDBKSTY_ID: item.ORDBKSTY_ID,
+        PROD_OUT_QTY: item.PROD_OUT_QTY,
+        BAL_QTY: item.BAL_QTY,
+        PROSTG_NAME: item.PROSTG_NAME,
+        DAYS: item.DAYS,
+        PROSTGGRP_NAME: item.PROSTGGRP_NAME,
+        REMK: item.REMK || '',
+        PROSTG_KEY:item.PROSTG_KEY,
+        TNADTL_ID:item.TNADTL_ID
+      }));
+
+      setRoutingData(result)
+      setEditableRoutingData(result);
+      setRmData([]);
+    } catch (error) {
+      console.error('Error fetching routing data:', error);
+    }
+  };
+  const fetchRmData = async () => {
+    if (!selectedRowId) {
+      setRmData([]);
+      return;
+    }
+    try {
+      const payload = {
+        "PageNumber": 1,
+        "PageSize": 25,
+        "SearchText": "",
+        "FLAG": "RM",
+        "FCYR_KEY": fcyr,
+        "COBR_ID": cobrid,
+        "PARTY_KEY": selectedParty?.PARTY_KEY,
+        "PARTYDTL_ID": selectedBranch?.PARTYDTL_ID,
+        "CWHAER": '',
+        "TNA_KEY":currentTnaKey || "",
+        "ORDBKSTYSZ_ID": selectedRowId,
+        "DBFLAG": "S",
+        "CLIENT_ID": clientId,
+        "NAME": "RM"
+      };
+
+      const response = await axiosInstance.post('/TNA/GetTNARM?currentPage=1&limit=25', payload);
+      const result = response.data.DATA?.map((item) => ({
+        FAB_NAME: item.FAB_NAME,
+        DESIGN: item.DESIGN,
+        QUANTITY: item.QUANTITY,
+        RATE: item.RATE,
+        AMOUNT: item.AMOUNT,
+        REMK: item.REMK,
+        BAL_QTY: item.BAL_QTY,
+        PO_QTY: item.PO_QTY,
+        GRN_QTY: item.GRN_QTY,
+        STK_QTY: item.STK_QTY,
+         FAB_KEY:item.FAB_KEY,
+        FABCAT_KEY:item.FABCAT_KEY,
+        FABDTL_ID:item.FABDTL_ID
+      })) || [];
+
+      setRmData(result);
+      setEditableRmData(result);
+    } catch (error) {
+      console.error('Error fetching RM data:', error);
+      setRmData([]);
+    } finally {
+
+    }
+  };
+  const fetchTRimData = async () => {
+    if (!selectedRowId) {
+      setTrimData([]);
+      return;
+    }
+    try {
+      const payload = {
+        "PageNumber": 1,
+        "PageSize": 25,
+        "SearchText": "",
+        "FLAG": "TRIM",
+        "FCYR_KEY": fcyr,
+        "COBR_ID": cobrid,
+        "PARTY_KEY": selectedParty?.PARTY_KEY,
+        "PARTYDTL_ID": selectedBranch?.PARTYDTL_ID,
+        "CWHAER": '',
+        "TNA_KEY": currentTnaKey || "",
+        "ORDBKSTYSZ_ID": selectedRowId,
+        "DBFLAG": "S",
+        "CLIENT_ID": clientId,
+        "NAME": "TRIM"
+      };
+
+      const response = await axiosInstance.post('/TNA/GetTNATRIM?currentPage=1&limit=25', payload);
+      const result = response.data.DATA?.map((item) => ({
+        ITM_DETAIL: item.ITM_DETAIL,
+        ITMSUBGRP_NAME: item.ITMSUBGRP_NAME,
+        QUANTITY: item.QUANTITY,
+        RATE: item.RATE,
+        AMOUNT: item.AMOUNT,
+        REMK: item.REMK,
+        BAL_QTY: item.BAL_QTY,
+        PO_QTY: item.PO_QTY,
+        GRN_QTY: item.GRN_QTY,
+        STK_QTY: item.STK_QTY,
+        ACCSHADE_NAME: item.ACCSHADE_NAME,
+        ACCSIZE_NAME: item.ACCSIZE_NAME,
+        STK_QTY: item.STK_QTY,
+        MIN_STK: item.MIN_STK,
+        PO_QTY: item.PO_QTY,
+        GRN_QTY: item.GRN_QTY,
+        ACCSIZE_KEY:item.ACCSIZE_KEY,
+        ITM_KEY:item.ITM_KEY,
+        ITMSUBGRP_KEY:item.ITMSUBGRP_KEY,
+        ITMCAT_KEY:item.ITMCAT_KEY,
+        TNATRIM_ID:item.TNATRIM_ID
+      })) || [];
+
+      setTrimData(result);
+      setEditableTrimData(result);
+    } catch (error) {
+      console.error('Error fetching RM data:', error);
+      setTrimData([]);
+    } finally {
+
+    }
+  };
 
   const handleTabChange = (event, newValue) => {
     if (newValue === 1 && selectedRowId) {
-    fetchRmData();
-  }
-  if(newValue===2 && selectedRowId){
-    fetchTRimData()
-  }
+      fetchRmData();
+    }
+    if (newValue === 2 && selectedRowId) {
+      fetchTRimData()
+    }
     setActiveTab(newValue);
   };
 
@@ -398,8 +444,237 @@ const fetchTRimData = async () => {
     }
   };
 
+
+  const handleRoutingInputChange = (index, field, value) => {
+    const newData = [...editableRoutingData];
+    newData[index] = {
+      ...newData[index],
+      [field]: value
+    };
+    setEditableRoutingData(newData);
+  };
+
+
+  const handleRmInputChange = (index, field, value) => {
+    const newData = [...editableRmData];
+    newData[index] = {
+      ...newData[index],
+      [field]: value
+    };
+    setEditableRmData(newData);
+  };
+
+  const handleTrimInputChange = (index, field, value) => {
+    const newData = [...editableTrimData];
+    newData[index] = {
+      ...newData[index],
+      [field]: value
+    };
+    setEditableTrimData(newData);
+  };
+
+  const formatDateForAPI = (dateString) => {
+  if (!dateString) return null;
+  try {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) {
+      return null;
+    }
+    return date.toISOString().split('T')[0]; 
+  } catch (error) {
+    console.error('Error formatting date:', error);
+    return null;
+  }
+};
+
+  const handleSave = async () => {
+    if (!selectedRowId) {
+      alert('Please select an order first');
+      return;
+    }
+
+    try {
+      const selectedRow = data.find(row => row.ORDBKSTYSZ_ID === selectedRowId);
+      if (!selectedRow) {
+        throw new Error('Selected row not found');
+      }
+
+      let tnaKey = currentTnaKey;
+      let tnaNo = currentTnaNo;
+      let dbFlag = "I"; 
+
+      if (currentTnaKey) {
+        dbFlag = "U";
+      } else {
+        const seriesPayload = {
+          "MODULENAME": "Tna",
+          "TBLNAME": "Tna",
+          "FLDNAME": "Tna_No",
+          "NCOLLEN": 6,
+          "CPREFIX": "TN",
+          "COBR_ID": cobrid,
+          "FCYR_KEY": fcyr,
+          "TRNSTYPE": "T",
+          "SERIESID": 0,
+          "FLAG": ""
+        };
+
+        const seriesResponse = await axiosInstance.post('/GetSeriesSettings/GetSeriesLastNewKey', seriesPayload);
+        const seriesData = seriesResponse.data;
+
+        if (!seriesData?.DATA?.[0]?.ID) {
+          throw new Error('Failed to generate TNA key');
+        }
+
+        const generatedKey = seriesData.DATA[0].ID;
+        tnaNo = seriesData.DATA[0].ID || `TN${Date.now().toString().slice(-6)}`;
+        tnaKey = `${fcyr}${cobrid}${generatedKey}`;
+      }
+
+      const tnaPayload = {
+        "DBFLAG": dbFlag,
+        "FCYR_KEY": fcyr,
+        "CO_ID": cobrid,
+        "COBR_ID": cobrid,
+        "TNA_KEY": tnaKey,
+        "TNA_NO": tnaNo,
+        "ORDBKSTYSZ_ID": selectedRow.ORDBKSTYSZ_ID,
+        "ORDBKSTY_ID": selectedRow.ORDBKSTY_ID,
+        "ORDBK_KEY": selectedRow.ORDBK_KEY,
+        "ORDBK_DT": selectedRow.ORDBK_DT ? formatDateForAPI(selectedRow.ORDBK_DT) : null,
+        "DLV_DT": selectedRow.DLV_DT ? formatDateForAPI(selectedRow.DLV_DT) : null,
+        "KNIT_DT": selectedRow.KNIT_DT ? formatDateForAPI(selectedRow.KNIT_DT) : null,
+        "DAYS_CAL": selectedRow.DAYS_CAL || 0,
+        "ORDER_QTY": selectedRow.BAL_QTY || 0,
+        "PARTY_KEY": selectedParty?.PARTY_KEY || "",
+        "PARTYDTL_ID": selectedBranch?.PARTYDTL_ID || 0,
+        "FGSTYLE_ID": selectedRow.FGSTYLE_ID || 0,
+        "FGTYPE_KEY": selectedRow.FGTYPE_KEY,
+        "FGSHADE_KEY": selectedRow.FGSHADE_KEY || "",
+        "FGPTN_KEY": selectedRow.FGPTN_KEY,
+        "STYSIZE_ID": selectedRow.STYSIZE_ID || 0,
+        "PRODN_ST_DT": selectedRow.ORDBK_DT ? formatDateForAPI(selectedRow.ORDBK_DT) : null,
+        "EST_DT": '2025-12-18' ,
+        "REMK": "",
+        "STATUS": "1",
+        "EDIT_STATUS": "0",
+        "CREATED_BY": userId || 0,
+        "UPDATED_BY": userId || 0,
+        "TNARoutingEntities": [],
+        "TNARMEntities": [],
+        "TNATRIMEntities": []
+      };
+
+      if (editableRoutingData.length > 0) {
+        editableRoutingData.forEach((route, index) => {
+          tnaPayload.TNARoutingEntities.push({
+            "DBFLAG": "I",
+            "TNADTL_ID": route.TNADTL_ID,
+            "TNA_KEY": tnaKey,
+            "PROSTG_KEY": route.PROSTG_KEY,
+            "DAYS": route.DAYS || 0,
+            "PLAN_DT": route.PLAN_DT ? formatDateForAPI(route.PLAN_DT) : null,
+            "EST_DT": route.EST_DT ? formatDateForAPI(route.EST_DT) : null,
+            "ACT_DT": route.ACT_DT ? formatDateForAPI(route.ACT_DT) : null,
+            "PROD_OUT_QTY": route.PROD_OUT_QTY || 0,
+            "BAL_QTY": route.BAL_QTY || 0,
+            "REMK": route.REMK || ""
+          });
+        });
+      }
+
+      if (editableRmData.length > 0) {
+        editableRmData.forEach((rm, index) => {
+          tnaPayload.TNARMEntities.push({
+            "DBFLAG": "I",
+            "TNARM_ID": 0,
+            "TNA_KEY": tnaKey,
+            "FAB_KEY": rm.FAB_KEY || 0,
+            "FABDTL_ID": rm.FABDTL_ID,
+            "FABCAT_KEY": rm.FABCAT_KEY || 0,
+            "QUANTITY": rm.QUANTITY || 0,
+            "RATE": rm.RATE || 0,
+            "AMOUNT": rm.AMOUNT || 0,
+            "REMK": rm.REMK || "",
+            "STKST": "N",
+            "STK_QTY":rm.STK_QTY || 0
+          });
+        });
+      }
+      else if (rmData.length > 0) {
+        rmData.forEach((rm, index) => {
+          tnaPayload.TNARMEntities.push({
+            "DBFLAG": "I",
+            "TNARM_ID": 0,
+            "TNA_KEY": tnaKey,
+            "FAB_KEY": rm.FAB_KEY || 0,
+            "FABDTL_ID": rm.FABDTL_ID,
+            "FABCAT_KEY": rm.FABCAT_KEY || 0,
+            "QUANTITY": rm.QUANTITY || 0,
+            "RATE": rm.RATE || 0,
+            "AMOUNT": rm.AMOUNT || 0,
+            "REMK": rm.REMK || "",
+            "STKST": "N",
+            "STK_QTY":rm.STK_QTY || 0
+          });
+        });
+      }
+
+     if (editableTrimData.length > 0) {
+      editableTrimData.forEach((trim, index) => {
+        tnaPayload.TNATRIMEntities.push({
+          "DBFLAG": "I",
+          "TNATRIM_ID": trim.TNATRIM_ID,
+          "TNA_KEY": tnaKey,
+          "ITM_KEY": trim.ITM_KEY,
+          "ITMSUBGRP_KEY": trim.ITMSUBGRP_KEY,
+          "ITMCAT_KEY": trim.ITMCAT_KEY,
+          "ACCSHADE_KEY": 0,
+          "ACCSIZE_KEY": trim.ACCSIZE_KEY || '',
+          "QUANTITY": trim.QUANTITY || 0,
+          "RATE": trim.RATE || 0,
+          "AMOUNT": trim.AMOUNT || 0,
+          "REMK": trim.REMK || ""
+        });
+      });
+    } 
+
+    else if (trimData.length > 0) {
+      trimData.forEach((trim, index) => {
+        tnaPayload.TNATRIMEntities.push({
+          "DBFLAG": "I",
+          "TNATRIM_ID": trim.TNATRIM_ID,
+          "TNA_KEY": tnaKey,
+          "ITM_KEY": trim.ITM_KEY,
+          "ITMSUBGRP_KEY": trim.ITMSUBGRP_KEY,
+          "ITMCAT_KEY": trim.ITMCAT_KEY,
+          "ACCSHADE_KEY": 0,
+          "ACCSIZE_KEY": trim.ACCSIZE_KEY || '',
+          "QUANTITY": trim.QUANTITY || 0,
+          "RATE": trim.RATE || 0,
+          "AMOUNT": trim.AMOUNT || 0,
+          "REMK": trim.REMK || ""
+        });
+      });
+    }
+     console.log('tnaPayload',tnaPayload)
+      const submitResponse = await axiosInstance.post('/TNA/ApiMangeTNA', tnaPayload);
+      if (submitResponse.data?.STATUS ==0) {
+       toast.success(submitResponse.data.MESSAGE)
+        // await handleGetData();
+      } else {
+        toast.error(submitResponse.data.MESSAGE);
+      }
+
+    } catch (error) {
+      console.error('Error saving TNA:', error);
+  
+    }
+  };
+
   return (
-    <Box sx={{ backgroundColor: '#f8fafc',  p: 1 }}>
+    <Box sx={{ backgroundColor: '#f8fafc', p: 1 }}>
+        <ToastContainer />
       <Card sx={{
         mb: 1,
         boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
@@ -534,15 +809,63 @@ const fetchTRimData = async () => {
                   Get Data
                 </Button>
               </Grid>
-              <Grid size={{ xs: 6, md: 2 }} >
-                <Button
-                  variant="outlined"
-                  startIcon={<FilterListIcon />}
-                  sx={{ borderRadius: 2, marginTop: { xs: 0, sm: '20px' }, }}
+              <Grid
+                size={{ xs: 12, md: 2 }}
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "flex-start",
+                  gap: 1,
+                  minWidth: 'fit-content'
+                }}
+              >
+                <FormControl sx={{ minWidth: 'fit-content' }}>
+                  <RadioGroup
+                    row
+                    value="size"
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 0.5
+                    }}
+                  >
+                    <FormControlLabel
+                      value="item"
+                      control={<Radio size="small" sx={{ p: 0 }} />}
+                      label="Item"
+                      sx={{
+                        m: 0,
+                        "& .MuiFormControlLabel-label": {
+                          fontSize: "0.85rem",
+                          ml: 0.5,
+                        },
+                      }}
+                    />
+                    <FormControlLabel
+                      value="size"
+                      control={<Radio size="small" sx={{ p: 0 }} />}
+                      label="Size"
+                      sx={{
+                        m: 0,
+                        "& .MuiFormControlLabel-label": {
+                          fontSize: "0.85rem",
+                          ml: 0.5,
+                        },
+                      }}
+                    />
+                  </RadioGroup>
+                </FormControl>
+                <Typography
+                  sx={{
+                    fontSize: "0.85rem",
+                    whiteSpace: "nowrap",
+                    minWidth: 'fit-content'
+                  }}
                 >
-                  Filter
-                </Button>
+                  TNA No. TN0001
+                </Typography>
               </Grid>
+
             </Grid>
           </Box>
 
@@ -564,8 +887,8 @@ const fetchTRimData = async () => {
                   gridTemplateColumns: 'minmax(80px, 80px) repeat(12, minmax(120px, 1fr))',
                   minWidth: '100%',
                   width: '100%',
-                  height:'18px',
-                  fontSize:'15px',
+                  height: '15px',
+                  fontSize: '15px',
                   // overflowX: 'auto',
                 }}
               >
@@ -577,7 +900,7 @@ const fetchTRimData = async () => {
                 }}>
                   <Box sx={{
                     gridColumn: '1',
-                    p: 0.8,
+                    p: 0.6,
                     textAlign: 'center',
                     fontWeight: 600,
                     color: 'rgba(0, 0, 0, 0.87)',
@@ -635,15 +958,16 @@ const fetchTRimData = async () => {
                         alignItems: 'center',
                         justifyContent: 'center',
                         minHeight: '30px',
+                        backgroundColor: row.TNA_KEY ? '#d7fdd7' : 'transparent',
                       },
                       '& > div:last-child': {
                         borderRight: 'none',
                       },
                       '&:nth-of-type(even) > div': {
-                        backgroundColor: '#f8fafc',
+                        backgroundColor: row.TNA_KEY ? '#d7fdd7' : '#f8fafc',
                       },
                       '&:hover > div': {
-                        backgroundColor: '#f1f5f9',
+                        backgroundColor: row.TNA_KEY ? '#d7fdd7' : '#f1f5f9',
                       },
                     }}
                   >
@@ -664,13 +988,13 @@ const fetchTRimData = async () => {
                           {index + 1}
                         </Typography>
                         <Radio
-                         checked={selectedRowId === row.ORDBKSTYSZ_ID}
-                        //  onChange={() => setSelectedRowId(row.ORDBKSTY_ID)}
-                         onChange={()=>handleRadioChange(row)}
+                          checked={selectedRowId === row.ORDBKSTYSZ_ID}
+                          //  onChange={() => setSelectedRowId(row.ORDBKSTY_ID)}
+                          onChange={() => handleRadioChange(row)}
                           size="small"
                           sx={{
                             color: '#3b82f6',
-                            padding:'0px',
+                            padding: '0px',
                             '&.Mui-checked': {
                               color: '#3b82f6',
                             },
@@ -759,12 +1083,12 @@ const fetchTRimData = async () => {
                     ))}
 
                     <Box sx={{ px: 1 }}>
-                      <Tooltip title={row.tna_key} arrow>
+                      <Tooltip title={row.TNA_KEY} arrow>
                         <Chip
                           label={
-                            typeof row.tna_key === 'string' && row.tna_key.length > 12
-                              ? `${row.tna_key.substring(0, 12)}...`
-                              : row.tna_key
+                            typeof row.TNA_KEY === 'string' && row.TNA_KEY.length > 12
+                              ? `${row.TNA_KEY.substring(0, 12)}...`
+                              : row.TNA_KEY
                           }
                           size="small"
                           sx={{
@@ -881,7 +1205,7 @@ const fetchTRimData = async () => {
                             sx={{
                               gridColumn: `${idx + 1}`,
                               p: 0.8,
-                              textAlign: 'center',
+                              textAlign: 'left',
                               fontWeight: 600,
                               color: 'rgba(0, 0, 0, 0.87)',
                               backgroundColor: '#f1f5f9',
@@ -912,7 +1236,7 @@ const fetchTRimData = async () => {
                               borderBottom: '1px solid',
                               borderColor: 'divider',
                               display: 'flex',
-                              alignItems: 'center',
+                              alignItems: 'left',
                               justifyContent: 'center',
                               minHeight: '30px',
                             },
@@ -934,7 +1258,8 @@ const fetchTRimData = async () => {
                               sx={{
                                 backgroundColor: '#e0f2fe',
                                 color: '#0369a1',
-                                fontWeight: 500
+                                fontWeight: 500,
+                                textAlign: 'left',
                               }}
                             />
                           </Box>
@@ -946,7 +1271,7 @@ const fetchTRimData = async () => {
                                 overflow: 'hidden',
                                 textOverflow: 'ellipsis',
                                 whiteSpace: 'nowrap',
-                                textAlign: 'center',
+                                textAlign: 'left',
                               }}>
                                 {row.PROSTG_NAME}
                               </Box>
@@ -967,12 +1292,35 @@ const fetchTRimData = async () => {
                             {row.PLAN_DT ? formatDate(row.PLAN_DT) : '-'}
                           </Box>
                           <Box sx={{ px: 1 }}>
-                            {row.EST_DT ? formatDate(row.EST_DT) : '-'}
+                            <TextField
+                              type="date"
+                              size="small"
+                              value={editableRoutingData[index]?.EST_DT?.split('T')[0] || ''}
+                              onChange={(e) => handleRoutingInputChange(index, 'EST_DT', e.target.value)}
+                              sx={{
+                                '& .MuiInputBase-input': {
+                                  padding: '4px 8px',
+                                  fontSize: '0.875rem'
+                                }
+                              }}
+                            />
                           </Box>
                           <Box sx={{ px: 1 }}>
                             {row.ACT_DT ? formatDate(row.ACT_DT) : '-'}
                           </Box>
-                          <Box sx={{ px: 1 }}>-</Box>
+                          <Box sx={{ px: 1 }}>
+                            <TextField
+                              size="small"
+                              value={editableRoutingData[index]?.REMK || ''}
+                              onChange={(e) => handleRoutingInputChange(index, 'REMK', e.target.value)}
+                              sx={{
+                                '& .MuiInputBase-input': {
+                                  padding: '4px 8px',
+                                  fontSize: '0.875rem'
+                                }
+                              }}
+                            />
+                          </Box>
                           <Box sx={{ px: 1, fontWeight: 600 }}>
                             <Tooltip title={row.PROD_OUT_QTY} arrow>
                               <Box sx={{
@@ -1009,7 +1357,7 @@ const fetchTRimData = async () => {
               )}
 
               {activeTab === 1 && (
-                <Box >
+                <Box>
                   <TableContainer
                     component={Paper}
                     sx={{
@@ -1024,23 +1372,48 @@ const fetchTRimData = async () => {
                     <Box
                       sx={{
                         display: 'grid',
-                        gridTemplateColumns: 'repeat(10, minmax(140px, 1fr))',
+                        gridTemplateColumns: '60px repeat(10, minmax(140px, 1fr))',
                         minWidth: '100%',
                         width: '100%',
                         fontSize: '15px',
                       }}
                     >
+
                       <Box sx={{
                         display: 'contents',
                         position: 'sticky',
                         top: 0,
                         zIndex: 1,
                       }}>
-                        {['FAB_NAME', 'DESIGN', 'QUANTITY', 'RATE', 'AMOUNT', 'REMK', 'BAL_QTY', 'PO_QTY', 'GRN_QTY', 'STK_QTY'].map((header, idx) => (
+                        <Box
+                          sx={{
+                            gridColumn: '1',
+                            p: 0.8,
+                            textAlign: 'center',
+                            fontWeight: 600,
+                            color: 'rgba(0, 0, 0, 0.87)',
+                            backgroundColor: '#f1f5f9',
+                            borderRight: '1px solid',
+                            borderBottom: '1px solid',
+                            borderColor: 'divider',
+                            whiteSpace: 'nowrap',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            wordBreak: 'break-word',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                          }}
+                        >
+                          Select
+                        </Box>
+
+                        {/* Other headers */}
+                        {['FAB_NAME', 'DESIGN', 'QTY', 'REMK', 'BAL_QTY', 'PO_QTY', 'GRN_QTY', 'STK_QTY', 'RATE', 'AMOUNT'].map((header, idx) => (
                           <Box
                             key={header}
                             sx={{
-                              gridColumn: `${idx + 1}`,
+                              gridColumn: `${idx + 2}`,
                               p: 0.8,
                               textAlign: 'center',
                               fontWeight: 600,
@@ -1088,6 +1461,19 @@ const fetchTRimData = async () => {
                             },
                           }}
                         >
+                          <Box sx={{ px: 0.8 }}>
+                            <Checkbox
+                              size="small"
+                              checked={selectedRows[index] || false}
+                              onChange={(e) => handleRowSelect(index, e.target.checked)}
+                              sx={{
+                                '&.MuiCheckbox-root': {
+                                  padding: '1px',
+                                }
+                              }}
+                            />
+                          </Box>
+
                           <Box sx={{ px: 1 }}>
                             <Chip
                               label={row.FAB_NAME}
@@ -1125,34 +1511,18 @@ const fetchTRimData = async () => {
                             />
                           </Box>
                           <Box sx={{ px: 1 }}>
-                            <Tooltip title={row.RATE} arrow>
-                              <Box sx={{
-                                width: '100%',
-                                maxWidth: '100%',
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                                whiteSpace: 'nowrap',
-                                textAlign: 'center',
-                              }}>
-                                {row.RATE}
-                              </Box>
-                            </Tooltip>
+                            <TextField
+                              size="small"
+                              value={editableRmData[index]?.REMK || ''}
+                              onChange={(e) => handleRmInputChange(index, 'REMK', e.target.value)}
+                              sx={{
+                                '& .MuiInputBase-input': {
+                                  padding: '4px 8px',
+                                  fontSize: '0.875rem'
+                                }
+                              }}
+                            />
                           </Box>
-                          <Box sx={{ px: 1 }}>
-                            <Tooltip title={row.AMOUNT} arrow>
-                              <Box sx={{
-                                width: '100%',
-                                maxWidth: '100%',
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                                whiteSpace: 'nowrap',
-                                textAlign: 'center',
-                              }}>
-                                {row.AMOUNT}
-                              </Box>
-                            </Tooltip>
-                          </Box>
-                          <Box sx={{ px: 1 }}>-</Box>
                           <Box sx={{ px: 1 }}>
                             <Tooltip title={row.BAL_QTY} arrow>
                               <Box sx={{
@@ -1209,6 +1579,34 @@ const fetchTRimData = async () => {
                               </Box>
                             </Tooltip>
                           </Box>
+                          <Box sx={{ px: 1 }}>
+                            <Tooltip title={row.RATE} arrow>
+                              <Box sx={{
+                                width: '100%',
+                                maxWidth: '100%',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap',
+                                textAlign: 'center',
+                              }}>
+                                {row.RATE}
+                              </Box>
+                            </Tooltip>
+                          </Box>
+                          <Box sx={{ px: 1 }}>
+                            <Tooltip title={row.AMOUNT} arrow>
+                              <Box sx={{
+                                width: '100%',
+                                maxWidth: '100%',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap',
+                                textAlign: 'center',
+                              }}>
+                                {row.AMOUNT}
+                              </Box>
+                            </Tooltip>
+                          </Box>
                         </Box>
                       ))}
                     </Box>
@@ -1245,7 +1643,7 @@ const fetchTRimData = async () => {
                         top: 0,
                         zIndex: 1,
                       }}>
-                        {['ITM_DETAIL', 'ITM_SUBGROUP', 'QUANTITY', 'RATE', 'AMOUNT', 'ACCSHADE_NAME', 'ACCSIZE_NAME', 'REMK', 'BAL_QTY', 'PO_QTY', 'GRN_QTY', 'STK_QTY', 'MIN_QTY'].map((header, idx) => (
+                        {['ITM_DETAIL', 'ITM_SUBGROUP', 'QTY', 'RATE', 'AMOUNT', 'ACCSHADE_NAME', 'ACCSIZE_NAME', 'REMK', 'BAL_QTY', 'PO_QTY', 'GRN_QTY', 'STK_QTY', 'MIN_QTY'].map((header, idx) => (
                           <Box
                             key={header}
                             sx={{
@@ -1389,7 +1787,19 @@ const fetchTRimData = async () => {
                               </Box>
                             </Tooltip>
                           </Box>
-                          <Box sx={{ px: 1 }}>{row.REMK || '-'}</Box>
+                          <Box sx={{ px: 1 }}>
+                            <TextField
+                              size="small"
+                              value={editableTrimData[index]?.REMK || ''}
+                              onChange={(e) => handleTrimInputChange(index, 'REMK', e.target.value)}
+                              sx={{
+                                '& .MuiInputBase-input': {
+                                  padding: '4px 8px',
+                                  fontSize: '0.875rem'
+                                }
+                              }}
+                            />
+                          </Box>
                           <Box sx={{ px: 1 }}>
                             <Tooltip title={row.BAL_QTY} arrow>
                               <Box sx={{
@@ -1472,7 +1882,7 @@ const fetchTRimData = async () => {
             display: 'flex',
             justifyContent: 'flex-end',
             gap: 2,
-          
+
             pt: 1,
             borderTop: '1px solid',
             borderTopColor: 'divider'
@@ -1504,8 +1914,9 @@ const fetchTRimData = async () => {
                   background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
                 }
               }}
+              onClick={handleSave}
             >
-              Save
+              Submit
             </Button>
           </Box>
         </CardContent>
