@@ -16,8 +16,8 @@ import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 
 const Cards = () => {
   const theme = useTheme();
-  const [fcyr, setFcyr] = useState(null);
-  const [cobrId, setCobrId] = useState(null);
+  const [fcyr, setFcyr] = useState(localStorage.getItem("FCYR_KEY"));
+  const [cobrId, setCobrId] = useState(localStorage.getItem("COBR_ID"));
   const currentYear = dayjs().year();
   const previousYear = currentYear - 1;
   const [dateFrom, setDateFrom] = useState(dayjs(`${previousYear}-04-01`));
@@ -27,13 +27,6 @@ const Cards = () => {
   const [totalOut, setTotalOut] = useState([]);
   const [totalExp, setTotalExp] = useState([]);
   const [showComponent, setShowComponent] = useState(false);
-
-  useEffect(() => {
-    const fcyrFromStorage = localStorage.getItem("FCYR_KEY");
-    const cobrIdFromStorage = localStorage.getItem("COBR_ID");
-    setFcyr(fcyrFromStorage);
-    setCobrId(cobrIdFromStorage);
-  }, []);
 
   useEffect(() => {
     totalRevenue();

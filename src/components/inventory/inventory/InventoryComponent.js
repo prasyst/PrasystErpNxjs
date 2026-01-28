@@ -368,29 +368,35 @@ export default function InventoryComponent() {
           value={activeFilteredTabIndex}
           onChange={handleFilteredTabChange}
           variant="scrollable"
-          scrollButtons='auto'
           TabIndicatorProps={{ style: { display: 'none' } }}
           sx={{
             '& .MuiTabs-flexContainer': {
-              flexWrap: 'nowrap',
+              flexWrap: 'wrap',
               gap: '4px',
-              paddingInline: '2px'
+              paddingInline: '2px',
             },
             '& .MuiTabs-scroller': {
-              overflowX: 'auto !important', // Make sure the scroller is horizontally scrollable
-              display: 'flex', // Ensure it uses flexbox layout for scroll behavior
-              flexWrap: 'nowrap', // Prevent wrapping of tabs
+              overflow: 'visible !important',
             },
-            // Customizing the width of the scroll buttons
-            '& .MuiTabs-scrollButtons': {
-              width: '25px', // Set the width of the scroll buttons
-              '&.Mui-disabled': {
-                opacity: 0.3, // Optional: Lower opacity when buttons are disabled
+            '@media (max-width: 600px)': {
+              '& .MuiTabs-flexContainer': {
+                flexWrap: 'nowrap',
+              },
+              '& .MuiTabs-scroller': {
+                overflowX: 'auto !important',
+                display: 'flex',
+                flexWrap: 'nowrap',
+              },
+              '& .MuiTabs-scrollButtons': {
+                width: '25px',
+                '&.Mui-disabled': {
+                  opacity: 0.3,
+                },
               },
             },
           }}
         >
-          {filteredInventoryData.map((tab, index) => (
+          {filteredInventoryData.map((tab) => (
             <StyledTab key={tab.id} label={tab.name} />
           ))}
         </StyledTabs>

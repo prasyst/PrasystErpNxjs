@@ -1,7 +1,7 @@
 'use client';
 
-import Cards from '@/components/dashboard/Cards';
 import { Box } from '@mui/material';
+import Cards from '@/components/dashboard/Cards';
 import Charts from '@/components/dashboard/Charts';
 
 const OverviewTab = () => {
