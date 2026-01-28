@@ -1,16 +1,18 @@
 import React, { useEffect, useState } from 'react';
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, ResponsiveContainer, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
-import {
-  GaugeContainer, GaugeValueArc, GaugeReferenceArc, useGaugeState
-} from '@mui/x-charts/Gauge';
+import { GaugeContainer, GaugeValueArc, GaugeReferenceArc } from '@mui/x-charts/Gauge';
 import axiosInstance from '@/lib/axios';
 import { toast } from 'react-toastify';
 import CurrencyRupeeIcon from '@mui/icons-material/CurrencyRupee';
 import { Box, Chip, Grid, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, CircularProgress } from '@mui/material';
 import ReactSpeedometer from "react-d3-speedometer";
+
 const Dashboard = () => {
   const [recentTable, setRecentTable] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [fcyr, setFcyr] = useState(localStorage.getItem("FCYR_KEY"));
+  const [cobrId, setCobrId] = useState(localStorage.getItem("COBR_ID"));
+
   const lineData = [
     { name: 'Jan', value: 5000 },
     { name: 'Feb', value: 8000 },
@@ -97,8 +99,8 @@ const Dashboard = () => {
     setIsLoading(true);
     try {
       const response = await axiosInstance.post("MainDashBoard/GetMainDashBoard", {
-        COBR_ID: "01",
-        FCYR_KEY: 25,
+        COBR_ID: cobrId,
+        FCYR_KEY: fcyr,
         FROM_DT: "2025-04-01",
         To_DT: "2026-03-31",
         Flag: "RecentTrn",
