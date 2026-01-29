@@ -257,6 +257,36 @@ const populateFormData = async (orderData) => {
     
     // FIRST: Wait for all dropdown data to be fetched
     await fetchAllDropdownData();
+      const mapCodesToKeys = (item) => {
+      const mappedItem = { ...item };
+      
+      // Map PROD_CODE to FGPRD_KEY
+      if (item.PROD_CODE && !item.FGPRD_KEY) {
+        mappedItem.FGPRD_KEY = item.PROD_CODE;
+      }
+      
+      // Map SHADE_CODE to FGSHADE_KEY
+      if (item.SHADE_CODE && !item.FGSHADE_KEY) {
+        mappedItem.FGSHADE_KEY = item.SHADE_CODE;
+      }
+      
+      // Map PTN_CODE to FGPTN_KEY
+      if (item.PTN_CODE && !item.FGPTN_KEY) {
+        mappedItem.FGPTN_KEY = item.PTN_CODE;
+      }
+      
+      // Map TYPE_CODE to FGTYPE_KEY
+      if (item.TYPE_CODE && !item.FGTYPE_KEY) {
+        mappedItem.FGTYPE_KEY = item.TYPE_CODE;
+      }
+      
+      // Map STYLE_CODE to FGSTYLE_CODE if needed
+      if (item.STYLE_CODE && !item.FGSTYLE_CODE) {
+        mappedItem.FGSTYLE_CODE = item.STYLE_CODE;
+      }
+      
+      return mappedItem;
+    };
     
     // Helper function to safely get display name with retry
     const getDisplayNameWithRetry = async (getterFunction, key, maxRetries = 3) => {
@@ -304,19 +334,23 @@ const populateFormData = async (orderData) => {
     const orderTypeName = await getDisplayNameWithRetry(getOrderTypeNameByKey, orderData.ORDBK_TYPE);
     const merchandiserName = merchandiserMapping[orderData.MERCHANDISER_ID] || await getDisplayNameWithRetry(getMerchandiserNameById, orderData.MERCHANDISER_ID);
 
-    // Process ORDBKSTYLIST to preserve Type, Shade and Pattern keys
-    const processedOrdbkStyleList = orderData.ORDBKSTYLIST ? orderData.ORDBKSTYLIST.map(item => ({
-      ...item,
-      // CRITICAL: Preserve Type, Shade and Pattern keys
-      FGTYPE_KEY: item.FGTYPE_KEY || "",
-      FGSHADE_KEY: item.FGSHADE_KEY || "", // IMPORTANT: Preserve shade key
-      FGPTN_KEY: item.FGPTN_KEY || "",
-      // Ensure other required fields
-      FGPRD_KEY: item.FGPRD_KEY || "",
-      FGSTYLE_ID: item.FGSTYLE_ID || 0,
-      FGSTYLE_CODE: item.FGSTYLE_CODE || "",
-      DBFLAG: item.DBFLAG || "R"
-    })) : [];
+     const processedOrdbkStyleList = orderData.ORDBKSTYLIST ? orderData.ORDBKSTYLIST.map(item => {
+      // First map codes to keys
+      const mappedItem = mapCodesToKeys(item);
+      
+      return {
+        ...mappedItem,
+        // Ensure all required fields exist
+        FGTYPE_KEY: mappedItem.FGTYPE_KEY || "",
+        FGSHADE_KEY: mappedItem.FGSHADE_KEY || "",
+        FGPTN_KEY: mappedItem.FGPTN_KEY || "",
+        FGPRD_KEY: mappedItem.FGPRD_KEY || "",
+        FGSTYLE_ID: mappedItem.FGSTYLE_ID || 0,
+        FGSTYLE_CODE: mappedItem.FGSTYLE_CODE || "",
+        // IMPORTANT: Preserve DBFLAG from API response
+        DBFLAG: mappedItem.DBFLAG || "R" // Default to "R" for retrieved
+      };
+    }) : [];
 
     console.log('Processed ORDBKSTYLIST with shade keys:', processedOrdbkStyleList.length, 'items');
     console.log('Sample item shade key:', processedOrdbkStyleList[0]?.FGSHADE_KEY);
@@ -422,15 +456,15 @@ const populateFormData = async (orderData) => {
   }
 };
 
-// Function to prepare payload for submission - UPDATED for multi-shade support
+// Function to prepare payload for submission - FIXED for empty keys issue
 const prepareSubmitPayload = () => {
-  const dbFlag = mode === 'add' ? 'I' : 'U';
   const currentDate = new Date().toISOString().replace('T', ' ').split('.')[0];
   
   const userId = localStorage.getItem('USER_ID') || '1';
   const userName = localStorage.getItem('USER_NAME') || 'Admin';
   
-  console.log('User Info:', { userId, userName });
+  console.log('Mode:', mode);
+  console.log('Form Data API Response:', formData.apiResponseData);
 
   const getStatusValue = (status) => {
     const statusMapping = {
@@ -455,75 +489,192 @@ const prepareSubmitPayload = () => {
   const shippingPartyDtlId = formData.SHP_PARTYDTL_ID || formData.PARTYDTL_ID || 1;
   const merchandiserId = formData.MERCHANDISER_ID || 1;
 
-  console.log('Keys for payload:', {
-    partyKey,
-    branchId,
-    brokerKey,
-    broker1Key,
-    salesperson1Key,
-    salesperson2Key,
-    consigneeKey,
-    seasonKey,
-    transporterKey,
-    shippingPartyKey,
-    merchandiserId
-  });
-
-  // Get ORDBKSTYLIST from formData - IMPORTANT: Contains FGSHADE_KEY for each shade
+  // Get ORDBKSTYLIST from formData
   const ordbkStyleList = formData.apiResponseData?.ORDBKSTYLIST || [];
   
-  console.log('Using ORDBK_KEY:', correctOrdbkKey);
+  console.log('ORDBKSTYLIST from formData:', ordbkStyleList);
 
-  // Transform ORDBKSTYLIST for API with proper keys handling
-  const transformedOrdbkStyleList = ordbkStyleList.map(item => {
-    let itemDbFlag = item.DBFLAG || dbFlag;
+  // Function to generate FGITM_KEY dynamically
+  const generateFgItemKey = (item) => {
+    const fgprdKey = item.FGPRD_KEY || "";
+    const fgstyleId = item.FGSTYLE_ID || "";
+    const fgtypeKey = item.FGTYPE_KEY || "";
+    const fgshadeKey = item.FGSHADE_KEY || "";
+    const fgptnKey = item.FGPTN_KEY || "";
     
-    if (mode === 'edit') {
-      // Check if this is a new item
-      const isNewItem = item.ORDBKSTY_ID && item.ORDBKSTY_ID.toString().length > 9;
-      const hasOriginalId = item.ORDBKSTY_ID && item.ORDBKSTY_ID > 0 && !isNewItem;
+    // Clean keys
+    const cleanFgprdKey = fgprdKey.trim();
+    const cleanFgstyleId = fgstyleId.toString().trim();
+    const cleanFgtypeKey = fgtypeKey.trim();
+    const cleanFgshadeKey = fgshadeKey.trim();
+    const cleanFgptnKey = fgptnKey.trim();
+    
+    // Build FGITM_KEY based on available components
+    let fgItemKey = cleanFgprdKey;
+    
+    if (cleanFgstyleId) {
+      fgItemKey += cleanFgstyleId;
+    }
+    
+    if (cleanFgtypeKey) {
+      fgItemKey += cleanFgtypeKey;
+    }
+    
+    if (cleanFgshadeKey) {
+      fgItemKey += cleanFgshadeKey;
+    }
+    
+    if (cleanFgptnKey) {
+      fgItemKey += cleanFgptnKey;
+    }
+    
+    console.log('Generated FGITM_KEY:', fgItemKey, 'from:', {
+      FGPRD_KEY: cleanFgprdKey,
+      FGSTYLE_ID: cleanFgstyleId,
+      FGTYPE_KEY: cleanFgtypeKey,
+      FGSHADE_KEY: cleanFgshadeKey,
+      FGPTN_KEY: cleanFgptnKey
+    });
+    
+    return fgItemKey || "";
+  };
+
+  // IMPORTANT: Map API response codes to keys
+  const mapApiCodesToKeys = (item) => {
+    console.log('Mapping API codes to keys for item:', item);
+    
+    // Initialize with existing keys
+    const mappedItem = { ...item };
+    
+    // Map PROD_CODE to FGPRD_KEY if not already present
+    if (!mappedItem.FGPRD_KEY && item.PROD_CODE) {
+      console.log('Mapping PROD_CODE to FGPRD_KEY:', item.PROD_CODE);
+      mappedItem.FGPRD_KEY = item.PROD_CODE;
+    }
+    
+    // Map SHADE_CODE to FGSHADE_KEY if not already present
+    if (!mappedItem.FGSHADE_KEY && item.SHADE_CODE) {
+      console.log('Mapping SHADE_CODE to FGSHADE_KEY:', item.SHADE_CODE);
+      mappedItem.FGSHADE_KEY = item.SHADE_CODE;
+    }
+    
+    // Map PTN_CODE to FGPTN_KEY if not already present
+    if (!mappedItem.FGPTN_KEY && item.PTN_CODE) {
+      console.log('Mapping PTN_CODE to FGPTN_KEY:', item.PTN_CODE);
+      mappedItem.FGPTN_KEY = item.PTN_CODE;
+    }
+    
+    // Map TYPE_CODE to FGTYPE_KEY if not already present
+    if (!mappedItem.FGTYPE_KEY && item.TYPE_CODE) {
+      console.log('Mapping TYPE_CODE to FGTYPE_KEY:', item.TYPE_CODE);
+      mappedItem.FGTYPE_KEY = item.TYPE_CODE;
+    }
+    
+    console.log('Mapped item:', mappedItem);
+    return mappedItem;
+  };
+
+  // Transform ORDBKSTYLIST for API with proper DBFLAG handling
+  const transformedOrdbkStyleList = ordbkStyleList.map(item => {
+    // First map API codes to keys
+    const mappedItem = mapApiCodesToKeys(item);
+    
+    // Determine DBFLAG based on mode and item status
+    let itemDbFlag = mappedItem.DBFLAG || (mode === 'add' ? 'I' : 'U');
+    
+    // If item is marked as deleted in formData, keep it as 'D'
+    if (mappedItem.DBFLAG === 'D') {
+      itemDbFlag = 'D';
+    } 
+    // For edit mode, determine if it's new or existing
+    else if (mode === 'edit') {
+      const isNewItem = mappedItem.ORDBKSTY_ID && mappedItem.ORDBKSTY_ID.toString().length > 9; // Check if temporary ID
+      const hasOriginalId = mappedItem.ORDBKSTY_ID && mappedItem.ORDBKSTY_ID > 0 && !isNewItem;
       
-      // If DBFLAG is already 'D' (deleted), keep it as 'D'
-      if (item.DBFLAG === 'D') {
-        itemDbFlag = 'D';
+      if (isNewItem) {
+        itemDbFlag = 'I'; // New item in edit mode
+      } else if (hasOriginalId) {
+        itemDbFlag = 'U'; // Existing item to update
       } else {
-        itemDbFlag = hasOriginalId ? 'U' : 'I';
+        itemDbFlag = 'I'; // Default to insert for new items
       }
     }
 
-    // CRITICAL: Preserve all keys including FGSHADE_KEY for multi-shade support
-    let fgtypeKey, fgshadeKey, fgptnKey;
+    // Extract all keys from mapped item
+    const fgprdKey = mappedItem.FGPRD_KEY || "";
+    const fgstyleId = mappedItem.FGSTYLE_ID || "";
+    const fgtypeKey = mappedItem.FGTYPE_KEY || "";
+    const fgshadeKey = mappedItem.FGSHADE_KEY || "";
+    const fgptnKey = mappedItem.FGPTN_KEY || "";
     
-    if (mode === 'edit' && item.ORDBKSTY_ID && item.ORDBKSTY_ID > 0) {
-      // For existing items in edit mode, preserve original keys
-      fgtypeKey = item.FGTYPE_KEY || "";
-      fgshadeKey = item.FGSHADE_KEY || ""; // Preserve shade key
-      fgptnKey = item.FGPTN_KEY || "";
-    } else {
-      // For new items or add mode, use current values
-      fgtypeKey = item.FGTYPE_KEY || "";
-      fgshadeKey = item.FGSHADE_KEY || ""; // Use FGSHADE_KEY from Stepper2
-      fgptnKey = item.FGPTN_KEY || "";
-    }
+    console.log('Extracted keys for item:', {
+      FGPRD_KEY: fgprdKey,
+      FGSTYLE_ID: fgstyleId,
+      FGTYPE_KEY: fgtypeKey,
+      FGSHADE_KEY: fgshadeKey,
+      FGPTN_KEY: fgptnKey,
+      ORDBKSTY_ID: mappedItem.ORDBKSTY_ID
+    });
+
+    // Generate FGITM_KEY dynamically
+    const fgItemKey = generateFgItemKey({
+      FGPRD_KEY: fgprdKey,
+      FGSTYLE_ID: fgstyleId,
+      FGTYPE_KEY: fgtypeKey,
+      FGSHADE_KEY: fgshadeKey,
+      FGPTN_KEY: fgptnKey
+    });
+
+    // Transform ORDBKSTYSZLIST with correct DBFLAG
+    const transformedSizeList = (mappedItem.ORDBKSTYSZLIST || []).map(sizeItem => ({
+      DBFLAG: itemDbFlag, // Same DBFLAG as parent item
+      ORDBKSTYSZ_ID: sizeItem.ORDBKSTYSZ_ID || 0,
+      ORDBK_KEY: correctOrdbkKey,
+      ORDBKSTY_ID: mappedItem.ORDBKSTY_ID || 0,
+      STYSIZE_ID: sizeItem.STYSIZE_ID || 0,
+      STYSIZE_NAME: sizeItem.STYSIZE_NAME || "",
+      QTY: parseFloat(sizeItem.QTY) || 0,
+      INIT_DT: "1900-01-01 00:00:00.000",
+      INIT_REMK: "",
+      INIT_QTY: 0,
+      BAL_QTY: parseFloat(sizeItem.QTY) || 0,
+      MRP: parseFloat(mappedItem.RATE || mappedItem.ITMRATE) || 0,
+      WSP: parseFloat(mappedItem.RATE || mappedItem.ITMRATE) || 0,
+      RQTY: 0,
+      WOBALQTY: parseFloat(sizeItem.QTY) || 0,
+      REFORDBKSTYSZ_ID: 0,
+      OP_QTY: 0,
+      HSNCODE_KEY: "IG001",
+      GST_RATE_SLAB_ID: 39,
+      ITM_AMT: parseFloat(sizeItem.ITM_AMT) || 0,
+      DISC_AMT: parseFloat(sizeItem.DISC_AMT) || 0,
+      NET_AMT: parseFloat(sizeItem.NET_AMT) || 0,
+      SGST_AMT: 0,
+      CGST_AMT: 0,
+      IGST_AMT: 0,
+      NET_SALE_RATE: 0,
+      OTHER_AMT: 0,
+      ADD_CESS_RATE: 0,
+      ADD_CESS_AMT: 0
+    }));
 
     return {
       DBFLAG: itemDbFlag,
-      ORDBKSTY_ID: item.ORDBKSTY_ID || 0,
+      ORDBKSTY_ID: mappedItem.ORDBKSTY_ID || 0,
       ORDBK_KEY: correctOrdbkKey,
-      FGPRD_KEY: item.FGPRD_KEY || "",
-      FGSTYLE_ID: item.FGSTYLE_ID || 0,
-      FGSTYLE_CODE: item.FGSTYLE_CODE || "",
-      // CRITICAL: Preserve these keys properly for multi-shade
+      FGPRD_KEY: fgprdKey,
+      FGSTYLE_ID: fgstyleId,
+      FGSTYLE_CODE: mappedItem.FGSTYLE_CODE || mappedItem.STYLE_CODE || "",
       FGTYPE_KEY: fgtypeKey,
-      FGSHADE_KEY: fgshadeKey, // THIS IS CRITICAL FOR MULTI-SHADE
+      FGSHADE_KEY: fgshadeKey,
       FGPTN_KEY: fgptnKey,
-      FGITM_KEY: item.FGITM_KEY || "",
-      QTY: parseFloat(item.QTY || item.ITMQTY) || 0,
-      STYCATRT_ID: item.STYCATRT_ID || 0,
-      RATE: parseFloat(item.RATE || item.ITMRATE) || 0,
-      AMT: parseFloat(item.AMT || item.ITMAMT) || 0,
-      DLV_VAR_PERCENT: parseFloat(item.DLV_VAR_PERCENT || item.DLV_VAR_PERC) || 0,
-      DLV_VAR_QTY: parseFloat(item.DLV_VAR_QTY) || 0,
+      FGITM_KEY: fgItemKey,
+      QTY: parseFloat(mappedItem.QTY || mappedItem.ITMQTY) || 0,
+      STYCATRT_ID: mappedItem.STYCATRT_ID || 0,
+      RATE: parseFloat(mappedItem.RATE || mappedItem.ITMRATE) || 0,
+      AMT: parseFloat(mappedItem.AMT || mappedItem.ITMAMT) || 0,
+      DLV_VAR_PERCENT: parseFloat(mappedItem.DLV_VAR_PERCENT || mappedItem.DLV_VAR_PERC) || 0,
+      DLV_VAR_QTY: parseFloat(mappedItem.DLV_VAR_QTY) || 0,
       OPEN_RATE: "",
       TERM_KEY: "",
       TERM_NAME: "",
@@ -531,67 +682,58 @@ const prepareSubmitPayload = () => {
       TERM_FIX_AMT: 0,
       TERM_RATE: 0,
       TERM_PERQTY: 0,
-      DISC_AMT: parseFloat(item.DISC_AMT) || 0,
-      NET_AMT: parseFloat(item.NET_AMT) || 0,
+      DISC_AMT: parseFloat(mappedItem.DISC_AMT) || 0,
+      NET_AMT: parseFloat(mappedItem.NET_AMT) || 0,
       INIT_DT: "1900-01-01 00:00:00.000",
       INIT_REMK: "",
       INIT_QTY: 0,
       DLV_DT: "1900-01-01 00:00:00.000",
-      BAL_QTY: parseFloat(item.QTY || item.ITMQTY) || 0,
+      BAL_QTY: parseFloat(mappedItem.QTY || mappedItem.ITMQTY) || 0,
       STATUS: "1",
       STYLE_PRN: "",
       TYPE_PRN: "",
-      MRP_PRN: parseFloat(item.RATE || item.ITMRATE) || 0,
-      REMK: item.REMARK || "",
+      MRP_PRN: parseFloat(mappedItem.RATE || mappedItem.ITMRATE) || 0,
+      REMK: mappedItem.REMARK || "",
       QUOTEDTL_ID: 0,
-      SETQTY: parseFloat(item.SETQTY) || 0,
+      SETQTY: parseFloat(mappedItem.SETQTY) || 0,
       RQTY: 0,
       DISTBTR_KEY: consigneeKey,
       LOTNO: seasonKey,
-      WOBALQTY: parseFloat(item.QTY || item.ITMQTY) || 0,
+      WOBALQTY: parseFloat(mappedItem.QTY || mappedItem.ITMQTY) || 0,
       REFORDBKSTY_ID: 0,
       BOMSTY_ID: 0,
       ISRMREQ: "N",
       OP_QTY: 0,
-      ORDBKSTYSZLIST: (item.ORDBKSTYSZLIST || []).map(sizeItem => ({
-        DBFLAG: itemDbFlag,
-        ORDBKSTYSZ_ID: sizeItem.ORDBKSTYSZ_ID || 0,
-        ORDBK_KEY: correctOrdbkKey,
-        ORDBKSTY_ID: item.ORDBKSTY_ID || 0,
-        STYSIZE_ID: sizeItem.STYSIZE_ID || 0,
-        STYSIZE_NAME: sizeItem.STYSIZE_NAME || "",
-        QTY: parseFloat(sizeItem.QTY) || 0,
-        INIT_DT: "1900-01-01 00:00:00.000",
-        INIT_REMK: "",
-        INIT_QTY: 0,
-        BAL_QTY: parseFloat(sizeItem.QTY) || 0,
-        MRP: parseFloat(item.RATE || item.ITMRATE) || 0,
-        WSP: parseFloat(item.RATE || item.ITMRATE) || 0,
-        RQTY: 0,
-        WOBALQTY: parseFloat(sizeItem.QTY) || 0,
-        REFORDBKSTYSZ_ID: 0,
-        OP_QTY: 0,
-        HSNCODE_KEY: "IG001",
-        GST_RATE_SLAB_ID: 39,
-        ITM_AMT: parseFloat(sizeItem.ITM_AMT) || 0,
-        DISC_AMT: parseFloat(sizeItem.DISC_AMT) || 0,
-        NET_AMT: parseFloat(sizeItem.NET_AMT) || 0,
-        SGST_AMT: 0,
-        CGST_AMT: 0,
-        IGST_AMT: 0,
-        NET_SALE_RATE: 0,
-        OTHER_AMT: 0,
-        ADD_CESS_RATE: 0,
-        ADD_CESS_AMT: 0
-      }))
+      ORDBKSTYSZLIST: transformedSizeList
     };
   });
 
-  console.log('Transformed ORDBKSTYLIST with shade keys:', transformedOrdbkStyleList);
-  console.log('Sample item shade key:', transformedOrdbkStyleList[0]?.FGSHADE_KEY);
+  console.log('Transformed ORDBKSTYLIST with keys:', transformedOrdbkStyleList.map(item => ({
+    ORDBKSTY_ID: item.ORDBKSTY_ID,
+    DBFLAG: item.DBFLAG,
+    FGPRD_KEY: item.FGPRD_KEY,
+    FGSHADE_KEY: item.FGSHADE_KEY,
+    FGITM_KEY: item.FGITM_KEY
+  })));
 
-  // Get ORDBKTERMLIST from formData
-  const ordbkTermList = formData.apiResponseData?.ORDBKTERMLIST || [];
+  // Rest of the function remains the same for ORDBKTERMLIST and ORDBKGSTLIST
+  // Get ORDBKTERMLIST from formData with proper DBFLAG
+  const ordbkTermList = (formData.apiResponseData?.ORDBKTERMLIST || []).map(termItem => {
+    let termDbFlag = termItem.DBFLAG || (mode === 'add' ? 'I' : 'U');
+    
+    if (termItem.DBFLAG === 'D') {
+      termDbFlag = 'D';
+    } else if (mode === 'edit') {
+      const hasOriginalId = termItem.ORDBKTERM_ID && termItem.ORDBKTERM_ID > 0;
+      termDbFlag = hasOriginalId ? 'U' : 'I';
+    }
+    
+    return {
+      ...termItem,
+      DBFLAG: termDbFlag,
+      ORDBK_KEY: correctOrdbkKey
+    };
+  });
   
   // Generate ORDBKGSTLIST only if GST_APPL is "Y"
   let ordbkGstList = [];
@@ -599,17 +741,13 @@ const prepareSubmitPayload = () => {
   if (formData.GST_APPL === "Y") {
     if (formData.apiResponseData?.ORDBKGSTLIST && formData.apiResponseData.ORDBKGSTLIST.length > 0) {
       ordbkGstList = formData.apiResponseData.ORDBKGSTLIST.map(gstItem => {
-        let gstDbFlag;
-        
-        if (mode === 'add') {
-          gstDbFlag = 'I';
-        } else {
-          const hasOriginalId = gstItem.ORDBK_GST_ID && gstItem.ORDBK_GST_ID > 0;
-          gstDbFlag = hasOriginalId ? 'U' : 'I';
-        }
+        let gstDbFlag = gstItem.DBFLAG || (mode === 'add' ? 'I' : 'U');
         
         if (gstItem.DBFLAG === 'D') {
           gstDbFlag = 'D';
+        } else if (mode === 'edit') {
+          const hasOriginalId = gstItem.ORDBK_GST_ID && gstItem.ORDBK_GST_ID > 0;
+          gstDbFlag = hasOriginalId ? 'U' : 'I';
         }
 
         return {
@@ -640,50 +778,15 @@ const prepareSubmitPayload = () => {
           ADD_CESS_AMT: parseFloat(gstItem.ADD_CESS_AMT) || 0
         };
       });
-    } else {
-      // Generate GST list from items if GST is enabled but no GST data exists
-      transformedOrdbkStyleList.forEach(item => {
-        if (item.DBFLAG !== 'D') {
-          const gstItem = {
-            DBFLAG: mode === 'add' ? 'I' : 'I',
-            ORDBK_GST_ID: 0,
-            GSTTIN_NO: "URD",
-            ORDBK_KEY: correctOrdbkKey,
-            ORDBK_DT: formatDateForAPI(formData.ORDER_DATE)?.replace('T', ' ') || currentDate,
-            GST_TYPE: formData.GST_TYPE === "STATE" ? "S" : "I",
-            HSNCODE_KEY: "IG001",
-            HSN_CODE: "64021010",
-            QTY: item.QTY || 0,
-            UNIT_KEY: "UN005",
-            GST_RATE_SLAB_ID: 39,
-            ITM_AMT: item.AMT || 0,
-            DISC_AMT: item.DISC_AMT || 0,
-            NET_AMT: item.NET_AMT || 0,
-            SGST_RATE: formData.GST_TYPE === "STATE" ? 2.5 : 0,
-            SGST_AMT: formData.GST_TYPE === "STATE" ? (item.NET_AMT * 0.025) : 0,
-            CGST_RATE: formData.GST_TYPE === "STATE" ? 2.5 : 0,
-            CGST_AMT: formData.GST_TYPE === "STATE" ? (item.NET_AMT * 0.025) : 0,
-            IGST_RATE: formData.GST_TYPE === "I" ? 5 : 0,
-            IGST_AMT: formData.GST_TYPE === "I" ? (item.NET_AMT * 0.05) : 0,
-            ROUND_OFF: 0,
-            OTHER_AMT: 0,
-            PARTYDTL_ID: parseInt(branchId) || 106634,
-            ADD_CESS_RATE: 0,
-            ADD_CESS_AMT: 0
-          };
-          ordbkGstList.push(gstItem);
-        }
-      });
     }
-  } else {
-    // GST_APPL is "N" - send empty array
-    ordbkGstList = [];
-    console.log('GST_APPL is "N", sending empty ORDBKGSTLIST');
   }
 
-  // Base payload for both insert and update
+  // Set main DBFLAG based on mode
+  const mainDbFlag = mode === 'add' ? 'I' : 'U';
+
+  // Base payload
   const basePayload = {
-    DBFLAG: dbFlag,
+    DBFLAG: mainDbFlag,
     FCYR_KEY: "25",
     CO_ID: companyConfig.CO_ID, 
     COBR_ID: companyConfig.COBR_ID, 
@@ -703,7 +806,7 @@ const prepareSubmitPayload = () => {
     QUOTE_NO: formData.QUOTE_NO || "",
     QUOTE_DT: formatDateForAPI(formData.ORDER_DATE),
     PARTY_KEY: partyKey,
-    PARTYDTL_ID: parseInt(branchId) || 100006,
+    PARTYDTL_ID: parseInt(branchId) || 100003,
     BROKER_KEY: brokerKey,
     BROKER1_KEY: broker1Key,
     BROKER_COMM: 0.00,
@@ -717,7 +820,7 @@ const prepareSubmitPayload = () => {
     CURRN_KEY: formData.CURRN_KEY || "",
     EX_RATE: parseFloat(formData.EX_RATE) || 0,
     IMP_ORDBK_KEY: "",
-    ORDBK_TYPE: formData.ORDBK_TYPE || "0",
+    ORDBK_TYPE: formData.ORDBK_TYPE || "2",
     ROUND_OFF_DESC: "",
     ROUND_OFF: 0.00,
     BOMSTY_ID: 0,
@@ -730,7 +833,7 @@ const prepareSubmitPayload = () => {
     GST_APP: formData.GST_APPL || "N",
     GST_TYPE: formData.GST_TYPE === "STATE" ? "S" : "I",
     SHP_PARTY_KEY: shippingPartyKey,
-    SHP_PARTYDTL_ID: parseInt(shippingPartyDtlId) || 100006,
+    SHP_PARTYDTL_ID: parseInt(shippingPartyDtlId) || 100003,
     STATE_CODE: "",
     ORDBK_ITM_AMT: parseFloat(formData.ORDBK_ITM_AMT) || 0,
     ORDBK_SGST_AMT: parseFloat(formData.ORDBK_SGST_AMT) || 0,
@@ -739,7 +842,7 @@ const prepareSubmitPayload = () => {
     ORDBK_ADD_CESS_AMT: 0,
     ORDBK_GST_AMT: parseFloat(formData.ORDBK_GST_AMT) || 0,
     ORDBK_EXTRA_AMT: 0,
-    ORDBKSTYLIST: transformedOrdbkStyleList, // Contains FGSHADE_KEY for each shade
+    ORDBKSTYLIST: transformedOrdbkStyleList,
     ORDBKTERMLIST: ordbkTermList,
     ORDBKGSTLIST: ordbkGstList,
     DISTBTR_KEY: consigneeKey,
@@ -751,7 +854,7 @@ const prepareSubmitPayload = () => {
   };
 
   // Add user fields based on operation type
-  if (dbFlag === 'I') {
+  if (mainDbFlag === 'I') {
     basePayload.CREATED_BY = parseInt(userId) || 1;
     basePayload.CREATED_DT = currentDate;
   } else {
@@ -759,9 +862,9 @@ const prepareSubmitPayload = () => {
     basePayload.UPDATED_DT = currentDate;
   }
 
-  console.log('Final Payload with multi-shade support');
-  console.log('Total items in ORDBKSTYLIST:', transformedOrdbkStyleList.length);
-  console.log('Sample item check - has FGSHADE_KEY?:', transformedOrdbkStyleList[0]?.FGSHADE_KEY ? 'YES' : 'NO');
+  console.log('Final Payload for', mode === 'add' ? 'INSERT' : 'UPDATE');
+  console.log('Main DBFLAG:', mainDbFlag);
+  console.log('ORDBKSTYLIST items count:', transformedOrdbkStyleList.length);
   
   return basePayload;
 };
@@ -1994,6 +2097,7 @@ if (loading || isDataLoading) {
             onPrev={handlePrev} 
             showSnackbar={showSnackbar}
             showValidationErrors={showValidationErrors}
+            companyConfig={companyConfig} 
           />
         ) : (
           <Stepper3 

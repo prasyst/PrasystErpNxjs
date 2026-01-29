@@ -83,10 +83,10 @@ const [shadeViewMode, setShadeViewMode] = useState('allocated');
   
   // NEW: State for size details loading
   const [isSizeDetailsLoaded, setIsSizeDetailsLoaded] = useState(false);
-  const [checkboxes, setCheckboxes] = useState({
-  changeQty: false,
-  multiShade: false,
-  selectSet: false
+const [checkboxes, setCheckboxes] = useState({
+  changeQty: formData.CHANGE_QTY || false,
+  multiShade: formData.MULTI_SHADE || false,
+  selectSet: formData.SELECT_SET || false
 });
 
   // State for table filters
@@ -236,7 +236,7 @@ const [shadeViewMode, setShadeViewMode] = useState('allocated');
   // Parse ORDBKSTYLIST data for table - FIXED for Type, Shade, Pattern
   const initialTableData = formData.apiResponseData?.ORDBKSTYLIST ? formData.apiResponseData.ORDBKSTYLIST.map((item, index) => ({
     id: item.ORDBKSTY_ID || index + 1,
-    BarCode: item.FGITEM_KEY || "-",
+   BarCode: item.ALT_BARCODE || item.FGITEM_KEY || "-",
     product: item.PRODUCT || "-",
     style: item.STYLE || "-",
     // FIXED: Use TYPE, SHADE, PATTERN from API response
@@ -259,7 +259,8 @@ const [shadeViewMode, setShadeViewMode] = useState('allocated');
     FGPRD_KEY: item.FGPRD_KEY,
     FGTYPE_KEY: item.FGTYPE_KEY || "",
     FGSHADE_KEY: item.FGSHADE_KEY || "",
-    FGPTN_KEY: item.FGPTN_KEY || ""
+    FGPTN_KEY: item.FGPTN_KEY || "",
+    ALT_BARCODE: item.ALT_BARCODE || item.FGITEM_KEY || "" 
   })) : [];
 
   // Use updatedTableData if available, otherwise use initial data
@@ -618,7 +619,7 @@ const handleAllocatedShadesClick = async () => {
   await fetchShadesForStyle(currentStyleId, 'allocated');
 };
 
-  // Fetch style data by barcode
+// Fetch style data by barcode - IMPROVED
 const fetchStyleDataByBarcode = async (barcode) => {
   if (!barcode) return;
 
@@ -638,7 +639,7 @@ const fetchStyleDataByBarcode = async (barcode) => {
 
     if (response.data.DATA && response.data.DATA.length > 0) {
       const styleData = response.data.DATA[0];
-      const barcodeValue = styleData.ALT_BARCODE || styleData.STYSTKDTL_KEY || '';
+      const barcodeValue = styleData.ALT_BARCODE || styleData.STYSTKDTL_KEY || barcode;
       
       // Fetch shades for this style
       if (styleData.FGSTYLE_ID) {
@@ -654,9 +655,11 @@ const fetchStyleDataByBarcode = async (barcode) => {
           mrp: styleData.MRP ? styleData.MRP.toString() : '',
           rate: styleData.SSP ? styleData.SSP.toString() : '',
           barcode: barcodeValue,
-          // Set shade to first selected shade
           shade: selectedShades.length > 0 ? selectedShades[0] : ''
         }));
+        
+        // Set style code input to show the style
+        setStyleCodeInput(styleData.FGSTYLE_CODE || styleData.FGSTYLE_NAME || '');
         
         if (styleData.FGPRD_NAME && styleData.FGPRD_KEY) {
           setProductMapping(prev => ({
@@ -677,66 +680,111 @@ const fetchStyleDataByBarcode = async (barcode) => {
           await fetchLotNoData(styleData.FGSTYLE_ID);
         }
         
+        // Auto-load size details for barcode
         await fetchSizeDetailsForStyle(styleData);
       }
+    } else {
+      showSnackbar("No style found for this barcode", 'warning');
     }
   } catch (error) {
     console.error('Error fetching style data by barcode:', error);
+    showSnackbar('Error loading barcode data', 'error');
   } finally {
     setIsLoadingBarcode(false);
   }
 };
-  // Auto-load size details for style data (used ONLY for barcode)
-  const fetchSizeDetailsForStyle = async (styleData) => {
-    try {
-      const fgprdKey = styleData.FGPRD_KEY;
-      const fgstyleId = styleData.FGSTYLE_ID;
-      const fgtypeKey = styleData.FGTYPE_KEY || "";
-      const fgshadeKey = styleData.FGSHADE_KEY || "";
-      const fgptnKey = styleData.FGPTN_KEY || "";
 
-      if (!fgprdKey || !fgstyleId) {
-        return;
-      }
+  // Auto-load size details for barcode style data
+const fetchSizeDetailsForStyle = async (styleData) => {
+  try {
+    const fgprdKey = styleData.FGPRD_KEY;
+    const fgstyleId = styleData.FGSTYLE_ID;
+    const fgtypeKey = styleData.FGTYPE_KEY || "";
+    const fgshadeKey = styleData.FGSHADE_KEY || "";
+    const fgptnKey = styleData.FGPTN_KEY || "";
 
-      const payload = {
-        "FGSTYLE_ID": fgstyleId,
-        "FGPRD_KEY": fgprdKey,
-        "FGTYPE_KEY": fgtypeKey,
-        "FGSHADE_KEY": fgshadeKey,
-        "FGPTN_KEY": fgptnKey,
-        "MRP": parseFloat(styleData.MRP) || 0,
-        "SSP": parseFloat(styleData.SSP) || 0,
-        "PARTY_KEY": formData.PARTY_KEY || "",
-        "PARTYDTL_ID": formData.PARTYDTL_ID || 0,
-        "FLAG": ""
-      };
+    if (!fgprdKey || !fgstyleId) {
+      return;
+    }
 
-      const response = await axiosInstance.post('/STYSIZE/AddSizeDetail', payload);
+    // Get COBR_ID from localStorage or companyConfig
+    const cobrId = companyConfig.COBR_ID || localStorage.getItem('COBR_ID') || '02';
 
-      if (response.data.DATA && response.data.DATA.length > 0) {
-        const transformedSizeDetails = response.data.DATA.map((size, index) => ({
-          STYSIZE_ID: size.STYSIZE_ID || index + 1,
-          STYSIZE_NAME: size.STYSIZE_NAME || `Size ${index + 1}`,
-          FGSTYLE_ID: size.FGSTYLE_ID || fgstyleId,
-          QTY: 0,
-          ITM_AMT: 0,
-          ORDER_QTY: 0,
-          MRP: parseFloat(styleData.MRP) || 0,
-          RATE: parseFloat(styleData.SSP) || 0
-        }));
+    // FIRST: Get STYCATRT_ID from API with FLAG: "GETSTYCATRTID"
+    const stycatrtPayload = {
+      "FGSTYLE_ID": fgstyleId,
+      "FGPRD_KEY": fgprdKey,
+      "FGTYPE_KEY": fgtypeKey,
+      "FGSHADE_KEY": fgshadeKey,
+      "FGPTN_KEY": fgptnKey,
+      "FLAG": "GETSTYCATRTID",
+      "MRP": parseFloat(styleData.MRP) || 0,
+      "PARTY_KEY": formData.PARTY_KEY || "",
+      "PARTYDTL_ID": formData.PARTYDTL_ID || 0,
+      "COBR_ID": cobrId,
+      "FCYR_KEY": "25"
+    };
 
-        setSizeDetailsData(transformedSizeDetails);
-        setIsSizeDetailsLoaded(true);
-      } else {
-        setSizeDetailsData([]);
-        setIsSizeDetailsLoaded(false);
-      }
-    } catch (error) {
-      console.error('Error auto-fetching size details:', error);
+    console.log('Barcode Auto-fetching STYCATRT_ID with payload:', stycatrtPayload);
+
+    const stycatrtResponse = await axiosInstance.post('/STYSIZE/AddSizeDetail', stycatrtPayload);
+    console.log('Barcode Auto STYCATRT_ID Response:', stycatrtResponse.data);
+
+    let stycatrtId = 0;
+    if (stycatrtResponse.data.DATA && stycatrtResponse.data.DATA.length > 0) {
+      stycatrtId = stycatrtResponse.data.DATA[0].STYCATRT_ID || 0;
+    }
+
+    // SECOND: Get size details with regular payload
+    const sizeDetailsPayload = {
+      "FGSTYLE_ID": fgstyleId,
+      "FGPRD_KEY": fgprdKey,
+      "FGTYPE_KEY": fgtypeKey,
+      "FGSHADE_KEY": fgshadeKey,
+      "FGPTN_KEY": fgptnKey,
+      "MRP": parseFloat(styleData.MRP) || 0,
+      "SSP": parseFloat(styleData.SSP) || 0,
+      "PARTY_KEY": formData.PARTY_KEY || "",
+      "PARTYDTL_ID": formData.PARTYDTL_ID || 0,
+      "COBR_ID": cobrId,
+      "FLAG": ""
+    };
+
+    console.log('Barcode Auto-fetching size details with payload:', sizeDetailsPayload);
+
+    const response = await axiosInstance.post('/STYSIZE/AddSizeDetail', sizeDetailsPayload);
+
+    if (response.data.DATA && response.data.DATA.length > 0) {
+      const transformedSizeDetails = response.data.DATA.map((size, index) => ({
+        STYSIZE_ID: size.STYSIZE_ID || index + 1,
+        STYSIZE_NAME: size.STYSIZE_NAME || `Size ${index + 1}`,
+        FGSTYLE_ID: size.FGSTYLE_ID || fgstyleId,
+        QTY: 0,
+        ITM_AMT: 0,
+        ORDER_QTY: 0,
+        MRP: parseFloat(styleData.MRP) || 0,
+        RATE: parseFloat(styleData.SSP) || 0,
+        ALT_BARCODE: styleData.ALT_BARCODE || "" // Include barcode
+      }));
+
+      setSizeDetailsData(transformedSizeDetails);
+      
+      // Update newItemData with STYCATRT_ID for use in payload
+      setNewItemData(prev => ({
+        ...prev,
+        stycatrtId: stycatrtId
+      }));
+      
+      setIsSizeDetailsLoaded(true);
+    } else {
+      setSizeDetailsData([]);
       setIsSizeDetailsLoaded(false);
     }
-  };
+  } catch (error) {
+    console.error('Error auto-fetching size details for barcode:', error);
+    setIsSizeDetailsLoaded(false);
+  }
+};
 
   // Fetch Type dropdown data
   const fetchTypeData = async (fgstyleId) => {
@@ -840,65 +888,106 @@ const fetchStyleDataByBarcode = async (barcode) => {
     }
   };
 
-  // Fetch Size Details
   const fetchSizeDetails = async () => {
-    if (!newItemData.product || !newItemData.style) {
-      showSnackbar("Please select Product and Style first", 'error');
+  if (!newItemData.product || !newItemData.style) {
+    showSnackbar("Please select Product and Style first", 'error');
+    return;
+  }
+
+  try {
+    const fgprdKey = productMapping[newItemData.product];
+    const fgstyleId = styleMapping[newItemData.style];
+    const fgtypeKey = typeMapping[newItemData.type] || "";
+    const fgshadeKey = shadeMapping[newItemData.shade] || "";
+    const fgptnKey = lotNoMapping[newItemData.lotNo] || "";
+
+    if (!fgprdKey || !fgstyleId) {
       return;
     }
 
-    try {
-      const fgprdKey = productMapping[newItemData.product];
-      const fgstyleId = styleMapping[newItemData.style];
-      const fgtypeKey = typeMapping[newItemData.type] || "";
-      const fgshadeKey = shadeMapping[newItemData.shade] || "";
-      const fgptnKey = lotNoMapping[newItemData.lotNo] || "";
+    // Get COBR_ID from localStorage or companyConfig
+    const cobrId = companyConfig.COBR_ID || localStorage.getItem('COBR_ID') || '02';
 
-      if (!fgprdKey || !fgstyleId) {
-        return;
-      }
+    // FIRST: Get STYCATRT_ID from API with FLAG: "GETSTYCATRTID"
+    const stycatrtPayload = {
+      "FGSTYLE_ID": fgstyleId,
+      "FGPRD_KEY": fgprdKey,
+      "FGTYPE_KEY": fgtypeKey,
+      "FGSHADE_KEY": fgshadeKey,
+      "FGPTN_KEY": fgptnKey,
+      "FLAG": "GETSTYCATRTID",
+      "MRP": parseFloat(newItemData.mrp) || 0,
+      "PARTY_KEY": formData.PARTY_KEY || "",
+      "PARTYDTL_ID": formData.PARTYDTL_ID || 0,
+      "COBR_ID": cobrId,
+      "FCYR_KEY": "25"
+    };
 
-      const payload = {
-        "FGSTYLE_ID": fgstyleId,
-        "FGPRD_KEY": fgprdKey,
-        "FGTYPE_KEY": fgtypeKey,
-        "FGSHADE_KEY": fgshadeKey,
-        "FGPTN_KEY": fgptnKey,
-        "MRP": parseFloat(newItemData.mrp) || 0,
-        "SSP": parseFloat(newItemData.rate) || 0,
-        "PARTY_KEY": formData.PARTY_KEY || "",
-        "PARTYDTL_ID": formData.PARTYDTL_ID || 0,
-        "FLAG": ""
-      };
+    console.log('Barcode Fetching STYCATRT_ID with payload:', stycatrtPayload);
 
-      const response = await axiosInstance.post('/STYSIZE/AddSizeDetail', payload);
+    const stycatrtResponse = await axiosInstance.post('/STYSIZE/AddSizeDetail', stycatrtPayload);
+    console.log('Barcode STYCATRT_ID Response:', stycatrtResponse.data);
 
-      if (response.data.DATA && response.data.DATA.length > 0) {
-        const transformedSizeDetails = response.data.DATA.map((size, index) => ({
-          STYSIZE_ID: size.STYSIZE_ID || index + 1,
-          STYSIZE_NAME: size.STYSIZE_NAME || `Size ${index + 1}`,
-          FGSTYLE_ID: size.FGSTYLE_ID || fgstyleId,
-          QTY: 0,
-          ITM_AMT: 0,
-          ORDER_QTY: 0,
-          MRP: parseFloat(newItemData.mrp) || 0,
-          RATE: parseFloat(newItemData.rate) || 0
-        }));
+    let stycatrtId = 0;
+    if (stycatrtResponse.data.DATA && stycatrtResponse.data.DATA.length > 0) {
+      stycatrtId = stycatrtResponse.data.DATA[0].STYCATRT_ID || 0;
+    }
 
-        setSizeDetailsData(transformedSizeDetails);
-        setIsSizeDetailsLoaded(true);
-        // showSnackbar("Size details loaded successfully! Please enter quantities for each size.");
-      } else {
-        showSnackbar("No size details found for the selected combination.", 'warning');
-        setSizeDetailsData([]);
-        setIsSizeDetailsLoaded(false);
-      }
-    } catch (error) {
-      console.error('Error fetching size details:', error);
-      showSnackbar("Error loading size details. Please try again.", 'error');
+    // SECOND: Get size details with regular payload
+    const sizeDetailsPayload = {
+      "FGSTYLE_ID": fgstyleId,
+      "FGPRD_KEY": fgprdKey,
+      "FGTYPE_KEY": fgtypeKey,
+      "FGSHADE_KEY": fgshadeKey,
+      "FGPTN_KEY": fgptnKey,
+      "MRP": parseFloat(newItemData.mrp) || 0,
+      "SSP": parseFloat(newItemData.rate) || 0,
+      "PARTY_KEY": formData.PARTY_KEY || "",
+      "PARTYDTL_ID": formData.PARTYDTL_ID || 0,
+      "COBR_ID": cobrId,
+      "FLAG": ""
+    };
+
+    console.log('Barcode Fetching size details with payload:', sizeDetailsPayload);
+
+    const sizeDetailsResponse = await axiosInstance.post('/STYSIZE/AddSizeDetail', sizeDetailsPayload);
+
+    if (sizeDetailsResponse.data.DATA && sizeDetailsResponse.data.DATA.length > 0) {
+      const transformedSizeDetails = sizeDetailsResponse.data.DATA.map((size, index) => ({
+        STYSIZE_ID: size.STYSIZE_ID || index + 1,
+        STYSIZE_NAME: size.STYSIZE_NAME || `Size ${index + 1}`,
+        FGSTYLE_ID: size.FGSTYLE_ID || fgstyleId,
+        QTY: 0,
+        ITM_AMT: 0,
+        ORDER_QTY: 0,
+        MRP: parseFloat(newItemData.mrp) || 0,
+        RATE: parseFloat(newItemData.rate) || 0,
+        ALT_BARCODE: newItemData.barcode || "" // Include barcode
+      }));
+
+      setSizeDetailsData(transformedSizeDetails);
+      
+      // Update newItemData with STYCATRT_ID for use in payload
+      setNewItemData(prev => ({
+        ...prev,
+        stycatrtId: stycatrtId
+      }));
+      
+      setIsSizeDetailsLoaded(true);
+      
+      // Show success message with STYCATRT_ID
+      showSnackbar(`Barcode size details loaded successfully. STYCATRT_ID: ${stycatrtId}`, 'success');
+    } else {
+      showSnackbar("No size details found for the selected combination.", 'warning');
+      setSizeDetailsData([]);
       setIsSizeDetailsLoaded(false);
     }
-  };
+  } catch (error) {
+    console.error('Error fetching barcode size details:', error);
+    showSnackbar("Error loading size details. Please try again.", 'error');
+    setIsSizeDetailsLoaded(false);
+  }
+};
 
   // Handle style code text input change with debounce
   const handleStyleCodeInputChange = (e) => {
@@ -1149,7 +1238,6 @@ const fetchStyleDataByBarcode = async (barcode) => {
     setLotNoOptions([]);
   };
 
-// Handle Confirm Add - MODIFIED for multi-shade
 const handleConfirmAdd = () => {
   // Validation
   if (!newItemData.product || !newItemData.style) {
@@ -1171,7 +1259,9 @@ const handleConfirmAdd = () => {
 
   const fgprdKey = productMapping[newItemData.product] || productMapping[newItemData.style] || "";
   const fgstyleId = styleMapping[newItemData.style] || "";
-  
+  const stycatrtId = newItemData.stycatrtId || 0; // Get STYCATRT_ID from newItemData
+  const barcodeValue = newItemData.barcode || ""; // Get barcode value
+    
   const totalQty = sizesWithQty.reduce((sum, size) => sum + (parseFloat(size.QTY) || 0), 0);
   const mrp = parseFloat(newItemData.mrp) || 0;
   const rate = parseFloat(newItemData.rate) || 0;
@@ -1187,7 +1277,8 @@ const handleConfirmAdd = () => {
   const updatedSizeDetails = sizeDetailsData.map(size => ({
     ...size,
     QTY: parseFloat(size.QTY) || 0,
-    ITM_AMT: (parseFloat(size.QTY) || 0) * rate
+    ITM_AMT: (parseFloat(size.QTY) || 0) * rate,
+    ALT_BARCODE: size.ALT_BARCODE || barcodeValue // Include barcode in size details
   }));
 
   // Create items for EACH selected shade with FULL quantity
@@ -1202,7 +1293,7 @@ const handleConfirmAdd = () => {
 
     return {
       id: tempId + shadeIndex,
-      BarCode: newItemData.barcode || "-",
+      BarCode: barcodeValue || "-",
       product: newItemData.product,
       style: newItemData.style || "-",
       type: newItemData.type || "-",
@@ -1221,7 +1312,8 @@ const handleConfirmAdd = () => {
       set: parseFloat(newItemData.sets) || 0,
       originalData: {
         ORDBKSTY_ID: tempId + shadeIndex,
-        FGITEM_KEY: newItemData.barcode || "-",
+        FGITEM_KEY: barcodeValue || "-",
+        ALT_BARCODE: barcodeValue || "-", // Important for barcode
         PRODUCT: newItemData.product,
         STYLE: newItemData.style,
         TYPE: newItemData.type || "-",
@@ -1244,22 +1336,25 @@ const handleConfirmAdd = () => {
         FGPRD_KEY: fgprdKey,
         FGSTYLE_ID: fgstyleId,
         FGTYPE_KEY: fgtypeKey,
-        FGSHADE_KEY: fgshadeKey, // IMPORTANT: FGSHADE_KEY pass karna
+        FGSHADE_KEY: fgshadeKey,
         FGPTN_KEY: fgptnKey,
+        STYCATRT_ID: stycatrtId, // Include STYCATRT_ID
         DBFLAG: mode === 'add' ? 'I' : 'I'
       },
       FGSTYLE_ID: fgstyleId,
       FGPRD_KEY: fgprdKey,
       FGTYPE_KEY: fgtypeKey,
-      FGSHADE_KEY: fgshadeKey, // Store shade key
-      FGPTN_KEY: fgptnKey
+      FGSHADE_KEY: fgshadeKey,
+      FGPTN_KEY: fgptnKey,
+      STYCATRT_ID: stycatrtId, // Store STYCATRT_ID
+      ALT_BARCODE: barcodeValue // Store barcode
     };
   });
 
   // If no shades selected, create single item with current shade
   const finalNewItems = selectedShades.length > 0 ? newItems : [{
     id: tempId,
-    BarCode: newItemData.barcode || "-",
+    BarCode: barcodeValue || "-",
     product: newItemData.product,
     style: newItemData.style || "-",
     type: newItemData.type || "-",
@@ -1278,7 +1373,8 @@ const handleConfirmAdd = () => {
     set: parseFloat(newItemData.sets) || 0,
     originalData: {
       ORDBKSTY_ID: tempId,
-      FGITEM_KEY: newItemData.barcode || "-",
+      FGITEM_KEY: barcodeValue || "-",
+      ALT_BARCODE: barcodeValue || "-", // Important for barcode
       PRODUCT: newItemData.product,
       STYLE: newItemData.style,
       TYPE: newItemData.type || "-",
@@ -1301,15 +1397,18 @@ const handleConfirmAdd = () => {
       FGPRD_KEY: fgprdKey,
       FGSTYLE_ID: fgstyleId,
       FGTYPE_KEY: typeMapping[newItemData.type] || "",
-      FGSHADE_KEY: shadeMapping[newItemData.shade] || "", // Shade key
+      FGSHADE_KEY: shadeMapping[newItemData.shade] || "",
       FGPTN_KEY: lotNoMapping[newItemData.lotNo] || "",
+      STYCATRT_ID: stycatrtId, // Include STYCATRT_ID
       DBFLAG: mode === 'add' ? 'I' : 'I'
     },
     FGSTYLE_ID: fgstyleId,
     FGPRD_KEY: fgprdKey,
     FGTYPE_KEY: typeMapping[newItemData.type] || "",
-    FGSHADE_KEY: shadeMapping[newItemData.shade] || "", // Store shade key
-    FGPTN_KEY: lotNoMapping[newItemData.lotNo] || ""
+    FGSHADE_KEY: shadeMapping[newItemData.shade] || "",
+    FGPTN_KEY: lotNoMapping[newItemData.lotNo] || "",
+    STYCATRT_ID: stycatrtId, // Store STYCATRT_ID
+    ALT_BARCODE: barcodeValue // Store barcode
   }];
 
   const newTableData = [...tableData, ...finalNewItems];
@@ -1319,6 +1418,7 @@ const handleConfirmAdd = () => {
   const newOrdbkStyleItems = finalNewItems.map(item => ({
     ORDBKSTY_ID: item.id,
     FGITEM_KEY: item.BarCode,
+    ALT_BARCODE: item.ALT_BARCODE || item.BarCode, // Include ALT_BARCODE
     PRODUCT: item.product,
     STYLE: item.style,
     TYPE: item.type,
@@ -1341,8 +1441,9 @@ const handleConfirmAdd = () => {
     FGSTYLE_ID: item.FGSTYLE_ID,
     FGPRD_KEY: item.FGPRD_KEY,
     FGTYPE_KEY: item.FGTYPE_KEY,
-    FGSHADE_KEY: item.FGSHADE_KEY, // Include FGSHADE_KEY
+    FGSHADE_KEY: item.FGSHADE_KEY,
     FGPTN_KEY: item.FGPTN_KEY,
+    STYCATRT_ID: item.STYCATRT_ID, // Include STYCATRT_ID
     DBFLAG: mode === 'add' ? 'I' : 'I'
   }));
 
@@ -1375,7 +1476,8 @@ const handleConfirmAdd = () => {
     remark: '',
     divDt: '',
     rQty: '',
-    sets: ''
+    sets: '',
+    stycatrtId: 0 // Reset STYCATRT_ID
   });
   setStyleCodeInput('');
   setBarcodeInput('');
@@ -1385,8 +1487,8 @@ const handleConfirmAdd = () => {
   setAvailableShades([]);
 
   showSnackbar(selectedShades.length > 1 ? 
-    `${selectedShades.length} items added to order (${totalQty} each)!` : 
-    "Item added successfully!");
+    `${selectedShades.length} barcode items added to order (${totalQty} each)!` : 
+    "Barcode item added successfully!");
 };
 
   const handleEditItem = () => {
