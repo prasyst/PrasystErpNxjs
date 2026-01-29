@@ -249,13 +249,45 @@ useEffect(() => {
     }
   };
 
-// Function to populate form data from API response - FIXED branch and shipping party selection
+// Function to populate form data from API response - UPDATED for barcode and shade keys
 const populateFormData = async (orderData) => {
   try {
-    console.log('Order Data received:', orderData);
+    console.log('Barcode Order Data received:', orderData);
     
     // FIRST: Wait for all dropdown data to be fetched
     await fetchAllDropdownData();
+    
+    // Map codes to keys function
+    const mapCodesToKeys = (item) => {
+      const mappedItem = { ...item };
+      
+      // Map PROD_CODE to FGPRD_KEY
+      if (item.PROD_CODE && !item.FGPRD_KEY) {
+        mappedItem.FGPRD_KEY = item.PROD_CODE;
+      }
+      
+      // Map SHADE_CODE to FGSHADE_KEY
+      if (item.SHADE_CODE && !item.FGSHADE_KEY) {
+        mappedItem.FGSHADE_KEY = item.SHADE_CODE;
+      }
+      
+      // Map PTN_CODE to FGPTN_KEY
+      if (item.PTN_CODE && !item.FGPTN_KEY) {
+        mappedItem.FGPTN_KEY = item.PTN_CODE;
+      }
+      
+      // Map TYPE_CODE to FGTYPE_KEY
+      if (item.TYPE_CODE && !item.FGTYPE_KEY) {
+        mappedItem.FGTYPE_KEY = item.TYPE_CODE;
+      }
+      
+      // Map STYLE_CODE to FGSTYLE_CODE if needed
+      if (item.STYLE_CODE && !item.FGSTYLE_CODE) {
+        mappedItem.FGSTYLE_CODE = item.STYLE_CODE;
+      }
+      
+      return mappedItem;
+    };
     
     // Helper function to safely get display name with retry
     const getDisplayNameWithRetry = async (getterFunction, key, maxRetries = 3) => {
@@ -263,8 +295,6 @@ const populateFormData = async (orderData) => {
         try {
           const result = await getterFunction(key);
           if (result) return result;
-          
-          // If no result, wait a bit and try again
           await new Promise(resolve => setTimeout(resolve, 100));
         } catch (error) {
           console.error(`Error in getDisplayNameWithRetry attempt ${i + 1}:`, error);
@@ -282,12 +312,9 @@ const populateFormData = async (orderData) => {
       return statusMapping[apiStatus] || 'O';
     };
     
-    // Get display names from mappings using the actual API response keys
+    // Get display names
     const partyName = partyMapping[orderData.PARTY_KEY] || await getDisplayNameWithRetry(getPartyNameByKey, orderData.PARTY_KEY);
-    
-    // FIXED: Get branch name by actual ID from API response - Use PLACE from ORDBKList
     const branchName = orderData.PLACE || await getDisplayNameWithRetry(getBranchNameById, orderData.PARTYDTL_ID);
-    
     const brokerName = brokerMapping[orderData.BROKER_KEY] || await getDisplayNameWithRetry(getBrokerNameByKey, orderData.BROKER_KEY);
     const broker1Name = broker1Mapping[orderData.BROKER1_KEY] || await getDisplayNameWithRetry(getBrokerNameByKey, orderData.BROKER1_KEY);
     const salesperson1Name = salesperson1Mapping[orderData.SALEPERSON1_KEY] || await getDisplayNameWithRetry(getSalespersonNameByKey, orderData.SALEPERSON1_KEY);
@@ -296,57 +323,47 @@ const populateFormData = async (orderData) => {
     const seasonName = seasonMapping[orderData.CURR_SEASON_KEY] || await getDisplayNameWithRetry(getSeasonNameByKey, orderData.CURR_SEASON_KEY);
     const transporterName = transporterMapping[orderData.TRSP_KEY] || await getDisplayNameWithRetry(getTransporterNameByKey, orderData.TRSP_KEY);
     
-    // FIXED: Use SHIPPARTY and SHIPPLACE from API response directly
+    // Shipping party and place
     const shippingPartyName = orderData.SHIPPARTY || partyMapping[orderData.SHP_PARTY_KEY] || await getDisplayNameWithRetry(getPartyNameByKey, orderData.SHP_PARTY_KEY) || partyName;
     const shippingPlaceName = orderData.SHIPPLACE || orderData.DLV_PLACE || branchName;
     
     const orderTypeName = await getDisplayNameWithRetry(getOrderTypeNameByKey, orderData.ORDBK_TYPE);
     const merchandiserName = merchandiserMapping[orderData.MERCHANDISER_ID] || await getDisplayNameWithRetry(getMerchandiserNameById, orderData.MERCHANDISER_ID);
 
-    // Handle GST Type from API response
-    let gstTypeValue = 'state';
-    if (orderData.GST_TYPE === "S") {
-      gstTypeValue = 'state';
-    } else if (orderData.GST_TYPE === "I") {
-      gstTypeValue = 'igst';
-    }
+    // Process ORDBKSTYLIST with shade keys for barcode
+    const processedOrdbkStyleList = orderData.ORDBKSTYLIST ? orderData.ORDBKSTYLIST.map(item => {
+      // First map codes to keys
+      const mappedItem = mapCodesToKeys(item);
+      
+      // For barcode orders, preserve ALT_BARCODE or STYSTKDTL_KEY
+      const barcodeValue = mappedItem.ALT_BARCODE || mappedItem.STYSTKDTL_KEY || mappedItem.FGITEM_KEY || "";
+      
+      return {
+        ...mappedItem,
+        // Ensure all required fields exist
+        FGTYPE_KEY: mappedItem.FGTYPE_KEY || "",
+        FGSHADE_KEY: mappedItem.FGSHADE_KEY || "",
+        FGPTN_KEY: mappedItem.FGPTN_KEY || "",
+        FGPRD_KEY: mappedItem.FGPRD_KEY || "",
+        FGSTYLE_ID: mappedItem.FGSTYLE_ID || 0,
+        FGSTYLE_CODE: mappedItem.FGSTYLE_CODE || "",
+        ALT_BARCODE: barcodeValue, // Important for barcode
+        // IMPORTANT: Preserve DBFLAG from API response
+        DBFLAG: mappedItem.DBFLAG || "R" // Default to "R" for retrieved
+      };
+    }) : [];
 
-    console.log('Mapped names:', {
-      partyName,
-      branchName,
-      brokerName,
-      broker1Name,
-      salesperson1Name,
-      salesperson2Name,
-      consigneeName,
-      seasonName,
-      transporterName,
-      shippingPartyName,
-      shippingPlaceName,
-      orderTypeName,
-      merchandiserName,
-      gstType: orderData.GST_TYPE,
-      gstTypeValue
+    console.log('Barcode Processed ORDBKSTYLIST:', processedOrdbkStyleList.length, 'items');
+    console.log('Sample barcode item:', {
+      ALT_BARCODE: processedOrdbkStyleList[0]?.ALT_BARCODE,
+      FGSHADE_KEY: processedOrdbkStyleList[0]?.FGSHADE_KEY,
+      FGITEM_KEY: processedOrdbkStyleList[0]?.FGITEM_KEY
     });
-
-    // FIXED: Also process ORDBKSTYLIST to preserve Type, Shade and Pattern keys
-    const processedOrdbkStyleList = orderData.ORDBKSTYLIST ? orderData.ORDBKSTYLIST.map(item => ({
-      ...item,
-      // Preserve Type, Shade and Pattern keys
-      FGTYPE_KEY: item.FGTYPE_KEY || "",
-      FGSHADE_KEY: item.FGSHADE_KEY || "", // IMPORTANT: Preserve shade key
-      FGPTN_KEY: item.FGPTN_KEY || "",
-      // Ensure other required fields
-      FGPRD_KEY: item.FGPRD_KEY || "",
-      FGSTYLE_ID: item.FGSTYLE_ID || 0,
-      FGSTYLE_CODE: item.FGSTYLE_CODE || "",
-      DBFLAG: item.DBFLAG || "U"
-    })) : [];
 
     const formattedData = {
       apiResponseData: {
         ...orderData,
-        ORDBKSTYLIST: processedOrdbkStyleList
+        ORDBKSTYLIST: processedOrdbkStyleList // Contains FGSHADE_KEY and barcode
       },
       ORDER_NO: orderData.ORDBK_NO || "",
       ORDER_DATE: orderData.ORDBK_DT ? formatDateForDisplay(orderData.ORDBK_DT) : "",
@@ -359,7 +376,6 @@ const populateFormData = async (orderData) => {
       SHIPPING_PARTY: shippingPartyName,
       DIV_PLACE: orderData.DESP_PORT || "",
       AR_SALES: orderData.SALEPERSON1_KEY || "",
-      // FIXED: Use the actual shipping place from API response
       SHIPPING_PLACE: shippingPlaceName,
       PRICE_LIST: orderData.PRICELIST_KEY || "",
       BROKER_TRANSPORTER: brokerName || "",
@@ -376,7 +392,6 @@ const populateFormData = async (orderData) => {
       REMARK_STATUS: orderData.REMK || "",
       MAIN_DETAILS: orderData.LotWise === "Y" ? "L" : "G",
       GST_APPL: orderData.GST_APP || "N",
-      // Add GST_TYPE to formData
       GST_TYPE: orderData.GST_TYPE === "S" ? "STATE" : "IGST",
       RACK_MIN: orderData.STK_FLG || "0",
       REGISTERED_DEALER: "0",
@@ -384,7 +399,6 @@ const populateFormData = async (orderData) => {
       READY_SI: orderData.READY_SI || "0",
       LAST_ORD_NO: orderData.LAST_ORD_NO || "",
       SERIES: orderData.SERIES || "",
-      // Additional fields that might be useful
       ORD_EVENT_KEY: orderData.ORD_EVENT_KEY || "",
       ORG_DLV_DT: orderData.ORG_DLV_DT ? formatDateForDisplay(orderData.ORG_DLV_DT) : "",
       PLANNING: orderData.PLANNING || "0",
@@ -397,11 +411,9 @@ const populateFormData = async (orderData) => {
       CURRN_KEY: orderData.CURRN_KEY || "",
       EX_RATE: orderData.EX_RATE || "",
       DLV_DT: orderData.DLV_DT ? formatDateForDisplay(orderData.DLV_DT) : "",
-      // Dropdown display values - CRITICAL FIX: Use the resolved names
       Party: partyName || "",
       Branch: branchName || "",
       Broker: brokerName || "",
-      // API specific fields - PRESERVE TYPE AND PATTERN KEYS
       CURR_SEASON_KEY: orderData.CURR_SEASON_KEY || "",
       PRICELIST_KEY: orderData.PRICELIST_KEY || "",
       BROKER1_KEY: orderData.BROKER1_KEY || "",
@@ -411,31 +423,31 @@ const populateFormData = async (orderData) => {
       SALEPERSON2_KEY: orderData.SALEPERSON2_KEY || "",
       DISTBTR_KEY: orderData.DISTBTR_KEY || "",
       TRSP_KEY: orderData.TRSP_KEY || "",
-      // Branch and shipping details - Use actual IDs from API
       PARTYDTL_ID: orderData.PARTYDTL_ID || 0,
       SHP_PARTYDTL_ID: orderData.SHP_PARTYDTL_ID || orderData.PARTYDTL_ID || 0,
-      // New fields for Order Type and Merchandiser
       Order_Type: orderTypeName || "",
       MERCHANDISER_ID: orderData.MERCHANDISER_ID || "",
       MERCHANDISER_NAME: merchandiserName || "",
-      // Default selections
       Delivery_Shedule: "comman",
       Order_TNA: "ItemWise", 
       Status: getDisplayStatus(orderData.STATUS),
       ORDBK_TYPE: orderData.ORDBK_TYPE || "0",
-      // Calculate totals from ORDBKSTYLIST
       TOTAL_QTY: calculateTotalQty(orderData.ORDBKSTYLIST),
       TOTAL_AMOUNT: orderData.ORDBK_AMT || 0,
       NET_AMOUNT: (orderData.ORDBK_AMT || 0) - (orderData.ORDBK_DISC_AMT || 0),
-      DISCOUNT: orderData.ORDBK_DISC_AMT || 0
+      DISCOUNT: orderData.ORDBK_DISC_AMT || 0,
+      // Barcode specific flags
+      CHANGE_QTY: orderData.CHANGE_QTY || false,
+      MULTI_SHADE: orderData.MULTI_SHADE || false,
+      SELECT_SET: orderData.SELECT_SET || false
     };
 
-    console.log('Populating form with data:', formattedData);
+    console.log('Populating barcode form with data including shade keys and barcode');
     
     // Set form data
     setFormData(formattedData);
     
-    // FIXED: Fetch branches with the correct branch ID from API response
+    // Fetch branches with the correct branch ID
     if (orderData.PARTY_KEY && orderData.PARTYDTL_ID) {
       await fetchPartyDetails(orderData.PARTY_KEY, orderData.PARTYDTL_ID);
     }
@@ -443,25 +455,24 @@ const populateFormData = async (orderData) => {
     // Set current party key for navigation
     setCurrentPARTY_KEY(orderData.PARTY_KEY);
 
-    // Force update dropdown options in Stepper1
+    // Force update dropdown options
     setTimeout(() => {
       setFormData(prev => ({ ...prev, forceUpdate: Date.now() }));
     }, 100);
 
   } catch (error) {
-    console.error('Error populating form data:', error);
+    console.error('Error populating barcode form data:', error);
   }
 };
 
-// Function to prepare payload for submission - FIXED with proper Type and Pattern keys preservation
+// Function to prepare payload for submission - UPDATED for barcode orders
 const prepareSubmitPayload = () => {
-  const dbFlag = mode === 'add' ? 'I' : 'U';
   const currentDate = new Date().toISOString().replace('T', ' ').split('.')[0];
   
   const userId = localStorage.getItem('USER_ID') || '1';
   const userName = localStorage.getItem('USER_NAME') || 'Admin';
   
-  console.log('User Info:', { userId, userName });
+  console.log('Barcode Mode:', mode);
 
   const getStatusValue = (status) => {
     const statusMapping = {
@@ -486,75 +497,189 @@ const prepareSubmitPayload = () => {
   const shippingPartyDtlId = formData.SHP_PARTYDTL_ID || formData.PARTYDTL_ID || 1;
   const merchandiserId = formData.MERCHANDISER_ID || 1;
 
-  console.log('Keys for payload:', {
-    partyKey,
-    branchId,
-    brokerKey,
-    broker1Key,
-    salesperson1Key,
-    salesperson2Key,
-    consigneeKey,
-    seasonKey,
-    transporterKey,
-    shippingPartyKey,
-    merchandiserId
-  });
-
   // Get ORDBKSTYLIST from formData
   const ordbkStyleList = formData.apiResponseData?.ORDBKSTYLIST || [];
   
-  console.log('Using ORDBK_KEY:', correctOrdbkKey);
+  console.log('Barcode ORDBKSTYLIST from formData:', ordbkStyleList);
 
-  // Transform ORDBKSTYLIST for API with proper keys handling
-  const transformedOrdbkStyleList = ordbkStyleList.map(item => {
-    let itemDbFlag = item.DBFLAG || dbFlag;
+  // Function to generate FGITM_KEY dynamically
+  const generateFgItemKey = (item) => {
+    const fgprdKey = item.FGPRD_KEY || "";
+    const fgstyleId = item.FGSTYLE_ID || "";
+    const fgtypeKey = item.FGTYPE_KEY || "";
+    const fgshadeKey = item.FGSHADE_KEY || "";
+    const fgptnKey = item.FGPTN_KEY || "";
     
-    if (mode === 'edit') {
-      // Check if this is a new item
-      const isNewItem = item.ORDBKSTY_ID && item.ORDBKSTY_ID.toString().length > 9;
-      const hasOriginalId = item.ORDBKSTY_ID && item.ORDBKSTY_ID > 0 && !isNewItem;
+    // Clean keys
+    const cleanFgprdKey = fgprdKey.trim();
+    const cleanFgstyleId = fgstyleId.toString().trim();
+    const cleanFgtypeKey = fgtypeKey.trim();
+    const cleanFgshadeKey = fgshadeKey.trim();
+    const cleanFgptnKey = fgptnKey.trim();
+    
+    // Build FGITM_KEY based on available components
+    let fgItemKey = cleanFgprdKey;
+    
+    if (cleanFgstyleId) {
+      fgItemKey += cleanFgstyleId;
+    }
+    
+    if (cleanFgtypeKey) {
+      fgItemKey += cleanFgtypeKey;
+    }
+    
+    if (cleanFgshadeKey) {
+      fgItemKey += cleanFgshadeKey;
+    }
+    
+    if (cleanFgptnKey) {
+      fgItemKey += cleanFgptnKey;
+    }
+    
+    console.log('Generated FGITM_KEY for barcode:', fgItemKey);
+    
+    return fgItemKey || "";
+  };
+
+  // Map API response codes to keys
+  const mapApiCodesToKeys = (item) => {
+    console.log('Mapping API codes to keys for barcode item:', item);
+    
+    // Initialize with existing keys
+    const mappedItem = { ...item };
+    
+    // Map PROD_CODE to FGPRD_KEY if not already present
+    if (!mappedItem.FGPRD_KEY && item.PROD_CODE) {
+      mappedItem.FGPRD_KEY = item.PROD_CODE;
+    }
+    
+    // Map SHADE_CODE to FGSHADE_KEY if not already present
+    if (!mappedItem.FGSHADE_KEY && item.SHADE_CODE) {
+      mappedItem.FGSHADE_KEY = item.SHADE_CODE;
+    }
+    
+    // Map PTN_CODE to FGPTN_KEY if not already present
+    if (!mappedItem.FGPTN_KEY && item.PTN_CODE) {
+      mappedItem.FGPTN_KEY = item.PTN_CODE;
+    }
+    
+    // Map TYPE_CODE to FGTYPE_KEY if not already present
+    if (!mappedItem.FGTYPE_KEY && item.TYPE_CODE) {
+      mappedItem.FGTYPE_KEY = item.TYPE_CODE;
+    }
+    
+    // For barcode orders, ensure ALT_BARCODE is preserved
+    if (!mappedItem.ALT_BARCODE && item.FGITEM_KEY) {
+      mappedItem.ALT_BARCODE = item.FGITEM_KEY;
+    }
+    
+    return mappedItem;
+  };
+
+  // Transform ORDBKSTYLIST for API with proper DBFLAG handling for barcode
+  const transformedOrdbkStyleList = ordbkStyleList.map(item => {
+    // First map API codes to keys
+    const mappedItem = mapApiCodesToKeys(item);
+    
+    // Determine DBFLAG based on mode and item status
+    let itemDbFlag = mappedItem.DBFLAG || (mode === 'add' ? 'I' : 'U');
+    
+    // If item is marked as deleted in formData, keep it as 'D'
+    if (mappedItem.DBFLAG === 'D') {
+      itemDbFlag = 'D';
+    } 
+    // For edit mode, determine if it's new or existing
+    else if (mode === 'edit') {
+      const isNewItem = mappedItem.ORDBKSTY_ID && mappedItem.ORDBKSTY_ID.toString().length > 9;
+      const hasOriginalId = mappedItem.ORDBKSTY_ID && mappedItem.ORDBKSTY_ID > 0 && !isNewItem;
       
-      // If DBFLAG is already 'D' (deleted), keep it as 'D'
-      if (item.DBFLAG === 'D') {
-        itemDbFlag = 'D';
+      if (isNewItem) {
+        itemDbFlag = 'I'; // New item in edit mode
+      } else if (hasOriginalId) {
+        itemDbFlag = 'U'; // Existing item to update
       } else {
-        itemDbFlag = hasOriginalId ? 'U' : 'I';
+        itemDbFlag = 'I'; // Default to insert for new items
       }
     }
 
-    // FIXED: Preserve original Type, Shade, and Pattern keys for existing items in edit mode
-    let fgtypeKey, fgshadeKey, fgptnKey;
+    // Extract all keys from mapped item
+    const fgprdKey = mappedItem.FGPRD_KEY || "";
+    const fgstyleId = mappedItem.FGSTYLE_ID || "";
+    const fgtypeKey = mappedItem.FGTYPE_KEY || "";
+    const fgshadeKey = mappedItem.FGSHADE_KEY || "";
+    const fgptnKey = mappedItem.FGPTN_KEY || "";
+    const altBarcode = mappedItem.ALT_BARCODE || mappedItem.FGITEM_KEY || "";
     
-    if (mode === 'edit' && item.ORDBKSTY_ID && item.ORDBKSTY_ID > 0) {
-      // For existing items in edit mode, preserve original keys
-      fgtypeKey = item.FGTYPE_KEY || "";
-      fgshadeKey = item.FGSHADE_KEY || "";
-      fgptnKey = item.FGPTN_KEY || "";
-    } else {
-      // For new items or add mode, use current values
-      fgtypeKey = item.FGTYPE_KEY || "";
-      fgshadeKey = item.FGSHADE_KEY || "";
-      fgptnKey = item.FGPTN_KEY || "";
-    }
+    console.log('Extracted keys for barcode item:', {
+      FGPRD_KEY: fgprdKey,
+      FGSTYLE_ID: fgstyleId,
+      FGTYPE_KEY: fgtypeKey,
+      FGSHADE_KEY: fgshadeKey,
+      FGPTN_KEY: fgptnKey,
+      ALT_BARCODE: altBarcode,
+      ORDBKSTY_ID: mappedItem.ORDBKSTY_ID
+    });
+
+    // Generate FGITM_KEY dynamically
+    const fgItemKey = generateFgItemKey({
+      FGPRD_KEY: fgprdKey,
+      FGSTYLE_ID: fgstyleId,
+      FGTYPE_KEY: fgtypeKey,
+      FGSHADE_KEY: fgshadeKey,
+      FGPTN_KEY: fgptnKey
+    });
+
+    // Transform ORDBKSTYSZLIST with correct DBFLAG
+    const transformedSizeList = (mappedItem.ORDBKSTYSZLIST || []).map(sizeItem => ({
+      DBFLAG: itemDbFlag,
+      ORDBKSTYSZ_ID: sizeItem.ORDBKSTYSZ_ID || 0,
+      ORDBK_KEY: correctOrdbkKey,
+      ORDBKSTY_ID: mappedItem.ORDBKSTY_ID || 0,
+      STYSIZE_ID: sizeItem.STYSIZE_ID || 0,
+      STYSIZE_NAME: sizeItem.STYSIZE_NAME || "",
+      QTY: parseFloat(sizeItem.QTY) || 0,
+      INIT_DT: "1900-01-01 00:00:00.000",
+      INIT_REMK: "",
+      INIT_QTY: 0,
+      BAL_QTY: parseFloat(sizeItem.QTY) || 0,
+      MRP: parseFloat(mappedItem.RATE || mappedItem.ITMRATE) || 0,
+      WSP: parseFloat(mappedItem.RATE || mappedItem.ITMRATE) || 0,
+      RQTY: 0,
+      WOBALQTY: parseFloat(sizeItem.QTY) || 0,
+      REFORDBKSTYSZ_ID: 0,
+      OP_QTY: 0,
+      HSNCODE_KEY: "IG001",
+      GST_RATE_SLAB_ID: 39,
+      ITM_AMT: parseFloat(sizeItem.ITM_AMT) || 0,
+      DISC_AMT: parseFloat(sizeItem.DISC_AMT) || 0,
+      NET_AMT: parseFloat(sizeItem.NET_AMT) || 0,
+      SGST_AMT: 0,
+      CGST_AMT: 0,
+      IGST_AMT: 0,
+      NET_SALE_RATE: 0,
+      OTHER_AMT: 0,
+      ADD_CESS_RATE: 0,
+      ADD_CESS_AMT: 0
+    }));
 
     return {
       DBFLAG: itemDbFlag,
-      ORDBKSTY_ID: item.ORDBKSTY_ID || 0,
+      ORDBKSTY_ID: mappedItem.ORDBKSTY_ID || 0,
       ORDBK_KEY: correctOrdbkKey,
-      FGPRD_KEY: item.FGPRD_KEY || "",
-      FGSTYLE_ID: item.FGSTYLE_ID || 0,
-      FGSTYLE_CODE: item.FGSTYLE_CODE || "",
-      // FIXED: Preserve these keys properly in all modes
+      FGPRD_KEY: fgprdKey,
+      FGSTYLE_ID: fgstyleId,
+      FGSTYLE_CODE: mappedItem.FGSTYLE_CODE || mappedItem.STYLE_CODE || "",
       FGTYPE_KEY: fgtypeKey,
-      FGSHADE_KEY: fgshadeKey, // IMPORTANT: FGSHADE_KEY include karna
+      FGSHADE_KEY: fgshadeKey,
       FGPTN_KEY: fgptnKey,
-      FGITM_KEY: item.FGITM_KEY || "",
-      QTY: parseFloat(item.QTY || item.ITMQTY) || 0,
-      STYCATRT_ID: item.STYCATRT_ID || 0,
-      RATE: parseFloat(item.RATE || item.ITMRATE) || 0,
-      AMT: parseFloat(item.AMT || item.ITMAMT) || 0,
-      DLV_VAR_PERCENT: parseFloat(item.DLV_VAR_PERCENT || item.DLV_VAR_PERC) || 0,
-      DLV_VAR_QTY: parseFloat(item.DLV_VAR_QTY) || 0,
+      FGITM_KEY: fgItemKey,
+      ALT_BARCODE: altBarcode, // IMPORTANT: Include ALT_BARCODE for barcode orders
+      QTY: parseFloat(mappedItem.QTY || mappedItem.ITMQTY) || 0,
+      STYCATRT_ID: mappedItem.STYCATRT_ID || 0,
+      RATE: parseFloat(mappedItem.RATE || mappedItem.ITMRATE) || 0,
+      AMT: parseFloat(mappedItem.AMT || mappedItem.ITMAMT) || 0,
+      DLV_VAR_PERCENT: parseFloat(mappedItem.DLV_VAR_PERCENT || mappedItem.DLV_VAR_PERC) || 0,
+      DLV_VAR_QTY: parseFloat(mappedItem.DLV_VAR_QTY) || 0,
       OPEN_RATE: "",
       TERM_KEY: "",
       TERM_NAME: "",
@@ -562,84 +687,72 @@ const prepareSubmitPayload = () => {
       TERM_FIX_AMT: 0,
       TERM_RATE: 0,
       TERM_PERQTY: 0,
-      DISC_AMT: parseFloat(item.DISC_AMT) || 0,
-      NET_AMT: parseFloat(item.NET_AMT) || 0,
+      DISC_AMT: parseFloat(mappedItem.DISC_AMT) || 0,
+      NET_AMT: parseFloat(mappedItem.NET_AMT) || 0,
       INIT_DT: "1900-01-01 00:00:00.000",
       INIT_REMK: "",
       INIT_QTY: 0,
       DLV_DT: "1900-01-01 00:00:00.000",
-      BAL_QTY: parseFloat(item.QTY || item.ITMQTY) || 0,
+      BAL_QTY: parseFloat(mappedItem.QTY || mappedItem.ITMQTY) || 0,
       STATUS: "1",
       STYLE_PRN: "",
       TYPE_PRN: "",
-      MRP_PRN: parseFloat(item.RATE || item.ITMRATE) || 0,
-      REMK: item.REMARK || "",
+      MRP_PRN: parseFloat(mappedItem.RATE || mappedItem.ITMRATE) || 0,
+      REMK: mappedItem.REMARK || "",
       QUOTEDTL_ID: 0,
-      SETQTY: parseFloat(item.SETQTY) || 0,
+      SETQTY: parseFloat(mappedItem.SETQTY) || 0,
       RQTY: 0,
       DISTBTR_KEY: consigneeKey,
       LOTNO: seasonKey,
-      WOBALQTY: parseFloat(item.QTY || item.ITMQTY) || 0,
+      WOBALQTY: parseFloat(mappedItem.QTY || mappedItem.ITMQTY) || 0,
       REFORDBKSTY_ID: 0,
       BOMSTY_ID: 0,
       ISRMREQ: "N",
       OP_QTY: 0,
-      ORDBKSTYSZLIST: (item.ORDBKSTYSZLIST || []).map(sizeItem => ({
-        DBFLAG: itemDbFlag,
-        ORDBKSTYSZ_ID: sizeItem.ORDBKSTYSZ_ID || 0,
-        ORDBK_KEY: correctOrdbkKey,
-        ORDBKSTY_ID: item.ORDBKSTY_ID || 0,
-        STYSIZE_ID: sizeItem.STYSIZE_ID || 0,
-        STYSIZE_NAME: sizeItem.STYSIZE_NAME || "",
-        QTY: parseFloat(sizeItem.QTY) || 0,
-        INIT_DT: "1900-01-01 00:00:00.000",
-        INIT_REMK: "",
-        INIT_QTY: 0,
-        BAL_QTY: parseFloat(sizeItem.QTY) || 0,
-        MRP: parseFloat(item.RATE || item.ITMRATE) || 0,
-        WSP: parseFloat(item.RATE || item.ITMRATE) || 0,
-        RQTY: 0,
-        WOBALQTY: parseFloat(sizeItem.QTY) || 0,
-        REFORDBKSTYSZ_ID: 0,
-        OP_QTY: 0,
-        HSNCODE_KEY: "IG001",
-        GST_RATE_SLAB_ID: 39,
-        ITM_AMT: parseFloat(sizeItem.ITM_AMT) || 0,
-        DISC_AMT: parseFloat(sizeItem.DISC_AMT) || 0,
-        NET_AMT: parseFloat(sizeItem.NET_AMT) || 0,
-        SGST_AMT: 0,
-        CGST_AMT: 0,
-        IGST_AMT: 0,
-        NET_SALE_RATE: 0,
-        OTHER_AMT: 0,
-        ADD_CESS_RATE: 0,
-        ADD_CESS_AMT: 0
-      }))
+      ORDBKSTYSZLIST: transformedSizeList
     };
   });
 
-  console.log('Transformed ORDBKSTYLIST with proper keys:', transformedOrdbkStyleList);
+  console.log('Transformed Barcode ORDBKSTYLIST:', transformedOrdbkStyleList.map(item => ({
+    ORDBKSTY_ID: item.ORDBKSTY_ID,
+    DBFLAG: item.DBFLAG,
+    FGPRD_KEY: item.FGPRD_KEY,
+    FGSHADE_KEY: item.FGSHADE_KEY,
+    ALT_BARCODE: item.ALT_BARCODE,
+    FGITM_KEY: item.FGITM_KEY
+  })));
 
   // Get ORDBKTERMLIST from formData
-  const ordbkTermList = formData.apiResponseData?.ORDBKTERMLIST || [];
+  const ordbkTermList = (formData.apiResponseData?.ORDBKTERMLIST || []).map(termItem => {
+    let termDbFlag = termItem.DBFLAG || (mode === 'add' ? 'I' : 'U');
+    
+    if (termItem.DBFLAG === 'D') {
+      termDbFlag = 'D';
+    } else if (mode === 'edit') {
+      const hasOriginalId = termItem.ORDBKTERM_ID && termItem.ORDBKTERM_ID > 0;
+      termDbFlag = hasOriginalId ? 'U' : 'I';
+    }
+    
+    return {
+      ...termItem,
+      DBFLAG: termDbFlag,
+      ORDBK_KEY: correctOrdbkKey
+    };
+  });
   
-  // FIXED: Generate ORDBKGSTLIST only if GST_APPL is "Y"
+  // Generate ORDBKGSTLIST only if GST_APPL is "Y"
   let ordbkGstList = [];
   
   if (formData.GST_APPL === "Y") {
     if (formData.apiResponseData?.ORDBKGSTLIST && formData.apiResponseData.ORDBKGSTLIST.length > 0) {
       ordbkGstList = formData.apiResponseData.ORDBKGSTLIST.map(gstItem => {
-        let gstDbFlag;
-        
-        if (mode === 'add') {
-          gstDbFlag = 'I';
-        } else {
-          const hasOriginalId = gstItem.ORDBK_GST_ID && gstItem.ORDBK_GST_ID > 0;
-          gstDbFlag = hasOriginalId ? 'U' : 'I';
-        }
+        let gstDbFlag = gstItem.DBFLAG || (mode === 'add' ? 'I' : 'U');
         
         if (gstItem.DBFLAG === 'D') {
           gstDbFlag = 'D';
+        } else if (mode === 'edit') {
+          const hasOriginalId = gstItem.ORDBK_GST_ID && gstItem.ORDBK_GST_ID > 0;
+          gstDbFlag = hasOriginalId ? 'U' : 'I';
         }
 
         return {
@@ -670,50 +783,15 @@ const prepareSubmitPayload = () => {
           ADD_CESS_AMT: parseFloat(gstItem.ADD_CESS_AMT) || 0
         };
       });
-    } else {
-      // Generate GST list from items if GST is enabled but no GST data exists
-      transformedOrdbkStyleList.forEach(item => {
-        if (item.DBFLAG !== 'D') {
-          const gstItem = {
-            DBFLAG: mode === 'add' ? 'I' : 'I',
-            ORDBK_GST_ID: 0,
-            GSTTIN_NO: "URD",
-            ORDBK_KEY: correctOrdbkKey,
-            ORDBK_DT: formatDateForAPI(formData.ORDER_DATE)?.replace('T', ' ') || currentDate,
-            GST_TYPE: formData.GST_TYPE === "STATE" ? "S" : "I",
-            HSNCODE_KEY: "IG001",
-            HSN_CODE: "64021010",
-            QTY: item.QTY || 0,
-            UNIT_KEY: "UN005",
-            GST_RATE_SLAB_ID: 39,
-            ITM_AMT: item.AMT || 0,
-            DISC_AMT: item.DISC_AMT || 0,
-            NET_AMT: item.NET_AMT || 0,
-            SGST_RATE: formData.GST_TYPE === "STATE" ? 2.5 : 0,
-            SGST_AMT: formData.GST_TYPE === "STATE" ? (item.NET_AMT * 0.025) : 0,
-            CGST_RATE: formData.GST_TYPE === "STATE" ? 2.5 : 0,
-            CGST_AMT: formData.GST_TYPE === "STATE" ? (item.NET_AMT * 0.025) : 0,
-            IGST_RATE: formData.GST_TYPE === "I" ? 5 : 0,
-            IGST_AMT: formData.GST_TYPE === "I" ? (item.NET_AMT * 0.05) : 0,
-            ROUND_OFF: 0,
-            OTHER_AMT: 0,
-            PARTYDTL_ID: parseInt(branchId) || 106634,
-            ADD_CESS_RATE: 0,
-            ADD_CESS_AMT: 0
-          };
-          ordbkGstList.push(gstItem);
-        }
-      });
     }
-  } else {
-    // GST_APPL is "N" - send empty array
-    ordbkGstList = [];
-    console.log('GST_APPL is "N", sending empty ORDBKGSTLIST');
   }
 
-  // Base payload for both insert and update
+  // Set main DBFLAG based on mode
+  const mainDbFlag = mode === 'add' ? 'I' : 'U';
+
+  // Base payload for barcode order
   const basePayload = {
-    DBFLAG: dbFlag,
+    DBFLAG: mainDbFlag,
     FCYR_KEY: "25",
     CO_ID: companyConfig.CO_ID, 
     COBR_ID: companyConfig.COBR_ID, 
@@ -733,7 +811,7 @@ const prepareSubmitPayload = () => {
     QUOTE_NO: formData.QUOTE_NO || "",
     QUOTE_DT: formatDateForAPI(formData.ORDER_DATE),
     PARTY_KEY: partyKey,
-    PARTYDTL_ID: parseInt(branchId) || 100006,
+    PARTYDTL_ID: parseInt(branchId) || 100003,
     BROKER_KEY: brokerKey,
     BROKER1_KEY: broker1Key,
     BROKER_COMM: 0.00,
@@ -747,7 +825,7 @@ const prepareSubmitPayload = () => {
     CURRN_KEY: formData.CURRN_KEY || "",
     EX_RATE: parseFloat(formData.EX_RATE) || 0,
     IMP_ORDBK_KEY: "",
-    ORDBK_TYPE: formData.ORDBK_TYPE || "0",
+    ORDBK_TYPE: formData.ORDBK_TYPE || "2",
     ROUND_OFF_DESC: "",
     ROUND_OFF: 0.00,
     BOMSTY_ID: 0,
@@ -760,7 +838,7 @@ const prepareSubmitPayload = () => {
     GST_APP: formData.GST_APPL || "N",
     GST_TYPE: formData.GST_TYPE === "STATE" ? "S" : "I",
     SHP_PARTY_KEY: shippingPartyKey,
-    SHP_PARTYDTL_ID: parseInt(shippingPartyDtlId) || 100006,
+    SHP_PARTYDTL_ID: parseInt(shippingPartyDtlId) || 100003,
     STATE_CODE: "",
     ORDBK_ITM_AMT: parseFloat(formData.ORDBK_ITM_AMT) || 0,
     ORDBK_SGST_AMT: parseFloat(formData.ORDBK_SGST_AMT) || 0,
@@ -769,19 +847,23 @@ const prepareSubmitPayload = () => {
     ORDBK_ADD_CESS_AMT: 0,
     ORDBK_GST_AMT: parseFloat(formData.ORDBK_GST_AMT) || 0,
     ORDBK_EXTRA_AMT: 0,
-    ORDBKSTYLIST: transformedOrdbkStyleList, // This now contains FGSHADE_KEY
+    ORDBKSTYLIST: transformedOrdbkStyleList, // Contains ALT_BARCODE
     ORDBKTERMLIST: ordbkTermList,
-    ORDBKGSTLIST: ordbkGstList, // Will be empty array if GST_APPL = "N"
+    ORDBKGSTLIST: ordbkGstList,
     DISTBTR_KEY: consigneeKey,
     SALEPERSON1_KEY: salesperson1Key,
     SALEPERSON2_KEY: salesperson2Key,
     TRSP_KEY: transporterKey,
     PRICELIST_KEY: formData.PRICELIST_KEY || "",
     DESP_PORT: formData.DESP_PORT || "",
+    // Barcode specific flags
+    CHANGE_QTY: formData.CHANGE_QTY || false,
+    MULTI_SHADE: formData.MULTI_SHADE || false,
+    SELECT_SET: formData.SELECT_SET || false
   };
 
   // Add user fields based on operation type
-  if (dbFlag === 'I') {
+  if (mainDbFlag === 'I') {
     basePayload.CREATED_BY = parseInt(userId) || 1;
     basePayload.CREATED_DT = currentDate;
   } else {
@@ -789,8 +871,10 @@ const prepareSubmitPayload = () => {
     basePayload.UPDATED_DT = currentDate;
   }
 
-  console.log('Final Payload with GST_APPL:', formData.GST_APPL, 'ORDBKGSTLIST length:', ordbkGstList.length);
-  console.log('Final Payload:', JSON.stringify(basePayload, null, 2));
+  console.log('Final Barcode Payload for', mode === 'add' ? 'INSERT' : 'UPDATE');
+  console.log('Main DBFLAG:', mainDbFlag);
+  console.log('ORDBKSTYLIST items count:', transformedOrdbkStyleList.length);
+  
   return basePayload;
 };
 
