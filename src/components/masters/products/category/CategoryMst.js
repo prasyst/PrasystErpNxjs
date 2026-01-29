@@ -1,19 +1,8 @@
 'use client'
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import {
-    Box,
-    Grid,
-    TextField,
-    Typography,
-    Button,
-    Stack,
-    FormControlLabel,
-    Checkbox,
-    Dialog,
-    DialogTitle,
-    DialogContent,
-    DialogContentText,
-    DialogActions,
+    Box, Grid, TextField, Typography, Button, Stack, FormControlLabel, Checkbox, Dialog, DialogTitle, DialogContent,
+    DialogContentText, DialogActions,
 } from '@mui/material';
 import KeyboardArrowLeftIcon from "@mui/icons-material/KeyboardArrowLeft";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
@@ -36,6 +25,7 @@ const FORM_MODE = getFormMode();
 const categoryFormSchema = z.object({
     FGCAT_NAME: z.string().min(1, "Category Name is required"),
 });
+
 const columns = [
     { id: "ROWNUM", label: "SrNo.", minWidth: 40 },
     { id: "FGCAT_KEY", label: "Code", minWidth: 40 },
@@ -43,7 +33,6 @@ const columns = [
     { id: "FGCAT_NAME", label: "CatName", minWidth: 40 },
     { id: "SEGMENT_KEY", label: "Segment", minWidth: 40 },
     { id: "SR_CODE", label: "Cat_Series", minWidth: 40 },
-
 ];
 
 const CategoryMst = () => {
@@ -51,16 +40,15 @@ const CategoryMst = () => {
     const router = useRouter();
     const searchParams = useSearchParams();
     const FGCAT_KEY = searchParams.get('FGCAT_KEY');
-
     const [currentFGCAT_KEY, setCurrentFGCAT_KEY] = useState(null);
     const [form, setForm] = useState({
-        FGCAT_KEY: '',  //CODE
-        FGCAT_NAME: '',  //CATEGORY NAME
+        FGCAT_KEY: '',
+        FGCAT_NAME: '',
         Abrv: '',
         SearchByCd: '',
-        SR_CODE: '',    //CAT SERIES
+        SR_CODE: '',
         SEGMENT_KEY: '',
-        FGCAT_CODE: '',  // ALT CODE
+        FGCAT_CODE: '',
         FGCAT_LST_CODE: '',
         SERIES: '',
         Status: FORM_MODE.add ? "1" : "0",
@@ -91,7 +79,6 @@ const CategoryMst = () => {
         // ...
     ];
 
-
     useEffect(() => {
         const getRow = async () => {
             const params = {
@@ -101,14 +88,13 @@ const CategoryMst = () => {
                 const res = await axiosInstance.post('Category/GetFgCatDashBoard?currentPage=1&limit=500', params);
                 const { data: { STATUS, DATA } } = res;
                 if (STATUS === 0 && Array.isArray(DATA)) {
-
                     setRows(DATA);
                     setDataForPrint(DATA);
                 } else {
                     console.error('No data found in response');
                 }
             } catch (err) {
-                console.error('Error fetching data:', err);
+                toast.error('Error fetching data:', err);
             }
         };
         getRow();
@@ -202,14 +188,12 @@ const CategoryMst = () => {
     const handleSubmit = async () => {
         const result = categoryFormSchema.safeParse(form);
         if (!result.success) {
-            // console.log("Validation Errors:", result.error.format());
             return toast.info("Please fill in all required inputs correctly", {
                 autoClose: 1000,
             });
         }
         const { data } = result;
         try {
-
             const userRole = localStorage.getItem('userRole');
             const username = localStorage.getItem('USER_NAME');
             const PARTY_KEY = localStorage.getItem('PARTY_KEY');
@@ -224,12 +208,12 @@ const CategoryMst = () => {
                 url = `Category/InsertFgCat?UserName=${(UserName)}&strCobrid=${COBR_ID}`;
             }
             const payload = {
-                FGCAT_KEY: form.FGCAT_KEY,  //CODE
-                FGCAT_CODE: form.FGCAT_CODE, //ALT CODE
-                FGCAT_NAME: data.FGCAT_NAME, //CATEGORY NAME
+                FGCAT_KEY: form.FGCAT_KEY,
+                FGCAT_CODE: form.FGCAT_CODE,
+                FGCAT_NAME: data.FGCAT_NAME,
                 FGCAT_ABRV: form.Abrv,
                 STATUS: form.Status ? "1" : "0",
-                SR_CODE: form.SR_CODE,     // CAT SERIES 
+                SR_CODE: form.SR_CODE,
                 SEGMENT_KEY: form.SEGMENT_KEY,
                 CO_ID: CO_ID
             };
@@ -240,12 +224,10 @@ const CategoryMst = () => {
                 payload.UPDATED_BY = 1;
                 payload.UPDATED_DT = new Date().toISOString();
                 response = await axiosInstance.post(url, payload);
-                // console.log('Updated:', response.data);
                 const { STATUS, MESSAGE } = response.data;
                 if (STATUS === 0) {
                     setMode(FORM_MODE.read);
                     toast.success(MESSAGE, { autoClose: 1000 });
-
                 } else {
                     toast.error(MESSAGE, { autoClose: 1000 });
                 }
@@ -273,7 +255,7 @@ const CategoryMst = () => {
                 }
             }
         } catch (error) {
-            console.error("Submit Error:", error);
+            toast.error("Error while inserting.", error);
         }
     };
 
@@ -289,6 +271,7 @@ const CategoryMst = () => {
             SearchByCd: ''
         }));
     };
+
     const debouncedApiCall = debounce(async (newSeries) => {
         try {
             const response = await axiosInstance.post('GetSeriesSettings/GetSeriesLastNewKey', {
@@ -341,7 +324,7 @@ const CategoryMst = () => {
             return;
         };
         debouncedApiCall(newSeries);
-    }
+    };
 
     const handleAdd = async () => {
         setMode(FORM_MODE.add);
@@ -413,6 +396,7 @@ const CategoryMst = () => {
             console.error("Error fetching ID and LASTID:", error);
         }
     };
+
     const handleFirst = () => { }
     const handleLast = async () => {
         await fetchRetriveData(1, "L");
@@ -420,7 +404,8 @@ const CategoryMst = () => {
             ...prev,
             SearchByCd: ''
         }));
-    }
+    };
+
     const handlePrevious = async () => {
         await fetchRetriveData(currentFGCAT_KEY, "P");
         setForm((prev) => ({
@@ -428,6 +413,7 @@ const CategoryMst = () => {
             SearchByCd: ''
         }));
     };
+
     const handleNext = async () => {
         if (currentFGCAT_KEY) {
             await fetchRetriveData(currentFGCAT_KEY, "N");
@@ -437,16 +423,20 @@ const CategoryMst = () => {
             SearchByCd: ''
         }));
     };
+
     const handleDelete = () => {
         setOpenConfirmDialog(true);
-    }
+    };
+
     const handleCloseConfirmDialog = () => {
         setOpenConfirmDialog(false);
     };
+
     const handleConfirmDelete = async () => {
+        console.log("Confirm Delete buttion action");
         setOpenConfirmDialog(false);
         try {
-            const response = await axiosInstance.post('Category/DeleteFgCat', {
+            const response = await axiosInstance.post(`Category/DeleteFgCat?UserName=${(UserName)}&strCobrid=${COBR_ID}`, {
                 FGCAT_KEY: form.FGCAT_KEY
             });
             const { data: { STATUS, MESSAGE } } = response;
@@ -457,9 +447,10 @@ const CategoryMst = () => {
                 toast.error(MESSAGE);
             }
         } catch (error) {
-            console.error("Delete Error:", error);
+            toast.error("Error While Deleting.", error);
         }
     };
+
     const handleEdit = () => {
         setMode(FORM_MODE.edit);
     };
@@ -499,10 +490,8 @@ const CategoryMst = () => {
         router.push("/masters/products/category/cattable");
     };
 
-    const handleExit = async () => { 
-
-        router.push("/masterpage?activeTab=products"); 
-
+    const handleExit = async () => {
+        router.push("/masterpage?activeTab=products");
     };
 
     const handleInputChange = (e) => {
@@ -522,7 +511,7 @@ const CategoryMst = () => {
 
     const textInputSx = {
         '& .MuiInputBase-root': {
-            height: 36,
+            height: 42,
             fontSize: '14px',
         },
         '& .MuiInputLabel-root': {
@@ -534,7 +523,7 @@ const CategoryMst = () => {
             border: '1px solid #e0e0e0',
             borderRadius: '6px',
             overflow: 'hidden',
-            height: 36,
+            height: 42,
             fontSize: '14px',
         },
         '& .MuiFilledInput-root:before': {
@@ -555,7 +544,7 @@ const CategoryMst = () => {
 
     const DropInputSx = {
         '& .MuiInputBase-root': {
-            height: 36,
+            height: 42,
             fontSize: '14px',
         },
         '& .MuiInputLabel-root': {
@@ -567,7 +556,7 @@ const CategoryMst = () => {
             border: '1px solid #e0e0e0',
             borderRadius: '6px',
             overflow: 'hidden',
-            height: 36,
+            height: 42,
             fontSize: '14px',
             paddingRight: '36px',
         },
@@ -591,6 +580,7 @@ const CategoryMst = () => {
             backgroundColor: '#fff'
         }
     };
+
     return (
         <Grid
             sx={{
@@ -607,13 +597,12 @@ const CategoryMst = () => {
         >
             <ToastContainer />
 
-            <Grid container
+            <Grid container spacing={2}
                 sx={{
                     display: 'flex',
                     flexDirection: 'column',
                     marginInline: { xs: '5%', sm: '5%', md: '5%', lg: '15%', xl: '5%' },
                 }}
-                spacing={2}
             >
                 <Grid>
                     <Typography align="center" variant="h6">
@@ -649,7 +638,7 @@ const CategoryMst = () => {
                     <Grid sx={{ display: 'flex' }}>
                         <TextField
                             placeholder="Search By Code"
-                            variant="filled"
+                            variant="outlined"
                             sx={{
                                 backgroundColor: '#e0f7fa',
                                 '& .MuiInputBase-input': {
@@ -686,8 +675,7 @@ const CategoryMst = () => {
                     </Grid>
                 </Grid>
 
-                <Grid container spacing={0.5}>
-
+                <Grid container spacing={1}>
                     <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                         <TextField
                             label="Series"
@@ -778,16 +766,13 @@ const CategoryMst = () => {
                             value={form.SEGMENT_KEY}
                             onChange={(value) => setForm({ ...form, SEGMENT_KEY: value })}
                             className="custom-textfield"
+                            sx={DropInputSx}
                         />
                     </Grid>
 
                     <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                         <TextField
-                            label={
-                                <span>
-                                    Category Name<span style={{ color: "red" }}>*</span>
-                                </span>
-                            }
+                            label={<span>Category Name<span style={{ color: "red" }}>*</span></span>}
                             inputRef={FGCAT_NAMERef}
                             variant="filled"
                             fullWidth
@@ -864,7 +849,6 @@ const CategoryMst = () => {
                             label="Active "
                         />
                     </Grid>
-
                 </Grid>
 
                 <Grid sx={{
@@ -902,7 +886,6 @@ const CategoryMst = () => {
                     )}
                     {(mode === FORM_MODE.edit || mode === FORM_MODE.add) && (
                         <>
-
                             <Button variant="contained"
                                 sx={{
                                     backgroundColor: '#635bff',
@@ -925,13 +908,46 @@ const CategoryMst = () => {
                                 onClick={handleCancel}>
                                 Cancel
                             </Button>
-
                         </>
                     )}
                 </Grid>
-
             </Grid >
 
+            <Dialog
+                open={openConfirmDialog}
+                onClose={handleCloseConfirmDialog}
+                aria-labelledby="alert-dialog-title"
+                aria-describedby="alert-dialog-description"
+            >
+                <DialogTitle id="alert-dialog-title">{"Confirm Deletion"}</DialogTitle>
+                <DialogContent>
+                    <DialogContentText id="alert-dialog-description">
+                        Are you sure you want to delete this category?
+                    </DialogContentText>
+                </DialogContent>
+                <DialogActions>
+                    <Button
+                        sx={{
+                            backgroundColor: '#635bff',
+                            color: 'white',
+                            '&:hover': { backgroundColor: '#1565c0', color: 'white' },
+                        }}
+                        onClick={handleConfirmDelete}
+                    >
+                        Yes
+                    </Button>
+                    <Button
+                        sx={{
+                            backgroundColor: '#635bff',
+                            color: 'white',
+                            '&:hover': { backgroundColor: '#1565c0', color: 'white' },
+                        }}
+                        onClick={handleCloseConfirmDialog}
+                    >
+                        No
+                    </Button>
+                </DialogActions>
+            </Dialog>
         </Grid >
     );
 };

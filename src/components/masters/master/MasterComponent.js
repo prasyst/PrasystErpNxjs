@@ -1,14 +1,7 @@
 'use client';
 import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import {
-  Box,
-  Typography,
-  Card,
-  CardContent,
-  Grid,
-  styled,
-} from '@mui/material';
+import { Box, Typography, Card, CardContent, Grid, styled, } from '@mui/material';
 import { MdGavel, MdTune, MdBuild } from 'react-icons/md';
 import { FaHandshake } from 'react-icons/fa';
 import Tabs from '@mui/material/Tabs';
@@ -149,8 +142,6 @@ export default function MasterPage() {
     }
   }));
 
-
-
   const menuData = [
     {
       id: 'company',
@@ -235,7 +226,7 @@ export default function MasterPage() {
         { name: 'Web Collection', icon: CollectionsBookmarkIcon, path: '/masters/products/webcollection' },
         { name: 'Quality', icon: CollectionsBookmarkIcon, path: '/masters/products/quality' },
         { name: 'RackMst', icon: BuildIcon, path: '/masters/products/rack' },
-        { name: 'Prod Series', icon: AssignmentIcon, path: '/masters/products/prodseries' },
+        { name: 'Product Series', icon: AssignmentIcon, path: '/masters/products/prodseries' },
       ],
     },
     {
@@ -341,6 +332,22 @@ export default function MasterPage() {
                 '& .MuiTabs-scroller': {
                   overflow: 'visible !important',
                 },
+                '@media (max-width: 600px)': {
+                  '& .MuiTabs-flexContainer': {
+                    flexWrap: 'nowrap',
+                  },
+                  '& .MuiTabs-scroller': {
+                    overflowX: 'auto !important',
+                    display: 'flex',
+                    flexWrap: 'nowrap',
+                  },
+                  '& .MuiTabs-scrollButtons': {
+                    width: '25px',
+                    '&.Mui-disabled': {
+                      opacity: 0.3,
+                    },
+                  },
+                },
               }}
             >
               {menuData.map((tab, index) => (
@@ -356,15 +363,15 @@ export default function MasterPage() {
                   // Special handling ONLY for QC Test header
                   if (item.isHeader) {
                     return (
-                      <Grid item xs={12} key={`header-${itemIndex}`} sx={{ mt: 1, mb: 2 }}>
+                      <Grid size={{ xs: 12 }} key={`header-${itemIndex}`} sx={{ mt: 1, mb: 2 }}>
                         <Typography
                           variant="h6"
                           sx={{
                             fontWeight: 700,
                             color: '#635bff',
                             fontSize: '1.1rem',
-                            display: 'block', 
-                            marginTop: '1px', 
+                            display: 'block',
+                            marginTop: '1px',
                             marginBottom: '10px',
                           }}
                         >
@@ -384,12 +391,12 @@ export default function MasterPage() {
                   }
                   const ItemIcon = item.icon;
                   return (
-                    <Grid item xs={6} sm={6} md={4} lg={3} key={itemIndex}>
+                    <Grid size={{ xs: 6, sm: 3, md: 3, lg: 1.5 }} key={itemIndex}>
                       <Card
                         sx={{
                           cursor: item.path !== '#' ? 'pointer' : 'default',
                           transition: 'all 0.3s ease',
-                          width: 150,
+                          // width: 150,
                           height: '100%',
                           background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
                           border: '1px solid #e0e0e0',

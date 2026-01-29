@@ -343,9 +343,9 @@
 
 //  useEffect(() => {
 //   if (isOpen && isMobile) {
-   
+
 //     setTimeout(() => {
-    
+
 //       if (searchInputRef.current) {
 //         searchInputRef.current.blur();
 //       }
@@ -968,7 +968,7 @@
 //       >
 //         <MdSearch size={20} />
 //       </div>
-      
+
 //       <input
 //         ref={searchInputRef}
 //         type="text"
@@ -1021,7 +1021,7 @@
 //         spellCheck="false"
 //         enterKeyHint="search"
 //       />
-      
+
 //       {searchQuery && (
 //         <MdClear
 //           size={18}
@@ -1550,7 +1550,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
     e.stopPropagation();
     setIsSearchFocused(true);
     setIsUserInteracted(true);
-    
+
     // Prevent sidebar from closing when search is focused on mobile
     if (isMobile) {
       e.currentTarget.style.borderColor = '#635bff';
@@ -1568,9 +1568,9 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
   // Prevent sidebar close when search input is clicked on mobile - यह नया useEffect है
   useEffect(() => {
     const handleOutsideClick = (e) => {
-      if (isMobile && isOpen && sidebarRef.current && 
-          !sidebarRef.current.contains(e.target) && 
-          !isSearchFocused) {
+      if (isMobile && isOpen && sidebarRef.current &&
+        !sidebarRef.current.contains(e.target) &&
+        !isSearchFocused) {
         onClose();
       }
     };
@@ -2198,7 +2198,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
               >
                 <MdSearch size={20} />
               </div>
-              
+
               <input
                 ref={searchInputRef}
                 type="text"
@@ -2240,7 +2240,6 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
                 spellCheck="false"
                 enterKeyHint="search"
               />
-              
               {searchQuery && (
                 <MdClear
                   size={18}
@@ -2277,6 +2276,15 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
           paddingRight: '4px',
           visibility: isMobile ? (isOpen ? 'visible' : 'hidden') : 'visible',
         }}>
+
+          <style>
+            {`
+              ::-webkit-scrollbar {
+                width: 0px; 
+              }
+            `}
+          </style>
+
           {searchQuery.trim() && menuItems.length === 0 && (
             <div style={{
               textAlign: 'center',
