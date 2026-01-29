@@ -196,7 +196,7 @@ const Cards = () => {
       <Grid container spacing={2} sx={{ mb: 2, mt: 1 }}>
         {[
           {
-            title: "Total Revenue",
+            title: "Revenue",
             value: `₹ ${((totalRev[0]?.TOT_AMT || 0) / 100000).toFixed(2)}L`,
             gradient: 'linear-gradient(135deg, #42A5F5 0%, #1565C0 100%)',
             icon: <CurrencyRupeeIcon />,
@@ -204,7 +204,7 @@ const Cards = () => {
             iconBg: 'rgba(66, 165, 245, 0.15)',
           },
           {
-            title: "Total Collections",
+            title: "Collections",
             value: `₹ ${((totalColl[0]?.TOT_AMT || 0) / 100000).toFixed(2)}L`,
             gradient: 'linear-gradient(135deg, #7BBE9F 0%, #2E7D32 100%)',
             icon: <AddShoppingCartIcon />,
@@ -220,7 +220,7 @@ const Cards = () => {
             iconBg: 'rgba(244, 67, 54, 0.15)',
           },
           {
-            title: "Total Expense",
+            title: "Expense",
             value: `₹ ${((totalExp[0]?.TOT_AMT || 0) / 100000).toFixed(2)}L`,
             gradient: 'linear-gradient(135deg, #FFC107 0%, #FF9800 100%)',
             icon: <CurrencyRupeeIcon />,
