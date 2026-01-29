@@ -29,7 +29,7 @@ import SearchIcon from '@mui/icons-material/Search';
 import SaveIcon from '@mui/icons-material/Save';
 import CancelIcon from '@mui/icons-material/Cancel';
 import DownloadIcon from '@mui/icons-material/Download';
-import FilterListIcon from '@mui/icons-material/FilterList';
+import DeleteIcon from '@mui/icons-material/Delete';
 import ViewWeekIcon from '@mui/icons-material/ViewWeek';
 import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
 import axiosInstance from '../../../lib/axios';
@@ -57,7 +57,7 @@ const Tna = () => {
   const [editableRmData, setEditableRmData] = useState([]);
   const [editableTrimData, setEditableTrimData] = useState([]);
   const [selectedRows, setSelectedRows] = useState({});
-   const [currentTnaKey, setCurrentTnaKey] = useState(null); 
+  const [currentTnaKey, setCurrentTnaKey] = useState(null); 
   const [currentTnaNo, setCurrentTnaNo] = useState('')
 
   useEffect(() => {
@@ -222,7 +222,8 @@ const Tna = () => {
         ORDBK_KEY: item.ORDBK_KEY,
         TNA_KEY:item.TNA_KEY,
         FGPTN_KEY:item.FGPTN_KEY,
-        FGTYPE_KEY:item.FGTYPE_KEY
+        FGTYPE_KEY:item.FGTYPE_KEY,
+        TNA_NO:item.TNA_NO
       }))
       setData(result)
       // setSelectedRowId(null);
@@ -238,6 +239,10 @@ const Tna = () => {
         }
         setSelectedRowId(firstRow.ORDBKSTYSZ_ID);
         await handleRadioChange(firstRow);
+        setTimeout(() => {
+        fetchRmData();
+        fetchTRimData();
+      }, 500);
       } else {
         setSelectedRowId(null);
         setRoutingData([]);
@@ -445,15 +450,43 @@ const Tna = () => {
   };
 
 
-  const handleRoutingInputChange = (index, field, value) => {
-    const newData = [...editableRoutingData];
-    newData[index] = {
-      ...newData[index],
-      [field]: value
-    };
-    setEditableRoutingData(newData);
+  // const handleRoutingInputChange = (index, field, value) => {
+  //   const newData = [...editableRoutingData];
+  //   newData[index] = {
+  //     ...newData[index],
+  //     [field]: value
+  //   };
+  //   setEditableRoutingData(newData);
+  // };
+const handleRoutingInputChange = (index, field, value) => {
+  const newData = [...editableRoutingData];
+  newData[index] = {
+    ...newData[index],
+    [field]: value
   };
 
+  if (field === 'EST_DT' && value) {
+    for (let i = index + 1; i < newData.length; i++) {
+      const prevRow = newData[i - 1];
+      const currentRow = newData[i];
+      const days = currentRow.DAYS || 0;
+      
+      if (prevRow.EST_DT) {
+        const prevDate = new Date(prevRow.EST_DT);
+        const newDate = new Date(prevDate);
+        newDate.setDate(newDate.getDate() + parseInt(days));
+
+        const formattedDate = newDate.toISOString().split('T')[0];
+        newData[i] = {
+          ...currentRow,
+          EST_DT: formattedDate
+        };
+      }
+    }
+  }
+  
+  setEditableRoutingData(newData);
+};
 
   const handleRmInputChange = (index, field, value) => {
     const newData = [...editableRmData];
@@ -527,7 +560,7 @@ const Tna = () => {
         }
 
         const generatedKey = seriesData.DATA[0].ID;
-        tnaNo = seriesData.DATA[0].ID || `TN${Date.now().toString().slice(-6)}`;
+        tnaNo = seriesData.DATA[0].ID ;
         tnaKey = `${fcyr}${cobrid}${generatedKey}`;
       }
 
@@ -661,7 +694,7 @@ const Tna = () => {
       const submitResponse = await axiosInstance.post('/TNA/ApiMangeTNA', tnaPayload);
       if (submitResponse.data?.STATUS ==0) {
        toast.success(submitResponse.data.MESSAGE)
-        // await handleGetData();
+        await handleGetData();
       } else {
         toast.error(submitResponse.data.MESSAGE);
       }
@@ -672,8 +705,27 @@ const Tna = () => {
     }
   };
 
+  const handleDeleteTna = async () => {
+    try {
+      let payload = {
+        "TNA_KEY": currentTnaKey,
+        "FLAG": ""
+      }
+      const deleteTna = await axiosInstance.post('/TNA/DELETE_TNA', payload);
+      if (deleteTna.data?.STATUS == 0) {
+        toast.success(deleteTna.data.MESSAGE)
+        await handleGetData();
+      } else {
+        toast.error(submitResponse.data.MESSAGE);
+      }
+    } catch {
+      toast.error('Can not delete Tna')
+    }
+
+  }
+
   return (
-    <Box sx={{ backgroundColor: '#f8fafc', p: 1 }}>
+    <Box sx={{ backgroundColor: '#f8fafc', }}>
         <ToastContainer />
       <Card sx={{
         mb: 1,
@@ -810,13 +862,15 @@ const Tna = () => {
                 </Button>
               </Grid>
               <Grid
-                size={{ xs: 12, md: 2 }}
+                size={{ xs: 12, md: 1 }}
                 sx={{
                   display: "flex",
-                  alignItems: "center",
+                   flexDirection: { xs: "row", md: "column" },
+                   alignItems: { xs: "center", md: "flex-start" },
                   justifyContent: "flex-start",
                   gap: 1,
-                  minWidth: 'fit-content'
+                  minWidth: 'fit-content',
+                   mt: { xs: 0, md: '10px' },
                 }}
               >
                 <FormControl sx={{ minWidth: 'fit-content' }}>
@@ -855,21 +909,54 @@ const Tna = () => {
                     />
                   </RadioGroup>
                 </FormControl>
-                <Typography
+                <Box
                   sx={{
-                    fontSize: "0.85rem",
-                    whiteSpace: "nowrap",
-                    minWidth: 'fit-content'
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 3,
+                    ml: 1
                   }}
                 >
-                  TNA No. TN0001
-                </Typography>
+                  <Typography
+                    sx={{
+                      fontSize: "0.85rem",
+                      whiteSpace: "nowrap",
+                      minWidth: "fit-content",
+                    }}
+                  >
+                    <span style={{ fontWeight: 650 }}>TNA No. </span>
+                    {currentTnaNo ? currentTnaNo : "N/A"}
+                  </Typography>
+                 {/* <Tooltip title="Delete TNA" arrow>
+                  <IconButton
+                    size="small"
+                    color="error"
+                    // onClick={handleDeleteTna}
+                    // disabled={!currentTnaNo}
+                  >
+                    <DeleteIcon fontSize="small" />
+                  </IconButton>
+                  </Tooltip> */}
+                  <Button
+                    variant="contained"
+                    color="error"
+                    size="small"
+                    sx={{
+                      minWidth: "auto",
+                      px: 1,
+                      py: 0.25,
+                    }}
+                    disabled={!currentTnaKey}
+                    onClick={handleDeleteTna}
+                  >
+                    Delete Tna
+                  </Button>
+                </Box>
               </Grid>
-
             </Grid>
           </Box>
 
-          <Box sx={{ mb: 2 }}>
+          <Box sx={{ mb: 1 }}>
             <TableContainer
               component={Paper}
               sx={{
@@ -900,7 +987,7 @@ const Tna = () => {
                 }}>
                   <Box sx={{
                     gridColumn: '1',
-                    p: 0.6,
+                    p: 0.5,
                     textAlign: 'center',
                     fontWeight: 600,
                     color: 'rgba(0, 0, 0, 0.87)',
@@ -947,7 +1034,7 @@ const Tna = () => {
 
                 {data.map((row, index) => (
                   <Box
-                    key={row.ORDBK_KEY}
+                    key={row.ORDBKSTYSZ_ID}
                     sx={{
                       display: 'contents',
                       '& > div': {
@@ -957,7 +1044,7 @@ const Tna = () => {
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        minHeight: '30px',
+                        minHeight: '26px',
                         backgroundColor: row.TNA_KEY ? '#d7fdd7' : 'transparent',
                       },
                       '& > div:last-child': {
@@ -1088,7 +1175,7 @@ const Tna = () => {
                           label={
                             typeof row.TNA_KEY === 'string' && row.TNA_KEY.length > 12
                               ? `${row.TNA_KEY.substring(0, 12)}...`
-                              : row.TNA_KEY
+                              : row.TNA_KEY || "N/A"
                           }
                           size="small"
                           sx={{
@@ -1124,14 +1211,14 @@ const Tna = () => {
                   value={activeTab}
                   onChange={handleTabChange}
                   sx={{
-                    minHeight: '36px',
+                    minHeight: '30px',
                     '& .MuiTab-root': {
                       textTransform: 'none',
                       fontWeight: 600,
                       fontSize: '0.9rem',
                       minWidth: 'auto',
-                      minHeight: '36px',
-                      padding: '6px 10px',
+                      minHeight: '30px',
+                      padding: '4px 10px',
                       '&.Mui-selected': {
                         color: '#1d4ed8'
                       }
@@ -1139,7 +1226,7 @@ const Tna = () => {
                     '& .MuiTabs-indicator': {
                       backgroundColor: '#1d4ed8',
                       borderRadius: '3px 3px 0 0',
-                      height: '3px'
+                      height: '2px'
                     }
                   }}
                 >
@@ -1204,7 +1291,7 @@ const Tna = () => {
                             key={header}
                             sx={{
                               gridColumn: `${idx + 1}`,
-                              p: 0.8,
+                              p: 0.6,
                               textAlign: 'left',
                               fontWeight: 600,
                               color: 'rgba(0, 0, 0, 0.87)',
@@ -1238,7 +1325,7 @@ const Tna = () => {
                               display: 'flex',
                               alignItems: 'left',
                               justifyContent: 'center',
-                              minHeight: '30px',
+                              minHeight: '26px',
                             },
                             '& > div:last-child': {
                               borderRight: 'none',
@@ -1388,7 +1475,7 @@ const Tna = () => {
                         <Box
                           sx={{
                             gridColumn: '1',
-                            p: 0.8,
+                            p: 0.6,
                             textAlign: 'center',
                             fontWeight: 600,
                             color: 'rgba(0, 0, 0, 0.87)',
@@ -1408,13 +1495,12 @@ const Tna = () => {
                           Select
                         </Box>
 
-                        {/* Other headers */}
                         {['FAB_NAME', 'DESIGN', 'QTY', 'REMK', 'BAL_QTY', 'PO_QTY', 'GRN_QTY', 'STK_QTY', 'RATE', 'AMOUNT'].map((header, idx) => (
                           <Box
                             key={header}
                             sx={{
                               gridColumn: `${idx + 2}`,
-                              p: 0.8,
+                              p: 0.6,
                               textAlign: 'center',
                               fontWeight: 600,
                               color: 'rgba(0, 0, 0, 0.87)',
@@ -1448,7 +1534,7 @@ const Tna = () => {
                               display: 'flex',
                               alignItems: 'center',
                               justifyContent: 'center',
-                              minHeight: '30px',
+                              minHeight: '26px',
                             },
                             '& > div:last-child': {
                               borderRight: 'none',
@@ -1648,7 +1734,7 @@ const Tna = () => {
                             key={header}
                             sx={{
                               gridColumn: `${idx + 1}`,
-                              p: 0.8,
+                              p: 0.6,
                               textAlign: 'center',
                               fontWeight: 600,
                               color: 'rgba(0, 0, 0, 0.87)',
@@ -1682,7 +1768,7 @@ const Tna = () => {
                               display: 'flex',
                               alignItems: 'center',
                               justifyContent: 'center',
-                              minHeight: '30px',
+                              minHeight: '26px',
                             },
                             '& > div:last-child': {
                               borderRight: 'none',
