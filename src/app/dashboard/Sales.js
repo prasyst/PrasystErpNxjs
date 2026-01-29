@@ -146,7 +146,7 @@ const Sales = () => {
         FCYR_KEY: fcyr,
         FROM_DT: dateFrom,
         To_DT: dateTo,
-        Flag: "BillDis",
+        Flag: "OpenBill",
         PageNumber: 1,
         PageSize: 10,
         SearchText: "",
