@@ -170,26 +170,73 @@ const AutoVibe = React.forwardRef(
     onAddClick,
     onRefreshClick,
     isRefreshing,
-    showAddIcon = true,  // NEW: Add this prop
-    showRefreshIcon = true  // NEW: Add this prop
+    showAddIcon = true,  
+    showRefreshIcon = true  ,
+    minWidth = 200,
   }, ref) => {
 
     const [focused, setFocused] = React.useState(false);
     const shouldShrink = !!value || focused;
     
     return (
-      <FormControl fullWidth>
+     <FormControl fullWidth>
         <Autocomplete
           id={id}
           options={options}
           getOptionLabel={getOptionLabel}
           value={value}
           onChange={onChange}
-          sx={sx}
+          sx={{
+            ...sx,
+            // NEW: Ensure autocomplete container takes full width
+            '& .MuiAutocomplete-popper': {
+              // Auto width for dropdown
+              '& .MuiPaper-root': {
+                backgroundColor: '#ffffff !important',
+                minWidth: `${minWidth}px !important`,
+                maxWidth: 'fit-content !important',
+              }
+            }
+          }}
           popupIcon={undefined}
           clearOnBlur={false}
           onFocus={() => setFocused(true)}
           onBlur={() => setFocused(false)}
+          
+          // NEW: Custom render for dropdown options
+          renderOption={(props, option) => {
+            const label = getOptionLabel(option);
+            return (
+              <li 
+                {...props} 
+                style={{
+                  padding: '4px 12px', // Reduce padding
+                 
+                  whiteSpace: 'normal', // Allow text wrapping
+                  wordBreak: 'break-word', // Break long words
+                  lineHeight: '1.2', // Reduce line height
+                  fontSize: '15px', 
+                  minHeight: '22px', 
+                }}
+              >
+                {label}
+              </li>
+            );
+          }}
+          
+          // NEW: Custom Paper component for dropdown
+          PaperComponent={(props) => (
+            <div
+              style={{
+                minWidth: minWidth,
+                backgroundColor: '#ffffff',
+                width: 'auto',
+                maxWidth: '400px', // Maximum width
+              }}
+            >
+              <div {...props} />
+            </div>
+          )}
 
           renderInput={(params) => (
             <TextField
@@ -208,7 +255,6 @@ const AutoVibe = React.forwardRef(
                   paddingLeft: "8px !important",
                   paddingBottom: "8px !important"
                 },
-
                 startAdornment: (
                   <>
                     {params.InputProps.startAdornment}
@@ -218,7 +264,6 @@ const AutoVibe = React.forwardRef(
                   <InputAdornment position="end">
                     {!disabled && (
                       <>
-                        {/* Conditionally show AddIcon */}
                         {showAddIcon && onAddClick && (
                           <AddIcon
                             onClick={onAddClick}
@@ -226,7 +271,6 @@ const AutoVibe = React.forwardRef(
                           />
                         )}
                         
-                        {/* Conditionally show RefreshIcon */}
                         {showRefreshIcon && onRefreshClick && (
                           <RefreshIcon
                             onClick={onRefreshClick}
@@ -249,7 +293,6 @@ const AutoVibe = React.forwardRef(
                         )}
                       </>
                     )}
-
                   </InputAdornment>
                 ),
               }}

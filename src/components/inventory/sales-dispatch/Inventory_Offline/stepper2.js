@@ -1963,6 +1963,7 @@ const handleConfirmAdd = () => {
                 name="product"
                 value={isAddingNew || isEditingSize ? newItemData.product : selectedProduct}
                 onChange={handleProductChange}
+                 minWidth={350}
                 sx={DropInputSx}
               />
               
@@ -2411,7 +2412,7 @@ const handleConfirmAdd = () => {
                       <TableCell sx={{ fontWeight: 'bold', fontSize: '0.8rem', padding: '6px 8px', backgroundColor: "#f5f5f5", borderBottom: "1px solid #ddd" }}>MRP</TableCell>
                       <TableCell sx={{ fontWeight: 'bold', fontSize: '0.8rem', padding: '6px 8px', backgroundColor: "#f5f5f5", borderBottom: "1px solid #ddd" }}>Rate</TableCell>
                       <TableCell sx={{ fontWeight: 'bold', fontSize: '0.8rem', padding: '6px 8px', backgroundColor: "#f5f5f5", borderBottom: "1px solid #ddd" }}>Amount</TableCell>
-                      <TableCell sx={{ fontWeight: 'bold', fontSize: '0.8rem', padding: '6px 8px', backgroundColor: "#f5f5f5", borderBottom: "1px solid #ddd" }}>Barcode</TableCell>
+                      {/* <TableCell sx={{ fontWeight: 'bold', fontSize: '0.8rem', padding: '6px 8px', backgroundColor: "#f5f5f5", borderBottom: "1px solid #ddd" }}>Barcode</TableCell> */}
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -2443,7 +2444,7 @@ const handleConfirmAdd = () => {
                             {size.RATE || newItemData.rate || 0}
                           </TableCell>
                           <TableCell sx={{ fontSize: '0.75rem', padding: '6px 8px' }}>{size.ITM_AMT || 0}</TableCell>
-                          <TableCell sx={{ fontSize: '0.75rem', padding: '6px 8px' }}>{size.FGSTYLE_ID || "-"}</TableCell>
+                          {/* <TableCell sx={{ fontSize: '0.75rem', padding: '6px 8px' }}>{size.FGSTYLE_ID || "-"}</TableCell> */}
                         </TableRow>
                       ))
                     ) : (
