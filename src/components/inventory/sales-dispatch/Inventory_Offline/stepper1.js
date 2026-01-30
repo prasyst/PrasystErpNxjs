@@ -1354,6 +1354,7 @@ const fetchShippingPartyDetails = async (partyKey) => {
                   border: getFieldError('Party') ? '1px solid #f44336' : '1px solid #e0e0e0',
                 }
               }}
+               minWidth={300}
               inputProps={{
                 style: {
                   padding: '6px 8px',
@@ -1376,6 +1377,7 @@ const fetchShippingPartyDetails = async (partyKey) => {
               value={formData.SHIPPING_PARTY || ""}
               onChange={(event, value) => handleShippingPartyChange("SHIPPING_PARTY", value)}
               sx={DropInputSx}
+               minWidth={300}
               inputProps={{
                 style: {
                   padding: '6px 8px',
@@ -1570,6 +1572,7 @@ const fetchShippingPartyDetails = async (partyKey) => {
               value={formData.Transporter || ""}
               onChange={(event, value) => handleAutoCompleteChange("Transporter", value)}
               sx={DropInputSx}
+               minWidth={300}
               inputProps={{
                 style: {
                   padding: '6px 8px',
@@ -1777,6 +1780,7 @@ const fetchShippingPartyDetails = async (partyKey) => {
               value={formData.SALESPERSON_1 || ""}
               onChange={(event, value) => handleAutoCompleteChange("SALESPERSON_1", value)}
               sx={DropInputSx}
+               minWidth={300}
               inputProps={{
                 style: {
                   padding: '6px 8px',
@@ -1796,6 +1800,7 @@ const fetchShippingPartyDetails = async (partyKey) => {
               value={formData.SALESPERSON_2 || ""}
               onChange={(event, value) => handleAutoCompleteChange("SALESPERSON_2", value)}
               sx={DropInputSx}
+               minWidth={300}
               inputProps={{
                 style: {
                   padding: '6px 8px',
@@ -1912,91 +1917,134 @@ const fetchShippingPartyDetails = async (partyKey) => {
         </Box>
 
          <Box sx={{
-          display: 'flex',
-          flexDirection: { xs: 'column', sm: 'row', md: 'row' },
-          gap: { xs: 1, sm: 1.5, md: 2 }
-        }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', width: { xs: '100%', sm: '48%', md: '21%' } }}>
-            <FormLabel sx={{ margin: '7px 7px 0px 0px', fontSize: '14px', fontWeight: 'bold', color: 'black' }} component="legend">Delivery Shedule</FormLabel>
-            <RadioGroup
-              row
-              name="Delivery_Shedule"
-              onChange={handleInputChange}
-              disabled={isFormDisabled}
-              value={formData.Delivery_Shedule || "comman"}
-              sx={{ margin: '5px 0px 0px 0px' }}
-            >
-              <FormControlLabel 
-                disabled={isFormDisabled}
-                value="comman" 
-                control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
-                label={<Typography sx={{ fontSize: '12px' }}>Comman</Typography>} 
-              />
-              <FormControlLabel 
-                disabled={isFormDisabled}
-                value="style" 
-                control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
-                label={<Typography sx={{ fontSize: '12px' }}>Style Wise</Typography>} 
-              />
-            </RadioGroup>
-          </Box>
+  display: 'flex',
+  flexDirection: { xs: 'column', sm: 'row', md: 'row' },
+  gap: { xs: 1, sm: 1, md: 1 },
+  flexWrap: 'wrap' 
+}}>
+  
+  <Box sx={{ 
+    display: 'flex', 
+    alignItems: 'center', 
+    width: { xs: '100%', sm: '48%', md: '28%' }, 
+    minWidth: '250px' 
+  }}>
+    <FormLabel sx={{ 
+      margin: '7px 7px 0px 0px', 
+      fontSize: '14px', 
+      fontWeight: 'bold', 
+      color: 'black',
+      whiteSpace: 'nowrap' 
+    }} component="legend">
+      Delivery Shedule
+    </FormLabel>
+    <RadioGroup
+      row
+      name="Delivery_Shedule"
+      onChange={handleInputChange}
+      disabled={isFormDisabled}
+      value={formData.Delivery_Shedule || "comman"}
+      sx={{ margin: '5px 0px 0px 0px' }}
+    >
+      <FormControlLabel 
+        disabled={isFormDisabled}
+        value="comman" 
+        control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
+        label={<Typography sx={{ fontSize: '12px', whiteSpace: 'nowrap' }}>Comman</Typography>} 
+      />
+      <FormControlLabel 
+        disabled={isFormDisabled}
+        value="style" 
+        control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
+        label={<Typography sx={{ fontSize: '12px', whiteSpace: 'nowrap' }}>Style Wise</Typography>} 
+      />
+    </RadioGroup>
+  </Box>
 
-      <Box sx={{ display: 'flex', alignItems: 'center', width: { xs: '100%', sm: '48%', md: '21%' } }}>
-            <FormLabel sx={{ margin: '7px 7px 0px 0px', fontSize: '14px', fontWeight: 'bold', color: 'black' }} component="legend">Order TNA</FormLabel>
-            <RadioGroup
-              row
-              name="Order_TNA"
-              onChange={handleInputChange}
-              disabled={isFormDisabled}
-              value={formData.Order_TNA || "ItemWise"}
-              sx={{ margin: '5px 0px 0px 0px' }}
-            >
-              <FormControlLabel 
-                disabled={isFormDisabled}
-                value="ItemWise" 
-                control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
-                label={<Typography sx={{ fontSize: '12px' }}>ItemWise</Typography>} 
-              />
-              <FormControlLabel 
-                disabled={isFormDisabled}
-                value="SizeWise" 
-                control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
-                label={<Typography sx={{ fontSize: '12px' }}>SizeWise</Typography>} 
-              />
-            </RadioGroup>
-          </Box>
-        
-<Box sx={{ display: 'flex', alignItems: 'center', width: { xs: '100%', sm: '48%', md: '25%' } }}>
-  <FormLabel sx={{ margin: '7px 14px 0px 0px', fontSize: '14px', fontWeight: 'bold', color: 'black' }} component="legend">Status</FormLabel>
-  <RadioGroup
-    row
-    name="Status"
-    onChange={handleInputChange}
-    disabled={isFormDisabled}
-    value={formData.Status || "O"}
-    sx={{ margin: '5px 0px 0px 0px' }}
-  >
-    <FormControlLabel 
+  {/* Order TNA - width adjust करें */}
+  <Box sx={{ 
+    display: 'flex', 
+    alignItems: 'center', 
+    width: { xs: '100%', sm: '48%', md: '28%' }, // md को 28% करें
+    minWidth: '200px'
+  }}>
+    <FormLabel sx={{ 
+      margin: '7px 7px 0px 0px', 
+      fontSize: '14px', 
+      fontWeight: 'bold', 
+      color: 'black',
+      whiteSpace: 'nowrap'
+    }} component="legend">
+      Order TNA
+    </FormLabel>
+    <RadioGroup
+      row
+      name="Order_TNA"
+      onChange={handleInputChange}
       disabled={isFormDisabled}
-      value="O" 
-      control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
-      label={<Typography sx={{ fontSize: '12px' }}>Open</Typography>} 
-    />
-    <FormControlLabel 
+      value={formData.Order_TNA || "ItemWise"}
+      sx={{ margin: '5px 0px 0px 0px' }}
+    >
+      <FormControlLabel 
+        disabled={isFormDisabled}
+        value="ItemWise" 
+        control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
+        label={<Typography sx={{ fontSize: '12px', whiteSpace: 'nowrap' }}>ItemWise</Typography>} 
+      />
+      <FormControlLabel 
+        disabled={isFormDisabled}
+        value="SizeWise" 
+        control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
+        label={<Typography sx={{ fontSize: '12px', whiteSpace: 'nowrap' }}>SizeWise</Typography>} 
+      />
+    </RadioGroup>
+  </Box>
+  
+  {/* Status - width adjust करें */}
+  <Box sx={{ 
+    display: 'flex', 
+    alignItems: 'center', 
+    width: { xs: '100%', sm: '48%', md: '28%' }, // md को 28% करें
+    minWidth: '180px'
+  }}>
+    <FormLabel sx={{ 
+      margin: '7px 14px 0px 0px', 
+      fontSize: '14px', 
+      fontWeight: 'bold', 
+      color: 'black',
+      whiteSpace: 'nowrap'
+    }} component="legend">
+      Status
+    </FormLabel>
+    <RadioGroup
+      row
+      name="Status"
+      onChange={handleInputChange}
       disabled={isFormDisabled}
-      value="C" 
-      control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
-      label={<Typography sx={{ fontSize: '12px' }}>Cancel</Typography>} 
-    />
-    <FormControlLabel 
-      disabled={isFormDisabled}
-      value="S" 
-      control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
-      label={<Typography sx={{ fontSize: '12px' }}>Short</Typography>} 
-    />
-  </RadioGroup>
+      value={formData.Status || "O"}
+      sx={{ margin: '5px 0px 0px 0px' }}
+    >
+      <FormControlLabel 
+        disabled={isFormDisabled}
+        value="O" 
+        control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
+        label={<Typography sx={{ fontSize: '12px', whiteSpace: 'nowrap' }}>Open</Typography>} 
+      />
+      <FormControlLabel 
+        disabled={isFormDisabled}
+        value="C" 
+        control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
+        label={<Typography sx={{ fontSize: '12px', whiteSpace: 'nowrap' }}>Cancel</Typography>} 
+      />
+      <FormControlLabel 
+        disabled={isFormDisabled}
+        value="S" 
+        control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
+        label={<Typography sx={{ fontSize: '12px', whiteSpace: 'nowrap' }}>Short</Typography>} 
+      />
+    </RadioGroup>
+  </Box>
 </Box>
-        </Box>
       </Box>
     </Box>
   )

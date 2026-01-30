@@ -4514,7 +4514,8 @@ const fetchSizeDetailsForStyle = async (styleData, selectedShadeName = '') => {
       "PARTY_KEY": formData.PARTY_KEY || "",
       "PARTYDTL_ID": formData.PARTYDTL_ID || 0,
       "COBR_ID": companyConfig.COBR_ID || "02",
-      "FLAG": "S"
+      "FLAG": "S",
+      "FCYR_KEY": "25"
     };
 
     console.log('Fetching size details with dynamic FGSHADE_KEY:', fgshadeKey, sizeDetailsPayload);
@@ -4533,7 +4534,11 @@ const fetchSizeDetailsForStyle = async (styleData, selectedShadeName = '') => {
         RATE: parseFloat(styleData.SSP) || 0,
         ALT_BARCODE: styleData.ALT_BARCODE || "",
         STYCATRT_ID: stycatrtId,
-        FGSHADE_KEY: fgshadeKey
+        FGSHADE_KEY: fgshadeKey,
+        FG_QTY: parseFloat(size.FG_QTY) || 0,
+    PORD_QTY: parseFloat(size.PORD_QTY) || 0,
+    ISU_QTY: parseFloat(size.ISU_QTY) || 0,
+    BAL_QTY: parseFloat(size.BAL_QTY) || 0,
       }));
 
       setSizeDetailsData(transformedSizeDetails);
@@ -6466,6 +6471,34 @@ let fgshadeKey = item.styleData?.FGSHADE_KEY || '';
                       fontSize: '14px',
                       fontWeight: '600'
                     }}>Quantity</th>
+                     <th style={{ 
+        padding: '2px 8px', 
+        border: '1px solid #dee2e6', 
+        textAlign: 'center',
+        fontSize: '14px',
+        fontWeight: '600'
+      }}>Ready Qty</th>
+      <th style={{ 
+        padding: '2px 8px', 
+        border: '1px solid #dee2e6', 
+        textAlign: 'center',
+        fontSize: '14px',
+        fontWeight: '600'
+      }}>Process</th>
+      <th style={{ 
+        padding: '2px 8px', 
+        border: '1px solid #dee2e6', 
+        textAlign: 'center',
+        fontSize: '14px',
+        fontWeight: '600'
+      }}>Order</th>
+      <th style={{ 
+        padding: '2px 8px', 
+        border: '1px solid #dee2e6', 
+        textAlign: 'center',
+        fontSize: '14px',
+        fontWeight: '600'
+      }}>Bal Qty</th>
                     <th style={{ 
                       padding: '2px 8px',
                       border: '1px solid #dee2e6', 
@@ -6490,65 +6523,115 @@ let fgshadeKey = item.styleData?.FGSHADE_KEY || '';
                   </tr>
                 </thead>
                 <tbody>
-                  {sizeDetailsData.map((size, index) => (
-                    <tr key={index} style={{ 
-                      backgroundColor: index % 2 === 0 ? '#fff' : '#f8f9fa',
-                      borderBottom: '1px solid #dee2e6'
-                    }}>
-                      <td style={{
-                        padding: '4px 8px',
-                        border: '1px solid #dee2e6',
-                        fontSize: '13px',
-                        lineHeight: '1.2'
-                      }}>{size.STYSIZE_NAME}</td>
-                      <td style={{ 
-                        padding: '5px', 
-                        border: '1px solid #dee2e6',
-                        textAlign: 'center'
-                      }}>
-                        <TextField
-                          type="number"
-                          value={size.QTY}
-                          onChange={(e) => handleSizeQtyChange(index, e.target.value)}
-                          size="small"
-                          sx={{
-                            width: '60px',
-                            '& .MuiInputBase-root': {
-                              height: '20px',
-                              fontSize: '13px'
-                            },
-                            '& input': {
-                              padding: '1px',
-                              textAlign: 'center'
-                            }
-                          }}
-                          inputProps={{ min: 0 }}
-                        />
-                      </td>
-                      <td style={{ 
-                        padding: '10px', 
-                        border: '1px solid #dee2e6',
-                        textAlign: 'right',
-                        fontSize: '14px'
-                      }}>{size.MRP || 0}</td>
-                      <td style={{ 
-                        padding: '10px', 
-                        border: '1px solid #dee2e6',
-                        textAlign: 'right',
-                        fontSize: '14px'
-                      }}>{size.WSP  || 0}</td>
-                      <td style={{ 
-                        padding: '10px', 
-                        border: '1px solid #dee2e6',
-                        textAlign: 'right',
-                        fontSize: '14px',
-                        fontWeight: '500'
-                      }}>
-                        ₹{(size.QTY || 0) * (size.WSP  || 0)}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
+  {sizeDetailsData.map((size, index) => {
+    // API response से values calculate करें
+    const readyQty = parseFloat(size.FG_QTY) || 0;
+    const orderQty = parseFloat(size.PORD_QTY) || 0;
+    const issueQty = parseFloat(size.ISU_QTY) || 0;
+    const processQty = orderQty + issueQty;
+    const balQty = parseFloat(size.BAL_QTY) || 0;
+    
+    return (
+      <tr key={index} style={{ 
+        backgroundColor: index % 2 === 0 ? '#fff' : '#f8f9fa',
+        borderBottom: '1px solid #dee2e6'
+      }}>
+        <td style={{
+          padding: '4px 8px',
+          border: '1px solid #dee2e6',
+          fontSize: '13px',
+          lineHeight: '1.2'
+        }}>{size.STYSIZE_NAME}</td>
+        
+        <td style={{ 
+          padding: '5px', 
+          border: '1px solid #dee2e6',
+          textAlign: 'center'
+        }}>
+          <TextField
+            type="number"
+            value={size.QTY}
+            onChange={(e) => handleSizeQtyChange(index, e.target.value)}
+            size="small"
+            sx={{
+              width: '60px',
+              '& .MuiInputBase-root': {
+                height: '20px',
+                fontSize: '13px'
+              },
+              '& input': {
+                padding: '1px',
+                textAlign: 'center'
+              }
+            }}
+            inputProps={{ min: 0 }}
+          />
+        </td>
+        
+        {/* नए columns के data display करें */}
+        <td style={{ 
+          padding: '4px 8px',
+          border: '1px solid #dee2e6',
+          textAlign: 'center',
+          fontSize: '13px'
+        }}>
+          {readyQty.toFixed(3)}
+        </td>
+        
+        <td style={{ 
+          padding: '4px 8px',
+          border: '1px solid #dee2e6',
+          textAlign: 'center',
+          fontSize: '13px'
+        }}>
+          {processQty.toFixed(3)}
+        </td>
+        
+        <td style={{ 
+          padding: '4px 8px',
+          border: '1px solid #dee2e6',
+          textAlign: 'center',
+          fontSize: '13px'
+        }}>
+          {orderQty.toFixed(3)}
+        </td>
+        
+        <td style={{ 
+          padding: '4px 8px',
+          border: '1px solid #dee2e6',
+          textAlign: 'center',
+          fontSize: '13px'
+        }}>
+          {balQty.toFixed(3)}
+        </td>
+        
+        <td style={{ 
+          padding: '10px', 
+          border: '1px solid #dee2e6',
+          textAlign: 'right',
+          fontSize: '14px'
+        }}>{size.MRP || 0}</td>
+        
+        <td style={{ 
+          padding: '10px', 
+          border: '1px solid #dee2e6',
+          textAlign: 'right',
+          fontSize: '14px'
+        }}>{size.WSP  || 0}</td>
+        
+        <td style={{ 
+          padding: '10px', 
+          border: '1px solid #dee2e6',
+          textAlign: 'right',
+          fontSize: '14px',
+          fontWeight: '500'
+        }}>
+          ₹{(size.QTY || 0) * (size.WSP  || 0)}
+        </td>
+      </tr>
+    );
+  })}
+</tbody>
               </table>
             </Box>
             

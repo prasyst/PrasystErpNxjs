@@ -747,7 +747,8 @@ const fetchSizeDetailsForStyle = async (styleData) => {
       "PARTY_KEY": formData.PARTY_KEY || "",
       "PARTYDTL_ID": formData.PARTYDTL_ID || 0,
       "COBR_ID": cobrId,
-      "FLAG": ""
+      "FLAG": "",
+      "FCYR_KEY": "25"
     };
 
     console.log('Barcode Auto-fetching size details with payload:', sizeDetailsPayload);
@@ -764,7 +765,11 @@ const fetchSizeDetailsForStyle = async (styleData) => {
         ORDER_QTY: 0,
         MRP: parseFloat(styleData.MRP) || 0,
         RATE: parseFloat(styleData.SSP) || 0,
-        ALT_BARCODE: styleData.ALT_BARCODE || "" // Include barcode
+        ALT_BARCODE: styleData.ALT_BARCODE || "" ,
+         FG_QTY: parseFloat(size.FG_QTY) || 0,
+  PORD_QTY: parseFloat(size.PORD_QTY) || 0,
+  ISU_QTY: parseFloat(size.ISU_QTY) || 0,
+  BAL_QTY: parseFloat(size.BAL_QTY) || 0
       }));
 
       setSizeDetailsData(transformedSizeDetails);
@@ -945,7 +950,8 @@ const fetchSizeDetailsForStyle = async (styleData) => {
       "PARTY_KEY": formData.PARTY_KEY || "",
       "PARTYDTL_ID": formData.PARTYDTL_ID || 0,
       "COBR_ID": cobrId,
-      "FLAG": ""
+      "FLAG": "",
+      "FCYR_KEY": "25"
     };
 
     console.log('Barcode Fetching size details with payload:', sizeDetailsPayload);
@@ -962,7 +968,11 @@ const fetchSizeDetailsForStyle = async (styleData) => {
         ORDER_QTY: 0,
         MRP: parseFloat(newItemData.mrp) || 0,
         RATE: parseFloat(newItemData.rate) || 0,
-        ALT_BARCODE: newItemData.barcode || "" // Include barcode
+        ALT_BARCODE: newItemData.barcode || "" ,
+         FG_QTY: parseFloat(size.FG_QTY) || 0,
+  PORD_QTY: parseFloat(size.PORD_QTY) || 0,
+  ISU_QTY: parseFloat(size.ISU_QTY) || 0,
+  BAL_QTY: parseFloat(size.BAL_QTY) || 0
       }));
 
       setSizeDetailsData(transformedSizeDetails);
@@ -2079,123 +2089,9 @@ const handleConfirmAdd = () => {
                 }}
                 // helperText={isLoadingBarcode ? "Loading..." : "Type barcode"}
               />
-              {/* <Box sx={{ 
-    display: 'flex', 
-    flexDirection: 'row', 
-    gap: 0.5,
-    ml: 1 
-  }}>
-    <FormControlLabel
-      control={
-        <Checkbox
-          size="small"
-          checked={formData.CHANGE_QTY || false}
-          onChange={(e) => setFormData(prev => ({
-            ...prev,
-            CHANGE_QTY: e.target.checked
-          }))}
-          disabled={shouldDisableFields()}
-          sx={{ 
-            padding: '4px',
-            '& .MuiSvgIcon-root': {
-              fontSize: 20
-            }
-          }}
-        />
-      }
-      label="Change Qty"
-      sx={{
-        margin: 0,
-        '& .MuiFormControlLabel-label': {
-          fontSize: '13px'
-        }
-      }}
-    />
-    
-    <FormControlLabel
-      control={
-        <Checkbox
-          size="small"
-          checked={formData.MULTI_SHADE || false}
-          onChange={(e) => setFormData(prev => ({
-            ...prev,
-            MULTI_SHADE: e.target.checked
-          }))}
-          disabled={shouldDisableFields()}
-          sx={{ 
-            padding: '4px',
-            '& .MuiSvgIcon-root': {
-              fontSize: 20
-            }
-          }}
-        />
-      }
-      label="Multi Shade"
-      sx={{
-        margin: 0,
-        '& .MuiFormControlLabel-label': {
-          fontSize: '13px'
-        }
-      }}
-    />
-    
-    <FormControlLabel
-      control={
-        <Checkbox
-          size="small"
-          checked={formData.SELECT_SET || false}
-          onChange={(e) => setFormData(prev => ({
-            ...prev,
-            SELECT_SET: e.target.checked
-          }))}
-          disabled={shouldDisableFields()}
-          sx={{ 
-            padding: '4px',
-            '& .MuiSvgIcon-root': {
-              fontSize: 20
-            }
-          }}
-        />
-      }
-      label="Select Set"
-      sx={{
-        margin: 0,
-        '& .MuiFormControlLabel-label': {
-          fontSize: '13px'
-        }
-      }}
-    />
-  </Box> */}
               
-              {/* <AutoVibe
-                id="Product"
-                disabled={shouldDisableFields()}
-                getOptionLabel={(option) => option || ''}
-                options={productOptions}
-                label="Product"
-                name="product"
-                value={isAddingNew || isEditingSize ? newItemData.product : selectedProduct}
-                onChange={handleProductChange}
-                sx={DropInputSx}
-              /> */}
               
-              {/* Style Dropdown */}
-              {/* <AutoVibe
-                id="Style_Cd"
-                disabled={shouldDisableFields()}
-                getOptionLabel={(option) => option || ''}
-                options={styleOptions}
-                label="Style Cd"
-                name="style"
-                value={isAddingNew || isEditingSize ? newItemData.style : selectedStyle}
-                onChange={handleStyleChange}
-                sx={DropInputSx}
-              /> */}
-              
-              {/* Style Code Text Field */}
-              
-
-              {/* Barcode Text Field */}
+             
              
               <TextField 
                 label="Type style code Here" 
@@ -2615,61 +2511,106 @@ const handleConfirmAdd = () => {
               <TableContainer sx={{ width: '100%' }}>
                 <Table size="small">
                   <TableHead>
-                    <TableRow>
-                      <TableCell sx={{ fontWeight: 'bold', fontSize: '0.8rem', padding: '6px 8px', backgroundColor: "#f5f5f5", borderBottom: "1px solid #ddd" }}>Size</TableCell>
-                      <TableCell sx={{ fontWeight: 'bold', fontSize: '0.8rem', padding: '6px 8px', backgroundColor: "#f5f5f5", borderBottom: "1px solid #ddd" }}>Qty</TableCell>
-                      <TableCell sx={{ fontWeight: 'bold', fontSize: '0.8rem', padding: '6px 8px', backgroundColor: "#f5f5f5", borderBottom: "1px solid #ddd" }}>MRP</TableCell>
-                      <TableCell sx={{ fontWeight: 'bold', fontSize: '0.8rem', padding: '6px 8px', backgroundColor: "#f5f5f5", borderBottom: "1px solid #ddd" }}>Rate</TableCell>
-                      <TableCell sx={{ fontWeight: 'bold', fontSize: '0.8rem', padding: '6px 8px', backgroundColor: "#f5f5f5", borderBottom: "1px solid #ddd" }}>Amount</TableCell>
-                      <TableCell sx={{ fontWeight: 'bold', fontSize: '0.8rem', padding: '6px 8px', backgroundColor: "#f5f5f5", borderBottom: "1px solid #ddd" }}>Barcode</TableCell>
-                    </TableRow>
-                  </TableHead>
+  <TableRow>
+    <TableCell sx={{ fontWeight: 'bold', fontSize: '0.8rem', padding: '6px 8px', backgroundColor: "#f5f5f5", borderBottom: "1px solid #ddd" }}>Size</TableCell>
+    <TableCell sx={{ fontWeight: 'bold', fontSize: '0.8rem', padding: '6px 8px', backgroundColor: "#f5f5f5", borderBottom: "1px solid #ddd" }}>Qty</TableCell>
+    
+    {/* नए columns add करें */}
+    <TableCell sx={{ fontWeight: 'bold', fontSize: '0.8rem', padding: '6px 8px', backgroundColor: "#f5f5f5", borderBottom: "1px solid #ddd" }}>Ready Qty</TableCell>
+    <TableCell sx={{ fontWeight: 'bold', fontSize: '0.8rem', padding: '6px 8px', backgroundColor: "#f5f5f5", borderBottom: "1px solid #ddd" }}>Process</TableCell>
+    <TableCell sx={{ fontWeight: 'bold', fontSize: '0.8rem', padding: '6px 8px', backgroundColor: "#f5f5f5", borderBottom: "1px solid #ddd" }}>Order</TableCell>
+    <TableCell sx={{ fontWeight: 'bold', fontSize: '0.8rem', padding: '6px 8px', backgroundColor: "#f5f5f5", borderBottom: "1px solid #ddd" }}>Bal Qty</TableCell>
+    
+    {/* <TableCell sx={{ fontWeight: 'bold', fontSize: '0.8rem', padding: '6px 8px', backgroundColor: "#f5f5f5", borderBottom: "1px solid #ddd" }}>MRP</TableCell>
+    <TableCell sx={{ fontWeight: 'bold', fontSize: '0.8rem', padding: '6px 8px', backgroundColor: "#f5f5f5", borderBottom: "1px solid #ddd" }}>Rate</TableCell>
+    <TableCell sx={{ fontWeight: 'bold', fontSize: '0.8rem', padding: '6px 8px', backgroundColor: "#f5f5f5", borderBottom: "1px solid #ddd" }}>Amount</TableCell> */}
+    <TableCell sx={{ fontWeight: 'bold', fontSize: '0.8rem', padding: '6px 8px', backgroundColor: "#f5f5f5", borderBottom: "1px solid #ddd" }}>Barcode</TableCell>
+  </TableRow>
+</TableHead>
+                  
                   <TableBody>
-                    {sizeDetailsData.length > 0 ? (
-                      sizeDetailsData.map((size, index) => (
-                        <TableRow key={index} sx={{
-                          backgroundColor: index % 2 === 0 ? "#fafafa" : "#fff",
-                          "&:hover": { backgroundColor: "#e3f2fd" }
-                        }}>
-                          <TableCell sx={{ fontSize: '0.75rem', padding: '6px 8px' }}>{size.STYSIZE_NAME}</TableCell>
-                          <TableCell sx={{ fontSize: '0.75rem', padding: '6px 8px' }}>
-                            <TextField
-                              type="number"
-                              value={size.QTY}
-                              onChange={(e) => handleSizeQtyChange(index, e.target.value)}
-                              size="small"
-                              sx={{ width: '80px' }}
-                              inputProps={{ 
-                                style: { fontSize: '0.75rem', padding: '4px' },
-                                min: 0 
-                              }}
-                              disabled={!isAddingNew && !isEditingSize}
-                            />
-                          </TableCell>
-                          <TableCell sx={{ fontSize: '0.75rem', padding: '6px 8px' }}>
-                            {size.MRP || newItemData.mrp || 0}
-                          </TableCell>
-                          <TableCell sx={{ fontSize: '0.75rem', padding: '6px 8px' }}>
-                            {size.RATE || newItemData.rate || 0}
-                          </TableCell>
-                          <TableCell sx={{ fontSize: '0.75rem', padding: '6px 8px' }}>{size.ITM_AMT || 0}</TableCell>
-                          <TableCell sx={{ fontSize: '0.75rem', padding: '6px 8px' }}>{size.FGSTYLE_ID || "-"}</TableCell>
-                        </TableRow>
-                      ))
-                    ) : (
-                      <TableRow>
-                        <TableCell colSpan={6} align="center" sx={{ py: 1 }}>
-                          <Typography variant="body2" color="textSecondary">
-                            {isAddingNew ? 
-                              (dataSource === 'barcode' ? 
-                                "Size details auto-loaded! Enter quantities." : 
-                                "Click 'Add Qty' to load size details") 
-                              : "No size details available"}
-                          </Typography>
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </TableBody>
+  {sizeDetailsData.length > 0 ? (
+    sizeDetailsData.map((size, index) => {
+      // API response से values calculate करें
+      const readyQty = parseFloat(size.FG_QTY) || 0;
+      const orderQty = parseFloat(size.PORD_QTY) || 0;
+      const issueQty = parseFloat(size.ISU_QTY) || 0;
+      const processQty = orderQty + issueQty;
+      const balQty = parseFloat(size.BAL_QTY) || 0;
+      
+      return (
+        <TableRow key={index} sx={{
+          backgroundColor: index % 2 === 0 ? "#fafafa" : "#fff",
+          "&:hover": { backgroundColor: "#e3f2fd" }
+        }}>
+          <TableCell sx={{ fontSize: '0.75rem', padding: '6px 8px' }}>
+            {size.STYSIZE_NAME}
+          </TableCell>
+          
+          <TableCell sx={{ fontSize: '0.75rem', padding: '6px 8px' }}>
+            <TextField
+              type="number"
+              value={size.QTY}
+              onChange={(e) => handleSizeQtyChange(index, e.target.value)}
+              size="small"
+              sx={{ width: '80px' }}
+              inputProps={{ 
+                style: { fontSize: '0.75rem', padding: '4px' },
+                min: 0 
+              }}
+              disabled={!isAddingNew && !isEditingSize}
+            />
+          </TableCell>
+          
+          {/* नए columns के data display करें */}
+          <TableCell sx={{ fontSize: '0.75rem', padding: '6px 8px' }}>
+            {readyQty.toFixed(3)}
+          </TableCell>
+          
+          <TableCell sx={{ fontSize: '0.75rem', padding: '6px 8px' }}>
+            {processQty.toFixed(3)}
+          </TableCell>
+          
+          <TableCell sx={{ fontSize: '0.75rem', padding: '6px 8px' }}>
+            {orderQty.toFixed(3)}
+          </TableCell>
+          
+          <TableCell sx={{ fontSize: '0.75rem', padding: '6px 8px' }}>
+            {balQty.toFixed(3)}
+          </TableCell>
+          
+          {/* <TableCell sx={{ fontSize: '0.75rem', padding: '6px 8px' }}>
+            {size.MRP || newItemData.mrp || 0}
+          </TableCell>
+          
+          <TableCell sx={{ fontSize: '0.75rem', padding: '6px 8px' }}>
+            {size.RATE || newItemData.rate || 0}
+          </TableCell>
+          
+          <TableCell sx={{ fontSize: '0.75rem', padding: '6px 8px' }}>
+            {size.ITM_AMT || 0}
+          </TableCell> */}
+          
+          <TableCell sx={{ fontSize: '0.75rem', padding: '6px 8px' }}>
+            {size.FGSTYLE_ID || "-"}
+          </TableCell>
+        </TableRow>
+      );
+    })
+  ) : (
+    <TableRow>
+      <TableCell colSpan={11} align="center" sx={{ py: 1 }}> {/* colSpan को 11 करें क्योंकि अब 11 columns हैं */}
+        <Typography variant="body2" color="textSecondary">
+          {isAddingNew ? 
+            (dataSource === 'barcode' ? 
+              "Size details auto-loaded! Enter quantities." : 
+              "Click 'Add Qty' to load size details") 
+            : "No size details available"}
+        </Typography>
+      </TableCell>
+    </TableRow>
+  )}
+</TableBody>
                 </Table>
               </TableContainer>
             </Box>
