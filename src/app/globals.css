@@ -280,6 +280,7 @@ div[class*="Watermark"],
   min-width: 75px !important;
 }
 
-/* .custom-datepicker .css-1fb7els-MuiPickersSectionList-root-MuiPickersInputBase-sectionsContainer-MuiPickersOutlinedInput-sectionsContainer {
-    padding: 9.5px 0 !important;
-} */
+.css-joz0rk-MuiPickersSectionList-section-MuiPickersInputBase-section {
+font-size: 14px !important;
+ font-style: 400 !important;
+}

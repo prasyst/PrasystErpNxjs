@@ -49,7 +49,9 @@ const SalesOrderOffline = () => {
   const [seasonMapping, setSeasonMapping] = useState({});
   const [transporterMapping, setTransporterMapping] = useState({});
   const [orderTypeMapping, setOrderTypeMapping] = useState({});
+  const [loadingBranches, setLoadingBranches] = useState(false);
   const [merchandiserMapping, setMerchandiserMapping] = useState({});
+  const [branchOptions, setBranchOptions] = useState([]);
   const [showValidationErrors, setShowValidationErrors] = useState(false);
     const [companyConfig, setCompanyConfig] = useState({
     CO_ID: '',
@@ -1297,128 +1299,201 @@ const handleNextClick = async () => {
     }
   };
 
-  // Updated handleAdd function - sets today's date and clears other fields
-  const handleAdd = async () => {
-    try {
-      setLoading(true);
+// Function to fetch party branches - ADD THIS FUNCTION
+const fetchPartyDetails = async (partyKey, forceBranchId = null) => {
+  if (!partyKey) {
+    setBranchOptions([]);
+    return;
+  }
+  
+  try {
+    setLoadingBranches(true);
+    const response = await axiosInstance.post("Party/GetPartyDtlDrp", {
+      PARTY_KEY: partyKey
+    });
+    
+    console.log('Branch API Response:', response.data);
+    
+    if (response.data.STATUS === 0 && Array.isArray(response.data.DATA)) {
+      const branches = response.data.DATA.map(item => item.PLACE || '');
+      setBranchOptions(branches);
       
-      // Get today's date
-      const todayDate = getTodayDate();
+      const mapping = {};
+      response.data.DATA.forEach(item => {
+        if (item.PLACE && item.PARTYDTL_ID) {
+          mapping[item.PLACE] = item.PARTYDTL_ID;
+        }
+      });
+      setBranchMapping(mapping);
+      console.log('Branch mapping set with', Object.keys(mapping).length, 'branches');
+    }
+  } catch (error) {
+    console.error("Error fetching party details:", error);
+  } finally {
+    setLoadingBranches(false);
+  }
+};
+
+
+
+const handleAdd = async () => {
+  try {
+    setLoading(true);
+    
+    // Get today's date
+    const todayDate = getTodayDate();
+    
+    // Clear all form data for new entry but set today's date for date fields and default values
+    const emptyFormData = {
+      ORDER_NO: "",
+      ORDER_DATE: todayDate,
+      PARTY_ORD_NO: "",
+      SEASON: "",
+      ORD_REF_DT: todayDate,
+      ENQ_NO: "",
+      PARTY_BRANCH: "",
+      QUOTE_NO: "",
+      SHIPPING_PARTY: "",
+      DIV_PLACE: "",
+      AR_SALES: "",
+      SHIPPING_PLACE: "",
+      PRICE_LIST: "",
+      BROKER_TRANSPORTER: "",
+      B_EAST_II: "",
+      NEW_ADDR: "",
+      CONSIGNEE: "",
+      E_ASM1: "",
+      BROKER1: "",
+      SALESPERSON_2: "",
+      NEW: "",
+      EMAIL: "",
+      REMARK_STATUS: "",
+      MAIN_DETAILS: "G",
+      GST_APPL: "N",
+      RACK_MIN: "0",
+      REGISTERED_DEALER: "0",
+      SHORT_CLOSE: "0",
+      READY_SI: "0",
+      SearchByCd: "",
+      LAST_ORD_NO: "",
+      SERIES: "",
+      ORDBK_KEY: "",
+      ORD_EVENT_KEY: "",
+      ORG_DLV_DT: todayDate,
+      PLANNING: "0",
+      PARTY_KEY: "",
+      ORDBK_AMT: "",
+      ORDBK_ITM_AMT: "",
+      ORDBK_GST_AMT: "",
+      ORDBK_DISC_AMT: "",
+      CURRN_KEY: "",
+      EX_RATE: "",
+      DLV_DT: todayDate,
+      TOTAL_QTY: 0,
+      TOTAL_AMOUNT: 0,
+      NET_AMOUNT: 0,
+      DISCOUNT: 0,
+      Party: "",
+      Branch: "",
+      Broker: "",
+      Transporter: "",
+      SALESPERSON_1: "",
+      ord_event: "",
+      CURR_SEASON_KEY: "",
+      PRICELIST_KEY: "",
+      BROKER1_KEY: "",
+      SHP_PARTY_KEY: "",
+      DESP_PORT: "",
+      SALEPERSON1_KEY: "",
+      SALEPERSON2_KEY: "",
+      DISTBTR_KEY: "",
+      TRSP_KEY: "",
+      apiResponseData: null,
+      PARTYDTL_ID: 0,
+      SHP_PARTYDTL_ID: 0,
+      Order_Type: "Sales And Work-Order",
+      MERCHANDISER_ID: "",
+      MERCHANDISER_NAME: "",
+      Delivery_Shedule: "comman",
+      Order_TNA: "ItemWise",
+      Status: "O",
+      ORDBK_TYPE: "2"
+    };
+    
+    // Get series prefix first
+    const prefix = await getSeriesPrefix();
+    
+    if (prefix) {
+      // Get order number using the prefix
+      const orderData = await getOrderNumber(prefix);
       
-      // Clear all form data for new entry but set today's date for date fields and default values
-      const emptyFormData = {
-        ORDER_NO: "",
-        ORDER_DATE: todayDate,
-        PARTY_ORD_NO: "",
-        SEASON: "",
-        ORD_REF_DT: todayDate,
-        ENQ_NO: "",
-        PARTY_BRANCH: "",
-        QUOTE_NO: "",
-        SHIPPING_PARTY: "",
-        DIV_PLACE: "",
-        AR_SALES: "",
-        SHIPPING_PLACE: "",
-        PRICE_LIST: "",
-        BROKER_TRANSPORTER: "",
-        B_EAST_II: "",
-        NEW_ADDR: "",
-        CONSIGNEE: "",
-        E_ASM1: "",
-        BROKER1: "",
-        SALESPERSON_2: "",
-        NEW: "",
-        EMAIL: "",
-        REMARK_STATUS: "",
-        MAIN_DETAILS: "G",
-        GST_APPL: "N",
-        RACK_MIN: "0",
-        REGISTERED_DEALER: "0",
-        SHORT_CLOSE: "0",
-        READY_SI: "0",
-        SearchByCd: "",
-        LAST_ORD_NO: "",
-        SERIES: "",
-        ORDBK_KEY: "",
-        ORD_EVENT_KEY: "",
-        ORG_DLV_DT: todayDate,
-        PLANNING: "0",
-        PARTY_KEY: "",
-        ORDBK_AMT: "",
-        ORDBK_ITM_AMT: "",
-        ORDBK_GST_AMT: "",
-        ORDBK_DISC_AMT: "",
-        CURRN_KEY: "",
-        EX_RATE: "",
-        DLV_DT: todayDate,
-        TOTAL_QTY: 0,
-        TOTAL_AMOUNT: 0,
-        NET_AMOUNT: 0,
-        DISCOUNT: 0,
-        Party: "",
-        Branch: "",
-        Broker: "",
-        Transporter: "",
-        SALESPERSON_1: "",
-        ord_event: "",
-        CURR_SEASON_KEY: "",
-        PRICELIST_KEY: "",
-        BROKER1_KEY: "",
-        SHP_PARTY_KEY: "",
-        DESP_PORT: "",
-        SALEPERSON1_KEY: "",
-        SALEPERSON2_KEY: "",
-        DISTBTR_KEY: "",
-        TRSP_KEY: "",
-        apiResponseData: null,
-        PARTYDTL_ID: 0,
-        SHP_PARTYDTL_ID: 0,
-        Order_Type: "Sales And Work-Order",
-        MERCHANDISER_ID: "",
-        MERCHANDISER_NAME: "",
-        Delivery_Shedule: "comman",
-        Order_TNA: "ItemWise",
-        Status: "O",
-        ORDBK_TYPE: "2"
-      };
-      
-      setFormData(emptyFormData);
-      
-      // Get series prefix first
-      const prefix = await getSeriesPrefix();
-      
-      if (prefix) {
-        // Get order number using the prefix
-        const orderData = await getOrderNumber(prefix);
+      if (orderData) {
+        // CORRECT ORDBK_KEY generation: FCYR_KEY + COBR_ID + ORDBK_NO
+        const correctOrdbkKey = `2502${orderData.orderNo}`;
         
-        if (orderData) {
-          // CORRECT ORDBK_KEY generation: FCYR_KEY + COBR_ID + ORDBK_NO
-          const correctOrdbkKey = `2502${orderData.orderNo}`;
+        // Update form data with new order numbers
+        const formDataWithOrderNo = {
+          ...emptyFormData,
+          ORDER_NO: orderData.orderNo,
+          LAST_ORD_NO: orderData.lastOrderNo,
+          SERIES: prefix,
+          ORDBK_KEY: correctOrdbkKey
+        };
+        
+        console.log('Generated ORDBK_KEY:', correctOrdbkKey);
+        
+        // Set the form data with order numbers
+        setFormData(formDataWithOrderNo);
+        
+        // Set mode first to enable form
+        setMode('add');
+        setIsFormDisabled(false);
+        
+        // NEW: Wait for dropdown data to load
+        await fetchAllDropdownData();
+        
+        // Get the first party from partyMapping
+        if (Object.keys(partyMapping).length > 0) {
+          const firstPartyName = Object.keys(partyMapping)[0];
+          const firstPartyKey = partyMapping[firstPartyName];
           
-          // Update form data with new order numbers
-          setFormData(prev => ({
-            ...emptyFormData,
-            ORDER_NO: orderData.orderNo,
-            LAST_ORD_NO: orderData.lastOrderNo,
-            SERIES: prefix,
-            ORDBK_KEY: correctOrdbkKey
-          }));
+          console.log('Auto-selecting first party:', firstPartyName, 'Key:', firstPartyKey);
           
-          console.log('Generated ORDBK_KEY:', correctOrdbkKey);
+          if (firstPartyName && firstPartyKey) {
+            // Auto-populate party
+            setFormData(prev => ({
+              ...prev,
+              Party: firstPartyName,
+              PARTY_KEY: firstPartyKey,
+              SHIPPING_PARTY: firstPartyName,
+              SHP_PARTY_KEY: firstPartyKey
+            }));
+            
+            // Fetch branches for the selected party
+            await fetchPartyDetails(firstPartyKey);
+            
+            // Fetch party details for auto-population
+            await fetchPartyDetailsForAutoFill(firstPartyKey);
+            
+            // Show success message
+            // showSnackbar(`Party "${firstPartyName}" auto-selected successfully!`);
+          }
         }
       }
-      
+    } else {
+      setFormData(emptyFormData);
       setMode('add');
       setIsFormDisabled(false);
-      setShowValidationErrors(false); 
-      // showSnackbar('New order created. Please fill all required fields.');
-    } catch (error) {
-      console.error('Error in handleAdd:', error);
-      // showSnackbar('Error creating new order', 'error');
-    } finally {
-      setLoading(false);
     }
-  };
+    
+    setShowValidationErrors(false); 
+  } catch (error) {
+    console.error('Error in handleAdd:', error);
+    // showSnackbar('Error creating new order', 'error');
+  } finally {
+    setLoading(false);
+  }
+};
 
   const handleCancel = () => {
     setMode('view');
@@ -1726,11 +1801,29 @@ const handleDelete = async () => {
 const fetchAllDropdownData = async () => {
   try {
     console.log('Starting to fetch all dropdown data...');
+    const partyResponse = await axiosInstance.post("Party/GetParty_By_Name", { PARTY_NAME: "" });
+    
+    // Process party data
+    if (partyResponse.data.STATUS === 0 && Array.isArray(partyResponse.data.DATA)) {
+      const partyMap = {};
+      const partyNames = [];
+      
+      partyResponse.data.DATA.forEach(item => {
+        if (item.PARTY_NAME && item.PARTY_KEY) {
+          partyMap[item.PARTY_KEY] = item.PARTY_NAME;
+          partyNames.push(item.PARTY_NAME);
+        }
+      });
+      
+      setPartyMapping(partyMap);
+      // Store party names in state or directly use from mapping
+      // You might need to pass partyNames to Stepper1 or store in state
+    }
     
     // Use Promise.all to fetch all data in parallel but wait for all to complete
     const [
       orderTypes,
-      partyResponse,
+
       brokerResponse,
       salespersonResponse,
       consigneeResponse,
@@ -2084,6 +2177,8 @@ if (loading || isDataLoading) {
             showValidationErrors={showValidationErrors}
             fetchPartyDetailsForAutoFill={fetchPartyDetailsForAutoFill}
             isDataLoading={isDataLoading}
+            branchOptions={[]} 
+            setBranchOptions={setBranchOptions} 
           />
         ) : tabIndex === 1 ? (
           <Stepper2 
