@@ -648,7 +648,9 @@ import {
   RiUserSearchLine, RiShoppingCart2Line, RiTaskLine, RiTruckLine, RiTimer2Line, RiBuilding4Line,
   RiDraftLine, RiTestTubeLine, RiCheckboxCircleLine, RiArchiveStackLine, RiTicket2Line, RiTicket2Fill
 } from 'react-icons/ri';
-
+import ContentCutIcon from '@mui/icons-material/ContentCut';
+import AltRouteIcon from '@mui/icons-material/AltRoute';
+import AssistantNavigationIcon from '@mui/icons-material/AssistantNavigation';
 import { TiTicket } from "react-icons/ti";
 import { FaBuilding, FaTruck, FaUserTag, FaHandshake, FaBalanceScale, FaBoxOpen, FaBoxes, FaUserTie, FaRupeeSign } from 'react-icons/fa';
 import { FiUser } from 'react-icons/fi';
@@ -1196,6 +1198,10 @@ export const sidebarMenuItems = [
           { name: 'Buyer Enq', icon: RiSearchLine, path: '#' },
           { name: 'Sales Offline', icon: RiShoppingCart2Line, path: '/inverntory/stock-enquiry-table' },
           { name: 'Packaging/Barcode', icon: RiBarcodeLine, path: '/inverntory/packeging-barcode/' },
+          { name: 'TNA', icon: AssistantNavigationIcon, path: '/inverntory/tnadash/' },
+          { name: 'Update Routing', icon: RiBarcodeLine, path: '/inverntory/updaterouting/' },
+           { name: 'Update Rm', icon: AltRouteIcon, path: '/inverntory/updaterm/' },
+            { name: 'Update Trims', icon: ContentCutIcon, path: '/inverntory/updatetrims/' },
         ],
       },
     ],
