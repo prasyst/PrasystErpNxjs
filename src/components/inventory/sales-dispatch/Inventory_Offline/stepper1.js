@@ -324,6 +324,23 @@ const Stepper1 = ({
     }
   };
 
+    const handleAddPartyRedirect = () => {
+ 
+  const partyManagementUrl = '#'; 
+  window.open(partyManagementUrl, '_blank');
+  
+
+};
+
+  const handleAddbrokerRedirect = () => {
+ 
+  const partyManagementUrl = '#'; 
+  window.open(partyManagementUrl, '_blank');
+  
+
+};
+  
+
 // Fetch Party Branches - FIXED: Proper branch selection based on API response
 const fetchPartyDetails = async (partyKey, forceBranchId = null) => {
   if (!partyKey) {
@@ -1337,7 +1354,7 @@ const fetchShippingPartyDetails = async (partyKey) => {
           flexDirection: { xs: 'column', sm: 'row', md: 'row' },
           gap: { xs: 1, sm: 1.5, md: 2 }
         }}>
-          <Box sx={{ width: { xs: '100%', sm: '20%', md: '20%' }}}>
+                  <Box sx={{ width: { xs: '100%', sm: '20%', md: '20%' }}}>
             <AutoVibe
               id="Party"
               disabled={isFormDisabled}
@@ -1354,7 +1371,7 @@ const fetchShippingPartyDetails = async (partyKey) => {
                   border: getFieldError('Party') ? '1px solid #f44336' : '1px solid #e0e0e0',
                 }
               }}
-               minWidth={300}
+              minWidth={300}
               inputProps={{
                 style: {
                   padding: '6px 8px',
@@ -1363,6 +1380,11 @@ const fetchShippingPartyDetails = async (partyKey) => {
               }}
               error={!!getFieldError('Party')}
               helperText={getFieldError('Party')}
+              
+              showAddIcon={true}
+              onAddClick={handleAddPartyRedirect}
+              showRefreshIcon={false}
+              showDropdownIcon={true} 
             />
           </Box>
 
@@ -1558,6 +1580,10 @@ const fetchShippingPartyDetails = async (partyKey) => {
                   fontSize: '12px',
                 },
               }}
+               showAddIcon={true}
+              onAddClick={handleAddbrokerRedirect}
+              showRefreshIcon={false}
+              showDropdownIcon={true}
             />
           </Box>
 
@@ -1579,6 +1605,10 @@ const fetchShippingPartyDetails = async (partyKey) => {
                   fontSize: '12px',
                 },
               }}
+              showAddIcon={true}
+              onAddClick={handleAddbrokerRedirect}
+              showRefreshIcon={false}
+              showDropdownIcon={true}
             />
           </Box>
 
@@ -1737,6 +1767,10 @@ const fetchShippingPartyDetails = async (partyKey) => {
                   fontSize: '12px',
                 },
               }}
+               showAddIcon={true}
+              onAddClick={handleAddbrokerRedirect}
+              showRefreshIcon={false}
+              showDropdownIcon={true}
             />
           </Box>
           
@@ -1787,6 +1821,10 @@ const fetchShippingPartyDetails = async (partyKey) => {
                   fontSize: '12px',
                 },
               }}
+               showAddIcon={true}
+              onAddClick={handleAddbrokerRedirect}
+              showRefreshIcon={false}
+              showDropdownIcon={true}
             />
           </Box>
           <Box sx={{ width: { xs: '100%', sm: '20%', md: '20%' } }}>
@@ -1807,6 +1845,10 @@ const fetchShippingPartyDetails = async (partyKey) => {
                   fontSize: '12px',
                 },
               }}
+               showAddIcon={true}
+              onAddClick={handleAddbrokerRedirect}
+              showRefreshIcon={false}
+              showDropdownIcon={true}
             />
           </Box>
           <Box sx={{ width: { xs: "100%", sm: "20%", md: "20%" } }}>
