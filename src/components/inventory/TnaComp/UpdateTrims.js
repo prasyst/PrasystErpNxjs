@@ -340,18 +340,7 @@ const UpdateTrims = () => {
     }
   };
 
-  const handleTabChange = (event, newValue) => {
-  
-    if (newValue === 2 && selectedRowId) {
-      fetchTRimData()
-    }
-    setActiveTab(newValue);
-    setSearchQuery('')
-    
-     if (newValue === 2) {
-      setFilteredTrimData(trimData);
-    }
-  };
+
 
   const formatDate = (dateString) => {
     if (!dateString) return '-';
@@ -371,35 +360,6 @@ const UpdateTrims = () => {
   };
 
 
-  const handleRoutingInputChange = (index, field, value) => {
-    const newData = [...editableRoutingData];
-    newData[index] = {
-      ...newData[index],
-      [field]: value
-    };
-
-    if (field === 'EST_DT' && value) {
-      for (let i = index + 1; i < newData.length; i++) {
-        const prevRow = newData[i - 1];
-        const currentRow = newData[i];
-        const days = currentRow.DAYS || 0;
-
-        if (prevRow.EST_DT) {
-          const prevDate = new Date(prevRow.EST_DT);
-          const newDate = new Date(prevDate);
-          newDate.setDate(newDate.getDate() + parseInt(days));
-
-          const formattedDate = newDate.toISOString().split('T')[0];
-          newData[i] = {
-            ...currentRow,
-            EST_DT: formattedDate
-          };
-        }
-      }
-    }
-
-    setEditableRoutingData(newData);
-  };
 
   const handleRmInputChange = (index, field, value) => {
     const newData = [...editableRmData];
@@ -1218,7 +1178,7 @@ const UpdateTrims = () => {
                 padding: { xs: '8px', sm: '0' }
               }}>
                 <Tabs
-                //   value={activeTab}
+                  value={activeTab}
                 //   onChange={handleTabChange}
                   sx={{
                     minHeight: '30px',

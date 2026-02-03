@@ -361,7 +361,8 @@ const Tna = () => {
         STK_QTY: item.STK_QTY,
         FAB_KEY: item.FAB_KEY,
         FABCAT_KEY: item.FABCAT_KEY,
-        FABDTL_ID: item.FABDTL_ID
+        FABDTL_ID: item.FABDTL_ID,
+        STKST: item.STKST === 1 || item.STKST === true || item.STKST === "1"
       })) || [];
 
       setRmData(result);
@@ -512,7 +513,7 @@ const Tna = () => {
     const newData = [...editableRmData];
     newData[index] = {
       ...newData[index],
-      [field]: value
+      [field]: field === 'STKST' ? (value === true || value === "true" || value === 1 || value === "1") : value
     };
     setEditableRmData(newData);
   };
@@ -649,7 +650,7 @@ const Tna = () => {
             "RATE": rm.RATE || 0,
             "AMOUNT": rm.AMOUNT || 0,
             "REMK": rm.REMK || "",
-            "STKST": "N",
+             "STKST": rm.STKST ? 1 : 0,
             "STK_QTY": rm.STK_QTY || 0
           });
         });
@@ -1725,8 +1726,8 @@ const Tna = () => {
                           <Box sx={{ px: 0.8 }}>
                             <Checkbox
                               size="small"
-                              checked={selectedRows[index] || false}
-                              onChange={(e) => handleRowSelect(index, e.target.checked)}
+                              checked={editableRmData[index]?.STKST || false}
+                              onChange={(e) => handleRmInputChange(index, 'STKST', e.target.checked)}
                               sx={{
                                 '&.MuiCheckbox-root': {
                                   padding: '1px',
