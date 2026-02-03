@@ -318,10 +318,10 @@ export default function InventoryComponent() {
         { name: 'Buyer Enq', icon: SearchIcon, path: '#' },
         { name: 'Sales Offline', icon: ShoppingIcon, path: '/inverntory/stock-enquiry-table' },
         { name: 'Packaging/Barcode', icon: InventoryIcon, path: '/inverntory/packeging-barcode/' },
-        { name: 'TNA', icon: InventoryIcon, path: '/inverntory/tnadash/' },
-        { name: 'Update Routing', icon: InventoryIcon, path: '/inverntory/updaterouting/' },
-        { name: 'Update RM', icon: InventoryIcon, path: '/inverntory/updaterm/' },
-        { name: 'Update Trims', icon: InventoryIcon, path: '/inverntory/updatetrims/' },
+        // { name: 'TNA', icon: InventoryIcon, path: '/inverntory/tnadash/' },
+        // { name: 'Update Routing', icon: InventoryIcon, path: '/inverntory/updaterouting/' },
+        // { name: 'Update RM', icon: InventoryIcon, path: '/inverntory/updaterm/' },
+        // { name: 'Update Trims', icon: InventoryIcon, path: '/inverntory/updatetrims/' },
       ],
     }
   ];

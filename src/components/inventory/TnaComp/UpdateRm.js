@@ -310,7 +310,8 @@ const UpdateRm = () => {
         STK_QTY: item.STK_QTY,
         FAB_KEY: item.FAB_KEY,
         FABCAT_KEY: item.FABCAT_KEY,
-        FABDTL_ID: item.FABDTL_ID
+        FABDTL_ID: item.FABDTL_ID,
+        STKST: item.STKST === 1 || item.STKST === true || item.STKST === "1"
       })) || [];
 
       setRmData(result);
@@ -325,22 +326,11 @@ const UpdateRm = () => {
   };
  
 
-  const handleTabChange = (event, newValue) => {
-    if (newValue === 1 && selectedRowId) {
-      fetchRmData();
-    }
-    
-    setActiveTab(newValue);
-    setSearchQuery('')
-    if (newValue === 0) {
-      setFilteredRoutingData(routingData);
-    } else if (newValue === 1) {
-      setFilteredRmData(rmData);
-    } else if (newValue === 2) {
-      setFilteredTrimData(trimData);
-    }
-  };
-
+  useEffect(() => {
+     if (selectedRowId) {
+       fetchRmData();
+     }
+   }, [selectedRowId]);
   const formatDate = (dateString) => {
     if (!dateString) return '-';
     try {
@@ -364,7 +354,7 @@ const UpdateRm = () => {
     const newData = [...editableRmData];
     newData[index] = {
       ...newData[index],
-      [field]: value
+      [field]: field === 'STKST' ? (value === true || value === "true" || value === 1 || value === "1") : value
     };
     setEditableRmData(newData);
   };
@@ -429,7 +419,7 @@ const UpdateRm = () => {
       }
 
       const tnaPayload = {
-        "DBFLAG": dbFlag,
+        "DBFLAG": U,
         "FCYR_KEY": fcyr,
         "CO_ID": cobrid,
         "COBR_ID": cobrid,
@@ -493,7 +483,7 @@ const UpdateRm = () => {
             "RATE": rm.RATE || 0,
             "AMOUNT": rm.AMOUNT || 0,
             "REMK": rm.REMK || "",
-            "STKST": "N",
+            "STKST": rm.STKST ? 1 : 0,
             "STK_QTY": rm.STK_QTY || 0
           });
         });
@@ -1169,7 +1159,7 @@ const UpdateRm = () => {
                 padding: { xs: '8px', sm: '0' }
               }}>
                 <Tabs
-                //   value={activeTab}
+                  value={activeTab}
                 //   onChange={handleTabChange}
                   sx={{
                     minHeight: '30px',
@@ -1360,8 +1350,8 @@ const UpdateRm = () => {
                           <Box sx={{ px: 0.8 }}>
                             <Checkbox
                               size="small"
-                              checked={selectedRows[index] || false}
-                              onChange={(e) => handleRowSelect(index, e.target.checked)}
+                                checked={editableRmData[index]?.STKST || false}
+                              onChange={(e) => handleRmInputChange(index, 'STKST', e.target.checked)}
                               sx={{
                                 '&.MuiCheckbox-root': {
                                   padding: '1px',

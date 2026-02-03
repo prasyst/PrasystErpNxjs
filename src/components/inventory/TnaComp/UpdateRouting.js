@@ -1221,24 +1221,7 @@ const UpdateRouting = () => {
                       </Box>
                     }
                   />
-                  {/* <Tab
-                    label={
-                      <Box sx={{ display: { xs: 'none', sm: 'inline' } }}>
-                        RM
-                      </Box>
-                    }
-                    icon={<Box sx={{ display: { xs: 'inline', sm: 'none' } }}>RM</Box>}
-                    iconPosition="start"
-                  />
-                  <Tab
-                    label={
-                      <Box sx={{ display: { xs: 'none', sm: 'inline' } }}>
-                        Trims
-                      </Box>
-                    }
-                    icon={<Box sx={{ display: { xs: 'inline', sm: 'none' } }}>Trims</Box>}
-                    iconPosition="start"
-                  /> */}
+                 
                 </Tabs>
 
                 <Box sx={{

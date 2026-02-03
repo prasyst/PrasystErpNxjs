@@ -646,7 +646,7 @@ import {
   RiBarcodeLine, RiInboxArchiveLine, RiFileShield2Line, RiImageAddLine, RiDownload2Line, RiShareForwardLine, RiSettings4Line,
   RiPriceTag3Line, RiExchangeLine, RiStackLine, RiBriefcase2Line, RiSearchLine, RiPlayListAddLine,
   RiUserSearchLine, RiShoppingCart2Line, RiTaskLine, RiTruckLine, RiTimer2Line, RiBuilding4Line,
-  RiDraftLine, RiTestTubeLine, RiCheckboxCircleLine, RiArchiveStackLine, RiTicket2Line, RiTicket2Fill
+  RiDraftLine, RiTestTubeLine, RiCheckboxCircleLine, RiArchiveStackLine, RiTicket2Line, RiTicket2Fill,
 } from 'react-icons/ri';
 import ContentCutIcon from '@mui/icons-material/ContentCut';
 import AltRouteIcon from '@mui/icons-material/AltRoute';
@@ -1198,10 +1198,10 @@ export const sidebarMenuItems = [
           { name: 'Buyer Enq', icon: RiSearchLine, path: '#' },
           { name: 'Sales Offline', icon: RiShoppingCart2Line, path: '/inverntory/stock-enquiry-table' },
           { name: 'Packaging/Barcode', icon: RiBarcodeLine, path: '/inverntory/packeging-barcode/' },
-          { name: 'TNA', icon: AssistantNavigationIcon, path: '/inverntory/tnadash/' },
-          { name: 'Update Routing', icon: RiBarcodeLine, path: '/inverntory/updaterouting/' },
-           { name: 'Update Rm', icon: AltRouteIcon, path: '/inverntory/updaterm/' },
-            { name: 'Update Trims', icon: ContentCutIcon, path: '/inverntory/updatetrims/' },
+          // { name: 'TNA', icon: AssistantNavigationIcon, path: '/inverntory/tnadash/' },
+          // { name: 'Update Routing', icon: RiBarcodeLine, path: '/inverntory/updaterouting/' },
+          //  { name: 'Update Rm', icon: AltRouteIcon, path: '/inverntory/updaterm/' },
+          //   { name: 'Update Trims', icon: ContentCutIcon, path: '/inverntory/updatetrims/' },
         ],
       },
     ],
@@ -1210,7 +1210,7 @@ export const sidebarMenuItems = [
   {
     name: 'Accounts',
     icon: MdAccountBalance,
-    path: '/accountspage',
+    // path: '/accountspage',
     children: [
       { name: 'General Ledger', icon: MdAssignment, path: '#' },
       { name: 'Accounts Payable', icon: MdPayments, path: '#' },
@@ -1235,6 +1235,17 @@ export const sidebarMenuItems = [
       { name: 'Raise Ticket', icon: MdPayments, path: '/tickets/create-tickets/' },
       { name: 'Ticket Escalation', icon: RiTicket2Fill, path: '/tickets/ticket-esclation' },
       { name: 'Ticket Status', icon: RiTicket2Line, path: '/tickets/all-tickets' },
+    ],
+  },
+  {
+    name: 'TNA',
+    icon: MdAccountBalance,
+    path: '/tnapage',
+    children: [
+     { name: 'TNA', icon: AssistantNavigationIcon, path: '/tnapage/tnadash/' },
+      { name: 'Update Routing', icon: RiBarcodeLine, path: '/tnapage/updaterouting/' },
+      { name: 'Update Rm', icon: AltRouteIcon, path: '/tnapage/updaterm/' },
+      { name: 'Update Trims', icon: ContentCutIcon, path: '/tnapage/updatetrims/' },
     ],
   },
   {
