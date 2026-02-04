@@ -1411,7 +1411,7 @@ const CompanyMst = () => {
   };
 
   const handleTable = () => {
-    router.push('/masters/customers/partyTable');
+    router.push('/masters/company/company/companytable');
   };
 
   useEffect(() => {
@@ -1676,7 +1676,7 @@ const CompanyMst = () => {
             currentPARTY_KEY={currentPARTY_KEY}
             isFormDisabled={isFormDisabled}
           />
-        ) : null }
+        ) : null}
       </Grid>
 
       {tabIndex === 0 && (

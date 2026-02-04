@@ -3,8 +3,10 @@
 import React, { useEffect, useState } from 'react';
 import {
   Box, Container, Typography, Grid, Paper, Stack, useTheme, useMediaQuery, Button, TextField, CircularProgress,
-  Dialog, DialogTitle, DialogContent, DialogActions, Autocomplete, Checkbox, ListItemText, IconButton, Chip, Fade
+  Dialog, DialogTitle, DialogContent, DialogActions, Autocomplete, Checkbox, ListItemText, IconButton, Chip, Fade,
+  Drawer, Divider, Slider, FormControl, Select, MenuItem,
 } from '@mui/material';
+import { Tune as TuneIcon, FilterAltOff as FilterAltOffIcon, Check as CheckIcon, } from '@mui/icons-material';
 import { ShoppingCart, People, Search } from '@mui/icons-material';
 import InventoryIcon from '@mui/icons-material/Inventory';
 import ImportContactsIcon from '@mui/icons-material/ImportContacts';
@@ -60,7 +62,11 @@ const Dispatch = () => {
     Partyfilter: [],
     Statefilter: [],
     Brokerfilter: [],
+    progressRange: [0, 100],
+    delayDays: [0, 30],
+    dateRange: 'all',
   });
+  const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
 
   const handleGetData = () => {
     fetchOpenPack();
@@ -417,6 +423,242 @@ const Dispatch = () => {
     qty: state.PACKITMDTL_QTY,
   }));
 
+  const AdvancedFilterDrawer = () => (
+    <Drawer
+      anchor="right"
+      open={filterDrawerOpen}
+      onClose={() => setFilterDrawerOpen(false)}
+      PaperProps={{
+        sx: {
+          width: { xs: '100%', sm: 350 },
+          p: 3,
+          backgroundColor: 'white',
+        },
+      }}
+    >
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          mb: 3,
+        }}
+      >
+        <Typography
+          variant="h6"
+          sx={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}
+        >
+          <TuneIcon /> Advanced Filters
+        </Typography>
+        <IconButton onClick={() => setFilterDrawerOpen(false)}>
+          <CloseIcon />
+        </IconButton>
+      </Box>
+
+      <Divider sx={{ mb: 3 }} />
+
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3.5 }}>
+        <Box>
+          <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 600 }}>
+            Progress Range
+          </Typography>
+          <Slider
+            value={filters.progressRange ?? [0, 100]}
+            onChange={(_, newValue) => setFilters({ ...filters, progressRange: newValue })}
+            valueLabelDisplay="auto"
+            min={0}
+            max={100}
+            marks
+            sx={{ color: theme.palette.primary.main }}
+          />
+          <Typography variant="caption" sx={{ display: 'block', mt: 0.5, color: 'text.secondary' }}>
+            {filters.progressRange?.[0] ?? 0}% – {filters.progressRange?.[1] ?? 100}%
+          </Typography>
+        </Box>
+
+        <Box>
+          <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 600 }}>
+            Delay Days
+          </Typography>
+          <Slider
+            value={filters.delayDays ?? [0, 30]}
+            onChange={(_, newValue) => setFilters({ ...filters, delayDays: newValue })}
+            valueLabelDisplay="auto"
+            min={0}
+            max={30}
+            marks
+            sx={{ color: theme.palette.error.main }}
+          />
+          <Typography variant="caption" sx={{ display: 'block', mt: 0.5, color: 'text.secondary' }}>
+            {filters.delayDays?.[0] ?? 0} – {filters.delayDays?.[1] ?? 30} days
+          </Typography>
+        </Box>
+
+        <Box>
+          <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 600 }}>
+            Timeline Duration
+          </Typography>
+          <FormControl fullWidth size="small">
+            <Select
+              value={filters.dateRange ?? 'all'}
+              onChange={(e) => setFilters({ ...filters, dateRange: e.target.value })}
+            >
+              <MenuItem value="all">All Durations</MenuItem>
+              <MenuItem value="short">Recent (≤ 15 days)</MenuItem>
+              <MenuItem value="medium">Medium (16–60 days)</MenuItem>
+              <MenuItem value="long">Long ( ≥ 60 days)</MenuItem>
+              <MenuItem value="overdue">Overdue</MenuItem>
+            </Select>
+          </FormControl>
+        </Box>
+
+        <Box>
+          <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 600 }}>
+            Party
+          </Typography>
+          <Autocomplete
+            multiple
+            options={partyOption}
+            getOptionLabel={(option) => option.PARTY_NAME || ''}
+            value={filters.Partyfilter || []}
+            onChange={(_, newValue) => setFilters({ ...filters, Partyfilter: newValue })}
+            disableCloseOnSelect
+            size="small"
+            renderInput={(params) => <TextField {...params} label="Select Parties" />}
+            renderOption={(props, option, { selected }) => (
+              <li {...props} style={{ display: 'flex', alignItems: 'center', padding: '2px 12px', margin: '0' }}>
+                <Checkbox checked={selected} size="small" sx={{ p: 0, mr: '8px', height: '15px', width: '18px' }} />
+                <ListItemText primary={option.PARTY_NAME} sx={{ p: 0, m: 0 }} />
+              </li>
+            )}
+            renderTags={(value, getTagProps) =>
+              value.map((option, index) => (
+                <Chip key={option.PARTY_KEY} label={option.PARTY_NAME} size="small" {...getTagProps({ index })} />
+              ))
+            }
+          />
+        </Box>
+
+        <Box>
+          <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 600 }}>
+            Brand
+          </Typography>
+          <Autocomplete
+            multiple
+            options={brandOption}
+            getOptionLabel={(option) => option.BRAND_NAME || ''}
+            value={filters.Brandfilter || []}
+            onChange={(_, newValue) => setFilters({ ...filters, Brandfilter: newValue })}
+            disableCloseOnSelect
+            size="small"
+            renderInput={(params) => <TextField {...params} label="Select Brands" />}
+            renderOption={(props, option, { selected }) => (
+              <li {...props} style={{ display: 'flex', alignItems: 'center', padding: '2px 12px', margin: '0' }}>
+                <Checkbox checked={selected} size="small" sx={{ p: 0, mr: '8px', height: '15px', width: '18px' }} />
+                <ListItemText primary={option.BRAND_NAME} sx={{ p: 0, m: 0 }} />
+              </li>
+            )}
+            renderTags={(value, getTagProps) =>
+              value.map((option, index) => (
+                <Chip key={option.BRAND_KEY} label={option.BRAND_NAME} size="small" {...getTagProps({ index })} />
+              ))
+            }
+          />
+        </Box>
+
+        <Box>
+          <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 600 }}>
+            State
+          </Typography>
+          <Autocomplete
+            multiple
+            options={stateOption}
+            getOptionLabel={(option) => option.STATE_NAME || ''}
+            value={filters.Statefilter || []}
+            onChange={(_, newValue) => setFilters({ ...filters, Statefilter: newValue })}
+            disableCloseOnSelect
+            size="small"
+            renderInput={(params) => <TextField {...params} label="Select States" />}
+            renderOption={(props, option, { selected }) => (
+              <li {...props} style={{ display: 'flex', alignItems: 'center', padding: '2px 12px', margin: '0' }}>
+                <Checkbox checked={selected} size="small" sx={{ p: 0, mr: '8px', height: '15px', width: '18px' }} />
+                <ListItemText primary={option.STATE_NAME} sx={{ p: 0, m: 0 }} />
+              </li>
+            )}
+            renderTags={(value, getTagProps) =>
+              value.map((option, index) => (
+                <Chip key={option.STATE_KEY} label={option.STATE_NAME} size="small" {...getTagProps({ index })} />
+              ))
+            }
+          />
+        </Box>
+
+        <Box>
+          <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 600 }}>
+            Broker
+          </Typography>
+          <Autocomplete
+            multiple
+            options={BrokerOption}
+            getOptionLabel={(option) => option.BROKER_NAME || ''}
+            value={filters.Brokerfilter || []}
+            onChange={(_, newValue) => setFilters({ ...filters, Brokerfilter: newValue })}
+            disableCloseOnSelect
+            size="small"
+            renderInput={(params) => <TextField {...params} label="Select Brokers" />}
+            renderOption={(props, option, { selected }) => (
+              <li {...props} style={{ display: 'flex', alignItems: 'center', padding: '2px 12px', margin: '0' }}>
+                <Checkbox checked={selected} size="small" sx={{ p: 0, mr: '8px', height: '15px', width: '18px' }} />
+                <ListItemText primary={option.BROKER_NAME} sx={{ p: 0, m: 0 }} />
+              </li>
+            )}
+            renderTags={(value, getTagProps) =>
+              value.map((option, index) => (
+                <Chip key={option.BROKER_KEY} label={option.BROKER_NAME} size="small" {...getTagProps({ index })} />
+              ))
+            }
+          />
+        </Box>
+      </Box>
+
+      <Box sx={{ mt: 'auto', pt: 4, display: 'flex', gap: 2 }}>
+        <Button
+          fullWidth
+          variant="outlined"
+          color="error"
+          startIcon={<FilterAltOffIcon />}
+          onClick={() => {
+            setFilters({
+              Brandfilter: [],
+              Partyfilter: [],
+              Statefilter: [],
+              Brokerfilter: [],
+              progressRange: [0, 100],
+              delayDays: [0, 30],
+              dateRange: 'all',
+            });
+            setFilterDrawerOpen(false);
+            handleGetData();
+          }}
+        >
+          Clear
+        </Button>
+
+        <Button
+          fullWidth
+          variant="contained"
+          startIcon={<CheckIcon />}
+          onClick={() => {
+            setFilterDrawerOpen(false);
+            handleGetData();
+          }}
+        >
+          Apply
+        </Button>
+      </Box>
+    </Drawer>
+  );
+
   return (
     <Box sx={{ bgcolor: '#f0f4f8', minHeight: '100vh', py: { xs: 2, md: 2 } }}>
       <ToastContainer />
@@ -502,6 +744,19 @@ const Dispatch = () => {
                 }}
               >
                 Filter
+              </Button>
+              <Button
+                variant="contained"
+                size="small"
+                startIcon={<TuneIcon />}
+                onClick={() => setFilterDrawerOpen(true)}
+                sx={{
+                  borderRadius: '20px',
+                  backgroundColor: '#7c4dff',
+                  '&:hover': { backgroundColor: '#7c4dff' },
+                }}
+              >
+                Advanced
               </Button>
             </Box>
           </LocalizationProvider>
@@ -1254,6 +1509,7 @@ const Dispatch = () => {
           </DialogActions>
         </Dialog>
       </Container>
+      <AdvancedFilterDrawer />
     </Box >
   );
 };
