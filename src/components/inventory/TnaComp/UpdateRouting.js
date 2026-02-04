@@ -390,190 +390,114 @@ const UpdateRouting = () => {
     }
   };
 
-  const handleSave = async () => {
-    if (!selectedRowId) {
-      alert('Please select an order first');
-      return;
+ const handleSave = async () => {
+  if (!selectedRowId) {
+    alert('Please select an order first');
+    return;
+  }
+
+  try {
+    const selectedRow = data.find(row => row.ORDBKSTYSZ_ID === selectedRowId);
+    if (!selectedRow) {
+      throw new Error('Selected row not found');
     }
 
-    try {
-      const selectedRow = data.find(row => row.ORDBKSTYSZ_ID === selectedRowId);
-      if (!selectedRow) {
-        throw new Error('Selected row not found');
-      }
+    let tnaKey = currentTnaKey;
+    let tnaNo = currentTnaNo;
+    let dbFlag = "I";
 
-      let tnaKey = currentTnaKey;
-      let tnaNo = currentTnaNo;
-      let dbFlag = "I";
-
-      if (currentTnaKey) {
-        dbFlag = "U";
-      } else {
-        const seriesPayload = {
-          "MODULENAME": "Tna",
-          "TBLNAME": "Tna",
-          "FLDNAME": "Tna_No",
-          "NCOLLEN": 6,
-          "CPREFIX": "TN",
-          "COBR_ID": cobrid,
-          "FCYR_KEY": fcyr,
-          "TRNSTYPE": "T",
-          "SERIESID": 0,
-          "FLAG": ""
-        };
-
-        const seriesResponse = await axiosInstance.post('/GetSeriesSettings/GetSeriesLastNewKey', seriesPayload);
-        const seriesData = seriesResponse.data;
-
-        if (!seriesData?.DATA?.[0]?.ID) {
-          throw new Error('Failed to generate TNA key');
-        }
-
-        const generatedKey = seriesData.DATA[0].ID;
-        tnaNo = seriesData.DATA[0].ID;
-        tnaKey = `${fcyr}${cobrid}${generatedKey}`;
-      }
-
-      const tnaPayload = {
-        "DBFLAG": dbFlag,
-        "FCYR_KEY": fcyr,
-        "CO_ID": cobrid,
+    if (currentTnaKey) {
+      dbFlag = "U";
+    } else {
+      const seriesPayload = {
+        "MODULENAME": "Tna",
+        "TBLNAME": "Tna",
+        "FLDNAME": "Tna_No",
+        "NCOLLEN": 6,
+        "CPREFIX": "TN",
         "COBR_ID": cobrid,
-        "TNA_KEY": tnaKey,
-        "TNA_NO": tnaNo,
-        "ORDBKSTYSZ_ID": selectedRow.ORDBKSTYSZ_ID,
-        "ORDBKSTY_ID": selectedRow.ORDBKSTY_ID,
-        "ORDBK_KEY": selectedRow.ORDBK_KEY,
-        "ORDBK_DT": selectedRow.ORDBK_DT ? formatDateForAPI(selectedRow.ORDBK_DT) : null,
-        "DLV_DT": selectedRow.DLV_DT ? formatDateForAPI(selectedRow.DLV_DT) : null,
-        "KNIT_DT": selectedRow.KNIT_DT ? formatDateForAPI(selectedRow.KNIT_DT) : null,
-        "DAYS_CAL": selectedRow.DAYS_CAL || 0,
-        "ORDER_QTY": selectedRow.BAL_QTY || 0,
-        "PARTY_KEY": selectedParty?.PARTY_KEY || "",
-        "PARTYDTL_ID": selectedBranch?.PARTYDTL_ID || 0,
-        "FGSTYLE_ID": selectedRow.FGSTYLE_ID || 0,
-        "FGTYPE_KEY": selectedRow.FGTYPE_KEY,
-        "FGSHADE_KEY": selectedRow.FGSHADE_KEY || "",
-        "FGPTN_KEY": selectedRow.FGPTN_KEY,
-        "STYSIZE_ID": selectedRow.STYSIZE_ID || 0,
-        "PRODN_ST_DT": selectedRow.ORDBK_DT ? formatDateForAPI(selectedRow.ORDBK_DT) : null,
-        "EST_DT": '2025-12-18',
-        "REMK": "",
-        "STATUS": "1",
-        "EDIT_STATUS": "0",
-        "CREATED_BY": userId || 0,
-        "UPDATED_BY": userId || 0,
-        "TNARoutingEntities": [],
-        "TNARMEntities": [],
-        "TNATRIMEntities": []
+        "FCYR_KEY": fcyr,
+        "TRNSTYPE": "T",
+        "SERIESID": 0,
+        "FLAG": ""
       };
 
-      if (editableRoutingData.length > 0) {
-        editableRoutingData.forEach((route, index) => {
-          tnaPayload.TNARoutingEntities.push({
-            "DBFLAG": "I",
-            "TNADTL_ID": route.TNADTL_ID,
-            "TNA_KEY": tnaKey,
-            "PROSTG_KEY": route.PROSTG_KEY,
-            "DAYS": route.DAYS || 0,
-            "PLAN_DT": route.PLAN_DT ? formatDateForAPI(route.PLAN_DT) : null,
-            "EST_DT": route.EST_DT ? formatDateForAPI(route.EST_DT) : null,
-            "ACT_DT": route.ACT_DT ? formatDateForAPI(route.ACT_DT) : formatDateForAPI(new Date()),
-            "PROD_OUT_QTY": route.PROD_OUT_QTY || 0,
-            "BAL_QTY": route.BAL_QTY || 0,
-            "REMK": route.REMK || ""
-          });
-        });
+      const seriesResponse = await axiosInstance.post('/GetSeriesSettings/GetSeriesLastNewKey', seriesPayload);
+      const seriesData = seriesResponse.data;
+
+      if (!seriesData?.DATA?.[0]?.ID) {
+        throw new Error('Failed to generate TNA key');
       }
 
-      if (editableRmData.length > 0) {
-        editableRmData.forEach((rm, index) => {
-          tnaPayload.TNARMEntities.push({
-            "DBFLAG": "I",
-            "TNARM_ID": 0,
-            "TNA_KEY": tnaKey,
-            "FAB_KEY": rm.FAB_KEY || 0,
-            "FABDTL_ID": rm.FABDTL_ID,
-            "FABCAT_KEY": rm.FABCAT_KEY || 0,
-            "QUANTITY": rm.QUANTITY || 0,
-            "RATE": rm.RATE || 0,
-            "AMOUNT": rm.AMOUNT || 0,
-            "REMK": rm.REMK || "",
-            "STKST": "N",
-            "STK_QTY": rm.STK_QTY || 0
-          });
-        });
-      }
-      else if (rmData.length > 0) {
-        rmData.forEach((rm, index) => {
-          tnaPayload.TNARMEntities.push({
-            "DBFLAG": "I",
-            "TNARM_ID": 0,
-            "TNA_KEY": tnaKey,
-            "FAB_KEY": rm.FAB_KEY || 0,
-            "FABDTL_ID": rm.FABDTL_ID,
-            "FABCAT_KEY": rm.FABCAT_KEY || 0,
-            "QUANTITY": rm.QUANTITY || 0,
-            "RATE": rm.RATE || 0,
-            "AMOUNT": rm.AMOUNT || 0,
-            "REMK": rm.REMK || "",
-            "STKST": "N",
-            "STK_QTY": rm.STK_QTY || 0
-          });
-        });
-      }
-
-      if (editableTrimData.length > 0) {
-        editableTrimData.forEach((trim, index) => {
-          tnaPayload.TNATRIMEntities.push({
-            "DBFLAG": "I",
-            "TNATRIM_ID": trim.TNATRIM_ID,
-            "TNA_KEY": tnaKey,
-            "ITM_KEY": trim.ITM_KEY,
-            "ITMSUBGRP_KEY": trim.ITMSUBGRP_KEY,
-            "ITMCAT_KEY": trim.ITMCAT_KEY,
-            "ACCSHADE_KEY": 0,
-            "ACCSIZE_KEY": trim.ACCSIZE_KEY || '',
-            "QUANTITY": trim.QUANTITY || 0,
-            "RATE": trim.RATE || 0,
-            "AMOUNT": trim.AMOUNT || 0,
-            "REMK": trim.REMK || ""
-          });
-        });
-      }
-
-      else if (trimData.length > 0) {
-        trimData.forEach((trim, index) => {
-          tnaPayload.TNATRIMEntities.push({
-            "DBFLAG": "I",
-            "TNATRIM_ID": trim.TNATRIM_ID,
-            "TNA_KEY": tnaKey,
-            "ITM_KEY": trim.ITM_KEY,
-            "ITMSUBGRP_KEY": trim.ITMSUBGRP_KEY,
-            "ITMCAT_KEY": trim.ITMCAT_KEY,
-            "ACCSHADE_KEY": 0,
-            "ACCSIZE_KEY": trim.ACCSIZE_KEY || '',
-            "QUANTITY": trim.QUANTITY || 0,
-            "RATE": trim.RATE || 0,
-            "AMOUNT": trim.AMOUNT || 0,
-            "REMK": trim.REMK || ""
-          });
-        });
-      }
-      console.log('tnaPayload', tnaPayload)
-      const submitResponse = await axiosInstance.post('/TNA/ApiMangeTNA', tnaPayload);
-      if (submitResponse.data?.STATUS == 0) {
-        toast.success(submitResponse.data.MESSAGE)
-        await handleGetData();
-      } else {
-        toast.error(submitResponse.data.MESSAGE);
-      }
-
-    } catch (error) {
-      console.error('Error saving TNA:', error);
-
+      const generatedKey = seriesData.DATA[0].ID;
+      tnaNo = seriesData.DATA[0].ID;
+      tnaKey = `${fcyr}${cobrid}${generatedKey}`;
     }
-  };
+
+    const routingPayload = {
+      "DBFLAG": dbFlag, 
+      "FCYR_KEY": fcyr,
+      "CO_ID": cobrid,
+      "COBR_ID": cobrid,
+      "TNA_KEY": tnaKey,
+      "TNA_NO": tnaNo,
+      "ORDBKSTYSZ_ID": selectedRow.ORDBKSTYSZ_ID,
+      "ORDBKSTY_ID": selectedRow.ORDBKSTY_ID,
+      "ORDBK_KEY": selectedRow.ORDBK_KEY,
+      "ORDBK_DT": selectedRow.ORDBK_DT ? formatDateForAPI(selectedRow.ORDBK_DT) : null,
+      "DLV_DT": selectedRow.DLV_DT ? formatDateForAPI(selectedRow.DLV_DT) : null,
+      "KNIT_DT": selectedRow.KNIT_DT ? formatDateForAPI(selectedRow.KNIT_DT) : null,
+      "DAYS_CAL": selectedRow.DAYS_CAL || 0,
+      "ORDER_QTY": selectedRow.BAL_QTY || 0,
+      "PARTY_KEY": selectedParty?.PARTY_KEY || "",
+      "PARTYDTL_ID": selectedBranch?.PARTYDTL_ID || 0,
+      "FGSTYLE_ID": selectedRow.FGSTYLE_ID || 0,
+      "FGTYPE_KEY": selectedRow.FGTYPE_KEY || "",
+      "FGSHADE_KEY": selectedRow.FGSHADE_KEY || "",
+      "FGPTN_KEY": selectedRow.FGPTN_KEY || "",
+      "STYSIZE_ID": selectedRow.STYSIZE_ID || 0,
+      "PRODN_ST_DT": selectedRow.ORDBK_DT ? formatDateForAPI(selectedRow.ORDBK_DT) : null,
+      "EST_DT": selectedRow.EST_DT ? formatDateForAPI(selectedRow.EST_DT) : '2025-12-18',
+      "REMK": selectedRow.REMK || "",
+      "STATUS": "1",
+      "EDIT_STATUS": "0",
+      "CREATED_BY": userId || 0,
+      "UPDATED_BY": userId || 0,
+      "TNARoutingEntities": []
+    };
+
+    if (editableRoutingData.length > 0) {
+      editableRoutingData.forEach((route, index) => {
+        routingPayload.TNARoutingEntities.push({
+          "DBFLAG": "I",
+          "TNADTL_ID": route.TNADTL_ID || (index + 1).toString(),
+          "TNA_KEY": tnaKey,
+          "PROSTG_KEY": route.PROSTG_KEY,
+          "DAYS": route.DAYS || 0,
+          "PLAN_DT": route.PLAN_DT ? formatDateForAPI(route.PLAN_DT) : null,
+          "EST_DT": route.EST_DT ? formatDateForAPI(route.EST_DT) : null,
+          "ACT_DT": route.ACT_DT ? formatDateForAPI(route.ACT_DT) : formatDateForAPI(new Date()),
+          "PROD_OUT_QTY": route.PROD_OUT_QTY || 0,
+          "BAL_QTY": route.BAL_QTY || 0,
+          "REMK": route.REMK || ""
+        });
+      });
+    }
+
+    const submitResponse = await axiosInstance.post('/TNA/ApiTNARouting', routingPayload);
+    
+    if (submitResponse.data?.STATUS == 0) {
+      toast.success(submitResponse.data.MESSAGE)
+      await handleGetData();
+    } else {
+      toast.error(submitResponse.data.MESSAGE);
+    }
+
+  } catch (error) {
+    console.error('Error saving TNA routing:', error);
+    toast.error('Error saving routing data');
+  }
+};
 
 
   const handleDeleteClick = () => {

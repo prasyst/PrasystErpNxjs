@@ -844,7 +844,7 @@ const Tna = () => {
     <Box sx={{ backgroundColor: '#f8fafc', }}>
       <ToastContainer />
       <Card sx={{
-        mb: 1,
+        mb: 0.5,
         boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
         borderRadius: 3,
         overflow: 'hidden'
@@ -854,7 +854,7 @@ const Tna = () => {
             backgroundColor: '#f1f5f9',
             p: 1,
             borderRadius: 2,
-            mb: 1,
+            mb: 0.5,
             border: '1px solid',
             borderColor: 'divider'
           }}>
@@ -1671,7 +1671,7 @@ const Tna = () => {
                           Select
                         </Box>
 
-                        {['FAB_NAME', 'DESIGN',  'REMK','QTY', 'BAL_QTY', 'PO_QTY', 'GRN_QTY', 'STK_QTY', 'RATE', 'AMOUNT'].map((header, idx) => (
+                        {['RM_NAME', 'DESIGN',  'REMK','QTY', 'BAL_QTY', 'PO_QTY', 'GRN_QTY', 'STK_QTY', 'RATE', 'AMOUNT'].map((header, idx) => (
                           <Box
                             key={header}
                             sx={{
@@ -2159,8 +2159,7 @@ const Tna = () => {
             display: 'flex',
             justifyContent: 'flex-end',
             gap: 2,
-
-            pt: 1,
+            pt: 0.5,
             borderTop: '1px solid',
             borderTopColor: 'divider'
           }}>
