@@ -48,7 +48,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, compa
   const [isEditingSize, setIsEditingSize] = useState(false);
   const [editingRowData, setEditingRowData] = useState(null);
   const [hasRecords, setHasRecords] = useState(false);
-  
+  const [itemsConfirmed, setItemsConfirmed] = useState(false);
   // State for dropdown options
   const [productOptions, setProductOptions] = useState([]);
   const [styleOptions, setStyleOptions] = useState([]);
@@ -332,31 +332,60 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, compa
     });
   };
 
-  // Fetch Product dropdown data from API
-  const fetchProductData = async () => {
-    try {
-      const payload = {
-        "FLAG": ""
-      };
 
-      const response = await axiosInstance.post('/Product/GetFgPrdDrp', payload);
+const fetchProductData = async (autoFill = false) => {
+  try {
+    console.log('=== fetchProductData START ===');
+    
+    const payload = {
+      "FLAG": ""
+    };
 
-      if (response.data.DATA && response.data.DATA.length > 0) {
-        const products = response.data.DATA.map(item => item.FGPRD_NAME || '');
-        setProductOptions(products);
-        
-        const mapping = {};
-        response.data.DATA.forEach(item => {
-          if (item.FGPRD_NAME && item.FGPRD_KEY) {
-            mapping[item.FGPRD_NAME] = item.FGPRD_KEY;
-          }
-        });
-        setProductMapping(mapping);
+    const response = await axiosInstance.post('/Product/GetFgPrdDrp', payload);
+    console.log('Product API Response:', response.data);
+
+    if (response.data.DATA && response.data.DATA.length > 0) {
+      // Filter out empty product names
+      const validProducts = response.data.DATA
+        .filter(item => item.FGPRD_NAME && item.FGPRD_NAME.trim() !== '')
+        .map(item => item.FGPRD_NAME || '');
+      
+      console.log('Valid products count:', validProducts.length);
+      console.log('First 5 valid products:', validProducts.slice(0, 5));
+      
+      setProductOptions(validProducts);
+      
+      // Create mapping only for valid products
+      const mapping = {};
+      response.data.DATA.forEach(item => {
+        if (item.FGPRD_NAME && item.FGPRD_NAME.trim() !== '' && item.FGPRD_KEY) {
+          mapping[item.FGPRD_NAME] = item.FGPRD_KEY;
+        }
+      });
+      
+      setProductMapping(mapping);
+      console.log('Product mapping created with', Object.keys(mapping).length, 'items');
+      
+      // If autoFill is true, select the first valid product
+      if (autoFill && isAddingNew) {
+        const firstValidProduct = validProducts[0];
+        if (firstValidProduct) {
+          console.log('Auto-filling first valid product:', firstValidProduct);
+          setNewItemData(prev => ({
+            ...prev,
+            product: firstValidProduct
+          }));
+        }
       }
-    } catch (error) {
-      console.error('Error fetching product data:', error);
+      
+      return validProducts;
     }
-  };
+    return [];
+  } catch (error) {
+    console.error('Error fetching product data:', error);
+    return [];
+  }
+};
 
   // Fetch Style dropdown data
   const fetchStyleData = async (fgprdKey) => {
@@ -638,6 +667,295 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, compa
       setIsLoadingBarcode(false);
     }
   };
+
+// Update the autoFillProductData function:
+
+const autoFillProductData = async () => {
+  try {
+    console.log('=== autoFillProductData START ===');
+    console.log('Current productOptions:', productOptions.length);
+    console.log('First 5 products:', productOptions.slice(0, 5));
+    
+    // First, make sure product data is loaded
+    if (productOptions.length === 0) {
+      await fetchProductData();
+    }
+    
+    // Find the first non-empty product
+    const validProducts = productOptions.filter(product => 
+      product && product.trim() !== ''
+    );
+    
+    if (validProducts.length === 0) {
+      console.log('No valid products found');
+      showSnackbar('No valid products available', 'warning');
+      return false;
+    }
+    
+    // Take the SECOND product (since first might be empty)
+    const secondProduct = validProducts.length > 1 ? validProducts[1] : validProducts[0];
+    const productKey = productMapping[secondProduct];
+    
+    console.log('Selected product for auto-fill:', secondProduct);
+    console.log('Product Key:', productKey);
+    
+    if (!secondProduct || !productKey) {
+      console.log('Invalid product or key not found');
+      showSnackbar('Could not auto-fill product', 'error');
+      return false;
+    }
+    
+    // Update newItemData with the selected product
+    setNewItemData(prev => ({
+      ...prev,
+      product: secondProduct
+    }));
+    
+    console.log('Updated newItemData with product:', secondProduct);
+    
+    // Now fetch styles for this product - call autoFillStyleData instead of fetchStyleData
+    await autoFillStyleData(productKey, secondProduct);
+    
+    return true;
+  } catch (error) {
+    console.error('Error in autoFillProductData:', error);
+    showSnackbar('Error auto-filling product data', 'error');
+    return false;
+  }
+};
+
+const autoFillStyleData = async (fgprdKey, productName) => {
+  if (!fgprdKey) {
+    console.error('No fgprdKey provided to autoFillStyleData');
+    return;
+  }
+
+  try {
+    console.log('=== autoFillStyleData START ===');
+    console.log('Fetching styles for product:', productName, 'Key:', fgprdKey);
+    
+    const payload = {
+      "FGSTYLE_ID": 0,
+      "FGPRD_KEY": fgprdKey,
+      "FGSTYLE_CODE": "",
+      "FLAG": ""
+    };
+
+    console.log('Style API Payload:', payload);
+    
+    const response = await axiosInstance.post('/FGSTYLE/GetFgstyleDrp', payload);
+    console.log('Style API Response:', response.data);
+
+    if (response.data.DATA && response.data.DATA.length > 0) {
+      console.log('Styles found:', response.data.DATA.length);
+      
+      // Filter out empty style codes/names
+      const validStyles = response.data.DATA.filter(item => 
+        (item.FGSTYLE_CODE || item.FGSTYLE_NAME) && 
+        (item.FGSTYLE_CODE?.trim() !== '' || item.FGSTYLE_NAME?.trim() !== '')
+      );
+      
+      if (validStyles.length === 0) {
+        console.log('No valid styles found');
+        showSnackbar('No valid styles found for selected product', 'warning');
+        return false;
+      }
+      
+      const firstStyle = validStyles[0];
+      const styleCode = firstStyle.FGSTYLE_CODE || firstStyle.FGSTYLE_NAME || '';
+      const styleId = firstStyle.FGSTYLE_ID || '';
+      
+      console.log('First valid style:', styleCode, 'ID:', styleId);
+      
+      // Update style dropdown and mapping
+      const styles = validStyles.map(item => item.FGSTYLE_CODE || item.FGSTYLE_NAME || '');
+      setStyleOptions(styles);
+      console.log('Style options set:', styles.length, 'items');
+      
+      const styleIdMapping = {};
+      validStyles.forEach(item => {
+        const styleName = item.FGSTYLE_CODE || item.FGSTYLE_NAME;
+        if (styleName && item.FGSTYLE_ID) {
+          styleIdMapping[styleName] = item.FGSTYLE_ID;
+        }
+      });
+      
+      setStyleMapping(styleIdMapping);
+      console.log('Style mapping created with', Object.keys(styleIdMapping).length, 'items');
+      
+      // Auto-fill the style in newItemData
+      setNewItemData(prev => ({
+        ...prev,
+        style: styleCode,
+        mrp: firstStyle.MRP ? firstStyle.MRP.toString() : '',
+        rate: firstStyle.SSP ? firstStyle.SSP.toString() : '',
+        type: firstStyle.FGTYPE_NAME || ''
+      }));
+      
+      console.log('Updated newItemData with style:', styleCode, 'MRP:', firstStyle.MRP, 'Rate:', firstStyle.SSP);
+      
+      // Now fetch other related data for this style
+      if (styleId) {
+        console.log('Fetching related data for style ID:', styleId);
+        await fetchShadesForStyle(styleId, shadeViewMode);
+        await fetchTypeData(styleId);
+        await fetchLotNoData(styleId);
+        
+        // Fetch size details for auto-fill
+        await fetchSizeDetailsForAutoFill(firstStyle);
+      } else {
+        console.warn('No style ID found for style:', styleCode);
+      }
+      
+      // showSnackbar(`Auto-filled: ${productName} - ${styleCode}`, 'success');
+      return true;
+    } else {
+      console.log('No styles data received from API');
+      showSnackbar('No styles available for selected product', 'warning');
+      return false;
+    }
+  } catch (error) {
+    console.error('Error auto-filling style data:', error);
+    showSnackbar('Error fetching style data', 'error');
+    return false;
+  }
+};
+
+// Modified fetchSizeDetailsForAutoFill function
+const fetchSizeDetailsForAutoFill = async (styleData) => {
+  try {
+    const fgprdKey = productMapping[newItemData.product] || styleData.FGPRD_KEY;
+    const fgstyleId = styleMapping[newItemData.style] || styleData.FGSTYLE_ID;
+    
+    if (!fgprdKey || !fgstyleId) {
+      return;
+    }
+
+    // Get COBR_ID from localStorage or companyConfig
+    const cobrId = companyConfig.COBR_ID || localStorage.getItem('COBR_ID') || '02';
+
+    // Get STYCATRT_ID
+    const stycatrtPayload = {
+      "FGSTYLE_ID": fgstyleId,
+      "FGPRD_KEY": fgprdKey,
+      "FGTYPE_KEY": styleData.FGTYPE_KEY || "",
+      "FGSHADE_KEY": "",
+      "FGPTN_KEY": "",
+      "FLAG": "GETSTYCATRTID",
+      "MRP": parseFloat(styleData.MRP) || 0,
+      "PARTY_KEY": formData.PARTY_KEY || "",
+      "PARTYDTL_ID": formData.PARTYDTL_ID || 0,
+      "COBR_ID": cobrId,
+      "FCYR_KEY": "25"
+    };
+
+    const stycatrtResponse = await axiosInstance.post('/STYSIZE/AddSizeDetail', stycatrtPayload);
+    
+    let stycatrtId = 0;
+    if (stycatrtResponse.data.DATA && stycatrtResponse.data.DATA.length > 0) {
+      stycatrtId = stycatrtResponse.data.DATA[0].STYCATRT_ID || 0;
+    }
+
+    // Get size details
+    const sizeDetailsPayload = {
+      "FGSTYLE_ID": fgstyleId,
+      "FGPRD_KEY": fgprdKey,
+      "FGTYPE_KEY": styleData.FGTYPE_KEY || "",
+      "FGSHADE_KEY": "",
+      "FGPTN_KEY": "",
+      "MRP": parseFloat(styleData.MRP) || 0,
+      "SSP": parseFloat(styleData.SSP) || 0,
+      "PARTY_KEY": formData.PARTY_KEY || "",
+      "PARTYDTL_ID": formData.PARTYDTL_ID || 0,
+      "COBR_ID": cobrId,
+      "FLAG": ""
+    };
+
+    const sizeDetailsResponse = await axiosInstance.post('/STYSIZE/AddSizeDetail', sizeDetailsPayload);
+
+    if (sizeDetailsResponse.data.DATA && sizeDetailsResponse.data.DATA.length > 0) {
+      const transformedSizeDetails = sizeDetailsResponse.data.DATA.map((size, index) => ({
+        STYSIZE_ID: size.STYSIZE_ID || index + 1,
+        STYSIZE_NAME: size.STYSIZE_NAME || `Size ${index + 1}`,
+        FGSTYLE_ID: size.FGSTYLE_ID || fgstyleId,
+        QTY: 0,
+        ITM_AMT: 0,
+        ORDER_QTY: 0,
+        MRP: parseFloat(styleData.MRP) || 0,
+        RATE: parseFloat(styleData.SSP) || 0
+      }));
+
+      setSizeDetailsData(transformedSizeDetails);
+      setIsSizeDetailsLoaded(true);
+      
+      // Show success message
+      showSnackbar('Product and style auto-filled successfully!', 'success');
+    }
+  } catch (error) {
+    console.error('Error auto-fetching size details:', error);
+  }
+};
+
+const handleAddItem = async () => {
+  console.log('=== handleAddItem START ===');
+  console.log('isPartySelected:', isPartySelected());
+  
+  if (!isPartySelected()) {
+    showSnackbar("Please select a Party first before adding items", 'error');
+    return;
+  }
+
+  setIsAddingNew(true);
+  console.log('isAddingNew set to true');
+  
+  // Reset states
+  setSizeDetailsData([]);
+  setIsSizeDetailsLoaded(false);
+  setDataSource(null);
+  setAvailableShades([]);
+  setSelectedShades([]);
+  
+  // Reset form
+  setNewItemData({
+    product: '',
+    barcode: '',
+    style: '',
+    type: '',
+    shade: '',
+    qty: '',
+    mrp: '',
+    rate: '',
+    setNo: '',
+    varPer: '',
+    stdQty: '',
+    convFact: '',
+    lotNo: '',
+    discount: '',
+    percent: '',
+    remark: '',
+    divDt: '',
+    rQty: '',
+    sets: ''
+  });
+  
+  setStyleCodeInput('');
+  setBarcodeInput('');
+  setStyleOptions([]);
+  setTypeOptions([]);
+  setLotNoOptions([]);
+  
+  console.log('Form reset completed');
+  
+  // Fetch product data with auto-fill
+  await fetchProductData(true);
+  
+  // Auto-fill product and related data
+  setTimeout(async () => {
+    await autoFillProductData();
+  }, 1000);
+  
+  console.log('=== handleAddItem END ===');
+};
 
 // Auto-load size details for style data
 const fetchSizeDetailsForStyle = async (styleData) => {
@@ -1099,50 +1417,7 @@ const fetchSizeDetails = async () => {
     return !!formData.Party && !!formData.PARTY_KEY;
   };
 
-  // Handle Add Item
-  const handleAddItem = async () => {
-    if (!isPartySelected()) {
-      showSnackbar("Please select a Party first before adding items", 'error');
-      return;
-    }
-
-    setIsAddingNew(true);
-    setSizeDetailsData([]);
-    setIsSizeDetailsLoaded(false);
-    setDataSource(null);
-    setAvailableShades([]);
-    setSelectedShades([]);
-    
-    await fetchProductData();
-    
-    setNewItemData({
-      product: '',
-      barcode: '',
-      style: '',
-      type: '',
-      shade: '',
-      qty: '',
-      mrp: '',
-      rate: '',
-      setNo: '',
-      varPer: '',
-      stdQty: '',
-      convFact: '',
-      lotNo: '',
-      discount: '',
-      percent: '',
-      remark: '',
-      divDt: '',
-      rQty: '',
-      sets: ''
-    });
-    
-    setStyleCodeInput('');
-    setBarcodeInput('');
-    setStyleOptions([]);
-    setTypeOptions([]);
-    setLotNoOptions([]);
-  };
+  
 
  // Handle Confirm Add - UPDATED for STYCATRT_ID
 const handleConfirmAdd = () => {
@@ -1385,6 +1660,7 @@ const handleConfirmAdd = () => {
   setDataSource(null);
   setSelectedShades([]);
   setAvailableShades([]);
+  setItemsConfirmed(true);
 
   showSnackbar(selectedShades.length > 1 ? 
     `${selectedShades.length} items added to order (${totalQty} each)!` : 
@@ -2491,6 +2767,7 @@ const handleConfirmAdd = () => {
             variant="contained" 
             color="primary" 
             onClick={onNext}
+            disabled={!itemsConfirmed}
             sx={{ 
               minWidth: '60px', 
               height: '36px',

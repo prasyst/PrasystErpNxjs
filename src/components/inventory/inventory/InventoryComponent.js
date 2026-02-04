@@ -292,7 +292,9 @@ export default function InventoryComponent() {
       name: 'Sales/Dispatch',
       // MOD_NAME: "mnuTrnSales",
       children: [
+
         { name: 'Sales Order(Live Stock)', icon: ShoppingCartIcon, path: '/inverntory/stockOrder-LiveStock' },
+        { name: 'Stock Enquiry', icon: SearchIcon, path: '/dashboard/stock-enquiry-table' },
         {
           name: 'Order Booking (Hide Stock/FOB/WO)',
           // MOD_NAME: "mnuTrnSalesOrderWOStk",
@@ -314,7 +316,10 @@ export default function InventoryComponent() {
         { name: 'Buyer Enq', icon: SearchIcon, path: '#' },
         { name: 'Sales Offline', icon: ShoppingIcon, path: '/inverntory/stock-enquiry-table' },
         { name: 'Packaging/Barcode', icon: InventoryIcon, path: '/inverntory/packeging-barcode/' },
-        { name: 'TNA', icon: InventoryIcon, path: '/inverntory/tnadash/' },
+        // { name: 'TNA', icon: InventoryIcon, path: '/inverntory/tnadash/' },
+        // { name: 'Update Routing', icon: InventoryIcon, path: '/inverntory/updaterouting/' },
+        // { name: 'Update RM', icon: InventoryIcon, path: '/inverntory/updaterm/' },
+        // { name: 'Update Trims', icon: InventoryIcon, path: '/inverntory/updatetrims/' },
       ],
     }
   ];

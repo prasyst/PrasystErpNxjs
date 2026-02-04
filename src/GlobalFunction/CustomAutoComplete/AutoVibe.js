@@ -250,41 +250,54 @@ const AutoVibe = React.forwardRef(
                     {params.InputProps.startAdornment}
                   </>
                 ),
-                endAdornment: (
-                  <InputAdornment position="end">
-                    {!disabled && (
-                      <>
-                        {showAddIcon && onAddClick && (
-                          <AddIcon
-                            onClick={onAddClick}
-                            style={{ cursor: 'pointer', fontSize: '18px', color: '#2196f3' }}
-                          />
-                        )}
-                        
-                        {showRefreshIcon && onRefreshClick && (
-                          <RefreshIcon
-                            onClick={onRefreshClick}
-                            sx={{
-                              fontSize: '18px',
-                              color: '#4caf50',
-                              cursor: 'pointer',
-                              transition: 'transform 0.3s ease',
-                              animation: isRefreshing ? 'spin 1s linear infinite' : 'none',
-                              '@keyframes spin': {
-                                '0%': {
-                                  transform: 'rotate(0deg)',
-                                },
-                                '100%': {
-                                  transform: 'rotate(360deg)',
-                                },
-                              },
-                            }}
-                          />
-                        )}
-                      </>
-                    )}
-                  </InputAdornment>
-                ),
+               // In AutoVibe component, update the endAdornment section
+
+endAdornment: (
+  <InputAdornment position="end">
+    {!disabled && (
+      <>
+        {showAddIcon && onAddClick && (
+          <AddIcon
+            onClick={(e) => {
+              e.stopPropagation(); // Prevent opening dropdown
+              onAddClick();
+            }}
+            style={{ 
+              cursor: 'pointer', 
+              fontSize: '18px', 
+              color: '#2196f3',
+              marginRight: '8px' // Add spacing if needed
+            }}
+          />
+        )}
+        
+        {showRefreshIcon && onRefreshClick && (
+          <RefreshIcon
+            onClick={(e) => {
+              e.stopPropagation();
+              onRefreshClick();
+            }}
+            sx={{
+              fontSize: '18px',
+              color: '#4caf50',
+              cursor: 'pointer',
+              transition: 'transform 0.3s ease',
+              animation: isRefreshing ? 'spin 1s linear infinite' : 'none',
+              '@keyframes spin': {
+                '0%': {
+                  transform: 'rotate(0deg)',
+                },
+                '100%': {
+                  transform: 'rotate(360deg)',
+                },
+              },
+            }}
+          />
+        )}
+      </>
+    )}
+  </InputAdornment>
+),
               }}
               InputLabelProps={{
                 shrink: shouldShrink,

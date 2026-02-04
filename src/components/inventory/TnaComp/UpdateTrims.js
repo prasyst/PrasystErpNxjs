@@ -36,14 +36,14 @@ import { toast, ToastContainer } from 'react-toastify';
 import ConfirmDailog from '@/components/ReusableConfirmDailog/ConfirmDailog';
 import { useRouter } from 'next/navigation';
 
-const Tna = () => {
+const UpdateTrims = () => {
   const [selectedParty, setSelectedParty] = useState(null);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [selectedBranch, setSelectedBranch] = useState(null);
   const [partyName, setPartyName] = useState([]);
   const [branchName, setBranchName] = useState([]);
   const [orderNo, setOrderNo] = useState([]);
-  const [activeTab, setActiveTab] = useState(0);
+  const [activeTab, setActiveTab] = useState(2);
   const [cobrid, setCobrid] = useState('');
   const [fcyr, setFcyr] = useState('');
   const [clientId, setClientId] = useState('')
@@ -187,6 +187,12 @@ const Tna = () => {
     }
   }, [selectedBranch, selectedParty])
 
+    useEffect(() => {
+    if (selectedRowId) {
+      fetchTRimData();
+    }
+  }, [selectedRowId]);
+
   const handleGetData = async () => {
     try {
       const payload = {
@@ -235,7 +241,6 @@ const Tna = () => {
       }))
       setData(result)
       // setSelectedRowId(null);
-      setTrimData([]);
       if (result.length > 0) {
         const firstRow = result[0];
         if (firstRow.TNA_KEY) {
@@ -246,11 +251,7 @@ const Tna = () => {
           setCurrentTnaNo('');
         }
         setSelectedRowId(firstRow.ORDBKSTYSZ_ID);
-        await handleRadioChange(firstRow);
-        setTimeout(() => {
-          fetchRmData();
-          fetchTRimData();
-        }, 500);
+        await handleRadioChange(firstRow,true);
       } else {
         setSelectedRowId(null);
         setRoutingData([]);
@@ -263,12 +264,12 @@ const Tna = () => {
     }
   }
 
-  const handleRadioChange = async (row) => {
+  const handleRadioChange = async (row,fromGetData=false) => {
     setSelectedRowId(row.ORDBKSTYSZ_ID);
-    setRmData([]);
-    setTrimData([]);
     setSearchQuery('');
-    setActiveTab(0);
+     if (!fromGetData) {
+      setActiveTab(2);
+    }
     if (row.TNA_KEY) {
       setCurrentTnaKey(row.TNA_KEY);
       setCurrentTnaNo(row.TNA_NO || '');
@@ -276,105 +277,9 @@ const Tna = () => {
       setCurrentTnaKey(null);
       setCurrentTnaNo('');
     }
-    try {
-      const payload = {
-        "PageNumber": 1,
-        "PageSize": 25,
-        "SearchText": "",
-        "FLAG": "Routing",
-        "FCYR_KEY": fcyr,
-        "COBR_ID": cobrid,
-        "PARTY_KEY": selectedParty?.PARTY_KEY,
-        "PARTYDTL_ID": selectedBranch?.PARTYDTL_ID,
-        "CWHAER": selectedOrder?.ORDBK_KEY,
-        "TNA_KEY": row.TNA_KEY || "",
-        "ORDBKSTYSZ_ID": row?.ORDBKSTYSZ_ID,
-        "DBFLAG": "S",
-        "CLIENT_ID": clientId,
-        "NAME": "Routing"
-      };
-
-      const response = await axiosInstance.post('/TNA/GetTNAProstg?currentPage=1&limit=25', payload);
-      const result = response.data.DATA.map((item) => ({
-        REC_DOZ: item.REC_DOZ,
-        PLAN_DT: item.PLAN_DT,
-        EST_DT: item.EST_DT,
-        ACT_DT: item.ACT_DT,
-        BAL_QTY: item.BAL_QTY,
-        ORDBK_DT: item.ORDBK_DT,
-        DLV_DT: item.DLV_DT,
-        REC_QTY: item.REC_QTY,
-        PORD_REF: item.PORD_REF,
-        ORDBKSTY_ID: item.ORDBKSTY_ID,
-        PROD_OUT_QTY: item.PROD_OUT_QTY,
-        BAL_QTY: item.BAL_QTY,
-        PROSTG_NAME: item.PROSTG_NAME,
-        DAYS: item.DAYS,
-        PROSTGGRP_NAME: item.PROSTGGRP_NAME,
-        REMK: item.REMK || '',
-        PROSTG_KEY: item.PROSTG_KEY,
-        TNADTL_ID: item.TNADTL_ID
-      }));
-
-      setRoutingData(result)
-      setFilteredRoutingData(result);
-      setEditableRoutingData(result);
-      setRmData([]);
-    } catch (error) {
-      console.error('Error fetching routing data:', error);
-    }
+   await fetchTRimData();
   };
-  const fetchRmData = async () => {
-    if (!selectedRowId) {
-      setRmData([]);
-      return;
-    }
-    try {
-      const payload = {
-        "PageNumber": 1,
-        "PageSize": 25,
-        "SearchText": "",
-        "FLAG": "RM",
-        "FCYR_KEY": fcyr,
-        "COBR_ID": cobrid,
-        "PARTY_KEY": selectedParty?.PARTY_KEY,
-        "PARTYDTL_ID": selectedBranch?.PARTYDTL_ID,
-        "CWHAER": '',
-        "TNA_KEY": currentTnaKey || "",
-        "ORDBKSTYSZ_ID": selectedRowId,
-        "DBFLAG": "S",
-        "CLIENT_ID": clientId,
-        "NAME": "RM"
-      };
-
-      const response = await axiosInstance.post('/TNA/GetTNARM?currentPage=1&limit=25', payload);
-      const result = response.data.DATA?.map((item) => ({
-        FAB_NAME: item.FAB_NAME,
-        DESIGN: item.DESIGN,
-        QUANTITY: item.QUANTITY,
-        RATE: item.RATE,
-        AMOUNT: item.AMOUNT,
-        REMK: item.REMK,
-        BAL_QTY: item.BAL_QTY,
-        PO_QTY: item.PO_QTY,
-        GRN_QTY: item.GRN_QTY,
-        STK_QTY: item.STK_QTY,
-        FAB_KEY: item.FAB_KEY,
-        FABCAT_KEY: item.FABCAT_KEY,
-        FABDTL_ID: item.FABDTL_ID,
-        STKST: item.STKST === 1 || item.STKST === true || item.STKST === "1"
-      })) || [];
-
-      setRmData(result);
-      setEditableRmData(result);
-      setFilteredRmData(result);
-    } catch (error) {
-      console.error('Error fetching RM data:', error);
-      setRmData([]);
-    } finally {
-
-    }
-  };
+ 
   const fetchTRimData = async () => {
     if (!selectedRowId) {
       setTrimData([]);
@@ -435,23 +340,7 @@ const Tna = () => {
     }
   };
 
-  const handleTabChange = (event, newValue) => {
-    if (newValue === 1 && selectedRowId) {
-      fetchRmData();
-    }
-    if (newValue === 2 && selectedRowId) {
-      fetchTRimData()
-    }
-    setActiveTab(newValue);
-    setSearchQuery('')
-    if (newValue === 0) {
-      setFilteredRoutingData(routingData);
-    } else if (newValue === 1) {
-      setFilteredRmData(rmData);
-    } else if (newValue === 2) {
-      setFilteredTrimData(trimData);
-    }
-  };
+
 
   const formatDate = (dateString) => {
     if (!dateString) return '-';
@@ -471,49 +360,12 @@ const Tna = () => {
   };
 
 
-  // const handleRoutingInputChange = (index, field, value) => {
-  //   const newData = [...editableRoutingData];
-  //   newData[index] = {
-  //     ...newData[index],
-  //     [field]: value
-  //   };
-  //   setEditableRoutingData(newData);
-  // };
-  const handleRoutingInputChange = (index, field, value) => {
-    const newData = [...editableRoutingData];
-    newData[index] = {
-      ...newData[index],
-      [field]: value
-    };
-
-    if (field === 'EST_DT' && value) {
-      for (let i = index + 1; i < newData.length; i++) {
-        const prevRow = newData[i - 1];
-        const currentRow = newData[i];
-        const days = currentRow.DAYS || 0;
-
-        if (prevRow.EST_DT) {
-          const prevDate = new Date(prevRow.EST_DT);
-          const newDate = new Date(prevDate);
-          newDate.setDate(newDate.getDate() + parseInt(days));
-
-          const formattedDate = newDate.toISOString().split('T')[0];
-          newData[i] = {
-            ...currentRow,
-            EST_DT: formattedDate
-          };
-        }
-      }
-    }
-
-    setEditableRoutingData(newData);
-  };
 
   const handleRmInputChange = (index, field, value) => {
     const newData = [...editableRmData];
     newData[index] = {
       ...newData[index],
-      [field]: field === 'STKST' ? (value === true || value === "true" || value === 1 || value === "1") : value
+      [field]: value
     };
     setEditableRmData(newData);
   };
@@ -650,7 +502,7 @@ const Tna = () => {
             "RATE": rm.RATE || 0,
             "AMOUNT": rm.AMOUNT || 0,
             "REMK": rm.REMK || "",
-             "STKST": rm.STKST ? 1 : 0,
+            "STKST": "N",
             "STK_QTY": rm.STK_QTY || 0
           });
         });
@@ -1327,7 +1179,7 @@ const Tna = () => {
               }}>
                 <Tabs
                   value={activeTab}
-                  onChange={handleTabChange}
+                //   onChange={handleTabChange}
                   sx={{
                     minHeight: '30px',
                     width: { xs: '100%', sm: 'auto' },
@@ -1354,33 +1206,8 @@ const Tna = () => {
                   }}
                   variant={{ xs: 'fullWidth', sm: 'standard' }}
                 >
-                  <Tab
-                    label={
-                      <Box sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 0.5,
-                        fontSize: { xs: '0.8rem', sm: 'inherit' }
-                      }}>
-                        <ViewWeekIcon fontSize="small" sx={{ fontSize: { xs: '0.9rem', sm: 'inherit' } }} />
-                        <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>
-                          Routing
-                        </Box>
-                        <Box component="span" sx={{ display: { xs: 'inline', sm: 'none' } }}>
-                          Routing
-                        </Box>
-                      </Box>
-                    }
-                  />
-                  <Tab
-                    label={
-                      <Box sx={{ display: { xs: 'none', sm: 'inline' } }}>
-                        RM
-                      </Box>
-                    }
-                    icon={<Box sx={{ display: { xs: 'inline', sm: 'none' } }}>RM</Box>}
-                    iconPosition="start"
-                  />
+                 
+                 
                   <Tab
                     label={
                       <Box sx={{ display: { xs: 'none', sm: 'inline' } }}>
@@ -1433,450 +1260,6 @@ const Tna = () => {
                 overflow: 'hidden'
               }}
             >
-              {activeTab === 0 && (
-                <Box>
-                  <TableContainer
-                    component={Paper}
-                    sx={{
-                      height: 220,
-                      overflowY: 'auto',
-                      scrollbarWidth: 'thin',
-                      borderRadius: 2,
-                      border: '1px solid',
-                      borderColor: 'divider',
-                    }}
-                  >
-                    <Box
-                      sx={{
-                        display: 'grid',
-                        gridTemplateColumns: 'repeat(9, minmax(140px, 1fr))',
-                        minWidth: '100%',
-                        width: '100%',
-                        // height: '18px',
-                        fontSize: '15px',
-                      }}
-                    >
-                      <Box sx={{
-                        display: 'contents',
-                        position: 'sticky',
-                        top: 0,
-                        zIndex: 1,
-                      }}>
-                        {['PROSTGGRP_NAME', 'PROSTG_NAME', 'DAYS', 'PLAN_DT', 'EST_DT', 'ACT_DT', 'REMK', 'PROD_OUT_QTY', 'BAL_QTY'].map((header, idx) => (
-                          <Box
-                            key={header}
-                            sx={{
-                              gridColumn: `${idx + 1}`,
-                              p: 0.6,
-                              textAlign: 'left',
-                              fontWeight: 600,
-                              color: 'rgba(0, 0, 0, 0.87)',
-                              backgroundColor: '#f1f5f9',
-                              borderRight: idx === 8 ? 'none' : '1px solid',
-                              borderBottom: '1px solid',
-                              borderColor: 'divider',
-                              whiteSpace: 'nowrap',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              wordBreak: 'break-word',
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis',
-                            }}
-                          >
-                            {header}
-                          </Box>
-                        ))}
-                      </Box>
-
-                      {filteredRoutingData.map((row, index) => (
-                        <Box
-                          key={index}
-                          sx={{
-                            display: 'contents',
-                            '& > div': {
-                              borderRight: '1px solid',
-                              borderBottom: '1px solid',
-                              borderColor: 'divider',
-                              display: 'flex',
-                              alignItems: 'center',
-                              // justifyContent: 'center',
-                              minHeight: '26px',
-                            },
-                            '& > div:last-child': {
-                              borderRight: 'none',
-                            },
-                            '&:nth-of-type(even) > div': {
-                              backgroundColor: '#f8fafc',
-                            },
-                            '&:hover > div': {
-                              backgroundColor: '#f1f5f9',
-                            },
-                          }}
-                        >
-                          <Box sx={{ px: 1 ,justifyContent:'flex-start'}}>
-                            <Chip
-                              label={row.PROSTGGRP_NAME}
-                              size="small"
-                              sx={{
-                                backgroundColor: '#e0f2fe',
-                                color: '#0369a1',
-                                fontWeight: 500,
-                               justifyContent:'flex-start'
-                              }}
-                            />
-                          </Box>
-                          <Box sx={{ px: 1 }}>
-                            <Tooltip title={row.PROSTG_NAME} arrow>
-                              <Box sx={{
-                                width: '100%',
-                                maxWidth: '100%',
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                                whiteSpace: 'nowrap',
-                                textAlign: 'left',
-                              }}>
-                                {row.PROSTG_NAME}
-                              </Box>
-                            </Tooltip>
-                          </Box>
-                          <Box sx={{ justifyContent: 'center' }}>
-                            <Chip
-                              label={row.DAYS}
-                              size="small"
-                              sx={{
-                                fontWeight: 600,
-                                backgroundColor: '#fef3c7',
-                                color: '#92400e',
-                              }}
-                            />
-                          </Box>
-                          <Box sx={{ px: 1,justifyContent: 'center' }}>
-                            {row.PLAN_DT ? formatDate(row.PLAN_DT) : '-'}
-                          </Box>
-                          <Box sx={{ px: 1 }}>
-                            <TextField
-                              type="date"
-                              size="small"
-                              value={editableRoutingData[index]?.EST_DT?.split('T')[0] || ''}
-                              onChange={(e) => handleRoutingInputChange(index, 'EST_DT', e.target.value)}
-                              sx={{
-                                '& .MuiInputBase-input': {
-                                  padding: '4px 8px',
-                                  fontSize: '0.875rem'
-                                }
-                              }}
-                            />
-                          </Box>
-                          <Box sx={{ px: 1 ,justifyContent: 'center'}}>
-                            {row.ACT_DT ? formatDate(row.ACT_DT) : '-'}
-                          </Box>
-                          <Box sx={{ px: 1,justifyContent: 'center' }}>
-                            <TextField
-                              size="small"
-                              value={editableRoutingData[index]?.REMK || ''}
-                              onChange={(e) => handleRoutingInputChange(index, 'REMK', e.target.value)}
-                              sx={{
-                                '& .MuiInputBase-input': {
-                                  padding: '4px 8px',
-                                  fontSize: '0.875rem'
-                                }
-                              }}
-                            />
-                          </Box>
-                          <Box sx={{ px: 1, fontWeight: 600 }}>
-                            <Tooltip title={row.PROD_OUT_QTY} arrow>
-                              <Box sx={{
-                                width: '100%',
-                                maxWidth: '100%',
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                                whiteSpace: 'nowrap',
-                                textAlign: 'center',
-                              }}>
-                                {row.PROD_OUT_QTY}
-                              </Box>
-                            </Tooltip>
-                          </Box>
-                          <Box sx={{ px: 1, fontWeight: 600 }}>
-                            <Tooltip title={row.BAL_QTY} arrow>
-                              <Box sx={{
-                                width: '100%',
-                                maxWidth: '100%',
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                                whiteSpace: 'nowrap',
-                                textAlign: 'center',
-                              }}>
-                                {row.BAL_QTY}
-                              </Box>
-                            </Tooltip>
-                          </Box>
-                        </Box>
-                      ))}
-                    </Box>
-                  </TableContainer>
-                </Box>
-              )}
-
-              {activeTab === 1 && (
-                <Box>
-                  <TableContainer
-                    component={Paper}
-                    sx={{
-                      height: 220,
-                      overflowY: 'auto',
-                      scrollbarWidth: 'thin',
-                      borderRadius: 2,
-                      border: '1px solid',
-                      borderColor: 'divider',
-                    }}
-                  >
-                    <Box
-                      sx={{
-                        display: 'grid',
-                        gridTemplateColumns: '60px repeat(10, minmax(140px, 1fr))',
-                        minWidth: '100%',
-                        width: '100%',
-                        fontSize: '15px',
-                      }}
-                    >
-
-                      <Box sx={{
-                        display: 'contents',
-                        position: 'sticky',
-                        top: 0,
-                        zIndex: 1,
-                      }}>
-                        <Box
-                          sx={{
-                            gridColumn: '1',
-                            p: 0.6,
-                            textAlign: 'center',
-                            fontWeight: 600,
-                            color: 'rgba(0, 0, 0, 0.87)',
-                            backgroundColor: '#f1f5f9',
-                            borderRight: '1px solid',
-                            borderBottom: '1px solid',
-                            borderColor: 'divider',
-                            whiteSpace: 'nowrap',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            wordBreak: 'break-word',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                          }}
-                        >
-                          Select
-                        </Box>
-
-                        {['FAB_NAME', 'DESIGN',  'REMK','QTY', 'BAL_QTY', 'PO_QTY', 'GRN_QTY', 'STK_QTY', 'RATE', 'AMOUNT'].map((header, idx) => (
-                          <Box
-                            key={header}
-                            sx={{
-                              gridColumn: `${idx + 2}`,
-                              p: 0.6,
-                              textAlign: 'center',
-                              fontWeight: 600,
-                              color: 'rgba(0, 0, 0, 0.87)',
-                              backgroundColor: '#f1f5f9',
-                              borderRight: idx === 9 ? 'none' : '1px solid',
-                              borderBottom: '1px solid',
-                              borderColor: 'divider',
-                              whiteSpace: 'nowrap',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              wordBreak: 'break-word',
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis',
-                            }}
-                          >
-                            {header}
-                          </Box>
-                        ))}
-                      </Box>
-
-                      {filteredRmData.map((row, index) => (
-                        <Box
-                          key={index}
-                          sx={{
-                            display: 'contents',
-                            '& > div': {
-                              borderRight: '1px solid',
-                              borderBottom: '1px solid',
-                              borderColor: 'divider',
-                              display: 'flex',
-                              alignItems: 'center',
-                              // justifyContent: 'center',
-                              minHeight: '26px',
-                            },
-                            '& > div:last-child': {
-                              borderRight: 'none',
-                            },
-                            '&:nth-of-type(even) > div': {
-                              backgroundColor: '#f8fafc',
-                            },
-                            '&:hover > div': {
-                              backgroundColor: '#f1f5f9',
-                            },
-                          }}
-                        >
-                          <Box sx={{ px: 0.8 }}>
-                            <Checkbox
-                              size="small"
-                              checked={editableRmData[index]?.STKST || false}
-                              onChange={(e) => handleRmInputChange(index, 'STKST', e.target.checked)}
-                              sx={{
-                                '&.MuiCheckbox-root': {
-                                  padding: '1px',
-                                 textAlign: 'center',
-                                }
-                              }}
-                            />
-                          </Box>
-
-                          <Box sx={{ px: 1,justifyContent:'flex-start'}}>
-                            <Chip
-                              label={row.FAB_NAME}
-                              size="small"
-                              sx={{
-                                backgroundColor: '#e0f2fe',
-                                color: '#0369a1',
-                                fontWeight: 500
-                              }}
-                            />
-                          </Box>
-                          <Box sx={{ px: 1,justifyContent:'flex-start' }}>
-                            <Tooltip title={row.DESIGN} arrow>
-                              <Box sx={{
-                                width: '100%',
-                                maxWidth: '100%',
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                                whiteSpace: 'nowrap',
-                                // textAlign: 'center',
-                              }}>
-                                {row.DESIGN}
-                              </Box>
-                            </Tooltip>
-                          </Box>
-                          
-                          <Box sx={{ px: 1 }}>
-                            <TextField
-                              size="small"
-                              value={editableRmData[index]?.REMK || ''}
-                              onChange={(e) => handleRmInputChange(index, 'REMK', e.target.value)}
-                              sx={{
-                                '& .MuiInputBase-input': {
-                                  padding: '4px 8px',
-                                  fontSize: '0.875rem'
-                                }
-                              }}
-                            />
-                          </Box>
-                          <Box sx={{justifyContent:'center'}}>
-                            <Chip
-                              label={row.QUANTITY}
-                              size="small"
-                              sx={{
-                                fontWeight: 600,
-                                backgroundColor: '#fef3c7',
-                                color: '#92400e',
-                              }}
-                            />
-                          </Box>
-                          <Box sx={{ px: 1 }}>
-                            <Tooltip title={row.BAL_QTY} arrow>
-                              <Box sx={{
-                                width: '100%',
-                                maxWidth: '100%',
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                                whiteSpace: 'nowrap',
-                                textAlign: 'center',
-                              }}>
-                                {row.BAL_QTY}
-                              </Box>
-                            </Tooltip>
-                          </Box>
-                          <Box sx={{ px: 1, fontWeight: 600 }}>
-                            <Tooltip title={row.PO_QTY} arrow>
-                              <Box sx={{
-                                width: '100%',
-                                maxWidth: '100%',
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                                whiteSpace: 'nowrap',
-                                textAlign: 'center',
-                              }}>
-                                {row.PO_QTY}
-                              </Box>
-                            </Tooltip>
-                          </Box>
-                          <Box sx={{ px: 1, fontWeight: 600 }}>
-                            <Tooltip title={row.GRN_QTY} arrow>
-                              <Box sx={{
-                                width: '100%',
-                                maxWidth: '100%',
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                                whiteSpace: 'nowrap',
-                                textAlign: 'center',
-                              }}>
-                                {row.GRN_QTY}
-                              </Box>
-                            </Tooltip>
-                          </Box>
-                          <Box sx={{ px: 1, fontWeight: 600 }}>
-                            <Tooltip title={row.STK_QTY} arrow>
-                              <Box sx={{
-                                width: '100%',
-                                maxWidth: '100%',
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                                whiteSpace: 'nowrap',
-                                textAlign: 'center',
-                              }}>
-                                {row.STK_QTY}
-                              </Box>
-                            </Tooltip>
-                          </Box>
-                          <Box sx={{ px: 1 }}>
-                            <Tooltip title={row.RATE} arrow>
-                              <Box sx={{
-                                width: '100%',
-                                maxWidth: '100%',
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                                whiteSpace: 'nowrap',
-                                textAlign: 'center',
-                              }}>
-                                {row.RATE}
-                              </Box>
-                            </Tooltip>
-                          </Box>
-                          <Box sx={{ px: 1 }}>
-                            <Tooltip title={row.AMOUNT} arrow>
-                              <Box sx={{
-                                width: '100%',
-                                maxWidth: '100%',
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                                whiteSpace: 'nowrap',
-                                textAlign: 'center',
-                              }}>
-                                {row.AMOUNT}
-                              </Box>
-                            </Tooltip>
-                          </Box>
-                        </Box>
-                      ))}
-                    </Box>
-                  </TableContainer>
-                </Box>
-              )}
 
               {activeTab === 2 && (
                 <Box >
@@ -2213,4 +1596,4 @@ const Tna = () => {
   );
 };
 
-export default Tna;
+export default UpdateTrims;
