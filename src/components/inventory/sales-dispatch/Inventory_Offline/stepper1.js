@@ -787,16 +787,16 @@ const handleAutoCompleteChange = (name, value) => {
       ...prev,
       PARTY_KEY: partyKey,
       Party: value,
-      // Only auto-populate shipping party if it's empty or same as current party
-      SHIPPING_PARTY: prev.SHIPPING_PARTY === prev.Party ? value : prev.SHIPPING_PARTY,
-      // Don't auto-set shipping party key if shipping party is different
-      SHP_PARTY_KEY: prev.SHIPPING_PARTY === prev.Party ? partyKey : prev.SHP_PARTY_KEY,
-      // Branch will be auto-selected in fetchPartyDetails
+    
+      SHIPPING_PARTY: value, 
+      SHP_PARTY_KEY: partyKey,
+    
+      SHIPPING_PLACE: "",
+      SHP_PARTYDTL_ID: 0
     }));
   }
 
-  // If branch is selected, only auto-select shipping place if it's currently empty or same as branch
-  // If branch is selected, auto-update shipping place
+
 if (name === "Branch" && value) {
   const branchId = branchMapping[value];
   console.log(`Branch selected: ${value}, Branch ID: ${branchId}`);

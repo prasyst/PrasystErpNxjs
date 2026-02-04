@@ -296,7 +296,7 @@ export default function InventoryComponent() {
       name: 'Sales/Dispatch',
       // MOD_NAME: "mnuTrnSales",
       children: [
-        // { name: 'Stock Enquiry', icon: SearchIcon, path: '/dashboard/stock-enquiry-table' },
+        { name: 'Stock Enquiry', icon: SearchIcon, path: '/dashboard/stock-enquiry-table' },
         {
           name: 'Order Booking (Hide Stock/FOB/WO)',
           // MOD_NAME: "mnuTrnSalesOrderWOStk",

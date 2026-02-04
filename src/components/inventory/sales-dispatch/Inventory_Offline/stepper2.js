@@ -48,7 +48,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, compa
   const [isEditingSize, setIsEditingSize] = useState(false);
   const [editingRowData, setEditingRowData] = useState(null);
   const [hasRecords, setHasRecords] = useState(false);
-  
+  const [itemsConfirmed, setItemsConfirmed] = useState(false);
   // State for dropdown options
   const [productOptions, setProductOptions] = useState([]);
   const [styleOptions, setStyleOptions] = useState([]);
@@ -1660,6 +1660,7 @@ const handleConfirmAdd = () => {
   setDataSource(null);
   setSelectedShades([]);
   setAvailableShades([]);
+  setItemsConfirmed(true);
 
   showSnackbar(selectedShades.length > 1 ? 
     `${selectedShades.length} items added to order (${totalQty} each)!` : 
@@ -2766,6 +2767,7 @@ const handleConfirmAdd = () => {
             variant="contained" 
             color="primary" 
             onClick={onNext}
+            disabled={!itemsConfirmed}
             sx={{ 
               minWidth: '60px', 
               height: '36px',

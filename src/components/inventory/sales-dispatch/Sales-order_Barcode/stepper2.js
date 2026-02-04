@@ -57,7 +57,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit,compan
   const [typeOptions, setTypeOptions] = useState([]);
   const [shadeOptions, setShadeOptions] = useState([]);
   const [lotNoOptions, setLotNoOptions] = useState([]);
-
+ const [itemsConfirmed, setItemsConfirmed] = useState(false);
   const [availableShades, setAvailableShades] = useState([]);
 const [selectedShades, setSelectedShades] = useState([]);
 const [shadeViewMode, setShadeViewMode] = useState('allocated');
@@ -1495,6 +1495,7 @@ const handleConfirmAdd = () => {
   setDataSource(null);
   setSelectedShades([]);
   setAvailableShades([]);
+  setItemsConfirmed(true);
 
   showSnackbar(selectedShades.length > 1 ? 
     `${selectedShades.length} barcode items added to order (${totalQty} each)!` : 
@@ -2656,7 +2657,7 @@ const handleConfirmAdd = () => {
             variant="outlined" 
             color="primary" 
             onClick={onPrev}
-            // disabled={isAddingNew || isEditingSize}
+           
             sx={{ 
               minWidth: '60px', 
               height: '36px',
@@ -2675,7 +2676,8 @@ const handleConfirmAdd = () => {
             variant="contained" 
             color="primary" 
             onClick={onNext}
-            // disabled={!hasRecords || isAddingNew || isEditingSize}
+               disabled={!itemsConfirmed}
+           
             sx={{ 
               minWidth: '60px', 
               height: '36px',
