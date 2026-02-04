@@ -419,7 +419,7 @@ const UpdateRm = () => {
       }
 
       const tnaPayload = {
-        "DBFLAG": U,
+        "DBFLAG": dbFlag,
         "FCYR_KEY": fcyr,
         "CO_ID": cobrid,
         "COBR_ID": cobrid,
@@ -447,28 +447,8 @@ const UpdateRm = () => {
         "EDIT_STATUS": "0",
         "CREATED_BY": userId || 0,
         "UPDATED_BY": userId || 0,
-        "TNARoutingEntities": [],
         "TNARMEntities": [],
-        "TNATRIMEntities": []
       };
-
-      if (editableRoutingData.length > 0) {
-        editableRoutingData.forEach((route, index) => {
-          tnaPayload.TNARoutingEntities.push({
-            "DBFLAG": "I",
-            "TNADTL_ID": route.TNADTL_ID,
-            "TNA_KEY": tnaKey,
-            "PROSTG_KEY": route.PROSTG_KEY,
-            "DAYS": route.DAYS || 0,
-            "PLAN_DT": route.PLAN_DT ? formatDateForAPI(route.PLAN_DT) : null,
-            "EST_DT": route.EST_DT ? formatDateForAPI(route.EST_DT) : null,
-            "ACT_DT": route.ACT_DT ? formatDateForAPI(route.ACT_DT) : formatDateForAPI(new Date()),
-            "PROD_OUT_QTY": route.PROD_OUT_QTY || 0,
-            "BAL_QTY": route.BAL_QTY || 0,
-            "REMK": route.REMK || ""
-          });
-        });
-      }
 
       if (editableRmData.length > 0) {
         editableRmData.forEach((rm, index) => {
@@ -507,45 +487,8 @@ const UpdateRm = () => {
         });
       }
 
-      if (editableTrimData.length > 0) {
-        editableTrimData.forEach((trim, index) => {
-          tnaPayload.TNATRIMEntities.push({
-            "DBFLAG": "I",
-            "TNATRIM_ID": trim.TNATRIM_ID,
-            "TNA_KEY": tnaKey,
-            "ITM_KEY": trim.ITM_KEY,
-            "ITMSUBGRP_KEY": trim.ITMSUBGRP_KEY,
-            "ITMCAT_KEY": trim.ITMCAT_KEY,
-            "ACCSHADE_KEY": 0,
-            "ACCSIZE_KEY": trim.ACCSIZE_KEY || '',
-            "QUANTITY": trim.QUANTITY || 0,
-            "RATE": trim.RATE || 0,
-            "AMOUNT": trim.AMOUNT || 0,
-            "REMK": trim.REMK || ""
-          });
-        });
-      }
-
-      else if (trimData.length > 0) {
-        trimData.forEach((trim, index) => {
-          tnaPayload.TNATRIMEntities.push({
-            "DBFLAG": "I",
-            "TNATRIM_ID": trim.TNATRIM_ID,
-            "TNA_KEY": tnaKey,
-            "ITM_KEY": trim.ITM_KEY,
-            "ITMSUBGRP_KEY": trim.ITMSUBGRP_KEY,
-            "ITMCAT_KEY": trim.ITMCAT_KEY,
-            "ACCSHADE_KEY": 0,
-            "ACCSIZE_KEY": trim.ACCSIZE_KEY || '',
-            "QUANTITY": trim.QUANTITY || 0,
-            "RATE": trim.RATE || 0,
-            "AMOUNT": trim.AMOUNT || 0,
-            "REMK": trim.REMK || ""
-          });
-        });
-      }
       console.log('tnaPayload', tnaPayload)
-      const submitResponse = await axiosInstance.post('/TNA/ApiMangeTNA', tnaPayload);
+      const submitResponse = await axiosInstance.post('/TNA/ApiTNARM', tnaPayload);
       if (submitResponse.data?.STATUS == 0) {
         toast.success(submitResponse.data.MESSAGE)
         await handleGetData();
@@ -1295,7 +1238,7 @@ const UpdateRm = () => {
                           Select
                         </Box>
 
-                        {['FAB_NAME', 'DESIGN',  'REMK','QTY', 'BAL_QTY', 'PO_QTY', 'GRN_QTY', 'STK_QTY', 'RATE', 'AMOUNT'].map((header, idx) => (
+                        {['RM_NAME', 'DESIGN',  'REMK','QTY', 'BAL_QTY', 'PO_QTY', 'GRN_QTY', 'STK_QTY', 'RATE', 'AMOUNT'].map((header, idx) => (
                           <Box
                             key={header}
                             sx={{
