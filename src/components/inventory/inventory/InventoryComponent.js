@@ -4,12 +4,7 @@ import { useState, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useSelector } from 'react-redux'; // Import useSelector
 import {
-  Box,
-  Typography,
-  Card,
-  CardContent,
-  Grid,
-  styled
+  Box, Typography, Card, CardContent, Grid, styled
 } from '@mui/material';
 import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
@@ -28,6 +23,7 @@ import {
   LocalShipping as ShippingIcon,
   Construction as ConstructionIcon
 } from '@mui/icons-material';
+import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import { useRecentPaths } from '../../../app/context/RecentPathsContext';
 
 function TabPanel(props) {
@@ -296,6 +292,8 @@ export default function InventoryComponent() {
       name: 'Sales/Dispatch',
       // MOD_NAME: "mnuTrnSales",
       children: [
+
+        { name: 'Sales Order(Live Stock)', icon: ShoppingCartIcon, path: '/inverntory/stockOrder-LiveStock' },
         { name: 'Stock Enquiry', icon: SearchIcon, path: '/dashboard/stock-enquiry-table' },
         {
           name: 'Order Booking (Hide Stock/FOB/WO)',

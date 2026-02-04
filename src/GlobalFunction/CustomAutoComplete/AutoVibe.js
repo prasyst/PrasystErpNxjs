@@ -136,13 +136,6 @@
 // export default AutoVibe;
 
 
-
-
-
-
-
-
-
 import React from 'react';
 import { Autocomplete, TextField, InputAdornment, FormControl } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
@@ -188,9 +181,7 @@ const AutoVibe = React.forwardRef(
           onChange={onChange}
           sx={{
             ...sx,
-            // NEW: Ensure autocomplete container takes full width
             '& .MuiAutocomplete-popper': {
-              // Auto width for dropdown
               '& .MuiPaper-root': {
                 backgroundColor: '#ffffff !important',
                 minWidth: `${minWidth}px !important`,
@@ -211,7 +202,6 @@ const AutoVibe = React.forwardRef(
                 {...props} 
                 style={{
                   padding: '4px 12px', // Reduce padding
-                 
                   whiteSpace: 'normal', // Allow text wrapping
                   wordBreak: 'break-word', // Break long words
                   lineHeight: '1.2', // Reduce line height

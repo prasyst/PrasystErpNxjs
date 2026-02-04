@@ -1,32 +1,61 @@
 'use client'
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import {
-    Box,
-    Grid,
-    TextField,
-    Typography,
-    Button,
-    Stack,
-    FormControlLabel,
-    Checkbox,
-    Dialog,
-    DialogTitle,
-    DialogContent,
-    DialogContentText,
-    DialogActions,
+    Box, Grid, TextField, Typography, Button, Stack, FormControlLabel, Checkbox, Dialog, DialogTitle, DialogContent,
+    DialogContentText, DialogActions, Paper
 } from '@mui/material';
-import { toast, ToastContainer } from 'react-toastify';
+import KeyboardArrowLeftIcon from "@mui/icons-material/KeyboardArrowLeft";
+import NavigateNextIcon from "@mui/icons-material/NavigateNext";
+import { toast, ToastContainer } from 'react-toastify'
+import z from 'zod';
 import { getFormMode } from '@/lib/helpers';
 import { useRouter } from 'next/navigation';
+import CrudButton from '@/GlobalFunction/CrudButton';
 import debounce from 'lodash.debounce';
 import axiosInstance from '@/lib/axios';
 import { useSearchParams } from 'next/navigation';
 import { pdf } from '@react-pdf/renderer';
-import PrintPrdGrpDt from './PrintPrdGrpDt';
-import PaginationButtons from '@/GlobalFunction/PaginationButtons';
-import CrudButtons from '@/GlobalFunction/CrudButtons';
+import { TbListSearch } from "react-icons/tb";
 
 const FORM_MODE = getFormMode();
+
+const categoryFormSchema = z.object({
+    FGCAT_NAME: z.string().min(1, "Category Name is required"),
+});
+
+const textInputSx = {
+    '& .MuiInputBase-root': {
+        height: 42,
+        fontSize: '14px',
+    },
+    '& .MuiInputLabel-root': {
+        fontSize: '14px',
+        top: '-8px',
+    },
+    '& .MuiFilledInput-root': {
+        backgroundColor: '#fafafa',
+        border: '1px solid #e0e0e0',
+        borderRadius: '6px',
+        overflow: 'hidden',
+        height: 42,
+        fontSize: '14px',
+    },
+    '& .MuiFilledInput-root:before': {
+        display: 'none',
+    },
+    '& .MuiFilledInput-root:after': {
+        display: 'none',
+    },
+    '& .MuiInputBase-input': {
+        padding: '10px 12px !important',
+        fontSize: '14px !important',
+        lineHeight: '1.4',
+    },
+    '& .MuiFilledInput-root.Mui-disabled': {
+        backgroundColor: '#fff'
+    }
+};
+
 const ProductGrp = () => {
     const router = useRouter();
     const searchParams = useSearchParams();
@@ -36,7 +65,7 @@ const ProductGrp = () => {
         SearchByCd: '',
         SERIES: '',
         PRODGRP_CODE: '',
-        PRODGRP_KEY: '',  //CODE
+        PRODGRP_KEY: '',
         PRODGRP_NAME: '',
         PRODGRP_ABRV: '',
         ProdGrp_LST_CODE: '',
@@ -71,13 +100,13 @@ const ProductGrp = () => {
     const fetchRetriveData = useCallback(async (currentPRODGRP_KEY, flag = "R", isManualSearch = false) => {
         try {
             const response = await axiosInstance.post('ProdGrp/RetriveProdGrp', {
-                "FLAG": flag,
-                "TBLNAME": "ProdGrp",
-                "FLDNAME": "PRODGRP_KEY",
-                "ID": currentPRODGRP_KEY,
-                "ORDERBYFLD": "",
-                "CWHAER": "",
-                "CO_ID": CO_ID
+                FLAG: flag,
+                TBLNAME: "ProdGrp",
+                FLDNAME: "PRODGRP_KEY",
+                ID: currentPRODGRP_KEY,
+                ORDERBYFLD: "",
+                CWHAER: "",
+                CO_ID: CO_ID
             });
             const { data: { STATUS, DATA, RESPONSESTATUSCODE, MESSAGE } } = response;
             if (STATUS === 0 && Array.isArray(DATA) && RESPONSESTATUSCODE == 1) {
@@ -126,7 +155,7 @@ const ProductGrp = () => {
                 SearchByCd: '',
                 SERIES: '',
                 PRODGRP_CODE: '',
-                PRODGRP_KEY: '',  //CODE
+                PRODGRP_KEY: '',
                 PRODGRP_NAME: '',
                 PRODGRP_ABRV: '',
                 ProdGrp_LST_CODE: '',
@@ -149,9 +178,9 @@ const ProductGrp = () => {
                 url = `ProdGrp/InsertProdGrp?UserName=${(UserName)}&strCobrid=${COBR_ID}`;
             }
             const payload = {
-                PRODGRP_KEY: form.PRODGRP_KEY,  //CODE
-                PRODGRP_CODE: form.PRODGRP_CODE, //ALT CODE
-                PRODGRP_NAME: form.PRODGRP_NAME, //PRODGRP NAME
+                PRODGRP_KEY: form.PRODGRP_KEY,
+                PRODGRP_CODE: form.PRODGRP_CODE,
+                PRODGRP_NAME: form.PRODGRP_NAME,
                 PRODGRP_ABRV: form.PRODGRP_ABRV,
                 STATUS: form.Status ? "1" : "0",
             };
@@ -165,7 +194,6 @@ const ProductGrp = () => {
                 if (STATUS === 0) {
                     setMode(FORM_MODE.read);
                     toast.success(MESSAGE, { autoClose: 1000 });
-
                 } else {
                     toast.error(MESSAGE, { autoClose: 1000 });
                 }
@@ -193,9 +221,18 @@ const ProductGrp = () => {
                 }
             }
         } catch (error) {
-            console.error("Submit Error:", error);
+            toast.error("Submit Error:", error);
         }
     };
+
+    const handleInputChange = (e) => {
+        const { name, value } = e.target;
+        setForm(prev => ({
+            ...prev,
+            [name]: value
+        }));
+    };
+
     const handleCancel = async () => {
         if (mode === FORM_MODE.add) {
             await fetchRetriveData(1, "L");
@@ -208,19 +245,20 @@ const ProductGrp = () => {
             SearchByCd: ''
         }));
     };
+
     const debouncedApiCall = debounce(async (newSeries) => {
         try {
             const response = await axiosInstance.post('GetSeriesSettings/GetSeriesLastNewKey', {
-                "MODULENAME": "ProdGrp",
-                "TBLNAME": "ProdGrp",
-                "FLDNAME": "ProdGrp_KEY",
-                "NCOLLEN": 5,
-                "CPREFIX": newSeries,
-                "COBR_ID": COBR_ID,
-                "FCYR_KEY": FCYR_KEY,
-                "TRNSTYPE": "M",
-                "SERIESID": 0,
-                "FLAG": ""
+                MODULENAME: "ProdGrp",
+                TBLNAME: "ProdGrp",
+                FLDNAME: "ProdGrp_KEY",
+                NCOLLEN: 5,
+                CPREFIX: newSeries,
+                COBR_ID: COBR_ID,
+                FCYR_KEY: FCYR_KEY,
+                TRNSTYPE: "M",
+                SERIESID: 0,
+                FLAG: ""
             });
             const { STATUS, DATA, MESSAGE } = response.data;
             if (STATUS === 0 && DATA.length > 0) {
@@ -244,6 +282,7 @@ const ProductGrp = () => {
             console.error("Error fetching series data:", error);
         }
     }, 300);
+
     const handleManualSeriesChange = (newSeries) => {
         setForm((prevForm) => ({
             ...prevForm,
@@ -258,9 +297,13 @@ const ProductGrp = () => {
             return;
         };
         debouncedApiCall(newSeries);
-    }
+    };
+
+    const handleTable = () => {
+        router.push("/masters/products/productgrp/prdgrptable/");
+    };
+
     const handleAdd = async () => {
-        console.log("handleAdd called");
         setMode(FORM_MODE.add);
         setCurrentPRODGRP_KEY(null);
         setForm((prevForm) => ({
@@ -275,16 +318,16 @@ const ProductGrp = () => {
         let cprefix = '';
         try {
             const response = await axiosInstance.post('GetSeriesSettings/GetSeriesLastNewKey', {
-                "MODULENAME": "ProdGrp",
-                "TBLNAME": "ProdGrp",
-                "FLDNAME": "PRODGRP_KEY",
-                "NCOLLEN": 0,
-                "CPREFIX": "",
-                "COBR_ID": COBR_ID,
-                "FCYR_KEY": FCYR_KEY,
-                "TRNSTYPE": "M",
-                "SERIESID": 162,
-                "FLAG": "Series"
+                MODULENAME: "ProdGrp",
+                TBLNAME: "ProdGrp",
+                FLDNAME: "PRODGRP_KEY",
+                NCOLLEN: 0,
+                CPREFIX: "",
+                COBR_ID: COBR_ID,
+                FCYR_KEY: FCYR_KEY,
+                TRNSTYPE: "M",
+                SERIESID: 162,
+                FLAG: "Series"
             });
 
             const { STATUS, DATA } = response.data;
@@ -327,14 +370,16 @@ const ProductGrp = () => {
             console.error("Error fetching ID and LASTID:", error);
         }
     };
-    const handleFirst = async()=>{}
-    const handleLast = async ()=>{
-          await fetchRetriveData(1, "L");
+
+    const handleFirst = async () => { }
+    const handleLast = async () => {
+        await fetchRetriveData(1, "L");
         setForm((prev) => ({
             ...prev,
             SearchByCd: ''
         }));
-    }
+    };
+
     const handlePrevious = async () => {
         await fetchRetriveData(currentPRODGRP_KEY, "P");
         setForm((prev) => ({
@@ -342,6 +387,7 @@ const ProductGrp = () => {
             SearchByCd: ''
         }));
     };
+
     const handleNext = async () => {
         if (currentPRODGRP_KEY) {
             await fetchRetriveData(currentPRODGRP_KEY, "N");
@@ -351,12 +397,15 @@ const ProductGrp = () => {
             SearchByCd: ''
         }));
     };
+
     const handleDelete = () => {
         setOpenConfirmDialog(true);
-    }
+    };
+
     const handleCloseConfirmDialog = () => {
         setOpenConfirmDialog(false);
     };
+
     const handleConfirmDelete = async () => {
         setOpenConfirmDialog(false);
         try {
@@ -375,9 +424,9 @@ const ProductGrp = () => {
             console.error("Delete Error:", error);
         }
     };
+
     const handleEdit = () => {
         setMode(FORM_MODE.edit);
-
     };
 
     const handlePrint = async () => {
@@ -385,19 +434,17 @@ const ProductGrp = () => {
             const response = await axiosInstance.post(`/ProdGrp/GetProdGrpDashBoard?currentPage=1&limit=5000`, {
                 "SearchText": ""
             });
-            const { data: { STATUS, DATA } } = response; // Extract DATA
+            const { data: { STATUS, DATA } } = response;
             if (STATUS === 0 && Array.isArray(DATA)) {
                 const formattedData = DATA.map(row => ({
                     ...row,
                     STATUS: row.STATUS === "1" ? "Active" : "Inactive"
                 }));
 
-                // Generate the PDF blob
                 const asPdf = pdf(<PrintPrdGrpDt rows={formattedData} />);
                 const blob = await asPdf.toBlob();
                 const url = URL.createObjectURL(blob);
 
-                // Open the PDF in a new tab
                 const newTab = window.open(url, '_blank');
                 if (newTab) {
                     newTab.focus();
@@ -413,145 +460,202 @@ const ProductGrp = () => {
 
     const handleExit = () => { router.push("/masterpage?activeTab=products") };
 
-    const Buttonsx = {
-        backgroundColor: '#39ace2',
-        margin: { xs: '0 4px', sm: '0 6px' },
-        minWidth: { xs: 40, sm: 46, md: 60 },
-        height: { xs: 40, sm: 46, md: 27 },
-        // "&:disabled": {
-        //   backgroundColor: "rgba(0, 0, 0, 0.12)",
-        //   color: "rgba(0, 0, 0, 0.26)",
-        //   boxShadow: "none",
-        // }
-    };
     return (
         <>
-            <Box
+            <Grid
                 sx={{
                     width: '100%',
+                    display: 'flex',
+                    flexDirection: 'column',
                     justifyContent: 'center',
-                    alignItems: 'flex-start',
-                    padding: '24px',
+                    alignItems: 'center',
                     boxSizing: 'border-box',
-                    marginTop: { xs: "30px", sm: "0px" }
+                    minHeight: '91vh',
+                    overflowX: 'hidden',
+                    overflowY: 'auto'
                 }}
-                className="form-container"
             >
                 <ToastContainer />
-                <Box
+
+                <Grid container spacing={2}
                     sx={{
-                        maxWidth: '1000px',
-                        boxShadow: '0px 2px 6px rgba(0, 0, 0, 0.1)',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        marginInline: { xs: '5%', sm: '5%', md: '5%', lg: '15%', xl: '5%' },
                     }}
-                    className="form_grid"
                 >
-                    <Grid container alignItems="center"
-                        justifyContent="space-between" spacing={2} sx={{ marginTop: "10px", marginInline: '20px' }}>
-                        <Grid sx={{ flexGrow: 1 }}>
-                            <Typography align="center" variant="h5">
-                                Product Group Master
-                            </Typography>
-                        </Grid>
+                    <Grid>
+                        <Typography align="center" variant="h6">
+                            Product Group Master
+                        </Typography>
                     </Grid>
-                    <Box sx={{
-                        display: 'flex', flexDirection: 'column', gap: { xs: 1.5, sm: 1.5, md: 2 },
-                        marginInline: { xs: '5%', sm: '10%', md: '25%' },
-                        marginBlock: { xs: '15px', sm: '20px', md: '30px' },
-                    }}>
-                        <Box sx={{ display: 'flex', justifyContent: 'end' }}>
+
+                    <Grid container justifyContent="space-between"
+                        sx={{ marginInline: { xs: '5%', sm: '5%', md: '5%', lg: '0%', xl: '0%' } }}
+                        spacing={2}
+                    >
+                        <Grid>
+                            <Button
+                                variant="contained"
+                                size="small"
+                                sx={{ background: 'linear-gradient(290deg, #d4d4d4, #d4d4d4) !important' }}
+                                disabled={mode !== 'view'}
+                                onClick={handlePrevious}
+                            >
+                                <KeyboardArrowLeftIcon />
+                            </Button>
+                            <Button
+                                variant="contained"
+                                size="small"
+                                sx={{ background: 'linear-gradient(290deg, #b9d0e9, #e9f2fa) !important', ml: 1 }}
+                                disabled={mode !== 'view'}
+                                onClick={handleNext}
+                            >
+                                <NavigateNextIcon />
+                            </Button>
+                        </Grid>
+
+                        <Grid sx={{ display: 'flex' }}>
                             <TextField
                                 placeholder="Search By Code"
-                                variant="filled"
+                                variant="outlined"
                                 sx={{
-                                    width: { xs: '100%', sm: '50%', md: '30%' },
                                     backgroundColor: '#e0f7fa',
                                     '& .MuiInputBase-input': {
                                         paddingBlock: { xs: '8px', md: '4px' },
-                                        paddingLeft: { xs: '10px', md: '8px' },
+                                        paddingLeft: { xs: '8px', md: '8px' },
                                     },
-
                                 }}
                                 value={form.SearchByCd}
                                 onChange={(e) => setForm({ ...form, SearchByCd: e.target.value })}
                                 onKeyPress={(e) => {
                                     if (e.key === 'Enter') {
-                                        fetchRetriveData(e.target.value, "R", true);
+                                        fetchRetriveData(e.target.value, 'R', true);
                                     }
                                 }}
                             />
-                        </Box>
+                        </Grid>
 
-                        <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row', md: 'row' }, justifyContent: 'space-between', gap: { xs: 1, sm: 1, md: 1 } }}>
+                        <Grid sx={{ display: 'flex' }}>
+                            <TbListSearch onClick={handleTable} style={{ color: 'rgb(99, 91, 255)', width: '40px', height: '32px' }} />
+                        </Grid>
+
+                        <Grid sx={{ display: "flex", justifyContent: "end", marginRight: '-6px' }}>
+                            <CrudButton
+                                moduleName="QC Group"
+                                mode={mode}
+                                onAdd={handleAdd}
+                                onEdit={handleEdit}
+                                onDelete={handleDelete}
+                                onExit={handleExit}
+                                readOnlyMode={mode === FORM_MODE.read}
+                                onPrevious={handlePrevious}
+                                onNext={handleNext}
+                            />
+                        </Grid>
+                    </Grid>
+
+                    <Grid container spacing={1}>
+                        <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                             <TextField
                                 label="Series"
                                 inputRef={SERIESRef}
-                                sx={{ width: { xs: '100%', sm: '50%', md: '32%' } }}
-                                disabled={mode === FORM_MODE.read}
+                                variant="filled"
                                 fullWidth
-                                className="custom-textfield"
-                                value={form.SERIES}
                                 onChange={(e) => handleManualSeriesChange(e.target.value)}
+                                value={form.SERIES}
+                                name="SERIES"
+                                disabled={mode === FORM_MODE.read}
+                                sx={textInputSx}
+                                inputProps={{
+                                    style: {
+                                        padding: '6px 8px',
+                                        fontSize: '12px',
+                                    },
+                                }}
                             />
+                        </Grid>
+
+                        <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                             <TextField
                                 label="Last Cd"
-                                sx={{ width: { xs: '100%', sm: '50%', md: '32%' } }}
-                                disabled={true}
+                                variant="filled"
                                 fullWidth
-                                className="custom-textfield"
-                                value={form.ProdGrp_LST_CODE}
-                                onChange={(e) => setForm({ ...form, ProdGrp_LST_CODE: e.target.value })}
+                                onChange={handleInputChange}
+                                value={form.PRODGRP_KEY}
+                                name="FGPRD_LST_CODE"
+                                disabled={true}
+                                sx={textInputSx}
+                                inputProps={{
+                                    style: {
+                                        padding: '6px 8px',
+                                        fontSize: '12px',
+                                    },
+                                }}
                             />
+                        </Grid>
+
+                        <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                             <TextField
                                 label="Code"
                                 inputRef={PRODGRP_KEYRef}
-                                sx={{ width: { xs: '100%', sm: '50%', md: '32%' } }}
+                                variant="filled"
+                                fullWidth
+                                onChange={handleInputChange}
+                                value={form.PRODGRP_CODE}
+                                name="PRODGRP_KEY"
                                 disabled={mode === FORM_MODE.read}
-                                className="custom-textfield"
-                                value={form.PRODGRP_KEY}
-                                onChange={(e) => setForm({ ...form, PRODGRP_KEY: e.target.value })}
+                                sx={textInputSx}
+                                inputProps={{
+                                    style: {
+                                        padding: '6px 8px',
+                                        fontSize: '12px',
+                                    },
+                                }}
                             />
+                        </Grid>
 
-                        </Box>
-
-                        <Box sx={{
-                            display: 'flex',
-                            flexDirection: { xs: 'column', sm: 'row', md: 'row' },
-                            justifyContent: 'space-between',
-                            gap: { xs: 1, sm: 1, md: 1 },
-                        }}>
-
+                        <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                             <TextField
+                                label={<span>Product Name<span style={{ color: "red" }}>*</span></span>}
                                 inputRef={ProdGrp_NAMERef}
-                                label=" Name"
-                                // label={
-                                //     <span>
-                                //         Name<span style={{ color: "red" }}>*</span>
-                                //     </span>
-                                // }
-                                sx={{ width: '100%' }}
-                                disabled={mode === FORM_MODE.read}
-                                className="custom-textfield"
+                                variant="filled"
+                                fullWidth
+                                onChange={handleInputChange}
                                 value={form.PRODGRP_NAME}
-                                onChange={(e) => setForm({ ...form, PRODGRP_NAME: e.target.value })}
+                                name="PRODGRP_NAME"
+                                disabled={mode === FORM_MODE.read}
+                                sx={textInputSx}
+                                inputProps={{
+                                    style: {
+                                        padding: '6px 8px',
+                                        fontSize: '12px',
+                                    },
+                                }}
                             />
-                        </Box>
-                        <Box sx={{
-                            display: 'flex',
-                            flexDirection: { xs: 'column', sm: 'row', md: 'row' },
-                            justifyContent: 'space-between',
-                            gap: { xs: 1, sm: 1, md: 1 },
-                        }}>
+                        </Grid>
 
+                        <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                             <TextField
                                 label="Abbreviation"
                                 inputRef={PRODGRP_ABRVRef}
-                                sx={{ width: { xs: '100%', sm: '40%', md: '30%' } }}
-                                disabled={mode === FORM_MODE.read}
-                                className="custom-textfield"
+                                variant="filled"
+                                fullWidth
+                                onChange={handleInputChange}
                                 value={form.PRODGRP_ABRV}
-                                onChange={(e) => setForm({ ...form, PRODGRP_ABRV: e.target.value })}
+                                name="PRODGRP_ABRV"
+                                disabled={mode === FORM_MODE.read}
+                                sx={textInputSx}
+                                inputProps={{
+                                    style: {
+                                        padding: '6px 8px',
+                                        fontSize: '12px',
+                                    },
+                                }}
                             />
+                        </Grid>
 
+                        <Grid size={{ xs: 12, sm: 6, md: 2 }} display="flex" justifyContent="end">
                             <FormControlLabel
                                 control={
                                     <Checkbox
@@ -567,70 +671,34 @@ const ProductGrp = () => {
                                 }
                                 label="Active "
                             />
-                        </Box>
-                    </Box>
-                    <Grid container alignItems="center"
-                        justifyContent="center" spacing={1} sx={{ marginTop: "10px", marginInline: '20px' }}>
-                        <Grid sx={{
-                            display: 'flex', justifyContent: {
-                                xs: 'center',
-                                sm: 'flex-start'
-                            },
-                            width: { xs: '100%', sm: 'auto' },
-                        }}>
-                            <Stack direction="row" spacing={1}>
-                                <PaginationButtons
-                                    mode={mode}
-                                    FORM_MODE={FORM_MODE}
-                                    currentKey={currentPRODGRP_KEY}
-                                    onFirst={handleFirst}
-                                    onPrevious={handlePrevious}
-                                    onNext={handleNext}
-                                    onLast={handleLast}
-                                    sx={{ mt: 2 }}
-                                    buttonSx={Buttonsx}
-                                />
-                            </Stack>
-                        </Grid>
-                        <Grid>
-                            <Stack direction="row" spacing={{ xs: 0.5, sm: 1 }} >
-                                <CrudButtons
-                                    mode={mode}
-                                    onAdd={mode === FORM_MODE.read ? handleAdd : handleSubmit}
-                                    onEdit={mode === FORM_MODE.read ? handleEdit : handleCancel}
-                                    onView={handlePrint}
-                                    onDelete={handleDelete}
-                                    onExit={handleExit}
-                                    readOnlyMode={mode === FORM_MODE.read}
-                                />
-                            </Stack>
                         </Grid>
                     </Grid>
-                    {/* Submit / Cancel Buttons */}
-                    {/* <Grid item xs={12} className="form_button"   sx={{
-                            display: 'flex',
-                            justifyContent: { xs: 'center', sm: 'flex-end' },
-                            gap: { xs: 1, sm: 1.5 },
-                            padding: { xs: 1, sm: 2, md: 3 },
-                        }}>
+
+                    <Grid sx={{
+                        display: "flex",
+                        justifyContent: "end",
+                        ml: '56.8%',
+                        position: 'relative',
+                        top: 10
+                    }}>
                         {mode === FORM_MODE.read && (
                             <>
-                                <Button
-                                    variant="contained"
+                                <Button variant="contained"
                                     sx={{
-                                        mr: 1,
-                                        background: "linear-gradient(290deg, #d4d4d4, #ffffff)",
+                                        background: 'linear-gradient(290deg, #d4d4d4, #ffffff)',
+                                        margin: { xs: '0 4px', sm: '0 6px' },
+                                        minWidth: { xs: 40, sm: 46, md: 60 },
+                                        height: { xs: 40, sm: 46, md: 30 },
                                     }}
-                                    onClick={handleAdd}
-                                    disabled
-                                >
+                                    onClick={handleAdd} disabled>
                                     Submit
                                 </Button>
-                                <Button
-                                    variant="contained"
+                                <Button variant="contained"
                                     sx={{
-                                        mr: 1,
-                                        background: "linear-gradient(290deg, #a7c5e9, #ffffff)",
+                                        background: 'linear-gradient(290deg, #a7c5e9, #ffffff)',
+                                        margin: { xs: '0 4px', sm: '0 6px' },
+                                        minWidth: { xs: 40, sm: 46, md: 60 },
+                                        height: { xs: 40, sm: 46, md: 30 },
                                     }}
                                     onClick={handleEdit}
                                     disabled
@@ -641,72 +709,69 @@ const ProductGrp = () => {
                         )}
                         {(mode === FORM_MODE.edit || mode === FORM_MODE.add) && (
                             <>
-                                <Button
-                                    variant="contained"
+                                <Button variant="contained"
                                     sx={{
-                                        mr: 1,
-                                        background: "linear-gradient(290deg,   #b9d0e9, #e9f2fa)",
+                                        backgroundColor: '#635bff',
+                                        color: '#fff',
+                                        margin: { xs: '0 4px', sm: '0 6px' },
+                                        minWidth: { xs: 40, sm: 46, md: 60 },
+                                        height: { xs: 40, sm: 46, md: 30 },
                                     }}
-                                    onClick={handleSubmit}
-                                >
+                                    onClick={handleSubmit}>
                                     Submit
                                 </Button>
-                                <Button
-                                    variant="contained"
+                                <Button variant="contained"
                                     sx={{
-                                        mr: 1,
-                                        background: "linear-gradient(290deg,   #b9d0e9, #e9f2fa)",
+                                        backgroundColor: '#635bff',
+                                        color: '#fff',
+                                        margin: { xs: '0 4px', sm: '0 6px' },
+                                        minWidth: { xs: 40, sm: 46, md: 60 },
+                                        height: { xs: 40, sm: 46, md: 30 },
                                     }}
-                                    onClick={handleCancel}
-                                >
+                                    onClick={handleCancel}>
                                     Cancel
                                 </Button>
                             </>
                         )}
-                    </Grid> */}
-                </Box>
-            </Box>
-            <Dialog
-                open={openConfirmDialog}
-                onClose={handleCloseConfirmDialog}
-                aria-labelledby="alert-dialog-title"
-                aria-describedby="alert-dialog-description"
-            >
-                <DialogTitle id="alert-dialog-title">{"Confirm Deletion"}</DialogTitle>
-                <DialogContent>
-                    <DialogContentText id="alert-dialog-description">
-                        Are you sure you want to delete this record?
-                    </DialogContentText>
-                </DialogContent>
-                <DialogActions>
-                    <Button
-                        sx={{
-                            backgroundColor: "#39ace2",
-                            color: "white",
-                            "&:hover": {
-                                backgroundColor: "#2199d6",
-                                color: "white",
-                            },
-                        }}
-                        onClick={handleConfirmDelete}
-                    >
-                        Yes
-                    </Button>
-                    <Button
-                        sx={{
-                            backgroundColor: "#39ace2",
-                            color: "white",
-                            "&:hover": {
-                                backgroundColor: "#2199d6",
-                                color: "white",
-                            },
-                        }}
-                        onClick={handleCloseConfirmDialog}
-                    >
-                        No
-                    </Button>
-                </DialogActions>
-            </Dialog>
+                    </Grid>
+                </Grid >
+
+                <Dialog
+                    open={openConfirmDialog}
+                    onClose={handleCloseConfirmDialog}
+                    aria-labelledby="alert-dialog-title"
+                    aria-describedby="alert-dialog-description"
+                >
+                    <DialogTitle id="alert-dialog-title">{"Confirm Deletion"}</DialogTitle>
+                    <DialogContent>
+                        <DialogContentText id="alert-dialog-description">
+                            Are you sure you want to delete this product group?
+                        </DialogContentText>
+                    </DialogContent>
+                    <DialogActions>
+                        <Button
+                            sx={{
+                                backgroundColor: '#635bff',
+                                color: 'white',
+                                '&:hover': { backgroundColor: '#1565c0', color: 'white' },
+                            }}
+                            onClick={handleConfirmDelete}
+                        >
+                            Yes
+                        </Button>
+                        <Button
+                            sx={{
+                                backgroundColor: '#635bff',
+                                color: 'white',
+                                '&:hover': { backgroundColor: '#1565c0', color: 'white' },
+                            }}
+                            onClick={handleCloseConfirmDialog}
+                        >
+                            No
+                        </Button>
+                    </DialogActions>
+                </Dialog>
+            </Grid >
         </>
     );
 };
