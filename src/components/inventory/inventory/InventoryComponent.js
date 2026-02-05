@@ -293,7 +293,7 @@ export default function InventoryComponent() {
       // MOD_NAME: "mnuTrnSales",
       children: [
 
-        { name: 'Sales Order(Live Stock)', icon: ShoppingCartIcon, path: '/inverntory/stockOrder-LiveStock' },
+        { name: 'Sales Order(Live Stock)', icon: ShoppingCartIcon, path: '/inverntory/saleorder-livestock' },
         { name: 'Stock Enquiry', icon: SearchIcon, path: '/dashboard/stock-enquiry-table' },
         {
           name: 'Order Booking (Hide Stock/FOB/WO)',
@@ -359,7 +359,6 @@ export default function InventoryComponent() {
       <Box
         sx={{
           width: '100%',
-          pb: 1,
           '& .MuiTabs-root': {
             padding: '4px 3px 4px 4px !important',
           },
@@ -413,15 +412,13 @@ export default function InventoryComponent() {
                 {filteredChildren.map((item, itemIndex) => {
                   const ItemIcon = item.icon;
                   return (
-                    <Grid item xs={4} sm={6} md={4} lg={3} key={itemIndex}>
+                    <Grid size={{ xs: 6, sm: 3, md: 3, lg: 2 }} key={itemIndex}>
                       <Card
                         sx={{
                           cursor: item.path !== '#' ? 'pointer' : 'default',
                           transition: 'all 0.3s ease',
-                          width: { xs: 150, sm: 180 },
-                          minWidth: { xs: 150, sm: 180 },
-                          maxWidth: { xs: 150, sm: 180 },
-                          height: 100,
+                          // width: 150,
+                          height: '100%',
                           background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
                           border: '1px solid #e0e0e0',
                           borderRadius: '8px',

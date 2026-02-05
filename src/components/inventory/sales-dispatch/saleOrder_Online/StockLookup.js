@@ -7,6 +7,7 @@ import {
   TextField,
   CircularProgress,
   Autocomplete,
+  Typography,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import axiosInstance from '../../../../lib/axios';
@@ -50,8 +51,8 @@ const StockLookupoffline = () => {
     {
       field: "ORDBK_NO",
       headerName: t('orderNo'),
-      width: 130,
-      maxWidth: 140,
+      width: 100,
+      maxWidth: 100,
       filter: 'agSetColumnFilter',
       filterParams: {
         defaultToNothingSelected: true,
@@ -265,14 +266,13 @@ const StockLookupoffline = () => {
 
   const handleRowDoubleClick = useCallback((rows) => {
     const queryString = `?ordbkKey=${encodeURIComponent(rows.ORDBK_KEY)}`;
-    router.push(`/inverntory/inventory-offline${queryString}`);
+    router.push(`/inverntory/saleorder-livestock/${queryString}`);
   }, [router]);
 
   const handleSelectionChanged = useCallback((event) => {
     const selectedNodes = event.api.getSelectedNodes();
     const selectedData = selectedNodes.map(node => node.data);
     setSelectedRows(selectedData);
-    console.log('Selected rows:', selectedData);
   }, []);
 
   const addButtonStyles = {
@@ -295,8 +295,8 @@ const StockLookupoffline = () => {
   };
 
   return (
-    <div className="p-2 w-full">
-      <div className="w-full mx-auto" style={{ maxWidth: '100%' }}>
+    <Box className="p-2 w-full">
+      <Box className="w-full mx-auto" style={{ maxWidth: '100%' }}>
         <Box sx={{ width: "100%", px: 2, mb: 2 }}>
           <Box sx={{
             display: "flex",
@@ -422,16 +422,18 @@ const StockLookupoffline = () => {
         </Box>
 
         {/* AG Grid Table */}
-        <div style={{ height: 'calc(100vh - 100px)', width: '100%' }}>
+        <Box sx={{ height: 'calc(100vh - 100px)', width: '100%' }}>
           {isLoading ? (
-            <div style={{
+            <Box sx={{
               display: 'flex',
+              flexDirection: 'column',
               justifyContent: 'center',
               alignItems: 'center',
-              height: '100%'
+              height: '100%',
             }}>
-              <CircularProgress />
-            </div>
+              <CircularProgress size="3rem" />
+              <Typography sx={{ marginTop: '10px' }}>Loading data...</Typography>
+            </Box>
           ) : (
             <ReusableTable
               columnDefs={columnDefs}
@@ -475,9 +477,9 @@ const StockLookupoffline = () => {
               enableLanguageSwitch={true}
             />
           )}
-        </div>
-      </div>
-    </div>
+        </Box>
+      </Box>
+    </Box>
   );
 };
 

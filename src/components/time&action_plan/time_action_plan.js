@@ -191,7 +191,7 @@ const generateMockData = () => {
   const factories = ['Factory A', 'Factory B', 'Factory C', 'Factory D', 'Factory E'];
   const merchandisers = ['John Doe', 'Jane Smith', 'Mike Johnson', 'Sarah Lee', 'Robert Chen'];
   const buyers = ['H&M', 'Zara', 'Mango', 'Uniqlo', 'Gap', 'Nike', 'Adidas', 'Puma'];
-  
+
   // All stages as per your requirement
   const allStages = [
     // Order Confirmation Stage
@@ -199,52 +199,52 @@ const generateMockData = () => {
     { name: 'Tech Pack Review', category: 'Order Confirmation', duration: 2 },
     { name: 'Costing Approval', category: 'Order Confirmation', duration: 3 },
     { name: 'Delivery Date Finalization', category: 'Order Confirmation', duration: 2 },
-    
+
     // BOM Finalization
     { name: 'Fabric Details Freeze', category: 'BOM Finalization', duration: 2 },
     { name: 'Trims & Accessories List', category: 'BOM Finalization', duration: 3 },
     { name: 'Packing Material Final', category: 'BOM Finalization', duration: 1 },
     { name: 'Consumption Calculation', category: 'BOM Finalization', duration: 2 },
-    
+
     // Sampling Stage
     { name: 'Proto Sample', category: 'Sampling', duration: 5 },
     { name: 'Fit Sample', category: 'Sampling', duration: 4 },
     { name: 'Size Set Sample', category: 'Sampling', duration: 6 },
     { name: 'PP Sample (Pre Production)', category: 'Sampling', duration: 5 },
     { name: 'Buyer Approval', category: 'Sampling', duration: 3 },
-    
+
     // Material Procurement
     { name: 'Fabric Order Placement', category: 'Material Procurement', duration: 2 },
     { name: 'Fabric In-House', category: 'Material Procurement', duration: 10 },
     { name: 'Trims Order', category: 'Material Procurement', duration: 3 },
     { name: 'Trims In-House', category: 'Material Procurement', duration: 7 },
     { name: 'Shade Band Approval', category: 'Material Procurement', duration: 3 },
-    
+
     // Production Preparation
     { name: 'Pattern Making', category: 'Production Preparation', duration: 4 },
     { name: 'Marker Making', category: 'Production Preparation', duration: 2 },
     { name: 'CAD Approval', category: 'Production Preparation', duration: 3 },
     { name: 'Fabric Inspection (4 Point System)', category: 'Production Preparation', duration: 2 },
     { name: 'Cutting Approval', category: 'Production Preparation', duration: 1 },
-    
+
     // Production Stage
     { name: 'Cutting Start', category: 'Production', duration: 3 },
     { name: 'Sewing Start', category: 'Production', duration: 10 },
     { name: 'Line Feeding', category: 'Production', duration: 2 },
     { name: 'Output Monitoring', category: 'Production', duration: 15 },
     { name: 'Production Completion', category: 'Production', duration: 2 },
-    
+
     // Washing/Embroidery/Printing
     { name: 'Process Start', category: 'Special Processes', duration: 3 },
     { name: 'Process End', category: 'Special Processes', duration: 5 },
     { name: 'Quality Check', category: 'Special Processes', duration: 2 },
-    
+
     // Quality Control
     { name: 'Inline Inspection', category: 'Quality Control', duration: 2 },
     { name: 'Mid Inspection', category: 'Quality Control', duration: 3 },
     { name: 'Final Inspection', category: 'Quality Control', duration: 4 },
     { name: 'Buyer Final Inspection', category: 'Quality Control', duration: 2 },
-    
+
     // Finishing & Packing
     { name: 'Thread Cutting', category: 'Finishing & Packing', duration: 1 },
     { name: 'Ironing', category: 'Finishing & Packing', duration: 2 },
@@ -262,14 +262,14 @@ const generateMockData = () => {
     const startDate = new Date(Date.now() - Math.floor(Math.random() * 30) * 24 * 60 * 60 * 1000);
     const endDate = new Date(startDate.getTime() + (30 + Math.floor(Math.random() * 30)) * 24 * 60 * 60 * 1000);
     const totalDays = Math.floor((endDate - startDate) / (1000 * 60 * 60 * 24));
-    
+
     // Generate stages with realistic dates
     const stages = allStages.map((stage, idx) => {
       const stageStart = new Date(startDate.getTime() + (idx * totalDays / allStages.length) * 24 * 60 * 60 * 1000);
       const stageEnd = new Date(stageStart.getTime() + stage.duration * 24 * 60 * 60 * 1000);
       const isCompleted = Math.random() > 0.3;
       const isInProgress = !isCompleted && Math.random() > 0.5;
-      
+
       return {
         ...stage,
         plannedStartDate: stageStart,
@@ -323,7 +323,7 @@ const generateMockData = () => {
 const TNADashboard = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-  
+
   // State Management
   const [tnaData, setTnaData] = useState([]);
   const [filteredData, setFilteredData] = useState([]);
@@ -367,7 +367,7 @@ const TNADashboard = () => {
 
   // Advanced Filter Drawer
   const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
-  
+
   // Statistics State
   const [stats, setStats] = useState({
     totalProjects: 0,
@@ -391,7 +391,7 @@ const TNADashboard = () => {
     setTnaData(mockData);
     setFilteredData(mockData);
     calculateEnhancedStats(mockData);
-    
+
     setTimeout(() => {
       setLoading(false);
     }, 1500);
@@ -495,14 +495,14 @@ const TNADashboard = () => {
     }
 
     // Progress Range Filter
-    filtered = filtered.filter(item => 
-      item.overallProgress >= filters.progressRange[0] && 
+    filtered = filtered.filter(item =>
+      item.overallProgress >= filters.progressRange[0] &&
       item.overallProgress <= filters.progressRange[1]
     );
 
     // Delay Days Filter
-    filtered = filtered.filter(item => 
-      item.delayDays >= filters.delayDays[0] && 
+    filtered = filtered.filter(item =>
+      item.delayDays >= filters.delayDays[0] &&
       item.delayDays <= filters.delayDays[1]
     );
 
@@ -513,7 +513,7 @@ const TNADashboard = () => {
         const startDate = new Date(item.startDate);
         const endDate = new Date(item.endDate);
         const daysDiff = Math.floor((endDate - startDate) / (1000 * 60 * 60 * 24));
-        
+
         switch (filters.dateRange) {
           case 'short': return daysDiff <= 30;
           case 'medium': return daysDiff > 30 && daysDiff <= 60;
@@ -553,7 +553,7 @@ const TNADashboard = () => {
 
   // Export to Excel
   const exportToExcel = () => {
-    const dataToExport = selectedItems.length > 0 
+    const dataToExport = selectedItems.length > 0
       ? tnaData.filter(item => selectedItems.includes(item.id))
       : filteredData;
 
@@ -585,11 +585,11 @@ const TNADashboard = () => {
     const ws = XLSX.utils.json_to_sheet(exportData);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "TNA Data");
-    
+
     // Auto-size columns
     const wscols = Object.keys(exportData[0] || {}).map(() => ({ width: 20 }));
     ws['!cols'] = wscols;
-    
+
     XLSX.writeFile(wb, `TNA_Export_${new Date().toISOString().split('T')[0]}.xlsx`);
   };
 
@@ -662,7 +662,7 @@ const TNADashboard = () => {
 
   const handleSaveTNA = () => {
     if (newTNA.id) {
-      setTnaData(prev => prev.map(item => 
+      setTnaData(prev => prev.map(item =>
         item.id === newTNA.id ? newTNA : item
       ));
     } else {
@@ -774,11 +774,11 @@ const TNADashboard = () => {
         color: theme.palette.primary.main,
         bgColor: alpha(theme.palette.primary.main, 0.1),
         trend: '+12%',
-        description: 'Active TNA Plans',  
+        description: 'Active TNA Plans',
         animationDelay: '0s',
       },
       {
-        title: 'Pending Orders', 
+        title: 'Pending Orders',
         value: stats.pendingOrders,
         icon: <ShoppingCartIcon sx={{ fontSize: 24 }} />,
         color: theme.palette.warning.main,
@@ -817,17 +817,17 @@ const TNADashboard = () => {
         description: 'YTD Revenue',
         animationDelay: '0.4s'
       }
-      
+
     ];
 
     return (
       <Slide direction="up" in={!loading} timeout={800}>
         <Grid container spacing={2} sx={{ mb: 3 }}>
           {cards.map((card, index) => (
-            <Grid item xs={12} sm={4} md={2.4} key={index}>
+            <Grid size={{ xs: 12, sm: 4, md: 2.4 }} key={index}>
               <Grow in={!loading} timeout={600 + index * 100}>
-                <Card 
-                  sx={{ 
+                <Card
+                  sx={{
                     height: '90%',
                     borderRadius: 2,
                     width: '100%',
@@ -846,7 +846,7 @@ const TNADashboard = () => {
                       sx={{
                         display: 'flex',
                         flexDirection: 'column',
-                        alignItems: 'center', 
+                        alignItems: 'center',
                         justifyContent: 'center',
                       }}
                     >
@@ -866,10 +866,10 @@ const TNADashboard = () => {
                           {card.icon}
                         </Box>
                       </Box>
-                      
-                      <Typography 
-                        variant="h5"   
-                        sx={{ 
+
+                      <Typography
+                        variant="h5"
+                        sx={{
                           fontWeight: 700,
                           color: card.color,
                           mb: 0.5
@@ -877,10 +877,10 @@ const TNADashboard = () => {
                       >
                         {card.value}
                       </Typography>
-                      
-                      <Typography 
-                        variant="body2" 
-                        sx={{ 
+
+                      <Typography
+                        variant="body2"
+                        sx={{
                           fontWeight: 600,
                           color: theme.palette.text.primary,
                           mb: 0.5
@@ -888,10 +888,10 @@ const TNADashboard = () => {
                       >
                         {card.title}
                       </Typography>
-                      
-                      <Typography 
-                        variant="caption" 
-                        sx={{ 
+
+                      <Typography
+                        variant="caption"
+                        sx={{
                           color: theme.palette.text.secondary,
                           display: 'block',
                           mb: 1
@@ -899,7 +899,7 @@ const TNADashboard = () => {
                       >
                         {card.description}
                       </Typography>
-                      
+
                       <Chip
                         icon={<ArrowUpwardIcon sx={{ fontSize: 12 }} />}
                         label={card.trend}
@@ -964,13 +964,13 @@ const TNADashboard = () => {
             delay: '0.3s'
           }
         ].map((metric, index) => (
-          <Grid item xs={12} sm={6} md={3} key={index}>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }} item xs={12} sm={6} md={3} key={index}>
             <Grow in={!loading} timeout={800 + index * 100}>
-              <Card 
-                sx={{ 
+              <Card
+                sx={{
                   borderRadius: 2,
                   height: '100%',
-                  transition: 'all 0.3s', 
+                  transition: 'all 0.3s',
                   '&:hover': {
                     transform: 'translateY(-4px)',
                     boxShadow: `0 8px 16px ${alpha(metric.color, 0.15)}`
@@ -1004,7 +1004,7 @@ const TNADashboard = () => {
                       </Typography>
                     </Box>
                   </Box>
-                  
+
                   <Box sx={{ mt: 1.5 }}>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
                       <Typography variant="caption">Progress</Typography>
@@ -1012,10 +1012,10 @@ const TNADashboard = () => {
                         {metric.trend}
                       </Typography>
                     </Box>
-                    <LinearProgress 
-                      variant="determinate" 
+                    <LinearProgress
+                      variant="determinate"
                       value={metric.progress}
-                      sx={{ 
+                      sx={{
                         height: 6,
                         borderRadius: 3,
                         bgcolor: alpha(metric.color, 0.1),
@@ -1074,7 +1074,7 @@ const TNADashboard = () => {
 
       <Divider sx={{ mb: 3 }} />
 
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 ,backgroundColor: 'white'}}>
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, backgroundColor: 'white' }}>
         {/* Progress Range */}
         <Box>
           <Typography variant="subtitle2" gutterBottom>
@@ -1082,7 +1082,7 @@ const TNADashboard = () => {
           </Typography>
           <Slider
             value={filters.progressRange}
-            onChange={(e, newValue) => setFilters({...filters, progressRange: newValue})}
+            onChange={(e, newValue) => setFilters({ ...filters, progressRange: newValue })}
             valueLabelDisplay="auto"
             min={0}
             max={100}
@@ -1097,7 +1097,7 @@ const TNADashboard = () => {
           </Typography>
           <Slider
             value={filters.delayDays}
-            onChange={(e, newValue) => setFilters({...filters, delayDays: newValue})}
+            onChange={(e, newValue) => setFilters({ ...filters, delayDays: newValue })}
             valueLabelDisplay="auto"
             min={0}
             max={30}
@@ -1113,7 +1113,7 @@ const TNADashboard = () => {
           <FormControl fullWidth size="small">
             <Select
               value={filters.dateRange}
-              onChange={(e) => setFilters({...filters, dateRange: e.target.value})}
+              onChange={(e) => setFilters({ ...filters, dateRange: e.target.value })}
             >
               <MenuItem value="all">All Durations</MenuItem>
               <MenuItem value="short">Recent (≤ 15 days)</MenuItem>
@@ -1131,7 +1131,7 @@ const TNADashboard = () => {
           <FormControl fullWidth size="small">
             <Select
               value={filters.buyer}
-              onChange={(e) => setFilters({...filters, buyer: e.target.value})}
+              onChange={(e) => setFilters({ ...filters, buyer: e.target.value })}
             >
               <MenuItem value="all">All Buyers</MenuItem>
               {uniqueValues.buyers.map(buyer => (
@@ -1147,7 +1147,7 @@ const TNADashboard = () => {
           <FormControl fullWidth size="small">
             <Select
               value={filters.orderType}
-              onChange={(e) => setFilters({...filters, orderType: e.target.value})}
+              onChange={(e) => setFilters({ ...filters, orderType: e.target.value })}
             >
               <MenuItem value="all">All Types</MenuItem>
               {uniqueValues.orderTypes.map(type => (
@@ -1163,7 +1163,7 @@ const TNADashboard = () => {
           <FormControl fullWidth size="small">
             <Select
               value={filters.fabricType}
-              onChange={(e) => setFilters({...filters, fabricType: e.target.value})}
+              onChange={(e) => setFilters({ ...filters, fabricType: e.target.value })}
             >
               <MenuItem value="all">All Fabrics</MenuItem>
               {uniqueValues.fabricTypes.map(fabric => (
@@ -1179,7 +1179,7 @@ const TNADashboard = () => {
           <FormControl fullWidth size="small">
             <Select
               value={filters.season}
-              onChange={(e) => setFilters({...filters, season: e.target.value})}
+              onChange={(e) => setFilters({ ...filters, season: e.target.value })}
             >
               <MenuItem value="all">All Seasons</MenuItem>
               {uniqueValues.seasons.map(season => (
@@ -1195,7 +1195,7 @@ const TNADashboard = () => {
           <FormControl fullWidth size="small">
             <Select
               value={filters.department}
-              onChange={(e) => setFilters({...filters, department: e.target.value})}
+              onChange={(e) => setFilters({ ...filters, department: e.target.value })}
             >
               <MenuItem value="all">All Departments</MenuItem>
               {uniqueValues.departments.map(dept => (
@@ -1211,7 +1211,7 @@ const TNADashboard = () => {
           <FormControl fullWidth size="small">
             <Select
               value={filters.productCategory}
-              onChange={(e) => setFilters({...filters, productCategory: e.target.value})}
+              onChange={(e) => setFilters({ ...filters, productCategory: e.target.value })}
             >
               <MenuItem value="all">All Categories</MenuItem>
               {uniqueValues.productCategories.map(category => (
@@ -1281,9 +1281,9 @@ const TNADashboard = () => {
             </ListItemIcon>
             <ListItemText primary="Export to Excel (.xlsx)" />
           </MenuItem>
-          <MenuItem onClick={() => { 
-            exportToExcel(); 
-            handleClose(); 
+          <MenuItem onClick={() => {
+            exportToExcel();
+            handleClose();
           }}>
             <ListItemIcon>
               <FileIcon color="success" />
@@ -1302,105 +1302,104 @@ const TNADashboard = () => {
     );
   };
 
-  
-const ProductionStagesTimeline = () => {
-  const categories = [
-    { name: 'Order Confirmation', icon: <AssignmentIcon />, color: theme.palette.primary.main },
-    { name: 'BOM Finalization', icon: <FormatListBulletedIcon />, color: theme.palette.secondary.main },
-    { name: 'Sampling', icon: <BuildIcon />, color: theme.palette.warning.main },
-    { name: 'Material Procurement', icon: <WarehouseIcon />, color: theme.palette.info.main },
-    { name: 'Production Preparation', icon: <ContentCutIcon />, color: theme.palette.success.main },
-    { name: 'Production', icon: <FactoryIcon />, color: theme.palette.error.main },
-    { name: 'Special Processes', icon: <BrushIcon />, color: theme.palette.grey[600] },
-    { name: 'Quality Control', icon: <CheckIcon />, color: '#9c27b0' }, // purple color
-    { name: 'Finishing & Packing', icon: <LocalShippingIcon />, color: '#ff9800' }, // orange color
-  ];
+  const ProductionStagesTimeline = () => {
+    const categories = [
+      { name: 'Order Confirmation', icon: <AssignmentIcon />, color: theme.palette.primary.main },
+      { name: 'BOM Finalization', icon: <FormatListBulletedIcon />, color: theme.palette.secondary.main },
+      { name: 'Sampling', icon: <BuildIcon />, color: theme.palette.warning.main },
+      { name: 'Material Procurement', icon: <WarehouseIcon />, color: theme.palette.info.main },
+      { name: 'Production Preparation', icon: <ContentCutIcon />, color: theme.palette.success.main },
+      { name: 'Production', icon: <FactoryIcon />, color: theme.palette.error.main },
+      { name: 'Special Processes', icon: <BrushIcon />, color: theme.palette.grey[600] },
+      { name: 'Quality Control', icon: <CheckIcon />, color: '#9c27b0' }, // purple color
+      { name: 'Finishing & Packing', icon: <LocalShippingIcon />, color: '#ff9800' }, // orange color
+    ];
 
-  const stageCounts = categories.map(category => ({
-    name: category.name,
-    count: tnaData.flatMap(item => item.stages)
-      .filter(stage => stage.category === category.name)
-      .filter(stage => stage.status === 'Completed').length,
-    total: tnaData.flatMap(item => item.stages)
-      .filter(stage => stage.category === category.name).length,
-    color: category.color
-  }));
+    const stageCounts = categories.map(category => ({
+      name: category.name,
+      count: tnaData.flatMap(item => item.stages)
+        .filter(stage => stage.category === category.name)
+        .filter(stage => stage.status === 'Completed').length,
+      total: tnaData.flatMap(item => item.stages)
+        .filter(stage => stage.category === category.name).length,
+      color: category.color
+    }));
 
-  return (
-    <Card sx={{ mb: 3, borderRadius: 2 }}>
-      <CardHeader
-        title={
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <TimelineIcon style={{ fontSize: 20, color: theme.palette.primary.main }} />
-            <Typography variant="h6">Production Stages Overview</Typography>
-          </Box>
-        }
-      />
-      <CardContent>
-        <Grid container spacing={1}>
-          {categories.map((category, index) => {
-            const stages = tnaData.flatMap(item => item.stages)
-              .filter(stage => stage.category === category.name);
-            const completed = stages.filter(s => s.status === 'Completed').length;
-            
-            return (
-              <Grid item xs={12} sm={6} md={4} key={index}>
-                <Card sx={{ 
-                  height: '100%',
-                  borderLeft: `3px solid ${category.color}`,
-                  transition: 'all 0.3s',
-                  '&:hover': {
-                    transform: 'translateY(-2px)',
-                    boxShadow: 2
-                  }
-                }}>
-                  <CardContent sx={{ p: 1.5 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1, gap: 1 }}>
-                      <Box sx={{ color: category.color, fontSize: 18 }}>
-                        {category.icon}
+    return (
+      <Card sx={{ mb: 3, borderRadius: 2 }}>
+        <CardHeader
+          title={
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <TimelineIcon style={{ fontSize: 20, color: theme.palette.primary.main }} />
+              <Typography variant="h6">Production Stages Overview</Typography>
+            </Box>
+          }
+        />
+        <CardContent>
+          <Grid container spacing={1}>
+            {categories.map((category, index) => {
+              const stages = tnaData.flatMap(item => item.stages)
+                .filter(stage => stage.category === category.name);
+              const completed = stages.filter(s => s.status === 'Completed').length;
+
+              return (
+                <Grid size={{ xs: 12, sm: 6, md: 4 }} key={index}>
+                  <Card sx={{
+                    height: '100%',
+                    borderLeft: `3px solid ${category.color}`,
+                    transition: 'all 0.3s',
+                    '&:hover': {
+                      transform: 'translateY(-2px)',
+                      boxShadow: 2
+                    }
+                  }}>
+                    <CardContent sx={{ p: 1.5 }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', mb: 1, gap: 1 }}>
+                        <Box sx={{ color: category.color, fontSize: 18 }}>
+                          {category.icon}
+                        </Box>
+                        <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                          {category.name}
+                        </Typography>
                       </Box>
-                      <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                        {category.name}
-                      </Typography>
-                    </Box>
-                    
-                    <Box sx={{ mb: 1 }}>
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-                        <Typography variant="caption">Completed</Typography>
-                        <Typography variant="caption" sx={{ fontWeight: 600 }}>{completed}</Typography>
+
+                      <Box sx={{ mb: 1 }}>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
+                          <Typography variant="caption">Completed</Typography>
+                          <Typography variant="caption" sx={{ fontWeight: 600 }}>{completed}</Typography>
+                        </Box>
+                        <LinearProgress
+                          variant="determinate"
+                          value={stages.length ? (completed / stages.length) * 100 : 0}
+                          sx={{ height: 4, borderRadius: 1 }}
+                        />
                       </Box>
-                      <LinearProgress 
-                        variant="determinate" 
-                        value={stages.length ? (completed / stages.length) * 100 : 0}
-                        sx={{ height: 4, borderRadius: 1 }}
-                      />
-                    </Box>
-                    
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <Typography variant="caption" color="text.secondary">
-                        Total: {stages.length}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        {stages.length ? Math.round((completed / stages.length) * 100) : 0}%
-                      </Typography>
-                    </Box>
-                  </CardContent>
-                </Card>
-              </Grid>
-            );
-          })}
-        </Grid>
-      </CardContent>
-    </Card>
-  );
-};
+
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <Typography variant="caption" color="text.secondary">
+                          Total: {stages.length}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          {stages.length ? Math.round((completed / stages.length) * 100) : 0}%
+                        </Typography>
+                      </Box>
+                    </CardContent>
+                  </Card>
+                </Grid>
+              );
+            })}
+          </Grid>
+        </CardContent>
+      </Card>
+    );
+  };
 
   // Dashboard View
   const DashboardView = () => (
     <Grid container spacing={2}>
       {/* Statistics Cards */}
-      <Grid item xs={12} sm={6} md={2.4}>
-        <Card sx={{ 
+      <Grid size={{ xs: 12, sm: 6, md: 2.4 }} >
+        <Card sx={{
           height: '100%',
           borderRadius: 2,
           transition: 'transform 0.3s',
@@ -1421,8 +1420,8 @@ const ProductionStagesTimeline = () => {
         </Card>
       </Grid>
 
-      <Grid item xs={12} sm={6} md={2.4}>
-        <Card sx={{ 
+      <Grid size={{ xs: 12, sm: 6, md: 2.4 }} >
+        <Card sx={{
           height: '100%',
           borderRadius: 2,
           transition: 'transform 0.3s',
@@ -1443,8 +1442,8 @@ const ProductionStagesTimeline = () => {
         </Card>
       </Grid>
 
-      <Grid item xs={12} sm={6} md={2.4}>
-        <Card sx={{ 
+      <Grid size={{ xs: 12, sm: 6, md: 2.4 }} >
+        <Card sx={{
           height: '100%',
           borderRadius: 2,
           transition: 'transform 0.3s',
@@ -1465,8 +1464,8 @@ const ProductionStagesTimeline = () => {
         </Card>
       </Grid>
 
-      <Grid item xs={12} sm={6} md={2.4}>
-        <Card sx={{ 
+      <Grid size={{ xs: 12, sm: 6, md: 2.4 }} >
+        <Card sx={{
           height: '100%',
           borderRadius: 2,
           transition: 'transform 0.3s',
@@ -1487,8 +1486,8 @@ const ProductionStagesTimeline = () => {
         </Card>
       </Grid>
 
-      <Grid item xs={12} sm={6} md={2.4}>
-        <Card sx={{ 
+      <Grid size={{ xs: 12, sm: 6, md: 2.4 }} >
+        <Card sx={{
           height: '100%',
           borderRadius: 2,
           transition: 'transform 0.3s',
@@ -1510,16 +1509,16 @@ const ProductionStagesTimeline = () => {
       </Grid>
 
       {/* Production Stages Timeline */}
-      <Grid item xs={12}>
+      <Grid size={{ xs: 12 }}>
         <ProductionStagesTimeline />
       </Grid>
 
       {/* Charts */}
-      <Grid item xs={12} md={8}>
+      <Grid size={{ xs: 12, md: 8 }} >
         <Card sx={{ borderRadius: 2 }}>
-          <CardHeader 
-            title="TNA Status Distribution" 
-            sx={{ 
+          <CardHeader
+            title="TNA Status Distribution"
+            sx={{
               borderBottom: `1px solid ${theme.palette.divider}`,
               '& .MuiCardHeader-title': {
                 fontWeight: 600,
@@ -1553,11 +1552,11 @@ const ProductionStagesTimeline = () => {
         </Card>
       </Grid>
 
-      <Grid item xs={12} md={4}>
+      <Grid size={{ xs: 12, md: 4 }} >
         <Card sx={{ borderRadius: 2 }}>
-          <CardHeader 
-            title="Top 5 Progress" 
-            sx={{ 
+          <CardHeader
+            title="Top 5 Progress"
+            sx={{
               borderBottom: `1px solid ${theme.palette.divider}`,
               '& .MuiCardHeader-title': {
                 fontWeight: 600,
@@ -1573,8 +1572,8 @@ const ProductionStagesTimeline = () => {
                 <XAxis dataKey="name" />
                 <YAxis />
                 <RechartsTooltip />
-                <Bar 
-                  dataKey="progress" 
+                <Bar
+                  dataKey="progress"
                   fill={theme.palette.primary.main}
                   radius={[2, 2, 0, 0]}
                 />
@@ -1585,14 +1584,14 @@ const ProductionStagesTimeline = () => {
       </Grid>
 
       {/* Recent TNAs */}
-      <Grid item xs={12}>
+      <Grid size={{ xs: 12, md: 12 }}>
         <Card sx={{ borderRadius: 2 }}>
-          <CardHeader 
+          <CardHeader
             title="Recent Time & Action Plans"
             action={
-              <Button 
-                startIcon={<AddIcon />} 
-                variant="contained" 
+              <Button
+                startIcon={<AddIcon />}
+                variant="contained"
                 onClick={handleAddTNA}
                 size="small"
                 sx={{
@@ -1609,7 +1608,7 @@ const ProductionStagesTimeline = () => {
                 Add New
               </Button>
             }
-            sx={{ 
+            sx={{
               borderBottom: `1px solid ${theme.palette.divider}`,
               '& .MuiCardHeader-title': {
                 fontWeight: 600,
@@ -1621,8 +1620,8 @@ const ProductionStagesTimeline = () => {
           <TableContainer>
             <Table size="small">
               <TableHead>
-                <TableRow sx={{ 
-                  '& th': { 
+                <TableRow sx={{
+                  '& th': {
                     fontWeight: 600,
                     backgroundColor: alpha(theme.palette.primary.main, 0.05),
                     py: 1
@@ -1641,10 +1640,10 @@ const ProductionStagesTimeline = () => {
               </TableHead>
               <TableBody>
                 {filteredData.slice(0, 5).map((item) => (
-                  <TableRow 
-                    key={item.id} 
+                  <TableRow
+                    key={item.id}
                     hover
-                    sx={{ 
+                    sx={{
                       transition: 'all 0.2s',
                       '&:hover': {
                         backgroundColor: alpha(theme.palette.primary.main, 0.04),
@@ -1660,9 +1659,9 @@ const ProductionStagesTimeline = () => {
                     <TableCell sx={{ fontSize: '0.8rem' }}>{item.style}</TableCell>
                     <TableCell sx={{ fontSize: '0.8rem' }}>{item.buyer}</TableCell>
                     <TableCell sx={{ fontSize: '0.8rem' }}>
-                      <Chip 
-                        label={item.factory} 
-                        size="small" 
+                      <Chip
+                        label={item.factory}
+                        size="small"
                         variant="outlined"
                         sx={{ borderRadius: 0.5, fontSize: '0.7rem' }}
                       />
@@ -1670,10 +1669,10 @@ const ProductionStagesTimeline = () => {
                     <TableCell sx={{ fontSize: '0.8rem' }}>
                       <Box>
                         <Typography variant="body2" fontSize="0.8rem">{item.currentStage}</Typography>
-                        <LinearProgress 
-                          variant="determinate" 
+                        <LinearProgress
+                          variant="determinate"
                           value={item.stages.find(s => s.name === item.currentStage)?.completion || 0}
-                          sx={{ 
+                          sx={{
                             mt: 0.5,
                             height: 3,
                             borderRadius: 1,
@@ -1688,10 +1687,10 @@ const ProductionStagesTimeline = () => {
                     <TableCell sx={{ fontSize: '0.8rem' }}>
                       <Box sx={{ display: 'flex', alignItems: 'center' }}>
                         <Box sx={{ width: '100%', mr: 1 }}>
-                          <LinearProgress 
-                            variant="determinate" 
+                          <LinearProgress
+                            variant="determinate"
                             value={item.overallProgress}
-                            sx={{ 
+                            sx={{
                               height: 6,
                               borderRadius: 2,
                               backgroundColor: theme.palette.grey[200],
@@ -1709,7 +1708,7 @@ const ProductionStagesTimeline = () => {
                       </Box>
                     </TableCell>
                     <TableCell sx={{ fontSize: '0.8rem' }}>
-                      <Chip 
+                      <Chip
                         icon={getStatusIcon(item.status)}
                         label={item.status}
                         color={getStatusColor(item.status)}
@@ -1719,10 +1718,10 @@ const ProductionStagesTimeline = () => {
                     </TableCell>
                     <TableCell sx={{ fontSize: '0.8rem' }}>
                       <Stack direction="row" spacing={0.5}>
-                        <IconButton 
-                          size="small" 
+                        <IconButton
+                          size="small"
                           onClick={() => handleEditTNA(item.id)}
-                          sx={{ 
+                          sx={{
                             color: 'primary.main',
                             padding: 0.5,
                             '&:hover': {
@@ -1732,10 +1731,10 @@ const ProductionStagesTimeline = () => {
                         >
                           <EditIcon fontSize="small" />
                         </IconButton>
-                        <IconButton 
-                          size="small" 
+                        <IconButton
+                          size="small"
                           onClick={() => handleDeleteTNA(item.id)}
-                          sx={{ 
+                          sx={{
                             color: 'error.main',
                             padding: 0.5,
                             '&:hover': {
@@ -1760,14 +1759,14 @@ const ProductionStagesTimeline = () => {
   // List View
   const ListView = () => (
     <Card sx={{ borderRadius: 2 }}>
-      <CardHeader 
+      <CardHeader
         title="TNA List View"
         action={
           <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
             <ExportMenu />
-            <Button 
-              startIcon={<AddIcon />} 
-              variant="contained" 
+            <Button
+              startIcon={<AddIcon />}
+              variant="contained"
               onClick={handleAddTNA}
               size="small"
               sx={{
@@ -1785,7 +1784,7 @@ const ProductionStagesTimeline = () => {
             </Button>
           </Box>
         }
-        sx={{ 
+        sx={{
           borderBottom: `1px solid ${theme.palette.divider}`,
           '& .MuiCardHeader-title': {
             fontWeight: 600,
@@ -1797,8 +1796,8 @@ const ProductionStagesTimeline = () => {
       <TableContainer>
         <Table size="small">
           <TableHead>
-            <TableRow sx={{ 
-              '& th': { 
+            <TableRow sx={{
+              '& th': {
                 fontWeight: 600,
                 backgroundColor: alpha(theme.palette.primary.main, 0.05),
                 py: 1,
@@ -1832,11 +1831,11 @@ const ProductionStagesTimeline = () => {
                 const daysDiff = Math.floor((endDate - startDate) / (1000 * 60 * 60 * 24));
 
                 return (
-                  <TableRow 
-                    key={item.id} 
-                    hover 
+                  <TableRow
+                    key={item.id}
+                    hover
                     selected={selectedItems.indexOf(item.id) !== -1}
-                    sx={{ 
+                    sx={{
                       '&:hover': {
                         backgroundColor: alpha(theme.palette.primary.main, 0.04),
                       }
@@ -1873,9 +1872,9 @@ const ProductionStagesTimeline = () => {
                     </TableCell>
                     <TableCell sx={{ fontSize: '0.8rem' }}>
                       <Box>
-                        <Chip 
-                          label={item.factory} 
-                          size="small" 
+                        <Chip
+                          label={item.factory}
+                          size="small"
                           variant="outlined"
                           sx={{ mb: 0.5, borderRadius: 0.5, fontSize: '0.7rem' }}
                         />
@@ -1899,7 +1898,7 @@ const ProductionStagesTimeline = () => {
                           </Typography>
                         </Box>
                         {item.delayDays > 0 && (
-                          <Chip 
+                          <Chip
                             label={`Delay: ${item.delayDays}d`}
                             size="small"
                             color="error"
@@ -1911,10 +1910,10 @@ const ProductionStagesTimeline = () => {
                     <TableCell sx={{ fontSize: '0.8rem' }}>
                       <Box sx={{ display: 'flex', alignItems: 'center' }}>
                         <Box sx={{ width: '100%', mr: 1 }}>
-                          <LinearProgress 
-                            variant="determinate" 
+                          <LinearProgress
+                            variant="determinate"
                             value={item.overallProgress}
-                            sx={{ 
+                            sx={{
                               height: 5,
                               borderRadius: 2,
                               backgroundColor: theme.palette.grey[200],
@@ -1933,7 +1932,7 @@ const ProductionStagesTimeline = () => {
                       </Typography>
                     </TableCell>
                     <TableCell sx={{ fontSize: '0.8rem' }}>
-                      <Chip 
+                      <Chip
                         icon={getStatusIcon(item.status)}
                         label={item.status}
                         color={getStatusColor(item.status)}
@@ -1942,7 +1941,7 @@ const ProductionStagesTimeline = () => {
                       />
                     </TableCell>
                     <TableCell sx={{ fontSize: '0.8rem' }}>
-                      <Chip 
+                      <Chip
                         label={item.priority}
                         color={getPriorityColor(item.priority)}
                         size="small"
@@ -1953,9 +1952,9 @@ const ProductionStagesTimeline = () => {
                     <TableCell sx={{ fontSize: '0.8rem' }}>
                       <Box sx={{ display: 'flex', gap: 0.5 }}>
                         <Tooltip title="View Details">
-                          <IconButton 
+                          <IconButton
                             size="small"
-                            sx={{ 
+                            sx={{
                               padding: 0.5,
                               '&:hover': {
                                 backgroundColor: alpha(theme.palette.info.main, 0.1),
@@ -1967,10 +1966,10 @@ const ProductionStagesTimeline = () => {
                           </IconButton>
                         </Tooltip>
                         <Tooltip title="Edit">
-                          <IconButton 
-                            size="small" 
+                          <IconButton
+                            size="small"
                             onClick={() => handleEditTNA(item.id)}
-                            sx={{ 
+                            sx={{
                               padding: 0.5,
                               '&:hover': {
                                 backgroundColor: alpha(theme.palette.primary.main, 0.1),
@@ -1981,10 +1980,10 @@ const ProductionStagesTimeline = () => {
                           </IconButton>
                         </Tooltip>
                         <Tooltip title="Delete">
-                          <IconButton 
-                            size="small" 
+                          <IconButton
+                            size="small"
                             onClick={() => handleDeleteTNA(item.id)}
-                            sx={{ 
+                            sx={{
                               padding: 0.5,
                               '&:hover': {
                                 backgroundColor: alpha(theme.palette.error.main, 0.1),
@@ -2025,7 +2024,7 @@ const ProductionStagesTimeline = () => {
   // Main Render
   return (
     <LocalizationProvider dateAdapter={AdapterDateFns}>
-      <Box sx={{ 
+      <Box sx={{
         p: isMobile ? 1 : 2,
         minHeight: '100vh',
         background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.03)} 0%, ${alpha(theme.palette.secondary.main, 0.03)} 100%)`
@@ -2033,11 +2032,11 @@ const ProductionStagesTimeline = () => {
         <Container maxWidth="xl">
           {/* Enhanced Header */}
           <Box sx={{ mb: 3 }}>
-            <Box 
-              sx={{ 
-                display: 'flex', 
+            <Box
+              sx={{
+                display: 'flex',
                 flexDirection: isMobile ? 'column' : 'row',
-                justifyContent: 'space-between', 
+                justifyContent: 'space-between',
                 alignItems: isMobile ? 'stretch' : 'center',
                 mb: 1,
                 gap: 2
@@ -2045,10 +2044,10 @@ const ProductionStagesTimeline = () => {
             >
               <Box sx={{ position: 'relative' }}>
                 <Zoom in={!loading} timeout={500}>
-                  <Typography 
-                    variant="h4" 
-                    gutterBottom 
-                    sx={{ 
+                  <Typography
+                    variant="h4"
+                    gutterBottom
+                    sx={{
                       fontWeight: 700,
                       background: `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
                       WebkitBackgroundClip: 'text',
@@ -2059,11 +2058,11 @@ const ProductionStagesTimeline = () => {
                     Time & Action (TNA) Plan Dashboard
                   </Typography>
                 </Zoom>
-                
+
                 <Fade in={!loading} timeout={800}>
-                  <Typography 
-                    variant="body2" 
-                    sx={{ 
+                  <Typography
+                    variant="body2"
+                    sx={{
                       color: 'text.secondary',
                       mb: 2,
                       display: 'flex',
@@ -2071,7 +2070,7 @@ const ProductionStagesTimeline = () => {
                       gap: 1
                     }}
                   >
-                    <RocketLaunchIcon sx={{ 
+                    <RocketLaunchIcon sx={{
                       color: theme.palette.primary.main,
                       fontSize: 16
                     }} />
@@ -2079,8 +2078,6 @@ const ProductionStagesTimeline = () => {
                   </Typography>
                 </Fade>
               </Box>
-              
-              
             </Box>
 
             {/* Enhanced Stats Cards */}
@@ -2089,9 +2086,9 @@ const ProductionStagesTimeline = () => {
           </Box>
 
           {/* View Mode Tabs */}
-          <Paper 
-            sx={{ 
-              mb: 3, 
+          <Paper
+            sx={{
+              mb: 3,
               borderRadius: 2,
               background: 'rgba(255, 255, 255, 0.9)',
               border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
@@ -2104,7 +2101,7 @@ const ProductionStagesTimeline = () => {
                 value={viewMode}
                 onChange={(e, newValue) => setViewMode(newValue)}
                 variant={isMobile ? "fullWidth" : "standard"}
-                sx={{ 
+                sx={{
                   '& .MuiTab-root': {
                     minHeight: 48,
                     fontSize: '0.9rem',
@@ -2120,27 +2117,27 @@ const ProductionStagesTimeline = () => {
                   }
                 }}
               >
-                <Tab 
+                <Tab
                   icon={<DashboardIcon />}
                   iconPosition="start"
-                  label="Dashboard" 
+                  label="Dashboard"
                   value="dashboard"
                 />
-                <Tab 
+                <Tab
                   icon={<ViewListIcon />}
                   iconPosition="start"
-                  label="List View" 
+                  label="List View"
                   value="list"
                 />
               </Tabs>
             </Box>
 
             {/* Search and Filters */}
-            <Box sx={{ 
-              p: 2, 
-              display: 'flex', 
-              flexWrap: 'wrap', 
-              gap: 1, 
+            <Box sx={{
+              p: 2,
+              display: 'flex',
+              flexWrap: 'wrap',
+              gap: 1,
               alignItems: 'center',
               background: alpha(theme.palette.primary.main, 0.02)
             }}>
@@ -2150,8 +2147,8 @@ const ProductionStagesTimeline = () => {
                 size="small"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                sx={{ 
-                  flex: 1, 
+                sx={{
+                  flex: 1,
                   minWidth: 150,
                   '& .MuiOutlinedInput-root': {
                     borderRadius: 1,
@@ -2179,7 +2176,7 @@ const ProductionStagesTimeline = () => {
                 <Select
                   value={filters.status}
                   label="Status"
-                  onChange={(e) => setFilters({...filters, status: e.target.value})}
+                  onChange={(e) => setFilters({ ...filters, status: e.target.value })}
                   sx={{ borderRadius: 1, fontSize: '0.9rem' }}
                 >
                   <MenuItem value="all">All Status</MenuItem>
@@ -2196,7 +2193,7 @@ const ProductionStagesTimeline = () => {
                 <Select
                   value={filters.priority}
                   label="Priority"
-                  onChange={(e) => setFilters({...filters, priority: e.target.value})}
+                  onChange={(e) => setFilters({ ...filters, priority: e.target.value })}
                   sx={{ borderRadius: 1, fontSize: '0.9rem' }}
                 >
                   <MenuItem value="all">All</MenuItem>
@@ -2211,7 +2208,7 @@ const ProductionStagesTimeline = () => {
                 variant="contained"
                 size="small"
                 onClick={() => setFilterDrawerOpen(true)}
-                sx={{ 
+                sx={{
                   borderRadius: 1,
                   fontWeight: 600,
                   background: `linear-gradient(45deg, ${theme.palette.info.main}, ${theme.palette.info.light})`,
@@ -2235,7 +2232,7 @@ const ProductionStagesTimeline = () => {
                 variant="outlined"
                 size="small"
                 onClick={resetFilters}
-                sx={{ 
+                sx={{
                   borderRadius: 1,
                   fontWeight: 600,
                 }}
@@ -2247,15 +2244,15 @@ const ProductionStagesTimeline = () => {
 
           {/* Loading State */}
           {loading ? (
-            <Box sx={{ 
-              display: 'flex', 
+            <Box sx={{
+              display: 'flex',
               flexDirection: 'column',
-              justifyContent: 'center', 
-              alignItems: 'center', 
+              justifyContent: 'center',
+              alignItems: 'center',
               height: '50vh',
               gap: 2
             }}>
-              <CircularProgress 
+              <CircularProgress
                 size={60}
                 thickness={2}
                 sx={{
@@ -2278,15 +2275,15 @@ const ProductionStagesTimeline = () => {
           {/* Quick Stats Footer */}
           {viewMode === 'dashboard' && (
             <Slide direction="up" in={!loading} timeout={1400}>
-              <Paper sx={{ 
-                mt: 3, 
-                p: 2, 
+              <Paper sx={{
+                mt: 3,
+                p: 2,
                 borderRadius: 2,
                 background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.05)} 0%, ${alpha(theme.palette.secondary.main, 0.05)} 100%)`,
                 border: `1px solid ${alpha(theme.palette.primary.main, 0.1)}`,
               }}>
                 <Grid container spacing={1}>
-                  <Grid item xs={12}>
+                  <Grid size={{ xs: 12 }}>
                     <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 600 }}>
                       📊 Performance Summary
                     </Typography>
@@ -2318,12 +2315,12 @@ const ProductionStagesTimeline = () => {
                       color: 'secondary'
                     }
                   ].map((stat, index) => (
-                    <Grid item xs={12} sm={4} md={2.4} key={index}>
+                    <Grid size={{ xs: 12, sm: 4, md: 2.4 }} key={index}>
                       <Fade in={!loading} timeout={800 + index * 100}>
                         <Box sx={{ textAlign: 'center', p: 1 }}>
-                          <Typography 
-                            variant="h6" 
-                            sx={{ 
+                          <Typography
+                            variant="h6"
+                            sx={{
                               fontWeight: 700,
                               color: `${stat.color}.main`,
                               mb: 0.5
@@ -2353,63 +2350,63 @@ const ProductionStagesTimeline = () => {
             </DialogTitle>
             <DialogContent dividers sx={{ p: 2 }}>
               <Grid container spacing={1}>
-                <Grid item xs={12} sm={6}>
+                <Grid size={{ xs: 12, sm: 3 }}>
                   <TextField
                     fullWidth
                     label="Order ID"
                     size="small"
                     value={newTNA.orderId}
-                    onChange={(e) => setNewTNA({...newTNA, orderId: e.target.value})}
+                    onChange={(e) => setNewTNA({ ...newTNA, orderId: e.target.value })}
                     margin="dense"
                   />
                 </Grid>
-                <Grid item xs={12} sm={6}>
+                <Grid size={{ xs: 12, sm: 3 }}>
                   <TextField
                     fullWidth
                     label="Style Number"
                     size="small"
                     value={newTNA.style}
-                    onChange={(e) => setNewTNA({...newTNA, style: e.target.value})}
+                    onChange={(e) => setNewTNA({ ...newTNA, style: e.target.value })}
                     margin="dense"
                   />
                 </Grid>
-                <Grid item xs={12} sm={6}>
+               <Grid size={{ xs: 12, sm: 3 }}>
                   <TextField
                     fullWidth
                     label="Buyer"
                     size="small"
                     value={newTNA.buyer}
-                    onChange={(e) => setNewTNA({...newTNA, buyer: e.target.value})}
+                    onChange={(e) => setNewTNA({ ...newTNA, buyer: e.target.value })}
                     margin="dense"
                   />
                 </Grid>
-                <Grid item xs={12} sm={6}>
+                <Grid size={{ xs: 12, sm: 3 }}>
                   <TextField
                     fullWidth
                     label="Factory"
                     size="small"
                     value={newTNA.factory}
-                    onChange={(e) => setNewTNA({...newTNA, factory: e.target.value})}
+                    onChange={(e) => setNewTNA({ ...newTNA, factory: e.target.value })}
                     margin="dense"
                   />
                 </Grid>
-                <Grid item xs={12} sm={6}>
+                <Grid size={{ xs: 12, sm: 3 }}>
                   <TextField
                     fullWidth
                     label="Merchandiser"
                     size="small"
                     value={newTNA.merchandiser}
-                    onChange={(e) => setNewTNA({...newTNA, merchandiser: e.target.value})}
+                    onChange={(e) => setNewTNA({ ...newTNA, merchandiser: e.target.value })}
                     margin="dense"
                   />
                 </Grid>
-                <Grid item xs={12} sm={6}>
+                <Grid size={{ xs: 12, sm: 3 }}>
                   <FormControl fullWidth size="small" margin="dense">
                     <InputLabel>Priority</InputLabel>
                     <Select
                       value={newTNA.priority}
                       label="Priority"
-                      onChange={(e) => setNewTNA({...newTNA, priority: e.target.value})}
+                      onChange={(e) => setNewTNA({ ...newTNA, priority: e.target.value })}
                     >
                       <MenuItem value="High">High</MenuItem>
                       <MenuItem value="Medium">Medium</MenuItem>
@@ -2417,13 +2414,13 @@ const ProductionStagesTimeline = () => {
                     </Select>
                   </FormControl>
                 </Grid>
-                <Grid item xs={12} sm={6}>
+                <Grid size={{ xs: 12, sm: 3 }}>
                   <FormControl fullWidth size="small" margin="dense">
                     <InputLabel>Fabric Type</InputLabel>
                     <Select
                       value={newTNA.fabricType}
                       label="Fabric Type"
-                      onChange={(e) => setNewTNA({...newTNA, fabricType: e.target.value})}
+                      onChange={(e) => setNewTNA({ ...newTNA, fabricType: e.target.value })}
                     >
                       <MenuItem value="Cotton">Cotton</MenuItem>
                       <MenuItem value="Polyester">Polyester</MenuItem>
@@ -2433,13 +2430,13 @@ const ProductionStagesTimeline = () => {
                     </Select>
                   </FormControl>
                 </Grid>
-                <Grid item xs={12} sm={6}>
+                <Grid size={{ xs: 12, sm: 3 }}>
                   <FormControl fullWidth size="small" margin="dense">
                     <InputLabel>Order Type</InputLabel>
                     <Select
                       value={newTNA.orderType}
                       label="Order Type"
-                      onChange={(e) => setNewTNA({...newTNA, orderType: e.target.value})}
+                      onChange={(e) => setNewTNA({ ...newTNA, orderType: e.target.value })}
                     >
                       <MenuItem value="Regular">Regular</MenuItem>
                       <MenuItem value="Urgent">Urgent</MenuItem>
@@ -2448,31 +2445,31 @@ const ProductionStagesTimeline = () => {
                     </Select>
                   </FormControl>
                 </Grid>
-                <Grid item xs={12} sm={6}>
+                <Grid size={{ xs: 12, sm: 3 }}>
                   <DatePicker
                     label="Start Date"
                     value={newTNA.startDate}
-                    onChange={(date) => setNewTNA({...newTNA, startDate: date})}
-                    slotProps={{ 
-                      textField: { 
-                        fullWidth: true, 
+                    onChange={(date) => setNewTNA({ ...newTNA, startDate: date })}
+                    slotProps={{
+                      textField: {
+                        fullWidth: true,
                         size: 'small',
-                        margin: 'dense' 
-                      } 
+                        margin: 'dense'
+                      }
                     }}
                   />
                 </Grid>
-                <Grid item xs={12} sm={6}>
+                <Grid size={{ xs: 12, sm: 3 }}>
                   <DatePicker
                     label="End Date"
                     value={newTNA.endDate}
-                    onChange={(date) => setNewTNA({...newTNA, endDate: date})}
-                    slotProps={{ 
-                      textField: { 
-                        fullWidth: true, 
+                    onChange={(date) => setNewTNA({ ...newTNA, endDate: date })}
+                    slotProps={{
+                      textField: {
+                        fullWidth: true,
                         size: 'small',
-                        margin: 'dense' 
-                      } 
+                        margin: 'dense'
+                      }
                     }}
                   />
                 </Grid>
@@ -2480,8 +2477,8 @@ const ProductionStagesTimeline = () => {
             </DialogContent>
             <DialogActions sx={{ p: 1 }}>
               <Button onClick={() => setOpenDialog(false)} size="small">Cancel</Button>
-              <Button 
-                onClick={handleSaveTNA} 
+              <Button
+                onClick={handleSaveTNA}
                 variant="contained"
                 size="small"
                 sx={{
