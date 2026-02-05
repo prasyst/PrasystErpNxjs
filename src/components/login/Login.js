@@ -131,15 +131,20 @@ const Login = () => {
     }, 1000);
     return () => clearInterval(interval);
   }, []);
-  useEffect(() => {
-    const expireTime = localStorage.getItem('authExpire');
-    if (!expireTime || Date.now() > Number(expireTime) || localStorage.getItem('authenticated') !== 'true') {
-      localStorage.removeItem('authenticated');
-      localStorage.removeItem('authExpire');
-    } else {
-      router.push('/dashboard', { replace: true });
-    }
-  }, [router]);
+  
+useEffect(() => {
+  const expireTime = localStorage.getItem('authExpire');
+  const isAuthenticated = localStorage.getItem('authenticated') === 'true';
+  const hasCompanyAndBranch = localStorage.getItem('CO_ID') && localStorage.getItem('COBR_ID');
+  
+  if (!expireTime || Date.now() > Number(expireTime) || !isAuthenticated) {
+    localStorage.removeItem('authenticated');
+    localStorage.removeItem('authExpire');
+  } else if (isAuthenticated && hasCompanyAndBranch) {
+
+    router.replace('/dashboard'); 
+  }
+}, [router]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -409,15 +414,29 @@ const Login = () => {
   const handleClickShowNewPassword = () => {
     setShowNewPwd(!showNewPwd);
   };
-  const resetToLogin = () => {
-    setShowLogin(true);
-    setModalOpen(false);
-    setForm({ username: '', password: '', mobile: '' });
-    setRole('user');
-    setOtpSent(false);
-    setGeneratedOtp('');
-    setMobilePassword('');
-  };
+ const resetToLogin = () => {
+  // Clear all localStorage when returning to login
+  localStorage.removeItem('authenticated');
+  localStorage.removeItem('userRole');
+  localStorage.removeItem('CO_ID');
+  localStorage.removeItem('COBR_ID');
+  localStorage.removeItem('PARTY_NAME');
+  localStorage.removeItem('PARTY_KEY');
+  localStorage.removeItem('FCYR_KEY');
+  localStorage.removeItem('USER_NAME');
+  localStorage.removeItem('USER_ID');
+  localStorage.removeItem('EMP_KEY');
+  localStorage.removeItem('EMP_NAME');
+  
+  setShowLogin(true);
+  setModalOpen(false);
+  setForm({ username: '', password: '', mobile: '' });
+  setRole('user');
+  setOtpSent(false);
+  setGeneratedOtp('');
+  setMobilePassword('');
+};
+
   return (
     <Box
       sx={{
