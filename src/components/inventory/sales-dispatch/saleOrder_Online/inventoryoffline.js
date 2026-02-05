@@ -1,16 +1,7 @@
 'use client';
 import React, { useEffect, useState, useCallback, Suspense } from "react";
 import {
-  Box,
-  TextField,
-  Grid,
-  Typography,
-  Tabs,
-  Tab,
-  Button,
-  Snackbar,
-  Alert,
-  CircularProgress,
+  Box, TextField, Grid, Typography, Tabs, Tab, Button, Snackbar, Alert, CircularProgress,
 } from "@mui/material";
 import { TbListSearch } from "react-icons/tb";
 import { useSearchParams } from "next/navigation";
@@ -232,20 +223,14 @@ const SalesOrderOffline = () => {
         FLAG: "R"
       };
 
-      console.log('Fetching order details with payload:', payload);
-
       const response = await axiosInstance.post('/ORDBK/RetriveOrder', payload);
-      console.log('API Response:', response.data);
 
       if (response.data.RESPONSESTATUSCODE === 1 && response.data.DATA.ORDBKList.length > 0) {
         const orderData = response.data.DATA.ORDBKList[0];
         await populateFormData(orderData);
         setCurrentPARTY_KEY(orderData.PARTY_KEY);
-      } else {
-        console.error('No data found in response');
       }
     } catch (error) {
-      console.error('Error fetching order details:', error);
       showSnackbar('Error fetching order details', 'error');
     } finally {
       setLoading(false);
@@ -256,7 +241,6 @@ const SalesOrderOffline = () => {
   // Function to populate form data from API response - UPDATED for shade keys
   const populateFormData = async (orderData) => {
     try {
-      console.log('Order Data received:', orderData);
 
       // FIRST: Wait for all dropdown data to be fetched
       await fetchAllDropdownData();
@@ -355,9 +339,6 @@ const SalesOrderOffline = () => {
         };
       }) : [];
 
-      console.log('Processed ORDBKSTYLIST with shade keys:', processedOrdbkStyleList.length, 'items');
-      console.log('Sample item shade key:', processedOrdbkStyleList[0]?.FGSHADE_KEY);
-
       const formattedData = {
         apiResponseData: {
           ...orderData,
@@ -436,8 +417,6 @@ const SalesOrderOffline = () => {
         DISCOUNT: orderData.ORDBK_DISC_AMT || 0
       };
 
-      console.log('Populating form with data including shade keys');
-
       // Set form data
       setFormData(formattedData);
 
@@ -466,9 +445,6 @@ const SalesOrderOffline = () => {
     const userId = localStorage.getItem('USER_ID') || '1';
     const userName = localStorage.getItem('USER_NAME') || 'Admin';
 
-    console.log('Mode:', mode);
-    console.log('Form Data API Response:', formData.apiResponseData);
-
     const getStatusValue = (status) => {
       const statusMapping = {
         'O': '1',
@@ -494,8 +470,6 @@ const SalesOrderOffline = () => {
 
     // Get ORDBKSTYLIST from formData
     const ordbkStyleList = formData.apiResponseData?.ORDBKSTYLIST || [];
-
-    console.log('ORDBKSTYLIST from formData:', ordbkStyleList);
 
     // Function to generate FGITM_KEY dynamically
     const generateFgItemKey = (item) => {
@@ -544,36 +518,30 @@ const SalesOrderOffline = () => {
 
     // IMPORTANT: Map API response codes to keys
     const mapApiCodesToKeys = (item) => {
-      console.log('Mapping API codes to keys for item:', item);
 
       // Initialize with existing keys
       const mappedItem = { ...item };
 
       // Map PROD_CODE to FGPRD_KEY if not already present
       if (!mappedItem.FGPRD_KEY && item.PROD_CODE) {
-        console.log('Mapping PROD_CODE to FGPRD_KEY:', item.PROD_CODE);
         mappedItem.FGPRD_KEY = item.PROD_CODE;
       }
 
       // Map SHADE_CODE to FGSHADE_KEY if not already present
       if (!mappedItem.FGSHADE_KEY && item.SHADE_CODE) {
-        console.log('Mapping SHADE_CODE to FGSHADE_KEY:', item.SHADE_CODE);
         mappedItem.FGSHADE_KEY = item.SHADE_CODE;
       }
 
       // Map PTN_CODE to FGPTN_KEY if not already present
       if (!mappedItem.FGPTN_KEY && item.PTN_CODE) {
-        console.log('Mapping PTN_CODE to FGPTN_KEY:', item.PTN_CODE);
         mappedItem.FGPTN_KEY = item.PTN_CODE;
       }
 
       // Map TYPE_CODE to FGTYPE_KEY if not already present
       if (!mappedItem.FGTYPE_KEY && item.TYPE_CODE) {
-        console.log('Mapping TYPE_CODE to FGTYPE_KEY:', item.TYPE_CODE);
         mappedItem.FGTYPE_KEY = item.TYPE_CODE;
       }
 
-      console.log('Mapped item:', mappedItem);
       return mappedItem;
     };
 
@@ -893,10 +861,7 @@ const SalesOrderOffline = () => {
         FLAG: "N"
       };
 
-      console.log('Fetching previous order with payload:', payload);
-
       const response = await axiosInstance.post('/ORDBK/RetriveOrder', payload);
-      console.log('Previous Order API Response:', response.data);
 
       if (response.data.RESPONSESTATUSCODE === 1 && response.data.DATA.ORDBKList.length > 0) {
         const orderData = response.data.DATA.ORDBKList[0];
@@ -912,7 +877,6 @@ const SalesOrderOffline = () => {
         // showSnackbar('No previous order found', 'info');
       }
     } catch (error) {
-      console.error('Error fetching previous order:', error);
       showSnackbar('Error loading previous order', 'error');
     } finally {
       setLoading(false);
@@ -929,10 +893,7 @@ const SalesOrderOffline = () => {
         FLAG: "P"
       };
 
-      console.log('Fetching next order with payload:', payload);
-
       const response = await axiosInstance.post('/ORDBK/RetriveOrder', payload);
-      console.log('Next Order API Response:', response.data);
 
       if (response.data.RESPONSESTATUSCODE === 1 && response.data.DATA.ORDBKList.length > 0) {
         const orderData = response.data.DATA.ORDBKList[0];
@@ -2067,7 +2028,8 @@ const SalesOrderOffline = () => {
             sx={textInputSx}
             inputProps={{
               style: {
-                padding: '4px 8px',
+                padding: '6px 0px',
+                marginTop: '10px',
                 fontSize: '12px',
               },
             }}

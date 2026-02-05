@@ -317,7 +317,7 @@ export default function MasterPage() {
     <Suspense fallback={<div>Loading...</div>}>
       {isClient && (
         <Box sx={{ width: '100%' }}>
-          <Box sx={{ width: '100%', pb: 1 }}>
+          <Box sx={{ width: '100%' }}>
             <StyledTabs
               value={activeTab}
               onChange={handleTabChange}
@@ -404,7 +404,7 @@ export default function MasterPage() {
                           '&:hover': item.path !== '#' ? {
                             transform: 'translateY(-2px)',
                             boxShadow: '0 4px 12px rgba(99, 91, 255, 0.2)',
-                            background: 'linear-gradient(135deg, #635bff 0%, #8a84ff 100%)',
+                            background: 'linear-gradient(135deg, #5A6EFF 0%, #6A75FF 100%)',
                             color: 'white',
                           } : {},
                         }}
