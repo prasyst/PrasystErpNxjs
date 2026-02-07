@@ -368,29 +368,44 @@ const CoBrModal = ({ open, onClose }) => {
           position: 'relative',
         }}
       >
-        {/* Loading Overlay */}
         {isNavigating && (
-          <Box
-            sx={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              
-              borderRadius: 3,
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 2,
-              zIndex: 1,
-            }}
-          >
-            <CircularProgress size={50} />
-           
-          </Box>
-        )}
+  <Box
+    sx={{
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      borderRadius: 3,
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 2,
+      zIndex: 1,
+    }}
+  >
+    <CircularProgress size={50} />
+    <Typography
+      sx={{
+        color: 'primary.main',
+        fontWeight: 600,
+        fontSize: '2.2rem',
+        animation: 'bounce 0.6s ease-in-out infinite',
+        '@keyframes bounce': {
+          '0%, 100%': {
+            transform: 'translateY(0)',
+          },
+          '50%': {
+            transform: 'translateY(-15px)',
+          },
+        },
+      }}
+    >
+      Please Wait ...
+    </Typography>
+  </Box>
+)}
 
         <Typography id="company-branch-modal-title" variant="h6" textAlign="center">
           Select Company and Branch
