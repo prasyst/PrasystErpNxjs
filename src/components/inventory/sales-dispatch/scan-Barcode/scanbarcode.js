@@ -3759,18 +3759,20 @@ import { useRouter } from 'next/navigation';
 import { TbListSearch } from "react-icons/tb";
 import { IoArrowBackCircleOutline } from "react-icons/io5";
 
+// import SearchIcon from '@mui/icons-material/Search';
 
 const ScanBarcode = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const isTablet = useMediaQuery(theme.breakpoints.between('sm', 'md'));
   const isDesktop = useMediaQuery(theme.breakpoints.up('lg'));
-  
+  const [shadeSearchQuery, setShadeSearchQuery] = useState('');
   // State for all functionalities
+  
   const [showAdvancedFields, setShowAdvancedFields] = useState(false);
   const [useStyleCodeMode, setUseStyleCodeMode] = useState(false);
-  const [fillByRatioMode, setFillByRatioMode] = useState(true); 
-  const [fillByShadeMode, setFillByShadeMode] = useState(true); 
+  const [fillByRatioMode, setFillByRatioMode] = useState(false); 
+  const [fillByShadeMode, setFillByShadeMode] = useState(false); 
   const [showOrderModal, setShowOrderModal] = useState(false);
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
   const [activeTab, setActiveTab] = useState(0);
@@ -3889,7 +3891,7 @@ const ScanBarcode = () => {
   const [salesperson2Mapping, setSalesperson2Mapping] = useState({});
   const [merchandiserMapping, setMerchandiserMapping] = useState({});
   const [seasonMapping, setSeasonMapping] = useState({});
-
+const [shadeModalOpen, setShadeModalOpen] = useState(false);
   const [showScanner, setShowScanner] = useState(false);
   const [isScanning, setIsScanning] = useState(false);
   const [scannerError, setScannerError] = useState('');
@@ -4593,7 +4595,7 @@ const datePickerSx = {
           await fetchShadesForStyle(styleData.FGSTYLE_ID, shadeViewMode);
         }
         
-        setFillByRatioMode(true);
+        // setFillByRatioMode(true);
         if (isMobile) {
       setActiveTab(2); 
       setViewMode('details');
@@ -4708,7 +4710,7 @@ const datePickerSx = {
           await fetchShadesForStyle(selectedStyleData.FGSTYLE_ID, shadeViewMode);
         }
         
-        setFillByRatioMode(true);
+        // setFillByRatioMode(true);
       if (isMobile) {
       setActiveTab(2); // Items tab index
       setViewMode('details');
@@ -4924,29 +4926,34 @@ const datePickerSx = {
   };
 
   const fillQuantitiesByRatio = () => {
-    const totalQty = parseFloat(ratioData.totalQty);
-    if (!totalQty || totalQty <= 0) {
-      showSnackbar('Please enter a valid total quantity', 'error');
-      return;
-    }
+   if (!fillByRatioMode) {
+    showSnackbar('Please enable Ratio Fill mode first', 'error');
+    return;
+  }
+  
+  const totalQty = parseFloat(ratioData.totalQty);
+  if (!totalQty || totalQty <= 0) {
+    showSnackbar('Please enter a valid total quantity', 'error');
+    return;
+  }
 
-    const ratios = ratioData.ratios;
-    const sizeNames = Object.keys(ratios);
-    
-    if (sizeNames.length === 0) {
-      showSnackbar('Please enter ratios for at least one size', 'error');
-      return;
-    }
+  const ratios = ratioData.ratios;
+  const sizeNames = Object.keys(ratios);
+  
+  if (sizeNames.length === 0) {
+    showSnackbar('Please enter ratios for at least one size', 'error');
+    return;
+  }
 
-    const totalRatio = sizeNames.reduce((sum, sizeName) => {
-      const ratio = parseFloat(ratios[sizeName]) || 0;
-      return sum + ratio;
-    }, 0);
+  const totalRatio = sizeNames.reduce((sum, sizeName) => {
+    const ratio = parseFloat(ratios[sizeName]) || 0;
+    return sum + ratio;
+  }, 0);
 
-    if (totalRatio === 0) {
-      showSnackbar('Total ratio cannot be zero', 'error');
-      return;
-    }
+  if (totalRatio === 0) {
+    showSnackbar('Total ratio cannot be zero', 'error');
+    return;
+  }
 
     const updatedSizeDetails = [...sizeDetailsData];
     let allocatedQty = 0;
@@ -5006,62 +5013,37 @@ const datePickerSx = {
     }
   };
 
-  const handleConfirmItem = () => {
-    if (!newItemData.product || !newItemData.style) {
-      showSnackbar("Please scan a valid barcode or enter style code first", 'error');
-      return;
-    }
+const handleConfirmItem = () => {
+  if (!newItemData.product || !newItemData.style) {
+    showSnackbar("Please scan a valid barcode or enter style code first", 'error');
+    return;
+  }
 
-    const totalQty = calculateTotalQty();
-    if (totalQty === 0) {
-      showSnackbar("Please enter quantity in size details", 'error');
-      return;
-    }
+  const totalQty = calculateTotalQty();
+  if (totalQty === 0) {
+    showSnackbar("Please enter quantity in size details", 'error');
+    return;
+  }
 
-    const { amount, netAmount } = calculateAmount();
+  const { amount, netAmount } = calculateAmount();
 
-    if (fillByShadeMode && selectedShades.length > 0) {
-      const newItems = selectedShades.map(shade => {
-        const shadeAmount = amount;
-        const shadeQty = totalQty;
-        
-        return {
-          id: Date.now() + Math.random(),
-          barcode: newItemData.barcode,
-          product: newItemData.product,
-          style: newItemData.style,
-          type: newItemData.type,
-          shade: shade,
-          qty: shadeQty,
-          mrp: parseFloat(newItemData.mrp) || 0,
-          rate: parseFloat(newItemData.rate) || 0,
-          amount: shadeAmount,
-          discAmt: parseFloat(newItemData.discount) || 0,
-          netAmt: netAmount,
-          sets: parseFloat(newItemData.sets) || 0,
-          varPer: parseFloat(newItemData.varPer) || 0,
-          remark: newItemData.remark,
-          sizeDetails: [...sizeDetailsData],
-          convFact: newItemData.convFact,
-          styleData: currentStyleData,
-          STYCATRT_ID: currentStyleData?.STYCATRT_ID || 0
-        };
-      });
-
-      setTableData(prev => [...prev, ...newItems]);
-
-    } else {
-      const newItem = {
-        id: Date.now(),
+  // Only use shade mode if it's enabled
+  if (fillByShadeMode && selectedShades.length > 0) {
+    const newItems = selectedShades.map(shade => {
+      const shadeAmount = amount;
+      const shadeQty = totalQty;
+      
+      return {
+        id: Date.now() + Math.random(),
         barcode: newItemData.barcode,
         product: newItemData.product,
         style: newItemData.style,
         type: newItemData.type,
-        shade: newItemData.shade,
-        qty: totalQty,
+        shade: shade,
+        qty: shadeQty,
         mrp: parseFloat(newItemData.mrp) || 0,
         rate: parseFloat(newItemData.rate) || 0,
-        amount: amount,
+        amount: shadeAmount,
         discAmt: parseFloat(newItemData.discount) || 0,
         netAmt: netAmount,
         sets: parseFloat(newItemData.sets) || 0,
@@ -5072,62 +5054,88 @@ const datePickerSx = {
         styleData: currentStyleData,
         STYCATRT_ID: currentStyleData?.STYCATRT_ID || 0
       };
-
-      setTableData(prev => [...prev, newItem]);
-    }
-
-    // Reset form
-    setNewItemData({
-      barcode: '',
-      product: '',
-      style: '',
-      type: '',
-      shade: '',
-      mrp: '',
-      rate: '',
-      qty: '',
-      discount: '0',
-      sets: '1',
-      convFact: '1',
-      remark: '',
-      varPer: '0',
-      stdQty: '',
-      setNo: '',
-      percent: '0',
-      rQty: '',
-      divDt: ''
     });
-    
-    if (useStyleCodeMode) {
-      setStyleCodeInput('');
-    }
-    
-    setCurrentProductInfo({
-      barcode: '',
-      style: '',
-      product: '',
-      productKey: ''
-    });
-    setCurrentStyleData(null);
-    setSizeDetailsData([]);
-    setAvailableSizes([]);
-    setAvailableShades([]);
-    setSelectedShades([]);
-    setFillByRatioMode(true);
-    setFillByShadeMode(true);
-    setRatioData({
-      totalQty: '',
-      ratios: {}
-    });
-    setScannerError('');
-    if (isMobile) setViewMode('scan');
 
-    if (fillByShadeMode && selectedShades.length > 1) {
-      showSnackbar(`${selectedShades.length} items added to order (${totalQty} each)! Go To Cart`, 'success');
-    } else {
-      showSnackbar('Item added to order! Go To Cart', 'success');
-    }
-  };
+    setTableData(prev => [...prev, ...newItems]);
+  } else {
+    // Single item without shade mode
+    const newItem = {
+      id: Date.now(),
+      barcode: newItemData.barcode,
+      product: newItemData.product,
+      style: newItemData.style,
+      type: newItemData.type,
+      shade: newItemData.shade,
+      qty: totalQty,
+      mrp: parseFloat(newItemData.mrp) || 0,
+      rate: parseFloat(newItemData.rate) || 0,
+      amount: amount,
+      discAmt: parseFloat(newItemData.discount) || 0,
+      netAmt: netAmount,
+      sets: parseFloat(newItemData.sets) || 0,
+      varPer: parseFloat(newItemData.varPer) || 0,
+      remark: newItemData.remark,
+      sizeDetails: [...sizeDetailsData],
+      convFact: newItemData.convFact,
+      styleData: currentStyleData,
+      STYCATRT_ID: currentStyleData?.STYCATRT_ID || 0
+    };
+
+    setTableData(prev => [...prev, newItem]);
+  }
+
+  // Reset form
+  setNewItemData({
+    barcode: '',
+    product: '',
+    style: '',
+    type: '',
+    shade: '',
+    mrp: '',
+    rate: '',
+    qty: '',
+    discount: '0',
+    sets: '1',
+    convFact: '1',
+    remark: '',
+    varPer: '0',
+    stdQty: '',
+    setNo: '',
+    percent: '0',
+    rQty: '',
+    divDt: ''
+  });
+  
+  if (useStyleCodeMode) {
+    setStyleCodeInput('');
+  }
+  
+  setCurrentProductInfo({
+    barcode: '',
+    style: '',
+    product: '',
+    productKey: ''
+  });
+  setCurrentStyleData(null);
+  setSizeDetailsData([]);
+  setAvailableSizes([]);
+  setAvailableShades([]);
+  setSelectedShades([]);
+  setFillByRatioMode(false); // Reset to false
+  setFillByShadeMode(false); // Reset to false
+  setRatioData({
+    totalQty: '',
+    ratios: {}
+  });
+  setScannerError('');
+  if (isMobile) setViewMode('scan');
+
+  if (fillByShadeMode && selectedShades.length > 1) {
+    showSnackbar(`${selectedShades.length} items added to order (${totalQty} each)! Go To Cart`, 'success');
+  } else {
+    showSnackbar('Item added to order! Go To Cart', 'success');
+  }
+};
 
   const handleFormChange = (field, value) => {
     const updatedFormData = {
@@ -5592,97 +5600,75 @@ const datePickerSx = {
       
       if (response.data.RESPONSESTATUSCODE === 1) {
         showSnackbar(`Order submitted successfully! Order No: ${formData.ORDER_NO}`, 'success');
+
+        if (isMobile) {
+        setActiveTab(0); // Order tab index
+        setViewMode('scan');
+      }
         
         setTableData([]);
-        setFormData({
-          Party: '',
-          PARTY_KEY: '',
-          SHIPPING_PARTY: '',
-          SHP_PARTY_KEY: '',
-          Branch: '',
-          PARTYDTL_ID: '',
-          SHIPPING_PLACE: '',
-          SHP_PARTYDTL_ID: '',
-          Order_Type: 'Sales And Work-Order',
-          ORDBK_TYPE: '2',
-          Status: 'O',
-          ORDER_NO: '',
-          ORDER_DATE: new Date().toLocaleDateString('en-GB'),
-          LAST_ORD_NO: '',
-          SERIES: '',
-          PARTY_ORD_NO: '',
-          SEASON: '',
-          ORD_REF_DT: '',
-          QUOTE_NO: '',
-          Broker: '',
-          BROKER_KEY: '',
-          SALESPERSON_1: '',
-          SALEPERSON1_KEY: '',
-          SALESPERSON_2: '',
-          SALEPERSON2_KEY: '',
-          MERCHANDISER_NAME: '',
-          MERCHANDISER_ID: '',
-          REMARK_STATUS: '',
-          GST_APPL: 'N',
-          GST_TYPE: 'STATE',
-          DLV_DT: '',
-          ORG_DLV_DT: '',
-          MAIN_DETAILS: 'G',
-          RACK_MIN: '0',
-          REGISTERED_DEALER: '0',
-          SHORT_CLOSE: '0',
-          READY_SI: '0',
-          PLANNING: '0'
-        });
-        
-        setNewItemData({
-          barcode: '',
-          product: '',
-          style: '',
-          type: '',
-          shade: '',
-          mrp: '',
-          rate: '',
-          qty: '',
-          discount: '',
-          sets: '',
-          convFact: '1',
-          remark: '',
-          varPer: '0',
-          stdQty: '',
-          setNo: '',
-          percent: '0',
-          rQty: '',
-          divDt: ''
-        });
-        
-        setStyleCodeInput('');
-        setCurrentStyleData(null);
-        setSizeDetailsData([]);
-        setAvailableSizes([]);
-        setAvailableShades([]);
-        setSelectedShades([]);
-        setFillByRatioMode(true);
-        setFillByShadeMode(true);
-        setRatioData({
-          totalQty: '',
-          ratios: {}
-        });
-        if (isMobile) setViewMode('scan');
-        
-        await generateOrderNumber();
-        
-      } else {
-        showSnackbar('Error submitting order: ' + (response.data.RESPONSEMESSAGE || 'Unknown error'), 'error');
-      }
-    } catch (error) {
-      console.error('Error submitting order:', error);
-      showSnackbar('Error submitting order. Please try again.', 'error');
-    } finally {
-      setIsLoadingData(false);
-      setShowOrderModal(false);
+      setFormData(prev => ({
+        ...prev,
+        ORDER_NO: '', 
+        ORDER_DATE: new Date().toLocaleDateString('en-GB'),
+        PARTY_ORD_NO: '',
+        SEASON: '',
+        ORD_REF_DT: '',
+        QUOTE_NO: '',
+        DLV_DT: '',
+        ORG_DLV_DT: '',
+        REMARK_STATUS: ''
+      }));
+      
+      setNewItemData({
+        barcode: '',
+        product: '',
+        style: '',
+        type: '',
+        shade: '',
+        mrp: '',
+        rate: '',
+        qty: '',
+        discount: '0',
+        sets: '1',
+        convFact: '1',
+        remark: '',
+        varPer: '0',
+        stdQty: '',
+        setNo: '',
+        percent: '0',
+        rQty: '',
+        divDt: ''
+      });
+      
+      setStyleCodeInput('');
+      setCurrentStyleData(null);
+      setSizeDetailsData([]);
+      setAvailableSizes([]);
+      setAvailableShades([]);
+      setSelectedShades([]);
+      setFillByRatioMode(false);
+      setFillByShadeMode(false);
+      setRatioData({
+        totalQty: '',
+        ratios: {}
+      });
+      setScannerError('');
+      
+      // Regenerate order number for next order
+      await generateOrderNumber();
+      
+    } else {
+      showSnackbar('Error submitting order: ' + (response.data.RESPONSEMESSAGE || 'Unknown error'), 'error');
     }
-  };
+  } catch (error) {
+    console.error('Error submitting order:', error);
+    showSnackbar('Error submitting order. Please try again.', 'error');
+  } finally {
+    setIsLoadingData(false);
+    setShowOrderModal(false);
+  }
+};
 
   // Cleanup effects
   useEffect(() => {
@@ -6602,246 +6588,261 @@ const datePickerSx = {
           )}
 
           {/* Fill by Ratio Section */}
-          {availableSizes.length > 0 && (
-            <Card elevation={0.5} sx={{ mb: 1 }}>
-              <CardContent>
-                <Box sx={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  justifyContent: 'space-between',
-                  mb: 0.1,
-                  flexWrap: 'wrap'
-                }}>
-                  <Typography variant="h6" sx={{ fontSize: '1.1rem' }}>
-                    Fill By Ratio
-                  </Typography>
-                  
-                  <Box sx={{ display: 'flex', gap: 2 }}>
-                    <FormGroup>
-                      <FormControlLabel
-                        control={
-                          <Checkbox
-                            checked={fillByRatioMode}
-                            onChange={(e) => setFillByRatioMode(e.target.checked)}
-                            size="small"
-                            defaultChecked
-                          />
-                        }
-                        label="Ratio Fill"
-                      />
-                    </FormGroup>
-                    
-                    <FormGroup>
-                      <FormControlLabel
-                        control={
-                          <Checkbox
-                            checked={fillByShadeMode}
-                            onChange={(e) => setFillByShadeMode(e.target.checked)}
-                            size="small"
-                            defaultChecked
-                          />
-                        }
-                        label="By Shade"
-                      />
-                    </FormGroup>
-                  </Box>
-                </Box>
-                
-                {fillByRatioMode && (
-                  <Box>
-                    {/* Shade Selection for Fill by Shade Mode */}
-                    {fillByShadeMode && availableShades.length > 0 && (
-                      <Box sx={{ mb: 2 }}>
-                        <Box sx={{ 
-                          display: 'flex', 
-                          flexDirection: { xs: 'column', sm: 'row' },
-                          alignItems: { xs: 'stretch', sm: 'center' },
-                          gap: 1,
-                          mb: 1
-                        }}>
-                          <Box sx={{ 
-                            display: 'flex', 
-                            gap: 1,
-                            alignItems: 'center'
-                          }}>
-                            <Button
-                              variant={shadeViewMode === 'all' ? 'contained' : 'outlined'}
-                              onClick={handleAllShadesClick}
-                              size="small"
-                              sx={{ 
-                                minWidth: '60px',
-                                backgroundColor: shadeViewMode === 'all' ? '#1976d2' : 'transparent',
-                                color: shadeViewMode === 'all' ? 'white' : '#1976d2',
-                                borderColor: '#1976d2',
-                                '&:hover': {
-                                  backgroundColor: shadeViewMode === 'all' ? '#1565c0' : 'rgba(25, 118, 210, 0.04)'
-                                }
-                              }}
-                            >
-                              All
-                            </Button>
-                            <Button
-                              variant={shadeViewMode === 'allocated' ? 'contained' : 'outlined'}
-                              onClick={handleAllocatedShadesClick}
-                              size="small"
-                              sx={{ 
-                                minWidth: '80px',
-                                backgroundColor: shadeViewMode === 'allocated' ? '#1976d2' : 'transparent',
-                                color: shadeViewMode === 'allocated' ? 'white' : '#1976d2',
-                                borderColor: '#1976d2',
-                                '&:hover': {
-                                  backgroundColor: shadeViewMode === 'allocated' ? '#1565c0' : 'rgba(25, 118, 210, 0.04)'
-                                }
-                              }}
-                            >
-                              Allocated
-                            </Button>
-                          </Box>
-                          
-                          <FormControl sx={{ 
-                            flex: 1,
-                            minWidth: { xs: '100%', sm: '200px' }
-                          }}>
-                            <InputLabel id="shade-select-label">Select Shades</InputLabel>
-                            <Select
-                              labelId="shade-select-label"
-                              id="shade-select"
-                              multiple
-                              value={selectedShades}
-                              onChange={handleShadeSelectionChange}
-                              input={<OutlinedInput label="Select Shades" />}
-                              renderValue={(selected) => (
-                                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                                  {selected.map((value) => (
-                                    <Chip key={value} label={value} size="small" />
-                                  ))}
-                                </Box>
-                              )}
-                              size="small"
-                            >
-                              {availableShades.map((shade) => (
-                                <MenuItem key={shade.FGSHADE_NAME} value={shade.FGSHADE_NAME}>
-                                  {shade.FGSHADE_NAME}
-                                </MenuItem>
-                              ))}
-                            </Select>
-                          </FormControl>
-                        </Box>
-                      </Box>
-                    )}
-                    
-                    {/* Total Quantity Input */}
-                    <Box sx={{ mb: 2 }}>
-                      <TextField
-                        label="Total Quantity"
-                        variant="outlined"
-                        fullWidth
-                        type="number"
-                        value={ratioData.totalQty}
-                        onChange={(e) => handleTotalQtyChange(e.target.value)}
-                        sx={{
-                          '& .MuiInputBase-root': {
-                            height: 40,
-                          },
-                        }}
-                        InputProps={{
-                          inputProps: { min: 0 }
-                        }}
-                      />
-                    </Box>
-                    
-                    {/* Horizontal Ratio Table */}
-                    <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: '600' }}>
-                      Enter Ratios for Each Size:
-                    </Typography>
+{availableSizes.length > 0 && (
+  <Card elevation={0.5} sx={{ mb: 1 }}>
+    <CardContent>
+      <Box sx={{ 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'space-between',
+        mb: 0.1,
+        flexWrap: 'wrap'
+      }}>
+        <Typography variant="h6" sx={{ fontSize: '1.1rem' }}>
+          Fill By Ratio
+        </Typography>
+        
+        <Box sx={{ display: 'flex', gap: 2 }}>
+          <FormGroup>
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={fillByRatioMode}
+                  onChange={(e) => {
+                    setFillByRatioMode(e.target.checked);
+                    if (e.target.checked && fillByShadeMode) {
+                      setFillByShadeMode(false); // Uncheck shade mode if ratio is checked
+                    }
+                  }}
+                  size="small"
+                />
+              }
+              label="Ratio Fill"
+            />
+          </FormGroup>
+          
+          <FormGroup>
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={fillByShadeMode}
+                  onChange={(e) => {
+                    setFillByShadeMode(e.target.checked);
+                    if (e.target.checked && fillByRatioMode) {
+                      setFillByRatioMode(false); // Uncheck ratio mode if shade is checked
+                    }
+                  }}
+                  size="small"
+                />
+              }
+              label="By Shade"
+            />
+          </FormGroup>
+        </Box>
+      </Box>
+      
+      {/* Show Ratio Component only when fillByRatioMode is true */}
+      {fillByRatioMode && (
+        <Box>
+          {/* Total Quantity Input */}
+          <Box sx={{ mb: 2 }}>
+            <TextField
+              label="Total Quantity"
+              variant="outlined"
+              fullWidth
+              type="number"
+              value={ratioData.totalQty}
+              onChange={(e) => handleTotalQtyChange(e.target.value)}
+              sx={{
+                '& .MuiInputBase-root': {
+                  height: 40,
+                },
+              }}
+              InputProps={{
+                inputProps: { min: 0 }
+              }}
+            />
+          </Box>
+          
+          {/* Horizontal Ratio Table */}
+          <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: '600' }}>
+            Enter Ratios for Each Size:
+          </Typography>
 
-                    <Box sx={{ 
-                      overflowX: 'auto',
-                      backgroundColor: '#f8f9fa',
-                      borderRadius: 1,
-                      p: 1,
-                      mb: 0.7
+          <Box sx={{ 
+            overflowX: 'auto',
+            backgroundColor: '#f8f9fa',
+            borderRadius: 1,
+            p: 1,
+            mb: 0.7
+          }}>
+            <table style={{ 
+              width: '100%', 
+              borderCollapse: 'collapse',
+              minWidth: `${availableSizes.length * 50}px`
+            }}>
+              <thead>
+                <tr style={{ backgroundColor: '#e9ecef' }}>
+                  {availableSizes.map((size) => (
+                    <th key={`th-${size.STYSIZE_ID}`} style={{ 
+                      padding: '10px',
+                      border: '1px solid #dee2e6', 
+                      textAlign: 'center',
+                      fontSize: '14px',
+                      fontWeight: '600',
+                      minWidth: '30px'
                     }}>
-                      <table style={{ 
-                        width: '100%', 
-                        borderCollapse: 'collapse',
-                        minWidth: `${availableSizes.length * 50}px`
-                      }}>
-                        <thead>
-                          <tr style={{ backgroundColor: '#e9ecef' }}>
-                            {availableSizes.map((size) => (
-                              <th key={`th-${size.STYSIZE_ID}`} style={{ 
-                                padding: '10px',
-                                border: '1px solid #dee2e6', 
-                                textAlign: 'center',
-                                fontSize: '14px',
-                                fontWeight: '600',
-                                minWidth: '40px'
-                              }}>
-                                {size.STYSIZE_NAME}
-                              </th>
-                            ))}
-                          </tr>
-                        </thead>
-                        <tbody>
-                          <tr>
-                            {availableSizes.map((size, index) => (
-                              <td key={`td-${size.STYSIZE_ID}`} style={{ 
-                                padding: '2px', 
-                                border: '1px solid #dee2e6',
-                                textAlign: 'center',
-                                backgroundColor: '#fff'
-                              }}>
-                                <TextField
-                                  type="number"
-                                  value={ratioData.ratios[size.STYSIZE_NAME] || ''}
-                                  onChange={(e) => handleRatioChange(size.STYSIZE_NAME, e.target.value)}
-                                  size="small"
-                                  sx={{
-                                    width: '50px',
-                                    '& .MuiInputBase-root': {
-                                      height: '26px',
-                                      fontSize: '14px'
-                                    },
-                                    '& input': {
-                                      padding: '8px',
-                                      textAlign: 'center'
-                                    }
-                                  }}
-                                  inputProps={{ 
-                                    min: 0, 
-                                    step: 0.1,
-                                    style: { textAlign: 'center' }
-                                  }}
-                                />
-                              </td>
-                            ))}
-                          </tr>
-                        </tbody>
-                      </table>
-                    </Box>
-                    
-                    {/* Fill Qty Button */}
-                    <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-                      <Button
-                        variant="contained"
-                        onClick={fillQuantitiesByRatio}
-                        disabled={!ratioData.totalQty || parseFloat(ratioData.totalQty) <= 0}
-                        sx={{ 
-                          backgroundColor: '#4CAF50',
-                          color: 'white',
-                          '&:hover': { backgroundColor: '#45a049' },
-                          minWidth: '80px'
+                      {size.STYSIZE_NAME}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  {availableSizes.map((size, index) => (
+                    <td key={`td-${size.STYSIZE_ID}`} style={{ 
+                      padding: '2px', 
+                      border: '1px solid #dee2e6',
+                      textAlign: 'center',
+                      backgroundColor: '#fff'
+                    }}>
+                      <TextField
+                        type="number"
+                        value={ratioData.ratios[size.STYSIZE_NAME] || ''}
+                        onChange={(e) => handleRatioChange(size.STYSIZE_NAME, e.target.value)}
+                        size="small"
+                        sx={{
+                          width: '50px',
+                          '& .MuiInputBase-root': {
+                            height: '26px',
+                            fontSize: '14px'
+                          },
+                          '& input': {
+                            padding: '8px',
+                            textAlign: 'center'
+                          }
                         }}
-                      >
-                        Fill Qty
-                      </Button>
-                    </Box>
+                        inputProps={{ 
+                          min: 0, 
+                          step: 0.1,
+                          style: { textAlign: 'center' }
+                        }}
+                      />
+                    </td>
+                  ))}
+                </tr>
+              </tbody>
+            </table>
+          </Box>
+          
+          {/* Fill Qty Button */}
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+            <Button
+              variant="contained"
+              onClick={fillQuantitiesByRatio}
+              disabled={!ratioData.totalQty || parseFloat(ratioData.totalQty) <= 0}
+              sx={{ 
+                backgroundColor: '#4CAF50',
+                color: 'white',
+                '&:hover': { backgroundColor: '#45a049' },
+                minWidth: '80px'
+              }}
+            >
+              Fill Qty
+            </Button>
+          </Box>
+        </Box>
+      )}
+      
+      {/* Show Shade Selection only when fillByShadeMode is true */}
+      {fillByShadeMode && availableShades.length > 0 && (
+        <Box sx={{ mt: 2 }}>
+          <Box sx={{ 
+            display: 'flex', 
+            flexDirection: { xs: 'column', sm: 'row' },
+            alignItems: { xs: 'stretch', sm: 'center' },
+            gap: 1,
+            mb: 1
+          }}>
+            <Box sx={{ 
+              display: 'flex', 
+              gap: 1,
+              alignItems: 'center'
+            }}>
+              <Button
+                variant={shadeViewMode === 'all' ? 'contained' : 'outlined'}
+                onClick={handleAllShadesClick}
+                size="small"
+                sx={{ 
+                  minWidth: '60px',
+                  backgroundColor: shadeViewMode === 'all' ? '#1976d2' : 'transparent',
+                  color: shadeViewMode === 'all' ? 'white' : '#1976d2',
+                  borderColor: '#1976d2',
+                  '&:hover': {
+                    backgroundColor: shadeViewMode === 'all' ? '#1565c0' : 'rgba(25, 118, 210, 0.04)'
+                  }
+                }}
+              >
+                All
+              </Button>
+              <Button
+                variant={shadeViewMode === 'allocated' ? 'contained' : 'outlined'}
+                onClick={handleAllocatedShadesClick}
+                size="small"
+                sx={{ 
+                  minWidth: '80px',
+                  backgroundColor: shadeViewMode === 'allocated' ? '#1976d2' : 'transparent',
+                  color: shadeViewMode === 'allocated' ? 'white' : '#1976d2',
+                  borderColor: '#1976d2',
+                  '&:hover': {
+                    backgroundColor: shadeViewMode === 'allocated' ? '#1565c0' : 'rgba(25, 118, 210, 0.04)'
+                  }
+                }}
+              >
+                Allocated
+              </Button>
+            </Box>
+            
+            <FormControl sx={{ 
+              flex: 1,
+              minWidth: { xs: '100%', sm: '200px' }
+            }}>
+              <InputLabel id="shade-select-label">Select Shades</InputLabel>
+              <Select
+                labelId="shade-select-label"
+                id="shade-select"
+                multiple
+                value={selectedShades}
+                onChange={handleShadeSelectionChange}
+                input={<OutlinedInput label="Select Shades" />}
+                renderValue={(selected) => (
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                    {selected.map((value) => (
+                      <Chip key={value} label={value} size="small" />
+                    ))}
                   </Box>
                 )}
-              </CardContent>
-            </Card>
+                size="small"
+              >
+                {availableShades.map((shade) => (
+                  <MenuItem key={shade.FGSHADE_NAME} value={shade.FGSHADE_NAME}>
+                    {shade.FGSHADE_NAME}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Box>
+          
+          {selectedShades.length > 0 && (
+            <Alert severity="info" sx={{ mt: 1 }}>
+              Selected {selectedShades.length} shade(s). Quantity will be added for each selected shade.
+            </Alert>
           )}
+        </Box>
+      )}
+    </CardContent>
+  </Card>
+)}
 
           {/* Size Details Table */}
           {sizeDetailsData.length > 0 && (
@@ -6877,35 +6878,35 @@ const datePickerSx = {
                           textAlign: 'center',
                           fontSize: '14px',
                           fontWeight: '600'
-                        }}>Quantity</th>
+                        }}>Qty</th>
                          <th style={{ 
         padding: '2px 8px', 
         border: '1px solid #dee2e6', 
         textAlign: 'center',
         fontSize: '14px',
         fontWeight: '600'
-      }}>Ready Qty</th>
+      }}>FG</th>
       <th style={{ 
         padding: '2px 8px', 
         border: '1px solid #dee2e6', 
         textAlign: 'center',
         fontSize: '14px',
         fontWeight: '600'
-      }}>Process</th>
+      }}>Proc</th>
       <th style={{ 
         padding: '2px 8px', 
         border: '1px solid #dee2e6', 
         textAlign: 'center',
         fontSize: '14px',
         fontWeight: '600'
-      }}>Order</th>
+      }}>Ord</th>
       <th style={{ 
         padding: '2px 8px', 
         border: '1px solid #dee2e6', 
         textAlign: 'center',
         fontSize: '14px',
         fontWeight: '600'
-      }}>Bal Qty</th>
+      }}>Bal</th>
                         <th style={{ 
                           padding: '2px 8px',
                           border: '1px solid #dee2e6', 
@@ -7467,150 +7468,458 @@ const datePickerSx = {
                 </Box>
               </Grid>
             </Grid>
-            
-            {/* Size Details */}
-            {sizeDetailsData.length > 0 && (
-              <Box sx={{ mt: 3 }}>
-                <Typography variant="subtitle2" sx={{ 
-                  mb: 1.5, 
-                  fontWeight: '600',
-                  color: '#1976d2'
+
+
+             {/* Ratio Settings */}
+      {/* Ratio Settings */}
+{availableSizes.length > 0 && (
+  <Card sx={{ 
+    mb: 2,
+    borderRadius: 3,
+    boxShadow: '0 4px 12px rgba(0,0,0,0.05)'
+  }}>
+    <CardContent sx={{ p: 1 }}>
+      <Box sx={{ 
+        display: 'flex', 
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        mb: 2
+      }}>
+        <Typography variant="subtitle1" sx={{ 
+          fontWeight: '600',
+          color: '#1976d2'
+        }}>
+          Ratio Settings
+        </Typography>
+        <FormGroup row>
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={fillByRatioMode}
+                onChange={(e) => {
+                  setFillByRatioMode(e.target.checked);
+                  if (e.target.checked && fillByShadeMode) {
+                    setFillByShadeMode(false); // Uncheck shade mode if ratio is checked
+                  }
+                }}
+                size="small"
+                sx={{
+                  color: '#1976d2',
+                  '&.Mui-checked': {
+                    color: '#1976d2',
+                  },
+                }}
+              />
+            }
+            label={
+              <Typography variant="caption" sx={{ fontSize: '12px' }}>
+                Ratio Fill
+              </Typography>
+            }
+          />
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={fillByShadeMode}
+                onChange={(e) => {
+                  setFillByShadeMode(e.target.checked);
+                  if (e.target.checked && fillByRatioMode) {
+                    setFillByRatioMode(false); // Uncheck ratio mode if shade is checked
+                  }
+                }}
+                size="small"
+                sx={{
+                  color: '#1976d2',
+                  '&.Mui-checked': {
+                    color: '#1976d2',
+                  },
+                }}
+              />
+            }
+            label={
+              <Typography variant="caption" sx={{ fontSize: '12px' }}>
+                By Shade
+              </Typography>
+            }
+          />
+        </FormGroup>
+      </Box>
+
+      {/* Show Ratio Component only when fillByRatioMode is true */}
+      {fillByRatioMode && (
+        <Box>
+          {/* Total Quantity */}
+          <TextField
+            label="Total Quantity"
+            variant="outlined"
+            fullWidth
+            type="number"
+            value={ratioData.totalQty}
+            onChange={(e) => handleTotalQtyChange(e.target.value)}
+            sx={{
+              mb: 2,
+              '& .MuiOutlinedInput-root': {
+                borderRadius: 2,
+                height: '44px'
+              }
+            }}
+            InputProps={{
+              inputProps: { min: 0 }
+            }}
+          />
+          
+          {/* Ratio Inputs */}
+          <Typography variant="subtitle2" sx={{ 
+            mb: 1, 
+            fontWeight: '600',
+            color: '#1976d2'
+          }}>
+            Ratios for Each Size:
+          </Typography>
+          
+          <Box sx={{ 
+            display: 'flex',
+            overflowX: 'auto',
+            gap: 0.3,
+            pb: 0.4
+          }}>
+            {availableSizes.map((size) => (
+              <Box key={size.STYSIZE_ID} sx={{ 
+                minWidth: '50px',
+                p: 0.5,
+                backgroundColor: 'white',
+                borderRadius: 2,
+                border: '1px solid #e0e0e0',
+                textAlign: 'center'
+              }}>
+                <Typography variant="caption" sx={{ 
+                  display: 'block', 
+                  color: '#666',
+                  mb: 0.3
                 }}>
-                  Size Details
+                  {size.STYSIZE_NAME}
                 </Typography>
-                
-                <Box sx={{ 
-                  maxHeight: '300px',
-                  overflowY: 'auto',
-                  backgroundColor: '#f8f9fa',
-                  borderRadius: 2,
-                  p: 1
-                }}>
-                  {sizeDetailsData.map((size, index) => {
-                    const readyQty = parseFloat(size.FG_QTY) || 0;
-                    const orderQty = parseFloat(size.PORD_QTY) || 0;
-                    const issueQty = parseFloat(size.ISU_QTY) || 0;
-                    const processQty = orderQty + issueQty;
-                    const balQty = parseFloat(size.BAL_QTY) || 0;
-                    
-                    return (
-                      <Box 
-                        key={index}
-                        sx={{ 
-                          mb: 1.5,
-                          p: 1.5,
-                          backgroundColor: 'white',
-                          borderRadius: 2,
-                          border: '1px solid #e0e0e0'
-                        }}
-                      >
-                        <Box sx={{ 
-                          display: 'flex', 
-                          justifyContent: 'space-between',
-                          alignItems: 'center',
-                          mb: 1
-                        }}>
-                          <Typography variant="body2" sx={{ fontWeight: '600' }}>
-                            {size.STYSIZE_NAME}
-                          </Typography>
-                          <TextField
-                            type="number"
-                            value={size.QTY}
-                            onChange={(e) => handleSizeQtyChange(index, e.target.value)}
-                            size="small"
-                            sx={{
-                              width: '80px',
-                              '& .MuiInputBase-root': {
-                                height: '36px',
-                                borderRadius: 1
-                              }
-                            }}
-                            inputProps={{ min: 0 }}
-                          />
-                        </Box>
-                        
-                        <Grid container spacing={1}>
-                          <Grid item xs={3}>
-                            <Typography variant="caption" sx={{ color: '#666' }}>
-                              Ready
-                            </Typography>
-                            <Typography variant="body2" sx={{ fontWeight: '500' }}>
-                              {readyQty.toFixed(0)}
-                            </Typography>
-                          </Grid>
-                          <Grid item xs={3}>
-                            <Typography variant="caption" sx={{ color: '#666' }}>
-                              Process
-                            </Typography>
-                            <Typography variant="body2" sx={{ fontWeight: '500' }}>
-                              {processQty.toFixed(0)}
-                            </Typography>
-                          </Grid>
-                          <Grid item xs={3}>
-                            <Typography variant="caption" sx={{ color: '#666' }}>
-                              Balance
-                            </Typography>
-                            <Typography variant="body2" sx={{ fontWeight: '500' }}>
-                              {balQty.toFixed(0)}
-                            </Typography>
-                          </Grid>
-                          <Grid item xs={3}>
-                            <Typography variant="caption" sx={{ color: '#666' }}>
-                              Amount
-                            </Typography>
-                            <Typography variant="body2" sx={{ fontWeight: '500', color: '#4caf50' }}>
-                              ₹{((size.QTY || 0) * (size.WSP || 0)).toFixed(2)}
-                            </Typography>
-                          </Grid>
-                        </Grid>
-                      </Box>
-                    );
-                  })}
-                </Box>
+                <TextField
+                  type="number"
+                  value={ratioData.ratios[size.STYSIZE_NAME] || ''}
+                  onChange={(e) => handleRatioChange(size.STYSIZE_NAME, e.target.value)}
+                  size="small"
+                  sx={{
+                    width: '40px',
+                    '& .MuiInputBase-root': {
+                      height: '36px',
+                      borderRadius: 1
+                    },
+                    '& input': {
+                      textAlign: 'center'
+                    }
+                  }}
+                  inputProps={{ 
+                    min: 0, 
+                    step: 0.1
+                  }}
+                />
               </Box>
-            )}
-            
-            {/* Total Summary */}
-            <Box sx={{ 
-              mt: 3, 
-              p: 2, 
-              backgroundColor: '#e8f5e9',
+            ))}
+          </Box>
+          
+          <Button
+            fullWidth
+            variant="contained"
+            onClick={fillQuantitiesByRatio}
+            disabled={!ratioData.totalQty || parseFloat(ratioData.totalQty) <= 0}
+            sx={{
+              mt: 0.5,
+              mb: 0.5,
+              py: 1.5,
               borderRadius: 2,
-              border: '1px solid #c8e6c9'
+              backgroundColor: '#4caf50',
+              '&:hover': {
+                backgroundColor: '#388e3c'
+              }
+            }}
+          >
+            Fill Quantities
+          </Button>
+        </Box>
+      )}
+
+      {/* Show Shade Component only when fillByShadeMode is true */}
+      {fillByShadeMode && (
+        <Box sx={{ mt: 2 }}>
+          {/* New Select Button */}
+          <Button
+            fullWidth
+            variant="outlined"
+            onClick={() => setShadeModalOpen(true)}
+            startIcon={<FilterListIcon />}
+            sx={{ 
+              mb: 2,
+              justifyContent: 'flex-start',
+              backgroundColor: selectedShades.length > 0 
+                ? 'rgba(25, 118, 210, 0.08)' 
+                : 'white'
+            }}
+          >
+            {selectedShades.length > 0 
+              ? `${selectedShades.length} shade(s) selected`
+              : 'Select Shades'}
+          </Button>
+          
+          {/* Show selected shades as chips */}
+          {selectedShades.length > 0 && (
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
+              {selectedShades.map(shade => (
+                <Chip
+                  key={shade}
+                  label={shade}
+                  onDelete={() => {
+                    const newSelected = selectedShades.filter(s => s !== shade);
+                    setSelectedShades(newSelected);
+                  }}
+                  size="small"
+                  color="primary"
+                  variant="outlined"
+                />
+              ))}
+            </Box>
+          )}
+        </Box>
+      )}
+    </CardContent>
+  </Card>
+)}
+            
+ {sizeDetailsData.length > 0 && (
+        <Card elevation={1} sx={{ mb: 1 }}>
+          <CardContent>
+            <Typography variant="h6" sx={{ mb: 1, fontSize: '1.1rem' }}>
+              Size Details (Qty) :<strong style={{ color: '#1976d2' }}>{calculateTotalQty()}</strong>
+            </Typography>
+            
+            <Box sx={{ 
+              overflowX: 'auto',
+              backgroundColor: '#f8f9fa',
+              borderRadius: 1,
+              p: 1
             }}>
-              <Grid container spacing={1}>
-                <Grid item xs={6}>
-                  <Typography variant="body2" sx={{ color: '#666' }}>
-                    Total Quantity:
+              <table style={{ 
+                width: '100%', 
+                borderCollapse: 'collapse',
+                minWidth: '500px'
+              }}>
+                <thead>
+                  <tr style={{ backgroundColor: '#e9ecef' }}>
+                    <th style={{ 
+                      padding: '2px 8px',
+                      border: '1px solid #dee2e6', 
+                      textAlign: 'left',
+                      fontSize: '14px',
+                      fontWeight: '600'
+                    }}>Size</th>
+                    <th style={{ 
+                      padding: '2px 8px', 
+                      border: '1px solid #dee2e6', 
+                      textAlign: 'center',
+                      fontSize: '14px',
+                      fontWeight: '600'
+                    }}>Qty</th>
+                     <th style={{ 
+        padding: '2px 8px', 
+        border: '1px solid #dee2e6', 
+        textAlign: 'center',
+        fontSize: '14px',
+        fontWeight: '600'
+      }}>FG</th>
+      <th style={{ 
+        padding: '2px 8px', 
+        border: '1px solid #dee2e6', 
+        textAlign: 'center',
+        fontSize: '14px',
+        fontWeight: '600'
+      }}>Proc</th>
+      <th style={{ 
+        padding: '2px 8px', 
+        border: '1px solid #dee2e6', 
+        textAlign: 'center',
+        fontSize: '14px',
+        fontWeight: '600'
+      }}>Ord</th>
+      <th style={{ 
+        padding: '2px 8px', 
+        border: '1px solid #dee2e6', 
+        textAlign: 'center',
+        fontSize: '14px',
+        fontWeight: '600'
+      }}>Bal</th>
+                    <th style={{ 
+                      padding: '2px 8px',
+                      border: '1px solid #dee2e6', 
+                      textAlign: 'right',
+                      fontSize: '14px',
+                      fontWeight: '600'
+                    }}>MRP</th>
+                    <th style={{ 
+                      padding: '2px 8px',
+                      border: '1px solid #dee2e6', 
+                      textAlign: 'right',
+                      fontSize: '14px',
+                      fontWeight: '600'
+                    }}>Rate</th>
+                    <th style={{ 
+                      padding: '2px 8px',
+                      border: '1px solid #dee2e6', 
+                      textAlign: 'right',
+                      fontSize: '14px',
+                      fontWeight: '600'
+                    }}>Amt</th>
+                  </tr>
+                </thead>
+                <tbody>
+  {sizeDetailsData.map((size, index) => {
+    // API response से values calculate करें
+    const readyQty = parseFloat(size.FG_QTY) || 0;
+    const orderQty = parseFloat(size.PORD_QTY) || 0;
+    const issueQty = parseFloat(size.ISU_QTY) || 0;
+    const processQty = orderQty + issueQty;
+    const balQty = parseFloat(size.BAL_QTY) || 0;
+    
+    return (
+      <tr key={index} style={{ 
+        backgroundColor: index % 2 === 0 ? '#fff' : '#f8f9fa',
+        borderBottom: '1px solid #dee2e6'
+      }}>
+        <td style={{
+          padding: '4px 8px',
+          border: '1px solid #dee2e6',
+          fontSize: '13px',
+          lineHeight: '1.2'
+        }}>{size.STYSIZE_NAME}</td>
+        
+        <td style={{ 
+          padding: '5px', 
+          border: '1px solid #dee2e6',
+          textAlign: 'center'
+        }}>
+          <TextField
+            type="number"
+            value={size.QTY}
+            onChange={(e) => handleSizeQtyChange(index, e.target.value)}
+            size="small"
+            sx={{
+              width: '60px',
+              '& .MuiInputBase-root': {
+                height: '20px',
+                fontSize: '13px'
+              },
+              '& input': {
+                padding: '1px',
+                textAlign: 'center'
+              }
+            }}
+            inputProps={{ min: 0 }}
+          />
+        </td>
+        
+        {/* नए columns के data display करें */}
+        <td style={{ 
+          padding: '4px 8px',
+          border: '1px solid #dee2e6',
+          textAlign: 'center',
+          fontSize: '13px'
+        }}>
+          {readyQty.toFixed(3)}
+        </td>
+        
+        <td style={{ 
+          padding: '4px 8px',
+          border: '1px solid #dee2e6',
+          textAlign: 'center',
+          fontSize: '13px'
+        }}>
+          {processQty.toFixed(3)}
+        </td>
+        
+        <td style={{ 
+          padding: '4px 8px',
+          border: '1px solid #dee2e6',
+          textAlign: 'center',
+          fontSize: '13px'
+        }}>
+          {orderQty.toFixed(3)}
+        </td>
+        
+        <td style={{ 
+          padding: '4px 8px',
+          border: '1px solid #dee2e6',
+          textAlign: 'center',
+          fontSize: '13px'
+        }}>
+          {balQty.toFixed(3)}
+        </td>
+        
+        <td style={{ 
+          padding: '10px', 
+          border: '1px solid #dee2e6',
+          textAlign: 'right',
+          fontSize: '14px'
+        }}>{size.MRP || 0}</td>
+        
+        <td style={{ 
+          padding: '10px', 
+          border: '1px solid #dee2e6',
+          textAlign: 'right',
+          fontSize: '14px'
+        }}>{size.WSP  || 0}</td>
+        
+        <td style={{ 
+          padding: '10px', 
+          border: '1px solid #dee2e6',
+          textAlign: 'right',
+          fontSize: '14px',
+          fontWeight: '500'
+        }}>
+          ₹{(size.QTY || 0) * (size.WSP  || 0)}
+        </td>
+      </tr>
+    );
+  })}
+</tbody>
+              </table>
+            </Box>
+            
+            <Box sx={{ 
+              mt: 2, 
+              display: 'flex', 
+              justifyContent: 'space-between', 
+              alignItems: 'center',
+              flexWrap: 'wrap',
+              gap: 2
+            }}>
+              <Box>
+                <Typography variant="body1" sx={{ fontWeight: '500' }}>
+                  Total Quantity: <strong style={{ color: '#1976d2' }}>{calculateTotalQty()}</strong>
+                </Typography>
+                <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                  Amount: ₹{calculateAmount().amount.toFixed(2)}
+                </Typography>
+                {fillByShadeMode && selectedShades.length > 1 && (
+                  <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                    Selected Shades: {selectedShades.length} (Total will be divided equally)
                   </Typography>
-                  <Typography variant="h6" sx={{ color: '#1976d2' }}>
-                    {calculateTotalQty()}
-                  </Typography>
-                </Grid>
-                <Grid item xs={6}>
-                  <Typography variant="body2" sx={{ color: '#666' }}>
-                    Total Amount:
-                  </Typography>
-                  <Typography variant="h6" sx={{ color: '#4caf50' }}>
-                    ₹{calculateAmount().amount.toFixed(2)}
-                  </Typography>
-                </Grid>
-              </Grid>
+                )}
+              </Box>
               
               <Button
-                fullWidth
                 variant="contained"
                 startIcon={<AddIcon />}
                 onClick={handleConfirmItem}
                 disabled={calculateTotalQty() === 0}
-                sx={{
-                  mt: 2,
-                  py: 1.5,
-                  borderRadius: 2,
-                  backgroundColor: '#4caf50',
-                  '&:hover': {
-                    backgroundColor: '#388e3c'
-                  }
+                sx={{ 
+                  backgroundColor: '#4CAF50',
+                  color: 'white',
+                  '&:hover': { backgroundColor: '#45a049' },
+                  minWidth: '140px'
                 }}
               >
                 Add to Order
@@ -7619,241 +7928,13 @@ const datePickerSx = {
           </CardContent>
         </Card>
       )}
-
-      {/* Ratio Settings */}
-      {availableSizes.length > 0 && (
-        <Card sx={{ 
-          mb: 2,
-          borderRadius: 3,
-          boxShadow: '0 4px 12px rgba(0,0,0,0.05)'
-        }}>
-          <CardContent sx={{ p: 2 }}>
-            <Box sx={{ 
-              display: 'flex', 
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              mb: 2
-            }}>
-              <Typography variant="subtitle1" sx={{ 
-                fontWeight: '600',
-                color: '#1976d2'
-              }}>
-                Ratio Settings
-              </Typography>
-              <FormGroup row>
-                <FormControlLabel
-                  control={
-                    <Checkbox
-                      checked={fillByRatioMode}
-                      onChange={(e) => setFillByRatioMode(e.target.checked)}
-                      size="small"
-                      sx={{
-                        color: '#1976d2',
-                        '&.Mui-checked': {
-                          color: '#1976d2',
-                        },
-                      }}
-                    />
-                  }
-                  label={
-                    <Typography variant="caption" sx={{ fontSize: '12px' }}>
-                      Ratio Fill
-                    </Typography>
-                  }
-                />
-                <FormControlLabel
-                  control={
-                    <Checkbox
-                      checked={fillByShadeMode}
-                      onChange={(e) => setFillByShadeMode(e.target.checked)}
-                      size="small"
-                      sx={{
-                        color: '#1976d2',
-                        '&.Mui-checked': {
-                          color: '#1976d2',
-                        },
-                      }}
-                    />
-                  }
-                  label={
-                    <Typography variant="caption" sx={{ fontSize: '12px' }}>
-                      By Shade
-                    </Typography>
-                  }
-                />
-              </FormGroup>
-            </Box>
-
-            {fillByRatioMode && (
-              <Box>
-                {/* Shade Selection */}
-                {fillByShadeMode && availableShades.length > 0 && (
-                  <Box sx={{ mb: 2 }}>
-                    <Box sx={{ 
-                      display: 'flex', 
-                      gap: 1,
-                      mb: 2
-                    }}>
-                      <Button
-                        variant={shadeViewMode === 'all' ? 'contained' : 'outlined'}
-                        onClick={handleAllShadesClick}
-                        size="small"
-                        sx={{ 
-                          flex: 1,
-                          backgroundColor: shadeViewMode === 'all' ? '#1976d2' : 'transparent',
-                          color: shadeViewMode === 'all' ? 'white' : '#1976d2',
-                          borderColor: '#1976d2',
-                          '&:hover': {
-                            backgroundColor: shadeViewMode === 'all' ? '#1565c0' : 'rgba(25, 118, 210, 0.04)'
-                          }
-                        }}
-                      >
-                        All Shades
-                      </Button>
-                      <Button
-                        variant={shadeViewMode === 'allocated' ? 'contained' : 'outlined'}
-                        onClick={handleAllocatedShadesClick}
-                        size="small"
-                        sx={{ 
-                          flex: 1,
-                          backgroundColor: shadeViewMode === 'allocated' ? '#1976d2' : 'transparent',
-                          color: shadeViewMode === 'allocated' ? 'white' : '#1976d2',
-                          borderColor: '#1976d2',
-                          '&:hover': {
-                            backgroundColor: shadeViewMode === 'allocated' ? '#1565c0' : 'rgba(25, 118, 210, 0.04)'
-                          }
-                        }}
-                      >
-                        Allocated
-                      </Button>
-                    </Box>
-                    
-                    <FormControl fullWidth>
-                      <InputLabel id="shade-select-label">Select Shades</InputLabel>
-                      <Select
-                        labelId="shade-select-label"
-                        id="shade-select"
-                        multiple
-                        value={selectedShades}
-                        onChange={handleShadeSelectionChange}
-                        input={<OutlinedInput label="Select Shades" />}
-                        renderValue={(selected) => (
-                          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                            {selected.map((value) => (
-                              <Chip key={value} label={value} size="small" />
-                            ))}
-                          </Box>
-                        )}
-                        size="small"
-                      >
-                        {availableShades.map((shade) => (
-                          <MenuItem key={shade.FGSHADE_NAME} value={shade.FGSHADE_NAME}>
-                            {shade.FGSHADE_NAME}
-                          </MenuItem>
-                        ))}
-                      </Select>
-                    </FormControl>
-                  </Box>
-                )}
-                
-                {/* Total Quantity */}
-                <TextField
-                  label="Total Quantity"
-                  variant="outlined"
-                  fullWidth
-                  type="number"
-                  value={ratioData.totalQty}
-                  onChange={(e) => handleTotalQtyChange(e.target.value)}
-                  sx={{
-                    mb: 2,
-                    '& .MuiOutlinedInput-root': {
-                      borderRadius: 2,
-                      height: '44px'
-                    }
-                  }}
-                  InputProps={{
-                    inputProps: { min: 0 }
-                  }}
-                />
-                
-                {/* Ratio Inputs */}
-                <Typography variant="subtitle2" sx={{ 
-                  mb: 1, 
-                  fontWeight: '600',
-                  color: '#1976d2'
-                }}>
-                  Ratios for Each Size:
-                </Typography>
-                
-                <Box sx={{ 
-                  display: 'flex',
-                  overflowX: 'auto',
-                  gap: 1,
-                  pb: 1
-                }}>
-                  {availableSizes.map((size) => (
-                    <Box key={size.STYSIZE_ID} sx={{ 
-                      minWidth: '100px',
-                      p: 1.5,
-                      backgroundColor: 'white',
-                      borderRadius: 2,
-                      border: '1px solid #e0e0e0',
-                      textAlign: 'center'
-                    }}>
-                      <Typography variant="caption" sx={{ 
-                        display: 'block', 
-                        color: '#666',
-                        mb: 1
-                      }}>
-                        {size.STYSIZE_NAME}
-                      </Typography>
-                      <TextField
-                        type="number"
-                        value={ratioData.ratios[size.STYSIZE_NAME] || ''}
-                        onChange={(e) => handleRatioChange(size.STYSIZE_NAME, e.target.value)}
-                        size="small"
-                        sx={{
-                          width: '70px',
-                          '& .MuiInputBase-root': {
-                            height: '36px',
-                            borderRadius: 1
-                          },
-                          '& input': {
-                            textAlign: 'center'
-                          }
-                        }}
-                        inputProps={{ 
-                          min: 0, 
-                          step: 0.1
-                        }}
-                      />
-                    </Box>
-                  ))}
-                </Box>
-                
-                <Button
-                  fullWidth
-                  variant="contained"
-                  onClick={fillQuantitiesByRatio}
-                  disabled={!ratioData.totalQty || parseFloat(ratioData.totalQty) <= 0}
-                  sx={{
-                    mt: 2,
-                    mb: 2,
-                    py: 1.5,
-                    borderRadius: 2,
-                    backgroundColor: '#4caf50',
-                    '&:hover': {
-                      backgroundColor: '#388e3c'
-                    }
-                  }}
-                >
-                  Fill Quantities
-                </Button>
-              </Box>
-            )}
+            
+           
           </CardContent>
         </Card>
       )}
+
+     
     </Box>
   );
 
@@ -8007,31 +8088,27 @@ const datePickerSx = {
                     <table style={{ 
                       width: '100%', 
                       borderCollapse: 'collapse',
-                      minWidth: '800px'
+                      minWidth: '600px'
                     }}>
                       <thead>
                         <tr style={{ backgroundColor: '#e9ecef' }}>
+                          
+                           <th style={{ 
+                            padding: '12px', 
+                            border: '1px solid #dee2e6', 
+                            textAlign: 'left',
+                            fontSize: '14px',
+                            fontWeight: '600'
+                          }}>Style/Shade</th>
                           <th style={{ 
                             padding: '12px', 
                             border: '1px solid #dee2e6', 
                             textAlign: 'left',
                             fontSize: '14px',
                             fontWeight: '600'
-                          }}>Product</th>
-                          <th style={{ 
-                            padding: '12px', 
-                            border: '1px solid #dee2e6', 
-                            textAlign: 'left',
-                            fontSize: '14px',
-                            fontWeight: '600'
-                          }}>Style</th>
-                          <th style={{ 
-                            padding: '12px', 
-                            border: '1px solid #dee2e6', 
-                            textAlign: 'center',
-                            fontSize: '14px',
-                            fontWeight: '600'
-                          }}>Qty</th>
+                          }}>QTY</th>
+                         
+                         
                           <th style={{ 
                             padding: '12px', 
                             border: '1px solid #dee2e6', 
@@ -8045,7 +8122,14 @@ const datePickerSx = {
                             textAlign: 'right',
                             fontSize: '14px',
                             fontWeight: '600'
-                          }}>Amount</th>
+                          }}>Amt</th>
+                           <th style={{ 
+                            padding: '12px', 
+                            border: '1px solid #dee2e6', 
+                            textAlign: 'right',
+                            fontSize: '14px',
+                            fontWeight: '600'
+                          }}>Product</th>
                           <th style={{ 
                             padding: '12px', 
                             border: '1px solid #dee2e6', 
@@ -8062,21 +8146,18 @@ const datePickerSx = {
                             borderBottom: '1px solid #dee2e6'
                           }}>
                             <td style={{ 
-                              padding: '12px',
-                              border: '1px solid #dee2e6',
-                              fontSize: '14px'
-                            }}>{item.product}</td>
-                            <td style={{ 
                               padding: '12px', 
                               border: '1px solid #dee2e6',
                               fontSize: '14px'
                             }}>{item.style} - {item.shade}</td>
+
                             <td style={{ 
-                              padding: '12px', 
+                              padding: '12px',
                               border: '1px solid #dee2e6',
-                              textAlign: 'center',
                               fontSize: '14px'
                             }}>{item.qty}</td>
+                            
+                            
                             <td style={{ 
                               padding: '12px',
                               border: '1px solid #dee2e6',
@@ -8090,6 +8171,13 @@ const datePickerSx = {
                               fontSize: '14px',
                               fontWeight: '500'
                             }}>₹{item.amount.toFixed(2)}</td>
+                             <td style={{ 
+                              padding: '12px',
+                              border: '1px solid #dee2e6',
+                              textAlign: 'right',
+                              fontSize: '14px',
+                              fontWeight: '500'
+                            }}>{item.product}</td>
                             <td style={{ 
                               padding: '12px', 
                               border: '1px solid #dee2e6',
@@ -8157,6 +8245,230 @@ const datePickerSx = {
           </Box>
         </Fade>
       </Modal>
+
+      
+<Dialog
+  open={shadeModalOpen}
+  onClose={() => setShadeModalOpen(false)}
+  maxWidth="md"
+  fullWidth
+  PaperProps={{
+    sx: {
+      maxWidth: '920px',
+      width: '100%',
+      maxHeight: '85vh'
+    }
+  }}
+>
+  <DialogTitle sx={{ 
+    display: 'flex', 
+    justifyContent: 'space-between', 
+    alignItems: 'center',
+    backgroundColor: '#1976d2',
+    color: 'white'
+  }}>
+    <Typography variant="h6">Select Shades</Typography>
+    <IconButton onClick={() => setShadeModalOpen(false)} sx={{ color: 'white' }}>
+      <CloseIcon />
+    </IconButton>
+  </DialogTitle>
+  
+  <DialogContent sx={{ p: 3 }}>
+    {/* View Mode Buttons */}
+    <Box sx={{ 
+      display: 'flex', 
+      gap: 1,
+      mb: 1,
+      mt: 1,
+      flexWrap: 'wrap'
+    }}>
+      <Button
+        variant={shadeViewMode === 'all' ? 'contained' : 'outlined'}
+        onClick={handleAllShadesClick}
+        size="medium"
+        sx={{ 
+          minWidth: '120px',
+          backgroundColor: shadeViewMode === 'all' ? '#1976d2' : 'transparent',
+          color: shadeViewMode === 'all' ? 'white' : '#1976d2',
+          borderColor: '#1976d2',
+          '&:hover': {
+            backgroundColor: shadeViewMode === 'all' ? '#1565c0' : 'rgba(25, 118, 210, 0.04)'
+          }
+        }}
+      >
+        All Shades
+      </Button>
+      <Button
+        variant={shadeViewMode === 'allocated' ? 'contained' : 'outlined'}
+        onClick={handleAllocatedShadesClick}
+        size="medium"
+        sx={{ 
+          minWidth: '120px',
+          backgroundColor: shadeViewMode === 'allocated' ? '#1976d2' : 'transparent',
+          color: shadeViewMode === 'allocated' ? 'white' : '#1976d2',
+          borderColor: '#1976d2',
+          '&:hover': {
+            backgroundColor: shadeViewMode === 'allocated' ? '#1565c0' : 'rgba(25, 118, 210, 0.04)'
+          }
+        }}
+      >
+        Allocated
+      </Button>
+    </Box>
+
+    {/* Search Filter */}
+    <TextField
+      fullWidth
+      placeholder="Search shades..."
+      value={shadeSearchQuery}
+      onChange={(e) => setShadeSearchQuery(e.target.value)}
+      sx={{ mb: 2 }}
+      InputProps={{
+        startAdornment: (
+          <InputAdornment position="start">
+            <SearchIcon />
+          </InputAdornment>
+        ),
+        endAdornment: shadeSearchQuery && (
+          <InputAdornment position="end">
+            <IconButton
+              size="small"
+              onClick={() => setShadeSearchQuery('')}
+            >
+              <CloseIcon fontSize="small" />
+            </IconButton>
+          </InputAdornment>
+        )
+      }}
+    />
+
+    {/* Shades List - Single Column */}
+    <Box sx={{ 
+      maxHeight: '400px', 
+      overflowY: 'auto',
+      border: '1px solid #e0e0e0',
+      borderRadius: '4px',
+      p: 0.3
+    }}>
+      {availableShades
+        .filter(shade => 
+          shade.FGSHADE_NAME.toLowerCase().includes(shadeSearchQuery.toLowerCase())
+        )
+        .map((shade) => {
+          const isChecked = selectedShades.includes(shade.FGSHADE_NAME);
+
+          return (
+            <Box
+              key={shade.FGSHADE_NAME}
+              onClick={() => {
+                setSelectedShades((prev) =>
+                  isChecked
+                    ? prev.filter(s => s !== shade.FGSHADE_NAME)
+                    : [...prev, shade.FGSHADE_NAME]
+                );
+              }}
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                px: 0.5,
+                py: 0.5,
+                cursor: 'pointer',
+                borderRadius: '4px',
+                mb: 0.5,
+                '&:hover': {
+                  backgroundColor: '#f5f5f5'
+                },
+                backgroundColor: isChecked ? '#e3f2fd' : 'transparent',
+                transition: 'background-color 0.2s'
+              }}
+            >
+              <Checkbox
+                checked={isChecked}
+                size="small"
+                sx={{ 
+                  p: 0,
+                  mr: 1.5
+                }}
+              />
+              <Typography
+                sx={{
+                  fontSize: '14px',
+                  fontWeight: isChecked ? 500 : 400,
+                  color: isChecked ? '#1976d2' : 'inherit'
+                }}
+              >
+                {shade.FGSHADE_NAME}
+              </Typography>
+            </Box>
+          );
+        })}
+      
+      {availableShades.filter(shade => 
+        shade.FGSHADE_NAME.toLowerCase().includes(shadeSearchQuery.toLowerCase())
+      ).length === 0 && (
+        <Box sx={{ 
+          display: 'flex', 
+          flexDirection: 'column', 
+          alignItems: 'center', 
+          justifyContent: 'center',
+          height: '150px',
+          color: 'text.secondary'
+        }}>
+          <InventoryIcon sx={{ fontSize: 48, mb: 2, opacity: 0.5 }} />
+          <Typography variant="h6">No shades found</Typography>
+          <Typography variant="body2">
+            {shadeSearchQuery ? 'Try a different search term' : 'Try changing the view mode'}
+          </Typography>
+        </Box>
+      )}
+    </Box>
+    
+
+  </DialogContent>
+  
+  <DialogActions sx={{ p: 0.5, borderTop: '1px solid #e0e0e0' }}>
+    <Button 
+      onClick={() => {
+        setSelectedShades([]);
+        setShadeSearchQuery('');
+        setShadeModalOpen(false);
+      }}
+      variant="outlined"
+      color="error"
+    >
+      Clear
+    </Button>
+    <Box sx={{ flex: 1 }} />
+
+    <Button
+      onClick={() => {
+        if (selectedShades.length > 0) {
+          const firstSelectedShade = selectedShades[0];
+          const shadeKey = shadeMapping[firstSelectedShade] || '';
+          
+          setSelectedShadeKey(shadeKey);
+          setNewItemData(prev => ({
+            ...prev,
+            shade: firstSelectedShade,
+            fgshadeKey: shadeKey
+          }));
+          
+          if (currentStyleData && shadeKey) {
+            fetchSizeDetailsForStyle(currentStyleData, firstSelectedShade);
+          }
+        }
+        setShadeSearchQuery('');
+        setShadeModalOpen(false);
+        showSnackbar(`${selectedShades.length} shade(s) selected`, 'success');
+      }}
+      variant="contained"
+      color="primary"
+      disabled={selectedShades.length === 0}
+    >
+      Done
+    </Button>
+  </DialogActions>
+</Dialog>
 
       {/* Barcode Scanner Dialog */}
       {isClient && (
