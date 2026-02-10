@@ -3882,7 +3882,9 @@ const ScanBarcode = () => {
   const [statusOptions] = useState(['O', 'C', 'S']);
   const [selectedShadeKey, setSelectedShadeKey] = useState('');
   const [shadeMapping, setShadeMapping] = useState({});
-  
+  const [fillEqualQtyMode, setFillEqualQtyMode] = useState(false);
+const [equalQtyValue, setEqualQtyValue] = useState('');
+const [showEqualQtyInput, setShowEqualQtyInput] = useState(false);
   const [partyMapping, setPartyMapping] = useState({});
   const [branchMapping, setBranchMapping] = useState({});
   const [shippingBranchMapping, setShippingBranchMapping] = useState({});
@@ -4074,6 +4076,64 @@ const datePickerSx = {
 };
 
 
+const handleEqualQtyCheckboxChange = (event) => {
+  const isChecked = event.target.checked;
+  setFillEqualQtyMode(isChecked);
+  setShowEqualQtyInput(isChecked);
+  
+  if (!isChecked) {
+    setEqualQtyValue('');
+  }
+};
+
+const handleEqualQtyApply = () => {
+  if (!equalQtyValue || parseFloat(equalQtyValue) <= 0) {
+    showSnackbar('Please enter a valid quantity', 'error');
+    return;
+  }
+
+  const qty = parseFloat(equalQtyValue);
+  const updatedSizeDetails = [...sizeDetailsData];
+  
+  updatedSizeDetails.forEach((size, index) => {
+    const rate = parseFloat(newItemData.rate) || 0;
+    const amount = qty * rate;
+    
+    updatedSizeDetails[index] = {
+      ...updatedSizeDetails[index],
+      QTY: qty,
+      ITM_AMT: amount,
+      ORDER_QTY: qty
+    };
+  });
+
+  setSizeDetailsData(updatedSizeDetails);
+  
+  const totalQty = updatedSizeDetails.reduce((sum, size) => sum + (parseFloat(size.QTY) || 0), 0);
+  setNewItemData(prev => ({ 
+    ...prev, 
+    qty: totalQty.toString(),
+    rate: totalQty > 0 ? (qty * updatedSizeDetails.length * parseFloat(prev.rate) / totalQty).toFixed(2) : prev.rate
+  }));
+  
+  showSnackbar(`Equal quantity (${qty}) applied to all ${updatedSizeDetails.length} sizes!`, 'success');
+};
+
+const handleEqualQtyCancel = () => {
+  setFillEqualQtyMode(false);
+  setShowEqualQtyInput(false);
+  setEqualQtyValue('');
+};
+
+const handleEqualQtyValueChange = (value) => {
+  setEqualQtyValue(value);
+};
+
+const handleEqualQtyKeyPress = (e) => {
+  if (e.key === 'Enter') {
+    handleEqualQtyApply();
+  }
+};
 
   // Key Functions (same as before, but optimized)
   const getRatioDataFromStorage = (productKey) => {
@@ -5121,14 +5181,19 @@ const handleConfirmItem = () => {
   setAvailableSizes([]);
   setAvailableShades([]);
   setSelectedShades([]);
-  setFillByRatioMode(false); // Reset to false
-  setFillByShadeMode(false); // Reset to false
+  setFillByRatioMode(false); 
+  setFillByShadeMode(false); 
   setRatioData({
     totalQty: '',
     ratios: {}
   });
   setScannerError('');
-  if (isMobile) setViewMode('scan');
+  
+  
+  if (isMobile) {
+    setActiveTab(1); 
+    setViewMode('scan');
+  }
 
   if (fillByShadeMode && selectedShades.length > 1) {
     showSnackbar(`${selectedShades.length} items added to order (${totalQty} each)! Go To Cart`, 'success');
@@ -7075,7 +7140,7 @@ const handleConfirmItem = () => {
                       minWidth: '140px'
                     }}
                   >
-                    Add to Order
+                    Add to Cart
                   </Button>
                 </Box>
               </CardContent>
@@ -7690,244 +7755,365 @@ const handleConfirmItem = () => {
   </Card>
 )}
             
- {sizeDetailsData.length > 0 && (
-        <Card elevation={1} sx={{ mb: 1 }}>
-          <CardContent>
-            <Typography variant="h6" sx={{ mb: 1, fontSize: '1.1rem' }}>
-              Size Details (Qty) :<strong style={{ color: '#1976d2' }}>{calculateTotalQty()}</strong>
-            </Typography>
-            
-            <Box sx={{ 
-              overflowX: 'auto',
-              backgroundColor: '#f8f9fa',
-              borderRadius: 1,
-              p: 1
-            }}>
-              <table style={{ 
-                width: '100%', 
-                borderCollapse: 'collapse',
-                minWidth: '500px'
-              }}>
-                <thead>
-                  <tr style={{ backgroundColor: '#e9ecef' }}>
-                    <th style={{ 
-                      padding: '2px 8px',
-                      border: '1px solid #dee2e6', 
-                      textAlign: 'left',
-                      fontSize: '14px',
-                      fontWeight: '600'
-                    }}>Size</th>
-                    <th style={{ 
-                      padding: '2px 8px', 
-                      border: '1px solid #dee2e6', 
-                      textAlign: 'center',
-                      fontSize: '14px',
-                      fontWeight: '600'
-                    }}>Qty</th>
-                     <th style={{ 
-        padding: '2px 8px', 
-        border: '1px solid #dee2e6', 
-        textAlign: 'center',
-        fontSize: '14px',
-        fontWeight: '600'
-      }}>FG</th>
-      <th style={{ 
-        padding: '2px 8px', 
-        border: '1px solid #dee2e6', 
-        textAlign: 'center',
-        fontSize: '14px',
-        fontWeight: '600'
-      }}>Proc</th>
-      <th style={{ 
-        padding: '2px 8px', 
-        border: '1px solid #dee2e6', 
-        textAlign: 'center',
-        fontSize: '14px',
-        fontWeight: '600'
-      }}>Ord</th>
-      <th style={{ 
-        padding: '2px 8px', 
-        border: '1px solid #dee2e6', 
-        textAlign: 'center',
-        fontSize: '14px',
-        fontWeight: '600'
-      }}>Bal</th>
-                    <th style={{ 
-                      padding: '2px 8px',
-                      border: '1px solid #dee2e6', 
-                      textAlign: 'right',
-                      fontSize: '14px',
-                      fontWeight: '600'
-                    }}>MRP</th>
-                    <th style={{ 
-                      padding: '2px 8px',
-                      border: '1px solid #dee2e6', 
-                      textAlign: 'right',
-                      fontSize: '14px',
-                      fontWeight: '600'
-                    }}>Rate</th>
-                    <th style={{ 
-                      padding: '2px 8px',
-                      border: '1px solid #dee2e6', 
-                      textAlign: 'right',
-                      fontSize: '14px',
-                      fontWeight: '600'
-                    }}>Amt</th>
-                  </tr>
-                </thead>
-                <tbody>
-  {sizeDetailsData.map((size, index) => {
-    // API response से values calculate करें
-    const readyQty = parseFloat(size.FG_QTY) || 0;
-    const orderQty = parseFloat(size.PORD_QTY) || 0;
-    const issueQty = parseFloat(size.ISU_QTY) || 0;
-    const processQty = orderQty + issueQty;
-    const balQty = parseFloat(size.BAL_QTY) || 0;
-    
-    return (
-      <tr key={index} style={{ 
-        backgroundColor: index % 2 === 0 ? '#fff' : '#f8f9fa',
-        borderBottom: '1px solid #dee2e6'
+{sizeDetailsData.length > 0 && (
+  <Card elevation={1} sx={{ mb: 0.3 }}>
+    <CardContent>
+      <Typography variant="h6" sx={{ mb: 0.3, fontSize: '1.1rem' }}>
+        Size Details (Qty) :<strong style={{ color: '#1976d2' }}>{calculateTotalQty()}</strong>
+      </Typography>
+
+      {/* Fill with equal QTY section - MOBILE VIEW */}
+      <Box sx={{ 
+        display: 'flex', 
+        flexDirection: 'column',
+        mb: 0.3,
+        p: 0.5,
+        backgroundColor: '#ffffff',
+        borderRadius: 2,
+        border: '1px solid #1976d2'
       }}>
-        <td style={{
-          padding: '4px 8px',
-          border: '1px solid #dee2e6',
-          fontSize: '13px',
-          lineHeight: '1.2'
-        }}>{size.STYSIZE_NAME}</td>
-        
-        <td style={{ 
-          padding: '5px', 
-          border: '1px solid #dee2e6',
-          textAlign: 'center'
+        <Box sx={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'space-between',
+          mb: showEqualQtyInput ? 1 : 0
         }}>
-          <TextField
-            type="number"
-            value={size.QTY}
-            onChange={(e) => handleSizeQtyChange(index, e.target.value)}
-            size="small"
-            sx={{
-              width: '60px',
-              '& .MuiInputBase-root': {
-                height: '20px',
-                fontSize: '13px'
-              },
-              '& input': {
-                padding: '1px',
-                textAlign: 'center'
+          <FormGroup>
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={fillEqualQtyMode}
+                  onChange={handleEqualQtyCheckboxChange}
+                  size="small"
+                  disabled={sizeDetailsData.length === 0}
+                  sx={{
+                    color: '#1976d2',
+                    '&.Mui-checked': {
+                      color: '#1976d2',
+                    },
+                  }}
+                />
               }
-            }}
-            inputProps={{ min: 0 }}
-          />
-        </td>
-        
-        {/* नए columns के data display करें */}
-        <td style={{ 
-          padding: '4px 8px',
-          border: '1px solid #dee2e6',
-          textAlign: 'center',
-          fontSize: '13px'
-        }}>
-          {readyQty.toFixed(3)}
-        </td>
-        
-        <td style={{ 
-          padding: '4px 8px',
-          border: '1px solid #dee2e6',
-          textAlign: 'center',
-          fontSize: '13px'
-        }}>
-          {processQty.toFixed(3)}
-        </td>
-        
-        <td style={{ 
-          padding: '4px 8px',
-          border: '1px solid #dee2e6',
-          textAlign: 'center',
-          fontSize: '13px'
-        }}>
-          {orderQty.toFixed(3)}
-        </td>
-        
-        <td style={{ 
-          padding: '4px 8px',
-          border: '1px solid #dee2e6',
-          textAlign: 'center',
-          fontSize: '13px'
-        }}>
-          {balQty.toFixed(3)}
-        </td>
-        
-        <td style={{ 
-          padding: '10px', 
-          border: '1px solid #dee2e6',
-          textAlign: 'right',
-          fontSize: '14px'
-        }}>{size.MRP || 0}</td>
-        
-        <td style={{ 
-          padding: '10px', 
-          border: '1px solid #dee2e6',
-          textAlign: 'right',
-          fontSize: '14px'
-        }}>{size.WSP  || 0}</td>
-        
-        <td style={{ 
-          padding: '10px', 
-          border: '1px solid #dee2e6',
-          textAlign: 'right',
-          fontSize: '14px',
-          fontWeight: '500'
-        }}>
-          ₹{(size.QTY || 0) * (size.WSP  || 0)}
-        </td>
-      </tr>
-    );
-  })}
-</tbody>
-              </table>
-            </Box>
+              label={
+                <Typography variant="body2" sx={{ 
+                  fontWeight: '500',
+                  fontSize: '13px',
+                  color: fillEqualQtyMode ? '#1976d2' : 'inherit'
+                }}>
+                  Fill with equal QTY
+                </Typography>
+              }
+            />
+          </FormGroup>
+
+          {!showEqualQtyInput && fillEqualQtyMode && (
+            <Button
+              variant="outlined"
+              size="small"
+              onClick={() => setShowEqualQtyInput(true)}
+              sx={{
+                borderColor: '#1976d2',
+                color: '#1976d2',
+                fontSize: '12px',
+                px: 1,
+                py: 0.5
+              }}
+            >
+              Enter Value
+            </Button>
+          )}
+        </Box>
+
+        {showEqualQtyInput && (
+          <Box sx={{ 
+            display: 'flex', 
+            flexDirection: 'column',
+            gap: 1,
+            width: '100%'
+          }}>
             
-            <Box sx={{ 
-              mt: 2, 
-              display: 'flex', 
-              justifyContent: 'space-between', 
-              alignItems: 'center',
-              flexWrap: 'wrap',
-              gap: 2
-            }}>
-              <Box>
-                <Typography variant="body1" sx={{ fontWeight: '500' }}>
-                  Total Quantity: <strong style={{ color: '#1976d2' }}>{calculateTotalQty()}</strong>
-                </Typography>
-                <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                  Amount: ₹{calculateAmount().amount.toFixed(2)}
-                </Typography>
-                {fillByShadeMode && selectedShades.length > 1 && (
-                  <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                    Selected Shades: {selectedShades.length} (Total will be divided equally)
-                  </Typography>
-                )}
-              </Box>
-              
+            <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+              <TextField
+                type="number"
+                value={equalQtyValue}
+                onChange={(e) => handleEqualQtyValueChange(e.target.value)}
+                onKeyPress={handleEqualQtyKeyPress}
+                placeholder="Enter quantity"
+                fullWidth
+                size="small"
+                sx={{
+                  flex: 1,
+                  '& .MuiInputBase-root': {
+                    height: '36px',
+                    fontSize: '14px'
+                  }
+                }}
+                InputProps={{
+                  inputProps: { min: 0 }
+                }}
+              />
               <Button
                 variant="contained"
-                startIcon={<AddIcon />}
-                onClick={handleConfirmItem}
-                disabled={calculateTotalQty() === 0}
-                sx={{ 
-                  backgroundColor: '#4CAF50',
+                onClick={handleEqualQtyApply}
+                disabled={!equalQtyValue || parseFloat(equalQtyValue) <= 0}
+                sx={{
+                  backgroundColor: '#1976d2',
                   color: 'white',
-                  '&:hover': { backgroundColor: '#45a049' },
-                  minWidth: '140px'
+                  minWidth: '50px',
+                  height: '36px',
+                  '&:hover': {
+                    backgroundColor: '#1976d2'
+                  }
                 }}
               >
-                Add to Order
+                OK
+              </Button>
+              <Button
+                variant="outlined"
+                onClick={handleEqualQtyCancel}
+                sx={{
+                  borderColor: '#1976d2',
+                  color: '#1976d2',
+                  minWidth: '60px',
+                  height: '36px'
+                }}
+              >
+                Cancel
               </Button>
             </Box>
-          </CardContent>
-        </Card>
-      )}
+          </Box>
+        )}
+      </Box>
+      
+      <Box sx={{ 
+        overflowX: 'auto',
+        backgroundColor: '#f8f9fa',
+        borderRadius: 1,
+        p: 1
+      }}>
+        <table style={{ 
+          width: '100%', 
+          borderCollapse: 'collapse',
+          minWidth: '500px'
+        }}>
+          <thead>
+            <tr style={{ backgroundColor: '#e9ecef' }}>
+              <th style={{ 
+                padding: '2px 8px',
+                border: '1px solid #dee2e6', 
+                textAlign: 'left',
+                fontSize: '14px',
+                fontWeight: '600'
+              }}>Size</th>
+              <th style={{ 
+                padding: '2px 8px', 
+                border: '1px solid #dee2e6', 
+                textAlign: 'center',
+                fontSize: '14px',
+                fontWeight: '600'
+              }}>Qty</th>
+              <th style={{ 
+                padding: '2px 8px', 
+                border: '1px solid #dee2e6', 
+                textAlign: 'center',
+                fontSize: '14px',
+                fontWeight: '600'
+              }}>FG</th>
+              <th style={{ 
+                padding: '2px 8px', 
+                border: '1px solid #dee2e6', 
+                textAlign: 'center',
+                fontSize: '14px',
+                fontWeight: '600'
+              }}>Proc</th>
+              <th style={{ 
+                padding: '2px 8px', 
+                border: '1px solid #dee2e6', 
+                textAlign: 'center',
+                fontSize: '14px',
+                fontWeight: '600'
+              }}>Ord</th>
+              <th style={{ 
+                padding: '2px 8px', 
+                border: '1px solid #dee2e6', 
+                textAlign: 'center',
+                fontSize: '14px',
+                fontWeight: '600'
+              }}>Bal</th>
+              <th style={{ 
+                padding: '2px 8px',
+                border: '1px solid #dee2e6', 
+                textAlign: 'right',
+                fontSize: '14px',
+                fontWeight: '600'
+              }}>MRP</th>
+              <th style={{ 
+                padding: '2px 8px',
+                border: '1px solid #dee2e6', 
+                textAlign: 'right',
+                fontSize: '14px',
+                fontWeight: '600'
+              }}>Rate</th>
+              <th style={{ 
+                padding: '2px 8px',
+                border: '1px solid #dee2e6', 
+                textAlign: 'right',
+                fontSize: '14px',
+                fontWeight: '600'
+              }}>Amt</th>
+            </tr>
+          </thead>
+          <tbody>
+            {sizeDetailsData.map((size, index) => {
+              const readyQty = parseFloat(size.FG_QTY) || 0;
+              const orderQty = parseFloat(size.PORD_QTY) || 0;
+              const issueQty = parseFloat(size.ISU_QTY) || 0;
+              const processQty = orderQty + issueQty;
+              const balQty = parseFloat(size.BAL_QTY) || 0;
+              
+              return (
+                <tr key={index} style={{ 
+                  backgroundColor: index % 2 === 0 ? '#fff' : '#f8f9fa',
+                  borderBottom: '1px solid #dee2e6'
+                }}>
+                  <td style={{
+                    padding: '4px 8px',
+                    border: '1px solid #dee2e6',
+                    fontSize: '13px',
+                    lineHeight: '1.2'
+                  }}>{size.STYSIZE_NAME}</td>
+                  
+                  <td style={{ 
+                    padding: '5px', 
+                    border: '1px solid #dee2e6',
+                    textAlign: 'center'
+                  }}>
+                    <TextField
+                      type="number"
+                      value={size.QTY}
+                      onChange={(e) => handleSizeQtyChange(index, e.target.value)}
+                      size="small"
+                      sx={{
+                        width: '60px',
+                        '& .MuiInputBase-root': {
+                          height: '20px',
+                          fontSize: '13px'
+                        },
+                        '& input': {
+                          padding: '1px',
+                          textAlign: 'center'
+                        }
+                      }}
+                      inputProps={{ min: 0 }}
+                    />
+                  </td>
+                  
+                  <td style={{ 
+                    padding: '4px 8px',
+                    border: '1px solid #dee2e6',
+                    textAlign: 'center',
+                    fontSize: '13px'
+                  }}>
+                    {readyQty.toFixed(3)}
+                  </td>
+                  
+                  <td style={{ 
+                    padding: '4px 8px',
+                    border: '1px solid #dee2e6',
+                    textAlign: 'center',
+                    fontSize: '13px'
+                  }}>
+                    {processQty.toFixed(3)}
+                  </td>
+                  
+                  <td style={{ 
+                    padding: '4px 8px',
+                    border: '1px solid #dee2e6',
+                    textAlign: 'center',
+                    fontSize: '13px'
+                  }}>
+                    {orderQty.toFixed(3)}
+                  </td>
+                  
+                  <td style={{ 
+                    padding: '4px 8px',
+                    border: '1px solid #dee2e6',
+                    textAlign: 'center',
+                    fontSize: '13px'
+                  }}>
+                    {balQty.toFixed(3)}
+                  </td>
+                  
+                  <td style={{ 
+                    padding: '10px', 
+                    border: '1px solid #dee2e6',
+                    textAlign: 'right',
+                    fontSize: '14px'
+                  }}>{size.MRP || 0}</td>
+                  
+                  <td style={{ 
+                    padding: '10px', 
+                    border: '1px solid #dee2e6',
+                    textAlign: 'right',
+                    fontSize: '14px'
+                  }}>{size.WSP  || 0}</td>
+                  
+                  <td style={{ 
+                    padding: '10px', 
+                    border: '1px solid #dee2e6',
+                    textAlign: 'right',
+                    fontSize: '14px',
+                    fontWeight: '500'
+                  }}>
+                    ₹{(size.QTY || 0) * (size.WSP  || 0)}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </Box>
+      
+      <Box sx={{ 
+        mt: 2, 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'center',
+        flexWrap: 'wrap',
+        gap: 2
+      }}>
+        <Box>
+          <Typography variant="body1" sx={{ fontWeight: '500' }}>
+            Total Quantity: <strong style={{ color: '#1976d2' }}>{calculateTotalQty()}</strong>
+          </Typography>
+          <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+            Amount: ₹{calculateAmount().amount.toFixed(2)}
+          </Typography>
+          {fillByShadeMode && selectedShades.length > 1 && (
+            <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+              Selected Shades: {selectedShades.length} (Total will be divided equally)
+            </Typography>
+          )}
+        </Box>
+        
+        <Button
+          variant="contained"
+          startIcon={<AddIcon />}
+          onClick={handleConfirmItem}
+          disabled={calculateTotalQty() === 0}
+          sx={{ 
+            backgroundColor: '#4CAF50',
+            color: 'white',
+            '&:hover': { backgroundColor: '#45a049' },
+            minWidth: '140px'
+          }}
+        >
+          Add to Cart
+        </Button>
+      </Box>
+    </CardContent>
+  </Card>
+)}
             
            
           </CardContent>
@@ -8099,7 +8285,7 @@ const handleConfirmItem = () => {
                             textAlign: 'left',
                             fontSize: '14px',
                             fontWeight: '600'
-                          }}>Style/Shade</th>
+                          }}>Style/ShadeType</th>
                           <th style={{ 
                             padding: '12px', 
                             border: '1px solid #dee2e6', 
@@ -8149,7 +8335,7 @@ const handleConfirmItem = () => {
                               padding: '12px', 
                               border: '1px solid #dee2e6',
                               fontSize: '14px'
-                            }}>{item.style} - {item.shade}</td>
+                            }}>{item.style} - {item.shade} - {item.type}</td>
 
                             <td style={{ 
                               padding: '12px',
