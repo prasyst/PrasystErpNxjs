@@ -1611,6 +1611,8 @@ import ReportIcon from '@mui/icons-material/Report';
 import axiosInstance from '@/lib/axios';
 import { useRecentPaths } from '../../../src/app/context/RecentPathsContext';
 import { IoMdMic, IoMdMicOff } from 'react-icons/io';
+import AIReportingTool from '../myaitool/myaitool';
+import { FaRobot } from 'react-icons/fa';
 
 const Header = ({ isSidebarCollapsed, onMenuToggle, isMobile }) => {
   const [isSearchExpanded, setIsSearchExpanded] = useState(false);
@@ -1619,6 +1621,7 @@ const Header = ({ isSidebarCollapsed, onMenuToggle, isMobile }) => {
   const [isQuickSettingsOpen, setIsQuickSettingsOpen] = useState(false);
   const [isRecentlyVisitedOpen, setIsRecentlyVisitedOpen] = useState(false);
   const { theme, toggleTheme } = useTheme();
+  const [isAIToolOpen, setIsAIToolOpen] = useState(false);
   const router = useRouter();
   const [userName, setUserName] = useState('');
   const [userRole, setUserRole] = useState('');
@@ -3107,6 +3110,32 @@ const Header = ({ isSidebarCollapsed, onMenuToggle, isMobile }) => {
   </div>
 )}
           </div>
+
+          {/* <button
+  onClick={() => setIsAIToolOpen(true)}
+  style={{
+    background: 'none',
+    border: 'none',
+    cursor: 'pointer',
+    color: 'white',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '40px',
+    height: '40px',
+    borderRadius: '50%',
+    transition: 'all 0.2s ease',
+    position: 'relative',
+  }}
+  className="hover:bg-white hover:bg-opacity-10 active:bg-opacity-20"
+  title="AI Financial Analyst Pro"
+  aria-label="Open AI Financial Tool"
+>
+  <FaRobot size={20} />
+</button>
+{isAIToolOpen && (
+  <AIReportingTool onClose={() => setIsAIToolOpen(false)} />
+)} */}
 
           {/* Pinned Modules */}
           <Link href="/pinned-modules" passHref>
