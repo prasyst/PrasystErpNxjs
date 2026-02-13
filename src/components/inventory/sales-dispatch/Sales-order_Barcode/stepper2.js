@@ -1978,7 +1978,7 @@ const handleConfirmAdd = () => {
                 onClick={handleAddItem}
                 disabled={isFormDisabled || isEditingSize || isAddingNew}
                 sx={{
-                  backgroundColor: '#39ace2',
+                   backgroundColor: '#635bff',
                   color: 'white',
                   margin: { xs: '0 4px', sm: '0 6px' },
                   minWidth: { xs: 40, sm: 46, md: 60 },
@@ -2000,7 +2000,7 @@ const handleConfirmAdd = () => {
             onClick={handleEditItem}
              disabled={isFormDisabled || isEditingSize || isAddingNew}
             sx={{
-              backgroundColor: '#39ace2',
+               backgroundColor: '#635bff',
               color: 'white',
               margin: { xs: '0 4px', sm: '0 6px' },
               minWidth: { xs: 40, sm: 46, md: 60 },
@@ -2020,7 +2020,7 @@ const handleConfirmAdd = () => {
             onClick={handleDeleteItem}
             disabled={isFormDisabled || isEditingSize || isAddingNew}
             sx={{
-              backgroundColor: '#39ace2',
+              backgroundColor: '#635bff',
               color: 'white',
               margin: { xs: '0 4px', sm: '0 6px' },
               minWidth: { xs: 40, sm: 46, md: 60 },
@@ -2157,7 +2157,7 @@ const handleConfirmAdd = () => {
     disabled={shouldDisableFields()}
     sx={{ 
       minWidth: '80px',
-      backgroundColor: shadeViewMode === 'allocated' ? '#1976d2' : 'transparent',
+      backgroundColor: shadeViewMode === 'allocated' ? '#635bff' : 'transparent',
       color: shadeViewMode === 'allocated' ? 'white' : '#1976d2',
       borderColor: '#1976d2',
       '&:hover': {
@@ -2495,7 +2495,7 @@ const handleConfirmAdd = () => {
           </Box>
 
           {/* RIGHT: Size Details Table */}
-          <Box sx={{ flex: 1 }}>
+         <Box sx={{ flex: 1 }}>
             <Box sx={{
               border: '1px solid #e0e0e0',
               borderRadius: 2,
@@ -2509,8 +2509,8 @@ const handleConfirmAdd = () => {
                 Size Details {selectedRow && `(for ${tableData.find(row => row.id === selectedRow)?.product || 'Selected Item'})`}
                 {isEditingSize && <span style={{ color: 'red', marginLeft: '10px' }}> - Editing Mode</span>}
               </Typography>
-              <TableContainer sx={{ width: '100%' }}>
-                <Table size="small">
+              <TableContainer sx={{ width: '100%', height: 270, overflowY: 'auto' }}>
+                <Table size="small" stickyHeader>
                   <TableHead>
   <TableRow>
     <TableCell sx={{ fontWeight: 'bold', fontSize: '0.8rem', padding: '6px 8px', backgroundColor: "#f5f5f5", borderBottom: "1px solid #ddd" }}>Size</TableCell>
@@ -2661,7 +2661,7 @@ const handleConfirmAdd = () => {
             sx={{ 
               minWidth: '60px', 
               height: '36px',
-              backgroundColor: '#39ace2',
+             backgroundColor: '#635bff',
               color: 'white',
               '&:disabled': {
                 borderColor: '#cccccc',
@@ -2681,7 +2681,7 @@ const handleConfirmAdd = () => {
             sx={{ 
               minWidth: '60px', 
               height: '36px',
-              backgroundColor: '#39ace2',
+              backgroundColor: '#635bff',
               '&:disabled': {
                 backgroundColor: '#cccccc',
                 color: '#666666'
