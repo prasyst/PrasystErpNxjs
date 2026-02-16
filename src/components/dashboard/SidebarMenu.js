@@ -1188,6 +1188,7 @@ export const sidebarMenuItems = [
             icon: RiShoppingCart2Line, path: '/inverntory/salesorderbarcode'
           },
           { name: 'Scan Barcode', icon: RiShoppingCart2Line, path: '/inverntory/scan-Barcode' },
+          { name: 'Paking Slip', icon: RiShoppingCart2Line, path: '/inverntory/packingslip' },
         ],
       },
       {
