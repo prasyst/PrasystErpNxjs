@@ -306,6 +306,7 @@ export default function InventoryComponent() {
           icon: ShoppingIcon, path: '/inverntory/salesorderbarcode'
         },
         { name: 'Scan Barcode', icon: ShoppingIcon, path: '/inverntory/scan-Barcode' },
+         { name: 'Paking Slip', icon: ShoppingIcon, path: '/inverntory/packingslip' },
         // { name: 'Packaging/Barcode', icon: InventoryIcon, path: '/inverntory/packeging-barcode/' },
       ],
     },
