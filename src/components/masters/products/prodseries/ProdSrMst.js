@@ -1,18 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
-    Box,
-    Grid,
-    TextField,
-    Typography,
-    Button,
-    Stack,
-    FormControlLabel,
-    Checkbox,
-    Dialog,
-    DialogTitle,
-    DialogContent,
-    DialogContentText,
-    DialogActions,
+    Box, Grid, TextField, Typography, Button, Stack, FormControlLabel, Checkbox,
+    Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions,
 } from '@mui/material';
 import { getFormMode } from '@/lib/helpers';
 import { useRouter } from 'next/navigation';
@@ -26,9 +15,8 @@ import { TbListSearch } from "react-icons/tb";
 import { pdf } from '@react-pdf/renderer';
 import { toast, ToastContainer } from 'react-toastify';
 import PrintProdSrDt from './PrintProdSrDt';
-import PaginationButtons from '@/GlobalFunction/PaginationButtons';
-import CrudButtons from '@/GlobalFunction/CrudButtons';
 import CustomAutocomplete from '@/GlobalFunction/CustomAutoComplete/CustomAutoComplete';
+import ConfirmDelDialog from '@/GlobalFunction/ConfirmDelDialog';
 
 const FORM_MODE = getFormMode();
 const ProdSrMst = () => {
@@ -110,25 +98,6 @@ const ProdSrMst = () => {
         }
     }, [CO_ID]);
 
-    // useEffect(() => {
-    //     if (location.state && location.state.PRODSRMST_ID) {
-    //         setCurrentPRODSRMST_ID(location.state.PRODSRMST_ID);
-    //         fetchRetriveData(location.state.PRODSRMST_ID);
-    //         setMode(FORM_MODE.read);
-    //     } else {
-    //         // Stay in read mode with blank data
-    //         setForm({
-    //             FGPRD_KEY: '',
-    //             SERIES: '',
-    //             SearchByCd: '',
-    //             PRODSRMST_ID: '',
-    //             MRP: '',
-    //             WSP: '',
-    //             Status: '1',
-    //         });
-    //         setMode(FORM_MODE.read);
-    //     }
-    // }, [location]);
     useEffect(() => {
         if (PRODSRMST_ID) {
             setCurrentPRODSRMST_ID(PRODSRMST_ID);
@@ -167,10 +136,10 @@ const ProdSrMst = () => {
                 url = `PRODSRMST/InsertPRODSRMST?UserName=${(UserName)}&strCobrid=${COBR_ID}`;
             }
             const payload = {
-                "PRODSRMST_ID": form.PRODSRMST_ID,
+                "PRODSRMST_ID": form.PRODSRMST_ID || 0,
                 "SERIES": form.SERIES,
-                "MRP": form.MRP,
-                "Wsp": form.WSP,
+                "MRP": form.MRP || 0.00,
+                "Wsp": form.WSP || 0.00,
                 "remk": form.REMK,
                 "FGPRD_KEY": form.FGPRD_KEY,
                 "STATUS": form.Status ? "1" : "0",
@@ -242,14 +211,7 @@ const ProdSrMst = () => {
             Status: '1',
         }));
     };
-    const handleFirst = () => { }
-    const handleLast = async () => {
-        await fetchRetriveData(1, "L");
-        setForm((prev) => ({
-            ...prev,
-            SearchByCd: ''
-        }));
-    }
+
     const handlePrevious = async () => {
         await fetchRetriveData(currentPRODSRMST_ID, "P");
         setForm((prev) => ({
@@ -257,6 +219,7 @@ const ProdSrMst = () => {
             SearchByCd: ''
         }));
     };
+
     const handleNext = async () => {
         if (currentPRODSRMST_ID) {
             await fetchRetriveData(currentPRODSRMST_ID, "N");
@@ -266,12 +229,15 @@ const ProdSrMst = () => {
             SearchByCd: ''
         }));
     };
+
     const handleDelete = () => {
         setOpenConfirmDialog(true);
-    }
+    };
+
     const handleCloseConfirmDialog = () => {
         setOpenConfirmDialog(false);
     };
+
     const handleConfirmDelete = async () => {
         setOpenConfirmDialog(false);
         try {
@@ -289,26 +255,11 @@ const ProdSrMst = () => {
             console.error("Delete Error:", error);
         }
     };
+
     const handleEdit = () => {
         setMode(FORM_MODE.edit);
     };
 
-    // const handlePrint = async () => {
-    //     try {
-    //         const response = await axiosInstance.post(
-    //             `PRODSRMST/GetPRODSRMSTDashBoard?currentPage=1&limit=5000`,
-    //             { SearchText: "" }
-    //         );
-
-    //         const { data: { STATUS, DATA } } = response;
-
-    //         if (STATUS === 0 && Array.isArray(DATA)) {
-    //             PrintProdSrd(DATA);
-    //         }
-    //     } catch (error) {
-    //         console.error("Print Error:", error);
-    //     }
-    // };
     const handlePrint = async () => {
         try {
             const response = await axiosInstance.post(`PRODSRMST/GetPRODSRMSTDashBoard?currentPage=1&limit=5000`, {
@@ -363,7 +314,7 @@ const ProdSrMst = () => {
 
     const textInputSx = {
         '& .MuiInputBase-root': {
-            height: 36,
+            height: 40,
             fontSize: '14px',
         },
         '& .MuiInputLabel-root': {
@@ -375,7 +326,7 @@ const ProdSrMst = () => {
             border: '1px solid #e0e0e0',
             borderRadius: '6px',
             overflow: 'hidden',
-            height: 36,
+            height: 40,
             fontSize: '14px',
         },
         '& .MuiFilledInput-root:before': {
@@ -396,7 +347,7 @@ const ProdSrMst = () => {
 
     const DropInputSx = {
         '& .MuiInputBase-root': {
-            height: 36,
+            height: 40,
             fontSize: '14px',
         },
         '& .MuiInputLabel-root': {
@@ -408,7 +359,7 @@ const ProdSrMst = () => {
             border: '1px solid #e0e0e0',
             borderRadius: '6px',
             overflow: 'hidden',
-            height: 36,
+            height: 40,
             fontSize: '14px',
             paddingRight: '36px',
         },
@@ -459,7 +410,7 @@ const ProdSrMst = () => {
             >
                 <Grid>
                     <Typography align="center" variant="h6">
-                       Catalogue/Product Series Master
+                        Catalogue/Product Series Master
                     </Typography>
                 </Grid>
 
@@ -491,7 +442,7 @@ const ProdSrMst = () => {
                     <Grid sx={{ display: 'flex' }}>
                         <TextField
                             placeholder="Search By Code"
-                            variant="filled"
+                            variant="outlined"
                             sx={{
                                 backgroundColor: '#e0f7fa',
                                 '& .MuiInputBase-input': {
@@ -519,6 +470,7 @@ const ProdSrMst = () => {
                             mode={mode}
                             onAdd={handleAdd}
                             onEdit={handleEdit}
+                            onView={handlePrint}
                             onDelete={handleDelete}
                             onExit={handleExit}
                             readOnlyMode={mode === FORM_MODE.read}
@@ -528,8 +480,7 @@ const ProdSrMst = () => {
                     </Grid>
                 </Grid>
 
-                <Grid container spacing={0.5}>
-
+                <Grid container spacing={1}>
                     <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                         <TextField
                             label="Name"
@@ -542,7 +493,8 @@ const ProdSrMst = () => {
                             sx={textInputSx}
                             inputProps={{
                                 style: {
-                                    padding: '6px 8px',
+                                    padding: '6px 0px',
+                                    marginTop: '10px',
                                     fontSize: '12px',
                                 },
                             }}
@@ -557,11 +509,12 @@ const ProdSrMst = () => {
                             onChange={handleInputChange}
                             value={form.MRP}
                             name="MRP"
-                            disabled={true}
+                            disabled={mode === FORM_MODE.read}
                             sx={textInputSx}
                             inputProps={{
                                 style: {
-                                    padding: '6px 8px',
+                                    padding: '6px 0px',
+                                    marginTop: '10px',
                                     fontSize: '12px',
                                 },
                             }}
@@ -580,7 +533,8 @@ const ProdSrMst = () => {
                             sx={textInputSx}
                             inputProps={{
                                 style: {
-                                    padding: '6px 8px',
+                                    padding: '6px 0px',
+                                    marginTop: '10px',
                                     fontSize: '12px',
                                 },
                             }}
@@ -596,6 +550,7 @@ const ProdSrMst = () => {
                             value={form.FGPRD_KEY}
                             onChange={(value) => setForm({ ...form, FGPRD_KEY: value })}
                             className="custom-textfield"
+                            sx={DropInputSx}
                         />
                     </Grid>
 
@@ -611,7 +566,8 @@ const ProdSrMst = () => {
                             sx={textInputSx}
                             inputProps={{
                                 style: {
-                                    padding: '6px 8px',
+                                    padding: '6px 0px',
+                                    marginTop: '10px',
                                     fontSize: '12px',
                                 },
                             }}
@@ -635,7 +591,6 @@ const ProdSrMst = () => {
                             label="Active "
                         />
                     </Grid>
-
                 </Grid>
 
                 <Grid sx={{
@@ -696,13 +651,17 @@ const ProdSrMst = () => {
                                 onClick={handleCancel}>
                                 Cancel
                             </Button>
-
                         </>
                     )}
                 </Grid>
-
             </Grid >
-
+            <ConfirmDelDialog
+                open={openConfirmDialog}
+                title='Confirm Deletion'
+                description="Are you sure you want to delete this item?"
+                onConfirm={handleConfirmDelete}
+                onCancel={() => setOpenConfirmDialog(false)}
+            />
         </Grid >
     );
 };

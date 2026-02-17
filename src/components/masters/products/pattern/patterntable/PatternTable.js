@@ -82,7 +82,7 @@ export default function UnitTable() {
         setRows(formattedData);
       }
     } catch (error) {
-      console.error("Error fetching data:", error);
+      toast.error("Error fetching data:", error);
     } finally {
       setIsLoading(false);
     }
@@ -100,7 +100,6 @@ export default function UnitTable() {
     const selectedNodes = event.api.getSelectedNodes();
     const selectedData = selectedNodes.map(node => node.data);
     setSelectedRows(selectedData);
-    console.log('Selected rows:', selectedData);
   }, []);
 
   return (

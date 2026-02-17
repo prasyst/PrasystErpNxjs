@@ -1,26 +1,63 @@
 'use client';
 import React, { useState, useEffect, useCallback } from "react";
+import axiosInstance from '../../../../../lib/axios';
+import ReusableTable, { getCustomDateFilter } from '@/components/datatable/ReusableTable';
+import { useRouter } from 'next/navigation';
+import { toast, ToastContainer } from "react-toastify";
 
-import {
-    Button,
-} from '@mui/material';
-import AddIcon from "@mui/icons-material/Add";
-import axiosInstance from "@/lib/axios";
-import ReusableHandsontable from "@/components/datatable/ReusableHandsontable";
-import { useRouter } from "next/navigation";
-
-const handsontableColumns = [
-    //   { field: "ROWNUM", headerName: "SrNo", width: "16%", type: "numeric" },
-    { field: "BRAND_KEY", headerName: "Code", width: "15%", type: "text" },
-    { field: "BRAND_NAME", headerName: "Name", width: "25%", type: "text" },
-    { field: "BRAND_ABRV", headerName: "Abrv", width: "20%", type: "text" },
-    { field: "STATUS", headerName: "Status", width: "15%", type: "numeric" }
+const columnDefs = [
+    {
+        field: "BRAND_KEY",
+        headerName: "Code",
+        filter: 'agSetColumnFilter',
+        filterParams: {
+            defaultToNothingSelected: true,
+        },
+        sortable: true
+    },
+    {
+        field: "BRAND_KEY",
+        headerName: "ALTCode",
+        filter: 'agSetColumnFilter',
+        filterParams: {
+            defaultToNothingSelected: true,
+        },
+        sortable: true
+    },
+    {
+        field: "BRAND_NAME",
+        headerName: "Name",
+        filter: 'agSetColumnFilter',
+        filterParams: {
+            defaultToNothingSelected: true,
+        },
+        sortable: true
+    },
+    {
+        field: "BRAND_ABRV",
+        headerName: "Abrv",
+        filter: 'agSetColumnFilter',
+        filterParams: {
+            defaultToNothingSelected: true,
+        },
+        sortable: true
+    },
+    {
+        field: "STATUS",
+        headerName: "Status",
+        filter: 'agSetColumnFilter',
+        filterParams: {
+            defaultToNothingSelected: true,
+        },
+        sortable: true
+    }
 ];
-  
+
 export default function BrandTable() {
-    const router = useRouter();
     const [isLoading, setIsLoading] = useState(true);
     const [rows, setRows] = useState([]);
+    const router = useRouter();
+    const [selectedRows, setSelectedRows] = useState([]);
 
     useEffect(() => {
         fetchTableData();
@@ -42,23 +79,13 @@ export default function BrandTable() {
                 setRows(formattedData);
             }
         } catch (error) {
-            console.error("Error fetching brand data:", error);
+            toast.error("Error fetching brand data:", error);
         } finally {
             setIsLoading(false);
         }
     };
 
-    const handleAfterChange = (changes, source) => {
-        if (source === 'edit') {
-            console.log('Data changed:', changes);
-        }
-    };
-
-    const handleAfterSelection = (row, column, row2, column2) => {
-        console.log('Selection changed:', { row, column, row2, column2 });
-    };
-
-    const handleRowClick = (row) => {
+    const handleRowDoubleClick = (row) => {
         const params = new URLSearchParams({
             BRAND_KEY: row.BRAND_KEY,
             mode: "view"
@@ -66,38 +93,17 @@ export default function BrandTable() {
         router.push(`/masters/products/brand?${params}`);
     };
 
-    const addButtonStyles = {
-        background: "#39ace2",
-        height: 40,
-        color: "white",
-        borderRadius: "50px",
-        padding: "5px 20px",
-        boxShadow: "0px 6px 15px rgba(0, 0, 0, 0.3)",
-        transition: "background 0.3s ease",
-        "&:hover": { background: "#2199d6" },
-        "&:disabled": {
-            backgroundColor: "#39ace2",
-            color: "rgba(0, 0, 0, 0.26)",
-        },
-    };
+    const handleSelectionChanged = useCallback((event) => {
+        const selectedNodes = event.api.getSelectedNodes();
+        const selectedData = selectedNodes.map(node => node.data);
+        setSelectedRows(selectedData);
+    }, []);
 
     return (
         <div className="p-2 w-full">
+            <ToastContainer />
             <div className="w-full mx-auto" style={{ maxWidth: '100%' }}>
-                <div className="mb-4 flex flex-wrap gap-4 items-center">
-
-                    <Button
-                        variant="contained"
-                        size="small"
-                        sx={addButtonStyles}
-                        startIcon={<AddIcon />}
-                        onClick={() => router.push('/masters/products/brand')}
-                    >
-                        New
-                    </Button>
-                </div>
-
-                <div style={{ height: 'calc(100vh - 180px)', width: '100%' }}>
+                <div style={{ height: 'calc(100vh - 80px)', width: '100%' }}>
                     {isLoading ? (
                         <div style={{
                             display: 'flex',
@@ -108,29 +114,43 @@ export default function BrandTable() {
                             Loading...
                         </div>
                     ) : (
-                        <ReusableHandsontable
-                            data={rows}
-                            columns={handsontableColumns}
-                            height="auto"
-                            width="100%"
-                            colHeaders={true}
-                            rowHeaders={true}
-                            afterChange={handleAfterChange}
-                            handleRowDoubleClick={handleRowClick}
-                            afterSelection={handleAfterSelection}
-                            readOnly={true}
-                            customSettings={{
-                                stretchH: 'all',
-                                dropdownMenu: true,
-                                filters: {
-                                    indicators: true,
-                                    showOperators: true
-                                },
-                                contextMenu: true,
-                                search: true,
-                                filteringCaseSensitive: false,
-                                filteringIndicator: true,
-                                licenseKey: "non-commercial-and-evaluation"
+                        <ReusableTable
+                            columnDefs={columnDefs}
+                            rowData={rows}
+                            height="100%"
+                            theme="ag-theme-quartz"
+                            isDarkMode={false}
+                            pagination={true}
+                            paginationPageSize={500}
+                            paginationPageSizeSelector={[100, 250, 500, 1000]}
+                            quickFilter={true}
+                            onRowClick={(params) => {
+                                console.log('Row clicked:', params);
+                            }}
+                            onRowDoubleClick={handleRowDoubleClick}
+                            onSelectionChanged={handleSelectionChanged}
+                            loading={isLoading}
+                            enableExport={true}
+                            exportSelectedOnly={true}
+                            selectedRows={selectedRows}
+                            enableCheckbox={true}
+                            compactMode={true}
+                            rowHeight={24}
+                            headerHeight={30}
+                            className="custom-ag-table"
+                            defaultColDef={{
+                                resizable: true,
+                                sortable: true,
+                                filter: true,
+                                flex: 1,
+                                minWidth: 100
+                            }}
+                            customGridOptions={{
+                                suppressRowClickSelection: true,
+                                rowSelection: 'multiple',
+                                animateRows: true,
+                                enableCellTextSelection: true,
+                                ensureDomOrder: true
                             }}
                         />
                     )}

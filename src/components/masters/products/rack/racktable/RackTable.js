@@ -7,7 +7,6 @@ import {
 import ReusableTable, { getCustomDateFilter } from '@/components/datatable/ReusableTable';
 import { useRouter } from 'next/navigation';
 
-// Column definitions for AG Grid with Serial No and Checkbox
 const columnDefs = [
   {
     field: "RACKMST_KEY",
@@ -143,8 +142,8 @@ export default function RackTable() {
               theme="ag-theme-quartz"
               isDarkMode={false}
               pagination={true}
-              paginationPageSize={25}
-              paginationPageSizeSelector={[25, 50, 100, 250, 500, 1000]}
+              paginationPageSize={500}
+              paginationPageSizeSelector={[100, 250, 500, 1000]}
               quickFilter={true}
               onRowClick={(params) => {
                 console.log('Row clicked:', params);

@@ -12,19 +12,17 @@ import { useSearchParams } from 'next/navigation';
 import { pdf } from '@react-pdf/renderer';
 import PrintQtDt from './PrintQtDt';
 import CustomAutocomplete from '@/GlobalFunction/CustomAutoComplete/CustomAutoComplete';
-import CrudButtons from '@/GlobalFunction/CrudButtons';
-import PaginationButtons from '@/GlobalFunction/PaginationButtons';
 import KeyboardArrowLeftIcon from "@mui/icons-material/KeyboardArrowLeft";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import { TbListSearch } from "react-icons/tb";
 import CrudButton from '@/GlobalFunction/CrudButton';
+import ConfirmDelDialog from '@/GlobalFunction/ConfirmDelDialog';
 
 const FORM_MODE = getFormMode();
 const QualityMst = () => {
     const router = useRouter();
     const searchParams = useSearchParams();
     const QLTY_KEY = searchParams.get('QLTY_KEY');
-
     const [currentQUALITY_KEY, setCurrentQUALITY_KEY] = useState(null);
     const [form, setForm] = useState({
         SearchByCd: '',
@@ -52,6 +50,7 @@ const QualityMst = () => {
     const username = localStorage.getItem('USER_NAME');
     const PARTY_KEY = localStorage.getItem('PARTY_KEY');
     const COBR_ID = localStorage.getItem('COBR_ID');
+
     const handleChangeStatus = (event) => {
         const updatedStatus = event.target.checked ? "1" : "0";
         setStatus(updatedStatus);
@@ -60,6 +59,7 @@ const QualityMst = () => {
             Status: updatedStatus
         }))
     };
+
     const fetchRetriveData = useCallback(async (currentQUALITY_KEY, flag = "R", isManualSearch = false) => {
         try {
             const response = await axiosInstance.post('QUALITY/RetriveQUALITY', {
@@ -127,6 +127,7 @@ const QualityMst = () => {
         }
         setMode(FORM_MODE.read);
     }, [QLTY_KEY, fetchRetriveData]);
+
     const handleSubmit = async () => {
         try {
             const UserName = userRole === 'user' ? username : PARTY_KEY;
@@ -137,13 +138,11 @@ const QualityMst = () => {
                 url = `QUALITY/InsertQUALITY?UserName=${(UserName)}&strCobrid=${COBR_ID}`;
             }
             const payload = {
-                "QLTY_KEY": form.QLTY_KEY,
-                "QLTY_NAME": form.QLTY_NAME,
-                "QLTY_ABRV": form.QLTY_ABRV,
-                QLTYGRP_KEY: form.QLTYGRP_KEY,
+                QLTY_KEY: form.QLTY_KEY,
+                QLTY_NAME: form.QLTY_NAME,
+                QLTY_ABRV: form.QLTY_ABRV,
+                QLTYGRP_KEY: form.QLTYGRP_KEY || '',
                 TARGET_SALE: form.TARGET_SALE,
-                "QLTYGRP_KEY": form.QLTYGRP_KEY || "",
-                "TARGET_SALE": form.TARGET_SALE,
                 STATUS: form.Status ? "1" : "0",
             };
             let response;
@@ -185,6 +184,7 @@ const QualityMst = () => {
             console.error("Submit Error:", error);
         }
     };
+
     const handleCancel = async () => {
         if (mode === FORM_MODE.add) {
             await fetchRetriveData(1, "L");
@@ -197,6 +197,7 @@ const QualityMst = () => {
             SearchByCd: ''
         }));
     };
+
     const debouncedApiCall = debounce(async (newSeries) => {
         try {
             const response = await axiosInstance.post('GetSeriesSettings/GetSeriesLastNewKey', {
@@ -233,6 +234,7 @@ const QualityMst = () => {
             console.error("Error fetching series data:", error);
         }
     }, 300);
+
     const handleManualSeriesChange = (newSeries) => {
         setForm((prevForm) => ({
             ...prevForm,
@@ -247,7 +249,8 @@ const QualityMst = () => {
             return;
         };
         debouncedApiCall(newSeries);
-    }
+    };
+
     const handleAdd = async () => {
         setMode(FORM_MODE.add);
         setCurrentQUALITY_KEY(null);
@@ -316,6 +319,7 @@ const QualityMst = () => {
             console.error("Error fetching ID and LASTID:", error);
         }
     };
+
     const handleFirst = () => { }
 
     const handleLast = async () => {
@@ -324,7 +328,8 @@ const QualityMst = () => {
             ...prev,
             SearchByCd: ''
         }));
-    }
+    };
+
     const handlePrevious = async () => {
         await fetchRetriveData(currentQUALITY_KEY, "P");
         setForm((prev) => ({
@@ -332,6 +337,7 @@ const QualityMst = () => {
             SearchByCd: ''
         }));
     };
+
     const handleNext = async () => {
         if (currentQUALITY_KEY) {
             await fetchRetriveData(currentQUALITY_KEY, "N");
@@ -341,12 +347,15 @@ const QualityMst = () => {
             SearchByCd: ''
         }));
     };
+
     const handleDelete = () => {
         setOpenConfirmDialog(true);
-    }
+    };
+
     const handleCloseConfirmDialog = () => {
         setOpenConfirmDialog(false);
     };
+
     const handleConfirmDelete = async () => {
         setOpenConfirmDialog(false);
         try {
@@ -365,10 +374,11 @@ const QualityMst = () => {
             console.error("Delete Error:", error);
         }
     };
+
     const handleEdit = () => {
         setMode(FORM_MODE.edit);
     };
-    ;
+
     const handlePrint = async () => {
         try {
             const response = await axiosInstance.post(`QUALITY/GetQUALITYDashBoard?currentPage=1&limit=5000`, {
@@ -423,7 +433,7 @@ const QualityMst = () => {
 
     const textInputSx = {
         '& .MuiInputBase-root': {
-            height: 36,
+            height: 40,
             fontSize: '14px',
         },
         '& .MuiInputLabel-root': {
@@ -435,7 +445,7 @@ const QualityMst = () => {
             border: '1px solid #e0e0e0',
             borderRadius: '6px',
             overflow: 'hidden',
-            height: 36,
+            height: 40,
             fontSize: '14px',
         },
         '& .MuiFilledInput-root:before': {
@@ -551,7 +561,7 @@ const QualityMst = () => {
                     <Grid sx={{ display: 'flex' }}>
                         <TextField
                             placeholder="Search By Code"
-                            variant="filled"
+                            variant="outlined"
                             sx={{
                                 backgroundColor: '#e0f7fa',
                                 '& .MuiInputBase-input': {
@@ -579,6 +589,7 @@ const QualityMst = () => {
                             mode={mode}
                             onAdd={handleAdd}
                             onEdit={handleEdit}
+                            onView={handlePrint}
                             onDelete={handleDelete}
                             onExit={handleExit}
                             readOnlyMode={mode === FORM_MODE.read}
@@ -588,8 +599,7 @@ const QualityMst = () => {
                     </Grid>
                 </Grid>
 
-                <Grid container spacing={0.5}>
-
+                <Grid container spacing={1}>
                     <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                         <TextField
                             label="Series"
@@ -603,7 +613,8 @@ const QualityMst = () => {
                             sx={textInputSx}
                             inputProps={{
                                 style: {
-                                    padding: '6px 8px',
+                                    padding: '6px 0px',
+                                    marginTop: '10px',
                                     fontSize: '12px',
                                 },
                             }}
@@ -622,7 +633,8 @@ const QualityMst = () => {
                             sx={textInputSx}
                             inputProps={{
                                 style: {
-                                    padding: '6px 8px',
+                                    padding: '6px 0px',
+                                    marginTop: '10px',
                                     fontSize: '12px',
                                 },
                             }}
@@ -642,7 +654,8 @@ const QualityMst = () => {
                             sx={textInputSx}
                             inputProps={{
                                 style: {
-                                    padding: '6px 8px',
+                                    padding: '6px 0px',
+                                    marginTop: '10px',
                                     fontSize: '12px',
                                 },
                             }}
@@ -662,7 +675,8 @@ const QualityMst = () => {
                             sx={textInputSx}
                             inputProps={{
                                 style: {
-                                    padding: '6px 8px',
+                                    padding: '6px 0px',
+                                    marginTop: '10px',
                                     fontSize: '12px',
                                 },
                             }}
@@ -682,7 +696,8 @@ const QualityMst = () => {
                             sx={textInputSx}
                             inputProps={{
                                 style: {
-                                    padding: '6px 8px',
+                                    padding: '6px 0px',
+                                    marginTop: '10px',
                                     fontSize: '12px',
                                 },
                             }}
@@ -701,7 +716,8 @@ const QualityMst = () => {
                             sx={textInputSx}
                             inputProps={{
                                 style: {
-                                    padding: '6px 8px',
+                                    padding: '6px 0px',
+                                    marginTop: '10px',
                                     fontSize: '12px',
                                 },
                             }}
@@ -804,8 +820,15 @@ const QualityMst = () => {
                         </>
                     )}
                 </Grid>
-
             </Grid >
+
+            <ConfirmDelDialog
+                open={openConfirmDialog}
+                title='Confirm Deletion'
+                description="Are you sure you want to delete this item?"
+                onConfirm={handleConfirmDelete}
+                onCancel={() => setOpenConfirmDialog(false)}
+            />
 
         </Grid >
     );
