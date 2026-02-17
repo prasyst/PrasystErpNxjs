@@ -1,19 +1,8 @@
 'use client'
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import {
-    Box,
-    Grid,
-    TextField,
-    Typography,
-    Button,
-    Stack,
-    FormControlLabel,
-    Checkbox,
-    Dialog,
-    DialogTitle,
-    DialogContent,
-    DialogContentText,
-    DialogActions,
+    Box, Grid, TextField, Typography, Button, Stack, FormControlLabel, Checkbox, Dialog,
+    DialogTitle, DialogContent, DialogContentText, DialogActions,
 } from '@mui/material';
 import { toast, ToastContainer } from 'react-toastify';
 import { useRouter } from 'next/navigation';
@@ -27,6 +16,7 @@ import KeyboardArrowLeftIcon from "@mui/icons-material/KeyboardArrowLeft";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import { TbListSearch } from "react-icons/tb";
 import CrudButton from '@/GlobalFunction/CrudButton';
+import ConfirmDelDialog from '@/GlobalFunction/ConfirmDelDialog';
 import CrudButtons from '@/GlobalFunction/CrudButtons';
 import PaginationButtons from '@/GlobalFunction/PaginationButtons';
 
@@ -99,7 +89,6 @@ const TypeMst = () => {
                 });
                 setStatus(DATA[0].STATUS);
                 setCurrentFGTYPE_KEY(categoryData.FGTYPE_KEY);
-                // ✅ Update URL
                 const newParams = new URLSearchParams();
                 newParams.set("FGTYPE_KEY", categoryData.FGTYPE_KEY);
                 router.replace(`/masters/products/type?${newParams.toString()}`);
@@ -118,7 +107,7 @@ const TypeMst = () => {
                 }
             }
         } catch (err) {
-            console.error(err);
+            toast.error('Error whilte fetching data.', err);
         }
     }, [CO_ID, router]);
 
@@ -143,7 +132,6 @@ const TypeMst = () => {
         setMode(FORM_MODE.read);
     }, [FGTYPE_KEY, fetchRetriveData]);
 
-
     const handleSubmit = async () => {
         try {
             const UserName = userRole === 'user' ? username : PARTY_KEY;
@@ -156,9 +144,9 @@ const TypeMst = () => {
                 url = `Fgtype/InsertFGTYPE?UserName=${(UserName)}&strCobrid=${COBR_ID}`;
             }
             const payload = {
-                FGTYPE_KEY: form.FGTYPE_KEY,  //CODE
-                FGTYPE_CODE: form.FGTYPE_CODE, //ALT CODE
-                FGTYPE_NAME: form.FGTYPE_NAME, //TYPE NAME
+                FGTYPE_KEY: form.FGTYPE_KEY,
+                FGTYPE_CODE: form.FGTYPE_CODE,
+                FGTYPE_NAME: form.FGTYPE_NAME,
                 FGTYPE_ABRV: form.FGTYPE_ABRV,
                 STATUS: form.Status ? "1" : "0",
             };
@@ -173,7 +161,7 @@ const TypeMst = () => {
                 if (STATUS === 0) {
                     setMode(FORM_MODE.read);
                     toast.success(MESSAGE, { autoClose: 1000 });
-
+                    await fetchRetriveData(currentFGTYPE_KEY)
                 } else {
                     toast.error(MESSAGE, { autoClose: 1000 });
                 }
@@ -194,12 +182,13 @@ const TypeMst = () => {
                     });
                     setMode(FORM_MODE.read);
                     toast.success(MESSAGE, { autoClose: 1000 });
+                    await fetchRetriveData(response.data.FGTYPE_KEY);
                 } else {
                     toast.error(MESSAGE, { autoClose: 1000 });
                 }
             }
         } catch (error) {
-            console.error("Submit Error:", error);
+            toast.error("Submit Error:", error);
         }
     };
 
@@ -215,6 +204,7 @@ const TypeMst = () => {
             SearchByCd: ''
         }));
     };
+
     const debouncedApiCall = debounce(async (newSeries) => {
         try {
             const response = await axiosInstance.post('GetSeriesSettings/GetSeriesLastNewKey', {
@@ -251,6 +241,7 @@ const TypeMst = () => {
             console.error("Error fetching series data:", error);
         }
     }, 300);
+
     const handleManualSeriesChange = (newSeries) => {
         setForm((prevForm) => ({
             ...prevForm,
@@ -265,7 +256,7 @@ const TypeMst = () => {
             return;
         };
         debouncedApiCall(newSeries);
-    }
+    };
 
     const handleAdd = async () => {
         setMode(FORM_MODE.add);
@@ -335,6 +326,7 @@ const TypeMst = () => {
             console.error("Error fetching ID and LASTID:", error);
         }
     };
+
     const handleFirst = () => { }
     const handleLast = async () => {
         await fetchRetriveData(1, "L");
@@ -342,7 +334,8 @@ const TypeMst = () => {
             ...prev,
             SearchByCd: ''
         }));
-    }
+    };
+
     const handlePrevious = async () => {
         await fetchRetriveData(currentFGTYPE_KEY, "P");
         setForm((prev) => ({
@@ -350,6 +343,7 @@ const TypeMst = () => {
             SearchByCd: ''
         }));
     };
+
     const handleNext = async () => {
         if (currentFGTYPE_KEY) {
             await fetchRetriveData(currentFGTYPE_KEY, "N");
@@ -359,12 +353,15 @@ const TypeMst = () => {
             SearchByCd: ''
         }));
     };
+
     const handleDelete = () => {
         setOpenConfirmDialog(true);
-    }
+    };
+
     const handleCloseConfirmDialog = () => {
         setOpenConfirmDialog(false);
     };
+
     const handleConfirmDelete = async () => {
         setOpenConfirmDialog(false);
         try {
@@ -383,9 +380,9 @@ const TypeMst = () => {
             console.error("Delete Error:", error);
         }
     };
+
     const handleEdit = () => {
         setMode(FORM_MODE.edit);
-
     };
 
     const handlePrint = async () => {
@@ -426,6 +423,7 @@ const TypeMst = () => {
     const handleExit = () => {
         router.push('/masterpage?activeTab=products');
     };
+
     const Buttonsx = {
         backgroundColor: '#39ace2',
         margin: { xs: '0 4px', sm: '0 6px' },
@@ -443,7 +441,7 @@ const TypeMst = () => {
 
     const textInputSx = {
         '& .MuiInputBase-root': {
-            height: 36,
+            height: 40,
             fontSize: '14px',
         },
         '& .MuiInputLabel-root': {
@@ -455,7 +453,7 @@ const TypeMst = () => {
             border: '1px solid #e0e0e0',
             borderRadius: '6px',
             overflow: 'hidden',
-            height: 36,
+            height: 40,
             fontSize: '14px',
         },
         '& .MuiFilledInput-root:before': {
@@ -522,7 +520,7 @@ const TypeMst = () => {
                 justifyContent: 'center',
                 alignItems: 'center',
                 boxSizing: 'border-box',
-                minHeight: '91vh',
+                minHeight: '90vh',
                 overflowX: 'hidden',
                 overflowY: 'auto'
             }}
@@ -571,7 +569,7 @@ const TypeMst = () => {
                     <Grid sx={{ display: 'flex' }}>
                         <TextField
                             placeholder="Search By Code"
-                            variant="filled"
+                            variant="outlined"
                             sx={{
                                 backgroundColor: '#e0f7fa',
                                 '& .MuiInputBase-input': {
@@ -598,6 +596,7 @@ const TypeMst = () => {
                             moduleName=""
                             mode={mode}
                             onAdd={handleAdd}
+                            onView={handlePrint}
                             onEdit={handleEdit}
                             onDelete={handleDelete}
                             onExit={handleExit}
@@ -608,8 +607,7 @@ const TypeMst = () => {
                     </Grid>
                 </Grid>
 
-                <Grid container spacing={0.5}>
-
+                <Grid container spacing={1}>
                     <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                         <TextField
                             label="Series"
@@ -623,8 +621,9 @@ const TypeMst = () => {
                             sx={textInputSx}
                             inputProps={{
                                 style: {
-                                    padding: '6px 8px',
-                                    fontSize: '12px',
+                                    padding: '6px 0px',
+                                    marginTop: '10px',
+                                    fontSize: '12px'
                                 },
                             }}
                         />
@@ -642,7 +641,8 @@ const TypeMst = () => {
                             sx={textInputSx}
                             inputProps={{
                                 style: {
-                                    padding: '6px 8px',
+                                    padding: '6px 0px',
+                                    marginTop: '10px',
                                     fontSize: '12px',
                                 },
                             }}
@@ -662,7 +662,8 @@ const TypeMst = () => {
                             sx={textInputSx}
                             inputProps={{
                                 style: {
-                                    padding: '6px 8px',
+                                    padding: '6px 0px',
+                                    marginTop: '10px',
                                     fontSize: '12px',
                                 },
                             }}
@@ -682,7 +683,8 @@ const TypeMst = () => {
                             sx={textInputSx}
                             inputProps={{
                                 style: {
-                                    padding: '6px 8px',
+                                    padding: '6px 0px',
+                                    marginTop: '10px',
                                     fontSize: '12px',
                                 },
                             }}
@@ -706,7 +708,8 @@ const TypeMst = () => {
                             sx={textInputSx}
                             inputProps={{
                                 style: {
-                                    padding: '6px 8px',
+                                    padding: '6px 0px',
+                                    marginTop: '10px',
                                     fontSize: '12px',
                                 },
                             }}
@@ -726,7 +729,8 @@ const TypeMst = () => {
                             sx={textInputSx}
                             inputProps={{
                                 style: {
-                                    padding: '6px 8px',
+                                    padding: '6px 0px',
+                                    marginTop: '10px',
                                     fontSize: '12px',
                                 },
                             }}
@@ -750,7 +754,6 @@ const TypeMst = () => {
                             label="Active"
                         />
                     </Grid>
-
                 </Grid>
 
                 <Grid sx={{
@@ -788,7 +791,6 @@ const TypeMst = () => {
                     )}
                     {(mode === FORM_MODE.edit || mode === FORM_MODE.add) && (
                         <>
-
                             <Button variant="contained"
                                 sx={{
                                     backgroundColor: '#635bff',
@@ -811,13 +813,18 @@ const TypeMst = () => {
                                 onClick={handleCancel}>
                                 Cancel
                             </Button>
-
                         </>
                     )}
                 </Grid>
-
             </Grid >
-
+            <ConfirmDelDialog
+                open={openConfirmDialog}
+                title="Confirm Deletion"
+                description="Are you sure you want to delete this item?"
+                onConfirm={handleConfirmDelete}
+                onCancel={handleCloseConfirmDialog}
+            // loading={false}
+            />
         </Grid >
     );
 };

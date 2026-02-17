@@ -23,22 +23,22 @@ const ConfirmDelDialog = ({ open, title, description, onConfirm, onCancel, loadi
         </DialogContentText>
       </DialogContent>
       <DialogActions>
-        <Button
+        <Button size="small"
           sx={{
-            backgroundColor: "#635bff",
+            backgroundColor: "#008000",
             color: "white",
-            "&:hover": { backgroundColor: "#1565c0", color: "white" },
+            "&:hover": { backgroundColor: "#008000", color: "white" },
           }}
           onClick={onConfirm}
           disabled={loading}
         >
           Yes
         </Button>
-        <Button
+        <Button size="small"
           sx={{
-            backgroundColor: "#635bff",
+            backgroundColor: "#FF0000",
             color: "white",
-            "&:hover": { backgroundColor: "#1565c0", color: "white" },
+            "&:hover": { backgroundColor: "#FF0000", color: "white" },
           }}
           onClick={onCancel}
           disabled={loading}

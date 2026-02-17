@@ -115,6 +115,7 @@ const UnitMst = () => {
             console.error(err);
         }
     }, [CO_ID, router])
+
     useEffect(() => {
         if (UNIT_KEY) {
             setCurrentUNIT_KEY(UNIT_KEY);
@@ -136,6 +137,7 @@ const UnitMst = () => {
         }
         setMode(FORM_MODE.read);
     }, [UNIT_KEY, fetchRetriveData]);
+
     const handleSubmit = async () => {
         try {
             const UserName = userRole === 'user' ? username : PARTY_KEY;
@@ -198,6 +200,7 @@ const UnitMst = () => {
             console.error("Submit Error:", error);
         }
     };
+
     const handleCancel = async () => {
         if (mode === FORM_MODE.add) {
             await fetchRetriveData(1, "L");
@@ -210,6 +213,7 @@ const UnitMst = () => {
             SearchByCd: ''
         }));
     };
+
     const debouncedApiCall = debounce(async (newSeries) => {
         try {
             const response = await axiosInstance.post('GetSeriesSettings/GetSeriesLastNewKey', {
@@ -246,6 +250,7 @@ const UnitMst = () => {
             console.error("Error fetching series data:", error);
         }
     }, 300);
+
     const handleManualSeriesChange = (newSeries) => {
         setForm((prevForm) => ({
             ...prevForm,
@@ -260,7 +265,8 @@ const UnitMst = () => {
             return;
         };
         debouncedApiCall(newSeries);
-    }
+    };
+
     const handleAdd = async () => {
         setMode(FORM_MODE.add);
         setCurrentUNIT_KEY(null);
@@ -328,14 +334,17 @@ const UnitMst = () => {
             console.error("Error fetching ID and LASTID:", error);
         }
     };
+
     const handleFirst = () => { }
+
     const handleLast = async () => {
         await fetchRetriveData(1, "L");
         setForm((prev) => ({
             ...prev,
             SearchByCd: ''
         }));
-    }
+    };
+
     const handlePrevious = async () => {
         await fetchRetriveData(currentUNIT_KEY, "P");
         setForm((prev) => ({
@@ -343,6 +352,7 @@ const UnitMst = () => {
             SearchByCd: ''
         }));
     };
+
     const handleNext = async () => {
         if (currentUNIT_KEY) {
             await fetchRetriveData(currentUNIT_KEY, "N");
@@ -352,12 +362,15 @@ const UnitMst = () => {
             SearchByCd: ''
         }));
     };
+
     const handleDelete = () => {
         setOpenConfirmDialog(true);
-    }
+    };
+
     const handleCloseConfirmDialog = () => {
         setOpenConfirmDialog(false);
     };
+
     const handleConfirmDelete = async () => {
         setOpenConfirmDialog(false);
         try {
@@ -376,9 +389,11 @@ const UnitMst = () => {
             console.error("Delete Error:", error);
         }
     };
+
     const handleEdit = () => {
         setMode(FORM_MODE.edit);
     };
+
     const handlePrint = async () => {
         try {
             const response = await axiosInstance.post(`Unit/GetUnitDashBoard?currentPage=1&limit=5000`, {
@@ -418,13 +433,6 @@ const UnitMst = () => {
         router.push('/masterpage?activeTab=products');
     };
 
-    const Buttonsx = {
-        backgroundColor: '#39ace2',
-        margin: { xs: '0 4px', sm: '0 6px' },
-        minWidth: { xs: 40, sm: 46, md: 60 },
-        height: { xs: 40, sm: 46, md: 27 },
-    };
-
     const handleInputChange = (e) => {
         const { name, value } = e.target;
         setForm(prev => ({
@@ -435,7 +443,7 @@ const UnitMst = () => {
 
     const textInputSx = {
         '& .MuiInputBase-root': {
-            height: 36,
+            height: 40,
             fontSize: '14px',
         },
         '& .MuiInputLabel-root': {
@@ -447,7 +455,7 @@ const UnitMst = () => {
             border: '1px solid #e0e0e0',
             borderRadius: '6px',
             overflow: 'hidden',
-            height: 36,
+            height: 40,
             fontSize: '14px',
         },
         '& .MuiFilledInput-root:before': {
@@ -460,45 +468,6 @@ const UnitMst = () => {
             padding: '10px 12px !important',
             fontSize: '14px !important',
             lineHeight: '1.4',
-        },
-        '& .MuiFilledInput-root.Mui-disabled': {
-            backgroundColor: '#fff'
-        }
-    };
-
-    const DropInputSx = {
-        '& .MuiInputBase-root': {
-            height: 36,
-            fontSize: '14px',
-        },
-        '& .MuiInputLabel-root': {
-            fontSize: '14px',
-            top: '-4px',
-        },
-        '& .MuiFilledInput-root': {
-            backgroundColor: '#fafafa',
-            border: '1px solid #e0e0e0',
-            borderRadius: '6px',
-            overflow: 'hidden',
-            height: 36,
-            fontSize: '14px',
-            paddingRight: '36px',
-        },
-        '& .MuiFilledInput-root:before': {
-            display: 'none',
-        },
-        '& .MuiFilledInput-root:after': {
-            display: 'none',
-        },
-        '& .MuiInputBase-input': {
-            padding: '10px 12px',
-            fontSize: '14px',
-            lineHeight: '1.4',
-        },
-        '& .MuiAutocomplete-endAdornment': {
-            top: '50%',
-            transform: 'translateY(-50%)',
-            right: '10px',
         },
         '& .MuiFilledInput-root.Mui-disabled': {
             backgroundColor: '#fff'
@@ -563,7 +532,7 @@ const UnitMst = () => {
                     <Grid sx={{ display: 'flex' }}>
                         <TextField
                             placeholder="Search By Code"
-                            variant="filled"
+                            variant="outlined"
                             sx={{
                                 backgroundColor: '#e0f7fa',
                                 '& .MuiInputBase-input': {
@@ -600,8 +569,7 @@ const UnitMst = () => {
                     </Grid>
                 </Grid>
 
-                <Grid container spacing={0.5}>
-
+                <Grid container spacing={1}>
                     <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                         <TextField
                             label="Series"
@@ -615,7 +583,8 @@ const UnitMst = () => {
                             sx={textInputSx}
                             inputProps={{
                                 style: {
-                                    padding: '6px 8px',
+                                    padding: '6px 0px',
+                                    marginTop: '10px',
                                     fontSize: '12px',
                                 },
                             }}
@@ -634,7 +603,8 @@ const UnitMst = () => {
                             sx={textInputSx}
                             inputProps={{
                                 style: {
-                                    padding: '6px 8px',
+                                    padding: '6px 0px',
+                                    marginTop: '10px',
                                     fontSize: '12px',
                                 },
                             }}
@@ -654,7 +624,8 @@ const UnitMst = () => {
                             sx={textInputSx}
                             inputProps={{
                                 style: {
-                                    padding: '6px 8px',
+                                    padding: '6px 0px',
+                                    marginTop: '10px',
                                     fontSize: '12px',
                                 },
                             }}
@@ -674,7 +645,8 @@ const UnitMst = () => {
                             sx={textInputSx}
                             inputProps={{
                                 style: {
-                                    padding: '6px 8px',
+                                    padding: '6px 0px',
+                                    marginTop: '10px',
                                     fontSize: '12px',
                                 },
                             }}
@@ -694,7 +666,8 @@ const UnitMst = () => {
                             sx={textInputSx}
                             inputProps={{
                                 style: {
-                                    padding: '6px 8px',
+                                    padding: '6px 0px',
+                                    marginTop: '10px',
                                     fontSize: '12px',
                                 },
                             }}
@@ -728,7 +701,8 @@ const UnitMst = () => {
                             sx={textInputSx}
                             inputProps={{
                                 style: {
-                                    padding: '6px 8px',
+                                    padding: '6px 0px',
+                                    marginTop: '10px',
                                     fontSize: '12px',
                                 },
                             }}
@@ -752,7 +726,6 @@ const UnitMst = () => {
                             label="Active"
                         />
                     </Grid>
-
                 </Grid>
 
                 <Grid sx={{
@@ -813,7 +786,6 @@ const UnitMst = () => {
                                 onClick={handleCancel}>
                                 Cancel
                             </Button>
-
                         </>
                     )}
                 </Grid>

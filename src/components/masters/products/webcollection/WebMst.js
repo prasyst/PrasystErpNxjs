@@ -15,8 +15,7 @@ import { TbListSearch } from "react-icons/tb";
 import CustomAutocomplete from '@/GlobalFunction/CustomAutoComplete/CustomAutoComplete';
 import PrintWebDt from './PrintWebDt';
 import { useSearchParams } from 'next/navigation';
-import CrudButtons from '@/GlobalFunction/CrudButtons';
-import PaginationButtons from '@/GlobalFunction/PaginationButtons';
+import ConfirmDelDialog from '@/GlobalFunction/ConfirmDelDialog';
 
 const FORM_MODE = getFormMode();
 const WebMst = () => {
@@ -58,6 +57,7 @@ const WebMst = () => {
             Status: updatedStatus
         }))
     };
+
     const fetchRetriveData = useCallback(async (currentWeb_KEY, flag = "R", isManualSearch = false) => {
         try {
             const response = await axiosInstance.post('WEBCOLLECTION/RetriveWEBCOLLECTION', {
@@ -84,7 +84,6 @@ const WebMst = () => {
                 setStatus(DATA[0].STATUS);
                 setCurrentWeb_KEY(webData.WEBCOLLECTION_KEY);
 
-                // ✅ Update URL
                 const newParams = new URLSearchParams();
                 newParams.set("WEBCOLLECTION_KEY", categoryData.WEBCOLLECTION_KEY);
                 router.replace(`/masters/products/webcollection?${newParams.toString()}`);
@@ -106,6 +105,7 @@ const WebMst = () => {
             console.error(err);
         }
     }, [CO_ID, router]);
+
     useEffect(() => {
         if (WEBCOLLECTION_KEY) {
             setCurrentWeb_KEY(WEBCOLLECTION_KEY);
@@ -126,6 +126,7 @@ const WebMst = () => {
         }
         setMode(FORM_MODE.read);
     }, [WEBCOLLECTION_KEY, fetchRetriveData]);
+
     const handleSubmit = async () => {
         try {
             const UserName = userRole === 'user' ? username : PARTY_KEY;
@@ -181,6 +182,7 @@ const WebMst = () => {
             console.error("Submit Error:", error);
         }
     };
+
     const handleCancel = async () => {
         if (mode === FORM_MODE.add) {
             await fetchRetriveData(1, "L");
@@ -193,6 +195,7 @@ const WebMst = () => {
             SearchByCd: ''
         }));
     };
+
     const debouncedApiCall = debounce(async (newSeries) => {
         try {
             const response = await axiosInstance.post('GetSeriesSettings/GetSeriesLastNewKey', {
@@ -229,6 +232,7 @@ const WebMst = () => {
             console.error("Error fetching series data:", error);
         }
     }, 300);
+
     const handleManualSeriesChange = (newSeries) => {
         setForm((prevForm) => ({
             ...prevForm,
@@ -243,7 +247,8 @@ const WebMst = () => {
             return;
         };
         debouncedApiCall(newSeries);
-    }
+    };
+
     const handleAdd = async () => {
         setMode(FORM_MODE.add);
         setCurrentWeb_KEY(null);
@@ -311,14 +316,17 @@ const WebMst = () => {
             console.error("Error fetching ID and LASTID:", error);
         }
     };
+
     const handleFirst = () => { }
+
     const handleLast = async () => {
         await fetchRetriveData(1, "L");
         setForm((prev) => ({
             ...prev,
             SearchByCd: ''
         }));
-    }
+    };
+
     const handlePrevious = async () => {
         await fetchRetriveData(currentWeb_KEY, "P");
         setForm((prev) => ({
@@ -326,6 +334,7 @@ const WebMst = () => {
             SearchByCd: ''
         }));
     };
+
     const handleNext = async () => {
         if (currentWeb_KEY) {
             await fetchRetriveData(currentWeb_KEY, "N");
@@ -335,12 +344,15 @@ const WebMst = () => {
             SearchByCd: ''
         }));
     };
+
     const handleDelete = () => {
         setOpenConfirmDialog(true);
-    }
+    };
+
     const handleCloseConfirmDialog = () => {
         setOpenConfirmDialog(false);
     };
+
     const handleConfirmDelete = async () => {
         setOpenConfirmDialog(false);
         try {
@@ -359,6 +371,7 @@ const WebMst = () => {
             console.error("Delete Error:", error);
         }
     };
+
     const handleEdit = () => {
         setMode(FORM_MODE.edit);
     };
@@ -405,7 +418,7 @@ const WebMst = () => {
 
     const textInputSx = {
         '& .MuiInputBase-root': {
-            height: 36,
+            height: 40,
             fontSize: '14px',
         },
         '& .MuiInputLabel-root': {
@@ -417,7 +430,7 @@ const WebMst = () => {
             border: '1px solid #e0e0e0',
             borderRadius: '6px',
             overflow: 'hidden',
-            height: 36,
+            height: 40,
             fontSize: '14px',
         },
         '& .MuiFilledInput-root:before': {
@@ -533,7 +546,7 @@ const WebMst = () => {
                     <Grid sx={{ display: 'flex' }}>
                         <TextField
                             placeholder="Search By Code"
-                            variant="filled"
+                            variant="outlined"
                             sx={{
                                 backgroundColor: '#e0f7fa',
                                 '& .MuiInputBase-input': {
@@ -561,6 +574,7 @@ const WebMst = () => {
                             mode={mode}
                             onAdd={handleAdd}
                             onEdit={handleEdit}
+                            onView={handlePrint}
                             onDelete={handleDelete}
                             onExit={handleExit}
                             readOnlyMode={mode === FORM_MODE.read}
@@ -570,8 +584,7 @@ const WebMst = () => {
                     </Grid>
                 </Grid>
 
-                <Grid container spacing={0.5}>
-
+                <Grid container spacing={1}>
                     <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                         <TextField
                             label="Series"
@@ -585,7 +598,8 @@ const WebMst = () => {
                             sx={textInputSx}
                             inputProps={{
                                 style: {
-                                    padding: '6px 8px',
+                                    padding: '6px 0px',
+                                    marginTop: '10px',
                                     fontSize: '12px',
                                 },
                             }}
@@ -604,7 +618,8 @@ const WebMst = () => {
                             sx={textInputSx}
                             inputProps={{
                                 style: {
-                                    padding: '6px 8px',
+                                    padding: '6px 0px',
+                                    marginTop: '10px',
                                     fontSize: '12px',
                                 },
                             }}
@@ -624,7 +639,8 @@ const WebMst = () => {
                             sx={textInputSx}
                             inputProps={{
                                 style: {
-                                    padding: '6px 8px',
+                                    padding: '6px 0px',
+                                    marginTop: '10px',
                                     fontSize: '12px',
                                 },
                             }}
@@ -656,7 +672,8 @@ const WebMst = () => {
                             sx={textInputSx}
                             inputProps={{
                                 style: {
-                                    padding: '6px 8px',
+                                    padding: '6px 0px',
+                                    marginTop: '10px',
                                     fontSize: '12px',
                                 },
                             }}
@@ -675,7 +692,8 @@ const WebMst = () => {
                             sx={textInputSx}
                             inputProps={{
                                 style: {
-                                    padding: '6px 8px',
+                                    padding: '6px 0px',
+                                    marginTop: '10px',
                                     fontSize: '12px',
                                 },
                             }}
@@ -695,7 +713,8 @@ const WebMst = () => {
                             sx={textInputSx}
                             inputProps={{
                                 style: {
-                                    padding: '6px 8px',
+                                    padding: '6px 0px',
+                                    marginTop: '10px',
                                     fontSize: '12px',
                                 },
                             }}
@@ -721,7 +740,6 @@ const WebMst = () => {
                             label="Active "
                         />
                     </Grid>
-
                 </Grid>
 
                 <Grid sx={{
@@ -782,13 +800,17 @@ const WebMst = () => {
                                 onClick={handleCancel}>
                                 Cancel
                             </Button>
-
                         </>
                     )}
                 </Grid>
-
             </Grid >
-
+            <ConfirmDelDialog
+                open={openConfirmDialog}
+                title='Confirm Deletion'
+                description="Are you sure you want to delete this item?"
+                onConfirm={handleConfirmDelete}
+                onCancel={() => setOpenConfirmDialog(false)}
+            />
         </Grid >
     );
 };

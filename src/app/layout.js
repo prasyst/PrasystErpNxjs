@@ -48,7 +48,7 @@ export const metadata = {
   title: "PrasystERP",
   description: "PRASYST - The symbol of business integration.",
   icons: {
-    icon: '/images/Login3.jpg'
+    icon: '/images/FavIcon.png'
   }
 };
 

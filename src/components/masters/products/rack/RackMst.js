@@ -12,11 +12,10 @@ import { useSearchParams } from 'next/navigation';
 import { TbListSearch } from "react-icons/tb";
 import CrudButton from '@/GlobalFunction/CrudButton';
 import { pdf } from '@react-pdf/renderer';
-import CrudButtons from '@/GlobalFunction/CrudButtons';
 import KeyboardArrowLeftIcon from "@mui/icons-material/KeyboardArrowLeft";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import CustomAutocomplete from '@/GlobalFunction/CustomAutoComplete/CustomAutoComplete';
-import PaginationButtons from '@/GlobalFunction/PaginationButtons';
+import ConfirmDelDialog from '@/GlobalFunction/ConfirmDelDialog';
 
 const FORM_MODE = getFormMode();
 const RackMst = () => {
@@ -51,6 +50,7 @@ const RackMst = () => {
     const username = localStorage.getItem('USER_NAME');
     const PARTY_KEY = localStorage.getItem('PARTY_KEY');
     const COBR_ID = localStorage.getItem('COBR_ID');
+
     const handleChangeStatus = (event) => {
         const updatedStatus = event.target.checked ? "1" : "0";
         setStatus(updatedStatus);
@@ -59,6 +59,7 @@ const RackMst = () => {
             Status: updatedStatus
         }))
     };
+
     const fetchRetriveData = useCallback(async (currentRACKMST_KEY, flag = "R", isManualSearch = false) => {
         try {
             const response = await axiosInstance.post('RACKMST/RetriveRACKMST', {
@@ -129,6 +130,7 @@ const RackMst = () => {
         }
         setMode(FORM_MODE.read);
     }, [RACKMST_KEY, fetchRetriveData]);
+
     const handleSubmit = async () => {
         try {
             const UserName = userRole === 'user' ? username : PARTY_KEY;
@@ -188,6 +190,7 @@ const RackMst = () => {
             console.error("Submit Error:", error);
         }
     };
+
     const handleCancel = async () => {
         if (mode === FORM_MODE.add) {
             await fetchRetriveData(1, "L");
@@ -200,6 +203,7 @@ const RackMst = () => {
             SearchByCd: ''
         }));
     };
+
     const debouncedApiCall = debounce(async (newSeries) => {
         try {
             const response = await axiosInstance.post('GetSeriesSettings/GetSeriesLastNewKey', {
@@ -236,6 +240,7 @@ const RackMst = () => {
             console.error("Error fetching series data:", error);
         }
     }, 300);
+
     const handleManualSeriesChange = (newSeries) => {
         setForm((prevForm) => ({
             ...prevForm,
@@ -250,7 +255,8 @@ const RackMst = () => {
             return;
         };
         debouncedApiCall(newSeries);
-    }
+    };
+
     const handleAdd = async () => {
         setMode(FORM_MODE.add);
         setCurrentRACKMST_KEY(null);
@@ -351,7 +357,8 @@ const RackMst = () => {
 
     const handleDelete = () => {
         setOpenConfirmDialog(true);
-    }
+    };
+
     const handleCloseConfirmDialog = () => {
         setOpenConfirmDialog(false);
     };
@@ -419,7 +426,7 @@ const RackMst = () => {
 
     const textInputSx = {
         '& .MuiInputBase-root': {
-            height: 36,
+            height: 40,
             fontSize: '14px',
         },
         '& .MuiInputLabel-root': {
@@ -431,7 +438,7 @@ const RackMst = () => {
             border: '1px solid #e0e0e0',
             borderRadius: '6px',
             overflow: 'hidden',
-            height: 36,
+            height: 40,
             fontSize: '14px',
         },
         '& .MuiFilledInput-root:before': {
@@ -452,7 +459,7 @@ const RackMst = () => {
 
     const DropInputSx = {
         '& .MuiInputBase-root': {
-            height: 36,
+            height: 40,
             fontSize: '14px',
         },
         '& .MuiInputLabel-root': {
@@ -464,7 +471,7 @@ const RackMst = () => {
             border: '1px solid #e0e0e0',
             borderRadius: '6px',
             overflow: 'hidden',
-            height: 36,
+            height: 40,
             fontSize: '14px',
             paddingRight: '36px',
         },
@@ -547,7 +554,7 @@ const RackMst = () => {
                     <Grid sx={{ display: 'flex' }}>
                         <TextField
                             placeholder="Search By Code"
-                            variant="filled"
+                            variant="outlined"
                             sx={{
                                 backgroundColor: '#e0f7fa',
                                 '& .MuiInputBase-input': {
@@ -575,6 +582,7 @@ const RackMst = () => {
                             mode={mode}
                             onAdd={handleAdd}
                             onEdit={handleEdit}
+                            onView={handlePrint}
                             onDelete={handleDelete}
                             onExit={handleExit}
                             readOnlyMode={mode === FORM_MODE.read}
@@ -584,8 +592,7 @@ const RackMst = () => {
                     </Grid>
                 </Grid>
 
-                <Grid container spacing={0.5}>
-
+                <Grid container spacing={1}>
                     <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                         <TextField
                             label="Series"
@@ -599,7 +606,8 @@ const RackMst = () => {
                             sx={textInputSx}
                             inputProps={{
                                 style: {
-                                    padding: '6px 8px',
+                                    padding: '6px 0px',
+                                    marginTop: '10px',
                                     fontSize: '12px',
                                 },
                             }}
@@ -618,7 +626,8 @@ const RackMst = () => {
                             sx={textInputSx}
                             inputProps={{
                                 style: {
-                                    padding: '6px 8px',
+                                    padding: '6px 0px',
+                                    marginTop: '10px',
                                     fontSize: '12px',
                                 },
                             }}
@@ -638,7 +647,8 @@ const RackMst = () => {
                             sx={textInputSx}
                             inputProps={{
                                 style: {
-                                    padding: '6px 8px',
+                                    padding: '6px 0px',
+                                    marginTop: '10px',
                                     fontSize: '12px',
                                 },
                             }}
@@ -658,7 +668,8 @@ const RackMst = () => {
                             sx={textInputSx}
                             inputProps={{
                                 style: {
-                                    padding: '6px 8px',
+                                    padding: '6px 0px',
+                                    marginTop: '10px',
                                     fontSize: '12px',
                                 },
                             }}
@@ -674,6 +685,7 @@ const RackMst = () => {
                             value={form.ROW_NO}
                             onChange={(value) => setForm({ ...form, ROW_NO: value })}
                             className="custom-textfield"
+                            sx={DropInputSx}
                         />
                     </Grid>
 
@@ -690,7 +702,8 @@ const RackMst = () => {
                             sx={textInputSx}
                             inputProps={{
                                 style: {
-                                    padding: '6px 8px',
+                                    padding: '6px 0px',
+                                    marginTop: '10px',
                                     fontSize: '12px',
                                 },
                             }}
@@ -709,7 +722,8 @@ const RackMst = () => {
                             sx={textInputSx}
                             inputProps={{
                                 style: {
-                                    padding: '6px 8px',
+                                    padding: '6px 0px',
+                                    marginTop: '10px',
                                     fontSize: '12px',
                                 },
                             }}
@@ -749,15 +763,12 @@ const RackMst = () => {
                                         '&.Mui-checked': {
                                             color: mode === FORM_MODE.read ? 'rgba(0, 0, 0, 0.38)' : '#39ace2',
                                         },
-
                                     }}
                                 />
                             }
                             label="Default Rack"
-
                         />
                     </Grid>
-
                 </Grid>
 
                 <Grid sx={{
@@ -822,9 +833,14 @@ const RackMst = () => {
                         </>
                     )}
                 </Grid>
-
             </Grid >
-
+            <ConfirmDelDialog
+                open={openConfirmDialog}
+                title='Confirm Deletion'
+                description="Are you sure you want to delete this item?"
+                onConfirm={handleConfirmDelete}
+                onCancel={() => setOpenConfirmDialog(false)}
+            />
         </Grid >
     );
 };

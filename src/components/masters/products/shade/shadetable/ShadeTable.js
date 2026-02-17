@@ -1,28 +1,65 @@
 'use client';
 import React, { useState, useEffect, useCallback } from "react";
-
+import axiosInstance from '../../../../../lib/axios';
 import {
-    Button,
+    Button, Stack, Box
 } from '@mui/material';
-import AddIcon from "@mui/icons-material/Add";
-import axiosInstance from "@/lib/axios";
-import ReusableHandsontable from "@/components/datatable/ReusableHandsontable";
-import { useRouter } from "next/navigation";
+import ReusableTable, { getCustomDateFilter } from '@/components/datatable/ReusableTable';
+import { useRouter } from 'next/navigation';
 
-const handsontableColumns = [
-    // { field: "ROWNUM", headerName: "SrNo", width: "16%", type: "numeric" },
-    { field: "FGSHADE_KEY", headerName: "Code", width: "16%", type: "text" },
-    { field: "FGSHADE_ALT_KEY", headerName: "ALTCode", width: "10%", type: "text" },
-    { field: "FGSHADE_NAME", headerName: "Name", width: "20%", type: "text" },
-    { field: "FGSHADE_ABRV", headerName: "Abrv", width: "15%", type: "text" },
-    { field: "STATUS", headerName: "Status", width: "15%", type: "numeric" }
+const columnDefs = [
+    {
+        field: "FGSHADE_KEY",
+        headerName: "Code",
+        filter: 'agSetColumnFilter',
+        filterParams: {
+            defaultToNothingSelected: true,
+        },
+        sortable: true
+    },
+    {
+        field: "FGSHADE_ALT_KEY",
+        headerName: "ALTCode",
+        filter: 'agSetColumnFilter',
+        filterParams: {
+            defaultToNothingSelected: true,
+        },
+        sortable: true
+    },
+    {
+        field: "FGSHADE_NAME",
+        headerName: "Name",
+        filter: 'agSetColumnFilter',
+        filterParams: {
+            defaultToNothingSelected: true,
+        },
+        sortable: true
+    },
+    {
+        field: "FGSHADE_ABRV",
+        headerName: "Abrv",
+        filter: 'agSetColumnFilter',
+        filterParams: {
+            defaultToNothingSelected: true,
+        },
+        sortable: true
+    },
+    {
+        field: "STATUS",
+        headerName: "Status",
+        filter: 'agSetColumnFilter',
+        filterParams: {
+            defaultToNothingSelected: true,
+        },
+        sortable: true
+    }
 ];
 
 export default function ShadeTable() {
-    const router = useRouter();
-
     const [isLoading, setIsLoading] = useState(true);
     const [rows, setRows] = useState([]);
+    const router = useRouter();
+    const [selectedRows, setSelectedRows] = useState([]);
 
     useEffect(() => {
         fetchTableData();
@@ -50,17 +87,7 @@ export default function ShadeTable() {
         }
     };
 
-    const handleAfterChange = (changes, source) => {
-        if (source === 'edit') {
-            console.log('Data changed:', changes);
-        }
-    };
-
-    const handleAfterSelection = (row, column, row2, column2) => {
-        console.log('Selection changed:', { row, column, row2, column2 });
-    };
-
-    const handleRowClick = (row) => {
+    const handleRowDoubleClick = (row) => {
         const params = new URLSearchParams({
             FGSHADE_KEY: row.FGSHADE_KEY,
             mode: "view"
@@ -68,39 +95,17 @@ export default function ShadeTable() {
         router.push(`/masters/products/shade?${params}`);
     };
 
-
-    const addButtonStyles = {
-        background: "#39ace2",
-        height: 40,
-        color: "white",
-        borderRadius: "50px",
-        padding: "5px 20px",
-        boxShadow: "0px 6px 15px rgba(0, 0, 0, 0.3)",
-        transition: "background 0.3s ease",
-        "&:hover": { background: "#2199d6" },
-        "&:disabled": {
-            backgroundColor: "#39ace2",
-            color: "rgba(0, 0, 0, 0.26)",
-        },
-    };
+    const handleSelectionChanged = useCallback((event) => {
+        const selectedNodes = event.api.getSelectedNodes();
+        const selectedData = selectedNodes.map(node => node.data);
+        setSelectedRows(selectedData);
+    }, []);
 
     return (
         <div className="p-2 w-full">
             <div className="w-full mx-auto" style={{ maxWidth: '100%' }}>
-                <div className="mb-4 flex flex-wrap gap-4 items-center">
 
-                    <Button
-                        variant="contained"
-                        size="small"
-                        sx={addButtonStyles}
-                        startIcon={<AddIcon />}
-                        onClick={() => router.push('/masters/products/shade')}
-                    >
-                        New
-                    </Button>
-                </div>
-
-                <div style={{ height: 'calc(100vh - 180px)', width: '100%' }}>
+                <div style={{ height: 'calc(100vh - 80px)', width: '100%' }}>
                     {isLoading ? (
                         <div style={{
                             display: 'flex',
@@ -111,29 +116,43 @@ export default function ShadeTable() {
                             Loading...
                         </div>
                     ) : (
-                        <ReusableHandsontable
-                            data={rows}
-                            columns={handsontableColumns}
-                            height="auto"
-                            width="100%"
-                            colHeaders={true}
-                            rowHeaders={true}
-                            afterChange={handleAfterChange}
-                            handleRowDoubleClick={handleRowClick}
-                            afterSelection={handleAfterSelection}
-                            readOnly={true}
-                            customSettings={{
-                                stretchH: 'all',
-                                dropdownMenu: true,
-                                filters: {
-                                    indicators: true,
-                                    showOperators: true
-                                },
-                                contextMenu: true,
-                                search: true,
-                                filteringCaseSensitive: false,
-                                filteringIndicator: true,
-                                licenseKey: "non-commercial-and-evaluation"
+                        <ReusableTable
+                            columnDefs={columnDefs}
+                            rowData={rows}
+                            height="100%"
+                            theme="ag-theme-quartz"
+                            isDarkMode={false}
+                            pagination={true}
+                            paginationPageSize={1000}
+                            paginationPageSizeSelector={[100, 200, 500, 1000, 5000]}
+                            quickFilter={true}
+                            onRowClick={(params) => {
+                                console.log('Row clicked:', params);
+                            }}
+                            onRowDoubleClick={handleRowDoubleClick}
+                            onSelectionChanged={handleSelectionChanged}
+                            loading={isLoading}
+                            enableExport={true}
+                            exportSelectedOnly={true}
+                            selectedRows={selectedRows}
+                            enableCheckbox={true}
+                            compactMode={true}
+                            rowHeight={24}
+                            headerHeight={30}
+                            className="custom-ag-table"
+                            defaultColDef={{
+                                resizable: true,
+                                sortable: true,
+                                filter: true,
+                                flex: 1,
+                                minWidth: 100
+                            }}
+                            customGridOptions={{
+                                suppressRowClickSelection: true,
+                                rowSelection: 'multiple',
+                                animateRows: true,
+                                enableCellTextSelection: true,
+                                ensureDomOrder: true
                             }}
                         />
                     )}

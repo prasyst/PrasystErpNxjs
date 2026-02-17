@@ -118,7 +118,6 @@ export default function QualityTable() {
     const selectedNodes = event.api.getSelectedNodes();
     const selectedData = selectedNodes.map(node => node.data);
     setSelectedRows(selectedData);
-    console.log('Selected rows:', selectedData);
   }, []);
 
   return (
@@ -143,8 +142,8 @@ export default function QualityTable() {
               theme="ag-theme-quartz"
               isDarkMode={false}
               pagination={true}
-              paginationPageSize={25}
-              paginationPageSizeSelector={[25, 50, 100, 250, 500, 1000]}
+              paginationPageSize={500}
+              paginationPageSizeSelector={[100, 250, 500, 1000]}
               quickFilter={true}
               onRowClick={(params) => {
                 console.log('Row clicked:', params);

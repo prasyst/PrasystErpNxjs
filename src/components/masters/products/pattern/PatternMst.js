@@ -15,9 +15,7 @@ import axiosInstance from '@/lib/axios';
 import { useSearchParams } from 'next/navigation';
 import { TbListSearch } from "react-icons/tb";
 import CrudButton from '@/GlobalFunction/CrudButton';
-import FirstPageIcon from '@mui/icons-material/FirstPage';
-import LastPageIcon from '@mui/icons-material/LastPage';
-import CrudButtons from '@/GlobalFunction/CrudButtons';
+import ConfirmDelDialog from '@/GlobalFunction/ConfirmDelDialog';
 
 const FORM_MODE = getFormMode();
 const PatternMst = () => {
@@ -61,8 +59,6 @@ const PatternMst = () => {
             Status: updatedStatus
         }))
     };
-    console.log("currentFGPTN_KEY", currentFGPTN_KEY)
-    console.log("FGPTN_KEY", FGPTN_KEY)
 
     // const fetchRetriveData = async (currentFGPTN_KEY, flag = "R", isManualSearch = false) => {
     //     try {
@@ -182,6 +178,7 @@ const PatternMst = () => {
         }
         setMode(FORM_MODE.read);
     }, [FGPTN_KEY, fetchRetriveData]);
+
     const handleSubmit = async () => {
         try {
             const UserName = userRole === 'user' ? username : PARTY_KEY;
@@ -240,6 +237,7 @@ const PatternMst = () => {
             console.error("Submit Error:", error);
         }
     };
+
     const handleCancel = async () => {
         if (mode === FORM_MODE.add) {
             await fetchRetriveData(1, "L");
@@ -252,6 +250,7 @@ const PatternMst = () => {
             SearchByCd: ''
         }));
     };
+
     const debouncedApiCall = debounce(async (newSeries) => {
         try {
             const response = await axiosInstance.post('GetSeriesSettings/GetSeriesLastNewKey', {
@@ -288,6 +287,7 @@ const PatternMst = () => {
             console.error("Error fetching series data:", error);
         }
     }, 300);
+
     const handleManualSeriesChange = (newSeries) => {
         setForm((prevForm) => ({
             ...prevForm,
@@ -302,7 +302,8 @@ const PatternMst = () => {
             return;
         };
         debouncedApiCall(newSeries);
-    }
+    };
+
     const handleAdd = async () => {
         setMode(FORM_MODE.add);
         setCurrentFGPTN_KEY(null);
@@ -367,7 +368,7 @@ const PatternMst = () => {
                 }));
             }
         } catch (error) {
-            console.error("Error fetching ID and LASTID:", error);
+            toast.error("Error fetching ID and LASTID:", error);
         }
     };
     const handleFirst = () => { }
@@ -396,10 +397,12 @@ const PatternMst = () => {
     };
     const handleDelete = () => {
         setOpenConfirmDialog(true);
-    }
+    };
+
     const handleCloseConfirmDialog = () => {
         setOpenConfirmDialog(false);
     };
+
     const handleConfirmDelete = async () => {
         setOpenConfirmDialog(false);
         try {
@@ -409,18 +412,20 @@ const PatternMst = () => {
             });
             const { data: { STATUS, MESSAGE } } = response;
             if (STATUS === 0) {
-                toast.success(MESSAGE, { autoClose: 500 });
+                toast.success(MESSAGE || 'Record Deleted.');
                 await fetchRetriveData(currentFGPTN_KEY, 'P');
             } else {
                 toast.error(MESSAGE);
             }
         } catch (error) {
-            console.error("Delete Error:", error);
+            toast.error("Delete Error:", error);
         }
     };
+
     const handleEdit = () => {
         setMode(FORM_MODE.edit);
     };
+
     const handlePrint = async () => {
         try {
             const response = await axiosInstance.post(`Fgptn/GetFgptnDashBoard?currentPage=1&limit=5000`, {
@@ -448,7 +453,7 @@ const PatternMst = () => {
                 }, 100);
             }
         } catch (error) {
-            console.error("Print Error:", error);
+            toast.error("Print Error:", error);
         }
     };
 
@@ -458,13 +463,6 @@ const PatternMst = () => {
 
     const handleExit = () => {
         router.push("/masterpage?activeTab=products");
-    };
-
-    const Buttonsx = {
-        backgroundColor: '#39ace2',
-        margin: { xs: '0 4px', sm: '0 6px' },
-        minWidth: { xs: 40, sm: 46, md: 60 },
-        height: { xs: 40, sm: 46, md: 27 },
     };
 
     const handleInputChange = (e) => {
@@ -477,7 +475,7 @@ const PatternMst = () => {
 
     const textInputSx = {
         '& .MuiInputBase-root': {
-            height: 36,
+            height: 40,
             fontSize: '14px',
         },
         '& .MuiInputLabel-root': {
@@ -485,11 +483,11 @@ const PatternMst = () => {
             top: '-8px',
         },
         '& .MuiFilledInput-root': {
-            backgroundColor: '#fafafa',
+            backgroundColor: '#fff',
             border: '1px solid #e0e0e0',
             borderRadius: '6px',
             overflow: 'hidden',
-            height: 36,
+            height: 40,
             fontSize: '14px',
         },
         '& .MuiFilledInput-root:before': {
@@ -502,45 +500,6 @@ const PatternMst = () => {
             padding: '10px 12px !important',
             fontSize: '14px !important',
             lineHeight: '1.4',
-        },
-        '& .MuiFilledInput-root.Mui-disabled': {
-            backgroundColor: '#fff'
-        }
-    };
-
-    const DropInputSx = {
-        '& .MuiInputBase-root': {
-            height: 36,
-            fontSize: '14px',
-        },
-        '& .MuiInputLabel-root': {
-            fontSize: '14px',
-            top: '-4px',
-        },
-        '& .MuiFilledInput-root': {
-            backgroundColor: '#fafafa',
-            border: '1px solid #e0e0e0',
-            borderRadius: '6px',
-            overflow: 'hidden',
-            height: 36,
-            fontSize: '14px',
-            paddingRight: '36px',
-        },
-        '& .MuiFilledInput-root:before': {
-            display: 'none',
-        },
-        '& .MuiFilledInput-root:after': {
-            display: 'none',
-        },
-        '& .MuiInputBase-input': {
-            padding: '10px 12px',
-            fontSize: '14px',
-            lineHeight: '1.4',
-        },
-        '& .MuiAutocomplete-endAdornment': {
-            top: '50%',
-            transform: 'translateY(-50%)',
-            right: '10px',
         },
         '& .MuiFilledInput-root.Mui-disabled': {
             backgroundColor: '#fff'
@@ -605,7 +564,7 @@ const PatternMst = () => {
                     <Grid sx={{ display: 'flex' }}>
                         <TextField
                             placeholder="Search By Code"
-                            variant="filled"
+                            variant="outlined"
                             sx={{
                                 backgroundColor: '#e0f7fa',
                                 '& .MuiInputBase-input': {
@@ -631,6 +590,7 @@ const PatternMst = () => {
                         <CrudButton
                             moduleName=""
                             mode={mode}
+                            onView={handlePrint}
                             onAdd={handleAdd}
                             onEdit={handleEdit}
                             onDelete={handleDelete}
@@ -642,8 +602,7 @@ const PatternMst = () => {
                     </Grid>
                 </Grid>
 
-                <Grid container spacing={0.5}>
-
+                <Grid container spacing={1}>
                     <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                         <TextField
                             label="Series"
@@ -657,7 +616,8 @@ const PatternMst = () => {
                             sx={textInputSx}
                             inputProps={{
                                 style: {
-                                    padding: '6px 8px',
+                                    padding: '6px 0px',
+                                    marginTop: '10px',
                                     fontSize: '12px',
                                 },
                             }}
@@ -676,7 +636,8 @@ const PatternMst = () => {
                             sx={textInputSx}
                             inputProps={{
                                 style: {
-                                    padding: '6px 8px',
+                                    padding: '6px 0px',
+                                    marginTop: '10px',
                                     fontSize: '12px',
                                 },
                             }}
@@ -696,7 +657,8 @@ const PatternMst = () => {
                             sx={textInputSx}
                             inputProps={{
                                 style: {
-                                    padding: '6px 8px',
+                                    padding: '6px 0px',
+                                    marginTop: '10px',
                                     fontSize: '12px',
                                 },
                             }}
@@ -716,7 +678,8 @@ const PatternMst = () => {
                             sx={textInputSx}
                             inputProps={{
                                 style: {
-                                    padding: '6px 8px',
+                                    padding: '6px 0px',
+                                    marginTop: '10px',
                                     fontSize: '12px',
                                 },
                             }}
@@ -736,7 +699,8 @@ const PatternMst = () => {
                             sx={textInputSx}
                             inputProps={{
                                 style: {
-                                    padding: '6px 8px',
+                                    padding: '6px 0px',
+                                    marginTop: '10px',
                                     fontSize: '12px',
                                 },
                             }}
@@ -756,7 +720,8 @@ const PatternMst = () => {
                             sx={textInputSx}
                             inputProps={{
                                 style: {
-                                    padding: '6px 8px',
+                                    padding: '6px 0px',
+                                    marginTop: '10px',
                                     fontSize: '12px',
                                 },
                             }}
@@ -780,7 +745,6 @@ const PatternMst = () => {
                             label="Active"
                         />
                     </Grid>
-
                 </Grid>
 
                 <Grid sx={{
@@ -845,8 +809,15 @@ const PatternMst = () => {
                         </>
                     )}
                 </Grid>
-
             </Grid >
+
+            <ConfirmDelDialog
+                open={openConfirmDialog}
+                title='Confirm Deletion'
+                description="Are you sure you want to delete this item?"
+                onConfirm={handleConfirmDelete}
+                onCancel={() => setOpenConfirmDialog(false)}
+            />
 
         </Grid >
     );
