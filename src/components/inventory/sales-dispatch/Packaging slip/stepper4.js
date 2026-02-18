@@ -27,7 +27,7 @@ function TabPanel({ children, value, index, ...other }) {
   );
 }
 
-const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onPrev, onCancel, showSnackbar }) => {
+const Stepper4 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onPrev, onCancel, showSnackbar }) => {
   const [tabIndex, setTabIndex] = useState(0);
   const [selectedRow, setSelectedRow] = useState(null);
   const [isAddingNew, setIsAddingNew] = useState(false);
@@ -2207,4 +2207,4 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, onPre
   );
 };
 
-export default Stepper3;
+export default Stepper4;

@@ -893,6 +893,34 @@ const fetchSizeDetailsForStyle = async (styleData) => {
     }
   };
 
+  const consolidateItemsByStyle = (items) => {
+  const styleMap = new Map();
+  
+  items.forEach(item => {
+    const key = `${item.product}-${item.style}-${item.type || ''}-${item.lotNo || ''}`;
+    
+    if (styleMap.has(key)) {
+      // Consolidate quantities and amounts
+      const existing = styleMap.get(key);
+      existing.qty = (parseFloat(existing.qty) || 0) + (parseFloat(item.qty) || 0);
+      existing.amount = (parseFloat(existing.amount) || 0) + (parseFloat(item.amount) || 0);
+      existing.netAmt = (parseFloat(existing.netAmt) || 0) + (parseFloat(item.netAmt) || 0);
+      
+      // Merge size details
+      if (item.originalData?.ORDBKSTYSZLIST) {
+        existing.originalData.ORDBKSTYSZLIST = [
+          ...(existing.originalData.ORDBKSTYSZLIST || []),
+          ...item.originalData.ORDBKSTYSZLIST
+        ];
+      }
+    } else {
+      styleMap.set(key, { ...item });
+    }
+  });
+  
+  return Array.from(styleMap.values());
+};
+
   const fetchSizeDetails = async () => {
   if (!newItemData.product || !newItemData.style) {
     showSnackbar("Please select Product and Style first", 'error');

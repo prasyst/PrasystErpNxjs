@@ -1,4 +1,3 @@
-
 'use client';
 import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import {
@@ -32,8 +31,14 @@ const StockLookupoffline = () => {
     PARTY_NAME: ""
   });
   const [rows, setRows] = useState([]);
+  const [pagination, setPagination] = useState({
+    currentPage: 1,
+    pageSize: 25,
+    totalRecords: 0,
+    totalPages: 1
+  });
 
-  // Column definitions with localization
+  // Column definitions with localization for Pack Dashboard
   const columnDefs = useMemo(() => [
     {
       headerName: t('select'),
@@ -49,10 +54,9 @@ const StockLookupoffline = () => {
       headerClass: 'checkbox-header'
     },
     {
-      field: "ORDBK_NO",
-      headerName: t('orderNo'),
-      width: 100,
-      maxWidth: 100,
+      field: "PACK_NO",
+      headerName: t('packNo') || "Pack No",
+      width: 120,
       filter: 'agSetColumnFilter',
       filterParams: {
         defaultToNothingSelected: true,
@@ -60,8 +64,18 @@ const StockLookupoffline = () => {
       sortable: true
     },
     {
-      field: "ORDER_Date",
-      headerName: t('orderDate'),
+      field: "PACK_KEY",
+      headerName: t('packKey') || "Pack Key",
+      width: 150,
+      filter: 'agSetColumnFilter',
+      filterParams: {
+        defaultToNothingSelected: true,
+      },
+      sortable: true
+    },
+    {
+      field: "PACK_DT",
+      headerName: t('packDate') || "Pack Date",
       width: 130,
       filter: 'agDateColumnFilter',
       filterParams: {
@@ -78,12 +92,18 @@ const StockLookupoffline = () => {
         customOptionLabel: 'Custom Dates',
         customFilter: getCustomDateFilter()
       },
-      sortable: true
+      sortable: true,
+      valueFormatter: (params) => {
+        if (params.value) {
+          return new Date(params.value).toLocaleDateString('en-IN');
+        }
+        return '';
+      }
     },
     {
-      field: "PORD_REF",
-      headerName: t('pOrderRef'),
-      width: 160,
+      field: "BILL_NO",
+      headerName: t('billNo') || "Bill No",
+      width: 120,
       filter: 'agSetColumnFilter',
       filterParams: {
         defaultToNothingSelected: true,
@@ -91,23 +111,12 @@ const StockLookupoffline = () => {
       sortable: true
     },
     {
-      field: "DLV_DT",
-      headerName: t('deliveryDate'),
-      width: 130,
-      filter: 'agDateColumnFilter',
+      field: "LR_NO",
+      headerName: t('lrNo') || "LR No",
+      width: 150,
+      filter: 'agSetColumnFilter',
       filterParams: {
-        browserDatePicker: true,
-        filterOptions: [
-          'equals',
-          'notEqual',
-          'lessThan',
-          'greaterThan',
-          'inRange',
-          'empty',
-          'notEmpty'
-        ],
-        customOptionLabel: 'Custom Dates',
-        customFilter: getCustomDateFilter()
+        defaultToNothingSelected: true,
       },
       sortable: true
     },
@@ -115,6 +124,16 @@ const StockLookupoffline = () => {
       field: "PARTY_NAME",
       headerName: t('partyName'),
       width: 230,
+      filter: 'agSetColumnFilter',
+      filterParams: {
+        defaultToNothingSelected: true,
+      },
+      sortable: true
+    },
+    {
+      field: "PLACE",
+      headerName: t('place') || "Place",
+      width: 140,
       filter: 'agSetColumnFilter',
       filterParams: {
         defaultToNothingSelected: true,
@@ -132,23 +151,31 @@ const StockLookupoffline = () => {
       sortable: true
     },
     {
+      field: "DISTBTR_NAME",
+      headerName: t('distributor') || "Distributor",
+      width: 140,
+      filter: 'agSetColumnFilter',
+      filterParams: {
+        defaultToNothingSelected: true,
+      },
+      sortable: true
+    },
+    {
       field: "QTY",
       headerName: t('quantity'),
       width: 120,
-      maxWidth: 130,
       filter: 'agNumberColumnFilter',
+      valueFormatter: (params) => {
+        if (params.value != null) {
+          return params.value.toFixed(4);
+        }
+        return '';
+      }
     },
     {
-      field: "BAL_QTY",
-      headerName: t('balanceQty'),
+      field: "PACK_NET_AMT",
+      headerName: t('netAmount') || "Net Amount",
       width: 130,
-      filter: 'agNumberColumnFilter',
-    },
-    {
-      field: "AMT",
-      headerName: t('amount'),
-      width: 120,
-      maxWidth: 130,
       filter: 'agNumberColumnFilter',
       valueFormatter: (params) => {
         if (params.value != null) {
@@ -161,6 +188,28 @@ const StockLookupoffline = () => {
         return '';
       }
     },
+    {
+      field: "EX_RATE",
+      headerName: t('exchangeRate') || "Ex. Rate",
+      width: 100,
+      filter: 'agNumberColumnFilter',
+      valueFormatter: (params) => {
+        if (params.value != null) {
+          return params.value.toFixed(2);
+        }
+        return '';
+      }
+    },
+    {
+      field: "CURRN_NAME",
+      headerName: t('currency') || "Currency",
+      width: 120,
+      filter: 'agSetColumnFilter',
+      filterParams: {
+        defaultToNothingSelected: true,
+      },
+      sortable: true
+    }
   ], [t]);
 
   useEffect(() => {
@@ -228,33 +277,50 @@ const StockLookupoffline = () => {
     router.push("/dashboard/stock_enqury");
   };
 
-  const fetchTableData = useCallback(async () => {
+  const fetchTableData = useCallback(async (page = pagination.currentPage, pageSize = pagination.pageSize) => {
     setIsLoading(true);
     try {
-      const response = await axiosInstance.post(`StockEnqiry/GetOrderDashBoard`, {
-        pageNumber: "1",
-        PageSize: "1000",
-        SearchText: form.PARTY_KEY,
-        Flag: "",
-        PARTY_KEY: ""
-      });
+      const payload = {
+        PACK_KEY: "",
+        FLAG: "",
+        FCYR_KEY: "25",
+        COBR_ID: "02",
+        PageNumber: page,
+        PageSize: pageSize,
+        SearchText: form.PARTY_KEY || searchTerm || ""
+      };
 
-      const { data: { STATUS, DATA } } = response;
+      const response = await axiosInstance.post("PACK/GetPACKDashBoard?currentPage=" + page + "&limit=" + pageSize, payload);
+
+      const { data: { STATUS, DATA, totalRecords, totalPages } } = response;
+      
       if (STATUS === 0 && Array.isArray(DATA)) {
         const formattedData = DATA.map((row, index) => ({
           id: index,
           ...row,
-          ORDER_Date: row.ORDBK_DT ? new Date(row.ORDBK_DT) : null,
-          DLV_DT: row.DLV_DT ? new Date(row.DLV_DT) : null
+          PACK_DT: row.PACK_DT ? new Date(row.PACK_DT) : null
         }));
         setRows(formattedData);
+        
+        // Update pagination info from response if available
+        if (totalRecords) {
+          setPagination(prev => ({
+            ...prev,
+            totalRecords: totalRecords,
+            totalPages: totalPages || Math.ceil(totalRecords / pageSize),
+            currentPage: page
+          }));
+        }
+      } else {
+        setRows([]);
       }
     } catch (error) {
-      console.error("Error fetching order data:", error);
+      console.error("Error fetching pack data:", error);
+      setRows([]);
     } finally {
       setIsLoading(false);
     }
-  }, [form.PARTY_KEY]);
+  }, [form.PARTY_KEY, searchTerm, pagination.currentPage, pagination.pageSize]);
 
   useEffect(() => {
     fetchTableData();
@@ -264,16 +330,28 @@ const StockLookupoffline = () => {
     console.log('Row clicked:', event.data);
   }, []);
 
-  const handleRowDoubleClick = useCallback((rows) => {
-    const queryString = `?ordbkKey=${encodeURIComponent(rows.ORDBK_KEY)}`;
-    router.push(`/inverntory/saleorder-livestock/${queryString}`);
-  }, [router]);
+ // In your table component (where the row double-click is handled)
+const handleRowDoubleClick = useCallback((rows) => {
+  // Pass PACK_KEY instead of ORDBK_KEY
+  const queryString = `?packKey=${encodeURIComponent(rows.PACK_KEY)}&packNo=${encodeURIComponent(rows.PACK_NO)}`;
+  router.push(`/inverntory/packingslip/${queryString}`);
+}, [router]);
 
   const handleSelectionChanged = useCallback((event) => {
     const selectedNodes = event.api.getSelectedNodes();
     const selectedData = selectedNodes.map(node => node.data);
     setSelectedRows(selectedData);
   }, []);
+
+  const handlePageChange = useCallback((newPage) => {
+    setPagination(prev => ({ ...prev, currentPage: newPage }));
+    fetchTableData(newPage, pagination.pageSize);
+  }, [fetchTableData, pagination.pageSize]);
+
+  const handlePageSizeChange = useCallback((newPageSize) => {
+    setPagination(prev => ({ ...prev, pageSize: newPageSize, currentPage: 1 }));
+    fetchTableData(1, newPageSize);
+  }, [fetchTableData]);
 
   const addButtonStyles = {
     background: "#39ace2",
@@ -291,7 +369,14 @@ const StockLookupoffline = () => {
   };
 
   const handleReset = async () => {
-    await fetchTableData();
+    setSearchTerm("");
+    setForm({
+      PARTY_KEY: "",
+      PARTYDTL_ID: "",
+      PARTY_NAME: ""
+    });
+    setPagination(prev => ({ ...prev, currentPage: 1 }));
+    await fetchTableData(1, pagination.pageSize);
   };
 
   return (
@@ -325,7 +410,7 @@ const StockLookupoffline = () => {
               />
             ) : (
               <>
-                {/* <Box sx={{ width: "100%", maxWidth: 220 }}>
+                <Box sx={{ width: "100%", maxWidth: 220 }}>
                   <Autocomplete
                     id="party-autocomplete"
                     options={partySearchResults}
@@ -338,6 +423,7 @@ const StockLookupoffline = () => {
                         PARTY_NAME: newValue?.PARTY_NAME || '',
                         PARTYDTL_ID: '' 
                       }));
+                      setSearchTerm(newValue?.PARTY_NAME || '');
                     
                       if (newValue?.PARTY_KEY) {
                         fetchPartyDetails(newValue.PARTY_KEY);
@@ -352,7 +438,7 @@ const StockLookupoffline = () => {
                     renderInput={(params) => (
                       <TextField
                         {...params}
-                        label="Search Party by Name"
+                        label={t('searchPartyByName') || "Search Party by Name"}
                         variant="outlined"
                         sx={{
                           '& .MuiOutlinedInput-root': {
@@ -369,9 +455,9 @@ const StockLookupoffline = () => {
                     )}
                     sx={{ width: '100%', maxWidth: 220 }}
                   />
-                </Box> */}
+                </Box>
 
-                {/* <Box sx={{ flex: 1, minWidth: '150px', maxWidth: '150px' }}>
+                <Box sx={{ flex: 1, minWidth: '150px', maxWidth: '150px' }}>
                   <Autocomplete
                     id="branch-autocomplete"
                     options={partyDtls}
@@ -387,7 +473,7 @@ const StockLookupoffline = () => {
                     renderInput={(params) => (
                       <TextField
                         {...params}
-                        label="Branch"
+                        label={t('branch') || "Branch"}
                         variant="outlined"
                         sx={{
                           '& .MuiOutlinedInput-root': {
@@ -404,19 +490,23 @@ const StockLookupoffline = () => {
                     )}
                     sx={{ width: '100%', minWidth: '150px', maxWidth: '150px' }}
                   />
-                </Box> */}
+                </Box>
               </>
             )}
 
-            {/* <Button
+            <Button
               variant="contained"
               size="small"
-              onClick={handleClick}
-              sx={addButtonStyles}
-              startIcon={<AddIcon />}
+              onClick={handleReset}
+              sx={{
+                ...addButtonStyles,
+                background: "#6c757d",
+                "&:hover": { background: "#5a6268" }
+              }}
+              startIcon={<RestoreIcon />}
             >
-              {t('new')}
-            </Button> */}
+              {t('reset') || "Reset"}
+            </Button>
 
           </Box>
         </Box>
@@ -432,7 +522,7 @@ const StockLookupoffline = () => {
               height: '100%',
             }}>
               <CircularProgress size="3rem" />
-              <Typography sx={{ marginTop: '10px' }}>Loading data...</Typography>
+              <Typography sx={{ marginTop: '10px' }}>{t('loading') || "Loading data..."}</Typography>
             </Box>
           ) : (
             <ReusableTable
@@ -442,7 +532,7 @@ const StockLookupoffline = () => {
               theme="ag-theme-quartz"
               isDarkMode={false}
               pagination={true}
-              paginationPageSize={25}
+              paginationPageSize={pagination.pageSize}
               paginationPageSizeSelector={[25, 50, 100, 250, 500, 1000]}
               quickFilter={true}
               onRowClick={handleRowClick}
@@ -471,10 +561,18 @@ const StockLookupoffline = () => {
               }}
               exportParams={{
                 suppressTextAsCDATA: true,
-                fileName: 'Order_Details',
-                sheetName: 'Order Details'
+                fileName: 'Pack_Details',
+                sheetName: 'Pack Details'
               }}
               enableLanguageSwitch={true}
+              onPaginationChanged={(params) => {
+                if (params.api) {
+                  const currentPage = params.api.paginationGetCurrentPage() + 1;
+                  if (currentPage !== pagination.currentPage) {
+                    handlePageChange(currentPage);
+                  }
+                }
+              }}
             />
           )}
         </Box>

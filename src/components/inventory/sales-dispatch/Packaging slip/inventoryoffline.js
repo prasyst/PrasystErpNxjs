@@ -105,6 +105,7 @@ const [detailMode, setDetailMode] = useState('style');
     SERIES: "",
     // Additional fields for API
     ORDBK_KEY: "",
+    PACK_KEY: "",
     ORD_EVENT_KEY: "",
     ORG_DLV_DT: "",
     PLANNING: "0",
@@ -193,6 +194,21 @@ const [detailMode, setDetailMode] = useState('style');
   const searchParams = useSearchParams();
   const ordbkKey = searchParams.get("ordbkKey");
 
+  // In SalesOrderOffline.js - Add this to handle URL parameters
+useEffect(() => {
+  const searchParams = new URLSearchParams(window.location.search);
+  const packKey = searchParams.get('packKey');
+  const packNo = searchParams.get('packNo');
+  
+  if (packKey) {
+    console.log("Got PACK_KEY from URL:", packKey);
+    fetchOrderDetails(packKey);
+  } else if (ordbkKey) {
+    console.log("Got ORDBK_KEY from URL:", ordbkKey);
+    fetchOrderDetails(ordbkKey);
+  }
+}, [ordbkKey]);
+
   const showSnackbar = (message, severity = 'success') => {
     setSnackbar({ open: true, message, severity });
   };
@@ -213,637 +229,557 @@ const [detailMode, setDetailMode] = useState('style');
     }
   }, [ordbkKey]);
 
-  // Function to fetch order details from API
-  const fetchOrderDetails = async (ordbkKey) => {
-    try {
-      setLoading(true);
-      setIsDataLoading(true);
 
-      const payload = {
-        ORDBK_KEY: ordbkKey,
-        FLAG: "R"
-      };
+// Update the fetchOrderDetails function
+const fetchOrderDetails = async (packKey) => {
+  try {
+    setLoading(true);
+    setIsDataLoading(true);
 
-      const response = await axiosInstance.post('/ORDBK/RetriveOrder', payload);
+    const payload = {
+      PACK_KEY: packKey,
+      FLAG: "R"
+    };
 
-      if (response.data.RESPONSESTATUSCODE === 1 && response.data.DATA.ORDBKList.length > 0) {
-        const orderData = response.data.DATA.ORDBKList[0];
-        await populateFormData(orderData);
-        setCurrentPARTY_KEY(orderData.PARTY_KEY);
+    const response = await axiosInstance.post('/PACK/RetrivePACK', payload);
+
+    if (response.data.RESPONSESTATUSCODE === 1 && response.data.DATA.PACKList.length > 0) {
+      const orderData = response.data.DATA.PACKList[0];
+      
+      // Set detailMode based on BARCD_FLG
+      if (orderData.BARCD_FLG === "1") {
+        setDetailMode('barcode');
+      } else {
+        setDetailMode('style');
       }
-    } catch (error) {
-      showSnackbar('Error fetching order details', 'error');
-    } finally {
-      setLoading(false);
-      setIsDataLoading(false);
-    }
-  };
-
-  // Function to populate form data from API response - UPDATED for shade keys
-  const populateFormData = async (orderData) => {
-    try {
-
-      // FIRST: Wait for all dropdown data to be fetched
-      await fetchAllDropdownData();
-      const mapCodesToKeys = (item) => {
-        const mappedItem = { ...item };
-
-        // Map PROD_CODE to FGPRD_KEY
-        if (item.PROD_CODE && !item.FGPRD_KEY) {
-          mappedItem.FGPRD_KEY = item.PROD_CODE;
-        }
-
-        // Map SHADE_CODE to FGSHADE_KEY
-        if (item.SHADE_CODE && !item.FGSHADE_KEY) {
-          mappedItem.FGSHADE_KEY = item.SHADE_CODE;
-        }
-
-        // Map PTN_CODE to FGPTN_KEY
-        if (item.PTN_CODE && !item.FGPTN_KEY) {
-          mappedItem.FGPTN_KEY = item.PTN_CODE;
-        }
-
-        // Map TYPE_CODE to FGTYPE_KEY
-        if (item.TYPE_CODE && !item.FGTYPE_KEY) {
-          mappedItem.FGTYPE_KEY = item.TYPE_CODE;
-        }
-
-        // Map STYLE_CODE to FGSTYLE_CODE if needed
-        if (item.STYLE_CODE && !item.FGSTYLE_CODE) {
-          mappedItem.FGSTYLE_CODE = item.STYLE_CODE;
-        }
-
-        return mappedItem;
-      };
-
-      // Helper function to safely get display name with retry
-      const getDisplayNameWithRetry = async (getterFunction, key, maxRetries = 3) => {
-        for (let i = 0; i < maxRetries; i++) {
-          try {
-            const result = await getterFunction(key);
-            if (result) return result;
-
-            // If no result, wait a bit and try again
-            await new Promise(resolve => setTimeout(resolve, 100));
-          } catch (error) {
-            console.error(`Error in getDisplayNameWithRetry attempt ${i + 1}:`, error);
-          }
-        }
-        return "";
-      };
-
-      const getDisplayStatus = (apiStatus) => {
-        const statusMapping = {
-          '1': 'O',  // 1 -> Open
-          '0': 'C',  // 0 -> Cancel  
-          '5': 'S'   // 5 -> Short
-        };
-        return statusMapping[apiStatus] || 'O';
-      };
-
-      // Get display names from mappings using the actual API response keys
-      const partyName = partyMapping[orderData.PARTY_KEY] || await getDisplayNameWithRetry(getPartyNameByKey, orderData.PARTY_KEY);
-
-      // Get branch name by actual ID from API response
-      const branchName = orderData.PLACE || await getDisplayNameWithRetry(getBranchNameById, orderData.PARTYDTL_ID);
-
-      const brokerName = brokerMapping[orderData.BROKER_KEY] || await getDisplayNameWithRetry(getBrokerNameByKey, orderData.BROKER_KEY);
-      const broker1Name = broker1Mapping[orderData.BROKER1_KEY] || await getDisplayNameWithRetry(getBrokerNameByKey, orderData.BROKER1_KEY);
-      const salesperson1Name = salesperson1Mapping[orderData.SALEPERSON1_KEY] || await getDisplayNameWithRetry(getSalespersonNameByKey, orderData.SALEPERSON1_KEY);
-      const salesperson2Name = salesperson2Mapping[orderData.SALEPERSON2_KEY] || await getDisplayNameWithRetry(getSalespersonNameByKey, orderData.SALEPERSON2_KEY);
-      const consigneeName = consigneeMapping[orderData.DISTBTR_KEY] || await getDisplayNameWithRetry(getConsigneeNameByKey, orderData.DISTBTR_KEY);
-      const seasonName = seasonMapping[orderData.CURR_SEASON_KEY] || await getDisplayNameWithRetry(getSeasonNameByKey, orderData.CURR_SEASON_KEY);
-      const transporterName = transporterMapping[orderData.TRSP_KEY] || await getDisplayNameWithRetry(getTransporterNameByKey, orderData.TRSP_KEY);
-
-      // Use SHIPPARTY and SHIPPLACE from API response directly
-      const shippingPartyName = orderData.SHIPPARTY || partyMapping[orderData.SHP_PARTY_KEY] || await getDisplayNameWithRetry(getPartyNameByKey, orderData.SHP_PARTY_KEY) || partyName;
-      const shippingPlaceName = orderData.SHIPPLACE || orderData.DLV_PLACE || branchName;
-
-      const orderTypeName = await getDisplayNameWithRetry(getOrderTypeNameByKey, orderData.ORDBK_TYPE);
-      const merchandiserName = merchandiserMapping[orderData.MERCHANDISER_ID] || await getDisplayNameWithRetry(getMerchandiserNameById, orderData.MERCHANDISER_ID);
-
-      const processedOrdbkStyleList = orderData.ORDBKSTYLIST ? orderData.ORDBKSTYLIST.map(item => {
-        // First map codes to keys
-        const mappedItem = mapCodesToKeys(item);
-
-        return {
-          ...mappedItem,
-          // Ensure all required fields exist
-          FGTYPE_KEY: mappedItem.FGTYPE_KEY || "",
-          FGSHADE_KEY: mappedItem.FGSHADE_KEY || "",
-          FGPTN_KEY: mappedItem.FGPTN_KEY || "",
-          FGPRD_KEY: mappedItem.FGPRD_KEY || "",
-          FGSTYLE_ID: mappedItem.FGSTYLE_ID || 0,
-          FGSTYLE_CODE: mappedItem.FGSTYLE_CODE || "",
-          // IMPORTANT: Preserve DBFLAG from API response
-          DBFLAG: mappedItem.DBFLAG || "R" // Default to "R" for retrieved
-        };
-      }) : [];
-
-      const formattedData = {
-        apiResponseData: {
-          ...orderData,
-          ORDBKSTYLIST: processedOrdbkStyleList // Contains FGSHADE_KEY
-        },
-        ORDER_NO: orderData.ORDBK_NO || "",
-        ORDER_DATE: orderData.ORDBK_DT ? formatDateForDisplay(orderData.ORDBK_DT) : "",
-        PARTY_ORD_NO: orderData.PORD_REF || "",
-        SEASON: seasonName || "",
-        ORD_REF_DT: orderData.PORD_DT ? formatDateForDisplay(orderData.PORD_DT) : "",
-        ENQ_NO: orderData.Enq_Key || "",
-        PARTY_BRANCH: orderData.OrdBk_CoBr_Id || "",
-        QUOTE_NO: orderData.QUOTE_NO || "",
-        SHIPPING_PARTY: shippingPartyName,
-        DIV_PLACE: orderData.DESP_PORT || "",
-        AR_SALES: orderData.SALEPERSON1_KEY || "",
-        SHIPPING_PLACE: shippingPlaceName,
-        PRICE_LIST: orderData.PRICELIST_KEY || "",
-        BROKER_TRANSPORTER: brokerName || "",
-        B_EAST_II: "",
-        NEW_ADDR: "",
-        CONSIGNEE: consigneeName || "",
-        E_ASM1: "",
-        BROKER1: broker1Name || "",
-        SALESPERSON_2: salesperson2Name || "",
-        SALESPERSON_1: salesperson1Name || "",
-        Transporter: transporterName || "",
-        NEW: "",
-        EMAIL: "",
-        REMARK_STATUS: orderData.REMK || "",
-        MAIN_DETAILS: orderData.LotWise === "Y" ? "L" : "G",
-        GST_APPL: orderData.GST_APP || "N",
-        GST_TYPE: orderData.GST_TYPE === "S" ? "STATE" : "IGST",
-        RACK_MIN: orderData.STK_FLG || "0",
-        REGISTERED_DEALER: "0",
-        SHORT_CLOSE: "0",
-        READY_SI: orderData.READY_SI || "0",
-        LAST_ORD_NO: orderData.LAST_ORD_NO || "",
-        SERIES: orderData.SERIES || "",
-        ORD_EVENT_KEY: orderData.ORD_EVENT_KEY || "",
-        ORG_DLV_DT: orderData.ORG_DLV_DT ? formatDateForDisplay(orderData.ORG_DLV_DT) : "",
-        PLANNING: orderData.PLANNING || "0",
-        ORDBK_KEY: orderData.ORDBK_KEY || "",
-        PARTY_KEY: orderData.PARTY_KEY || "",
-        ORDBK_AMT: orderData.ORDBK_AMT || "",
-        ORDBK_ITM_AMT: orderData.ORDBK_ITM_AMT || "",
-        ORDBK_GST_AMT: orderData.ORDBK_GST_AMT || "",
-        ORDBK_DISC_AMT: orderData.ORDBK_DISC_AMT || "",
-        CURRN_KEY: orderData.CURRN_KEY || "",
-        EX_RATE: orderData.EX_RATE || "",
-        DLV_DT: orderData.DLV_DT ? formatDateForDisplay(orderData.DLV_DT) : "",
-        Party: partyName || "",
-        Branch: branchName || "",
-        Broker: brokerName || "",
-        CURR_SEASON_KEY: orderData.CURR_SEASON_KEY || "",
-        PRICELIST_KEY: orderData.PRICELIST_KEY || "",
-        BROKER1_KEY: orderData.BROKER1_KEY || "",
-        SHP_PARTY_KEY: orderData.SHP_PARTY_KEY || orderData.PARTY_KEY,
-        DESP_PORT: orderData.DESP_PORT || "",
-        SALEPERSON1_KEY: orderData.SALEPERSON1_KEY || "",
-        SALEPERSON2_KEY: orderData.SALEPERSON2_KEY || "",
-        DISTBTR_KEY: orderData.DISTBTR_KEY || "",
-        TRSP_KEY: orderData.TRSP_KEY || "",
-        PARTYDTL_ID: orderData.PARTYDTL_ID || 0,
-        SHP_PARTYDTL_ID: orderData.SHP_PARTYDTL_ID || orderData.PARTYDTL_ID || 0,
-        Order_Type: orderTypeName || "",
-        MERCHANDISER_ID: orderData.MERCHANDISER_ID || "",
-        MERCHANDISER_NAME: merchandiserName || "",
-        Delivery_Shedule: "comman",
-        Order_TNA: "ItemWise",
-        Status: getDisplayStatus(orderData.STATUS),
-        ORDBK_TYPE: orderData.ORDBK_TYPE || "0",
-        TOTAL_QTY: calculateTotalQty(orderData.ORDBKSTYLIST),
-        TOTAL_AMOUNT: orderData.ORDBK_AMT || 0,
-        NET_AMOUNT: (orderData.ORDBK_AMT || 0) - (orderData.ORDBK_DISC_AMT || 0),
-        DISCOUNT: orderData.ORDBK_DISC_AMT || 0
-      };
-
-      // Set form data
-      setFormData(formattedData);
-
-      // Fetch branches with the correct branch ID from API response
-      if (orderData.PARTY_KEY && orderData.PARTYDTL_ID) {
-        await fetchPartyDetails(orderData.PARTY_KEY, orderData.PARTYDTL_ID);
-      }
-
-      // Set current party key for navigation
+      
+      await populateFormData(orderData);
       setCurrentPARTY_KEY(orderData.PARTY_KEY);
-
-      // Force update dropdown options in Stepper1
-      setTimeout(() => {
-        setFormData(prev => ({ ...prev, forceUpdate: Date.now() }));
-      }, 100);
-
-    } catch (error) {
-      console.error('Error populating form data:', error);
     }
-  };
+  } catch (error) {
+    console.error('Error fetching PACK details:', error);
+    showSnackbar('Error fetching order details', 'error');
+  } finally {
+    setLoading(false);
+    setIsDataLoading(false);
+  }
+};
 
-  // Function to prepare payload for submission - FIXED for empty keys issue
-  const prepareSubmitPayload = () => {
-    const currentDate = new Date().toISOString().replace('T', ' ').split('.')[0];
+// Update populateFormData to handle BARCD_FLG and item consolidation
+const populateFormData = async (packData) => {
+  try {
+    // FIRST: Wait for all dropdown data to be fetched
+    await fetchAllDropdownData();
 
-    const userId = localStorage.getItem('USER_ID') || '1';
-    const userName = localStorage.getItem('USER_NAME') || 'Admin';
-
-    const getStatusValue = (status) => {
-      const statusMapping = {
-        'O': '1',
-        'C': '0',
-        'S': '5'
-      };
-      return statusMapping[status] || "1";
-    };
-
-    const correctOrdbkKey = formData.ORDBK_KEY || `25${companyConfig.COBR_ID}${formData.ORDER_NO}`;
-    const partyKey = formData.PARTY_KEY;
-    const branchId = formData.PARTYDTL_ID || 0;
-    const brokerKey = formData.BROKER_KEY || "";
-    const broker1Key = formData.BROKER1_KEY || "";
-    const salesperson1Key = formData.SALEPERSON1_KEY || "";
-    const salesperson2Key = formData.SALEPERSON2_KEY || "";
-    const consigneeKey = formData.DISTBTR_KEY || "";
-    const seasonKey = formData.CURR_SEASON_KEY || "";
-    const transporterKey = formData.TRSP_KEY || "";
-    const shippingPartyKey = formData.SHP_PARTY_KEY || formData.PARTY_KEY;
-    const shippingPartyDtlId = formData.SHP_PARTYDTL_ID || formData.PARTYDTL_ID || 1;
-    const merchandiserId = formData.MERCHANDISER_ID || 1;
-
-    // Get ORDBKSTYLIST from formData
-    const ordbkStyleList = formData.apiResponseData?.ORDBKSTYLIST || [];
-
-    // Function to generate FGITM_KEY dynamically
-    const generateFgItemKey = (item) => {
-      const fgprdKey = item.FGPRD_KEY || "";
-      const fgstyleId = item.FGSTYLE_ID || "";
-      const fgtypeKey = item.FGTYPE_KEY || "";
-      const fgshadeKey = item.FGSHADE_KEY || "";
-      const fgptnKey = item.FGPTN_KEY || "";
-
-      // Clean keys
-      const cleanFgprdKey = fgprdKey.trim();
-      const cleanFgstyleId = fgstyleId.toString().trim();
-      const cleanFgtypeKey = fgtypeKey.trim();
-      const cleanFgshadeKey = fgshadeKey.trim();
-      const cleanFgptnKey = fgptnKey.trim();
-
-      // Build FGITM_KEY based on available components
-      let fgItemKey = cleanFgprdKey;
-
-      if (cleanFgstyleId) {
-        fgItemKey += cleanFgstyleId;
-      }
-
-      if (cleanFgtypeKey) {
-        fgItemKey += cleanFgtypeKey;
-      }
-
-      if (cleanFgshadeKey) {
-        fgItemKey += cleanFgshadeKey;
-      }
-
-      if (cleanFgptnKey) {
-        fgItemKey += cleanFgptnKey;
-      }
-
-      console.log('Generated FGITM_KEY:', fgItemKey, 'from:', {
-        FGPRD_KEY: cleanFgprdKey,
-        FGSTYLE_ID: cleanFgstyleId,
-        FGTYPE_KEY: cleanFgtypeKey,
-        FGSHADE_KEY: cleanFgshadeKey,
-        FGPTN_KEY: cleanFgptnKey
-      });
-
-      return fgItemKey || "";
-    };
-
-    // IMPORTANT: Map API response codes to keys
-    const mapApiCodesToKeys = (item) => {
-
-      // Initialize with existing keys
+    const mapCodesToKeys = (item) => {
       const mappedItem = { ...item };
-
-      // Map PROD_CODE to FGPRD_KEY if not already present
-      if (!mappedItem.FGPRD_KEY && item.PROD_CODE) {
+      
+      // Map PROD_CODE to FGPRD_KEY
+      if (item.PROD_CODE && !item.FGPRD_KEY) {
         mappedItem.FGPRD_KEY = item.PROD_CODE;
       }
-
-      // Map SHADE_CODE to FGSHADE_KEY if not already present
-      if (!mappedItem.FGSHADE_KEY && item.SHADE_CODE) {
+      
+      // Map SHADE_CODE to FGSHADE_KEY
+      if (item.SHADE_CODE && !item.FGSHADE_KEY) {
         mappedItem.FGSHADE_KEY = item.SHADE_CODE;
       }
-
-      // Map PTN_CODE to FGPTN_KEY if not already present
-      if (!mappedItem.FGPTN_KEY && item.PTN_CODE) {
+      
+      // Map PTN_CODE to FGPTN_KEY
+      if (item.PTN_CODE && !item.FGPTN_KEY) {
         mappedItem.FGPTN_KEY = item.PTN_CODE;
       }
-
-      // Map TYPE_CODE to FGTYPE_KEY if not already present
-      if (!mappedItem.FGTYPE_KEY && item.TYPE_CODE) {
+      
+      // Map TYPE_CODE to FGTYPE_KEY
+      if (item.TYPE_CODE && !item.FGTYPE_KEY) {
         mappedItem.FGTYPE_KEY = item.TYPE_CODE;
       }
-
+      
       return mappedItem;
     };
 
-    // Transform ORDBKSTYLIST for API with proper DBFLAG handling
-    const transformedOrdbkStyleList = ordbkStyleList.map(item => {
-      // First map API codes to keys
-      const mappedItem = mapApiCodesToKeys(item);
-
-      // Determine DBFLAG based on mode and item status
-      let itemDbFlag = mappedItem.DBFLAG || (mode === 'add' ? 'I' : 'U');
-
-      // If item is marked as deleted in formData, keep it as 'D'
-      if (mappedItem.DBFLAG === 'D') {
-        itemDbFlag = 'D';
-      }
-      // For edit mode, determine if it's new or existing
-      else if (mode === 'edit') {
-        const isNewItem = mappedItem.ORDBKSTY_ID && mappedItem.ORDBKSTY_ID.toString().length > 9; // Check if temporary ID
-        const hasOriginalId = mappedItem.ORDBKSTY_ID && mappedItem.ORDBKSTY_ID > 0 && !isNewItem;
-
-        if (isNewItem) {
-          itemDbFlag = 'I'; // New item in edit mode
-        } else if (hasOriginalId) {
-          itemDbFlag = 'U'; // Existing item to update
-        } else {
-          itemDbFlag = 'I'; // Default to insert for new items
+    // Helper function to safely get display name with retry
+    const getDisplayNameWithRetry = async (getterFunction, key, maxRetries = 3) => {
+      for (let i = 0; i < maxRetries; i++) {
+        try {
+          const result = await getterFunction(key);
+          if (result) return result;
+          
+          await new Promise(resolve => setTimeout(resolve, 100));
+        } catch (error) {
+          console.error(`Error in getDisplayNameWithRetry attempt ${i + 1}:`, error);
         }
       }
-
-      // Extract all keys from mapped item
-      const fgprdKey = mappedItem.FGPRD_KEY || "";
-      const fgstyleId = mappedItem.FGSTYLE_ID || "";
-      const fgtypeKey = mappedItem.FGTYPE_KEY || "";
-      const fgshadeKey = mappedItem.FGSHADE_KEY || "";
-      const fgptnKey = mappedItem.FGPTN_KEY || "";
-
-      console.log('Extracted keys for item:', {
-        FGPRD_KEY: fgprdKey,
-        FGSTYLE_ID: fgstyleId,
-        FGTYPE_KEY: fgtypeKey,
-        FGSHADE_KEY: fgshadeKey,
-        FGPTN_KEY: fgptnKey,
-        ORDBKSTY_ID: mappedItem.ORDBKSTY_ID
-      });
-
-      // Generate FGITM_KEY dynamically
-      const fgItemKey = generateFgItemKey({
-        FGPRD_KEY: fgprdKey,
-        FGSTYLE_ID: fgstyleId,
-        FGTYPE_KEY: fgtypeKey,
-        FGSHADE_KEY: fgshadeKey,
-        FGPTN_KEY: fgptnKey
-      });
-
-      // Transform ORDBKSTYSZLIST with correct DBFLAG
-      const transformedSizeList = (mappedItem.ORDBKSTYSZLIST || []).map(sizeItem => ({
-        DBFLAG: itemDbFlag, // Same DBFLAG as parent item
-        ORDBKSTYSZ_ID: sizeItem.ORDBKSTYSZ_ID || 0,
-        ORDBK_KEY: correctOrdbkKey,
-        ORDBKSTY_ID: mappedItem.ORDBKSTY_ID || 0,
-        STYSIZE_ID: sizeItem.STYSIZE_ID || 0,
-        STYSIZE_NAME: sizeItem.STYSIZE_NAME || "",
-        QTY: parseFloat(sizeItem.QTY) || 0,
-        INIT_DT: "1900-01-01 00:00:00.000",
-        INIT_REMK: "",
-        INIT_QTY: 0,
-        BAL_QTY: parseFloat(sizeItem.QTY) || 0,
-        MRP: parseFloat(mappedItem.RATE || mappedItem.ITMRATE) || 0,
-        WSP: parseFloat(mappedItem.RATE || mappedItem.ITMRATE) || 0,
-        RQTY: 0,
-        WOBALQTY: parseFloat(sizeItem.QTY) || 0,
-        REFORDBKSTYSZ_ID: 0,
-        OP_QTY: 0,
-        HSNCODE_KEY: "IG001",
-        GST_RATE_SLAB_ID: 39,
-        ITM_AMT: parseFloat(sizeItem.ITM_AMT) || 0,
-        DISC_AMT: parseFloat(sizeItem.DISC_AMT) || 0,
-        NET_AMT: parseFloat(sizeItem.NET_AMT) || 0,
-        SGST_AMT: 0,
-        CGST_AMT: 0,
-        IGST_AMT: 0,
-        NET_SALE_RATE: 0,
-        OTHER_AMT: 0,
-        ADD_CESS_RATE: 0,
-        ADD_CESS_AMT: 0
-      }));
-
-      return {
-        DBFLAG: itemDbFlag,
-        ORDBKSTY_ID: mappedItem.ORDBKSTY_ID || 0,
-        ORDBK_KEY: correctOrdbkKey,
-        FGPRD_KEY: fgprdKey,
-        FGSTYLE_ID: fgstyleId,
-        FGSTYLE_CODE: mappedItem.FGSTYLE_CODE || mappedItem.STYLE_CODE || "",
-        FGTYPE_KEY: fgtypeKey,
-        FGSHADE_KEY: fgshadeKey,
-        FGPTN_KEY: fgptnKey,
-        FGITM_KEY: fgItemKey,
-        QTY: parseFloat(mappedItem.QTY || mappedItem.ITMQTY) || 0,
-        STYCATRT_ID: mappedItem.STYCATRT_ID || 0,
-        RATE: parseFloat(mappedItem.RATE || mappedItem.ITMRATE) || 0,
-        AMT: parseFloat(mappedItem.AMT || mappedItem.ITMAMT) || 0,
-        DLV_VAR_PERCENT: parseFloat(mappedItem.DLV_VAR_PERCENT || mappedItem.DLV_VAR_PERC) || 0,
-        DLV_VAR_QTY: parseFloat(mappedItem.DLV_VAR_QTY) || 0,
-        OPEN_RATE: "",
-        TERM_KEY: "",
-        TERM_NAME: "",
-        TERM_PERCENT: 0,
-        TERM_FIX_AMT: 0,
-        TERM_RATE: 0,
-        TERM_PERQTY: 0,
-        DISC_AMT: parseFloat(mappedItem.DISC_AMT) || 0,
-        NET_AMT: parseFloat(mappedItem.NET_AMT) || 0,
-        INIT_DT: "1900-01-01 00:00:00.000",
-        INIT_REMK: "",
-        INIT_QTY: 0,
-        DLV_DT: "1900-01-01 00:00:00.000",
-        BAL_QTY: parseFloat(mappedItem.QTY || mappedItem.ITMQTY) || 0,
-        STATUS: "1",
-        STYLE_PRN: "",
-        TYPE_PRN: "",
-        MRP_PRN: parseFloat(mappedItem.RATE || mappedItem.ITMRATE) || 0,
-        REMK: mappedItem.REMARK || "",
-        QUOTEDTL_ID: 0,
-        SETQTY: parseFloat(mappedItem.SETQTY) || 0,
-        RQTY: 0,
-        DISTBTR_KEY: consigneeKey,
-        LOTNO: seasonKey,
-        WOBALQTY: parseFloat(mappedItem.QTY || mappedItem.ITMQTY) || 0,
-        REFORDBKSTY_ID: 0,
-        BOMSTY_ID: 0,
-        ISRMREQ: "N",
-        OP_QTY: 0,
-        ORDBKSTYSZLIST: transformedSizeList
-      };
-    });
-
-    console.log('Transformed ORDBKSTYLIST with keys:', transformedOrdbkStyleList.map(item => ({
-      ORDBKSTY_ID: item.ORDBKSTY_ID,
-      DBFLAG: item.DBFLAG,
-      FGPRD_KEY: item.FGPRD_KEY,
-      FGSHADE_KEY: item.FGSHADE_KEY,
-      FGITM_KEY: item.FGITM_KEY
-    })));
-
-    // Rest of the function remains the same for ORDBKTERMLIST and ORDBKGSTLIST
-    // Get ORDBKTERMLIST from formData with proper DBFLAG
-    const ordbkTermList = (formData.apiResponseData?.ORDBKTERMLIST || []).map(termItem => {
-      let termDbFlag = termItem.DBFLAG || (mode === 'add' ? 'I' : 'U');
-
-      if (termItem.DBFLAG === 'D') {
-        termDbFlag = 'D';
-      } else if (mode === 'edit') {
-        const hasOriginalId = termItem.ORDBKTERM_ID && termItem.ORDBKTERM_ID > 0;
-        termDbFlag = hasOriginalId ? 'U' : 'I';
-      }
-
-      return {
-        ...termItem,
-        DBFLAG: termDbFlag,
-        ORDBK_KEY: correctOrdbkKey
-      };
-    });
-
-    // Generate ORDBKGSTLIST only if GST_APPL is "Y"
-    let ordbkGstList = [];
-
-    if (formData.GST_APPL === "Y") {
-      if (formData.apiResponseData?.ORDBKGSTLIST && formData.apiResponseData.ORDBKGSTLIST.length > 0) {
-        ordbkGstList = formData.apiResponseData.ORDBKGSTLIST.map(gstItem => {
-          let gstDbFlag = gstItem.DBFLAG || (mode === 'add' ? 'I' : 'U');
-
-          if (gstItem.DBFLAG === 'D') {
-            gstDbFlag = 'D';
-          } else if (mode === 'edit') {
-            const hasOriginalId = gstItem.ORDBK_GST_ID && gstItem.ORDBK_GST_ID > 0;
-            gstDbFlag = hasOriginalId ? 'U' : 'I';
-          }
-
-          return {
-            DBFLAG: gstDbFlag,
-            ORDBK_GST_ID: gstItem.ORDBK_GST_ID || 0,
-            GSTTIN_NO: gstItem.GSTTIN_NO || "URD",
-            ORDBK_KEY: correctOrdbkKey,
-            ORDBK_DT: formatDateForAPI(formData.ORDER_DATE)?.replace('T', ' ') || currentDate,
-            GST_TYPE: formData.GST_TYPE === "STATE" ? "S" : "I",
-            HSNCODE_KEY: gstItem.HSNCODE_KEY || "IG001",
-            HSN_CODE: gstItem.HSN_CODE || "64021010",
-            QTY: parseFloat(gstItem.QTY) || 0,
-            UNIT_KEY: gstItem.UNIT_KEY || "UN005",
-            GST_RATE_SLAB_ID: parseInt(gstItem.GST_RATE_SLAB_ID) || 39,
-            ITM_AMT: parseFloat(gstItem.ITM_AMT) || 0,
-            DISC_AMT: parseFloat(gstItem.DISC_AMT) || 0,
-            NET_AMT: parseFloat(gstItem.NET_AMT) || 0,
-            SGST_RATE: parseFloat(gstItem.SGST_RATE) || 0,
-            SGST_AMT: parseFloat(gstItem.SGST_AMT) || 0,
-            CGST_RATE: parseFloat(gstItem.CGST_RATE) || 0,
-            CGST_AMT: parseFloat(gstItem.CGST_AMT) || 0,
-            IGST_RATE: parseFloat(gstItem.IGST_RATE) || 0,
-            IGST_AMT: parseFloat(gstItem.IGST_AMT) || 0,
-            ROUND_OFF: parseFloat(gstItem.ROUND_OFF) || 0,
-            OTHER_AMT: parseFloat(gstItem.OTHER_AMT) || 0,
-            PARTYDTL_ID: parseInt(branchId) || 106634,
-            ADD_CESS_RATE: parseFloat(gstItem.ADD_CESS_RATE) || 0,
-            ADD_CESS_AMT: parseFloat(gstItem.ADD_CESS_AMT) || 0
-          };
-        });
-      }
-    }
-
-    // Set main DBFLAG based on mode
-    const mainDbFlag = mode === 'add' ? 'I' : 'U';
-
-    // Base payload
-    const basePayload = {
-      DBFLAG: mainDbFlag,
-      FCYR_KEY: "25",
-      CO_ID: companyConfig.CO_ID,
-      COBR_ID: companyConfig.COBR_ID,
-      ORDBK_NO: formData.ORDER_NO || "",
-      CURR_SEASON_KEY: seasonKey,
-      ORDBK_X: "",
-      ORDBK_TNA_TYPE: "I",
-      MERCHANDISER_ID: parseInt(merchandiserId) || 1,
-      ORD_EVENT_KEY: "",
-      ORG_DLV_DT: formatDateForAPI(formData.ORG_DLV_DT) || "1900-01-01T00:00:00",
-      PLANNING: "0",
-      STATUS: getStatusValue(formData.Status),
-      ORDBK_KEY: correctOrdbkKey,
-      ORDBK_DT: formatDateForAPI(formData.ORDER_DATE),
-      PORD_REF: formData.PARTY_ORD_NO || "",
-      PORD_DT: formatDateForAPI(formData.ORD_REF_DT),
-      QUOTE_NO: formData.QUOTE_NO || "",
-      QUOTE_DT: formatDateForAPI(formData.ORDER_DATE),
-      PARTY_KEY: partyKey,
-      PARTYDTL_ID: parseInt(branchId) || 100003,
-      BROKER_KEY: brokerKey,
-      BROKER1_KEY: broker1Key,
-      BROKER_COMM: 0.00,
-      COMMON_DLV_DT_FLG: "0",
-      STK_FLG: formData.RACK_MIN || "0",
-      DLV_DT: formatDateForAPI(formData.DLV_DT),
-      DLV_PLACE: formData.SHIPPING_PLACE || "",
-      TRSP_KEY: transporterKey,
-      ORDBK_AMT: parseFloat(formData.TOTAL_AMOUNT) || 0,
-      REMK: formData.REMARK_STATUS || "",
-      CURRN_KEY: formData.CURRN_KEY || "",
-      EX_RATE: parseFloat(formData.EX_RATE) || 0,
-      IMP_ORDBK_KEY: "",
-      ORDBK_TYPE: formData.ORDBK_TYPE || "2",
-      ROUND_OFF_DESC: "",
-      ROUND_OFF: 0.00,
-      BOMSTY_ID: 0,
-      LOTWISE: formData.MAIN_DETAILS === "L" ? "Y" : "N",
-      IsWO: "0",
-      SuplKey: "",
-      KNIT_DT: "1900-01-01 00:00:00.000",
-      OrdBk_CoBr_Id: formData.PARTY_BRANCH || "02",
-      GR_AMT: parseFloat(formData.TOTAL_AMOUNT) || 0,
-      GST_APP: formData.GST_APPL || "N",
-      GST_TYPE: formData.GST_TYPE === "STATE" ? "S" : "I",
-      SHP_PARTY_KEY: shippingPartyKey,
-      SHP_PARTYDTL_ID: parseInt(shippingPartyDtlId) || 100003,
-      STATE_CODE: "",
-      ORDBK_ITM_AMT: parseFloat(formData.ORDBK_ITM_AMT) || 0,
-      ORDBK_SGST_AMT: parseFloat(formData.ORDBK_SGST_AMT) || 0,
-      ORDBK_CGST_AMT: parseFloat(formData.ORDBK_CGST_AMT) || 0,
-      ORDBK_IGST_AMT: parseFloat(formData.ORDBK_IGST_AMT) || 0,
-      ORDBK_ADD_CESS_AMT: 0,
-      ORDBK_GST_AMT: parseFloat(formData.ORDBK_GST_AMT) || 0,
-      ORDBK_EXTRA_AMT: 0,
-      ORDBKSTYLIST: transformedOrdbkStyleList,
-      ORDBKTERMLIST: ordbkTermList,
-      ORDBKGSTLIST: ordbkGstList,
-      DISTBTR_KEY: consigneeKey,
-      SALEPERSON1_KEY: salesperson1Key,
-      SALEPERSON2_KEY: salesperson2Key,
-      TRSP_KEY: transporterKey,
-      PRICELIST_KEY: formData.PRICELIST_KEY || "",
-      DESP_PORT: formData.DESP_PORT || "",
+      return "";
     };
 
-    // Add user fields based on operation type
-    if (mainDbFlag === 'I') {
-      basePayload.CREATED_BY = parseInt(userId) || 1;
-      basePayload.CREATED_DT = currentDate;
-    } else {
-      basePayload.UPDATED_BY = parseInt(userId) || 1;
-      basePayload.UPDATED_DT = currentDate;
+    const getDisplayStatus = (apiStatus) => {
+      const statusMapping = {
+        '1': 'O',  // 1 -> Open
+        '0': 'C',  // 0 -> Cancel  
+        '5': 'S'   // 5 -> Short
+      };
+      return statusMapping[apiStatus] || 'O';
+    };
+
+    // Get display names from mappings
+    const partyName = partyMapping[packData.PARTY_KEY] || await getDisplayNameWithRetry(getPartyNameByKey, packData.PARTY_KEY);
+    const branchName = packData.DLV_PLACE || await getDisplayNameWithRetry(getBranchNameById, packData.PARTYDTL_ID);
+    const brokerName = brokerMapping[packData.BROKER_KEY] || await getDisplayNameWithRetry(getBrokerNameByKey, packData.BROKER_KEY);
+    const broker1Name = broker1Mapping[packData.BROKER1_KEY] || await getDisplayNameWithRetry(getBrokerNameByKey, packData.BROKER1_KEY);
+    const salesperson1Name = salesperson1Mapping[packData.SALEPERSON1_KEY] || await getDisplayNameWithRetry(getSalespersonNameByKey, packData.SALEPERSON1_KEY);
+    const salesperson2Name = salesperson2Mapping[packData.SALEPERSON2_KEY] || await getDisplayNameWithRetry(getSalespersonNameByKey, packData.SALEPERSON2_KEY);
+    const consigneeName = consigneeMapping[packData.DISTBTR_KEY] || await getDisplayNameWithRetry(getConsigneeNameByKey, packData.DISTBTR_KEY);
+    const seasonName = seasonMapping[packData.CURR_SEASON_KEY] || await getDisplayNameWithRetry(getSeasonNameByKey, packData.CURR_SEASON_KEY);
+    const transporterName = transporterMapping[packData.TRSP_KEY] || await getDisplayNameWithRetry(getTransporterNameByKey, packData.TRSP_KEY);
+    const merchandiserName = merchandiserMapping[packData.MERCHANDISER_ID] || await getDisplayNameWithRetry(getMerchandiserNameById, packData.MERCHANDISER_ID);
+
+    // Process PACKITMLIST (items)
+    let processedPackItemList = packData.PACKITMLIST ? packData.PACKITMLIST.map(item => {
+      const mappedItem = mapCodesToKeys(item);
+      
+      return {
+        ...mappedItem,
+        ORDBKSTY_ID: item.PACKITM_ID,
+        FGITEM_KEY: item.FGITM_KEY,
+        PRODUCT: item.PRODUCT,
+        STYLE: item.FGSTYLE_CODE,
+        TYPE: item.TYPE,
+        SHADE: item.SHADE,
+        PATTERN: item.PATTERN,
+        ITMQTY: item.PACK_QTY,
+        ITMRATE: item.RATE,
+        ITMAMT: item.AMT,
+        ORDBKSTYSZLIST: item.PACKITMSZLIST ? item.PACKITMSZLIST.map(sizeItem => ({
+          ...sizeItem,
+          ORDBKSTYSZ_ID: sizeItem.PACKITMDTL_ID,
+          QTY: sizeItem.PACKITMDTL_QTY
+        })) : [],
+        DBFLAG: item.DBFLAG || "R"
+      };
+    }) : [];
+
+    // If BARCD_FLG is "1" (barcode mode), consolidate items by style
+    if (packData.BARCD_FLG === "1" && processedPackItemList.length > 0) {
+      processedPackItemList = consolidateItemsByStyle(processedPackItemList);
     }
 
-    console.log('Final Payload for', mode === 'add' ? 'INSERT' : 'UPDATE');
-    console.log('Main DBFLAG:', mainDbFlag);
-    console.log('ORDBKSTYLIST items count:', transformedOrdbkStyleList.length);
+    const formattedData = {
+      apiResponseData: {
+        ...packData,
+        ORDBKSTYLIST: processedPackItemList,
+        ORDBKTERMLIST: packData.PACKTERMLIST || [],
+        ORDBKGSTLIST: packData.PACKGSTLIST || []
+      },
+      ORDER_NO: packData.PACK_NO || "",
+      ORDER_DATE: packData.PACK_DT ? formatDateForDisplay(packData.PACK_DT) : "",
+      PARTY_ORD_NO: packData.PACK_OTH_REF || "",
+      SEASON: seasonName || "",
+      ORD_REF_DT: packData.PACK_DT ? formatDateForDisplay(packData.PACK_DT) : "",
+      ENQ_NO: packData.PACK_OTH_REF || "",
+      PARTY_BRANCH: packData.Pack_CoBr_Id || "",
+      QUOTE_NO: packData.PACK_OTH_REF || "",
+      SHIPPING_PARTY: await getPartyNameByKey(packData.SHP_PARTY_KEY) || partyName,
+      DIV_PLACE: packData.DLV_PLACE || "",
+      AR_SALES: packData.SALEPERSON1_KEY || "",
+      SHIPPING_PLACE: packData.DLV_PLACE || branchName,
+      PRICE_LIST: packData.PRICELIST_KEY || "",
+      BROKER_TRANSPORTER: brokerName || "",
+      CONSIGNEE: consigneeName || "",
+      BROKER1: broker1Name || "",
+      SALESPERSON_2: salesperson2Name || "",
+      SALESPERSON_1: salesperson1Name || "",
+      Transporter: transporterName || "",
+      REMARK_STATUS: packData.REMK || "",
+      MAIN_DETAILS: packData.LotWise === "Y" ? "L" : "G",
+      GST_APPL: packData.GST_APP || "N",
+      GST_TYPE: packData.GST_TYPE === "S" ? "STATE" : packData.GST_TYPE === "I" ? "IGST" : "C",
+      RACK_MIN: packData.STK_FLG || "0",
+      READY_SI: packData.READY_SI || "0",
+      LAST_ORD_NO: packData.LAST_ORD_NO || "",
+      SERIES: packData.SERIES || "",
+      ORD_EVENT_KEY: packData.ORD_EVENT_KEY || "",
+      ORG_DLV_DT: packData.ORG_DLV_DT ? formatDateForDisplay(packData.ORG_DLV_DT) : "",
+      PLANNING: packData.PLANNING || "0",
+      ORDBK_KEY: packData.PACK_KEY || "",
+      PARTY_KEY: packData.PARTY_KEY || "",
+      ORDBK_AMT: packData.PACK_AMT || "",
+      ORDBK_ITM_AMT: packData.PACK_ITM_AMT || "",
+      ORDBK_GST_AMT: packData.PACK_GST_AMT || "",
+      ORDBK_DISC_AMT: packData.PACK_DISC_AMT || "",
+      CURRN_KEY: packData.CURRN_KEY || "",
+      EX_RATE: packData.EX_RATE || "",
+      DLV_DT: packData.DUE_DT ? formatDateForDisplay(packData.DUE_DT) : "",
+      Party: partyName || "",
+      Branch: branchName || "",
+      Broker: brokerName || "",
+      CURR_SEASON_KEY: packData.CURR_SEASON_KEY || "",
+      PRICELIST_KEY: packData.PRICELIST_KEY || "",
+      BROKER1_KEY: packData.BROKER1_KEY || "",
+      SHP_PARTY_KEY: packData.SHP_PARTY_KEY || packData.PARTY_KEY,
+      DESP_PORT: packData.DESP_PORT || "",
+      SALEPERSON1_KEY: packData.SALEPERSON1_KEY || "",
+      SALEPERSON2_KEY: packData.SALEPERSON2_KEY || "",
+      DISTBTR_KEY: packData.DISTBTR_KEY || "",
+      TRSP_KEY: packData.TRSP_KEY || "",
+      PARTYDTL_ID: packData.PARTYDTL_ID || 0,
+      SHP_PARTYDTL_ID: packData.SHP_PARTYDTL_ID || packData.PARTYDTL_ID || 0,
+      Order_Type: "Sales And Work-Order",
+      MERCHANDISER_ID: packData.MERCHANDISER_ID || "",
+      MERCHANDISER_NAME: merchandiserName || "",
+      Delivery_Shedule: "comman",
+      Order_TNA: "ItemWise",
+      Status: getDisplayStatus(packData.STATUS),
+      ORDBK_TYPE: packData.ORDBK_TYPE || "0",
+      TOTAL_QTY: calculateTotalQty(processedPackItemList),
+      TOTAL_AMOUNT: packData.PACK_AMT || 0,
+      NET_AMOUNT: packData.PACK_NET_AMT || 0,
+      DISCOUNT: packData.PACK_DISC_AMT || 0,
+      PKTS: packData.PKTS || "",
+      BARCD_FLG: packData.BARCD_FLG || "0"
+    };
 
-    return basePayload;
+    setFormData(formattedData);
+
+    if (packData.PARTY_KEY && packData.PARTYDTL_ID) {
+      await fetchPartyDetails(packData.PARTY_KEY, packData.PARTYDTL_ID);
+    }
+
+    setCurrentPARTY_KEY(packData.PARTY_KEY);
+
+    setTimeout(() => {
+      setFormData(prev => ({ ...prev, forceUpdate: Date.now() }));
+    }, 100);
+
+  } catch (error) {
+    console.error('Error populating form data:', error);
+  }
+};
+
+// Add this function to consolidate items by style for barcode mode
+const consolidateItemsByStyle = (itemList) => {
+  const styleMap = new Map();
+  
+  itemList.forEach(item => {
+    const key = `${item.FGPRD_KEY}-${item.FGSTYLE_ID}-${item.FGTYPE_KEY || ''}-${item.PATTERN || ''}`;
+    
+    if (styleMap.has(key)) {
+      // Consolidate quantities and amounts
+      const existing = styleMap.get(key);
+      existing.ITMQTY = (parseFloat(existing.ITMQTY) || 0) + (parseFloat(item.ITMQTY) || 0);
+      existing.ITMAMT = (parseFloat(existing.ITMAMT) || 0) + (parseFloat(item.ITMAMT) || 0);
+      existing.NET_AMT = (parseFloat(existing.NET_AMT) || 0) + (parseFloat(item.NET_AMT) || 0);
+      
+      // Merge size details
+      if (item.ORDBKSTYSZLIST) {
+        existing.ORDBKSTYSZLIST = existing.ORDBKSTYSZLIST || [];
+        existing.ORDBKSTYSZLIST = [...existing.ORDBKSTYSZLIST, ...item.ORDBKSTYSZLIST];
+      }
+    } else {
+      styleMap.set(key, { ...item });
+    }
+  });
+  
+  return Array.from(styleMap.values());
+};
+
+// In SalesOrderOffline component, add this function
+const preparePackSubmitPayload = () => {
+  const currentDate = new Date().toISOString().replace('T', ' ').split('.')[0];
+  const currentDateFormatted = formatDateForAPI(getTodayDate()).split('T')[0]; // YYYY-MM-DD format for PACK_DT
+  
+  const userId = localStorage.getItem('USER_ID') || '1';
+  const userName = localStorage.getItem('USER_NAME') || 'Admin';
+
+  const getStatusValue = (status) => {
+    const statusMapping = {
+      'O': '1',  // Open
+      'C': '0',  // Cancel
+      'S': '5'   // Short
+    };
+    return statusMapping[status] || "1";
   };
+
+  // Main DBFLAG based on mode
+  const mainDbFlag = mode === 'add' ? 'I' : 'U';
+
+  // Get party and branch details
+  const partyKey = formData.PARTY_KEY || "";
+  const branchId = formData.PARTYDTL_ID || 0;
+  const brokerKey = formData.BROKER_KEY || "";
+  const broker1Key = formData.BROKER1_KEY || "";
+  const salesperson1Key = formData.SALEPERSON1_KEY || "";
+  const salesperson2Key = formData.SALEPERSON2_KEY || "";
+  const consigneeKey = formData.DISTBTR_KEY || "";
+  const transporterKey = formData.TRSP_KEY || "";
+  const shippingPartyKey = formData.SHP_PARTY_KEY || formData.PARTY_KEY;
+  const shippingPartyDtlId = formData.SHP_PARTYDTL_ID || formData.PARTYDTL_ID || 1;
+
+  // Get PACKITMLIST from formData
+  const packItemList = formData.apiResponseData?.ORDBKSTYLIST || [];
+
+  // Transform ORDBKSTYLIST to PACKITMLIST format
+  const transformedPackItemList = packItemList.map(item => {
+    // Determine DBFLAG based on mode and item status
+    let itemDbFlag = item.DBFLAG || mainDbFlag;
+    
+  
+    if (item.DBFLAG === 'D') {
+      itemDbFlag = 'D';
+    }
+    // For edit mode, determine if it's new or existing
+    else if (mode === 'edit') {
+      const isNewItem = item.ORDBKSTY_ID && item.ORDBKSTY_ID.toString().length > 9;
+      const hasOriginalId = item.ORDBKSTY_ID && item.ORDBKSTY_ID > 0 && !isNewItem;
+
+      if (isNewItem) {
+        itemDbFlag = 'I'; // New item in edit mode
+      } else if (hasOriginalId) {
+        itemDbFlag = 'U'; // Existing item to update
+      } else {
+        itemDbFlag = 'I'; // Default to insert for new items
+      }
+    }
+
+    // Transform ORDBKSTYSZLIST to PACKITMDTLLIST format
+    const transformedSizeList = (item.ORDBKSTYSZLIST || []).map(sizeItem => ({
+      DBFLAG: itemDbFlag,
+      PACKITMDTL_ID: sizeItem.ORDBKSTYSZ_ID || 0,
+      ORDBKSTYSZ_ID: sizeItem.ORDBKSTYSZ_ID || 0,
+      PACK_KEY: formData.ORDBK_KEY || "",
+      PACKITM_ID: item.ORDBKSTY_ID || 0,
+      STYSIZE_ID: sizeItem.STYSIZE_ID || 0,
+      STYSIZE_NAME: sizeItem.STYSIZE_NAME || "",
+      PACKITMDTL_QTY: parseFloat(sizeItem.QTY) || 0,
+      MRP: parseFloat(sizeItem.MRP || item.MRP) || 0,
+      WSP: parseFloat(sizeItem.RATE || item.ITMRATE) || 0,
+      BAL_QTY: parseFloat(sizeItem.QTY) || 0,
+      ALLOW_RTS: 0,
+      RTS_QTY: 0,
+      HSNCODE_KEY: sizeItem.HSNCODE_KEY || item.HSNCODE_KEY || "",
+      GST_RATE_SLAB_ID: sizeItem.GST_RATE_SLAB_ID || item.GST_RATE_SLAB_ID || 0,
+      ITM_AMT: parseFloat(sizeItem.ITM_AMT) || 0,
+      DISC_AMT: parseFloat(sizeItem.DISC_AMT) || 0,
+      NET_AMT: parseFloat(sizeItem.NET_AMT) || 0,
+      SGST_AMT: 0,
+      CGST_AMT: 0,
+      IGST_AMT: 0,
+      NET_SALE_RATE: 0,
+      OTHER_AMT: 0,
+      ADD_CESS_RATE: 0,
+      ADD_CESS_AMT: 0
+    }));
+
+    return {
+      DBFLAG: itemDbFlag,
+      PACKITM_ID: item.ORDBKSTY_ID || 0,
+      PACK_KEY: formData.ORDBK_KEY || "",
+      // ORDBKSTY_ID: item.ORDBKSTY_ID || 0,
+      ORDBKSTY_ID:  0,
+      ORDBK_KEY: item.ORDBK_KEY || "",
+      FGPRD_KEY: item.FGPRD_KEY || "",
+      FGSTYLE_ID: item.FGSTYLE_ID || 0,
+      FGSTYLE_CODE: item.FGSTYLE_CODE || item.STYLE || "",
+      FGTYPE_KEY: item.FGTYPE_KEY || "",
+      FGSHADE_KEY: item.FGSHADE_KEY || "",
+      FGPTN_KEY: item.FGPTN_KEY || "",
+      FGITM_KEY: item.FGITM_KEY || "",
+      PACK_QTY: parseFloat(item.ITMQTY) || 0,
+      STYCATRT_ID: item.STYCATRT_ID || 0,
+      RATE: parseFloat(item.ITMRATE) || 0,
+      AMT: parseFloat(item.ITMAMT) || 0,
+      TERM_KEY: "",
+      TERM_NAME: "",
+      TERM_PERCENT: 0,
+      TERM_FIX_AMT: 0,
+      TERM_RATE: 0.50,
+      TERM_PERQTY: 0,
+      DISC_AMT: parseFloat(item.DISC_AMT) || 0,
+      NET_AMT: parseFloat(item.NET_AMT) || 0,
+      STATUS: "1",
+      STYLE_PRN: "STYLE PRINT",
+      TYPE_PRN: "TYPE PRINT",
+      MRP_PRN: parseFloat(item.MRP) || 0,
+      CARTON_REF: "1",
+      REMK: item.REMARK || "",
+      STDQTY: 0,
+      SETQTY: parseFloat(item.SETQTY) || 0,
+      CARTON_REF1: "CRT-REF-01",
+      CARTON_MARKS: "UP",
+      NET_WT: 0,
+      GR_WT: 0,
+      BOX_MRKN: "",
+      PACKNO_REF: `PACK-REF-${formData.ORDER_NO || ''}`,
+      MTRS: 0,
+      ROLL: 0,
+      SET_NAME: "",
+      SET_ID: 0,
+      STYSET_COUNT: 0,
+      PACKITMDTLLIST: transformedSizeList
+    };
+  });
+
+  // Transform PACKITMBARCODELIST if needed
+  const packBarcodeList = formData.apiResponseData?.PACKITMBARCODELIST || [];
+
+  // Transform PACKTERMLIST from ORDBKTERMLIST
+  const packTermList = (formData.apiResponseData?.ORDBKTERMLIST || []).map(termItem => {
+    let termDbFlag = termItem.DBFLAG || mainDbFlag;
+
+    if (termItem.DBFLAG === 'D') {
+      termDbFlag = 'D';
+    } else if (mode === 'edit') {
+      const hasOriginalId = termItem.ORDBKTERM_ID && termItem.ORDBKTERM_ID > 0;
+      termDbFlag = hasOriginalId ? 'U' : 'I';
+    }
+
+    return {
+      DBFLAG: termDbFlag,
+      PACKTERM_ID: termItem.ORDBKTERM_ID || 0,
+      PACK_KEY: formData.ORDBK_KEY || "",
+      TERM_KEY: termItem.TERM_KEY || "",
+      TERM_NAME: termItem.TERM_NAME || "",
+      TERM_PERCENT: parseFloat(termItem.TERM_PERCENT) || 0,
+      TERM_FIX_AMT: parseFloat(termItem.TERM_FIX_AMT) || 0,
+      TERM_RATE: parseFloat(termItem.TERM_RATE) || 0,
+      TERM_PERQTY: parseFloat(termItem.TERM_PERQTY) || 0,
+      TERM_DESC: termItem.TERM_DESC || "",
+      TERM_OPR: termItem.TERM_OPR || "+",
+      TAX_KEY: termItem.TAX_KEY || "",
+      TAX_FORM: termItem.TAX_FORM || "",
+      TAX_RATE: parseFloat(termItem.TAX_RATE) || 0,
+      T_AOT1_D: termItem.T_AOT1_D || "",
+      T_AOT1_R: parseFloat(termItem.T_AOT1_R) || 0,
+      TAXABLE_AMT: parseFloat(termItem.TAXABLE_AMT) || 0,
+      TAX_AMT: parseFloat(termItem.TAX_AMT) || 0,
+      AOT1_AMT: parseFloat(termItem.AOT1_AMT) || 0,
+      STATUS: "1",
+      T_AOT2_D: termItem.T_AOT2_D || "",
+      T_AOT2_R: parseFloat(termItem.T_AOT2_R) || 0,
+      AOT2_AMT: parseFloat(termItem.AOT2_AMT) || 0
+    };
+  });
+
+  // Transform PACKGSTLIST from ORDBKGSTLIST
+  const packGstList = (formData.apiResponseData?.ORDBKGSTLIST || []).map(gstItem => {
+    let gstDbFlag = gstItem.DBFLAG || mainDbFlag;
+
+    if (gstItem.DBFLAG === 'D') {
+      gstDbFlag = 'D';
+    } else if (mode === 'edit') {
+      const hasOriginalId = gstItem.ORDBK_GST_ID && gstItem.ORDBK_GST_ID > 0;
+      gstDbFlag = hasOriginalId ? 'U' : 'I';
+    }
+
+    return {
+      DBFLAG: gstDbFlag,
+      PACK_GST_ID: gstItem.ORDBK_GST_ID || 0,
+      GSTTIN_NO: gstItem.GSTTIN_NO || "URD",
+      PACK_KEY: formData.ORDBK_KEY || "",
+      GST_TYPE: formData.GST_TYPE === "STATE" ? "S" : formData.GST_TYPE === "IGST" ? "I" : "C",
+      HSNCODE_KEY: gstItem.HSNCODE_KEY || "IG001",
+      HSN_CODE: gstItem.HSN_CODE || "61124100",
+      QTY: parseFloat(gstItem.QTY) || 0,
+      GST_RATE_SLAB_ID: parseInt(gstItem.GST_RATE_SLAB_ID) || 638,
+      ITM_AMT: parseFloat(gstItem.ITM_AMT) || 0,
+      DISC_AMT: parseFloat(gstItem.DISC_AMT) || 0,
+      NET_AMT: parseFloat(gstItem.NET_AMT) || 0,
+      SGST_RATE: parseFloat(gstItem.SGST_RATE) || 0,
+      SGST_AMT: parseFloat(gstItem.SGST_AMT) || 0,
+      CGST_RATE: parseFloat(gstItem.CGST_RATE) || 0,
+      CGST_AMT: parseFloat(gstItem.CGST_AMT) || 0,
+      IGST_RATE: parseFloat(gstItem.IGST_RATE) || 0,
+      IGST_AMT: parseFloat(gstItem.IGST_AMT) || 0,
+      ROUND_OFF: parseFloat(gstItem.ROUND_OFF) || 0,
+      OTHER_AMT: parseFloat(gstItem.OTHER_AMT) || 0,
+      PARTYDTL_ID: parseInt(branchId) || 106634,
+      ADD_CESS_RATE: parseFloat(gstItem.ADD_CESS_RATE) || 0,
+      ADD_CESS_AMT: parseFloat(gstItem.ADD_CESS_AMT) || 0
+    };
+  });
+
+  // Base payload
+  const basePayload = {
+    PACK_TYPE: "ITM",
+    PACK_BARCODETYPE: "I",
+    DBFLAG: mainDbFlag,
+    FCYR_KEY: "25",
+    CO_ID: companyConfig.CO_ID || "02",
+    COBR_ID: companyConfig.COBR_ID || "02",
+    PACK_NO: formData.ORDER_NO || "",
+    PACK_X: "",
+    PACK_KEY: formData.ORDBK_KEY || "",
+    PACK_DT: formatDateForAPI(formData.ORDER_DATE)?.split('T')[0] || currentDateFormatted,
+    PARTY_KEY: partyKey,
+    PARTYDTL_ID: parseInt(branchId) || 0,
+    PACK_Z: "0",
+    PACK_OTH_REF: formData.PARTY_ORD_NO || "",
+    BROKER_KEY: brokerKey,
+    BROKER_RATE: parseFloat(formData.Comm) || 0,
+    TRSP_KEY: transporterKey,
+    LR_NO: "",
+    LR_DT: "1900-01-01T00:00:00",
+    PACK_AMT: parseFloat(formData.TOTAL_AMOUNT) || 0,
+    ROUND_OFF_DESC: "ROUND OFF",
+    ROUND_OFF: 0,
+    PYT_DAYS: 0,
+    DUE_DT: formatDateForAPI(formData.DLV_DT) || "1900-01-01T00:00:00",
+    PACK_NET_AMT: parseFloat(formData.NET_AMOUNT) || 0,
+    PACK_BAL_AMT: parseFloat(formData.NET_AMOUNT) || 0,
+    CURRN_KEY: formData.CURRN_KEY || "CM001",
+    EX_RATE: parseFloat(formData.EX_RATE) || 1,
+    DISC_KEY: "",
+    REMK: formData.REMARK_STATUS || "",
+    STATUS: getStatusValue(formData.Status),
+    COMMBL_AMT: parseFloat(formData.TOTAL_AMOUNT) || 0,
+    SECSALE: "1",
+    PKTS: formData.PKTS || "10",
+    DLV_PLACE: formData.SHIPPING_PLACE || "",
+    DISTBTR_KEY: consigneeKey,
+    SALEPERSON1_KEY: salesperson1Key,
+    SALEPERSON2_KEY: salesperson2Key,
+    ON_MRP: "0",
+     BARCD_FLG: detailMode === 'barcode' ? "1" : "0",
+    BROKER1_KEY: broker1Key,
+    PACK_COBR_ID: companyConfig.COBR_ID || "02",
+    LOTWISE: formData.MAIN_DETAILS === "L" ? "Y" : "N",
+    GST_APP: formData.GST_APPL || "N",
+    GST_TYPE: formData.GST_TYPE === "STATE" ? "S" : formData.GST_TYPE === "IGST" ? "I" : "C",
+    STATE_PARTYDTL_ID: 0,
+    PACK_ITM_AMT: parseFloat(formData.ORDBK_ITM_AMT) || 0,
+    PACK_SGST_AMT: parseFloat(formData.ORDBK_SGST_AMT) || 0,
+    PACK_CGST_AMT: parseFloat(formData.ORDBK_CGST_AMT) || 0,
+    PACK_IGST_AMT: parseFloat(formData.ORDBK_IGST_AMT) || 0,
+    PACK_ADD_CESS_AMT: 0,
+    PACK_GST_AMT: parseFloat(formData.ORDBK_GST_AMT) || 0,
+    SHP_PARTY_KEY: shippingPartyKey,
+    SHP_PARTYDTL_ID: parseInt(shippingPartyDtlId) || 0,
+    IS_PACK: "0",
+    PAYMENT_MODE: 0,
+    PACKITMLIST: transformedPackItemList,
+    PACKITMBARCODELIST: packBarcodeList,
+    PACKTERMLIST: packTermList,
+    PACKGSTLIST: packGstList
+  };
+
+  // Add user fields based on operation type
+  if (mainDbFlag === 'I') {
+    basePayload.CREATED_BY = parseInt(userId) || 1;
+    basePayload.CREATED_DT = currentDate;
+  } else {
+    basePayload.UPDATED_BY = parseInt(userId) || 1;
+    basePayload.UPDATED_DT = currentDate;
+  }
+
+  console.log('Final PACK Payload for', mode === 'add' ? 'INSERT' : 'UPDATE');
+  console.log('Main DBFLAG:', mainDbFlag);
+  console.log('PACKITMLIST count:', transformedPackItemList.length);
+
+  return basePayload;
+};
 
   // Rest of your existing functions remain the same...
   const handleTable = () => {
-    router.push('/inverntory/stockOrder-table');
+    router.push('/inverntory/pakingsliptable');
   };
 
   const handlePrev = () => {
@@ -1205,44 +1141,57 @@ const [detailMode, setDetailMode] = useState('style');
     return true;
   };
 
-  // Function to submit form data
-  const handleSubmit = async () => {
-    setShowValidationErrors(true);
-    if (!validateForm()) {
-      return;
-    }
+// Replace the existing handleSubmit with this new version
+const handleSubmit = async () => {
+  setShowValidationErrors(true);
+  if (!validateForm()) {
+    return;
+  }
 
-    try {
-      setSubmitLoading(true);
+  try {
+    setSubmitLoading(true);
 
-      const userName = localStorage.getItem('USER_NAME') || 'ankita';
-      const strCobrid = "02";
+    const userName = localStorage.getItem('USER_NAME') || 'ankita';
+    const strCobrid = companyConfig.COBR_ID || "02";
 
-      const payload = prepareSubmitPayload();
+    const payload = preparePackSubmitPayload();
 
-      console.log('Submitting order with payload:', payload);
+    console.log('Submitting PACK order with payload:', payload);
 
-      const response = await axiosInstance.post(`/ORDBK/ApiMangeOrdbk?UserName=${userName}&strCobrid=${strCobrid}`, payload);
-      console.log('Submit API Response:', response.data);
+    const response = await axiosInstance.post(`/PACK/ApiMangePACK`, payload);
+    console.log('Submit API Response:', response.data);
 
-      if (response.data.RESPONSESTATUSCODE === 1) {
-        showSnackbar("Order submitted successfully!");
-        setMode('view');
-        setIsFormDisabled(true);
-        setTabIndex(0)
-        if (formData.ORDBK_KEY) {
-          fetchOrderDetails(formData.ORDBK_KEY);
+    if (response.data.RESPONSESTATUSCODE === 1) {
+      showSnackbar(`Order ${mode === 'add' ? 'created' : 'updated'} successfully! PACK_KEY: ${response.data.DATA}`);
+      
+      // After successful submission, fetch the updated order if we have a PACK_KEY
+      if (response.data.DATA) {
+        // For update mode, ORDBK_KEY should already be set
+        // For insert mode, update formData with the new PACK_KEY from response
+        if (mode === 'add') {
+          setFormData(prev => ({
+            ...prev,
+            ORDBK_KEY: response.data.DATA
+          }));
         }
-      } else {
-        showSnackbar("Error submitting order: " + (response.data.RESPONSEMESSAGE || "Unknown error"), 'error');
+        
+        // Refresh order details
+        await fetchOrderDetails(response.data.DATA);
       }
-    } catch (error) {
-      console.error('Error submitting order:', error);
-      showSnackbar("Error submitting order. Please try again.", 'error');
-    } finally {
-      setSubmitLoading(false);
+      
+      setMode('view');
+      setIsFormDisabled(true);
+      setTabIndex(0);
+    } else {
+      showSnackbar("Error submitting order: " + (response.data.RESPONSEMESSAGE || "Unknown error"), 'error');
     }
-  };
+  } catch (error) {
+    console.error('Error submitting order:', error);
+    showSnackbar("Error submitting order. Please try again.", 'error');
+  } finally {
+    setSubmitLoading(false);
+  }
+};
 
   // Function to get order number
   const getOrderNumber = async (prefix) => {
@@ -1313,14 +1262,188 @@ const [detailMode, setDetailMode] = useState('style');
 
 
 
-  const handleAdd = async () => {
-    try {
-      setLoading(true);
+const handleAdd = async () => {
+  try {
+    setLoading(true);
 
-      // Get today's date
+    const todayDate = getTodayDate();
+
+    const emptyFormData = {
+      ORDER_NO: "",
+      ORDER_DATE: todayDate,
+      PARTY_ORD_NO: "",
+      SEASON: "",
+      ORD_REF_DT: todayDate,
+      ENQ_NO: "",
+      PARTY_BRANCH: "",
+      QUOTE_NO: "",
+      SHIPPING_PARTY: "",
+      DIV_PLACE: "",
+      AR_SALES: "",
+      SHIPPING_PLACE: "",
+      PRICE_LIST: "",
+      BROKER_TRANSPORTER: "",
+      CONSIGNEE: "",
+      BROKER1: "",
+      SALESPERSON_2: "",
+      SALESPERSON_1: "",
+      Transporter: "",
+      REMARK_STATUS: "",
+      MAIN_DETAILS: "G",
+      GST_APPL: "N",
+      RACK_MIN: "0",
+      READY_SI: "0",
+      LAST_ORD_NO: "",
+      SERIES: "",
+      ORDBK_KEY: "",
+      ORD_EVENT_KEY: "",
+      ORG_DLV_DT: todayDate,
+      PLANNING: "0",
+      PARTY_KEY: "",
+      ORDBK_AMT: "",
+      ORDBK_ITM_AMT: "",
+      ORDBK_GST_AMT: "",
+      ORDBK_DISC_AMT: "",
+      CURRN_KEY: "",
+      EX_RATE: "",
+      DLV_DT: todayDate,
+      TOTAL_QTY: 0,
+      TOTAL_AMOUNT: 0,
+      NET_AMOUNT: 0,
+      DISCOUNT: 0,
+      Party: "",
+      Branch: "",
+      Broker: "",
+      CURR_SEASON_KEY: "",
+      PRICELIST_KEY: "",
+      BROKER1_KEY: "",
+      SHP_PARTY_KEY: "",
+      DESP_PORT: "",
+      SALEPERSON1_KEY: "",
+      SALEPERSON2_KEY: "",
+      DISTBTR_KEY: "",
+      TRSP_KEY: "",
+      apiResponseData: null,
+      PARTYDTL_ID: 0,
+      SHP_PARTYDTL_ID: 0,
+      Order_Type: "Sales And Work-Order",
+      MERCHANDISER_ID: "",
+      MERCHANDISER_NAME: "",
+      Delivery_Shedule: "comman",
+      Order_TNA: "ItemWise",
+      Status: "O",
+      ORDBK_TYPE: "2",
+      PKTS: "10"
+    };
+
+    const prefix = await getSeriesPrefix();
+
+    if (prefix) {
+      const orderData = await getOrderNumber(prefix);
+
+      if (orderData) {
+        const correctPackKey = `25${companyConfig.COBR_ID}${orderData.orderNo}`;
+
+        const formDataWithOrderNo = {
+          ...emptyFormData,
+          ORDER_NO: orderData.orderNo,
+          LAST_ORD_NO: orderData.lastOrderNo,
+          SERIES: prefix,
+          ORDBK_KEY: correctPackKey
+        };
+
+        console.log('Generated PACK_KEY:', correctPackKey);
+
+        setFormData(formDataWithOrderNo);
+
+        setMode('add');
+        setIsFormDisabled(false);
+
+        await fetchAllDropdownData();
+
+        if (Object.keys(partyMapping).length > 0) {
+          const firstPartyName = Object.keys(partyMapping)[0];
+          const firstPartyKey = partyMapping[firstPartyName];
+
+          console.log('Auto-selecting first party:', firstPartyName, 'Key:', firstPartyKey);
+
+          if (firstPartyName && firstPartyKey) {
+            setFormData(prev => ({
+              ...prev,
+              Party: firstPartyName,
+              PARTY_KEY: firstPartyKey,
+              SHIPPING_PARTY: firstPartyName,
+              SHP_PARTY_KEY: firstPartyKey
+            }));
+
+            await fetchPartyDetails(firstPartyKey);
+            await fetchPartyDetailsForAutoFill(firstPartyKey);
+          }
+        }
+      }
+    } else {
+      setFormData(emptyFormData);
+      setMode('add');
+      setIsFormDisabled(false);
+    }
+
+    setShowValidationErrors(false);
+  } catch (error) {
+    console.error('Error in handleAdd:', error);
+  } finally {
+    setLoading(false);
+  }
+};
+
+  const handleCancel = () => {
+    setMode('view');
+    setIsFormDisabled(true);
+    // showSnackbar('Edit cancelled');
+    setShowValidationErrors(false);
+  };
+
+  const handleEdit = () => {
+    setMode('edit');
+    setIsFormDisabled(false);
+    // showSnackbar('Edit mode enabled');
+  };
+
+// Replace the existing handleDelete function with this updated version
+const handleDelete = async () => {
+  if (!formData.ORDBK_KEY) {
+    showSnackbar('No order selected for deletion', 'error');
+    return;
+  }
+
+  // Confirmation dialog
+  if (!window.confirm('Are you sure you want to delete this order permanently?')) {
+    return;
+  }
+
+  try {
+    setLoading(true);
+
+    // Prepare payload according to the DELETE API format
+    const payload = {
+      "PACK_KEY": formData.ORDBK_KEY,  // This should be the PACK_KEY value (e.g., "2502PL9392")
+      "FCYR_KEY": "25",                 // Financial year key - can be made dynamic if needed
+      "COBR_ID": companyConfig.COBR_ID || "02"  // Branch ID from company config
+    };
+
+    console.log('Deleting PACK with payload:', payload);
+    console.log('Authorization token present');
+
+    // Make DELETE API call
+    const response = await axiosInstance.post('/PACK/DELETE_PACK', payload);
+    console.log('Delete API Response:', response.data);
+
+    // Check response based on the API response structure
+    // The response should have STATUS: 1 for success as per your example
+    if (response.data.STATUS === 1 || response.data.RESPONSESTATUSCODE === 1) {
+      showSnackbar('Order deleted successfully!', 'success');
+
+      // Reset form after successful deletion
       const todayDate = getTodayDate();
-
-      // Clear all form data for new entry but set today's date for date fields and default values
       const emptyFormData = {
         ORDER_NO: "",
         ORDER_DATE: todayDate,
@@ -1394,232 +1517,63 @@ const [detailMode, setDetailMode] = useState('style');
         Delivery_Shedule: "comman",
         Order_TNA: "ItemWise",
         Status: "O",
-        ORDBK_TYPE: "2"
+        ORDBK_TYPE: "2",
+        PKTS: "10"  // Add this field if needed
       };
 
-      // Get series prefix first
+      setFormData(emptyFormData);
+      setMode('view');
+      setIsFormDisabled(true);
+      setCurrentPARTY_KEY("");
+
+      // Get new order number for fresh start
       const prefix = await getSeriesPrefix();
-
       if (prefix) {
-        // Get order number using the prefix
         const orderData = await getOrderNumber(prefix);
-
         if (orderData) {
-          // CORRECT ORDBK_KEY generation: FCYR_KEY + COBR_ID + ORDBK_NO
-          const correctOrdbkKey = `2502${orderData.orderNo}`;
-
-          // Update form data with new order numbers
-          const formDataWithOrderNo = {
+          const correctPackKey = `25${companyConfig.COBR_ID || "02"}${orderData.orderNo}`;
+          setFormData(prev => ({
             ...emptyFormData,
             ORDER_NO: orderData.orderNo,
             LAST_ORD_NO: orderData.lastOrderNo,
             SERIES: prefix,
-            ORDBK_KEY: correctOrdbkKey
-          };
-
-          console.log('Generated ORDBK_KEY:', correctOrdbkKey);
-
-          // Set the form data with order numbers
-          setFormData(formDataWithOrderNo);
-
-          // Set mode first to enable form
-          setMode('add');
-          setIsFormDisabled(false);
-
-          // NEW: Wait for dropdown data to load
-          await fetchAllDropdownData();
-
-          // Get the first party from partyMapping
-          if (Object.keys(partyMapping).length > 0) {
-            const firstPartyName = Object.keys(partyMapping)[0];
-            const firstPartyKey = partyMapping[firstPartyName];
-
-            console.log('Auto-selecting first party:', firstPartyName, 'Key:', firstPartyKey);
-
-            if (firstPartyName && firstPartyKey) {
-              // Auto-populate party
-              setFormData(prev => ({
-                ...prev,
-                Party: firstPartyName,
-                PARTY_KEY: firstPartyKey,
-                SHIPPING_PARTY: firstPartyName,
-                SHP_PARTY_KEY: firstPartyKey
-              }));
-
-              // Fetch branches for the selected party
-              await fetchPartyDetails(firstPartyKey);
-
-              // Fetch party details for auto-population
-              await fetchPartyDetailsForAutoFill(firstPartyKey);
-
-              // Show success message
-              // showSnackbar(`Party "${firstPartyName}" auto-selected successfully!`);
-            }
-          }
+            ORDBK_KEY: correctPackKey
+          }));
         }
-      } else {
-        setFormData(emptyFormData);
-        setMode('add');
-        setIsFormDisabled(false);
       }
-
-      setShowValidationErrors(false);
-    } catch (error) {
-      console.error('Error in handleAdd:', error);
-      // showSnackbar('Error creating new order', 'error');
-    } finally {
-      setLoading(false);
+      
+      // Show success message
+      showSnackbar('Order deleted successfully!', 'success');
+    } else {
+      showSnackbar('Error deleting order: ' + (response.data.MESSAGE || response.data.RESPONSEMESSAGE || 'Unknown error'), 'error');
     }
-  };
-
-  const handleCancel = () => {
-    setMode('view');
-    setIsFormDisabled(true);
-    // showSnackbar('Edit cancelled');
-    setShowValidationErrors(false);
-  };
-
-  const handleEdit = () => {
-    setMode('edit');
-    setIsFormDisabled(false);
-    // showSnackbar('Edit mode enabled');
-  };
-
-  // Function to handle delete with API call
-  const handleDelete = async () => {
-    if (!formData.ORDBK_KEY) {
-      showSnackbar('No order selected for deletion', 'error');
-      return;
+  } catch (error) {
+    console.error('Error deleting order:', error);
+    
+    // Handle different error scenarios
+    if (error.response) {
+      // The request was made and the server responded with a status code
+      // that falls out of the range of 2xx
+      console.error('Error response data:', error.response.data);
+      console.error('Error response status:', error.response.status);
+      
+      showSnackbar(
+        `Error deleting order: ${error.response.data.MESSAGE || error.response.statusText || 'Server error'}`,
+        'error'
+      );
+    } else if (error.request) {
+      // The request was made but no response was received
+      console.error('Error request:', error.request);
+      showSnackbar('No response from server. Please check your connection.', 'error');
+    } else {
+      // Something happened in setting up the request that triggered an Error
+      console.error('Error message:', error.message);
+      showSnackbar(`Error: ${error.message}`, 'error');
     }
-
-    // Confirmation dialog
-    if (!window.confirm('Are you sure you want to delete this order permanently?')) {
-      return;
-    }
-
-    try {
-      setLoading(true);
-
-      const payload = {
-        "ORDBK_KEY": formData.ORDBK_KEY
-      };
-
-      console.log('Deleting order with payload:', payload);
-
-      const response = await axiosInstance.post('/ORDBK/DELETE_ORDBK', payload);
-      console.log('Delete API Response:', response.data);
-
-      if (response.data.RESPONSESTATUSCODE === 1) {
-        showSnackbar('Order deleted successfully!', 'success');
-
-        // Reset form after successful deletion
-        const todayDate = getTodayDate();
-        const emptyFormData = {
-          ORDER_NO: "",
-          ORDER_DATE: todayDate,
-          PARTY_ORD_NO: "",
-          SEASON: "",
-          ORD_REF_DT: todayDate,
-          ENQ_NO: "",
-          PARTY_BRANCH: "",
-          QUOTE_NO: "",
-          SHIPPING_PARTY: "",
-          DIV_PLACE: "",
-          AR_SALES: "",
-          SHIPPING_PLACE: "",
-          PRICE_LIST: "",
-          BROKER_TRANSPORTER: "",
-          B_EAST_II: "",
-          NEW_ADDR: "",
-          CONSIGNEE: "",
-          E_ASM1: "",
-          BROKER1: "",
-          SALESPERSON_2: "",
-          NEW: "",
-          EMAIL: "",
-          REMARK_STATUS: "",
-          MAIN_DETAILS: "G",
-          GST_APPL: "N",
-          RACK_MIN: "0",
-          REGISTERED_DEALER: "0",
-          SHORT_CLOSE: "0",
-          READY_SI: "0",
-          SearchByCd: "",
-          LAST_ORD_NO: "",
-          SERIES: "",
-          ORDBK_KEY: "",
-          ORD_EVENT_KEY: "",
-          ORG_DLV_DT: todayDate,
-          PLANNING: "0",
-          PARTY_KEY: "",
-          ORDBK_AMT: "",
-          ORDBK_ITM_AMT: "",
-          ORDBK_GST_AMT: "",
-          ORDBK_DISC_AMT: "",
-          CURRN_KEY: "",
-          EX_RATE: "",
-          DLV_DT: todayDate,
-          TOTAL_QTY: 0,
-          TOTAL_AMOUNT: 0,
-          NET_AMOUNT: 0,
-          DISCOUNT: 0,
-          Party: "",
-          Branch: "",
-          Broker: "",
-          Transporter: "",
-          SALESPERSON_1: "",
-          ord_event: "",
-          CURR_SEASON_KEY: "",
-          PRICELIST_KEY: "",
-          BROKER1_KEY: "",
-          SHP_PARTY_KEY: "",
-          DESP_PORT: "",
-          SALEPERSON1_KEY: "",
-          SALEPERSON2_KEY: "",
-          DISTBTR_KEY: "",
-          TRSP_KEY: "",
-          apiResponseData: null,
-          PARTYDTL_ID: 0,
-          SHP_PARTYDTL_ID: 0,
-          Order_Type: "Sales And Work-Order",
-          MERCHANDISER_ID: "",
-          MERCHANDISER_NAME: "",
-          Delivery_Shedule: "comman",
-          Order_TNA: "ItemWise",
-          Status: "O",
-          ORDBK_TYPE: "2"
-        };
-
-        setFormData(emptyFormData);
-        setMode('view');
-        setIsFormDisabled(true);
-        setCurrentPARTY_KEY("");
-
-        // Get new order number for fresh start
-        const prefix = await getSeriesPrefix();
-        if (prefix) {
-          const orderData = await getOrderNumber(prefix);
-          if (orderData) {
-            const correctOrdbkKey = `2502${orderData.orderNo}`;
-            setFormData(prev => ({
-              ...emptyFormData,
-              ORDER_NO: orderData.orderNo,
-              LAST_ORD_NO: orderData.lastOrderNo,
-              SERIES: prefix,
-              ORDBK_KEY: correctOrdbkKey
-            }));
-          }
-        }
-      } else {
-        showSnackbar('Error deleting order: ' + (response.data.RESPONSEMESSAGE || 'Unknown error'), 'error');
-      }
-    } catch (error) {
-      console.error('Error deleting order:', error);
-      showSnackbar('Error deleting order. Please try again.', 'error');
-    } finally {
-      setLoading(false);
-    }
-  };
+  } finally {
+    setLoading(false);
+  }
+};
 
   const handleTabChange = (event, newValue) => {
     setTabIndex(newValue);
@@ -2069,6 +2023,7 @@ const [detailMode, setDetailMode] = useState('style');
 
       <Grid size={{ xs: 12 }} sx={{ ml: '5%', mb: '0%', mt: '0%' }}>
         <Box sx={{ display: 'flex' }}>
+
 <Tabs
   value={tabIndex}
   onChange={handleTabChange}
@@ -2098,10 +2053,10 @@ const [detailMode, setDetailMode] = useState('style');
     }}
   />
   
-  {/* Details Tab - Disabled when barcode mode is selected */}
+  {/* Details Tab - Always accessible but content will be disabled based on mode */}
   <Tab
     label="Details"
-    disabled={detailMode === 'barcode'}
+    // Not disabled - user can click and view
     sx={{
       minHeight: '36px',
       padding: '6px 16px',
@@ -2112,17 +2067,20 @@ const [detailMode, setDetailMode] = useState('style');
         color: '#000',
         fontWeight: 'bold',
       },
-      '&.Mui-disabled': {
-        opacity: 0.5,
-        color: '#999',
-      },
+      // Visual indication that it's view-only in barcode mode
+      ...(detailMode === 'barcode' && {
+        opacity: 0.9,
+        '& .MuiTab-root': {
+          color: '#666',
+        }
+      })
     }}
   />
   
-  {/* BarCode Details Tab - Disabled when style mode is selected */}
+  {/* BarCode Details Tab - Active when barcode mode is selected */}
   <Tab
     label="BarCode Details"
-    disabled={detailMode === 'style'}
+    // Not disabled - active when detailMode is 'barcode'
     sx={{
       minHeight: '36px',
       padding: '6px 16px',
@@ -2132,10 +2090,6 @@ const [detailMode, setDetailMode] = useState('style');
       '&.Mui-selected': {
         color: '#000',
         fontWeight: 'bold',
-      },
-      '&.Mui-disabled': {
-        opacity: 0.5,
-        color: '#999',
       },
     }}
   />
