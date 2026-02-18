@@ -234,6 +234,16 @@ const [typingTimeout, setTypingTimeout] = useState(null);
     return `${day}/${month}/${year}`;
   };
 
+  // In Stepper1.js - Add BARCD_FLG to formData when detailMode changes
+useEffect(() => {
+  if (detailMode) {
+    setFormData(prev => ({
+      ...prev,
+      BARCD_FLG: detailMode === 'barcode' ? "1" : "0"
+    }));
+  }
+}, [detailMode, setFormData]);
+
   // NEW: Function to fetch GST type based on party details
   const fetchGSTType = async (partyDtlId, shipPartyDtlId) => {
     try {

@@ -283,6 +283,15 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, compa
   };
 
   useEffect(() => {
+  if (hasRecords && formData) {
+    setFormData(prev => ({
+      ...prev,
+      BARCD_FLG: "0" // Style mode
+    }));
+  }
+}, [hasRecords, formData, setFormData]);
+
+  useEffect(() => {
     calculateTotals();
   }, [tableData]);
 
