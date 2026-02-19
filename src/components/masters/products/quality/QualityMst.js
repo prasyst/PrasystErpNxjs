@@ -466,7 +466,7 @@ const QualityMst = () => {
 
     const DropInputSx = {
         '& .MuiInputBase-root': {
-            height: 36,
+            height: 40,
             fontSize: '14px',
         },
         '& .MuiInputLabel-root': {
@@ -478,7 +478,7 @@ const QualityMst = () => {
             border: '1px solid #e0e0e0',
             borderRadius: '6px',
             overflow: 'hidden',
-            height: 36,
+            height: 40,
             fontSize: '14px',
             paddingRight: '36px',
         },
@@ -733,6 +733,8 @@ const QualityMst = () => {
                             // options={termsTypeOptions}
                             value={form.QLTYGRP_KEY}
                             onChange={(value) => setForm({ ...form, QLTYGRP_KEY: value })}
+                            className="custom-textfield"
+                            sx={DropInputSx}
                         />
                     </Grid>
 

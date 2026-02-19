@@ -131,20 +131,20 @@ const Login = () => {
     }, 1000);
     return () => clearInterval(interval);
   }, []);
-  
-useEffect(() => {
-  const expireTime = localStorage.getItem('authExpire');
-  const isAuthenticated = localStorage.getItem('authenticated') === 'true';
-  const hasCompanyAndBranch = localStorage.getItem('CO_ID') && localStorage.getItem('COBR_ID');
-  
-  if (!expireTime || Date.now() > Number(expireTime) || !isAuthenticated) {
-    localStorage.removeItem('authenticated');
-    localStorage.removeItem('authExpire');
-  } else if (isAuthenticated && hasCompanyAndBranch) {
 
-    router.replace('/dashboard'); 
-  }
-}, [router]);
+  useEffect(() => {
+    const expireTime = localStorage.getItem('authExpire');
+    const isAuthenticated = localStorage.getItem('authenticated') === 'true';
+    const hasCompanyAndBranch = localStorage.getItem('CO_ID') && localStorage.getItem('COBR_ID');
+
+    if (!expireTime || Date.now() > Number(expireTime) || !isAuthenticated) {
+      localStorage.removeItem('authenticated');
+      localStorage.removeItem('authExpire');
+    } else if (isAuthenticated && hasCompanyAndBranch) {
+
+      router.replace('/dashboard');
+    }
+  }, [router]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -172,7 +172,7 @@ useEffect(() => {
   const handleRoleSelect = (value) => {
     setRole(value);
   };
-  
+
   const canSendOtp = (mobile) => {
     if (!otpRequests[mobile]) return true;
     const lastRequestTime = otpRequests[mobile];
@@ -414,28 +414,28 @@ useEffect(() => {
   const handleClickShowNewPassword = () => {
     setShowNewPwd(!showNewPwd);
   };
- const resetToLogin = () => {
-  // Clear all localStorage when returning to login
-  localStorage.removeItem('authenticated');
-  localStorage.removeItem('userRole');
-  localStorage.removeItem('CO_ID');
-  localStorage.removeItem('COBR_ID');
-  localStorage.removeItem('PARTY_NAME');
-  localStorage.removeItem('PARTY_KEY');
-  localStorage.removeItem('FCYR_KEY');
-  localStorage.removeItem('USER_NAME');
-  localStorage.removeItem('USER_ID');
-  localStorage.removeItem('EMP_KEY');
-  localStorage.removeItem('EMP_NAME');
-  
-  setShowLogin(true);
-  setModalOpen(false);
-  setForm({ username: '', password: '', mobile: '' });
-  setRole('user');
-  setOtpSent(false);
-  setGeneratedOtp('');
-  setMobilePassword('');
-};
+  const resetToLogin = () => {
+    // Clear all localStorage when returning to login
+    localStorage.removeItem('authenticated');
+    localStorage.removeItem('userRole');
+    localStorage.removeItem('CO_ID');
+    localStorage.removeItem('COBR_ID');
+    localStorage.removeItem('PARTY_NAME');
+    localStorage.removeItem('PARTY_KEY');
+    localStorage.removeItem('FCYR_KEY');
+    localStorage.removeItem('USER_NAME');
+    localStorage.removeItem('USER_ID');
+    localStorage.removeItem('EMP_KEY');
+    localStorage.removeItem('EMP_NAME');
+
+    setShowLogin(true);
+    setModalOpen(false);
+    setForm({ username: '', password: '', mobile: '' });
+    setRole('user');
+    setOtpSent(false);
+    setGeneratedOtp('');
+    setMobilePassword('');
+  };
 
   return (
     <Box
@@ -492,7 +492,7 @@ useEffect(() => {
             sx={{
               display: 'flex',
               flexDirection: { xs: 'column', sm: 'row' },
-              width: { xs: '95%', sm: '90%', md: '850px' },
+              width: { xs: '95%', sm: '90%', md: '700px' },
               maxWidth: '850px',
               height: { xs: 'auto', sm: 'auto', md: '500px' },
               borderRadius: 4,
@@ -509,20 +509,29 @@ useEffect(() => {
               <Box sx={{ width: '100%', p: 3 }}>
                 <Box textAlign="center" sx={{ mb: 1.5 }}>
                   <Image
-                    src="/images/logo.jpg"
+                    src="/images/P_IconLogo.png"
                     alt="Profile"
-                    width={250}
-                    height={100}
+                    width={180}
+                    height={80}
                   />
                   <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mt: 1 }}>
-                    <Image
-                      src="/images/download.png"
+                    {/* <Image
+                      src="/images/pratham.jpeg"
                       alt="Company Logo"
                       width={50}
                       height={50}
                       style={{ marginRight: '0px' }}
-                    />
+                    /> */}
                     <Box sx={{ textAlign: 'left' }}>
+                      <Typography variant="body2" sx={{
+                        color: '#000',
+                        fontWeight: 500,
+                        lineHeight: 1.5,
+                        fontSize: '0.8rem',
+                        marginBottom: '2px'
+                      }}>
+                        The symbol of business integration
+                      </Typography>
                       <Typography variant="body2" sx={{
                         color: '#333',
                         fontWeight: 500,
@@ -542,16 +551,7 @@ useEffect(() => {
                       }}>
                         PRATHAM SYSTECH INDIA LTD.
                       </Typography>
-                      <Typography variant="body2" sx={{
-                        color: '#666',
-                        fontWeight: 500,
-                        lineHeight: 1.2,
-                        fontSize: '0.70rem',
-                        fontStyle: 'italic',
-                        marginBottom: '2px'
-                      }}>
-                        The symbol of business integration
-                      </Typography>
+
                       <Typography variant="body2" sx={{
                         color: '#333',
                         fontWeight: 600,
@@ -573,12 +573,12 @@ useEffect(() => {
                 {/* Role Selection */}
                 <Box sx={{ p: 0, bgcolor: '#ffffff', borderBottom: '1px solid #e0e0e0' }}>
                   <FormControl component="fieldset" fullWidth>
-                    <FormLabel
+                    {/* <FormLabel
                       component="legend"
                       sx={{ fontWeight: 'bold', color: '#333' }}
                     >
                       Select Your Role:
-                    </FormLabel>
+                    </FormLabel> */}
                     <RadioGroup
                       value={role}
                       onChange={(e) => handleRoleSelect(e.target.value)}
@@ -1016,7 +1016,7 @@ useEffect(() => {
                           sx={{
                             display: 'flex',
                             alignItems: 'center',
-                            p: 1.5,
+                            p: 1,
                             cursor: 'pointer',
                             bgcolor: role === r.value ? 'rgba(255, 255, 255, 0.3)' : 'rgba(255,255,255,0.1)',
                             border: role === r.value ? '1px solid rgba(255,255,255,0.5)' : '1px solid transparent',
@@ -1045,7 +1045,22 @@ useEffect(() => {
                     </Box>
                   </Box>
                   <Typography variant="caption" sx={{ opacity: 0.7, display: 'block', mt: 2 }}>
-                    © {currentYear} prasyst. All rights reserved.
+                    © 2006-{currentYear} prasyst. All rights reserved.
+                  </Typography>
+                  <Typography variant="body2" sx={{
+                    color: '#fff',
+                    lineHeight: 1.2,
+                    fontSize: '0.75rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}>
+                    <WhatsAppIcon sx={{
+                      color: '#25D366',
+                      fontSize: '0.9rem',
+                      marginRight: '4px'
+                    }} />
+                    8779163857
                   </Typography>
                 </Box>
                 <Box
@@ -1059,26 +1074,35 @@ useEffect(() => {
                 >
                   <Box textAlign="center" sx={{ mb: 1 }}>
                     <Image
-                      src="/images/logo.jpg"
+                      src="/images/P_IconLogo.png"
                       alt="Profile"
-                      width={250}
+                      width={200}
                       height={100}
                     />
                     <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mt: 1 }}>
-                      <Image
-                        src="/images/download.png"
+                      {/* <Image
+                        src="/images/FavIcon.png"
                         alt="Company Logo"
                         width={50}
                         height={50}
                         style={{ marginRight: '0px' }}
-                      />
+                      /> */}
                       <Box sx={{ textAlign: 'left' }}>
+                        <Typography variant="body2" sx={{
+                          color: '#000',
+                          fontWeight: 500,
+                          lineHeight: 1,
+                          fontSize: '0.82rem',
+                          marginBottom: '2px'
+                        }}>
+                          The symbol of business integration
+                        </Typography>
                         <Typography variant="body2" sx={{
                           color: '#333',
                           fontWeight: 500,
                           lineHeight: 1.2,
                           fontSize: '0.75rem',
-                          marginBottom: '2px'
+                          marginLeft: '-81px'
                         }}>
                           Powered By :-
                         </Typography>
@@ -1088,21 +1112,13 @@ useEffect(() => {
                           lineHeight: 1.1,
                           fontSize: '0.85rem',
                           marginBottom: '2px',
-                          transition: 'color 0.5s ease'
+                          transition: 'color 0.5s ease',
+                          marginTop: '-10px'
                         }}>
                           PRATHAM SYSTECH INDIA LTD.
                         </Typography>
-                        <Typography variant="body2" sx={{
-                          color: '#666',
-                          fontWeight: 500,
-                          lineHeight: 1.2,
-                          fontSize: '0.70rem',
-                          fontStyle: 'italic',
-                          marginBottom: '2px'
-                        }}>
-                          The symbol of business integration
-                        </Typography>
-                        <Typography variant="body2" sx={{
+
+                        {/* <Typography variant="body2" sx={{
                           color: '#333',
                           fontWeight: 600,
                           lineHeight: 1.2,
@@ -1116,7 +1132,7 @@ useEffect(() => {
                             marginRight: '4px'
                           }} />
                           8779163857
-                        </Typography>
+                        </Typography> */}
                       </Box>
                     </Box>
                   </Box>
@@ -1168,6 +1184,9 @@ useEffect(() => {
                                 borderRadius: 2,
                                 backgroundColor: '#f9f9f9',
                               },
+                              '& .MuiOutlinedInput-input': {
+                                padding: '12.5px 14px',
+                              },
                             }}
                           />
                           <TextField
@@ -1204,6 +1223,9 @@ useEffect(() => {
                                 borderRadius: 2,
                                 backgroundColor: '#f9f9f9',
                               },
+                              '& .MuiOutlinedInput-input': {
+                                padding: '12.5px 14px',
+                              },
                             }}
                           />
                         </>
@@ -1230,7 +1252,12 @@ useEffect(() => {
                             }}
                             helperText={mobileMessage}
                             error={mobileValid === 'invalid'}
-                            sx={{ mb: 0.5 }}
+                            sx={{
+                              mb: 1,
+                              '& .MuiOutlinedInput-input': {
+                                padding: '12.5px 14px',
+                              },
+                            }}
                           />
                           {/* {mobileValid === 'valid' && !isNewUser && ( */}
                           <TextField
@@ -1266,6 +1293,9 @@ useEffect(() => {
                               '& .MuiOutlinedInput-root': {
                                 borderRadius: 2,
                                 backgroundColor: '#f9f9f9',
+                              },
+                              '& .MuiOutlinedInput-input': {
+                                padding: '12.5px 14px',
                               },
                             }}
                           />
@@ -1311,7 +1341,10 @@ useEffect(() => {
                           '& .MuiOutlinedInput-root': {
                             borderRadius: 2,
                             backgroundColor: '#f9f9f9',
-                          }
+                          },
+                          '& .MuiOutlinedInput-input': {
+                            padding: '12.5px 14px',
+                          },
                         }}
                       />
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1, flexDirection: isMobile ? 'column' : 'row' }}>
@@ -1395,7 +1428,10 @@ useEffect(() => {
                       '& .MuiOutlinedInput-root': {
                         borderRadius: 2,
                         backgroundColor: '#f9f9f9',
-                      }
+                      },
+                      '& .MuiOutlinedInput-input': {
+                        padding: '12.5px 14px',
+                      },
                     }}
                   >
                     {years.map((year) => (
