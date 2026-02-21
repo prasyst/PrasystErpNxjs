@@ -2,12 +2,12 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
     Box, Grid, TextField, Typography, Button, Stack, FormControlLabel, Checkbox,
     Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions,
+    Autocomplete,
 } from '@mui/material';
 import { getFormMode } from '@/lib/helpers';
 import { useRouter } from 'next/navigation';
 import KeyboardArrowLeftIcon from "@mui/icons-material/KeyboardArrowLeft";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
-import debounce from 'lodash.debounce';
 import axiosInstance from '@/lib/axios';
 import { useSearchParams } from 'next/navigation';
 import CrudButton from '@/GlobalFunction/CrudButton';
@@ -43,6 +43,7 @@ const ProdSrMst = () => {
     const FCYR_KEY = localStorage.getItem('FCYR_KEY');
     const COBR_ID = localStorage.getItem('COBR_ID');
     const CO_ID = localStorage.getItem('CO_ID');
+    const [prod, setProd] = useState([]);
 
     const handleChangeStatus = (event) => {
         const updatedStatus = event.target.checked ? "1" : "0";
@@ -67,7 +68,6 @@ const ProdSrMst = () => {
             const { data: { STATUS, DATA, RESPONSESTATUSCODE, MESSAGE } } = response;
             if (STATUS === 0 && Array.isArray(DATA) && RESPONSESTATUSCODE == 1) {
                 const prodsrData = DATA[0];
-                console.log("prodsrData", prodsrData)
                 setForm({
                     FGPRD_KEY: prodsrData.FGPRD_KEY,
                     SERIES: prodsrData.SERIES,
@@ -119,6 +119,23 @@ const ProdSrMst = () => {
         setMode(FORM_MODE.read);
     }, [PRODSRMST_ID, fetchRetriveData]);
 
+    useEffect(() => {
+        const fetchProduct = async () => {
+            try {
+                const response = await axiosInstance.post('Product/GetFgPrdDrp', {
+                    FLAG: ""
+                })
+                if (response.data.STATUS === 0 && Array.isArray(response.data.DATA)) {
+                    setProd(response.data.DATA);
+                } else {
+                    setProd([]);
+                }
+            } catch (error) {
+                toast.error("Error while fetching product.");
+            }
+        };
+        fetchProduct();
+    }, []);
 
     const handleSubmit = async () => {
         try {
@@ -136,13 +153,13 @@ const ProdSrMst = () => {
                 url = `PRODSRMST/InsertPRODSRMST?UserName=${(UserName)}&strCobrid=${COBR_ID}`;
             }
             const payload = {
-                "PRODSRMST_ID": form.PRODSRMST_ID || 0,
-                "SERIES": form.SERIES,
-                "MRP": form.MRP || 0.00,
-                "Wsp": form.WSP || 0.00,
-                "remk": form.REMK,
-                "FGPRD_KEY": form.FGPRD_KEY,
-                "STATUS": form.Status ? "1" : "0",
+                PRODSRMST_ID: form.PRODSRMST_ID || 0,
+                SERIES: form.SERIES,
+                MRP: form.MRP || 0.00,
+                Wsp: form.WSP || 0.00,
+                remk: form.REMK,
+                FGPRD_KEY: form.FGPRD_KEY,
+                STATUS: form.Status ? "1" : "0",
             };
 
             let response;
@@ -316,13 +333,14 @@ const ProdSrMst = () => {
         '& .MuiInputBase-root': {
             height: 40,
             fontSize: '14px',
+            backgroundColor: '#fff',
         },
         '& .MuiInputLabel-root': {
             fontSize: '14px',
             top: '-8px',
         },
         '& .MuiFilledInput-root': {
-            backgroundColor: '#fafafa',
+            backgroundColor: '#fffff',
             border: '1px solid #e0e0e0',
             borderRadius: '6px',
             overflow: 'hidden',
@@ -349,13 +367,14 @@ const ProdSrMst = () => {
         '& .MuiInputBase-root': {
             height: 40,
             fontSize: '14px',
+            backgroundColor: '#fff'
         },
         '& .MuiInputLabel-root': {
             fontSize: '14px',
             top: '-4px',
         },
         '& .MuiFilledInput-root': {
-            backgroundColor: '#fafafa',
+            backgroundColor: '#fff',
             border: '1px solid #e0e0e0',
             borderRadius: '6px',
             overflow: 'hidden',
@@ -400,13 +419,12 @@ const ProdSrMst = () => {
         >
             <ToastContainer />
 
-            <Grid container
+            <Grid container spacing={2}
                 sx={{
                     display: 'flex',
                     flexDirection: 'column',
                     marginInline: { xs: '5%', sm: '5%', md: '5%', lg: '15%', xl: '5%' },
                 }}
-                spacing={2}
             >
                 <Grid>
                     <Typography align="center" variant="h6">
@@ -414,16 +432,15 @@ const ProdSrMst = () => {
                     </Typography>
                 </Grid>
 
-                <Grid container justifyContent="space-between"
+                <Grid container spacing={2} justifyContent="space-between"
                     sx={{ marginInline: { xs: '5%', sm: '5%', md: '5%', lg: '0%', xl: '0%' } }}
-                    spacing={2}
                 >
                     <Grid>
                         <Button
                             variant="contained"
                             size="small"
                             sx={{ background: 'linear-gradient(290deg, #d4d4d4, #d4d4d4) !important' }}
-                            disabled={mode !== 'view'}
+                            // disabled={mode !== 'view'}
                             onClick={handlePrevious}
                         >
                             <KeyboardArrowLeftIcon />
@@ -432,7 +449,7 @@ const ProdSrMst = () => {
                             variant="contained"
                             size="small"
                             sx={{ background: 'linear-gradient(290deg, #b9d0e9, #e9f2fa) !important', ml: 1 }}
-                            disabled={mode !== 'view'}
+                            // disabled={mode !== 'view'}
                             onClick={handleNext}
                         >
                             <NavigateNextIcon />
@@ -444,7 +461,7 @@ const ProdSrMst = () => {
                             placeholder="Search By Code"
                             variant="outlined"
                             sx={{
-                                backgroundColor: '#e0f7fa',
+                                backgroundColor: '#f1f7f8',
                                 '& .MuiInputBase-input': {
                                     paddingBlock: { xs: '8px', md: '4px' },
                                     paddingLeft: { xs: '8px', md: '8px' },
@@ -542,15 +559,23 @@ const ProdSrMst = () => {
                     </Grid>
 
                     <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                        <CustomAutocomplete
+                        <Autocomplete
                             id="product-key-autocomplete"
-                            disabled={true}
-                            label="Product"
-                            name="FGPRD_KEY"
-                            value={form.FGPRD_KEY}
-                            onChange={(value) => setForm({ ...form, FGPRD_KEY: value })}
+                            options={prod}
+                            getOptionLabel={(option) => option.FGPRD_NAME}
+                            value={prod.find((item) => item.FGPRD_KEY === form.FGPRD_KEY) || null}
+                            onChange={(event, value) => {
+                                setForm({
+                                    ...form,
+                                    FGPRD_KEY: value ? value.FGPRD_KEY : '',
+                                });
+                            }}
+                            renderInput={(params) => (
+                                <TextField {...params} label="Product" name="FGPRD_KEY" fullWidth />
+                            )}
                             className="custom-textfield"
                             sx={DropInputSx}
+                            disabled={mode === FORM_MODE.read}
                         />
                     </Grid>
 
@@ -567,7 +592,7 @@ const ProdSrMst = () => {
                             inputProps={{
                                 style: {
                                     padding: '6px 0px',
-                                    marginTop: '10px',
+                                    marginTop: '12px',
                                     fontSize: '12px',
                                 },
                             }}
@@ -583,7 +608,7 @@ const ProdSrMst = () => {
                                     onChange={handleChangeStatus}
                                     sx={{
                                         '&.Mui-checked': {
-                                            color: '#39ace2',
+                                            color: '#635bff',
                                         }
                                     }}
                                 />
@@ -628,7 +653,6 @@ const ProdSrMst = () => {
                     )}
                     {(mode === FORM_MODE.edit || mode === FORM_MODE.add) && (
                         <>
-
                             <Button variant="contained"
                                 sx={{
                                     backgroundColor: '#635bff',
