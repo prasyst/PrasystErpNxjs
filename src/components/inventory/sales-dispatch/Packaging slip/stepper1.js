@@ -465,7 +465,7 @@ const handleSeriesChange = async (e) => {
         PARTY_KEY: partyKey
       });
 
-      console.log('Branch API Response:', response.data);
+     
 
       if (response.data.STATUS === 0 && Array.isArray(response.data.DATA)) {
         const branches = response.data.DATA.map(item => item.PLACE || '');
@@ -494,7 +494,7 @@ const handleSeriesChange = async (e) => {
             SHP_PARTYDTL_ID: firstBranchId
           }));
 
-          console.log('Auto-selected branch for new order:', firstBranch, 'with ID:', firstBranchId);
+         
         }
 
         // NEW: If we have a specific branch ID to select (from API response), find and select it
@@ -512,7 +512,7 @@ const handleSeriesChange = async (e) => {
               SHP_PARTYDTL_ID: branchId
             }));
 
-            console.log('Forced branch selection:', branchName, 'with ID:', branchId);
+            
           }
         }
       } else {
@@ -872,7 +872,7 @@ const handleSeriesChange = async (e) => {
   };
 
   const handleAutoCompleteChange = (name, value) => {
-    console.log(`AutoComplete Change - Field: ${name}, Value: ${value}`);
+    
 
     setFormData(prev => ({
       ...prev,
@@ -882,7 +882,7 @@ const handleSeriesChange = async (e) => {
     // If party is selected, fetch branches, auto-select shipping party, and fetch party details
     if (name === "Party" && value && partyMapping[value]) {
       const partyKey = partyMapping[value];
-      console.log(`Party selected: ${value}, Party Key: ${partyKey}`);
+      
 
 
 
@@ -896,30 +896,29 @@ const handleSeriesChange = async (e) => {
         ...prev,
         PARTY_KEY: partyKey,
         Party: value,
-        // Only auto-populate shipping party if it's empty or same as current party
+      
         SHIPPING_PARTY: prev.SHIPPING_PARTY === prev.Party ? value : prev.SHIPPING_PARTY,
-        // Don't auto-set shipping party key if shipping party is different
+    
         SHP_PARTY_KEY: prev.SHIPPING_PARTY === prev.Party ? partyKey : prev.SHP_PARTY_KEY,
-        // Branch will be auto-selected in fetchPartyDetails
+    
       }));
     }
 
-    // If branch is selected, only auto-select shipping place if it's currently empty or same as branch
-    // If branch is selected, auto-update shipping place
+   
     if (name === "Branch" && value) {
       const branchId = branchMapping[value];
-      console.log(`Branch selected: ${value}, Branch ID: ${branchId}`);
+     
 
       setFormData(prev => ({
         ...prev,
         PARTYDTL_ID: branchId,
         Branch: value,
-        // AUTO-UPDATE: Always update shipping place when branch changes
+      
         SHIPPING_PLACE: value,
         SHP_PARTYDTL_ID: branchId
       }));
 
-      // NEW: Fetch GST type when branch is selected and GST is enabled
+   
       if (formData.GST_APPL === "Y" && branchId) {
         const shipPartyDtlId = formData.SHP_PARTYDTL_ID || branchId;
         fetchGSTType(branchId, shipPartyDtlId);
@@ -929,7 +928,7 @@ const handleSeriesChange = async (e) => {
     // Handle shipping party selection separately
     if (name === "SHIPPING_PARTY" && value) {
       const shippingPartyKey = partyMapping[value];
-      console.log(`Shipping Party selected: ${value}, Key: ${shippingPartyKey}`);
+      
 
       if (shippingPartyKey) {
         setFormData(prev => ({
@@ -949,7 +948,7 @@ const handleSeriesChange = async (e) => {
     // Handle shipping place selection
     if (name === "SHIPPING_PLACE" && value) {
       const shippingPlaceId = branchMapping[value];
-      console.log(`Shipping Place selected: ${value}, ID: ${shippingPlaceId}`);
+     
 
       if (shippingPlaceId) {
         setFormData(prev => ({
@@ -1029,7 +1028,7 @@ const handleSeriesChange = async (e) => {
         PARTY_KEY: partyKey
       });
 
-      console.log('Shipping Party Branches API Response:', response.data);
+    
 
       if (response.data.STATUS === 0 && Array.isArray(response.data.DATA)) {
         const branches = response.data.DATA.map(item => item.PLACE || '');

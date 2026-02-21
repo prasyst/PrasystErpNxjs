@@ -265,6 +265,10 @@ const fetchOrderDetails = async (packKey) => {
   }
 };
 
+useEffect(() => {
+  fetchAllDropdownData();
+}, []);
+
 // Update populateFormData to handle BARCD_FLG and item consolidation
 const populateFormData = async (packData) => {
   try {
@@ -1336,7 +1340,11 @@ const handleAdd = async () => {
       PKTS: "10"
     };
 
-    const prefix = await getSeriesPrefix();
+    // ✅ CHANGE 1: Series prefix + dropdown data PARALLEL fetch करो
+    const [prefix] = await Promise.all([
+      getSeriesPrefix(),
+      Object.keys(partyMapping).length === 0 ? fetchAllDropdownData() : Promise.resolve(true)
+    ]);
 
     if (prefix) {
       const orderData = await getOrderNumber(prefix);
@@ -1355,15 +1363,14 @@ const handleAdd = async () => {
         console.log('Generated PACK_KEY:', correctPackKey);
 
         setFormData(formDataWithOrderNo);
-
         setMode('add');
         setIsFormDisabled(false);
 
-        await fetchAllDropdownData();
-
+        // ✅ CHANGE 2: await fetchAllDropdownData() हटाया - already loaded है mount पर
+        // अब सिर्फ party check करो
         if (Object.keys(partyMapping).length > 0) {
-          const firstPartyName = Object.keys(partyMapping)[0];
-          const firstPartyKey = partyMapping[firstPartyName];
+          const firstPartyKey = Object.keys(partyMapping)[0];
+          const firstPartyName = partyMapping[firstPartyKey];
 
           console.log('Auto-selecting first party:', firstPartyName, 'Key:', firstPartyKey);
 
@@ -1376,8 +1383,11 @@ const handleAdd = async () => {
               SHP_PARTY_KEY: firstPartyKey
             }));
 
-            await fetchPartyDetails(firstPartyKey);
-            await fetchPartyDetailsForAutoFill(firstPartyKey);
+            // ✅ CHANGE 3: Branch fetch और party auto-fill PARALLEL करो
+            await Promise.all([
+              fetchPartyDetails(firstPartyKey),
+              fetchPartyDetailsForAutoFill(firstPartyKey)
+            ]);
           }
         }
       }
@@ -1728,176 +1738,104 @@ const handleDelete = async () => {
     }
   };
 
-  // Update fetchAllDropdownData to return a promise and ensure proper sequencing
-  const fetchAllDropdownData = async () => {
-    try {
-      console.log('Starting to fetch all dropdown data...');
-      const partyResponse = await axiosInstance.post("Party/GetParty_By_Name", { PARTY_NAME: "" });
 
-      // Process party data
-      if (partyResponse.data.STATUS === 0 && Array.isArray(partyResponse.data.DATA)) {
-        const partyMap = {};
-        const partyNames = [];
+const fetchAllDropdownData = async () => {
+  try {
+    // ✅ सभी APIs एक साथ parallel call करो (party को दो बार नहीं)
+    const [
+      partyResponse,
+      orderTypes,
+      brokerResponse,
+      salespersonResponse,
+      consigneeResponse,
+      seasonResponse,
+      transporterResponse,
+      merchandiserResponse
+    ] = await Promise.all([
+      axiosInstance.post("Party/GetParty_By_Name", { PARTY_NAME: "" }),
+      fetchOrderTypeData(),
+      axiosInstance.post('/BROKER/GetBrokerDrp', { "PARTY_KEY": "", "FLAG": "Drp", "BROKER_KEY": "", "PageNumber": 1, "PageSize": 100, "SearchText": "" }),
+      axiosInstance.post('/SALEPERSON/GetSALEPERSONDrp', { "PARTY_KEY": "", "FLAG": "Drp", "SALEPERSON_KEY": "", "PageNumber": 1, "PageSize": 100, "SearchText": "" }),
+      axiosInstance.post('/DISTBTR/GetDISTBTRDrp', { "PARTY_KEY": "", "FLAG": "Drp", "DISTBTR_KEY": "", "PageNumber": 1, "PageSize": 100, "SearchText": "" }),
+      axiosInstance.post('/SEASON/GetSEASONDrp', { "FLAG": "P", "TBLNAME": "SEASON", "FLDNAME": "SEASON_KEY", "ID": "", "ORDERBYFLD": "", "CWHAER": "", "CO_ID": "" }),
+      axiosInstance.post('/TRSP/GetTRSPDrp', { "PARTY_KEY": "", "FLAG": "Drp", "TRSP_KEY": "", "PageNumber": 1, "PageSize": 100, "SearchText": "" }),
+      axiosInstance.post('/USERS/GetUserLoginDrp', { "FLAG": "MECH" })
+    ]);
 
-        partyResponse.data.DATA.forEach(item => {
-          if (item.PARTY_NAME && item.PARTY_KEY) {
-            partyMap[item.PARTY_KEY] = item.PARTY_NAME;
-            partyNames.push(item.PARTY_NAME);
-          }
-        });
-
-        setPartyMapping(partyMap);
-        // Store party names in state or directly use from mapping
-        // You might need to pass partyNames to Stepper1 or store in state
-      }
-
-      // Use Promise.all to fetch all data in parallel but wait for all to complete
-      const [
-        orderTypes,
-
-        brokerResponse,
-        salespersonResponse,
-        consigneeResponse,
-        seasonResponse,
-        transporterResponse,
-        merchandiserResponse
-      ] = await Promise.all([
-        fetchOrderTypeData(),
-        axiosInstance.post("Party/GetParty_By_Name", { PARTY_NAME: "" }),
-        axiosInstance.post('/BROKER/GetBrokerDrp', {
-          "PARTY_KEY": "",
-          "FLAG": "Drp",
-          "BROKER_KEY": "",
-          "PageNumber": 1,
-          "PageSize": 100,
-          "SearchText": ""
-        }),
-        axiosInstance.post('/SALEPERSON/GetSALEPERSONDrp', {
-          "PARTY_KEY": "",
-          "FLAG": "Drp",
-          "SALEPERSON_KEY": "",
-          "PageNumber": 1,
-          "PageSize": 100,
-          "SearchText": ""
-        }),
-        axiosInstance.post('/DISTBTR/GetDISTBTRDrp', {
-          "PARTY_KEY": "",
-          "FLAG": "Drp",
-          "DISTBTR_KEY": "",
-          "PageNumber": 1,
-          "PageSize": 100,
-          "SearchText": ""
-        }),
-        axiosInstance.post('/SEASON/GetSEASONDrp', {
-          "FLAG": "P",
-          "TBLNAME": "SEASON",
-          "FLDNAME": "SEASON_KEY",
-          "ID": "",
-          "ORDERBYFLD": "",
-          "CWHAER": "",
-          "CO_ID": ""
-        }),
-        axiosInstance.post('/TRSP/GetTRSPDrp', {
-          "PARTY_KEY": "",
-          "FLAG": "Drp",
-          "TRSP_KEY": "",
-          "PageNumber": 1,
-          "PageSize": 100,
-          "SearchText": ""
-        }),
-        axiosInstance.post('/USERS/GetUserLoginDrp', {
-          "FLAG": "MECH"
-        })
-      ]);
-
-      // Process party data
-      if (partyResponse.data.STATUS === 0 && Array.isArray(partyResponse.data.DATA)) {
-        const partyMap = {};
-        partyResponse.data.DATA.forEach(item => {
-          if (item.PARTY_NAME && item.PARTY_KEY) {
-            partyMap[item.PARTY_KEY] = item.PARTY_NAME;
-          }
-        });
-        setPartyMapping(partyMap);
-      }
-
-      // Process broker data
-      if (brokerResponse.data.DATA && Array.isArray(brokerResponse.data.DATA)) {
-        const brokerMap = {};
-        brokerResponse.data.DATA.forEach(item => {
-          if (item.BROKER_NAME && item.BROKER_KEY) {
-            brokerMap[item.BROKER_KEY] = item.BROKER_NAME;
-          }
-        });
-        setBrokerMapping(brokerMap);
-        setBroker1Mapping(brokerMap);
-      }
-
-      // Process salesperson data
-      if (salespersonResponse.data.DATA && Array.isArray(salespersonResponse.data.DATA)) {
-        const salespersonMap = {};
-        salespersonResponse.data.DATA.forEach(item => {
-          if (item.SALEPERSON_NAME && item.SALEPERSON_KEY) {
-            salespersonMap[item.SALEPERSON_KEY] = item.SALEPERSON_NAME;
-          }
-        });
-        setSalesperson1Mapping(salespersonMap);
-        setSalesperson2Mapping(salespersonMap);
-      }
-
-      // Process consignee data
-      if (consigneeResponse.data.DATA && Array.isArray(consigneeResponse.data.DATA)) {
-        const consigneeMap = {};
-        consigneeResponse.data.DATA.forEach(item => {
-          if (item.DISTBTR_NAME && item.DISTBTR_KEY) {
-            consigneeMap[item.DISTBTR_KEY] = item.DISTBTR_NAME;
-          }
-        });
-        setConsigneeMapping(consigneeMap);
-      }
-
-      // Process season data
-      if (seasonResponse.data.DATA && Array.isArray(seasonResponse.data.DATA)) {
-        const seasonMap = {};
-        seasonResponse.data.DATA.forEach(item => {
-          if (item.SEASON_NAME && item.SEASON_KEY) {
-            seasonMap[item.SEASON_KEY] = item.SEASON_NAME;
-          }
-        });
-        setSeasonMapping(seasonMap);
-      }
-
-      // Process transporter data
-      if (transporterResponse.data.DATA && Array.isArray(transporterResponse.data.DATA)) {
-        const transporterMap = {};
-        transporterResponse.data.DATA.forEach(item => {
-          if (item.TRSP_NAME && item.TRSP_KEY) {
-            transporterMap[item.TRSP_KEY] = item.TRSP_NAME;
-          }
-        });
-        setTransporterMapping(transporterMap);
-      }
-
-      // Process merchandiser data
-      if (merchandiserResponse.data.DATA && Array.isArray(merchandiserResponse.data.DATA)) {
-        const merchandiserMap = {};
-        merchandiserResponse.data.DATA.forEach(item => {
-          if (item.USER_NAME && item.USER_ID) {
-            merchandiserMap[item.USER_NAME] = item.USER_ID;
-          }
-        });
-        setMerchandiserMapping(merchandiserMap);
-      }
-
-      console.log('All dropdown data fetched successfully');
-      return true;
-
-    } catch (error) {
-      console.error('Error fetching dropdown data:', error);
-      return false;
+    // Party mapping
+    if (partyResponse.data.STATUS === 0 && Array.isArray(partyResponse.data.DATA)) {
+      const partyMap = {};
+      partyResponse.data.DATA.forEach(item => {
+        if (item.PARTY_NAME && item.PARTY_KEY) {
+          partyMap[item.PARTY_KEY] = item.PARTY_NAME;
+        }
+      });
+      setPartyMapping(partyMap);
     }
-  };
 
+    // Broker mapping
+    if (brokerResponse.data.DATA && Array.isArray(brokerResponse.data.DATA)) {
+      const brokerMap = {};
+      brokerResponse.data.DATA.forEach(item => {
+        if (item.BROKER_NAME && item.BROKER_KEY) brokerMap[item.BROKER_KEY] = item.BROKER_NAME;
+      });
+      setBrokerMapping(brokerMap);
+      setBroker1Mapping(brokerMap);
+    }
+
+    // Salesperson mapping
+    if (salespersonResponse.data.DATA && Array.isArray(salespersonResponse.data.DATA)) {
+      const salespersonMap = {};
+      salespersonResponse.data.DATA.forEach(item => {
+        if (item.SALEPERSON_NAME && item.SALEPERSON_KEY) salespersonMap[item.SALEPERSON_KEY] = item.SALEPERSON_NAME;
+      });
+      setSalesperson1Mapping(salespersonMap);
+      setSalesperson2Mapping(salespersonMap);
+    }
+
+    // Consignee mapping
+    if (consigneeResponse.data.DATA && Array.isArray(consigneeResponse.data.DATA)) {
+      const consigneeMap = {};
+      consigneeResponse.data.DATA.forEach(item => {
+        if (item.DISTBTR_NAME && item.DISTBTR_KEY) consigneeMap[item.DISTBTR_KEY] = item.DISTBTR_NAME;
+      });
+      setConsigneeMapping(consigneeMap);
+    }
+
+    // Season mapping
+    if (seasonResponse.data.DATA && Array.isArray(seasonResponse.data.DATA)) {
+      const seasonMap = {};
+      seasonResponse.data.DATA.forEach(item => {
+        if (item.SEASON_NAME && item.SEASON_KEY) seasonMap[item.SEASON_KEY] = item.SEASON_NAME;
+      });
+      setSeasonMapping(seasonMap);
+    }
+
+    // Transporter mapping
+    if (transporterResponse.data.DATA && Array.isArray(transporterResponse.data.DATA)) {
+      const transporterMap = {};
+      transporterResponse.data.DATA.forEach(item => {
+        if (item.TRSP_NAME && item.TRSP_KEY) transporterMap[item.TRSP_KEY] = item.TRSP_NAME;
+      });
+      setTransporterMapping(transporterMap);
+    }
+
+    // Merchandiser mapping
+    if (merchandiserResponse.data.DATA && Array.isArray(merchandiserResponse.data.DATA)) {
+      const merchandiserMap = {};
+      merchandiserResponse.data.DATA.forEach(item => {
+        if (item.USER_NAME && item.USER_ID) merchandiserMap[item.USER_NAME] = item.USER_ID;
+      });
+      setMerchandiserMapping(merchandiserMap);
+    }
+
+    console.log('All dropdown data fetched successfully');
+    return true;
+  } catch (error) {
+    console.error('Error fetching dropdown data:', error);
+    return false;
+  }
+};
   // Update getOrderTypeNameByKey to use API data
   const getOrderTypeNameByKey = async (ordbkType) => {
     if (!ordbkType) return "";

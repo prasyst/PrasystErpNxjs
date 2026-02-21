@@ -69,10 +69,7 @@ const SalesOrderOffline = () => {
         COBR_ID: storedCOBR_ID
       });
       
-      console.log('SalesOrderOffline - Loaded company config from localStorage:', {
-        CO_ID: storedCO_ID,
-        COBR_ID: storedCOBR_ID
-      });
+      
     }
   }, []);
   
@@ -215,7 +212,7 @@ const SalesOrderOffline = () => {
 
   useEffect(() => {
     if (ordbkKey) {
-      console.log("Got ORDBK_KEY from URL:", ordbkKey);
+    
       fetchOrderDetails(ordbkKey);
     }
   }, [ordbkKey]);
@@ -231,10 +228,10 @@ const SalesOrderOffline = () => {
         FLAG: "R"
       };
 
-      console.log('Fetching order details with payload:', payload);
+    
 
       const response = await axiosInstance.post('/ORDBK/RetriveOrder', payload);
-      console.log('API Response:', response.data);
+    
 
       if (response.data.RESPONSESTATUSCODE === 1 && response.data.DATA.ORDBKList.length > 0) {
         const orderData = response.data.DATA.ORDBKList[0];
@@ -255,7 +252,7 @@ const SalesOrderOffline = () => {
 // Function to populate form data from API response - UPDATED for shade keys
 const populateFormData = async (orderData) => {
   try {
-    console.log('Order Data received:', orderData);
+  
     
     // FIRST: Wait for all dropdown data to be fetched
     await fetchAllDropdownData();
@@ -354,8 +351,7 @@ const populateFormData = async (orderData) => {
       };
     }) : [];
 
-    console.log('Processed ORDBKSTYLIST with shade keys:', processedOrdbkStyleList.length, 'items');
-    console.log('Sample item shade key:', processedOrdbkStyleList[0]?.FGSHADE_KEY);
+
 
     const formattedData = {
       apiResponseData: {
@@ -435,7 +431,7 @@ const populateFormData = async (orderData) => {
       DISCOUNT: orderData.ORDBK_DISC_AMT || 0
     };
 
-    console.log('Populating form with data including shade keys');
+ 
     
     // Set form data
     setFormData(formattedData);
@@ -465,8 +461,7 @@ const prepareSubmitPayload = () => {
   const userId = localStorage.getItem('USER_ID') || '1';
   const userName = localStorage.getItem('USER_NAME') || 'Admin';
   
-  console.log('Mode:', mode);
-  console.log('Form Data API Response:', formData.apiResponseData);
+
 
   const getStatusValue = (status) => {
     const statusMapping = {
@@ -494,7 +489,7 @@ const prepareSubmitPayload = () => {
   // Get ORDBKSTYLIST from formData
   const ordbkStyleList = formData.apiResponseData?.ORDBKSTYLIST || [];
   
-  console.log('ORDBKSTYLIST from formData:', ordbkStyleList);
+
 
   // Function to generate FGITM_KEY dynamically
   const generateFgItemKey = (item) => {
@@ -530,49 +525,43 @@ const prepareSubmitPayload = () => {
       fgItemKey += cleanFgptnKey;
     }
     
-    console.log('Generated FGITM_KEY:', fgItemKey, 'from:', {
-      FGPRD_KEY: cleanFgprdKey,
-      FGSTYLE_ID: cleanFgstyleId,
-      FGTYPE_KEY: cleanFgtypeKey,
-      FGSHADE_KEY: cleanFgshadeKey,
-      FGPTN_KEY: cleanFgptnKey
-    });
+
     
     return fgItemKey || "";
   };
 
   // IMPORTANT: Map API response codes to keys
   const mapApiCodesToKeys = (item) => {
-    console.log('Mapping API codes to keys for item:', item);
+ 
     
     // Initialize with existing keys
     const mappedItem = { ...item };
     
     // Map PROD_CODE to FGPRD_KEY if not already present
     if (!mappedItem.FGPRD_KEY && item.PROD_CODE) {
-      console.log('Mapping PROD_CODE to FGPRD_KEY:', item.PROD_CODE);
+    
       mappedItem.FGPRD_KEY = item.PROD_CODE;
     }
     
     // Map SHADE_CODE to FGSHADE_KEY if not already present
     if (!mappedItem.FGSHADE_KEY && item.SHADE_CODE) {
-      console.log('Mapping SHADE_CODE to FGSHADE_KEY:', item.SHADE_CODE);
+
       mappedItem.FGSHADE_KEY = item.SHADE_CODE;
     }
     
     // Map PTN_CODE to FGPTN_KEY if not already present
     if (!mappedItem.FGPTN_KEY && item.PTN_CODE) {
-      console.log('Mapping PTN_CODE to FGPTN_KEY:', item.PTN_CODE);
+     
       mappedItem.FGPTN_KEY = item.PTN_CODE;
     }
     
     // Map TYPE_CODE to FGTYPE_KEY if not already present
     if (!mappedItem.FGTYPE_KEY && item.TYPE_CODE) {
-      console.log('Mapping TYPE_CODE to FGTYPE_KEY:', item.TYPE_CODE);
+     
       mappedItem.FGTYPE_KEY = item.TYPE_CODE;
     }
     
-    console.log('Mapped item:', mappedItem);
+    
     return mappedItem;
   };
 
@@ -609,14 +598,7 @@ const prepareSubmitPayload = () => {
     const fgshadeKey = mappedItem.FGSHADE_KEY || "";
     const fgptnKey = mappedItem.FGPTN_KEY || "";
     
-    console.log('Extracted keys for item:', {
-      FGPRD_KEY: fgprdKey,
-      FGSTYLE_ID: fgstyleId,
-      FGTYPE_KEY: fgtypeKey,
-      FGSHADE_KEY: fgshadeKey,
-      FGPTN_KEY: fgptnKey,
-      ORDBKSTY_ID: mappedItem.ORDBKSTY_ID
-    });
+
 
     // Generate FGITM_KEY dynamically
     const fgItemKey = generateFgItemKey({
@@ -710,13 +692,6 @@ const prepareSubmitPayload = () => {
     };
   });
 
-  console.log('Transformed ORDBKSTYLIST with keys:', transformedOrdbkStyleList.map(item => ({
-    ORDBKSTY_ID: item.ORDBKSTY_ID,
-    DBFLAG: item.DBFLAG,
-    FGPRD_KEY: item.FGPRD_KEY,
-    FGSHADE_KEY: item.FGSHADE_KEY,
-    FGITM_KEY: item.FGITM_KEY
-  })));
 
   // Rest of the function remains the same for ORDBKTERMLIST and ORDBKGSTLIST
   // Get ORDBKTERMLIST from formData with proper DBFLAG
@@ -864,9 +839,6 @@ const prepareSubmitPayload = () => {
     basePayload.UPDATED_DT = currentDate;
   }
 
-  console.log('Final Payload for', mode === 'add' ? 'INSERT' : 'UPDATE');
-  console.log('Main DBFLAG:', mainDbFlag);
-  console.log('ORDBKSTYLIST items count:', transformedOrdbkStyleList.length);
   
   return basePayload;
 };
@@ -892,10 +864,10 @@ const handlePrevClick = async () => {
       FLAG: "N" 
     };
 
-    console.log('Fetching previous order with payload:', payload);
+   
 
     const response = await axiosInstance.post('/ORDBK/RetriveOrder', payload);
-    console.log('Previous Order API Response:', response.data);
+ 
 
     if (response.data.RESPONSESTATUSCODE === 1 && response.data.DATA.ORDBKList.length > 0) {
       const orderData = response.data.DATA.ORDBKList[0];
@@ -928,10 +900,10 @@ const handleNextClick = async () => {
       FLAG: "P"
     };
 
-    console.log('Fetching next order with payload:', payload);
+  
 
     const response = await axiosInstance.post('/ORDBK/RetriveOrder', payload);
-    console.log('Next Order API Response:', response.data);
+    
 
     if (response.data.RESPONSESTATUSCODE === 1 && response.data.DATA.ORDBKList.length > 0) {
       const orderData = response.data.DATA.ORDBKList[0];
@@ -987,11 +959,11 @@ const handleNextClick = async () => {
     const response = await axiosInstance.post("Party/GetPartyDtlDrp", {
       PARTYDTL_ID: branchId
     });
-    console.log('Branch by ID response for ID:', branchId, response.data);
+  
     
     if (response.data.STATUS === 0 && Array.isArray(response.data.DATA)) {
       const branch = response.data.DATA.find(item => item.PARTYDTL_ID === branchId);
-      console.log('Found branch:', branch);
+
       return branch ? branch.PLACE : "";
     }
     return "";
@@ -1183,7 +1155,7 @@ const handleNextClick = async () => {
       };
 
       const response = await axiosInstance.post('/GetSeriesSettings/GetSeriesLastNewKey', payload);
-      console.log('Series Prefix Response:', response.data);
+     
 
       if (response.data.DATA && response.data.DATA.length > 0) {
         return response.data.DATA[0].CPREFIX;
@@ -1243,10 +1215,10 @@ const handleNextClick = async () => {
       
       const payload = prepareSubmitPayload();
       
-      console.log('Submitting order with payload:', payload);
+    
       
       const response = await axiosInstance.post(`/ORDBK/ApiMangeOrdbk?UserName=${userName}&strCobrid=${strCobrid}`, payload);
-      console.log('Submit API Response:', response.data);
+    
       
       if (response.data.RESPONSESTATUSCODE === 1) {
         showSnackbar("Order submitted successfully!");
@@ -1284,7 +1256,7 @@ const handleNextClick = async () => {
       };
 
       const response = await axiosInstance.post('/GetSeriesSettings/GetSeriesLastNewKey', payload);
-      console.log('Order Number Response:', response.data);
+   
 
       if (response.data.DATA && response.data.DATA.length > 0) {
         return {
@@ -1312,7 +1284,7 @@ const fetchPartyDetails = async (partyKey, forceBranchId = null) => {
       PARTY_KEY: partyKey
     });
     
-    console.log('Branch API Response:', response.data);
+   
     
     if (response.data.STATUS === 0 && Array.isArray(response.data.DATA)) {
       const branches = response.data.DATA.map(item => item.PLACE || '');
@@ -1325,7 +1297,7 @@ const fetchPartyDetails = async (partyKey, forceBranchId = null) => {
         }
       });
       setBranchMapping(mapping);
-      console.log('Branch mapping set with', Object.keys(mapping).length, 'branches');
+    
     }
   } catch (error) {
     console.error("Error fetching party details:", error);
@@ -1460,10 +1432,10 @@ const handleDelete = async () => {
       "ORDBK_KEY": formData.ORDBK_KEY
     };
 
-    console.log('Deleting order with payload:', payload);
+  
 
     const response = await axiosInstance.post('/ORDBK/DELETE_ORDBK', payload);
-    console.log('Delete API Response:', response.data);
+    
 
     if (response.data.RESPONSESTATUSCODE === 1) {
       showSnackbar('Order deleted successfully!', 'success');
@@ -1604,7 +1576,7 @@ const handleDelete = async () => {
       };
 
       const response = await axiosInstance.post('/ORDBK/GetOrdbkDrp', payload);
-      console.log('Order Type API Response:', response.data);
+   
 
       if (response.data.DATA && Array.isArray(response.data.DATA)) {
         const orderTypes = response.data.DATA.map(item => item.ORDBK_TYPE_NM || '');
@@ -1637,7 +1609,7 @@ const handleDelete = async () => {
       };
 
       const response = await axiosInstance.post('/Party/GetParty', payload);
-      console.log('Party Details API Response:', response.data);
+     
 
       if (response.data.DATA && Array.isArray(response.data.DATA) && response.data.DATA.length > 0) {
         const partyData = response.data.DATA[0];
@@ -1820,7 +1792,7 @@ const fetchAllDropdownData = async () => {
       setMerchandiserMapping(merchandiserMap);
     }
 
-    console.log('All dropdown data fetched successfully');
+  
     return true;
   } catch (error) {
     console.error('Error fetching dropdown data:', error);

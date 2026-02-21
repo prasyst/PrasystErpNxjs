@@ -507,7 +507,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, compa
       };
 
       const response = await axiosInstance.post('/Fgshade/GetFgshadedrp', payload);
-      console.log('Shades API Response for FGSTYLE_ID:', fgstyleId, response.data);
+ 
 
       if (response.data.DATA && Array.isArray(response.data.DATA)) {
         const shades = response.data.DATA.map(item => ({
@@ -698,10 +698,10 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, compa
         "FCYR_KEY": "25"
       };
 
-      console.log('Auto-fetching STYCATRT_ID with payload:', stycatrtPayload);
+     
 
       const stycatrtResponse = await axiosInstance.post('/STYSIZE/AddSizeDetail', stycatrtPayload);
-      console.log('Auto STYCATRT_ID Response:', stycatrtResponse.data);
+      
 
       let stycatrtId = 0;
       if (stycatrtResponse.data.DATA && stycatrtResponse.data.DATA.length > 0) {
@@ -723,7 +723,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, compa
         "FLAG": ""
       };
 
-      console.log('Auto-fetching size details with payload:', sizeDetailsPayload);
+      
 
       const response = await axiosInstance.post('/STYSIZE/AddSizeDetail', sizeDetailsPayload);
 
@@ -862,10 +862,10 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, compa
         "FCYR_KEY": "25"
       };
 
-      console.log('Fetching STYCATRT_ID with payload:', stycatrtPayload);
+      
 
       const stycatrtResponse = await axiosInstance.post('/STYSIZE/AddSizeDetail', stycatrtPayload);
-      console.log('STYCATRT_ID Response:', stycatrtResponse.data);
+   
 
       let stycatrtId = 0;
       if (stycatrtResponse.data.DATA && stycatrtResponse.data.DATA.length > 0) {
@@ -887,7 +887,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, compa
         "FLAG": ""
       };
 
-      console.log('Fetching size details with payload:', sizeDetailsPayload);
+    
 
       const sizeDetailsResponse = await axiosInstance.post('/STYSIZE/AddSizeDetail', sizeDetailsPayload);
 
