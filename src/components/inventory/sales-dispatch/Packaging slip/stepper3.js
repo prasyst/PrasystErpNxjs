@@ -526,7 +526,7 @@ const fetchShadesForStyle = async (fgstyleId, mode = 'allocated') => {
     };
 
     const response = await axiosInstance.post('/Fgshade/GetFgshadedrp', payload);
-    console.log('Shades API Response:', response.data);
+   
     
     if (response.data.DATA && Array.isArray(response.data.DATA)) {
       const shades = response.data.DATA.map(item => ({
@@ -725,10 +725,10 @@ const fetchSizeDetailsForStyle = async (styleData) => {
       "FCYR_KEY": "25"
     };
 
-    console.log('Barcode Auto-fetching STYCATRT_ID with payload:', stycatrtPayload);
+  
 
     const stycatrtResponse = await axiosInstance.post('/STYSIZE/AddSizeDetail', stycatrtPayload);
-    console.log('Barcode Auto STYCATRT_ID Response:', stycatrtResponse.data);
+   
 
     let stycatrtId = 0;
     if (stycatrtResponse.data.DATA && stycatrtResponse.data.DATA.length > 0) {
@@ -751,7 +751,7 @@ const fetchSizeDetailsForStyle = async (styleData) => {
       "FCYR_KEY": "25"
     };
 
-    console.log('Barcode Auto-fetching size details with payload:', sizeDetailsPayload);
+ 
 
     const response = await axiosInstance.post('/STYSIZE/AddSizeDetail', sizeDetailsPayload);
 
@@ -956,10 +956,10 @@ const fetchSizeDetailsForStyle = async (styleData) => {
       "FCYR_KEY": "25"
     };
 
-    console.log('Barcode Fetching STYCATRT_ID with payload:', stycatrtPayload);
+ 
 
     const stycatrtResponse = await axiosInstance.post('/STYSIZE/AddSizeDetail', stycatrtPayload);
-    console.log('Barcode STYCATRT_ID Response:', stycatrtResponse.data);
+   
 
     let stycatrtId = 0;
     if (stycatrtResponse.data.DATA && stycatrtResponse.data.DATA.length > 0) {
@@ -982,7 +982,7 @@ const fetchSizeDetailsForStyle = async (styleData) => {
       "FCYR_KEY": "25"
     };
 
-    console.log('Barcode Fetching size details with payload:', sizeDetailsPayload);
+   
 
     const sizeDetailsResponse = await axiosInstance.post('/STYSIZE/AddSizeDetail', sizeDetailsPayload);
 

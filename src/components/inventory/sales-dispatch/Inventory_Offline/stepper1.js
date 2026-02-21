@@ -2475,7 +2475,7 @@ const Stepper1 = ({
         PARTY_KEY: partyKey
       });
 
-      console.log('Branch API Response:', response.data);
+      
 
       if (response.data.STATUS === 0 && Array.isArray(response.data.DATA)) {
         const branches = response.data.DATA.map(item => item.PLACE || '');
@@ -2504,7 +2504,7 @@ const Stepper1 = ({
             SHP_PARTYDTL_ID: firstBranchId
           }));
 
-          console.log('Auto-selected branch for new order:', firstBranch, 'with ID:', firstBranchId);
+      
         }
 
         // NEW: If we have a specific branch ID to select (from API response), find and select it
@@ -2522,7 +2522,7 @@ const Stepper1 = ({
               SHP_PARTYDTL_ID: branchId
             }));
 
-            console.log('Forced branch selection:', branchName, 'with ID:', branchId);
+           
           }
         }
       } else {
@@ -2882,7 +2882,7 @@ const Stepper1 = ({
   };
 
   const handleAutoCompleteChange = (name, value) => {
-    console.log(`AutoComplete Change - Field: ${name}, Value: ${value}`);
+ 
 
     setFormData(prev => ({
       ...prev,
@@ -2892,7 +2892,7 @@ const Stepper1 = ({
     // If party is selected, fetch branches, auto-select shipping party, and fetch party details
     if (name === "Party" && value && partyMapping[value]) {
       const partyKey = partyMapping[value];
-      console.log(`Party selected: ${value}, Party Key: ${partyKey}`);
+  
 
 
 
@@ -2918,7 +2918,7 @@ const Stepper1 = ({
     // If branch is selected, auto-update shipping place
     if (name === "Branch" && value) {
       const branchId = branchMapping[value];
-      console.log(`Branch selected: ${value}, Branch ID: ${branchId}`);
+    
 
       setFormData(prev => ({
         ...prev,
@@ -2939,7 +2939,7 @@ const Stepper1 = ({
     // Handle shipping party selection separately
     if (name === "SHIPPING_PARTY" && value) {
       const shippingPartyKey = partyMapping[value];
-      console.log(`Shipping Party selected: ${value}, Key: ${shippingPartyKey}`);
+     
 
       if (shippingPartyKey) {
         setFormData(prev => ({
@@ -2959,7 +2959,7 @@ const Stepper1 = ({
     // Handle shipping place selection
     if (name === "SHIPPING_PLACE" && value) {
       const shippingPlaceId = branchMapping[value];
-      console.log(`Shipping Place selected: ${value}, ID: ${shippingPlaceId}`);
+      
 
       if (shippingPlaceId) {
         setFormData(prev => ({
@@ -3039,7 +3039,7 @@ const Stepper1 = ({
         PARTY_KEY: partyKey
       });
 
-      console.log('Shipping Party Branches API Response:', response.data);
+     
 
       if (response.data.STATUS === 0 && Array.isArray(response.data.DATA)) {
         const branches = response.data.DATA.map(item => item.PLACE || '');
