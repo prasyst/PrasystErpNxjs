@@ -98,7 +98,7 @@ export default function TnaComponentPage() {
       id: 'company',
       name: 'TNA',
        children: [
-     { name: 'TNA', icon: AssistantNavigationIcon, path: '/tnapage/tnadash/' },
+     { name: 'TNADASH', icon: AssistantNavigationIcon, path: '/tnapage/tnadash/' },
       { name: 'Update Routing', icon: RiBarcodeLine, path: '/tnapage/updaterouting/' },
       { name: 'Update Rm', icon: AltRouteIcon, path: '/tnapage/updaterm/' },
       { name: 'Update Trims', icon: ContentCutIcon, path: '/tnapage/updatetrims/' },
