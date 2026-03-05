@@ -63,115 +63,128 @@ const UniversalDataAnalyzer = ({ onClose }) => {
   };
 
   // Universal Parser
-  const parseData = (inputText) => {
-    const lines = inputText.trim().split('\n').filter(l => l.trim());
-    if (lines.length === 0) return null;
+const parseData = (inputText) => {
+  const lines = inputText.trim().split('\n').filter(l => l.trim());
+  if (lines.length === 0) return null;
 
-    let delimiter = '\t';
-    const firstLine = lines[0];
-    const delimiters = ['\t', ',', '|', ';', ':'];
-    for (const d of delimiters) {
-      if (firstLine.includes(d)) {
-        delimiter = d;
-        break;
-      }
+  let delimiter = '\t';
+  const firstLine = lines[0];
+  const delimiters = ['\t', ',', '|', ';', ':'];
+  for (const d of delimiters) {
+    if (firstLine.includes(d)) {
+      delimiter = d;
+      break;
     }
+  }
 
-    const headers = lines[0].split(delimiter).map(h => h.trim());
+  const headers = lines[0].split(delimiter).map(h => h.trim());
+  
+  const rows = [];
+  for (let i = 1; i < lines.length; i++) {
+    const cells = lines[i].split(delimiter).map(c => c.trim());
     
-    const rows = [];
-    for (let i = 1; i < lines.length; i++) {
-      const cells = lines[i].split(delimiter).map(c => c.trim());
-      if (cells.length === headers.length) {
-        const row = {};
-        headers.forEach((header, idx) => {
-          let value = cells[idx];
-          const numValue = parseFloat(value.replace(/[₹$€£,%]/g, ''));
-          row[header] = isNaN(numValue) ? value : numValue;
-        });
-        rows.push(row);
+    // Handle case where row might have fewer cells
+    const row = {};
+    headers.forEach((header, idx) => {
+      // Get cell value or empty string if index out of bounds
+      let value = cells[idx] !== undefined ? cells[idx] : '';
+      
+      // Try to parse as number, but keep empty as 0 for numeric detection
+      const cleanValue = value.replace(/[₹$€£,%]/g, '');
+      
+      // Check if it's a number (including 0)
+      if (cleanValue !== '' && !isNaN(parseFloat(cleanValue)) && isFinite(cleanValue)) {
+        row[header] = parseFloat(cleanValue);
+      } else {
+        // For empty or non-numeric values, store as is (could be empty string)
+        row[header] = value === '' ? '' : value; // Empty string for blank cells
       }
-    }
+    });
+    
+    rows.push(row);
+  }
 
-    return { headers, rows };
-  };
+  return { headers, rows };
+};
 
   // Enhanced Time-based Analysis
-  const performTimeAnalysis = (rows, columns) => {
-    const timeAnalysis = {
-      monthly: {},
-      quarterly: {},
-      yearly: {},
-      trends: {},
-      comparisons: {},
-      growthRates: {},
-      seasonal: {}
-    };
-
-    // Find date/month column
-    const dateColumn = Object.keys(columns).find(col => 
-      col.toLowerCase().includes('month') || 
-      col.toLowerCase().includes('date') ||
-      col.toLowerCase().includes('year')
-    );
-
-    if (!dateColumn) return null;
-
-    // Find numeric columns for analysis
-    const numericColumns = Object.values(columns)
-      .filter(c => c.type === 'numeric')
-      .map(c => c.name);
-
-    // Group by month/period
-    rows.forEach(row => {
-      const period = row[dateColumn];
-      if (!period) return;
-
-      numericColumns.forEach(col => {
-        if (!timeAnalysis.monthly[period]) {
-          timeAnalysis.monthly[period] = {};
-        }
-        if (!timeAnalysis.monthly[period][col]) {
-          timeAnalysis.monthly[period][col] = 0;
-        }
-        timeAnalysis.monthly[period][col] += (row[col] || 0);
-      });
-    });
-
-    // Calculate growth rates
-    const periods = Object.keys(timeAnalysis.monthly).sort();
-    numericColumns.forEach(col => {
-      timeAnalysis.growthRates[col] = [];
-      for (let i = 1; i < periods.length; i++) {
-        const current = timeAnalysis.monthly[periods[i]]?.[col] || 0;
-        const previous = timeAnalysis.monthly[periods[i-1]]?.[col] || 0;
-        if (previous > 0) {
-          const growth = ((current - previous) / previous * 100).toFixed(1);
-          timeAnalysis.growthRates[col].push({
-            period: periods[i],
-            growth: parseFloat(growth),
-            value: current
-          });
-        }
-      }
-    });
-
-    // Identify best and worst periods
-    numericColumns.forEach(col => {
-      const values = periods.map(p => ({
-        period: p,
-        value: timeAnalysis.monthly[p]?.[col] || 0
-      })).filter(v => v.value > 0);
-
-      if (values.length > 0) {
-        const best = values.reduce((max, v) => v.value > max.value ? v : max);
-        const worst = values.reduce((min, v) => v.value < min.value ? v : min);
-        timeAnalysis.comparisons[col] = { best, worst };
-      }
-    });
-
-    return timeAnalysis;
+const performTimeAnalysis = (rows, columns) => {
+  const timeAnalysis = {
+    monthly: {},
+    quarterly: {},
+    yearly: {},
+    trends: {},
+    comparisons: {},
+    growthRates: {},
+    seasonal: {}
   };
+
+  // Find date/month column
+  const dateColumn = Object.keys(columns).find(col => 
+    col.toLowerCase().includes('month') || 
+    col.toLowerCase().includes('date') ||
+    col.toLowerCase().includes('year')
+  );
+
+  if (!dateColumn) return null;
+
+  // Find numeric columns for analysis
+  const numericColumns = Object.values(columns)
+    .filter(c => c.type === 'numeric')
+    .map(c => c.name);
+
+  // Group by month/period - treat blanks as 0
+  rows.forEach(row => {
+    const period = row[dateColumn] || 'Unknown';
+    if (!period) return;
+
+    numericColumns.forEach(col => {
+      if (!timeAnalysis.monthly[period]) {
+        timeAnalysis.monthly[period] = {};
+      }
+      if (!timeAnalysis.monthly[period][col]) {
+        timeAnalysis.monthly[period][col] = 0;
+      }
+      // Convert blank/undefined to 0
+      const value = row[col] || 0;
+      timeAnalysis.monthly[period][col] += value;
+    });
+  });
+
+  // Calculate growth rates (rest remains the same)
+  const periods = Object.keys(timeAnalysis.monthly).sort();
+  numericColumns.forEach(col => {
+    timeAnalysis.growthRates[col] = [];
+    for (let i = 1; i < periods.length; i++) {
+      const current = timeAnalysis.monthly[periods[i]]?.[col] || 0;
+      const previous = timeAnalysis.monthly[periods[i-1]]?.[col] || 0;
+      if (previous > 0) {
+        const growth = ((current - previous) / previous * 100).toFixed(1);
+        timeAnalysis.growthRates[col].push({
+          period: periods[i],
+          growth: parseFloat(growth),
+          value: current
+        });
+      }
+    }
+  });
+
+  
+  numericColumns.forEach(col => {
+    const values = periods.map(p => ({
+      period: p,
+      value: timeAnalysis.monthly[p]?.[col] || 0
+    })).filter(v => v.value > 0);
+
+    if (values.length > 0) {
+      const best = values.reduce((max, v) => v.value > max.value ? v : max);
+      const worst = values.reduce((min, v) => v.value < min.value ? v : min);
+      timeAnalysis.comparisons[col] = { best, worst };
+    }
+  });
+
+  return timeAnalysis;
+};
 
   // Generate Detailed Narrative
   const generateDetailedNarrative = (analysis, timeAnalysis) => {
@@ -336,83 +349,111 @@ const UniversalDataAnalyzer = ({ onClose }) => {
     return narrative;
   };
 
-  // Analyze Data Structure
-  const analyzeDataStructure = (data) => {
-    const { headers, rows } = data;
-    const analysis = {
-      totalRows: rows.length,
-      totalColumns: headers.length,
-      columns: {},
-      summary: {},
-      insights: [],
-      recommendations: []
+ // Analyze Data Structure
+const analyzeDataStructure = (data) => {
+  const { headers, rows } = data;
+  const analysis = {
+    totalRows: rows.length,
+    totalColumns: headers.length,
+    columns: {},
+    summary: {},
+    insights: [],
+    recommendations: []
+  };
+
+  headers.forEach(header => {
+    const values = rows.map(r => r[header]).filter(v => v !== undefined);
+    
+    // Check if column is numeric - consider empty strings as non-numeric
+    const isNumeric = values.every(v => {
+      if (v === '' || v === null) return true; // Empty is allowed in numeric columns
+      return typeof v === 'number';
+    });
+    
+    const uniqueValues = [...new Set(values)];
+    
+    const colInfo = {
+      name: header,
+      type: isNumeric ? 'numeric' : 'text',
+      count: values.length,
+      uniqueCount: uniqueValues.length,
+      sample: values.slice(0, 3),
+      // Add empty count to track blanks
+      emptyCount: values.filter(v => v === '' || v === null).length
     };
 
-    headers.forEach(header => {
-      const values = rows.map(r => r[header]).filter(v => v !== undefined);
-      const isNumeric = values.every(v => typeof v === 'number');
-      const uniqueValues = [...new Set(values)];
+    if (isNumeric) {
+      // Convert empty strings to 0 for calculations
+      const numericValues = values.map(v => {
+        if (v === '' || v === null) return 0;
+        return typeof v === 'number' ? v : 0;
+      });
       
-      const colInfo = {
-        name: header,
-        type: isNumeric ? 'numeric' : 'text',
-        count: values.length,
-        uniqueCount: uniqueValues.length,
-        sample: values.slice(0, 3)
-      };
-
-      if (isNumeric) {
-        const numericValues = values;
-        colInfo.min = Math.min(...numericValues);
-        colInfo.max = Math.max(...numericValues);
-        colInfo.sum = numericValues.reduce((a, b) => a + b, 0);
-        colInfo.avg = colInfo.sum / numericValues.length;
-        colInfo.median = numericValues.sort((a,b) => a-b)[Math.floor(numericValues.length/2)];
-        
-        const headerLower = header.toLowerCase();
-        if (headerLower.includes('revenue') || headerLower.includes('sales') || 
-            headerLower.includes('income') || headerLower.includes('price')) {
-          colInfo.category = 'financial';
-          colInfo.format = 'currency';
-          colInfo.subcategory = 'revenue';
-        } else if (headerLower.includes('profit')) {
-          colInfo.category = 'financial';
-          colInfo.format = 'currency';
-          colInfo.isProfit = true;
-          colInfo.subcategory = 'profit';
-        } else if (headerLower.includes('qty') || headerLower.includes('quantity') || 
-                  headerLower.includes('stock') || headerLower.includes('production')) {
-          colInfo.category = 'quantity';
-          colInfo.format = 'number';
-        } else if (headerLower.includes('cost')) {
-          colInfo.category = 'financial';
-          colInfo.format = 'currency';
-          colInfo.isCost = true;
-          colInfo.subcategory = 'cost';
-        }
-      } else {
-        colInfo.topValues = uniqueValues.slice(0, 5).map(val => ({
-          value: val,
+      colInfo.min = Math.min(...numericValues);
+      colInfo.max = Math.max(...numericValues);
+      colInfo.sum = numericValues.reduce((a, b) => a + b, 0);
+      colInfo.avg = colInfo.sum / numericValues.length;
+      colInfo.median = numericValues.sort((a,b) => a-b)[Math.floor(numericValues.length/2)];
+      
+      // Count zeros specifically
+      colInfo.zeroCount = numericValues.filter(v => v === 0).length;
+      
+      const headerLower = header.toLowerCase();
+      if (headerLower.includes('revenue') || headerLower.includes('sales') || 
+          headerLower.includes('income') || headerLower.includes('price')) {
+        colInfo.category = 'financial';
+        colInfo.format = 'currency';
+        colInfo.subcategory = 'revenue';
+      } else if (headerLower.includes('profit')) {
+        colInfo.category = 'financial';
+        colInfo.format = 'currency';
+        colInfo.isProfit = true;
+        colInfo.subcategory = 'profit';
+      } else if (headerLower.includes('qty') || headerLower.includes('quantity') || 
+                headerLower.includes('stock') || headerLower.includes('production')) {
+        colInfo.category = 'quantity';
+        colInfo.format = 'number';
+      } else if (headerLower.includes('cost')) {
+        colInfo.category = 'financial';
+        colInfo.format = 'currency';
+        colInfo.isCost = true;
+        colInfo.subcategory = 'cost';
+      }
+    } else {
+      // For text columns, track blanks as well
+      colInfo.topValues = uniqueValues
+        .filter(val => val !== '') // Exclude empty from top values
+        .slice(0, 5)
+        .map(val => ({
+          value: val === '' ? '(blank)' : val,
           count: values.filter(v => v === val).length
         }));
+      
+      // Add blank count to top values if there are blanks
+      if (colInfo.emptyCount > 0) {
+        colInfo.topValues.unshift({
+          value: '(blank)',
+          count: colInfo.emptyCount
+        });
       }
+    }
 
-      analysis.columns[header] = colInfo;
-    });
+    analysis.columns[header] = colInfo;
+  });
 
-    // Perform time analysis
-    const timeAnalysis = performTimeAnalysis(rows, analysis.columns);
-    setTimeframeAnalysis(timeAnalysis);
+  // Perform time analysis
+  const timeAnalysis = performTimeAnalysis(rows, analysis.columns);
+  setTimeframeAnalysis(timeAnalysis);
 
-    analysis.insights = generateInsights(analysis, rows);
-    analysis.recommendations = generateRecommendations(analysis, rows);
+  analysis.insights = generateInsights(analysis, rows);
+  analysis.recommendations = generateRecommendations(analysis, rows);
 
-    // Generate detailed narrative
-    const narrative = generateDetailedNarrative(analysis, timeAnalysis);
-    setDetailedNarrative(narrative);
+  // Generate detailed narrative
+  const narrative = generateDetailedNarrative(analysis, timeAnalysis);
+  setDetailedNarrative(narrative);
 
-    return analysis;
-  };
+  return analysis;
+};
 
   // Generate Insights
   const generateInsights = (analysis, rows) => {
@@ -896,6 +937,7 @@ const UniversalDataAnalyzer = ({ onClose }) => {
             {selectedColumns.map((col, index) => (
               <Bar key={col} dataKey={col} fill={COLORS[index % COLORS.length]} />
             ))}
+            
           </BarChart>
         )}
       </ResponsiveContainer>
