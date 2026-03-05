@@ -13,7 +13,6 @@ import {
   IconButton,
   Tooltip,
   Paper,
-  Grid,
   Snackbar,
   Alert,
 } from '@mui/material';
@@ -24,17 +23,68 @@ import {
   Undo as UndoIcon,
   Redo as RedoIcon,
   Clear as ClearIcon,
-  Add as AddIcon,
   ZoomIn as ZoomInIcon,
   ZoomOut as ZoomOutIcon,
   FitScreen as FitScreenIcon,
+  ArrowBack as ArrowBackIcon,
 } from '@mui/icons-material';
+import { useRouter } from 'next/navigation';
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
 
-// ─── Shape Node ──────────────────────────────────────────────────────────────
+// ─── Shape Node ───────────────────────────────────────────────────────────────
 const ShapeNode = ({ node, isSelected, onDragStart, onDoubleClick, onHandleMouseDown, onHandleMouseUp, onResizeStart }) => {
   const { id, type, position, label, color, width, height } = node;
+
+  const handleDot = {
+    position: 'absolute',
+    width: '14px',
+    height: '14px',
+    borderRadius: '50%',
+    background: '#fff',
+    border: `2.5px solid ${color}`,
+    cursor: 'crosshair',
+    zIndex: 15,
+    boxShadow: `0 1px 6px ${color}70`,
+  };
+
+  const resizeCorner = isSelected ? (
+    <Box
+      style={{
+        position: 'absolute',
+        width: '12px',
+        height: '12px',
+        background: '#fff',
+        border: `2px solid ${color}`,
+        borderRadius: '3px',
+        right: '-6px',
+        bottom: '-6px',
+        cursor: 'se-resize',
+        zIndex: 20,
+      }}
+      onMouseDown={(e) => { e.stopPropagation(); e.preventDefault(); onResizeStart(e, node); }}
+    />
+  ) : null;
+
+  const allPoints = [
+    { id: 'top',    x: '50%', y: '0%'    },
+    { id: 'bottom', x: '50%', y: '100%'  },
+    { id: 'left',   x: '0%',  y: '50%'  },
+    { id: 'right',  x: '100%',y: '50%'  },
+  ];
+
+  const renderHandles = () => allPoints.map((p) => (
+    <Box
+      key={`${id}-${p.id}`}
+      style={{ ...handleDot, left: p.x, top: p.y, transform: 'translate(-50%, -50%)' }}
+      onMouseDown={(e) => { e.stopPropagation(); e.preventDefault(); onHandleMouseDown(e, node, p.id); }}
+      onMouseUp={(e) => { e.stopPropagation(); e.preventDefault(); onHandleMouseUp(e, node, p.id); }}
+    />
+  ));
+
+  const glow = isSelected
+    ? `0 0 0 2px ${color}, 0 8px 32px ${color}60`
+    : `0 2px 10px rgba(0,0,0,0.3)`;
 
   const base = {
     position: 'absolute',
@@ -42,117 +92,98 @@ const ShapeNode = ({ node, isSelected, onDragStart, onDoubleClick, onHandleMouse
     top: `${position.y}px`,
     cursor: 'move',
     userSelect: 'none',
-    border: `2px solid ${isSelected ? '#fff' : color}`,
-    backgroundColor: isSelected ? `${color}30` : `${color}18`,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     textAlign: 'center',
     fontWeight: 600,
-    fontSize: '13px',
+    fontSize: '12px',
     color: isSelected ? '#fff' : color,
     zIndex: isSelected ? 10 : 1,
-    boxShadow: isSelected ? `0 0 0 2px ${color}, 0 8px 32px ${color}50` : `0 2px 8px rgba(0,0,0,0.18)`,
-    transition: 'box-shadow 0.2s, border 0.2s',
     overflow: 'visible',
+    boxSizing: 'border-box',
     letterSpacing: '0.02em',
   };
 
-  const handle = {
-    position: 'absolute',
-    width: '13px',
-    height: '13px',
-    borderRadius: '50%',
-    background: '#fff',
-    border: `2.5px solid ${color}`,
-    cursor: 'crosshair',
-    zIndex: 11,
-    boxShadow: `0 1px 4px ${color}60`,
-    transition: 'transform 0.15s',
-  };
+  // Rectangle
+  if (type === 'rectangle' || type === 'square') {
+    return (
+      <Box
+        style={{ ...base, width: `${width}px`, height: `${height}px`, borderRadius: '10px', padding: '10px',
+          border: `2px solid ${isSelected ? '#fff' : color}`, backgroundColor: isSelected ? `${color}30` : `${color}18`, boxShadow: glow }}
+        onMouseDown={(e) => onDragStart(e, node)}
+        onDoubleClick={() => onDoubleClick(node)}
+        onContextMenu={(e) => { e.preventDefault(); onDoubleClick(node); }}
+      >
+        {label}{renderHandles()}{resizeCorner}
+      </Box>
+    );
+  }
 
-  const resizeHandle = {
-    position: 'absolute',
-    width: '10px',
-    height: '10px',
-    background: '#fff',
-    border: `2px solid ${color}`,
-    zIndex: 12,
-    cursor: 'se-resize',
-    borderRadius: '2px',
-    right: '-5px',
-    bottom: '-5px',
-  };
+  // Circle
+  if (type === 'circle') {
+    return (
+      <Box
+        style={{ ...base, width: `${width}px`, height: `${height}px`, borderRadius: '50%', padding: '10px',
+          border: `2px solid ${isSelected ? '#fff' : color}`, backgroundColor: isSelected ? `${color}30` : `${color}18`, boxShadow: glow }}
+        onMouseDown={(e) => onDragStart(e, node)}
+        onDoubleClick={() => onDoubleClick(node)}
+        onContextMenu={(e) => { e.preventDefault(); onDoubleClick(node); }}
+      >
+        {label}{renderHandles()}{resizeCorner}
+      </Box>
+    );
+  }
 
-  const getStyle = () => {
-    switch (type) {
-      case 'rectangle':
-        return { ...base, width: `${width}px`, height: `${height}px`, borderRadius: '10px', padding: '12px' };
-      case 'square':
-        return { ...base, width: `${width}px`, height: `${height}px`, borderRadius: '10px', padding: '12px' };
-      case 'circle':
-        return { ...base, width: `${width}px`, height: `${width}px`, borderRadius: '50%', padding: '12px' };
-      case 'diamond':
-        return { ...base, width: `${width}px`, height: `${width}px`, clipPath: 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)', padding: '20px' };
-      default:
-        return base;
-    }
-  };
+  // Diamond (Decision)
+  if (type === 'diamond') {
+    return (
+      <Box
+        style={{ ...base, width: `${width}px`, height: `${height}px`,
+          clipPath: 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)',
+          backgroundColor: isSelected ? `${color}35` : `${color}20`,
+          boxShadow: glow, outline: isSelected ? `2px solid #fff` : `2px solid ${color}`, outlineOffset: '-4px' }}
+        onMouseDown={(e) => onDragStart(e, node)}
+        onDoubleClick={() => onDoubleClick(node)}
+        onContextMenu={(e) => { e.preventDefault(); onDoubleClick(node); }}
+      >
+        <Box style={{ fontSize: '11px', fontWeight: 700, color: isSelected ? '#fff' : color, maxWidth: '60%', textAlign: 'center' }}>{label}</Box>
+        {renderHandles()}{resizeCorner}
+      </Box>
+    );
+  }
 
-  const points = type === 'circle'
-    ? [
-        { id: 'top', x: '50%', y: '0%' },
-        { id: 'bottom', x: '50%', y: '100%' },
-      ]
-    : [
-        { id: 'top', x: '50%', y: '0%' },
-        { id: 'bottom', x: '50%', y: '100%' },
-        { id: 'left', x: '0%', y: '50%' },
-        { id: 'right', x: '100%', y: '50%' },
-      ];
+  // Condition / If-Else (Parallelogram)
+  if (type === 'condition') {
+    return (
+      <Box
+        style={{ ...base, width: `${width}px`, height: `${height}px`,
+          clipPath: 'polygon(15% 0%, 100% 0%, 85% 100%, 0% 100%)',
+          backgroundColor: isSelected ? `${color}35` : `${color}20`,
+          boxShadow: glow, outline: isSelected ? `2px solid #fff` : `2px solid ${color}`, outlineOffset: '-4px' }}
+        onMouseDown={(e) => onDragStart(e, node)}
+        onDoubleClick={() => onDoubleClick(node)}
+        onContextMenu={(e) => { e.preventDefault(); onDoubleClick(node); }}
+      >
+        <Box style={{ fontSize: '11px', fontWeight: 700, color: isSelected ? '#fff' : color, maxWidth: '70%', textAlign: 'center' }}>{label}</Box>
+        {renderHandles()}{resizeCorner}
+      </Box>
+    );
+  }
 
-  return (
-    <Box
-      style={getStyle()}
-      onMouseDown={(e) => onDragStart(e, node)}
-      onDoubleClick={() => onDoubleClick(node)}
-      onContextMenu={(e) => { e.preventDefault(); onDoubleClick(node); }}
-    >
-      {type === 'diamond'
-        ? <Box style={{ transform: 'rotate(45deg)', width: '100%', textAlign: 'center' }}>{label}</Box>
-        : label}
-
-      {/* Connection handles */}
-      {points.map((p) => (
-        <Box
-          key={`${id}-${p.id}`}
-          style={{ ...handle, left: p.x, top: p.y, transform: 'translate(-50%, -50%)' }}
-          onMouseDown={(e) => { e.stopPropagation(); e.preventDefault(); onHandleMouseDown(e, node, p.id); }}
-          onMouseUp={(e) => { e.stopPropagation(); e.preventDefault(); onHandleMouseUp(e, node, p.id); }}
-        />
-      ))}
-
-      {/* Resize handle */}
-      {isSelected && type !== 'circle' && type !== 'diamond' && (
-        <Box
-          style={resizeHandle}
-          onMouseDown={(e) => { e.stopPropagation(); e.preventDefault(); onResizeStart(e, node); }}
-        />
-      )}
-    </Box>
-  );
+  return null;
 };
 
-// ─── Connection Line (STRAIGHT) ───────────────────────────────────────────────
+// ─── Straight Connection Line ─────────────────────────────────────────────────
 const ConnectionLine = ({ connection, nodes, onDelete }) => {
   const { id, fromNodeId, fromPoint, toNodeId, toPoint } = connection;
   const fromNode = nodes.find(n => n.id === fromNodeId);
-  const toNode = nodes.find(n => n.id === toNodeId);
+  const toNode   = nodes.find(n => n.id === toNodeId);
   if (!fromNode || !toNode) return null;
 
   const pt = (node, pointId) => {
     const { position, width, height } = node;
-    const h = node.type === 'circle' || node.type === 'diamond' ? width : height;
+    const h = height || width;
     switch (pointId) {
       case 'top':    return { x: position.x + width / 2, y: position.y };
       case 'bottom': return { x: position.x + width / 2, y: position.y + h };
@@ -164,40 +195,30 @@ const ConnectionLine = ({ connection, nodes, onDelete }) => {
 
   const from = pt(fromNode, fromPoint);
   const to   = pt(toNode, toPoint);
-  const mx = (from.x + to.x) / 2;
-  const my = (from.y + to.y) / 2;
+  const mx   = (from.x + to.x) / 2;
+  const my   = (from.y + to.y) / 2;
   const lineColor = fromNode.color;
 
   return (
-    <svg
-      style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 5 }}
-    >
+    <svg style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 5 }}>
       <defs>
         <marker id={`arrow-${id}`} markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
           <path d="M0,0 L0,6 L8,3 z" fill={lineColor} />
         </marker>
       </defs>
-      {/* Straight line */}
-      <line
-        x1={from.x} y1={from.y} x2={to.x} y2={to.y}
-        stroke={lineColor} strokeWidth="2.5"
-        markerEnd={`url(#arrow-${id})`}
-        strokeDasharray="none"
-      />
-      {/* Delete button at midpoint */}
-      <g
-        style={{ pointerEvents: 'all', cursor: 'pointer' }}
-        onClick={() => onDelete(id)}
-      >
-        <circle cx={mx} cy={my} r="9" fill="#1a1a2e" stroke={lineColor} strokeWidth="1.5" />
-        <text x={mx} y={my + 4.5} textAnchor="middle" fontSize="11" fill="#ff4f6a" fontWeight="bold">×</text>
+      <line x1={from.x} y1={from.y} x2={to.x} y2={to.y} stroke={lineColor} strokeWidth="2.5" markerEnd={`url(#arrow-${id})`} />
+      <g style={{ pointerEvents: 'all', cursor: 'pointer' }} onClick={() => onDelete(id)}>
+        <circle cx={mx} cy={my} r="9" fill="#0f0f23" stroke={lineColor} strokeWidth="1.5" />
+        <text x={mx} y={my + 4.5} textAnchor="middle" fontSize="12" fill="#ff4f6a" fontWeight="bold">×</text>
       </g>
     </svg>
   );
 };
 
-// ─── Main Component ────────────────────────────────────────────────────────────
+// ─── Main Component ───────────────────────────────────────────────────────────
 const FlowDiagram = () => {
+  const router = useRouter();
+
   const [nodes, setNodes] = useState([]);
   const [connections, setConnections] = useState([]);
   const [selectedNode, setSelectedNode] = useState(null);
@@ -220,34 +241,50 @@ const FlowDiagram = () => {
   const canvasRef = useRef(null);
 
   const shapes = [
-    { type: 'rectangle', label: 'Rect',    emoji: '▬', color: '#3b82f6', width: 140, height: 80  },
-    { type: 'square',    label: 'Square',  emoji: '■', color: '#22c55e', width: 110, height: 110 },
-    { type: 'circle',    label: 'Circle',  emoji: '●', color: '#ec4899', width: 110, height: 110 },
-    { type: 'diamond',   label: 'Diamond', emoji: '◆', color: '#f59e0b', width: 110, height: 110 },
+    { type: 'rectangle', label: 'Process',   emoji: '▬', color: '#3b82f6', width: 150, height: 80  },
+    { type: 'square',    label: 'Step',      emoji: '■', color: '#22c55e', width: 110, height: 110 },
+    { type: 'circle',    label: 'Terminal',  emoji: '●', color: '#ec4899', width: 110, height: 110 },
+    { type: 'diamond',   label: 'Decision',  emoji: '◆', color: '#f59e0b', width: 120, height: 120 },
+    { type: 'condition', label: 'If / Else', emoji: '⌥', color: '#a855f7', width: 150, height: 70  },
   ];
 
-  const saveToHistory = useCallback((newNodes, newConns, action) => {
-    const slice = history.slice(0, historyIndex + 1);
-    slice.push({ nodes: JSON.parse(JSON.stringify(newNodes)), connections: JSON.parse(JSON.stringify(newConns)), action });
-    setHistory(slice);
-    setHistoryIndex(slice.length - 1);
-  }, [history, historyIndex]);
+  const saveToHistory = useCallback((nn, nc, action) => {
+    setHistory(prev => {
+      const slice = prev.slice(0, historyIndex + 1);
+      slice.push({ nodes: JSON.parse(JSON.stringify(nn)), connections: JSON.parse(JSON.stringify(nc)), action });
+      return slice;
+    });
+    setHistoryIndex(prev => prev + 1);
+  }, [historyIndex]);
 
   const handleUndo = useCallback(() => {
     if (historyIndex > 0) {
-      const prev = history[historyIndex - 1];
-      setNodes(prev.nodes); setConnections(prev.connections); setHistoryIndex(historyIndex - 1);
-      setSnackbar({ open: true, message: `Undo: ${prev.action}`, severity: 'info' });
+      const p = history[historyIndex - 1];
+      setNodes(p.nodes); setConnections(p.connections); setHistoryIndex(historyIndex - 1);
+      setSnackbar({ open: true, message: `Undo: ${p.action}`, severity: 'info' });
     }
   }, [history, historyIndex]);
 
   const handleRedo = useCallback(() => {
     if (historyIndex < history.length - 1) {
-      const next = history[historyIndex + 1];
-      setNodes(next.nodes); setConnections(next.connections); setHistoryIndex(historyIndex + 1);
-      setSnackbar({ open: true, message: `Redo: ${next.action}`, severity: 'info' });
+      const n = history[historyIndex + 1];
+      setNodes(n.nodes); setConnections(n.connections); setHistoryIndex(historyIndex + 1);
+      setSnackbar({ open: true, message: `Redo: ${n.action}`, severity: 'info' });
     }
   }, [history, historyIndex]);
+
+  const handleDeleteNode = useCallback((nodeId) => {
+    setNodes(prev => {
+      const nn = prev.filter(n => n.id !== nodeId);
+      setConnections(pc => {
+        const nc = pc.filter(c => c.fromNodeId !== nodeId && c.toNodeId !== nodeId);
+        return nc;
+      });
+      return nn;
+    });
+    setSelectedNode(s => s?.id === nodeId ? null : s);
+    setSnackbar({ open: true, message: 'Node deleted', severity: 'warning' });
+  }, []);
 
   useEffect(() => {
     const h = (e) => {
@@ -257,20 +294,17 @@ const FlowDiagram = () => {
     };
     window.addEventListener('keydown', h);
     return () => window.removeEventListener('keydown', h);
-  }, [handleUndo, handleRedo, selectedNode]);
+  }, [handleUndo, handleRedo, selectedNode, handleDeleteNode]);
 
   useEffect(() => {
-    const saved = localStorage.getItem('flowDiagram2');
-    if (saved) {
-      try {
-        const p = JSON.parse(saved);
-        if (p.nodes) { setNodes(p.nodes); setConnections(p.connections || []); }
-      } catch {}
-    }
+    try {
+      const saved = localStorage.getItem('flowDiagram_v3');
+      if (saved) { const p = JSON.parse(saved); if (p.nodes) { setNodes(p.nodes); setConnections(p.connections || []); } }
+    } catch {}
   }, []);
 
   useEffect(() => {
-    const t = setTimeout(() => localStorage.setItem('flowDiagram2', JSON.stringify({ nodes, connections })), 1000);
+    const t = setTimeout(() => localStorage.setItem('flowDiagram_v3', JSON.stringify({ nodes, connections })), 1000);
     return () => clearTimeout(t);
   }, [nodes, connections]);
 
@@ -280,9 +314,9 @@ const FlowDiagram = () => {
     const bx = rect ? (rect.width / 2 - shape.width / 2) : 200;
     const by = rect ? (rect.height / 2 - shape.height / 2) : 200;
     const newNode = {
-      id, type: shape.type,
+      id, type: shape.type, label: shape.label, color: shape.color,
+      width: shape.width, height: shape.height,
       position: { x: (bx - panOffset.x) / zoom, y: (by - panOffset.y) / zoom },
-      label: shape.label, color: shape.color, width: shape.width, height: shape.height || shape.width,
     };
     const nn = [...nodes, newNode];
     setNodes(nn);
@@ -293,9 +327,12 @@ const FlowDiagram = () => {
   const handleDragStart = (e, node) => {
     if (isConnecting) return;
     const rect = canvasRef.current.getBoundingClientRect();
-    const ox = (e.clientX - rect.left - panOffset.x) / zoom - node.position.x;
-    const oy = (e.clientY - rect.top  - panOffset.y) / zoom - node.position.y;
-    setDraggingNode(node); setDragOffset({ x: ox, y: oy }); setSelectedNode(node);
+    setDraggingNode(node);
+    setDragOffset({
+      x: (e.clientX - rect.left - panOffset.x) / zoom - node.position.x,
+      y: (e.clientY - rect.top  - panOffset.y) / zoom - node.position.y,
+    });
+    setSelectedNode(node);
   };
 
   const handleResizeStart = (e, node) => {
@@ -303,7 +340,7 @@ const FlowDiagram = () => {
     setResizeStartState({ mouseX: e.clientX, mouseY: e.clientY, w: node.width, h: node.height });
   };
 
-  const handleDrag = useCallback((e) => {
+  const handleMouseMove = useCallback((e) => {
     if (draggingNode && canvasRef.current && !isConnecting) {
       const rect = canvasRef.current.getBoundingClientRect();
       const x = Math.max(0, (e.clientX - rect.left - panOffset.x) / zoom - dragOffset.x);
@@ -317,22 +354,37 @@ const FlowDiagram = () => {
       const nh = Math.max(40, resizeStart.h + dy);
       setNodes(prev => prev.map(n => n.id === resizingNode.id ? { ...n, width: nw, height: nh } : n));
     }
-    if (isPanning && canvasRef.current) {
-      setPanOffset(prev => ({ x: prev.x + e.clientX - panStart.x, y: prev.y + e.clientY - panStart.y }));
+    if (isPanning) {
+      const dx = e.clientX - panStart.x;
+      const dy = e.clientY - panStart.y;
+      setPanOffset(prev => ({ x: prev.x + dx, y: prev.y + dy }));
       setPanStart({ x: e.clientX, y: e.clientY });
     }
   }, [draggingNode, dragOffset, isConnecting, resizingNode, resizeStart, isPanning, panStart, panOffset, zoom]);
 
-  const handleDragEnd = () => {
-    if (draggingNode) { saveToHistory(nodes, connections, `Move ${draggingNode.type}`); setDraggingNode(null); }
-    if (resizingNode) { saveToHistory(nodes, connections, `Resize ${resizingNode.type}`); setResizingNode(null); setResizeStartState(null); }
+  const handleMouseUp = useCallback(() => {
+    if (draggingNode) { setDraggingNode(null); }
+    if (resizingNode) { setResizingNode(null); setResizeStartState(null); }
     setIsPanning(false);
+  }, [draggingNode, resizingNode]);
+
+  useEffect(() => {
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+    return () => { document.removeEventListener('mousemove', handleMouseMove); document.removeEventListener('mouseup', handleMouseUp); };
+  }, [handleMouseMove, handleMouseUp]);
+
+  const handleCanvasMouseDown = (e) => {
+    if (e.button === 1 || (e.button === 0 && e.altKey)) {
+      e.preventDefault(); setIsPanning(true); setPanStart({ x: e.clientX, y: e.clientY });
+    }
+    if (e.target === canvasRef.current || e.target === e.currentTarget) setSelectedNode(null);
   };
 
   const handleHandleMouseDown = (e, node, pointId) => {
     e.stopPropagation(); e.preventDefault();
     setIsConnecting(true); setConnectionStart({ nodeId: node.id, pointId });
-    setSnackbar({ open: true, message: `Dusre node ka handle pe drop karo`, severity: 'info' });
+    setSnackbar({ open: true, message: 'Dusre node ke handle pe drop karo', severity: 'info' });
   };
 
   const handleHandleMouseUp = (e, node, pointId) => {
@@ -341,37 +393,17 @@ const FlowDiagram = () => {
     if (connectionStart.nodeId !== node.id) {
       const nc = { id: `conn_${Date.now()}`, fromNodeId: connectionStart.nodeId, fromPoint: connectionStart.pointId, toNodeId: node.id, toPoint: pointId };
       const newC = [...connections, nc];
-      setConnections(newC); saveToHistory(nodes, newC, 'Create Connection');
-      setSnackbar({ open: true, message: 'Connected!', severity: 'success' });
+      setConnections(newC);
+      saveToHistory(nodes, newC, 'Connect');
+      setSnackbar({ open: true, message: 'Nodes connected!', severity: 'success' });
     }
     setIsConnecting(false); setConnectionStart(null);
   };
 
-  useEffect(() => {
-    document.addEventListener('mousemove', handleDrag);
-    document.addEventListener('mouseup', handleDragEnd);
-    return () => { document.removeEventListener('mousemove', handleDrag); document.removeEventListener('mouseup', handleDragEnd); };
-  }, [handleDrag]);
-
-  const handleCanvasMouseDown = (e) => {
-    if (e.button === 1 || (e.button === 0 && e.altKey)) {
-      e.preventDefault(); setIsPanning(true); setPanStart({ x: e.clientX, y: e.clientY });
-    }
-    if (e.target === canvasRef.current) setSelectedNode(null);
-  };
-
-  const handleDeleteNode = (nodeId) => {
-    const del = nodes.find(n => n.id === nodeId);
-    const nn = nodes.filter(n => n.id !== nodeId);
-    const nc = connections.filter(c => c.fromNodeId !== nodeId && c.toNodeId !== nodeId);
-    setNodes(nn); setConnections(nc); saveToHistory(nn, nc, `Delete ${del?.type || 'Node'}`);
-    if (selectedNode?.id === nodeId) setSelectedNode(null);
-    setSnackbar({ open: true, message: 'Node deleted', severity: 'warning' });
-  };
-
   const handleDeleteConnection = (id) => {
     const nc = connections.filter(c => c.id !== id);
-    setConnections(nc); saveToHistory(nodes, nc, 'Delete Connection');
+    setConnections(nc);
+    saveToHistory(nodes, nc, 'Delete Connection');
     setSnackbar({ open: true, message: 'Connection deleted', severity: 'warning' });
   };
 
@@ -379,39 +411,37 @@ const FlowDiagram = () => {
 
   const handleSaveEdit = () => {
     const nn = nodes.map(n => n.id === editNodeId ? { ...n, label: editText } : n);
-    setNodes(nn); saveToHistory(nn, connections, 'Edit Text');
-    setEditDialogOpen(false); setEditText(''); setEditNodeId(null);
-    setSnackbar({ open: true, message: 'Text updated', severity: 'success' });
+    setNodes(nn);
+    saveToHistory(nn, connections, 'Edit Label');
+    setEditDialogOpen(false);
+    setSnackbar({ open: true, message: 'Label updated', severity: 'success' });
   };
 
   const handleClearDiagram = () => {
     if (window.confirm('Poora diagram clear karna hai?')) {
       setNodes([]); setConnections([]); setHistory([]); setHistoryIndex(-1);
-      localStorage.removeItem('flowDiagram2'); setZoom(1); setPanOffset({ x: 0, y: 0 });
+      localStorage.removeItem('flowDiagram_v3'); setZoom(1); setPanOffset({ x: 0, y: 0 });
       setSnackbar({ open: true, message: 'Diagram cleared', severity: 'info' });
     }
   };
 
   const handleExportPDF = async () => {
-    const el = canvasRef.current;
-    if (!el) return;
+    if (!canvasRef.current) return;
     try {
-      const canvas = await html2canvas(el, { backgroundColor: '#0f0f23', scale: 2, useCORS: true });
-      const imgData = canvas.toDataURL('image/png');
+      const canvas = await html2canvas(canvasRef.current, { backgroundColor: '#080818', scale: 2, useCORS: true });
       const pdf = new jsPDF('landscape', 'mm', 'a4');
       const pw = pdf.internal.pageSize.getWidth(), ph = pdf.internal.pageSize.getHeight();
       const ratio = Math.min(pw / canvas.width, (ph - 30) / canvas.height);
       const ix = (pw - canvas.width * ratio) / 2;
-      pdf.setFillColor(15, 15, 35); pdf.rect(0, 0, pw, ph, 'F');
-      pdf.addImage(imgData, 'PNG', ix, 30, canvas.width * ratio, canvas.height * ratio);
+      pdf.setFillColor(8, 8, 24); pdf.rect(0, 0, pw, ph, 'F');
+      pdf.addImage(canvas.toDataURL('image/png'), 'PNG', ix, 30, canvas.width * ratio, canvas.height * ratio);
       pdf.setFontSize(16); pdf.setTextColor(99, 91, 255); pdf.text('Flow Diagram', pw / 2, 18, { align: 'center' });
-      pdf.setFontSize(9); pdf.setTextColor(150, 150, 180); pdf.text(new Date().toLocaleString(), pw - 15, ph - 8, { align: 'right' });
+      pdf.setFontSize(9); pdf.setTextColor(120, 120, 160); pdf.text(new Date().toLocaleString(), pw - 15, ph - 8, { align: 'right' });
       pdf.save(`flow-diagram-${Date.now()}.pdf`);
       setSnackbar({ open: true, message: 'PDF exported!', severity: 'success' });
     } catch { setSnackbar({ open: true, message: 'PDF export failed', severity: 'error' }); }
   };
 
-  // ── Styles ──────────────────────────────────────────────────────────────────
   const panel = {
     background: 'linear-gradient(135deg, #0f0f23 0%, #1a1a3e 100%)',
     border: '1px solid rgba(255,255,255,0.07)',
@@ -419,97 +449,153 @@ const FlowDiagram = () => {
   };
 
   return (
-    <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', p: 1.5, background: '#080818', gap: 1.5 }}>
+    <Box sx={{
+      width: '100vw',
+      height: '100vh',
+      display: 'flex',
+      flexDirection: 'column',
+      p: 1.5,
+      gap: 1.5,
+      background: '#080818',
+      boxSizing: 'border-box',
+      overflow: 'hidden',
+    }}>
 
       {/* ── Header ── */}
-      <Paper elevation={0} sx={{ ...panel, p: '10px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <Box sx={{ width: 32, height: 32, borderRadius: '8px', background: 'linear-gradient(135deg, #635bff, #3b82f6)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px' }}>⬡</Box>
+      <Paper elevation={0} sx={{
+        ...panel,
+        p: '10px 16px',
+        flexShrink: 0,
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+      }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+          <Tooltip title="Go To Dashboard">
+            <IconButton
+              onClick={() => router.push('/dashboard')}
+              size="small"
+              sx={{
+                color: '#777',
+                border: '1px solid rgba(255,255,255,0.08)',
+                borderRadius: '8px',
+                width: 34, height: 34,
+                '&:hover': { color: '#fff', background: 'rgba(99,91,255,0.2)', borderColor: '#635bff' },
+              }}
+            >
+              <ArrowBackIcon sx={{ fontSize: 18 }} />
+            </IconButton>
+          </Tooltip>
+
+          <Box sx={{ width: '1px', height: 26, background: 'rgba(255,255,255,0.08)' }} />
+
+          <Box sx={{
+            width: 34, height: 34, borderRadius: '9px',
+            background: 'linear-gradient(135deg, #635bff, #3b82f6)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '17px',
+          }}>⬡</Box>
           <Box>
-            <Typography sx={{ fontWeight: 800, fontSize: '14px', color: '#fff', letterSpacing: '0.05em', lineHeight: 1 }}>FLOW BUILDER</Typography>
-            <Typography sx={{ fontSize: '10px', color: '#635bff', letterSpacing: '0.12em' }}>DIAGRAM TOOL</Typography>
+            <Typography sx={{ fontWeight: 800, fontSize: '14px', color: '#fff', letterSpacing: '0.06em', lineHeight: 1 }}>FLOW BUILDER</Typography>
+            <Typography sx={{ fontSize: '9px', color: '#635bff', letterSpacing: '0.15em' }}>DIAGRAM TOOL</Typography>
           </Box>
         </Box>
 
         <Box sx={{ display: 'flex', gap: 0.5, alignItems: 'center' }}>
           {[
-            { tip: 'Undo (Ctrl+Z)', icon: <UndoIcon sx={{ fontSize: 16 }} />, fn: handleUndo, disabled: historyIndex <= 0 },
-            { tip: 'Redo (Ctrl+Y)', icon: <RedoIcon sx={{ fontSize: 16 }} />, fn: handleRedo, disabled: historyIndex >= history.length - 1 },
-            { tip: 'Zoom In',  icon: <ZoomInIcon sx={{ fontSize: 16 }} />, fn: () => setZoom(p => Math.min(p + 0.15, 3)) },
-            { tip: 'Zoom Out', icon: <ZoomOutIcon sx={{ fontSize: 16 }} />, fn: () => setZoom(p => Math.max(p - 0.15, 0.1)) },
-            { tip: 'Fit',      icon: <FitScreenIcon sx={{ fontSize: 16 }} />, fn: () => { setZoom(1); setPanOffset({ x: 0, y: 0 }); } },
+            { tip: 'Undo (Ctrl+Z)', icon: <UndoIcon sx={{ fontSize: 17 }} />, fn: handleUndo, disabled: historyIndex <= 0 },
+            { tip: 'Redo (Ctrl+Y)', icon: <RedoIcon sx={{ fontSize: 17 }} />, fn: handleRedo, disabled: historyIndex >= history.length - 1 },
+            { tip: 'Zoom In',       icon: <ZoomInIcon sx={{ fontSize: 17 }} />, fn: () => setZoom(p => Math.min(p + 0.15, 3)) },
+            { tip: 'Zoom Out',      icon: <ZoomOutIcon sx={{ fontSize: 17 }} />, fn: () => setZoom(p => Math.max(p - 0.15, 0.1)) },
+            { tip: 'Fit to Screen', icon: <FitScreenIcon sx={{ fontSize: 17 }} />, fn: () => { setZoom(1); setPanOffset({ x: 0, y: 0 }); } },
           ].map(({ tip, icon, fn, disabled }) => (
             <Tooltip title={tip} key={tip}>
               <span>
-                <IconButton onClick={fn} disabled={disabled} size="small"
-                  sx={{ color: disabled ? '#333' : '#8888aa', '&:hover': { color: '#fff', background: 'rgba(99,91,255,0.15)' }, width: 30, height: 30 }}>
+                <IconButton onClick={fn} disabled={disabled} size="small" sx={{
+                  color: disabled ? '#2a2a44' : '#7070aa',
+                  '&:hover': { color: '#fff', background: 'rgba(99,91,255,0.15)' },
+                  width: 32, height: 32,
+                }}>
                   {icon}
                 </IconButton>
               </span>
             </Tooltip>
           ))}
 
-          <Box sx={{ width: '1px', height: 24, background: 'rgba(255,255,255,0.1)', mx: 0.5 }} />
+          <Box sx={{ width: '1px', height: 24, background: 'rgba(255,255,255,0.08)', mx: 0.5 }} />
 
           <Button onClick={handleExportPDF} size="small" startIcon={<PdfIcon sx={{ fontSize: '14px !important' }} />}
-            sx={{ fontSize: '11px', fontWeight: 700, px: 1.5, py: 0.5, background: 'linear-gradient(135deg, #635bff, #3b82f6)', color: '#fff', borderRadius: '8px', textTransform: 'none', letterSpacing: '0.04em', '&:hover': { background: 'linear-gradient(135deg, #5548d9, #2563eb)' }, minWidth: 0 }}>
+            sx={{ fontSize: '11px', fontWeight: 700, px: 1.5, py: 0.6, background: 'linear-gradient(135deg, #635bff, #3b82f6)', color: '#fff', borderRadius: '8px', textTransform: 'none', '&:hover': { background: 'linear-gradient(135deg, #5548d9, #2563eb)' }, minWidth: 0 }}>
             Export PDF
           </Button>
+
           <Button onClick={handleClearDiagram} size="small" startIcon={<ClearIcon sx={{ fontSize: '14px !important' }} />}
-            sx={{ fontSize: '11px', fontWeight: 700, px: 1.5, py: 0.5, border: '1px solid #ff4f6a44', color: '#ff4f6a', borderRadius: '8px', textTransform: 'none', '&:hover': { background: '#ff4f6a15' }, minWidth: 0 }}>
+            sx={{ fontSize: '11px', fontWeight: 700, px: 1.5, py: 0.6, border: '1px solid #ff4f6a33', color: '#ff4f6a', borderRadius: '8px', textTransform: 'none', '&:hover': { background: '#ff4f6a10' }, minWidth: 0 }}>
             Clear
           </Button>
         </Box>
       </Paper>
 
-      <Box sx={{ display: 'flex', flex: 1, gap: 1.5, overflow: 'hidden' }}>
+      {/* ── Body ── */}
+      <Box sx={{ display: 'flex', flex: 1, gap: 1.5, overflow: 'hidden', minHeight: 0 }}>
 
-        {/* ── Left Panel ── */}
-        <Paper elevation={0} sx={{ ...panel, width: 100, p: '12px 8px', display: 'flex', flexDirection: 'column', gap: 1 }}>
-          <Typography sx={{ fontSize: '9px', fontWeight: 800, color: '#635bff', letterSpacing: '0.15em', textAlign: 'center', mb: 0.5 }}>SHAPES</Typography>
+        {/* ── Left Sidebar ── */}
+        <Paper elevation={0} sx={{
+          ...panel,
+          width: 115,
+          flexShrink: 0,
+          p: '12px 8px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '8px',
+          overflowY: 'auto',
+        }}>
+          <Typography sx={{ fontSize: '9px', fontWeight: 800, color: '#635bff', letterSpacing: '0.18em', textAlign: 'center' }}>SHAPES</Typography>
 
           {shapes.map((shape) => (
             <Box key={shape.type} onClick={() => handleAddNode(shape)}
               sx={{
-                cursor: 'pointer', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.06)',
-                background: `${shape.color}12`, p: '7px 4px', textAlign: 'center',
+                cursor: 'pointer',
+                borderRadius: '10px',
+                border: '1px solid rgba(255,255,255,0.06)',
+                background: `${shape.color}12`,
+                p: '10px 6px',
+                textAlign: 'center',
                 transition: 'all 0.2s',
-                '&:hover': { background: `${shape.color}25`, border: `1px solid ${shape.color}60`, transform: 'scale(1.04)', boxShadow: `0 4px 16px ${shape.color}30` },
+                '&:hover': {
+                  background: `${shape.color}28`,
+                  border: `1px solid ${shape.color}70`,
+                  transform: 'scale(1.05)',
+                  boxShadow: `0 6px 20px ${shape.color}35`,
+                },
               }}>
-              <Typography sx={{ fontSize: '20px', lineHeight: 1.2, color: shape.color }}>{shape.emoji}</Typography>
-              <Typography sx={{ fontSize: '9px', fontWeight: 700, color: '#aaa', letterSpacing: '0.08em', mt: '2px' }}>{shape.label.toUpperCase()}</Typography>
+              <Typography sx={{ fontSize: '28px', lineHeight: 1.3, color: shape.color }}>{shape.emoji}</Typography>
+              <Typography sx={{ fontSize: '9px', fontWeight: 700, color: '#aaa', letterSpacing: '0.06em', mt: '3px', lineHeight: 1.2 }}>
+                {shape.label.toUpperCase()}
+              </Typography>
             </Box>
           ))}
 
-          {/* Stats */}
-          <Box sx={{ mt: 'auto', pt: 1, borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-            {[{ label: 'Nodes', val: nodes.length }, { label: 'Links', val: connections.length }].map(({ label, val }) => (
-              <Box key={label} sx={{ textAlign: 'center', mb: 0.5 }}>
-                <Typography sx={{ fontSize: '18px', fontWeight: 800, color: '#635bff', lineHeight: 1 }}>{val}</Typography>
-                <Typography sx={{ fontSize: '9px', color: '#666', letterSpacing: '0.1em' }}>{label.toUpperCase()}</Typography>
+          <Box sx={{ borderTop: '1px solid rgba(255,255,255,0.06)', mt: 'auto', pt: '10px' }}>
+            {[{ label: 'Nodes', val: nodes.length }, { label: 'Links', val: connections.length }, { label: 'Zoom', val: `${Math.round(zoom * 100)}%` }].map(({ label, val }) => (
+              <Box key={label} sx={{ textAlign: 'center', mb: '6px' }}>
+                <Typography sx={{ fontSize: '16px', fontWeight: 800, color: '#635bff', lineHeight: 1 }}>{val}</Typography>
+                <Typography sx={{ fontSize: '8px', color: '#555', letterSpacing: '0.1em' }}>{label.toUpperCase()}</Typography>
               </Box>
             ))}
-          </Box>
-
-          {/* Zoom */}
-          <Box sx={{ textAlign: 'center', borderTop: '1px solid rgba(255,255,255,0.06)', pt: 1 }}>
-            <Typography sx={{ fontSize: '11px', fontWeight: 800, color: '#635bff' }}>{Math.round(zoom * 100)}%</Typography>
-            <Typography sx={{ fontSize: '9px', color: '#555', letterSpacing: '0.1em' }}>ZOOM</Typography>
           </Box>
         </Paper>
 
         {/* ── Canvas ── */}
-        <Paper elevation={0} sx={{ ...panel, flex: 1, position: 'relative', overflow: 'hidden', p: 0 }}>
+        <Paper elevation={0} sx={{ ...panel, flex: 1, position: 'relative', overflow: 'hidden', p: 0, minWidth: 0 }}>
           <Box
             ref={canvasRef}
             onMouseDown={handleCanvasMouseDown}
             sx={{
-              width: '100%', height: '100%', position: 'relative', overflow: 'hidden',
+              width: '100%', height: '100%',
+              position: 'relative', overflow: 'hidden',
               background: '#080818',
               cursor: isPanning ? 'grabbing' : isConnecting ? 'crosshair' : 'default',
-              backgroundImage: `
-                radial-gradient(circle at 1px 1px, rgba(99,91,255,0.18) 1px, transparent 0)
-              `,
+              backgroundImage: `radial-gradient(circle at 1px 1px, rgba(99,91,255,0.22) 1px, transparent 0)`,
               backgroundSize: '28px 28px',
               transform: `translate(${panOffset.x}px, ${panOffset.y}px) scale(${zoom})`,
               transformOrigin: '0 0',
@@ -525,71 +611,87 @@ const FlowDiagram = () => {
                 onResizeStart={handleResizeStart}
               />
             ))}
+
             {nodes.length === 0 && (
-              <Box sx={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', textAlign: 'center' }}>
-                <Typography sx={{ fontSize: '48px', opacity: 0.15 }}>⬡</Typography>
-                <Typography sx={{ fontSize: '14px', color: '#333', fontWeight: 600, letterSpacing: '0.05em' }}>Click shapes to start</Typography>
-                <Typography sx={{ fontSize: '11px', color: '#222', mt: 0.5 }}>Alt+drag to pan • Double-click to edit</Typography>
+              <Box sx={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', textAlign: 'center', pointerEvents: 'none' }}>
+                <Typography sx={{ fontSize: '60px', opacity: 0.07, lineHeight: 1 }}>⬡</Typography>
+                <Typography sx={{ fontSize: '14px', color: '#282840', fontWeight: 700, letterSpacing: '0.06em', mt: 1 }}>Click shapes to start building</Typography>
+                <Typography sx={{ fontSize: '11px', color: '#1c1c30', mt: 0.5 }}>Alt+drag to pan • Double-click to edit • Del to delete</Typography>
               </Box>
             )}
           </Box>
 
-          {/* Selected node info */}
+          {/* Selected Node Panel */}
           {selectedNode && (
-            <Paper elevation={0} sx={{ ...panel, position: 'absolute', top: 12, left: 12, p: '10px 14px', minWidth: 170 }}>
-              <Typography sx={{ fontSize: '9px', fontWeight: 800, color: '#635bff', letterSpacing: '0.15em', mb: 1 }}>SELECTED</Typography>
-              <Typography sx={{ fontSize: '12px', color: '#ccc' }}><span style={{ color: '#666' }}>Type: </span>{selectedNode.type}</Typography>
-              <Typography sx={{ fontSize: '12px', color: '#ccc', mb: 1 }}><span style={{ color: '#666' }}>Label: </span>{selectedNode.label}</Typography>
+            <Paper elevation={0} sx={{ ...panel, position: 'absolute', top: 12, left: 12, p: '10px 14px', minWidth: 185 }}>
+              <Typography sx={{ fontSize: '9px', fontWeight: 800, color: '#635bff', letterSpacing: '0.16em', mb: 0.75 }}>SELECTED NODE</Typography>
+              <Typography sx={{ fontSize: '11px', color: '#888', mb: 0.25 }}>Type: <span style={{ color: '#ccc' }}>{selectedNode.type}</span></Typography>
+              <Typography sx={{ fontSize: '11px', color: '#888', mb: 1 }}>Label: <span style={{ color: '#ccc' }}>{selectedNode.label}</span></Typography>
               <Box sx={{ display: 'flex', gap: 0.75 }}>
                 <Button size="small" startIcon={<EditIcon sx={{ fontSize: '12px !important' }} />}
                   onClick={() => handleEditNode(selectedNode)}
-                  sx={{ fontSize: '10px', px: 1, py: 0.3, textTransform: 'none', color: '#3b82f6', border: '1px solid #3b82f620', borderRadius: '6px', '&:hover': { background: '#3b82f615' }, minWidth: 0 }}>
+                  sx={{ fontSize: '10px', px: 1, py: 0.3, textTransform: 'none', color: '#3b82f6', border: '1px solid #3b82f625', borderRadius: '6px', '&:hover': { background: '#3b82f615' }, minWidth: 0 }}>
                   Edit
                 </Button>
                 <Button size="small" startIcon={<DeleteIcon sx={{ fontSize: '12px !important' }} />}
                   onClick={() => handleDeleteNode(selectedNode.id)}
-                  sx={{ fontSize: '10px', px: 1, py: 0.3, textTransform: 'none', color: '#ff4f6a', border: '1px solid #ff4f6a20', borderRadius: '6px', '&:hover': { background: '#ff4f6a15' }, minWidth: 0 }}>
+                  sx={{ fontSize: '10px', px: 1, py: 0.3, textTransform: 'none', color: '#ff4f6a', border: '1px solid #ff4f6a25', borderRadius: '6px', '&:hover': { background: '#ff4f6a15' }, minWidth: 0 }}>
                   Delete
                 </Button>
               </Box>
             </Paper>
           )}
 
-          {/* Hint bar */}
-          <Box sx={{ position: 'absolute', bottom: 10, left: '50%', transform: 'translateX(-50%)',
-            background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)',
-            borderRadius: '20px', px: 2, py: 0.5, border: '1px solid rgba(255,255,255,0.06)' }}>
-            <Typography sx={{ fontSize: '10px', color: '#555', letterSpacing: '0.08em' }}>
-              Drag handles to connect · Double-click to edit · Delete key · Alt+drag to pan · Corner handle to resize
+          {/* Hint Bar */}
+          <Box sx={{
+            position: 'absolute', bottom: 10, left: '50%', transform: 'translateX(-50%)',
+            background: 'rgba(8,8,24,0.85)', backdropFilter: 'blur(8px)',
+            borderRadius: '20px', px: 2, py: '5px',
+            border: '1px solid rgba(255,255,255,0.05)', whiteSpace: 'nowrap',
+          }}>
+            <Typography sx={{ fontSize: '10px', color: '#3a3a5a', letterSpacing: '0.06em' }}>
+              🔵 Handle = connect &nbsp;|&nbsp; ◼ Corner = resize &nbsp;|&nbsp; Alt+drag = pan &nbsp;|&nbsp; Del = delete node
             </Typography>
           </Box>
         </Paper>
       </Box>
 
-      {/* Edit Dialog */}
+      {/* ── Edit Dialog ── */}
       <Dialog open={editDialogOpen} onClose={() => setEditDialogOpen(false)} maxWidth="xs" fullWidth
         PaperProps={{ sx: { ...panel, color: '#fff' } }}>
-        <DialogTitle sx={{ fontSize: '14px', fontWeight: 800, color: '#fff', pb: 0 }}>Edit Node Label</DialogTitle>
+        <DialogTitle sx={{ fontSize: '14px', fontWeight: 800, color: '#fff', pb: 0 }}>Node Label Edit Karo</DialogTitle>
         <DialogContent>
           <TextField autoFocus margin="dense" label="Label" fullWidth value={editText}
             onChange={(e) => setEditText(e.target.value)}
             onKeyPress={(e) => e.key === 'Enter' && handleSaveEdit()}
             variant="outlined"
-            sx={{ mt: 1, '& .MuiOutlinedInput-root': { color: '#fff', '& fieldset': { borderColor: 'rgba(255,255,255,0.15)' }, '&:hover fieldset': { borderColor: '#635bff' } }, '& .MuiInputLabel-root': { color: '#666' } }}
+            sx={{
+              mt: 1,
+              '& .MuiOutlinedInput-root': {
+                color: '#fff',
+                '& fieldset': { borderColor: 'rgba(255,255,255,0.12)' },
+                '&:hover fieldset': { borderColor: '#635bff' },
+                '&.Mui-focused fieldset': { borderColor: '#635bff' },
+              },
+              '& .MuiInputLabel-root': { color: '#555' },
+              '& .MuiInputLabel-root.Mui-focused': { color: '#635bff' },
+            }}
           />
         </DialogContent>
         <DialogActions sx={{ px: 2, pb: 2, gap: 1 }}>
-          <Button onClick={() => setEditDialogOpen(false)} sx={{ color: '#666', textTransform: 'none', fontSize: '12px' }}>Cancel</Button>
-          <Button onClick={handleSaveEdit} sx={{ background: 'linear-gradient(135deg, #635bff, #3b82f6)', color: '#fff', textTransform: 'none', fontSize: '12px', borderRadius: '8px', px: 2, '&:hover': { background: 'linear-gradient(135deg, #5548d9, #2563eb)' } }}>
+          <Button onClick={() => setEditDialogOpen(false)} sx={{ color: '#555', textTransform: 'none', fontSize: '12px' }}>Cancel</Button>
+          <Button onClick={handleSaveEdit}
+            sx={{ background: 'linear-gradient(135deg, #635bff, #3b82f6)', color: '#fff', textTransform: 'none', fontSize: '12px', borderRadius: '8px', px: 2, fontWeight: 700, '&:hover': { background: 'linear-gradient(135deg, #5548d9, #2563eb)' } }}>
             Save
           </Button>
         </DialogActions>
       </Dialog>
 
-      <Snackbar open={snackbar.open} autoHideDuration={2500} onClose={() => setSnackbar({ ...snackbar, open: false })}
+      {/* ── Snackbar ── */}
+      <Snackbar open={snackbar.open} autoHideDuration={2000} onClose={() => setSnackbar(s => ({ ...s, open: false }))}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}>
-        <Alert onClose={() => setSnackbar({ ...snackbar, open: false })} severity={snackbar.severity}
-          sx={{ background: '#1a1a3e', color: '#fff', border: '1px solid rgba(255,255,255,0.1)', '& .MuiAlert-icon': { color: '#635bff' } }}>
+        <Alert severity={snackbar.severity} onClose={() => setSnackbar(s => ({ ...s, open: false }))}
+          sx={{ background: '#1a1a3e', color: '#fff', border: '1px solid rgba(255,255,255,0.08)', '& .MuiAlert-icon': { color: '#635bff' } }}>
           {snackbar.message}
         </Alert>
       </Snackbar>

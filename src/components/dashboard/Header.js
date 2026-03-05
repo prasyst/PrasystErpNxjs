@@ -1520,9 +1520,9 @@ const Header = ({ isSidebarCollapsed, onMenuToggle, isMobile }) => {
   </div>
 )}
           </div>
-
-          {/* <button
-  onClick={() => setIsAIToolOpen(true)}
+<Link href="/AI-Reporting-tool" passHref>
+          <button
+ 
   style={{
     background: 'none',
     border: 'none',
@@ -1543,9 +1543,7 @@ const Header = ({ isSidebarCollapsed, onMenuToggle, isMobile }) => {
 >
   <FaRobot size={20} />
 </button>
-{isAIToolOpen && (
-  <AIReportingTool onClose={() => setIsAIToolOpen(false)} />
-)} */}
+</Link>
 
           {/* Pinned Modules */}
           <Link href="/pinned-modules" passHref>
@@ -1595,7 +1593,7 @@ const Header = ({ isSidebarCollapsed, onMenuToggle, isMobile }) => {
             </button>
           </Link>
 
-           {/* <Tooltip title="Flow Diagram Builder">
+           <Tooltip title="Flow Diagram Builder">
           <button
             onClick={handleFlowDiagramClick}
             style={{
@@ -1616,7 +1614,7 @@ const Header = ({ isSidebarCollapsed, onMenuToggle, isMobile }) => {
           >
             <BackupTableIcon style={{ fontSize: '20px' }} />
           </button>
-        </Tooltip> */}
+        </Tooltip>
 
           {/* Notifications */}
           <div ref={notificationsRef} style={{ position: 'relative' }}>
