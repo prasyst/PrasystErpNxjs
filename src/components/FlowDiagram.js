@@ -48,23 +48,27 @@ const ShapeNode = ({ node, isSelected, onDragStart, onDoubleClick, onHandleMouse
     boxShadow: `0 1px 6px ${color}70`,
   };
 
-  const resizeCorner = isSelected ? (
-    <Box
-      style={{
-        position: 'absolute',
-        width: '12px',
-        height: '12px',
-        background: '#fff',
-        border: `2px solid ${color}`,
-        borderRadius: '3px',
-        right: '-6px',
-        bottom: '-6px',
-        cursor: 'se-resize',
-        zIndex: 20,
-      }}
-      onMouseDown={(e) => { e.stopPropagation(); e.preventDefault(); onResizeStart(e, node); }}
-    />
-  ) : null;
+ const resizeCorner = isSelected ? (
+  <Box
+    style={{
+      position: 'absolute',
+      width: '12px',
+      height: '12px',
+      background: '#fff',
+      border: `2px solid ${color}`,
+      borderRadius: '3px',
+      right: '-6px',
+      bottom: '-6px',
+      cursor: 'se-resize',
+      zIndex: 20,
+    }}
+    onMouseDown={(e) => { 
+      e.stopPropagation(); 
+      e.preventDefault(); 
+      onResizeStart(e, node); 
+    }}
+  />
+) : null;
 
   const allPoints = [
     { id: 'top',    x: '50%', y: '0%'    },
@@ -135,41 +139,97 @@ const ShapeNode = ({ node, isSelected, onDragStart, onDoubleClick, onHandleMouse
     );
   }
 
-  // Diamond (Decision)
   if (type === 'diamond') {
-    return (
+  return (
+    <Box
+      style={{ 
+        ...base, 
+        width: `${width}px`, 
+        height: `${height}px`,
+        position: 'absolute',
+        left: `${position.x}px`,
+        top: `${position.y}px`,
+      }}
+      onMouseDown={(e) => onDragStart(e, node)}
+      onDoubleClick={() => onDoubleClick(node)}
+      onContextMenu={(e) => { e.preventDefault(); onDoubleClick(node); }}
+    >
+      {/* Diamond shape container */}
       <Box
-        style={{ ...base, width: `${width}px`, height: `${height}px`,
+        style={{
+          width: '100%',
+          height: '100%',
           clipPath: 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)',
           backgroundColor: isSelected ? `${color}35` : `${color}20`,
-          boxShadow: glow, outline: isSelected ? `2px solid #fff` : `2px solid ${color}`, outlineOffset: '-4px' }}
-        onMouseDown={(e) => onDragStart(e, node)}
-        onDoubleClick={() => onDoubleClick(node)}
-        onContextMenu={(e) => { e.preventDefault(); onDoubleClick(node); }}
+          border: `2px solid ${isSelected ? '#fff' : color}`,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          boxShadow: glow,
+        }}
       >
-        <Box style={{ fontSize: '11px', fontWeight: 700, color: isSelected ? '#fff' : color, maxWidth: '60%', textAlign: 'center' }}>{label}</Box>
-        {renderHandles()}{resizeCorner}
+        <Box style={{ 
+          fontSize: '11px', 
+          fontWeight: 700, 
+          color: isSelected ? '#fff' : color, 
+          maxWidth: '70%', 
+          textAlign: 'center',
+          wordBreak: 'break-word'
+        }}>
+          {label}
+        </Box>
       </Box>
-    );
-  }
+      {renderHandles()}
+      {resizeCorner}
+    </Box>
+  );
+}
 
-  // Condition / If-Else (Parallelogram)
-  if (type === 'condition') {
-    return (
+ if (type === 'condition') {
+  return (
+    <Box
+      style={{ 
+        ...base, 
+        width: `${width}px`, 
+        height: `${height}px`,
+        position: 'absolute',
+        left: `${position.x}px`,
+        top: `${position.y}px`,
+      }}
+      onMouseDown={(e) => onDragStart(e, node)}
+      onDoubleClick={() => onDoubleClick(node)}
+      onContextMenu={(e) => { e.preventDefault(); onDoubleClick(node); }}
+    >
+      {/* Parallelogram shape container */}
       <Box
-        style={{ ...base, width: `${width}px`, height: `${height}px`,
+        style={{
+          width: '100%',
+          height: '100%',
           clipPath: 'polygon(15% 0%, 100% 0%, 85% 100%, 0% 100%)',
           backgroundColor: isSelected ? `${color}35` : `${color}20`,
-          boxShadow: glow, outline: isSelected ? `2px solid #fff` : `2px solid ${color}`, outlineOffset: '-4px' }}
-        onMouseDown={(e) => onDragStart(e, node)}
-        onDoubleClick={() => onDoubleClick(node)}
-        onContextMenu={(e) => { e.preventDefault(); onDoubleClick(node); }}
+          border: `2px solid ${isSelected ? '#fff' : color}`,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          boxShadow: glow,
+        }}
       >
-        <Box style={{ fontSize: '11px', fontWeight: 700, color: isSelected ? '#fff' : color, maxWidth: '70%', textAlign: 'center' }}>{label}</Box>
-        {renderHandles()}{resizeCorner}
+        <Box style={{ 
+          fontSize: '11px', 
+          fontWeight: 700, 
+          color: isSelected ? '#fff' : color, 
+          maxWidth: '70%', 
+          textAlign: 'center',
+          wordBreak: 'break-word'
+        }}>
+          {label}
+        </Box>
       </Box>
-    );
-  }
+      {renderHandles()}
+      {resizeCorner}
+    </Box>
+  );
+}
 
   return null;
 };
@@ -335,38 +395,58 @@ const FlowDiagram = () => {
     setSelectedNode(node);
   };
 
-  const handleResizeStart = (e, node) => {
-    setResizingNode(node);
-    setResizeStartState({ mouseX: e.clientX, mouseY: e.clientY, w: node.width, h: node.height });
-  };
+ const handleResizeStart = (e, node) => {
+  e.stopPropagation();
+  e.preventDefault();
+  setResizingNode(node);
+  setResizeStartState({ 
+    mouseX: e.clientX, 
+    mouseY: e.clientY, 
+    w: node.width, 
+    h: node.height,
+    nodeId: node.id 
+  });
+};
 
-  const handleMouseMove = useCallback((e) => {
-    if (draggingNode && canvasRef.current && !isConnecting) {
-      const rect = canvasRef.current.getBoundingClientRect();
-      const x = Math.max(0, (e.clientX - rect.left - panOffset.x) / zoom - dragOffset.x);
-      const y = Math.max(0, (e.clientY - rect.top  - panOffset.y) / zoom - dragOffset.y);
-      setNodes(prev => prev.map(n => n.id === draggingNode.id ? { ...n, position: { x, y } } : n));
-    }
-    if (resizingNode && resizeStart) {
-      const dx = (e.clientX - resizeStart.mouseX) / zoom;
-      const dy = (e.clientY - resizeStart.mouseY) / zoom;
-      const nw = Math.max(60, resizeStart.w + dx);
-      const nh = Math.max(40, resizeStart.h + dy);
-      setNodes(prev => prev.map(n => n.id === resizingNode.id ? { ...n, width: nw, height: nh } : n));
-    }
-    if (isPanning) {
-      const dx = e.clientX - panStart.x;
-      const dy = e.clientY - panStart.y;
-      setPanOffset(prev => ({ x: prev.x + dx, y: prev.y + dy }));
-      setPanStart({ x: e.clientX, y: e.clientY });
-    }
-  }, [draggingNode, dragOffset, isConnecting, resizingNode, resizeStart, isPanning, panStart, panOffset, zoom]);
+const handleMouseMove = useCallback((e) => {
+  if (draggingNode && canvasRef.current && !isConnecting) {
+    const rect = canvasRef.current.getBoundingClientRect();
+    const x = Math.max(0, (e.clientX - rect.left - panOffset.x) / zoom - dragOffset.x);
+    const y = Math.max(0, (e.clientY - rect.top  - panOffset.y) / zoom - dragOffset.y);
+    setNodes(prev => prev.map(n => n.id === draggingNode.id ? { ...n, position: { x, y } } : n));
+  }
+  
+  if (resizingNode && resizeStart && resizeStart.nodeId === resizingNode.id) {
+    const dx = (e.clientX - resizeStart.mouseX) / zoom;
+    const dy = (e.clientY - resizeStart.mouseY) / zoom;
+    const nw = Math.max(60, resizeStart.w + dx);
+    const nh = Math.max(40, resizeStart.h + dy);
+    
+    setNodes(prev => prev.map(n => 
+      n.id === resizingNode.id ? { ...n, width: nw, height: nh } : n
+    ));
+  }
+  
+  if (isPanning) {
+    const dx = e.clientX - panStart.x;
+    const dy = e.clientY - panStart.y;
+    setPanOffset(prev => ({ x: prev.x + dx, y: prev.y + dy }));
+    setPanStart({ x: e.clientX, y: e.clientY });
+  }
+}, [draggingNode, dragOffset, isConnecting, resizingNode, resizeStart, isPanning, panStart, panOffset, zoom]);
 
-  const handleMouseUp = useCallback(() => {
-    if (draggingNode) { setDraggingNode(null); }
-    if (resizingNode) { setResizingNode(null); setResizeStartState(null); }
-    setIsPanning(false);
-  }, [draggingNode, resizingNode]);
+const handleMouseUp = useCallback(() => {
+  if (draggingNode) { 
+    setDraggingNode(null); 
+  }
+  if (resizingNode) { 
+    // Save to history after resize
+    saveToHistory(nodes, connections, 'Resize Node');
+    setResizingNode(null); 
+    setResizeStartState(null); 
+  }
+  setIsPanning(false);
+}, [draggingNode, resizingNode, nodes, connections, saveToHistory]);
 
   useEffect(() => {
     document.addEventListener('mousemove', handleMouseMove);
@@ -418,7 +498,7 @@ const FlowDiagram = () => {
   };
 
   const handleClearDiagram = () => {
-    if (window.confirm('Poora diagram clear karna hai?')) {
+    if (window.confirm('Do You want to Clear the diagram?')) {
       setNodes([]); setConnections([]); setHistory([]); setHistoryIndex(-1);
       localStorage.removeItem('flowDiagram_v3'); setZoom(1); setPanOffset({ x: 0, y: 0 });
       setSnackbar({ open: true, message: 'Diagram cleared', severity: 'info' });
