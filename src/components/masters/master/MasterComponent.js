@@ -147,7 +147,7 @@ export default function MasterPage() {
       id: 'company',
       name: 'Company',
       children: [
-        { name: 'Company', icon: DomainIcon, path: '/masters/company/company' },
+        { name: 'Company Master', icon: DomainIcon, path: '/masters/company/company' },
         { name: 'Company Area', icon: MapIcon, path: '#' },
         { name: 'Company Division', icon: GroupWorkIcon, path: '#' },
         { name: 'Stock Type', icon: CategoryIcon, path: '#' },

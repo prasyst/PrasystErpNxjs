@@ -673,7 +673,7 @@ export const sidebarMenuItems = [
         path: '/masterpage?activeTab=company',
         children: [
           {
-            name: 'Company', icon: MdDomain,
+            name: 'Company Master', icon: MdDomain,
             // MOD_NAME: "mnuMstCompany",
             path: '/masters/company/company'
           },
@@ -1325,6 +1325,10 @@ export const sidebarMenuItems = [
     name: 'UserPermission',
     icon: MdAccountBalance,
     path: '/userpermission',
+  }, {
+    name: 'Create Module',
+    icon: MdAccountBalance,
+    path: '/createmodule/',
   },
 ];
 
