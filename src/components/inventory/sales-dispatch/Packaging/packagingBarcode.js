@@ -24,7 +24,7 @@ import Stepper1 from "./stepper1";
 import Stepper2 from "./stepper2";
 import Stepper4 from "./stepper4";
 import Stepper3 from "./stepper3";
-
+import { useUserPermissions } from '@/app/hooks/useUserPermissions';
 const PackagingBarcode = () => {
 
   const router = useRouter();

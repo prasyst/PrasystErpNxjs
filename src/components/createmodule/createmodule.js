@@ -1,8 +1,9 @@
 'use client'
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import {
-    Grid, TextField, Typography, Button, FormControlLabel, Checkbox, Dialog, DialogTitle, DialogContent,Box  ,
-    DialogContentText, DialogActions, MenuItem, Select, FormControl, InputLabel
+    Grid, TextField, Typography, Button, FormControlLabel, Checkbox, 
+    Dialog, DialogTitle, DialogContent, Box,
+    DialogContentText, DialogActions, Autocomplete, CircularProgress
 } from '@mui/material';
 import KeyboardArrowLeftIcon from "@mui/icons-material/KeyboardArrowLeft";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
@@ -19,6 +20,7 @@ const FORM_MODE = getFormMode();
 const textInputSx = {
     '& .MuiInputBase-root': {
         height: 42,
+        width: 222,
         fontSize: '14px',
     },
     '& .MuiInputLabel-root': {
@@ -49,45 +51,30 @@ const textInputSx = {
     }
 };
 
-const selectSx = {
-    '& .MuiInputBase-root': {
-        height: 42,
-        fontSize: '14px',
-    },
-    '& .MuiInputLabel-root': {
-        fontSize: '14px',
-        top: '-8px',
-    },
-    '& .MuiFilledInput-root': {
-        backgroundColor: '#fafafa',
-        border: '1px solid #e0e0e0',
-        borderRadius: '6px',
-        minHeight: 42,
-    },
-    '& .MuiFilledInput-root:before': {
-        display: 'none',
-    },
-    '& .MuiFilledInput-root:after': {
-        display: 'none',
-    },
-};
-
 const CreateModule = () => {
     const router = useRouter();
     const searchParams = useSearchParams();
     const MOD_ID = searchParams.get('MOD_ID');
     const [currentMOD_ID, setCurrentMOD_ID] = useState(null);
-    const [parentModules, setParentModules] = useState([]);
+    
+    // State for modules list
+    const [modules, setModules] = useState([]);
+    const [filteredModules, setFilteredModules] = useState([]);
+    const [loading, setLoading] = useState(false);
+    const [searchText, setSearchText] = useState('');
+    
     const [form, setForm] = useState({
         SearchByCd: '',
         MOD_ID: '',
         MOD_NAME: '',
         MOD_DESC: '',
         PARENT_ID: '',
+        PARENT_NAME: '', // For display purposes
         MOD_ROUTIG: '',
         MOD_TBLNAME: '',
         Status: "1",
     });
+    
     const [openConfirmDialog, setOpenConfirmDialog] = useState(false);
     const MOD_NAMERef = useRef(null);
     const MOD_DESCRef = useRef(null);
@@ -101,22 +88,60 @@ const CreateModule = () => {
     const PARTY_KEY = localStorage.getItem('PARTY_KEY');
     const COBR_ID = localStorage.getItem('COBR_ID');
 
-    // Fetch parent modules for dropdown
-    const fetchParentModules = useCallback(async () => {
+    // Fetch all modules for dropdown
+    const fetchAllModules = useCallback(async (search = '') => {
+        setLoading(true);
         try {
             const response = await axiosInstance.post('Module/GetWebModulesDashBoard?currentPage=1&limit=1000', {
-                "SearchText": ""
+                "SearchText": search
             });
+            
             const { data: { STATUS, DATA } } = response;
+            
             if (STATUS === 0 && Array.isArray(DATA)) {
-                // Filter modules where PARENT_ID is "0" (top-level modules)
-                const topLevelModules = DATA.filter(module => module.PARENT_ID === "0");
-                setParentModules(topLevelModules);
+                // Filter out the current module if in edit mode
+                let filteredData = DATA;
+                if (mode === FORM_MODE.edit && currentMOD_ID) {
+                    filteredData = DATA.filter(module => module.MOD_ID.toString() !== currentMOD_ID.toString());
+                }
+                
+                setModules(filteredData);
+                setFilteredModules(filteredData);
+                
+                // If we have a PARENT_ID in form, find and set the parent name
+                if (form.PARENT_ID) {
+                    const parentModule = filteredData.find(m => m.MOD_ID.toString() === form.PARENT_ID.toString());
+                    if (parentModule) {
+                        setForm(prev => ({
+                            ...prev,
+                            PARENT_NAME: parentModule.MOD_NAME
+                        }));
+                    }
+                }
             }
         } catch (err) {
-            console.error("Error fetching parent modules:", err);
+            console.error("Error fetching modules:", err);
+            toast.error("Error loading modules");
+        } finally {
+            setLoading(false);
         }
-    }, []);
+    }, [mode, currentMOD_ID, form.PARENT_ID]);
+
+    // Debounced search function
+    const handleSearchChange = useCallback((event, value) => {
+        setSearchText(value);
+        
+        // Filter modules based on search text
+        if (value) {
+            const filtered = modules.filter(module => 
+                module.MOD_NAME?.toLowerCase().includes(value.toLowerCase()) ||
+                module.MOD_ID?.toString().includes(value)
+            );
+            setFilteredModules(filtered);
+        } else {
+            setFilteredModules(modules);
+        }
+    }, [modules]);
 
     // Fetch module data for retrieve mode
     const fetchRetriveData = useCallback(async (id, flag = "R", isManualSearch = false) => {
@@ -135,14 +160,35 @@ const CreateModule = () => {
             
             if (STATUS === 0 && Array.isArray(DATA) && RESPONSESTATUSCODE === 1) {
                 const moduleData = DATA[0];
+                
+                // Find parent module name
+                let parentName = '';
+                if (moduleData.PARENT_ID && moduleData.PARENT_ID !== "0") {
+                    const parentResponse = await axiosInstance.post('Module/RetriveWebModules', {
+                        FLAG: "R",
+                        TBLNAME: "WebMODULES",
+                        FLDNAME: "Mod_ID",
+                        ID: moduleData.PARENT_ID,
+                        ORDERBYFLD: "",
+                        CWHAER: "",
+                        CO_ID: CO_ID || ""
+                    });
+                    
+                    if (parentResponse.data.STATUS === 0 && parentResponse.data.DATA) {
+                        parentName = parentResponse.data.DATA[0]?.MOD_NAME || '';
+                    }
+                }
+                
                 setForm({
                     MOD_ID: moduleData.MOD_ID?.toString() || '',
                     MOD_NAME: moduleData.MOD_NAME || '',
                     MOD_DESC: moduleData.MOD_DESC || '',
                     PARENT_ID: moduleData.PARENT_ID?.toString() || '',
+                    PARENT_NAME: parentName,
                     MOD_ROUTIG: moduleData.MOD_ROUTIG || '',
                     MOD_TBLNAME: moduleData.MOD_TBLNAME || '',
                     Status: moduleData.STATUS || "0",
+                    SearchByCd: ''
                 });
                 setStatus(moduleData.STATUS || "0");
                 setCurrentMOD_ID(moduleData.MOD_ID);
@@ -170,18 +216,22 @@ const CreateModule = () => {
             MOD_NAME: '',
             MOD_DESC: '',
             PARENT_ID: '',
+            PARENT_NAME: '',
             MOD_ROUTIG: '',
             MOD_TBLNAME: '',
             Status: "1",
         });
         setStatus("1");
         setCurrentMOD_ID(null);
+        setSearchText('');
     };
 
+    // Initial load
     useEffect(() => {
-        fetchParentModules();
-    }, [fetchParentModules]);
+        fetchAllModules();
+    }, [fetchAllModules]);
 
+    // Load data when MOD_ID changes
     useEffect(() => {
         if (MOD_ID) {
             setCurrentMOD_ID(MOD_ID);
@@ -192,6 +242,11 @@ const CreateModule = () => {
             setMode(FORM_MODE.add);
         }
     }, [MOD_ID, fetchRetriveData]);
+
+    // Refresh modules when mode changes
+    useEffect(() => {
+        fetchAllModules();
+    }, [mode, currentMOD_ID, fetchAllModules]);
 
     const handleChangeStatus = (event) => {
         const updatedStatus = event.target.checked ? "1" : "0";
@@ -274,6 +329,22 @@ const CreateModule = () => {
             ...prev,
             [name]: value
         }));
+    };
+
+    const handleParentChange = (event, newValue) => {
+        if (newValue) {
+            setForm(prev => ({
+                ...prev,
+                PARENT_ID: newValue.MOD_ID?.toString() || '',
+                PARENT_NAME: newValue.MOD_NAME || ''
+            }));
+        } else {
+            setForm(prev => ({
+                ...prev,
+                PARENT_ID: '',
+                PARENT_NAME: ''
+            }));
+        }
     };
 
     const handleCancel = async () => {
@@ -394,68 +465,65 @@ const CreateModule = () => {
                 <ToastContainer />
 
                 <Grid container spacing={2} sx={{ maxWidth: '1200px', width: '100%' }}>
-                    {/* Header */}
-                   
+                    {/* Toolbar */}
+                    <Grid item xs={12}>
+                        <Grid container justifyContent="space-between" alignItems="center" spacing={2}>
+                            {/* LEFT - Navigation Icons */}
+                            <Grid item>
+                                <Button
+                                    variant="contained"
+                                    size="small"
+                                    sx={{ background: 'linear-gradient(290deg, #d4d4d4, #d4d4d4) !important', minWidth: '40px' }}
+                                    disabled={mode !== FORM_MODE.read}
+                                    onClick={handlePrevious}
+                                >
+                                    <KeyboardArrowLeftIcon />
+                                </Button>
+                                <Button
+                                    variant="contained"
+                                    size="small"
+                                    sx={{ background: 'linear-gradient(290deg, #b9d0e9, #e9f2fa) !important', ml: 1, minWidth: '40px' }}
+                                    disabled={mode !== FORM_MODE.read}
+                                    onClick={handleNext}
+                                >
+                                    <NavigateNextIcon />
+                                </Button>
+                            </Grid>
 
-                   {/* Toolbar */}
-<Grid item xs={12}>
-    <Grid container justifyContent="space-between" alignItems="center" spacing={2}>
-        {/* LEFT - Navigation Icons */}
-        <Grid item>
-            <Button
-                variant="contained"
-                size="small"
-                sx={{ background: 'linear-gradient(290deg, #d4d4d4, #d4d4d4) !important', minWidth: '40px' }}
-                disabled={mode !== 'view'}
-                onClick={handlePrevious}
-            >
-                <KeyboardArrowLeftIcon />
-            </Button>
-            <Button
-                variant="contained"
-                size="small"
-                sx={{ background: 'linear-gradient(290deg, #b9d0e9, #e9f2fa) !important', ml: 1, minWidth: '40px' }}
-                disabled={mode !== 'view'}
-                onClick={handleNext}
-            >
-                <NavigateNextIcon />
-            </Button>
-        </Grid>
+                            {/* CENTER - Title and Search */}
+                            <Grid item>
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                                    <Typography variant="h6" sx={{ mb: 0 }}>
+                                        Module Master
+                                    </Typography>
+                                    <TbListSearch 
+                                        onClick={handleTable} 
+                                        style={{ 
+                                            color: 'rgb(99, 91, 255)', 
+                                            width: '32px', 
+                                            height: '32px', 
+                                            cursor: 'pointer' 
+                                        }} 
+                                    />
+                                </Box>
+                            </Grid>
 
-        {/* CENTER - Title and Search */}
-        <Grid item>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                <Typography variant="h6" sx={{ mb: 0 }}>
-                    Module Master
-                </Typography>
-                <TbListSearch 
-                    onClick={handleTable} 
-                    style={{ 
-                        color: 'rgb(99, 91, 255)', 
-                        width: '32px', 
-                        height: '32px', 
-                        cursor: 'pointer' 
-                    }} 
-                />
-            </Box>
-        </Grid>
-
-        {/* RIGHT - CrudButton */}
-        <Grid item>
-            <CrudButton
-                moduleName="Module"
-                mode={mode}
-                onAdd={handleAdd}
-                onEdit={handleEdit}
-                onDelete={handleDelete}
-                onExit={handleExit}
-                readOnlyMode={mode === FORM_MODE.read}
-                onPrevious={handlePrevious}
-                onNext={handleNext}
-            />
-        </Grid>
-    </Grid>
-</Grid>
+                            {/* RIGHT - CrudButton */}
+                            <Grid item>
+                                <CrudButton
+                                    moduleName="Module"
+                                    mode={mode}
+                                    onAdd={handleAdd}
+                                    onEdit={handleEdit}
+                                    onDelete={handleDelete}
+                                    onExit={handleExit}
+                                    readOnlyMode={mode === FORM_MODE.read}
+                                    onPrevious={handlePrevious}
+                                    onNext={handleNext}
+                                />
+                            </Grid>
+                        </Grid>
+                    </Grid>
 
                     {/* Form Fields */}
                     <Grid item xs={12}>
@@ -476,23 +544,49 @@ const CreateModule = () => {
                                 />
                             </Grid>
 
-                            {/* Parent Module Dropdown */}
-                            <Grid item xs={12} sm={6} md={4}>
-                                <FormControl variant="filled" fullWidth sx={selectSx} disabled={mode === FORM_MODE.read}>
-                                    <InputLabel>Parent Module</InputLabel>
-                                    <Select
-                                        name="PARENT_ID"
-                                        value={form.PARENT_ID}
-                                        onChange={handleInputChange}
-                                    >
-                                        <MenuItem value="">None (Top Level)</MenuItem>
-                                        {parentModules.map((module) => (
-                                            <MenuItem key={module.MOD_ID} value={module.MOD_ID.toString()}>
-                                                {module.MOD_NAME}
-                                            </MenuItem>
-                                        ))}
-                                    </Select>
-                                </FormControl>
+                            {/* Parent Module AutoComplete */}
+                            <Grid size  xs={12} sm={6} md={4}>
+                                <Autocomplete
+                                    id="parent-module-autocomplete"
+                                    options={filteredModules}
+                                    loading={loading}
+                                    value={filteredModules.find(m => m.MOD_ID?.toString() === form.PARENT_ID) || null}
+                                    onChange={handleParentChange}
+                                    onInputChange={handleSearchChange}
+                                    getOptionLabel={(option) => `${option.MOD_NAME} (${option.MOD_ID})`}
+                                    isOptionEqualToValue={(option, value) => option.MOD_ID === value.MOD_ID}
+                                    disabled={mode === FORM_MODE.read}
+                                    renderInput={(params) => (
+                                        <TextField
+                                            {...params}
+                                            label="Parent Module"
+                                            variant="filled"
+                                            fullWidth
+                                            sx={textInputSx}
+                                            InputProps={{
+                                                ...params.InputProps,
+                                                endAdornment: (
+                                                    <>
+                                                        {loading ? <CircularProgress color="inherit" size={20} /> : null}
+                                                        {params.InputProps.endAdornment}
+                                                    </>
+                                                ),
+                                            }}
+                                            placeholder="Type to search modules..."
+                                        />
+                                    )}
+                                    renderOption={(props, option) => (
+                                        <li {...props}>
+                                            <Box>
+                                                <Typography variant="body1">
+                                                    {option.MOD_NAME}
+                                                </Typography>
+                                               
+                                            </Box>
+                                        </li>
+                                    )}
+                                    noOptionsText="No modules found"
+                                />
                             </Grid>
 
                             {/* Menu Name */}

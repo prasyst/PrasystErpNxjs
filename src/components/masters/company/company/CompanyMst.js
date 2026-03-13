@@ -1,3 +1,4 @@
+
 'use client';
 import React, { useState, useEffect, useCallback, useRef } from "react";
 
@@ -25,7 +26,7 @@ import {
   CancelPresentation as CancelPresentationIcon,
 } from "@mui/icons-material";
 import { TbListSearch } from "react-icons/tb";
-
+import { useUserPermissions } from '@/app/hooks/useUserPermissions';
 import "react-toastify/dist/ReactToastify.css";
 import { toast, ToastContainer } from "react-toastify";
 import axiosInstance from '../../../../lib/axios';
@@ -36,7 +37,7 @@ import DialogTitle from "@mui/material/DialogTitle";
 import DialogContentText from "@mui/material/DialogContentText";
 
 import { useSearchParams, useRouter } from 'next/navigation';
-import CrudButtons from "@/GlobalFunction/CrudButtons";
+
 import CrudButton from "@/GlobalFunction/CrudButton";
 import PaginationButtons from '@/GlobalFunction/PaginationButtons';
 
@@ -52,7 +53,7 @@ const CompanyMst = () => {
   const router = useRouter();
 
   const [tabIndex, setTabIndex] = useState(0);
-
+// const { hasSpecificPermission } = useUserPermissions();
   const [openDialog, setopenDialog] = useState(false);
   const [seriesData, setSeriesData] = useState([]);
   const [activeStep, setActiveStep] = useState(0);
@@ -70,6 +71,9 @@ const CompanyMst = () => {
   // const CO_ID = localStorage.getItem('CO_ID');
   const searchParams = useSearchParams();
   const FG = searchParams.get('PARTY_KEY');
+
+  const { hasSpecificPermission, loading: permissionsLoading } = useUserPermissions();
+const moduleName = "Company Master";
 
   const [formData, setFormData] = useState({
     SearchByCd: "",
@@ -254,6 +258,15 @@ const CompanyMst = () => {
     }]
 
   });
+
+  useEffect(() => {
+  console.log('Company Master permissions:', {
+    add: hasSpecificPermission(moduleName, 'ADD'),
+    edit: hasSpecificPermission(moduleName, 'EDIT'),
+    delete: hasSpecificPermission(moduleName, 'DELETE'),
+    view: hasSpecificPermission(moduleName, 'VIEW')
+  });
+}, [hasSpecificPermission, moduleName]);
 
   const handlePrint = () => { };
 
@@ -1596,17 +1609,23 @@ const CompanyMst = () => {
         </Grid>
 
         <Grid sx={{ display: "flex", justifyContent: "end" }}>
-          <CrudButton
-            moduleName=""
-            mode={mode}
-            onAdd={handleAdd}
-            onEdit={handleEdit}
-            onDelete={handleDelete}
-            onExit={handleExit}
-            readOnlyMode={mode === "view"}
-            onPrevious={handlePrevClick}
-            onNext={handleNextClick}
-          />
+  <CrudButton
+  moduleName={moduleName}
+  mode={mode}
+  onAdd={handleAdd}
+  onEdit={handleEdit}
+  onDelete={handleDelete}
+  onView={handlePrint}
+  onExit={handleExit}
+  readOnlyMode={mode === "view"}
+  onPrevious={handlePrevClick}
+  onNext={handleNextClick}
+  // Pass actual permission values from API
+  canAdd={hasSpecificPermission(moduleName, 'ADD')}
+  canEdit={hasSpecificPermission(moduleName, 'EDIT')}
+  canDelete={hasSpecificPermission(moduleName, 'DELETE')}
+  canView={hasSpecificPermission(moduleName, 'VIEW')}
+/>
         </Grid>
       </Grid>
 

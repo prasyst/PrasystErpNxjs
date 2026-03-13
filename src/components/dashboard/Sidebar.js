@@ -4,13 +4,18 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { usePathname } from 'next/navigation';
-import { sidebarMenuItems } from './SidebarMenu';
 import {
   MdPushPin, MdOutlinePushPin, MdChevronRight, MdSearch, MdClear, MdMenu,
-  MdClose
+  MdClose, MdDashboard, MdOutlineApartment, MdInventory, MdDomain, MdPeople,
+  MdCategory, MdLocalMall, MdCollectionsBookmark, MdBrandingWatermark,
+  MdStraighten, MdBuild, MdAssignment, MdGavel, MdEvent
 } from 'react-icons/md';
+import { FaTruck, FaUserTag, FaBoxes, FaBalanceScale, FaHandshake } from 'react-icons/fa';
+import { AiOutlineNodeIndex } from 'react-icons/ai';
+import { TiTicket } from 'react-icons/ti';
 import { usePin } from '../../app/hooks/usePin';
 import { useRecentPaths } from '../../app/context/RecentPathsContext';
+import axiosInstance from '@/lib/axios';
 
 const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => {
   const sidebarRef = useRef(null);
@@ -29,19 +34,40 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
   const [searchQuery, setSearchQuery] = useState('');
   const searchInputRef = useRef(null);
   const [activeGreatGrandchild, setActiveGreatGrandchild] = useState(null);
-  const [isSearchFocused, setIsSearchFocused] = useState(false); // नया state
-
-  // State for company name
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const [menuItems, setMenuItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [userId, setUserId] = useState(null);
   const [companyName, setCompanyName] = useState('Prasyst');
 
   // Track if user has manually interacted with sidebar
   const [isUserInteracted, setIsUserInteracted] = useState(false);
 
+  // Get userId from localStorage - ye useEffect replace karo
+useEffect(() => {
+  // Directly get USER_ID from localStorage
+  const userIdFromStorage = localStorage.getItem('USER_ID');
+  if (userIdFromStorage) {
+    setUserId(userIdFromStorage);
+    console.log('User ID from localStorage:', userIdFromStorage);
+  } else {
+    // Fallback to user object if exists
+    const userData = localStorage.getItem('user');
+    if (userData) {
+      try {
+        const parsedUser = JSON.parse(userData);
+        setUserId(parsedUser.USER_ID || parsedUser.userId || null);
+      } catch (error) {
+        console.error('Error parsing user data:', error);
+      }
+    }
+  }
+}, []);
+
   // Fetch company name from API
   useEffect(() => {
     const fetchCompanyName = async () => {
       try {
-        // Replace with your actual API endpoint
         const response = await fetch('/api/company/name');
         if (response.ok) {
           const data = await response.json();
@@ -49,7 +75,6 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
         }
       } catch (error) {
         console.error('Failed to fetch company name:', error);
-        // Fallback to localStorage if available
         const storedName = localStorage.getItem('companyName');
         if (storedName) {
           setCompanyName(storedName);
@@ -60,24 +85,200 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
     fetchCompanyName();
   }, []);
 
+ // Fetch menu items from API - temporary fix with hardcoded ID
+useEffect(() => {
+  const fetchMenuItems = async () => {
+    // Temporary: Use hardcoded ID 1 for testing
+    const effectiveUserId = "1";
+    
+    try {
+      setLoading(true);
+      console.log('Fetching menus for user ID:', effectiveUserId);
+      
+      const response = await axiosInstance.post('/MODULE/RetriveWebUserprivs', {
+        "FLAG": "UR",
+        "TBLNAME": "WebUserprivs",
+        "FLDNAME": "User_Id",
+        "ID": effectiveUserId,
+        "ORDERBYFLD": "",
+        "CWHAER": "",
+        "CO_ID": ""
+      });
+
+      console.log('Menu API Response:', response.data);
+
+      if (response.data && response.data.DATA && response.data.DATA.length > 0) {
+        const validData = response.data.DATA.filter(item => item.MOD_NAME || item.MOD_DESC);
+        const menuTree = buildMenuTree(validData);
+        setMenuItems(menuTree);
+        console.log('Menu tree built:', menuTree);
+      } else {
+        console.log('No menu data received');
+        setMenuItems([]);
+      }
+    } catch (error) {
+      console.error('Error fetching menu items:', error);
+      setMenuItems([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  fetchMenuItems();
+}, []); // Remove userId dependency for testing
+
+  // Build menu tree from flat API data - ye function replace karo
+const buildMenuTree = (data) => {
+  const itemMap = {};
+  const rootItems = [];
+  const allItemIds = new Set();
+
+  // First pass: Create all items and collect all IDs
+  data.forEach(item => {
+    if (!item.MOD_ID) return;
+    allItemIds.add(item.MOD_ID.toString());
+  });
+
+  // Second pass: Create all items with permissions
+  data.forEach(item => {
+    if (!item.MOD_ID) return;
+
+    const hasPermission = 
+      item.ADD_PRIV === "1" || 
+      item.EDIT_PRIV === "1" || 
+      item.DELETE_PRIV === "1" || 
+      item.SELECT_PRIV === "1";
+
+    // Include if has permission OR if it's a parent of a permitted item
+    if (hasPermission || (item.PARENT_ID && allItemIds.has(item.PARENT_ID.toString()))) {
+      itemMap[item.MOD_ID] = {
+        id: item.MOD_ID,
+        name: item.MOD_DESC || item.MOD_NAME || `Module ${item.MOD_ID}`,
+        path: item.MOD_ROUTIG || '#',
+        parentId: item.PARENT_ID === "0" || item.PARENT_ID === 0 || !item.PARENT_ID ? null : item.PARENT_ID.toString(),
+        children: [],
+        icon: getIconForModule(item.MOD_NAME || item.MOD_DESC),
+        permissions: {
+          add: item.ADD_PRIV === "1",
+          edit: item.EDIT_PRIV === "1",
+          delete: item.DELETE_PRIV === "1",
+          view: item.SELECT_PRIV === "1"
+        }
+      };
+    }
+  });
+
+  // Third pass: Add parent items if they don't exist but have children
+  const additionalParents = new Set();
+  Object.values(itemMap).forEach(item => {
+    if (item.parentId && !itemMap[item.parentId]) {
+      additionalParents.add(item.parentId);
+    }
+  });
+
+  // Fetch parent items from original data
+  if (additionalParents.size > 0) {
+    data.forEach(item => {
+      if (additionalParents.has(item.MOD_ID.toString()) && !itemMap[item.MOD_ID]) {
+        itemMap[item.MOD_ID] = {
+          id: item.MOD_ID,
+          name: item.MOD_DESC || item.MOD_NAME || `Module ${item.MOD_ID}`,
+          path: item.MOD_ROUTIG || '#',
+          parentId: item.PARENT_ID === "0" || item.PARENT_ID === 0 || !item.PARENT_ID ? null : item.PARENT_ID.toString(),
+          children: [],
+          icon: getIconForModule(item.MOD_NAME || item.MOD_DESC),
+          permissions: {
+            add: false,
+            edit: false,
+            delete: false,
+            view: false
+          }
+        };
+      }
+    });
+  }
+
+  // Build hierarchy
+  Object.values(itemMap).forEach(item => {
+    if (item.parentId && itemMap[item.parentId]) {
+      itemMap[item.parentId].children.push(item);
+    } else {
+      rootItems.push(item);
+    }
+  });
+
+  // Sort items
+  const sortItems = (items) => {
+    items.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+    items.forEach(item => {
+      if (item.children.length > 0) {
+        sortItems(item.children);
+      }
+    });
+  };
+
+  sortItems(rootItems);
+  console.log('Final Menu Tree:', rootItems);
+  return rootItems;
+};
+
+  // Get icon based on module name
+  const getIconForModule = (moduleName) => {
+    if (!moduleName) return MdOutlineApartment;
+    
+    const name = moduleName.toLowerCase();
+    const iconMap = {
+      'dashboard': MdDashboard,
+      'masters': MdOutlineApartment,
+      'inventory': MdInventory,
+      'ticketing': TiTicket,
+      'company': MdDomain,
+      'company master': MdDomain,
+      'vendors': FaTruck,
+      'creditors/suppliers': FaUserTag,
+      'customers': MdPeople,
+      'debtors/customers': MdPeople,
+      'products': FaBoxes,
+      'category master': MdCategory,
+      'product group': AiOutlineNodeIndex,
+      'product master': MdLocalMall,
+      'brand master': MdBrandingWatermark,
+      'unit master': MdStraighten,
+      'rackmst': MdBuild,
+      'prod series': MdAssignment,
+      'tax/terms': FaBalanceScale,
+      'tax master': MdGavel,
+      'terms master': MdAssignment,
+      'sales/dispatch': FaBoxes,
+      'sampling & development': FaBoxes,
+      'quality control': MdBuild,
+      'qc master': MdBuild,
+      'stores': FaHandshake,
+      'raw material': MdBuild,
+      'finished goods': MdBuild,
+      'semi finished': MdBuild
+    };
+
+    // Find matching icon
+    for (const [key, icon] of Object.entries(iconMap)) {
+      if (name.includes(key)) {
+        return icon;
+      }
+    }
+    
+    return MdOutlineApartment; // Default icon
+  };
+
   // Main navigation function with recent path tracking
   const handleNavigationWithTracking = (path, name, isGrandchild = false) => {
     console.log('Navigating to:', path, 'name:', name, 'isGrandchild:', isGrandchild);
 
     if (path && path !== '#') {
-      // Track only grandchild paths in recent paths
       if (isGrandchild) {
-        console.log('Adding to recent paths:', name, path);
         addRecentPath(path, name);
       }
-
-      // Navigate to the path
       router.push(path);
-
-      // Mark that user has interacted
       setIsUserInteracted(true);
-
-      // Only close sidebar on mobile if it's a leaf node (grandchild)
       if (isMobile && isGrandchild) {
         onClose();
       }
@@ -88,13 +289,11 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
     setIsUserInteracted(true);
     setOpenSections(prev => {
       const newState = { ...prev };
-
       if (newState[name]) {
         delete newState[name];
       } else {
         newState[name] = true;
       }
-
       setHasOpenSubmenu(Object.keys(newState).length > 0);
       return newState;
     });
@@ -105,17 +304,14 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
     e.stopPropagation();
     setIsUserInteracted(true);
 
-    // Set active parent
     setActiveParent(item.name);
     setActiveChild(null);
     setActiveGrandchild(null);
 
-    // If it has children, toggle section
     if (item.children && item.children.length > 0) {
       toggleSection(item.name);
     }
 
-    // If it has a valid path, navigate
     if (item.path && item.path !== '#') {
       handleNavigationWithTracking(item.path, item.name, false);
     }
@@ -126,66 +322,20 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
     e.stopPropagation();
     setIsUserInteracted(true);
 
-    // Set active states
     setActiveParent(parentName);
     setActiveChild(child.name);
     setActiveGrandchild(null);
     setActiveGreatGrandchild(null);
 
-    // Toggle child section if it has grandchildren
     if (child.children && child.children.length > 0) {
       toggleSection(child.name);
     }
 
-    let targetPath = child.path;
+    if (child.path && child.path !== '#') {
+      handleNavigationWithTracking(child.path, child.name, false);
+    }
 
-    // Handle special cases for Masters and Inventory
-    if (!targetPath || targetPath === '#') {
-      if (parentName === 'Inventory') {
-        const inventoryMap = {
-          'Inventory Items': 'inventory-items',
-          'Sampling & Development': 'sampling',
-          'Opening Stock': 'opening-stock',
-          'Purchase Order': 'purchase-order',
-          'Inward Approval': 'inward-approval',
-          'Provisonal GRN': 'provisinal-grn',
-          'Purchase Inward': 'purchase-inward',
-          'RM/Acc Issue': 'rm-acc-issue',
-          'Manufacturing': 'manufacturing',
-          'Other Transaction': 'other-transactions',
-          'Sample Packing': 'sample-packaging',
-          'Make to Order': 'make-to-order',
-          'Sales/Dispatch': 'sales-dispatch',
-          'Sampling & Production': 'sampling-production',
-        };
-        const tab = inventoryMap[child.name] || 'inventory';
-        targetPath = `/inventorypage?activeTab=${tab}`;
-      } else if (parentName === 'Masters') {
-        const mastersMap = {
-          Company: 'company',
-          Location: 'location',
-          Vendors: 'vendors',
-          Customers: 'customers',
-          Products: 'products',
-          'Tax/Terms': 'tax',
-          Season: 'season',
-          Ticketing: 'ticketing',
-          'GST/SAC Code': 'gst',
-          Process: 'process',
-        };
-        const tab = mastersMap[child.name] || 'company';
-        targetPath = `/masterpage?activeTab=${tab}`;
-      }
-    }
-    // Navigate (not tracking as recent since it's a child, not grandchild)
-    if (targetPath && targetPath !== '#') {
-      console.log('Navigating to child:', child.name, targetPath);
-      handleNavigationWithTracking(targetPath, child.name, false);
-    }
-    // Ensure parent stays open
-    if (parentName === 'Masters' || parentName === 'Inventory') {
-      setOpenSections(prev => ({ ...prev, [parentName]: true }));
-    }
+    setOpenSections(prev => ({ ...prev, [parentName]: true }));
   };
 
   // Handle grandchild click
@@ -193,50 +343,18 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
     e.stopPropagation();
     setIsUserInteracted(true);
 
-    // Set active states
     setActiveParent(parentName);
     setActiveChild(childName);
     setActiveGrandchild(grandchild.name);
 
-    // Ensure parent and child sections are open
     setOpenSections(prev => ({
       ...prev,
       [parentName]: true,
       [childName]: true
     }));
 
-    // Navigate and track as recent (since it's a grandchild)
     if (grandchild.path && grandchild.path !== '#') {
-      console.log('Navigating to grandchild:', grandchild.name, grandchild.path);
       handleNavigationWithTracking(grandchild.path, grandchild.name, true);
-    }
-
-    // Close sidebar on mobile for leaf nodes
-    if (isMobile) onClose();
-  };
-
-  // Handle great-grandchild click (e.g., Raw Material, Finished Goods under QC Test)
-  const handleGreatGrandchildClick = (greatGrandchild, parentName, childName, grandChildName, e) => {
-    e.stopPropagation();
-    setIsUserInteracted(true);
-
-    // Set all active levels
-    setActiveParent(parentName);
-    setActiveChild(childName);
-    setActiveGrandchild(grandChildName);
-    setActiveGreatGrandchild(greatGrandchild.name);
-
-    // Ensure all parent sections are open
-    setOpenSections(prev => ({
-      ...prev,
-      [parentName]: true,
-      [childName]: true,
-      [grandChildName]: true,
-    }));
-
-    // Navigate only if it has a valid path
-    if (greatGrandchild.path && greatGrandchild.path !== '#') {
-      handleNavigationWithTracking(greatGrandchild.path, greatGrandchild.name, true); // true = track as recent
     }
 
     if (isMobile) onClose();
@@ -245,6 +363,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
   // Item matches search
   const itemMatchesSearch = (item, query) => {
     if (!query.trim()) return true;
+    if (!item || !item.name) return false;
 
     const searchLower = query.toLowerCase().trim();
     const itemNameLower = item.name.toLowerCase();
@@ -265,7 +384,6 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
     return items
       .filter(item => {
         if (!item) return false;
-        if (item.divider) return true;
         return itemMatchesSearch(item, query);
       })
       .map(item => {
@@ -285,8 +403,8 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
   };
 
   const getFilteredMenuItems = () => {
-    if (!searchQuery.trim()) return sidebarMenuItems.filter(item => item);
-    return filterMenuTree(sidebarMenuItems, searchQuery);
+    if (!searchQuery.trim()) return menuItems.filter(item => item);
+    return filterMenuTree(menuItems, searchQuery);
   };
 
   const highlightText = (text, query) => {
@@ -316,12 +434,12 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
     setSearchQuery(value);
 
     if (value.trim()) {
-      const filteredItems = filterMenuTree(sidebarMenuItems, value);
+      const filteredItems = filterMenuTree(menuItems, value);
       const sectionsToOpen = {};
 
       const collectParents = (items, parent = null) => {
         items.forEach(item => {
-          if (!item || item.divider) return;
+          if (!item) return;
 
           if (parent && itemMatchesSearch(item, value)) {
             sectionsToOpen[parent.name] = true;
@@ -346,27 +464,24 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
     }
   };
 
-  // Handle search input focus - यह नया function है
   const handleSearchFocus = (e) => {
     e.stopPropagation();
     setIsSearchFocused(true);
     setIsUserInteracted(true);
 
-    // Prevent sidebar from closing when search is focused on mobile
     if (isMobile) {
       e.currentTarget.style.borderColor = '#635bff';
       e.currentTarget.style.boxShadow = '0 0 0 2px rgba(99, 91, 255, 0.1)';
     }
   };
 
-  // Handle search input blur - यह नया function है
   const handleSearchBlur = (e) => {
     e.target.style.borderColor = '#ddd';
     e.target.style.boxShadow = 'none';
     setIsSearchFocused(false);
   };
 
-  // Prevent sidebar close when search input is clicked on mobile - यह नया useEffect है
+  // Prevent sidebar close when search input is clicked on mobile
   useEffect(() => {
     const handleOutsideClick = (e) => {
       if (isMobile && isOpen && sidebarRef.current &&
@@ -387,14 +502,10 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
 
   // Set active states based on current path
   useEffect(() => {
-    console.log('Path changed to:', pathname);
-
-    // Helper function to find active items
     const findActiveItems = (items) => {
       for (const item of items) {
         if (!item) continue;
 
-        // Check if this item matches the path
         if (item.path === pathname) {
           setActiveParent(item.name);
           setActiveChild(null);
@@ -402,7 +513,6 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
           return true;
         }
 
-        // Check children
         if (item.children) {
           for (const child of item.children) {
             if (!child) continue;
@@ -415,7 +525,6 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
               return true;
             }
 
-            // Check grandchildren
             if (child.children) {
               for (const grandchild of child.children) {
                 if (!grandchild) continue;
@@ -439,77 +548,23 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
       return false;
     };
 
-    // Special handling for Masterpage and Inventorypage
-    if (pathname.startsWith('/masterpage')) {
-      setActiveParent('Masters');
-      setOpenSections(prev => ({ ...prev, Masters: true }));
-      setHasOpenSubmenu(true);
-
-      const urlParams = new URLSearchParams(pathname.split('?')[1]);
-      const activeTab = urlParams.get('activeTab');
-      const mastersTabToChildMap = {
-        company: 'Company',
-        location: 'Location',
-        vendors: 'Vendors',
-        customers: 'Customers',
-        products: 'Products',
-        tax: 'Tax/Terms',
-        season: 'Season',
-        ticketing: 'Ticketing',
-        gst: 'GST/SAC Code',
-        process: 'process',
-      };
-      setActiveChild(mastersTabToChildMap[activeTab] || null);
+    if (!findActiveItems(menuItems)) {
+      setActiveParent(null);
+      setActiveChild(null);
       setActiveGrandchild(null);
-    } else if (pathname.startsWith('/inventorypage')) {
-      setActiveParent('Inventory');
-      setOpenSections(prev => ({ ...prev, Inventory: true }));
-      setHasOpenSubmenu(true);
-
-      const urlParams = new URLSearchParams(pathname.split('?')[1]);
-      const activeTab = urlParams.get('activeTab');
-      const inventoryTabToChildMap = {
-        'inventory-items': 'Inventory Items',
-        sampling: 'Sampling & Development',
-        'opening-stock': 'Opening Stock',
-        'purchase-order': 'Purchase Order',
-        'inward-approval': 'Inward Approval',
-        'provisinal-grn': 'Provisonal GRN',
-        'purchase-inward': 'Purchase Inward',
-        'rm-acc-issue': 'RM/Acc Issue',
-        manufacturing: 'Manufacturing',
-        'other-transactions': 'Other Transaction',
-        'sample-packaging': 'Sample Packing',
-        'make-to-order': 'Make to Order',
-        'sales-dispatch': 'Sales/Dispatch',
-        'sampling-production': 'Sampling & Production',
-      };
-      setActiveChild(inventoryTabToChildMap[activeTab] || null);
-      setActiveGrandchild(null);
-    } else {
-      // Try to find active items in the menu
-      if (!findActiveItems(sidebarMenuItems)) {
-        // If not found, reset active states
-        setActiveParent(null);
-        setActiveChild(null);
-        setActiveGrandchild(null);
-      }
     }
-  }, [pathname]);
+  }, [pathname, menuItems]);
 
   // Reset user interaction flag after navigation
   useEffect(() => {
-    // Reset the flag after a short delay to allow sidebar to stay open
     const timer = setTimeout(() => {
       setIsUserInteracted(false);
     }, 100);
-
     return () => clearTimeout(timer);
   }, [pathname]);
 
-  const menuItems = getFilteredMenuItems();
+  const filteredMenuItems = getFilteredMenuItems();
 
-  // Handle pin click
   const handlePinClick = (item, event) => {
     event.stopPropagation();
 
@@ -538,7 +593,6 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
     setShowUnpinConfirm(null);
   };
 
-  // Handle mobile menu toggle
   const handleMobileMenuToggle = () => {
     if (isMobile) {
       onClose();
@@ -547,36 +601,15 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
 
   const renderMainMenu = useCallback((items) => {
     return items
-      .filter(item => item)
+      .filter(item => item && item.name)
       .map((item, index) => {
-        // DIVIDER RENDERING
-        if (item.divider) {
-          return (
-            <div
-              key={`divider-${index}`}
-              style={{
-                height: '1px',
-                backgroundColor: '#c8d6e5',
-                margin: '18px 24px',
-                borderRadius: '2px',
-                boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
-              }}
-            />
-          );
-        }
-
         const IconComponent = item.icon;
         const hasChildren = item.children && item.children.length > 0;
         const isOpen = openSections[item.name] || (searchQuery.trim() && hasChildren);
         const isActive = activeParent === item.name;
-        const hasValidPath = item.path && item.path !== '#';
-
-        // Check if any child is active for hover effect
-        const isHovered = false; // This can be enhanced with mouse events
 
         return (
-          <div key={item.name}>
-            {/* PARENT ITEM */}
+          <div key={item.id || index}>
             <div
               onClick={(e) => handleParentClick(item, e)}
               onMouseEnter={(e) => {
@@ -630,11 +663,10 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
               )}
             </div>
 
-            {/* CHILDREN (shown when parent is open and sidebar not collapsed) */}
             {hasChildren && isOpen && !isCollapsed && (
               <div style={{ marginLeft: '10px', borderLeft: '2px solid #e0e0e0', paddingLeft: '12px' }}>
                 {item.children
-                  .filter(child => child)
+                  .filter(child => child && child.name)
                   .map((child) => {
                     const ChildIcon = child.icon;
                     const childIsOpen = openSections[child.name] || (searchQuery.trim() && child.children);
@@ -642,8 +674,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
                     const isChildActive = activeChild === child.name;
 
                     return (
-                      <div key={child.name}>
-                        {/* CHILD ITEM */}
+                      <div key={child.id}>
                         <div
                           onClick={(e) => handleChildClick(child, item.name, e)}
                           onMouseEnter={(e) => {
@@ -675,13 +706,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
                               }}
                             />
                           )}
-                          <span
-                            style={{
-                              flex: 1,
-                              fontSize: '0.9rem',
-                              display: child.hideName ? 'none' : 'inline',
-                            }}
-                          >
+                          <span style={{ flex: 1, fontSize: '0.9rem' }}>
                             {searchQuery.trim() ? highlightText(child.name, searchQuery) : child.name}
                           </span>
 
@@ -697,41 +722,19 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
                           )}
                         </div>
 
-                        {/* GRANDCHILDREN (shown when child is open) */}
                         {hasGrandChildren && childIsOpen && (
                           <div style={{ marginLeft: '8px', paddingLeft: '8px' }}>
                             {child.children
-                              .filter(grandchild => grandchild)
+                              .filter(grandchild => grandchild && grandchild.name)
                               .map((grandchild) => {
                                 const GrandIcon = grandchild.icon;
                                 const hasPath = grandchild.path && grandchild.path !== '#';
-                                const hasGreatGrandChildren = grandchild.children && grandchild.children.length > 0;
-                                const isGrandchildOpen = openSections[grandchild.name] || (searchQuery.trim() && hasGreatGrandChildren);
                                 const isGrandchildActive = activeGrandchild === grandchild.name;
 
                                 return (
-                                  <div key={grandchild.name}>
-                                    {/* GRANDCHILD ITEM (e.g., QC Test) */}
+                                  <div key={grandchild.id}>
                                     <div
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        setIsUserInteracted(true);
-                                        setActiveGrandchild(grandchild.name);
-                                        setActiveGreatGrandchild(null);
-                                        if (hasGreatGrandChildren) {
-                                          toggleSection(grandchild.name);
-                                        }
-                                        // Navigate if it has a path (some may not)
-                                        if (grandchild.path && grandchild.path !== '#') {
-                                          handleNavigationWithTracking(grandchild.path, grandchild.name, false);
-                                        }
-                                        // Keep parent & child open
-                                        setOpenSections(prev => ({
-                                          ...prev,
-                                          [item.name]: true,
-                                          [child.name]: true,
-                                        }));
-                                      }}
+                                      onClick={(e) => handleGrandchildClick(grandchild, item.name, child.name, e)}
                                       style={{
                                         display: 'flex',
                                         alignItems: 'center',
@@ -758,7 +761,6 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
                                             color: isPinned(grandchild.path) ? '#635bff' : '#aaa',
                                             padding: '2px',
                                             borderRadius: '4px',
-                                            transition: 'all 0.2s ease',
                                           }}
                                           onMouseEnter={(e) => {
                                             e.currentTarget.style.backgroundColor = '#f0f2ff';
@@ -774,70 +776,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
                                           )}
                                         </div>
                                       )}
-                                      {hasGreatGrandChildren && (
-                                        <MdChevronRight
-                                          size={16}
-                                          style={{
-                                            transform: isGrandchildOpen ? 'rotate(90deg)' : 'rotate(0)',
-                                            transition: 'transform 0.2s',
-                                            color: isGrandchildActive ? 'white' : '#777',
-                                          }}
-                                        />
-                                      )}
                                     </div>
-
-                                    {/* GREAT-GRANDCHILDREN (4th level) */}
-                                    {hasGreatGrandChildren && isGrandchildOpen && (
-                                      <div style={{ marginLeft: '10px', paddingLeft: '8px', borderLeft: '1px dashed #ddd' }}>
-                                        {grandchild.children
-                                          .filter(great => great)
-                                          .map((greatGrandchild) => {
-                                            const GreatIcon = greatGrandchild.icon;
-                                            const hasPath = greatGrandchild.path && greatGrandchild.path !== '#';
-                                            const isGreatActive = activeGreatGrandchild === greatGrandchild.name;
-
-                                            return (
-                                              <div
-                                                key={greatGrandchild.name}
-                                                onClick={(e) => handleGreatGrandchildClick(greatGrandchild, item.name, child.name, grandchild.name, e)}
-                                                style={{
-                                                  display: 'flex',
-                                                  alignItems: 'center',
-                                                  padding: '0.3rem 0.1rem',
-                                                  cursor: hasPath ? 'pointer' : 'default',
-                                                  backgroundColor: isGreatActive ? '#635bff' : 'transparent',
-                                                  color: isGreatActive ? 'white' : '#333',
-                                                  borderRadius: '5px',
-                                                  margin: '1px 0',
-                                                  fontSize: '0.85rem',
-                                                }}
-                                                onMouseEnter={(e) => hasPath && (e.currentTarget.style.backgroundColor = isGreatActive ? '#635bff' : '#f0f2ff')}
-                                                onMouseLeave={(e) => hasPath && (e.currentTarget.style.backgroundColor = isGreatActive ? '#635bff' : 'transparent')}
-                                              >
-                                                {GreatIcon && (
-                                                  <GreatIcon size={15} style={{ marginRight: '6px', color: isGreatActive ? 'white' : '#555' }} />
-                                                )}
-                                                <span>
-                                                  {searchQuery.trim() ? highlightText(greatGrandchild.name, searchQuery) : greatGrandchild.name}
-                                                </span>
-
-                                                {/* Pin icon for leaf nodes */}
-                                                {hasPath && (
-                                                  <div
-                                                    onClick={(e) => handlePinClick(greatGrandchild, e)}
-                                                    style={{
-                                                      marginLeft: 'auto',
-                                                      color: isPinned(greatGrandchild.path) ? '#635bff' : '#aaa',
-                                                    }}
-                                                  >
-                                                    {isPinned(greatGrandchild.path) ? <MdPushPin size={14} /> : <MdOutlinePushPin size={14} />}
-                                                  </div>
-                                                )}
-                                              </div>
-                                            );
-                                          })}
-                                      </div>
-                                    )}
                                   </div>
                                 );
                               })}
@@ -853,12 +792,41 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
       });
   }, [openSections, activeParent, activeChild, activeGrandchild, isCollapsed, searchQuery]);
 
+  // Loading state
+  if (loading) {
+    return (
+      <div
+        ref={sidebarRef}
+        style={{
+          backgroundColor: '#fff',
+          height: '100vh',
+          position: 'fixed',
+          borderRight: '1px solid #e0e0e0',
+          left: 0,
+          top: 0,
+          width: isMobile ? (isOpen ? '270px' : '0') : (isCollapsed ? '77px' : '240px'),
+          transition: 'width 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
+          padding: isMobile ? (isOpen ? '0.8rem 0.6rem' : '0') : '0.8rem 0.6rem',
+          overflow: 'hidden',
+          zIndex: 1000,
+          display: 'flex',
+          flexDirection: 'column',
+          opacity: isMobile ? (isOpen ? 1 : 0) : 1,
+          visibility: isMobile ? (isOpen ? 'visible' : 'hidden') : 'visible',
+        }}
+      >
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+          <div>Loading menus...</div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <>
       <div
         ref={sidebarRef}
         onClick={(e) => {
-          // Only close if not clicking on search input
           if (!e.target.closest('input') && isMobile && isOpen && !isSearchFocused) {
             onClose();
           }
@@ -908,7 +876,6 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
             </h2>
           )}
 
-          {/* Hamburger menu for mobile when sidebar is open */}
           {isMobile && isOpen && (
             <button
               onClick={handleMobileMenuToggle}
@@ -934,13 +901,11 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
             </button>
           )}
 
-          {/* Collapse/Expand button for desktop */}
           {!isMobile && (
             <button
               onClick={() => {
                 setIsUserInteracted(true);
                 setIsCollapsed(!isCollapsed);
-                // Only close sections when manually collapsing AND no active child/grandchild
                 if (!isCollapsed && !activeChild && !activeGrandchild) {
                   setOpenSections({});
                   setHasOpenSubmenu(false);
@@ -1010,8 +975,8 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
                   e.stopPropagation();
                   setIsUserInteracted(true);
                 }}
-                onFocus={handleSearchFocus}  // नया function
-                onBlur={handleSearchBlur}    // नया function
+                onFocus={handleSearchFocus}
+                onBlur={handleSearchBlur}
                 onKeyDown={(e) => {
                   e.stopPropagation();
                   setIsUserInteracted(true);
@@ -1077,7 +1042,6 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
           paddingRight: '4px',
           visibility: isMobile ? (isOpen ? 'visible' : 'hidden') : 'visible',
         }}>
-
           <style>
             {`
               ::-webkit-scrollbar {
@@ -1086,7 +1050,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
             `}
           </style>
 
-          {searchQuery.trim() && menuItems.length === 0 && (
+          {searchQuery.trim() && filteredMenuItems.length === 0 && (
             <div style={{
               textAlign: 'center',
               padding: '2rem 1rem',
@@ -1097,17 +1061,28 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
             </div>
           )}
 
+          {filteredMenuItems.length === 0 && !loading && (
+            <div style={{
+              textAlign: 'center',
+              padding: '2rem 1rem',
+              color: '#666',
+              fontStyle: 'italic',
+            }}>
+              No menus available for your account
+            </div>
+          )}
+
           <ul style={{
             listStyle: 'none',
             padding: 0,
             margin: 0,
           }}>
-            {renderMainMenu(menuItems)}
+            {renderMainMenu(filteredMenuItems)}
           </ul>
         </div>
       </div>
 
-      {/* PIN CONFIRMATION MODAL */}
+      {/* PIN CONFIRMATION MODALS */}
       {showPinConfirm && (
         <div style={{
           position: 'fixed',
@@ -1162,7 +1137,6 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
         </div>
       )}
 
-      {/* UNPIN CONFIRMATION MODAL */}
       {showUnpinConfirm && (
         <div style={{
           position: 'fixed',
