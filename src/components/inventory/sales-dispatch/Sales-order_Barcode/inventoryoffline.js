@@ -27,6 +27,7 @@ import Stepper1 from "./stepper1";
 import Stepper2 from "./stepper2";
 import Stepper3 from "./stepper3";
 import axiosInstance from "@/lib/axios";
+import { useUserPermissions } from '@/app/hooks/useUserPermissions';
 
 const SalesOrderOffline = () => {
   const router = useRouter();
@@ -52,7 +53,8 @@ const SalesOrderOffline = () => {
   const [merchandiserMapping, setMerchandiserMapping] = useState({});
   const [showValidationErrors, setShowValidationErrors] = useState(false);
     const [loadingBranches, setLoadingBranches] = useState(false);
-
+ const { hasSpecificPermission, loading: permissionsLoading } = useUserPermissions();
+      const moduleName = "Order Booking (Only BarCode)";
     const [branchOptions, setBranchOptions] = useState([]);
 
   const [formData, setFormData] = useState({
@@ -2079,17 +2081,23 @@ if (loading || isDataLoading) {
         </Grid>
 
         <Grid sx={{ display: "flex", justifyContent: "end" }}>
-          <CrudButton
-            moduleName=""
-            mode={mode}
-            onAdd={handleAdd}
-            onEdit={handleEdit}
-            onDelete={handleDelete}
-            onExit={handleExit}
-            readOnlyMode={mode === "view"}
-            onPrevious={handlePrevClick}
-            onNext={handleNextClick}
-          />
+                                   <CrudButton
+  moduleName={moduleName}
+  mode={mode}
+  onAdd={handleAdd}
+  onEdit={handleEdit}
+  onDelete={handleDelete}
+  onView={handlePrint}
+  onExit={handleExit}
+  readOnlyMode={mode === "view"}
+  onPrevious={handlePrevClick}
+  onNext={handleNextClick}
+  // Permissions props - pass actual boolean values
+  canAdd={hasSpecificPermission(moduleName, 'ADD')}
+  canEdit={hasSpecificPermission(moduleName, 'EDIT')}
+  canDelete={hasSpecificPermission(moduleName, 'DELETE')}
+  canView={hasSpecificPermission(moduleName, 'VIEW')}
+/>
         </Grid>
       </Grid>
 

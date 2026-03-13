@@ -1,51 +1,55 @@
-// app/hooks/useUserPermissions.js
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
 import axiosInstance from '@/lib/axios';
 
+// In your useUserPermissions.js file, update these functions:
+
 export const useUserPermissions = () => {
   const [permissions, setPermissions] = useState({});
   const [loading, setLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState(null);
+  const [userId, setUserId] = useState(null);
+  const [lastFetched, setLastFetched] = useState(null);
 
-  // Get current user from localStorage or session
-  const getCurrentUser = () => {
+  // Get current user ID from localStorage
+  const getCurrentUserId = () => {
     if (typeof window !== 'undefined') {
-      // Try to get from localStorage
-      const storedUser = localStorage.getItem('currentUser');
-      if (storedUser) {
-        return storedUser;
+      const userIdFromStorage = localStorage.getItem('USER_ID');
+      if (userIdFromStorage) {
+        return userIdFromStorage;
       }
       
-      // Try to get from sessionStorage
-      const sessionUser = sessionStorage.getItem('currentUser');
-      if (sessionUser) {
-        return sessionUser;
+      const userData = localStorage.getItem('user');
+      if (userData) {
+        try {
+          const parsedUser = JSON.parse(userData);
+          return parsedUser.USER_ID || parsedUser.userId || null;
+        } catch (error) {
+          console.error('Error parsing user data:', error);
+        }
       }
-      
-      // Try to get from your authentication state if available
-      const authUser = localStorage.getItem('userName') || localStorage.getItem('userId');
-      return authUser;
     }
     return null;
   };
 
-  // Fetch user permissions from API
-  const fetchUserPermissions = useCallback(async (userName) => {
-    if (!userName) {
-      console.warn('No user name provided for fetching permissions');
+  // Fetch user permissions from API using userId - WITHOUT CACHE
+  const fetchUserPermissions = useCallback(async (userId, forceRefresh = false) => {
+    if (!userId) {
+      console.warn('No user ID provided for fetching permissions');
       setLoading(false);
       return;
     }
 
     try {
       setLoading(true);
-      const response = await axiosInstance.post('/MODULE/RetriveUSERPRIVS', {
-        "FLAG": "R",
-        "TBLNAME": "USERPRIVS",
+      console.log('Fetching permissions for user ID:', userId);
+      
+      const response = await axiosInstance.post('/MODULE/RetriveWebUserprivs', {
+        "FLAG": "UR",
+        "TBLNAME": "WebUserprivs",
         "FLDNAME": "User_Id",
-        "ID": userName,
+        "ID": userId.toString(),
         "ORDERBYFLD": "",
         "CWHAER": "",
         "CO_ID": ""
@@ -54,67 +58,52 @@ export const useUserPermissions = () => {
       console.log('Permissions API Response:', response.data);
 
       if (response.data && response.data.DATA) {
-        // Create a map of MOD_NAME to permissions
         const permissionsMap = {};
         response.data.DATA.forEach(item => {
-          if (item.MOD_NAME) {
-            permissionsMap[item.MOD_NAME] = {
+          if (item.MOD_NAME || item.MOD_DESC) {
+            const moduleName = item.MOD_DESC || item.MOD_NAME;
+            permissionsMap[moduleName] = {
               ADD_PRIV: item.ADD_PRIV === "1",
               EDIT_PRIV: item.EDIT_PRIV === "1",
               DELETE_PRIV: item.DELETE_PRIV === "1",
               SELECT_PRIV: item.SELECT_PRIV === "1",
               MOD_DESC: item.MOD_DESC,
+              MOD_NAME: item.MOD_NAME,
               MOD_ID: item.MOD_ID,
               USER_ID: item.USER_ID
             };
           }
         });
+        
         setPermissions(permissionsMap);
+        const fetchTime = Date.now();
+        setLastFetched(fetchTime);
         
-        // Store in localStorage for persistence
+        // Still store in localStorage but don't rely on it for immediate updates
         localStorage.setItem('userPermissions', JSON.stringify(permissionsMap));
-        localStorage.setItem('permissionsLastFetched', Date.now().toString());
+        localStorage.setItem('permissionsLastFetched', fetchTime.toString());
         
-        console.log('Permissions loaded for user:', userName, permissionsMap);
+        console.log('Permissions loaded for user ID:', userId, permissionsMap);
       } else {
         console.warn('No permission data received from API');
-        // Fallback to localStorage if available
-        const storedPermissions = localStorage.getItem('userPermissions');
-        if (storedPermissions) {
-          setPermissions(JSON.parse(storedPermissions));
-        }
       }
     } catch (error) {
       console.error('Error fetching user permissions:', error);
-      
-      // Fallback to localStorage if available
-      const storedPermissions = localStorage.getItem('userPermissions');
-      if (storedPermissions) {
-        console.log('Using cached permissions due to API error');
-        setPermissions(JSON.parse(storedPermissions));
-      }
     } finally {
       setLoading(false);
     }
   }, []);
 
-  // Check if user has at least one permission for a module
+    // Check if user has at least one permission for a module
   const hasPermission = useCallback((modName) => {
-    if (!modName) return true; // Default to visible if no MOD_NAME
+    if (!modName) return true;
     
-    // If permissions are still loading, show everything temporarily
-    if (loading) {
-      return true;
-    }
+    if (loading) return true;
     
-    // If no permissions data yet, show everything
-    if (Object.keys(permissions).length === 0) {
-      return true;
-    }
+    if (Object.keys(permissions).length === 0) return true;
     
     const modulePerms = permissions[modName];
     
-    // If module not found in permissions, default to visible
     if (!modulePerms) {
       console.log(`Module ${modName} not found in permissions, defaulting to visible`);
       return true;
@@ -127,68 +116,96 @@ export const useUserPermissions = () => {
       modulePerms.SELECT_PRIV
     );
     
-    console.log(`Permission check for ${modName}:`, modulePerms, 'Result:', hasPerm);
     return hasPerm;
   }, [permissions, loading]);
 
-  // Check specific permission
-  const hasSpecificPermission = useCallback((modName, permissionType) => {
-    if (!modName || !permissions[modName]) return false;
-    
-    const modulePerms = permissions[modName];
-    switch (permissionType) {
-      case 'ADD': return modulePerms.ADD_PRIV;
-      case 'EDIT': return modulePerms.EDIT_PRIV;
-      case 'DELETE': return modulePerms.DELETE_PRIV;
-      case 'VIEW': return modulePerms.SELECT_PRIV;
-      default: return false;
-    }
-  }, [permissions]);
-
-  // Manually set current user (call this after login)
-  const setUser = useCallback((userName) => {
-    if (userName) {
-      setCurrentUser(userName);
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('currentUser', userName);
-      }
-      fetchUserPermissions(userName);
-    }
-  }, [fetchUserPermissions]);
-
-  // Clear permissions (call this on logout)
-  const clearPermissions = useCallback(() => {
+   const clearPermissions = useCallback(() => {
     setPermissions({});
     setCurrentUser(null);
+    setUserId(null);
     if (typeof window !== 'undefined') {
       localStorage.removeItem('userPermissions');
-      localStorage.removeItem('currentUser');
+      localStorage.removeItem('currentUserId');
       localStorage.removeItem('permissionsLastFetched');
     }
   }, []);
 
-  // Initialize permissions on component mount
-  useEffect(() => {
-    const user = getCurrentUser();
-    if (user) {
-      setCurrentUser(user);
-      
-      // Check if we need to refresh permissions (older than 5 minutes)
-      const lastFetched = localStorage.getItem('permissionsLastFetched');
-      const shouldRefresh = !lastFetched || (Date.now() - parseInt(lastFetched)) > 5 * 60 * 1000;
-      
-      if (shouldRefresh) {
-        fetchUserPermissions(user);
-      } else {
-        // Use cached permissions
-        const storedPermissions = localStorage.getItem('userPermissions');
-        if (storedPermissions) {
-          setPermissions(JSON.parse(storedPermissions));
-          setLoading(false);
-        } else {
-          fetchUserPermissions(user);
-        }
+  // Check specific permission - with debug logs
+  const hasSpecificPermission = useCallback((modName, permissionType) => {
+    if (!modName) return false;
+    
+    // Try exact match first
+    let modulePerms = permissions[modName];
+    
+    // If not found, try case-insensitive match
+    if (!modulePerms) {
+      const foundKey = Object.keys(permissions).find(
+        key => key.toLowerCase() === modName.toLowerCase()
+      );
+      if (foundKey) {
+        modulePerms = permissions[foundKey];
       }
+    }
+    
+    // If still not found, try partial match
+    if (!modulePerms) {
+      const foundKey = Object.keys(permissions).find(
+        key => key.toLowerCase().includes(modName.toLowerCase()) || 
+               modName.toLowerCase().includes(key.toLowerCase())
+      );
+      if (foundKey) {
+        modulePerms = permissions[foundKey];
+        console.log(`Found fuzzy match for ${modName}: ${foundKey}`);
+      }
+    }
+    
+    if (!modulePerms) {
+      console.log(`Module ${modName} not found in permissions`);
+      return false;
+    }
+    
+    let result = false;
+    switch (permissionType.toUpperCase()) {
+      case 'ADD': 
+        result = modulePerms.ADD_PRIV === true;
+        break;
+      case 'EDIT': 
+        result = modulePerms.EDIT_PRIV === true;
+        break;
+      case 'DELETE': 
+        result = modulePerms.DELETE_PRIV === true;
+        break;
+      case 'VIEW': 
+        result = modulePerms.SELECT_PRIV === true;
+        break;
+      default: 
+        result = false;
+    }
+    
+    console.log(`Permission check for ${modName} - ${permissionType}:`, result);
+    return result;
+  }, [permissions]);
+
+  // Add a refresh function that components can call
+  const refreshPermissions = useCallback(() => {
+    const currentUserId = getCurrentUserId();
+    if (currentUserId) {
+      console.log('Manually refreshing permissions for user:', currentUserId);
+      return fetchUserPermissions(currentUserId, true);
+    }
+    return Promise.resolve();
+  }, [fetchUserPermissions]);
+
+  // Initialize permissions on component mount - always fetch fresh
+  useEffect(() => {
+    const userId = getCurrentUserId();
+    if (userId) {
+      setUserId(userId);
+      setCurrentUser(userId.toString());
+      
+      // Always fetch fresh permissions when component mounts
+      // This ensures latest data from server
+      fetchUserPermissions(userId);
     } else {
       setLoading(false);
     }
@@ -200,8 +217,17 @@ export const useUserPermissions = () => {
     hasPermission,
     hasSpecificPermission,
     currentUser,
-    setUser,
+    userId,
+    setUser: (userId) => {
+      setUserId(userId);
+      setCurrentUser(userId.toString());
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('currentUserId', userId.toString());
+      }
+      fetchUserPermissions(userId);
+    },
     clearPermissions,
-    refetchPermissions: fetchUserPermissions
+    refreshPermissions, // Export refresh function
+    lastFetched
   };
 };
