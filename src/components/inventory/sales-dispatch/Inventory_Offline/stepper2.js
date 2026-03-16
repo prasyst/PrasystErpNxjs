@@ -3750,41 +3750,83 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, compa
   };
 
   // Handle product selection change
+  // const handleProductChange = async (event, value) => {
+  //   setSelectedProduct(value);
+  //   setDataSource('dropdown');
+
+  //   if (isAddingNew || isEditingSize) {
+  //     setNewItemData(prev => ({ ...prev, product: value }));
+
+  //     if (value && productMapping[value]) {
+  //       const fgprdKey = productMapping[value];
+  //       await fetchStyleData(fgprdKey);
+
+  //       setNewItemData(prev => ({
+  //         ...prev,
+  //         style: '',
+  //         type: '',
+  //         shade: '',
+  //         lotNo: ''
+  //       }));
+  //       setTypeOptions([]);
+  //       setLotNoOptions([]);
+  //       setSizeDetailsData([]);
+  //       setIsSizeDetailsLoaded(false);
+  //       setAvailableShades([]);
+  //       setSelectedShades([]);
+  //     } else {
+  //       setStyleOptions([]);
+  //       setTypeOptions([]);
+  //       setLotNoOptions([]);
+  //       setSizeDetailsData([]);
+  //       setIsSizeDetailsLoaded(false);
+  //       setAvailableShades([]);
+  //       setSelectedShades([]);
+  //     }
+  //   }
+  // };
+
+
   const handleProductChange = async (event, value) => {
-    setSelectedProduct(value);
-    setDataSource('dropdown');
+  setSelectedProduct(value);
+  setDataSource('dropdown');
 
-    if (isAddingNew || isEditingSize) {
-      setNewItemData(prev => ({ ...prev, product: value }));
+  if (isAddingNew || isEditingSize) {
+    // Update newItemData with the selected product
+    setNewItemData(prev => ({ 
+      ...prev, 
+      product: value || ''  // Ensure value is properly set
+    }));
 
-      if (value && productMapping[value]) {
-        const fgprdKey = productMapping[value];
-        await fetchStyleData(fgprdKey);
+    if (value && productMapping[value]) {
+      const fgprdKey = productMapping[value];
+      await fetchStyleData(fgprdKey);
 
-        setNewItemData(prev => ({
-          ...prev,
-          style: '',
-          type: '',
-          shade: '',
-          lotNo: ''
-        }));
-        setTypeOptions([]);
-        setLotNoOptions([]);
-        setSizeDetailsData([]);
-        setIsSizeDetailsLoaded(false);
-        setAvailableShades([]);
-        setSelectedShades([]);
-      } else {
-        setStyleOptions([]);
-        setTypeOptions([]);
-        setLotNoOptions([]);
-        setSizeDetailsData([]);
-        setIsSizeDetailsLoaded(false);
-        setAvailableShades([]);
-        setSelectedShades([]);
-      }
+      setNewItemData(prev => ({
+        ...prev,
+        style: '',
+        type: '',
+        shade: '',
+        lotNo: ''
+      }));
+      setTypeOptions([]);
+      setLotNoOptions([]);
+      setSizeDetailsData([]);
+      setIsSizeDetailsLoaded(false);
+      setAvailableShades([]);
+      setSelectedShades([]);
+    } else {
+      setStyleOptions([]);
+      setTypeOptions([]);
+      setLotNoOptions([]);
+      setSizeDetailsData([]);
+      setIsSizeDetailsLoaded(false);
+      setAvailableShades([]);
+      setSelectedShades([]);
     }
-  };
+  }
+};
+
 
   // Handle style selection change
   const handleStyleChange = async (event, value) => {

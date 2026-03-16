@@ -1,4 +1,5 @@
 
+
 // import React from 'react';
 // import { Autocomplete, TextField, InputAdornment, FormControl } from '@mui/material';
 // import SearchIcon from '@mui/icons-material/Search';
@@ -25,108 +26,165 @@
 //     className = "",
 //     onAddClick,
 //     onRefreshClick,
-//     isRefreshing
+//     isRefreshing,
+//     showAddIcon = true,  
+//     showRefreshIcon = true  ,
+//     minWidth = 200,
 //   }, ref) => {
 
 //     const [focused, setFocused] = React.useState(false);
 //     const shouldShrink = !!value || focused;
+    
 //     return (
-//     <FormControl fullWidth>
-//       <Autocomplete
-//         id={id}
-//         options={options}
-//         getOptionLabel={getOptionLabel}
-//         value={value}
-//         onChange={onChange}
-//         sx={sx}
-//         popupIcon={undefined}
-//         clearOnBlur={false}
-//         onFocus={() => setFocused(true)}
-//         onBlur={() => setFocused(false)}
-
-//         renderInput={(params) => (
-//           <TextField
-//             {...params}
-//             label={label}
-//             variant={variant}
-//             className={className}
-//             inputRef={ref}
-//             onKeyDown={onKeyDown}
-//             InputProps={{
-//               ...params.InputProps,
-//               sx: {
-//                 padding: '0',
-//                 marginLeft: '0px !important',
-//                 paddingRight: "8px !important",
-//                 paddingLeft: "8px !important",
-//                 paddingBottom: "8px !important"
-//               },
-
-//               startAdornment: (
-//                 <>
-//                   {params.InputProps.startAdornment}
-//                 </>
-//               ),
-//               endAdornment: (
-//                 <InputAdornment position="end">
-
-//                   {!disabled && (
-//                     <>
-//                       <AddIcon
-//                         onClick={onAddClick}
-//                         style={{ cursor: 'pointer', fontSize: '18px', color: '#2196f3' }}
-//                       />
-//                       <RefreshIcon
-//                         onClick={onRefreshClick}
-//                         sx={{
-//                           fontSize: '18px',
-//                           color: '#4caf50',
-//                           cursor: 'pointer',
-//                           transition: 'transform 0.3s ease',
-//                           animation: isRefreshing ? 'spin 1s linear infinite' : 'none',
-//                           '@keyframes spin': {
-//                             '0%': {
-//                               transform: 'rotate(0deg)',
-//                             },
-//                             '100%': {
-//                               transform: 'rotate(360deg)',
-//                             },
-//                           },
-//                         }}
-//                       />
-//                     </>
-//                   )}
-
-//                 </InputAdornment>
-//               ),
-//             }}
-//             InputLabelProps={{
-//               shrink: shouldShrink,
-//               sx: {
-//                 transformOrigin: 'top left',
-//                 ...(!shouldShrink && {
-//                   transform: 'translate(14px, 18px) scale(1)',
-//                   fontSize: '1rem'
-//                 })
+//      <FormControl fullWidth>
+//         <Autocomplete
+//           id={id}
+//           options={options}
+//           getOptionLabel={getOptionLabel}
+//           value={value}
+//           onChange={onChange}
+//           sx={{
+//             ...sx,
+//             '& .MuiAutocomplete-popper': {
+//               '& .MuiPaper-root': {
+//                 backgroundColor: '#ffffff !important',
+//                 minWidth: `${minWidth}px !important`,
+//                 maxWidth: 'fit-content !important',
 //               }
+//             }
+//           }}
+//           popupIcon={undefined}
+//           clearOnBlur={false}
+//           onFocus={() => setFocused(true)}
+//           onBlur={() => setFocused(false)}
+          
+//           // NEW: Custom render for dropdown options
+//           renderOption={(props, option) => {
+//             const label = getOptionLabel(option);
+//             return (
+//               <li 
+//                 {...props} 
+//                 style={{
+//                   padding: '4px 12px', // Reduce padding
+//                   whiteSpace: 'normal', // Allow text wrapping
+//                   wordBreak: 'break-word', // Break long words
+//                   lineHeight: '1.2', // Reduce line height
+//                   fontSize: '15px', 
+//                   minHeight: '22px', 
+//                 }}
+//               >
+//                 {label}
+//               </li>
+//             );
+//           }}
+          
+//           // NEW: Custom Paper component for dropdown
+//           PaperComponent={(props) => (
+//             <div
+//               style={{
+//                 minWidth: minWidth,
+//                 backgroundColor: '#ffffff',
+//                 width: 'auto',
+//                 maxWidth: '400px', // Maximum width
+//               }}
+//             >
+//               <div {...props} />
+//             </div>
+//           )}
+
+//           renderInput={(params) => (
+//             <TextField
+//               {...params}
+//               label={label}
+//               variant={variant}
+//               className={className}
+//               inputRef={ref}
+//               onKeyDown={onKeyDown}
+//               InputProps={{
+//                 ...params.InputProps,
+//                 sx: {
+//                   padding: '0',
+//                   marginLeft: '0px !important',
+//                   paddingRight: "8px !important",
+//                   paddingLeft: "8px !important",
+//                   paddingBottom: "8px !important"
+//                 },
+//                 startAdornment: (
+//                   <>
+//                     {params.InputProps.startAdornment}
+//                   </>
+//                 ),
+//                // In AutoVibe component, update the endAdornment section
+
+// endAdornment: (
+//   <InputAdornment position="end">
+//     {!disabled && (
+//       <>
+//         {showAddIcon && onAddClick && (
+//           <AddIcon
+//             onClick={(e) => {
+//               e.stopPropagation(); // Prevent opening dropdown
+//               onAddClick();
 //             }}
-//             sx={{
-//               '& .MuiInputLabel-filled': {
-//                 ...(!shouldShrink && {
-//                   transform: 'translate(14px, 18px) scale(1)'
-//                 })
-//               }
+//             style={{ 
+//               cursor: 'pointer', 
+//               fontSize: '18px', 
+//               color: '#2196f3',
+//               marginRight: '8px' // Add spacing if needed
 //             }}
-//             fullWidth
 //           />
 //         )}
-//         disabled={disabled}
-//         // sx={{
-//         //   "& .MuiAutocomplete-root": {
-//         //     backgroundColor: disabled ? 'action.disabledBackground' : 'background.paper'
-//         //   }
-//         // }}
-//       />
+        
+//         {showRefreshIcon && onRefreshClick && (
+//           <RefreshIcon
+//             onClick={(e) => {
+//               e.stopPropagation();
+//               onRefreshClick();
+//             }}
+//             sx={{
+//               fontSize: '18px',
+//               color: '#4caf50',
+//               cursor: 'pointer',
+//               transition: 'transform 0.3s ease',
+//               animation: isRefreshing ? 'spin 1s linear infinite' : 'none',
+//               '@keyframes spin': {
+//                 '0%': {
+//                   transform: 'rotate(0deg)',
+//                 },
+//                 '100%': {
+//                   transform: 'rotate(360deg)',
+//                 },
+//               },
+//             }}
+//           />
+//         )}
+//       </>
+//     )}
+//   </InputAdornment>
+// ),
+//               }}
+//               InputLabelProps={{
+//                 shrink: shouldShrink,
+//                 sx: {
+//                   transformOrigin: 'top left',
+//                   ...(!shouldShrink && {
+//                     transform: 'translate(14px, 18px) scale(1)',
+//                     fontSize: '1rem'
+//                   })
+//                 }
+//               }}
+//               sx={{
+//                 '& .MuiInputLabel-filled': {
+//                   ...(!shouldShrink && {
+//                     transform: 'translate(14px, 18px) scale(1)'
+//                   })
+//                 }
+//               }}
+//               fullWidth
+//             />
+//           )}
+//           disabled={disabled}
+//         />
 //       </FormControl>
 //     );
 //   }
@@ -134,6 +192,11 @@
 
 // AutoVibe.displayName = "AutoVibe";
 // export default AutoVibe;
+
+
+
+
+
 
 
 import React from 'react';
@@ -148,180 +211,46 @@ const AutoVibe = React.forwardRef(
     value,
     onChange,
     disabled,
-    error,
-    helperText,
-    onKeyDown,
     getOptionLabel,
     id,
     sx,
     name,
     label,
-    InputProps = {},
-    endAdornment,
     variant = "filled",
-    className = "",
-    onAddClick,
-    onRefreshClick,
-    isRefreshing,
-    showAddIcon = true,  
-    showRefreshIcon = true  ,
     minWidth = 200,
   }, ref) => {
-
-    const [focused, setFocused] = React.useState(false);
-    const shouldShrink = !!value || focused;
-    
     return (
-     <FormControl fullWidth>
-        <Autocomplete
-          id={id}
-          options={options}
-          getOptionLabel={getOptionLabel}
-          value={value}
-          onChange={onChange}
-          sx={{
-            ...sx,
-            '& .MuiAutocomplete-popper': {
-              '& .MuiPaper-root': {
-                backgroundColor: '#ffffff !important',
-                minWidth: `${minWidth}px !important`,
-                maxWidth: 'fit-content !important',
-              }
+      <Autocomplete
+        id={id}
+        options={options}
+        getOptionLabel={getOptionLabel}
+        value={value || null}
+        onChange={(event, newValue) => {
+          onChange(event, newValue);
+        }}
+        sx={{
+          ...sx,
+          '& .MuiAutocomplete-popper': {
+            '& .MuiPaper-root': {
+              backgroundColor: '#ffffff !important',
+              minWidth: `${minWidth}px !important`,
             }
-          }}
-          popupIcon={undefined}
-          clearOnBlur={false}
-          onFocus={() => setFocused(true)}
-          onBlur={() => setFocused(false)}
-          
-          // NEW: Custom render for dropdown options
-          renderOption={(props, option) => {
-            const label = getOptionLabel(option);
-            return (
-              <li 
-                {...props} 
-                style={{
-                  padding: '4px 12px', // Reduce padding
-                  whiteSpace: 'normal', // Allow text wrapping
-                  wordBreak: 'break-word', // Break long words
-                  lineHeight: '1.2', // Reduce line height
-                  fontSize: '15px', 
-                  minHeight: '22px', 
-                }}
-              >
-                {label}
-              </li>
-            );
-          }}
-          
-          // NEW: Custom Paper component for dropdown
-          PaperComponent={(props) => (
-            <div
-              style={{
-                minWidth: minWidth,
-                backgroundColor: '#ffffff',
-                width: 'auto',
-                maxWidth: '400px', // Maximum width
-              }}
-            >
-              <div {...props} />
-            </div>
-          )}
-
-          renderInput={(params) => (
-            <TextField
-              {...params}
-              label={label}
-              variant={variant}
-              className={className}
-              inputRef={ref}
-              onKeyDown={onKeyDown}
-              InputProps={{
-                ...params.InputProps,
-                sx: {
-                  padding: '0',
-                  marginLeft: '0px !important',
-                  paddingRight: "8px !important",
-                  paddingLeft: "8px !important",
-                  paddingBottom: "8px !important"
-                },
-                startAdornment: (
-                  <>
-                    {params.InputProps.startAdornment}
-                  </>
-                ),
-               // In AutoVibe component, update the endAdornment section
-
-endAdornment: (
-  <InputAdornment position="end">
-    {!disabled && (
-      <>
-        {showAddIcon && onAddClick && (
-          <AddIcon
-            onClick={(e) => {
-              e.stopPropagation(); // Prevent opening dropdown
-              onAddClick();
-            }}
-            style={{ 
-              cursor: 'pointer', 
-              fontSize: '18px', 
-              color: '#2196f3',
-              marginRight: '8px' // Add spacing if needed
-            }}
+          }
+        }}
+        renderInput={(params) => (
+          <TextField
+            {...params}
+            label={label}
+            variant={variant}
+            name={name}
+            fullWidth
           />
         )}
-        
-        {showRefreshIcon && onRefreshClick && (
-          <RefreshIcon
-            onClick={(e) => {
-              e.stopPropagation();
-              onRefreshClick();
-            }}
-            sx={{
-              fontSize: '18px',
-              color: '#4caf50',
-              cursor: 'pointer',
-              transition: 'transform 0.3s ease',
-              animation: isRefreshing ? 'spin 1s linear infinite' : 'none',
-              '@keyframes spin': {
-                '0%': {
-                  transform: 'rotate(0deg)',
-                },
-                '100%': {
-                  transform: 'rotate(360deg)',
-                },
-              },
-            }}
-          />
-        )}
-      </>
-    )}
-  </InputAdornment>
-),
-              }}
-              InputLabelProps={{
-                shrink: shouldShrink,
-                sx: {
-                  transformOrigin: 'top left',
-                  ...(!shouldShrink && {
-                    transform: 'translate(14px, 18px) scale(1)',
-                    fontSize: '1rem'
-                  })
-                }
-              }}
-              sx={{
-                '& .MuiInputLabel-filled': {
-                  ...(!shouldShrink && {
-                    transform: 'translate(14px, 18px) scale(1)'
-                  })
-                }
-              }}
-              fullWidth
-            />
-          )}
-          disabled={disabled}
-        />
-      </FormControl>
+        disabled={disabled}
+        isOptionEqualToValue={(option, value) => {
+          return option === value || getOptionLabel(option) === getOptionLabel(value);
+        }}
+      />
     );
   }
 );
