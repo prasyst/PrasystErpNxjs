@@ -694,8 +694,7 @@ const fetchStyleDataByBarcode = async (barcode) => {
   }
 };
 
-  // Auto-load size details for barcode style data
-const fetchSizeDetailsForStyle = async (styleData) => {
+ const fetchSizeDetailsForStyle = async (styleData) => {
   try {
     const fgprdKey = styleData.FGPRD_KEY;
     const fgstyleId = styleData.FGSTYLE_ID;
@@ -707,8 +706,11 @@ const fetchSizeDetailsForStyle = async (styleData) => {
       return;
     }
 
-    // Get COBR_ID from localStorage or companyConfig
+    // Get values from localStorage
     const cobrId = companyConfig.COBR_ID || localStorage.getItem('COBR_ID') || '02';
+    const fcyrKey = localStorage.getItem('FCYR_KEY') || '25';
+    const coId = localStorage.getItem('CO_ID') || '02';
+    const clientId = localStorage.getItem('CLIENT_ID') || '5102';
 
     // FIRST: Get STYCATRT_ID from API with FLAG: "GETSTYCATRTID"
     const stycatrtPayload = {
@@ -722,20 +724,19 @@ const fetchSizeDetailsForStyle = async (styleData) => {
       "PARTY_KEY": formData.PARTY_KEY || "",
       "PARTYDTL_ID": formData.PARTYDTL_ID || 0,
       "COBR_ID": cobrId,
-      "FCYR_KEY": "25"
+      "FCYR_KEY": fcyrKey,
+      "CLIENT_ID": clientId,
+      "CO_ID": coId
     };
 
-    console.log('Barcode Auto-fetching STYCATRT_ID with payload:', stycatrtPayload);
-
     const stycatrtResponse = await axiosInstance.post('/STYSIZE/AddSizeDetail', stycatrtPayload);
-    console.log('Barcode Auto STYCATRT_ID Response:', stycatrtResponse.data);
 
     let stycatrtId = 0;
     if (stycatrtResponse.data.DATA && stycatrtResponse.data.DATA.length > 0) {
       stycatrtId = stycatrtResponse.data.DATA[0].STYCATRT_ID || 0;
     }
 
-    // SECOND: Get size details with regular payload
+    // SECOND: Get size details with enhanced payload
     const sizeDetailsPayload = {
       "FGSTYLE_ID": fgstyleId,
       "FGPRD_KEY": fgprdKey,
@@ -747,11 +748,16 @@ const fetchSizeDetailsForStyle = async (styleData) => {
       "PARTY_KEY": formData.PARTY_KEY || "",
       "PARTYDTL_ID": formData.PARTYDTL_ID || 0,
       "COBR_ID": cobrId,
-      "FLAG": "",
-      "FCYR_KEY": "25"
+      "FCYR_KEY": fcyrKey,
+      "STYSTKDTL_ID": 0,
+      "BARCODE": "",
+      "FGITM_KEY": "",
+      "STYSTK_KEY": "",
+      "ORDBKSTY_ID": 0,
+      "CLIENT_ID": clientId,
+      "CO_ID": coId,
+      "FLAG": ""
     };
-
-    console.log('Barcode Auto-fetching size details with payload:', sizeDetailsPayload);
 
     const response = await axiosInstance.post('/STYSIZE/AddSizeDetail', sizeDetailsPayload);
 
@@ -764,29 +770,24 @@ const fetchSizeDetailsForStyle = async (styleData) => {
         ITM_AMT: 0,
         ORDER_QTY: 0,
         MRP: parseFloat(styleData.MRP) || 0,
-        RATE: parseFloat(styleData.SSP) || 0,
-        ALT_BARCODE: styleData.ALT_BARCODE || "" ,
-         FG_QTY: parseFloat(size.FG_QTY) || 0,
-  PORD_QTY: parseFloat(size.PORD_QTY) || 0,
-  ISU_QTY: parseFloat(size.ISU_QTY) || 0,
-  BAL_QTY: parseFloat(size.BAL_QTY) || 0
+        RATE: parseFloat(styleData.SSP) || 0
       }));
 
       setSizeDetailsData(transformedSizeDetails);
-      
+
       // Update newItemData with STYCATRT_ID for use in payload
       setNewItemData(prev => ({
         ...prev,
         stycatrtId: stycatrtId
       }));
-      
+
       setIsSizeDetailsLoaded(true);
     } else {
       setSizeDetailsData([]);
       setIsSizeDetailsLoaded(false);
     }
   } catch (error) {
-    console.error('Error auto-fetching size details for barcode:', error);
+    console.error('Error auto-fetching size details:', error);
     setIsSizeDetailsLoaded(false);
   }
 };
@@ -893,7 +894,8 @@ const fetchSizeDetailsForStyle = async (styleData) => {
     }
   };
 
-  const fetchSizeDetails = async () => {
+
+ const fetchSizeDetails = async () => {
   if (!newItemData.product || !newItemData.style) {
     showSnackbar("Please select Product and Style first", 'error');
     return;
@@ -910,8 +912,11 @@ const fetchSizeDetailsForStyle = async (styleData) => {
       return;
     }
 
-    // Get COBR_ID from localStorage or companyConfig
+    // Get values from localStorage
     const cobrId = companyConfig.COBR_ID || localStorage.getItem('COBR_ID') || '02';
+    const fcyrKey = localStorage.getItem('FCYR_KEY') || '25';
+    const coId = localStorage.getItem('CO_ID') || '02';
+    const clientId = localStorage.getItem('CLIENT_ID') || '5102';
 
     // FIRST: Get STYCATRT_ID from API with FLAG: "GETSTYCATRTID"
     const stycatrtPayload = {
@@ -925,20 +930,19 @@ const fetchSizeDetailsForStyle = async (styleData) => {
       "PARTY_KEY": formData.PARTY_KEY || "",
       "PARTYDTL_ID": formData.PARTYDTL_ID || 0,
       "COBR_ID": cobrId,
-      "FCYR_KEY": "25"
+      "FCYR_KEY": fcyrKey,
+      "CLIENT_ID": clientId,
+      "CO_ID": coId
     };
 
-    console.log('Barcode Fetching STYCATRT_ID with payload:', stycatrtPayload);
-
     const stycatrtResponse = await axiosInstance.post('/STYSIZE/AddSizeDetail', stycatrtPayload);
-    console.log('Barcode STYCATRT_ID Response:', stycatrtResponse.data);
 
     let stycatrtId = 0;
     if (stycatrtResponse.data.DATA && stycatrtResponse.data.DATA.length > 0) {
       stycatrtId = stycatrtResponse.data.DATA[0].STYCATRT_ID || 0;
     }
 
-    // SECOND: Get size details with regular payload
+    // SECOND: Get size details with enhanced payload
     const sizeDetailsPayload = {
       "FGSTYLE_ID": fgstyleId,
       "FGPRD_KEY": fgprdKey,
@@ -950,11 +954,16 @@ const fetchSizeDetailsForStyle = async (styleData) => {
       "PARTY_KEY": formData.PARTY_KEY || "",
       "PARTYDTL_ID": formData.PARTYDTL_ID || 0,
       "COBR_ID": cobrId,
-      "FLAG": "",
-      "FCYR_KEY": "25"
+      "FCYR_KEY": fcyrKey,
+      "STYSTKDTL_ID": 0,
+      "BARCODE": "",
+      "FGITM_KEY": "",
+      "STYSTK_KEY": "",
+      "ORDBKSTY_ID": 0,
+      "CLIENT_ID": clientId,
+      "CO_ID": coId,
+      "FLAG": ""
     };
-
-    console.log('Barcode Fetching size details with payload:', sizeDetailsPayload);
 
     const sizeDetailsResponse = await axiosInstance.post('/STYSIZE/AddSizeDetail', sizeDetailsPayload);
 
@@ -967,33 +976,28 @@ const fetchSizeDetailsForStyle = async (styleData) => {
         ITM_AMT: 0,
         ORDER_QTY: 0,
         MRP: parseFloat(newItemData.mrp) || 0,
-        RATE: parseFloat(newItemData.rate) || 0,
-        ALT_BARCODE: newItemData.barcode || "" ,
-         FG_QTY: parseFloat(size.FG_QTY) || 0,
-  PORD_QTY: parseFloat(size.PORD_QTY) || 0,
-  ISU_QTY: parseFloat(size.ISU_QTY) || 0,
-  BAL_QTY: parseFloat(size.BAL_QTY) || 0
+        RATE: parseFloat(newItemData.rate) || 0
       }));
 
       setSizeDetailsData(transformedSizeDetails);
-      
+
       // Update newItemData with STYCATRT_ID for use in payload
       setNewItemData(prev => ({
         ...prev,
         stycatrtId: stycatrtId
       }));
-      
+
       setIsSizeDetailsLoaded(true);
-      
+
       // Show success message with STYCATRT_ID
-      showSnackbar(`Barcode size details loaded successfully. STYCATRT_ID: ${stycatrtId}`, 'success');
+      showSnackbar(`Size details loaded successfully. STYCATRT_ID: ${stycatrtId}`, 'success');
     } else {
       showSnackbar("No size details found for the selected combination.", 'warning');
       setSizeDetailsData([]);
       setIsSizeDetailsLoaded(false);
     }
   } catch (error) {
-    console.error('Error fetching barcode size details:', error);
+    console.error('Error fetching size details:', error);
     showSnackbar("Error loading size details. Please try again.", 'error');
     setIsSizeDetailsLoaded(false);
   }
