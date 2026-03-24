@@ -2853,10 +2853,44 @@ const Stepper1 = ({
     }
   };
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
+// In Stepper1.js - Update handleInputChange function
+const handleInputChange = (e) => {
+  const { name, value } = e.target;
 
-    if (name === "GST_APPL") {
+  if (name === "GST_APPL") {
+    // If changing from Yes to No, show confirmation
+    if (formData.GST_APPL === "Y" && value === "N") {
+      // Show confirmation dialog using props
+      if (window.confirm('Are you sure you want to disable GST? This will remove all GST calculations.')) {
+        setFormData(prev => ({
+          ...prev,
+          [name]: value
+        }));
+        
+        // Clear GST data from formData
+        setFormData(prev => ({
+          ...prev,
+          GST_TYPE: "",
+          ORDBK_GST_AMT: 0,
+          ORDBK_SGST_AMT: 0,
+          ORDBK_CGST_AMT: 0,
+          ORDBK_IGST_AMT: 0,
+          FINAL_AMOUNT: prev.TOTAL_AMOUNT || 0,
+          apiResponseData: {
+            ...prev.apiResponseData,
+            ORDBKGSTLIST: []
+          }
+        }));
+        
+        showSnackbar('GST disabled and GST rows removed', 'info');
+      } else {
+        // Keep current value
+        setFormData(prev => ({
+          ...prev,
+          [name]: prev.GST_APPL
+        }));
+      }
+    } else {
       setFormData(prev => ({
         ...prev,
         [name]: value
@@ -2865,21 +2899,15 @@ const Stepper1 = ({
       // If GST is enabled and party details are available, fetch GST type
       if (value === "Y" && formData.PARTYDTL_ID && formData.SHP_PARTYDTL_ID) {
         fetchGSTType(formData.PARTYDTL_ID, formData.SHP_PARTYDTL_ID);
-      } else if (value === "N") {
-        // Reset GST type when GST is disabled
-        setGstType('state');
-        setFormData(prev => ({
-          ...prev,
-          GST_TYPE: ""
-        }));
       }
-    } else {
-      setFormData(prev => ({
-        ...prev,
-        [name]: value
-      }));
     }
-  };
+  } else {
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  }
+};
 
   const handleAutoCompleteChange = (name, value) => {
  
@@ -2896,26 +2924,22 @@ const Stepper1 = ({
 
 
 
-      // Fetch branches for the selected party
+   
       fetchPartyDetails(partyKey);
 
-      // Fetch party details for auto-population
+  
       fetchPartyDetailsForAutoFill(partyKey);
 
       setFormData(prev => ({
         ...prev,
         PARTY_KEY: partyKey,
         Party: value,
-        // Only auto-populate shipping party if it's empty or same as current party
-        SHIPPING_PARTY: prev.SHIPPING_PARTY === prev.Party ? value : prev.SHIPPING_PARTY,
-        // Don't auto-set shipping party key if shipping party is different
-        SHP_PARTY_KEY: prev.SHIPPING_PARTY === prev.Party ? partyKey : prev.SHP_PARTY_KEY,
-        // Branch will be auto-selected in fetchPartyDetails
+        SHIPPING_PARTY: value,
+      SHP_PARTY_KEY: partyKey,
       }));
     }
 
-    // If branch is selected, only auto-select shipping place if it's currently empty or same as branch
-    // If branch is selected, auto-update shipping place
+ 
     if (name === "Branch" && value) {
       const branchId = branchMapping[value];
     

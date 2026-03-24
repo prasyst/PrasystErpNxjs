@@ -2852,10 +2852,43 @@ const Stepper1 = ({
     }
   };
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
+const handleInputChange = (e) => {
+  const { name, value } = e.target;
 
-    if (name === "GST_APPL") {
+  if (name === "GST_APPL") {
+    // If changing from Yes to No, show confirmation
+    if (formData.GST_APPL === "Y" && value === "N") {
+      // Show confirmation dialog using props
+      if (window.confirm('Are you sure you want to disable GST? This will remove all GST calculations.')) {
+        setFormData(prev => ({
+          ...prev,
+          [name]: value
+        }));
+        
+        // Clear GST data from formData
+        setFormData(prev => ({
+          ...prev,
+          GST_TYPE: "",
+          ORDBK_GST_AMT: 0,
+          ORDBK_SGST_AMT: 0,
+          ORDBK_CGST_AMT: 0,
+          ORDBK_IGST_AMT: 0,
+          FINAL_AMOUNT: prev.TOTAL_AMOUNT || 0,
+          apiResponseData: {
+            ...prev.apiResponseData,
+            ORDBKGSTLIST: []
+          }
+        }));
+        
+        showSnackbar('GST disabled and GST rows removed', 'info');
+      } else {
+        // Keep current value
+        setFormData(prev => ({
+          ...prev,
+          [name]: prev.GST_APPL
+        }));
+      }
+    } else {
       setFormData(prev => ({
         ...prev,
         [name]: value
@@ -2864,21 +2897,15 @@ const Stepper1 = ({
       // If GST is enabled and party details are available, fetch GST type
       if (value === "Y" && formData.PARTYDTL_ID && formData.SHP_PARTYDTL_ID) {
         fetchGSTType(formData.PARTYDTL_ID, formData.SHP_PARTYDTL_ID);
-      } else if (value === "N") {
-        // Reset GST type when GST is disabled
-        setGstType('state');
-        setFormData(prev => ({
-          ...prev,
-          GST_TYPE: ""
-        }));
       }
-    } else {
-      setFormData(prev => ({
-        ...prev,
-        [name]: value
-      }));
     }
-  };
+  } else {
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  }
+};
 
   const handleAutoCompleteChange = (name, value) => {
     console.log(`AutoComplete Change - Field: ${name}, Value: ${value}`);

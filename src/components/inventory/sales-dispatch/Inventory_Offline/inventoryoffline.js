@@ -4,7 +4,7 @@ import {
   Box,
   TextField,
   Grid,
-  Typography,
+  Typography,Dialog ,DialogTitle ,DialogContent ,DialogContentText ,DialogActions ,
   Tabs,
   Tab,
   Button,
@@ -55,6 +55,8 @@ const SalesOrderOffline = () => {
   const [branchOptions, setBranchOptions] = useState([]);
   const [showValidationErrors, setShowValidationErrors] = useState(false);
     const { hasSpecificPermission, loading: permissionsLoading } = useUserPermissions();
+    const [showGstConfirmDialog, setShowGstConfirmDialog] = useState(false);
+const [tempGstValue, setTempGstValue] = useState(null);
   const moduleName = "Order Booking (Hide Stock/FOB/WO)";
     const [companyConfig, setCompanyConfig] = useState({
     CO_ID: '',
@@ -261,14 +263,12 @@ const SalesOrderOffline = () => {
     }
   };
 
-// Function to populate form data from API response - UPDATED for shade keys
 const populateFormData = async (orderData) => {
   try {
-  
-    
     // FIRST: Wait for all dropdown data to be fetched
     await fetchAllDropdownData();
-      const mapCodesToKeys = (item) => {
+    
+    const mapCodesToKeys = (item) => {
       const mappedItem = { ...item };
       
       // Map PROD_CODE to FGPRD_KEY
@@ -345,7 +345,8 @@ const populateFormData = async (orderData) => {
     const orderTypeName = await getDisplayNameWithRetry(getOrderTypeNameByKey, orderData.ORDBK_TYPE);
     const merchandiserName = merchandiserMapping[orderData.MERCHANDISER_ID] || await getDisplayNameWithRetry(getMerchandiserNameById, orderData.MERCHANDISER_ID);
 
-     const processedOrdbkStyleList = orderData.ORDBKSTYLIST ? orderData.ORDBKSTYLIST.map(item => {
+    // Process ORDBKSTYLIST
+    const processedOrdbkStyleList = orderData.ORDBKSTYLIST ? orderData.ORDBKSTYLIST.map(item => {
       // First map codes to keys
       const mappedItem = mapCodesToKeys(item);
       
@@ -363,12 +364,22 @@ const populateFormData = async (orderData) => {
       };
     }) : [];
 
+    // ========== FIX: Process ORDBKGSTLIST ==========
+    // Ensure ORDBKGSTLIST is properly loaded with correct FGSTYLE_ID mapping
+    const processedOrdbkGstList = orderData.ORDBKGSTLIST ? orderData.ORDBKGSTLIST.map(gstItem => ({
+      ...gstItem,
+      FGSTYLE_ID: gstItem.FGSTYLE_ID || 0, // Ensure FGSTYLE_ID is present
+      DBFLAG: gstItem.DBFLAG || "R" // Mark as retrieved from API
+    })) : [];
 
+    console.log('Processed ORDBKGSTLIST:', processedOrdbkGstList);
+    // ========== END FIX ==========
 
     const formattedData = {
       apiResponseData: {
         ...orderData,
-        ORDBKSTYLIST: processedOrdbkStyleList // Contains FGSHADE_KEY
+        ORDBKSTYLIST: processedOrdbkStyleList,
+        ORDBKGSTLIST: processedOrdbkGstList // Add this line to preserve GST list
       },
       ORDER_NO: orderData.ORDBK_NO || "",
       ORDER_DATE: orderData.ORDBK_DT ? formatDateForDisplay(orderData.ORDBK_DT) : "",
@@ -443,7 +454,7 @@ const populateFormData = async (orderData) => {
       DISCOUNT: orderData.ORDBK_DISC_AMT || 0
     };
 
- 
+    console.log('Formatted data with ORDBKGSTLIST:', formattedData.apiResponseData.ORDBKGSTLIST);
     
     // Set form data
     setFormData(formattedData);
@@ -466,14 +477,11 @@ const populateFormData = async (orderData) => {
   }
 };
 
-// Function to prepare payload for submission - FIXED for empty keys issue
 const prepareSubmitPayload = () => {
   const currentDate = new Date().toISOString().replace('T', ' ').split('.')[0];
   
   const userId = localStorage.getItem('USER_ID') || '1';
   const userName = localStorage.getItem('USER_NAME') || 'Admin';
-  
-
 
   const getStatusValue = (status) => {
     const statusMapping = {
@@ -500,8 +508,6 @@ const prepareSubmitPayload = () => {
 
   // Get ORDBKSTYLIST from formData
   const ordbkStyleList = formData.apiResponseData?.ORDBKSTYLIST || [];
-  
-
 
   // Function to generate FGITM_KEY dynamically
   const generateFgItemKey = (item) => {
@@ -511,14 +517,12 @@ const prepareSubmitPayload = () => {
     const fgshadeKey = item.FGSHADE_KEY || "";
     const fgptnKey = item.FGPTN_KEY || "";
     
-    // Clean keys
     const cleanFgprdKey = fgprdKey.trim();
     const cleanFgstyleId = fgstyleId.toString().trim();
     const cleanFgtypeKey = fgtypeKey.trim();
     const cleanFgshadeKey = fgshadeKey.trim();
     const cleanFgptnKey = fgptnKey.trim();
     
-    // Build FGITM_KEY based on available components
     let fgItemKey = cleanFgprdKey;
     
     if (cleanFgstyleId) {
@@ -537,42 +541,28 @@ const prepareSubmitPayload = () => {
       fgItemKey += cleanFgptnKey;
     }
     
-
-    
     return fgItemKey || "";
   };
 
   // IMPORTANT: Map API response codes to keys
   const mapApiCodesToKeys = (item) => {
- 
-    
-    // Initialize with existing keys
     const mappedItem = { ...item };
     
-    // Map PROD_CODE to FGPRD_KEY if not already present
     if (!mappedItem.FGPRD_KEY && item.PROD_CODE) {
-    
       mappedItem.FGPRD_KEY = item.PROD_CODE;
     }
     
-    // Map SHADE_CODE to FGSHADE_KEY if not already present
     if (!mappedItem.FGSHADE_KEY && item.SHADE_CODE) {
-
       mappedItem.FGSHADE_KEY = item.SHADE_CODE;
     }
     
-    // Map PTN_CODE to FGPTN_KEY if not already present
     if (!mappedItem.FGPTN_KEY && item.PTN_CODE) {
-     
       mappedItem.FGPTN_KEY = item.PTN_CODE;
     }
     
-    // Map TYPE_CODE to FGTYPE_KEY if not already present
     if (!mappedItem.FGTYPE_KEY && item.TYPE_CODE) {
-     
       mappedItem.FGTYPE_KEY = item.TYPE_CODE;
     }
-    
     
     return mappedItem;
   };
@@ -583,25 +573,39 @@ const prepareSubmitPayload = () => {
     const mappedItem = mapApiCodesToKeys(item);
     
     // Determine DBFLAG based on mode and item status
-    let itemDbFlag = mappedItem.DBFLAG || (mode === 'add' ? 'I' : 'U');
+    let itemDbFlag = mappedItem.DBFLAG;
+    
+    // FIXED: Proper DBFLAG handling for edit mode
+    if (!itemDbFlag || itemDbFlag === 'R') {
+      // If item has no DBFLAG or is 'R' (retrieved from API)
+      if (mode === 'add') {
+        itemDbFlag = 'I'; // All items in add mode are inserts
+      } else if (mode === 'edit') {
+        // Check if it's a new item (temporary ID) or existing
+        const isNewItem = mappedItem.ORDBKSTY_ID && (
+          mappedItem.ORDBKSTY_ID.toString().length > 9 || // Check if temporary ID
+          mappedItem.ORDBKSTY_ID === 0 // New items have ID 0
+        );
+        const hasOriginalId = mappedItem.ORDBKSTY_ID && 
+                              mappedItem.ORDBKSTY_ID > 0 && 
+                              mappedItem.ORDBKSTY_ID.toString().length <= 9; // Existing items have shorter IDs
+        
+        if (isNewItem || mappedItem.ORDBKSTY_ID === 0) {
+          itemDbFlag = 'I'; // New item in edit mode - Insert
+        } else if (hasOriginalId) {
+          itemDbFlag = 'U'; // Existing item to update - Update
+        } else {
+          itemDbFlag = 'I'; // Default to insert for new items
+        }
+      }
+    }
     
     // If item is marked as deleted in formData, keep it as 'D'
     if (mappedItem.DBFLAG === 'D') {
       itemDbFlag = 'D';
-    } 
-    // For edit mode, determine if it's new or existing
-    else if (mode === 'edit') {
-      const isNewItem = mappedItem.ORDBKSTY_ID && mappedItem.ORDBKSTY_ID.toString().length > 9; // Check if temporary ID
-      const hasOriginalId = mappedItem.ORDBKSTY_ID && mappedItem.ORDBKSTY_ID > 0 && !isNewItem;
-      
-      if (isNewItem) {
-        itemDbFlag = 'I'; // New item in edit mode
-      } else if (hasOriginalId) {
-        itemDbFlag = 'U'; // Existing item to update
-      } else {
-        itemDbFlag = 'I'; // Default to insert for new items
-      }
     }
+
+    console.log(`Item ${mappedItem.ORDBKSTY_ID}: DBFLAG = ${itemDbFlag}, Mode = ${mode}`);
 
     // Extract all keys from mapped item
     const fgprdKey = mappedItem.FGPRD_KEY || "";
@@ -609,8 +613,6 @@ const prepareSubmitPayload = () => {
     const fgtypeKey = mappedItem.FGTYPE_KEY || "";
     const fgshadeKey = mappedItem.FGSHADE_KEY || "";
     const fgptnKey = mappedItem.FGPTN_KEY || "";
-    
-
 
     // Generate FGITM_KEY dynamically
     const fgItemKey = generateFgItemKey({
@@ -622,37 +624,61 @@ const prepareSubmitPayload = () => {
     });
 
     // Transform ORDBKSTYSZLIST with correct DBFLAG
-    const transformedSizeList = (mappedItem.ORDBKSTYSZLIST || []).map(sizeItem => ({
-      DBFLAG: itemDbFlag, // Same DBFLAG as parent item
-      ORDBKSTYSZ_ID: sizeItem.ORDBKSTYSZ_ID || 0,
-      ORDBK_KEY: correctOrdbkKey,
-      ORDBKSTY_ID: mappedItem.ORDBKSTY_ID || 0,
-      STYSIZE_ID: sizeItem.STYSIZE_ID || 0,
-      STYSIZE_NAME: sizeItem.STYSIZE_NAME || "",
-      QTY: parseFloat(sizeItem.QTY) || 0,
-      INIT_DT: "1900-01-01 00:00:00.000",
-      INIT_REMK: "",
-      INIT_QTY: 0,
-      BAL_QTY: parseFloat(sizeItem.QTY) || 0,
-      MRP: parseFloat(mappedItem.RATE || mappedItem.ITMRATE) || 0,
-      WSP: parseFloat(mappedItem.RATE || mappedItem.ITMRATE) || 0,
-      RQTY: 0,
-      WOBALQTY: parseFloat(sizeItem.QTY) || 0,
-      REFORDBKSTYSZ_ID: 0,
-      OP_QTY: 0,
-      HSNCODE_KEY: "IG001",
-      GST_RATE_SLAB_ID: 39,
-      ITM_AMT: parseFloat(sizeItem.ITM_AMT) || 0,
-      DISC_AMT: parseFloat(sizeItem.DISC_AMT) || 0,
-      NET_AMT: parseFloat(sizeItem.NET_AMT) || 0,
-      SGST_AMT: 0,
-      CGST_AMT: 0,
-      IGST_AMT: 0,
-      NET_SALE_RATE: 0,
-      OTHER_AMT: 0,
-      ADD_CESS_RATE: 0,
-      ADD_CESS_AMT: 0
-    }));
+    const transformedSizeList = (mappedItem.ORDBKSTYSZLIST || []).map(sizeItem => {
+      // FIXED: Proper DBFLAG for size items
+      let sizeDbFlag = sizeItem.DBFLAG;
+      
+      if (!sizeDbFlag || sizeDbFlag === 'R') {
+        if (mode === 'add') {
+          sizeDbFlag = 'I';
+        } else if (mode === 'edit') {
+          const isNewSize = sizeItem.ORDBKSTYSZ_ID === 0;
+          if (isNewSize) {
+            sizeDbFlag = 'I';
+          } else if (sizeItem.ORDBKSTYSZ_ID > 0) {
+            sizeDbFlag = 'U';
+          } else {
+            sizeDbFlag = 'I';
+          }
+        }
+      }
+      
+      if (sizeItem.DBFLAG === 'D') {
+        sizeDbFlag = 'D';
+      }
+      
+      return {
+        DBFLAG: sizeDbFlag,
+        ORDBKSTYSZ_ID: sizeItem.ORDBKSTYSZ_ID || 0,
+        ORDBK_KEY: correctOrdbkKey,
+        ORDBKSTY_ID: mappedItem.ORDBKSTY_ID || 0,
+        STYSIZE_ID: sizeItem.STYSIZE_ID || 0,
+        STYSIZE_NAME: sizeItem.STYSIZE_NAME || "",
+        QTY: parseFloat(sizeItem.QTY) || 0,
+        INIT_DT: "1900-01-01 00:00:00.000",
+        INIT_REMK: "",
+        INIT_QTY: 0,
+        BAL_QTY: parseFloat(sizeItem.QTY) || 0,
+        MRP: parseFloat(mappedItem.RATE || mappedItem.ITMRATE) || 0,
+        WSP: parseFloat(mappedItem.RATE || mappedItem.ITMRATE) || 0,
+        RQTY: 0,
+        WOBALQTY: parseFloat(sizeItem.QTY) || 0,
+        REFORDBKSTYSZ_ID: 0,
+        OP_QTY: 0,
+        HSNCODE_KEY: "IG001",
+        GST_RATE_SLAB_ID: 39,
+        ITM_AMT: parseFloat(sizeItem.ITM_AMT) || 0,
+        DISC_AMT: parseFloat(sizeItem.DISC_AMT) || 0,
+        NET_AMT: parseFloat(sizeItem.NET_AMT) || 0,
+        SGST_AMT: 0,
+        CGST_AMT: 0,
+        IGST_AMT: 0,
+        NET_SALE_RATE: 0,
+        OTHER_AMT: 0,
+        ADD_CESS_RATE: 0,
+        ADD_CESS_AMT: 0
+      };
+    });
 
     return {
       DBFLAG: itemDbFlag,
@@ -704,17 +730,21 @@ const prepareSubmitPayload = () => {
     };
   });
 
-
-  // Rest of the function remains the same for ORDBKTERMLIST and ORDBKGSTLIST
-  // Get ORDBKTERMLIST from formData with proper DBFLAG
+  // Get ORDBKTERMLIST with proper DBFLAG
   const ordbkTermList = (formData.apiResponseData?.ORDBKTERMLIST || []).map(termItem => {
-    let termDbFlag = termItem.DBFLAG || (mode === 'add' ? 'I' : 'U');
+    let termDbFlag = termItem.DBFLAG;
+    
+    if (!termDbFlag || termDbFlag === 'R') {
+      if (mode === 'add') {
+        termDbFlag = 'I';
+      } else if (mode === 'edit') {
+        const hasOriginalId = termItem.ORDBKTERM_ID && termItem.ORDBKTERM_ID > 0;
+        termDbFlag = hasOriginalId ? 'U' : 'I';
+      }
+    }
     
     if (termItem.DBFLAG === 'D') {
       termDbFlag = 'D';
-    } else if (mode === 'edit') {
-      const hasOriginalId = termItem.ORDBKTERM_ID && termItem.ORDBKTERM_ID > 0;
-      termDbFlag = hasOriginalId ? 'U' : 'I';
     }
     
     return {
@@ -724,19 +754,26 @@ const prepareSubmitPayload = () => {
     };
   });
   
-  // Generate ORDBKGSTLIST only if GST_APPL is "Y"
+  // FIXED: Generate ORDBKGSTLIST with proper DBFLAG
   let ordbkGstList = [];
   
   if (formData.GST_APPL === "Y") {
     if (formData.apiResponseData?.ORDBKGSTLIST && formData.apiResponseData.ORDBKGSTLIST.length > 0) {
       ordbkGstList = formData.apiResponseData.ORDBKGSTLIST.map(gstItem => {
-        let gstDbFlag = gstItem.DBFLAG || (mode === 'add' ? 'I' : 'U');
+        let gstDbFlag = gstItem.DBFLAG;
+        
+        // FIXED: Handle 'R' DBFLAG from API response
+        if (!gstDbFlag || gstDbFlag === 'R') {
+          if (mode === 'add') {
+            gstDbFlag = 'I';
+          } else if (mode === 'edit') {
+            const hasOriginalId = gstItem.ORDBK_GST_ID && gstItem.ORDBK_GST_ID > 0;
+            gstDbFlag = hasOriginalId ? 'U' : 'I';
+          }
+        }
         
         if (gstItem.DBFLAG === 'D') {
           gstDbFlag = 'D';
-        } else if (mode === 'edit') {
-          const hasOriginalId = gstItem.ORDBK_GST_ID && gstItem.ORDBK_GST_ID > 0;
-          gstDbFlag = hasOriginalId ? 'U' : 'I';
         }
 
         return {
@@ -837,7 +874,6 @@ const prepareSubmitPayload = () => {
     DISTBTR_KEY: consigneeKey,
     SALEPERSON1_KEY: salesperson1Key,
     SALEPERSON2_KEY: salesperson2Key,
-    TRSP_KEY: transporterKey,
     PRICELIST_KEY: formData.PRICELIST_KEY || "",
     DESP_PORT: formData.DESP_PORT || "",
   };
@@ -850,7 +886,13 @@ const prepareSubmitPayload = () => {
     basePayload.UPDATED_BY = parseInt(userId) || 1;
     basePayload.UPDATED_DT = currentDate;
   }
-
+  
+  console.log('Final payload prepared with proper DBFLAGS:', {
+    mainDbFlag,
+    ORDBKSTYLIST_DBFLAGS: transformedOrdbkStyleList.map(item => item.DBFLAG),
+    ORDBKTERMLIST_DBFLAGS: ordbkTermList.map(item => item.DBFLAG),
+    ORDBKGSTLIST_DBFLAGS: ordbkGstList.map(item => item.DBFLAG)
+  });
   
   return basePayload;
 };
@@ -1212,44 +1254,118 @@ const handleNextClick = async () => {
     return true;
   };
 
-  // Function to submit form data
-  const handleSubmit = async () => {
-    setShowValidationErrors(true);
-    if (!validateForm()) {
-      return;
-    }
 
-    try {
-      setSubmitLoading(true);
-      
-      const userName = localStorage.getItem('USER_NAME') || 'ankita';
-      const strCobrid = "02";
-      
-      const payload = prepareSubmitPayload();
-      
+
+const handleSubmit = async () => {
+  setShowValidationErrors(true);
+  if (!validateForm()) {
+    return;
+  }
+
+  try {
+    setSubmitLoading(true);
     
+    // Auto-calculate GST if enabled but not applied or if there are changes
+    if (formData.GST_APPL === "Y") {
+      // Check if we need to recalculate GST
+      const hasGstList = formData.apiResponseData?.ORDBKGSTLIST && formData.apiResponseData.ORDBKGSTLIST.length > 0;
+      const hasItems = formData.apiResponseData?.ORDBKSTYLIST && formData.apiResponseData.ORDBKSTYLIST.length > 0;
       
-      const response = await axiosInstance.post(`/ORDBK/ApiMangeOrdbk?UserName=${userName}&strCobrid=${strCobrid}`, payload);
-    
+      // Get total amount from items
+      const totalAmount = formData.TOTAL_AMOUNT || 0;
       
-      if (response.data.RESPONSESTATUSCODE === 1) {
-        showSnackbar("Order submitted successfully!");
-        setMode('view');
-        setIsFormDisabled(true);
-        setTabIndex(0)
-        if (formData.ORDBK_KEY) {
-          fetchOrderDetails(formData.ORDBK_KEY);
+      // Get current GST total from formData
+      const currentGstTotal = formData.ORDBK_GST_AMT || 0;
+      
+      // Check if there's a discount applied
+      const hasDiscount = (formData.DISCOUNT || 0) > 0;
+      
+      // Check if GST needs to be recalculated
+      const needsRecalculation = !hasGstList || 
+                                 (hasDiscount && !formData.apiResponseData?.ORDBKGSTLIST?.length) ||
+                                 (totalAmount > 0 && currentGstTotal === 0);
+      
+      if (needsRecalculation && hasItems) {
+        console.log('Auto-calculating GST before submission...');
+        showSnackbar('Auto-calculating GST before submission...', 'info');
+        
+        // Wait a moment to ensure all state is updated
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        // Calculate discount from terms
+        let discountFromTerms = 0;
+        if (formData.apiResponseData?.ORDBKTERMLIST) {
+          discountFromTerms = formData.apiResponseData.ORDBKTERMLIST
+            .filter(term => term.TAXGRP_NAME === 0) // Non-tax terms (discounts)
+            .reduce((sum, term) => sum + (parseFloat(term.TAX_AMT) || 0), 0);
         }
-      } else {
-        showSnackbar("Error submitting order: " + (response.data.RESPONSEMESSAGE || "Unknown error"), 'error');
+        
+        const netAmountAfterDiscount = totalAmount - discountFromTerms;
+        
+        // Call GST calculation API
+        const gstPayload = {
+          "ORDBK_KEY": formData.ORDBK_KEY,
+          "PARTY_KEY": formData.PARTY_KEY,
+          "PARTYDTL_ID": formData.PARTYDTL_ID,
+          "AMOUNT": netAmountAfterDiscount,
+          "GST_TYPE": formData.GST_TYPE === "IGST" ? "I" : "S"
+        };
+        
+        try {
+          const gstResponse = await axiosInstance.post('/ORDBK/CalculateGST', gstPayload);
+          
+          if (gstResponse.data.RESPONSESTATUSCODE === 1) {
+            // Update formData with calculated GST
+            setFormData(prev => ({
+              ...prev,
+              ORDBK_GST_AMT: gstResponse.data.GST_AMOUNT || 0,
+              ORDBK_SGST_AMT: gstResponse.data.SGST_AMOUNT || 0,
+              ORDBK_CGST_AMT: gstResponse.data.CGST_AMOUNT || 0,
+              ORDBK_IGST_AMT: gstResponse.data.IGST_AMOUNT || 0,
+              FINAL_AMOUNT: netAmountAfterDiscount + (gstResponse.data.GST_AMOUNT || 0),
+              apiResponseData: {
+                ...prev.apiResponseData,
+                ORDBKGSTLIST: gstResponse.data.GST_LIST || []
+              }
+            }));
+            
+            showSnackbar('GST calculated automatically!', 'success');
+            
+            // Wait a bit for state to update
+            await new Promise(resolve => setTimeout(resolve, 300));
+          }
+        } catch (gstError) {
+          console.error('Error auto-calculating GST:', gstError);
+          showSnackbar('Warning: GST could not be auto-calculated. Please click Apply GST manually.', 'warning');
+        }
       }
-    } catch (error) {
-      console.error('Error submitting order:', error);
-      showSnackbar("Error submitting order. Please try again.", 'error');
-    } finally {
-      setSubmitLoading(false);
     }
-  };
+    
+    const userName = localStorage.getItem('USER_NAME') || 'ankita';
+    const strCobrid = "02";
+    
+    const payload = prepareSubmitPayload();
+    
+    const response = await axiosInstance.post(`/ORDBK/ApiMangeOrdbk?UserName=${userName}&strCobrid=${strCobrid}`, payload);
+    
+    if (response.data.RESPONSESTATUSCODE === 1) {
+      showSnackbar("Order submitted successfully!");
+      setMode('view');
+      setIsFormDisabled(true);
+      setTabIndex(0);
+      if (formData.ORDBK_KEY) {
+        fetchOrderDetails(formData.ORDBK_KEY);
+      }
+    } else {
+      showSnackbar("Error submitting order: " + (response.data.RESPONSEMESSAGE || "Unknown error"), 'error');
+    }
+  } catch (error) {
+    console.error('Error submitting order:', error);
+    showSnackbar("Error submitting order. Please try again.", 'error');
+  } finally {
+    setSubmitLoading(false);
+  }
+};
 
   // Function to get order number
   const getOrderNumber = async (prefix) => {
@@ -2187,16 +2303,32 @@ if (loading || isDataLoading) {
             companyConfig={companyConfig} 
           />
         ) : (
-          <Stepper3 
-            formData={formData} 
-            setFormData={setFormData} 
-            isFormDisabled={isFormDisabled}
-            mode={mode}
-            onSubmit={handleSubmit}
-            onCancel={handleCancel}
-            onPrev={handlePrev} 
-            showSnackbar={showSnackbar}
-          />
+           <Stepper3 
+    formData={formData} 
+    setFormData={setFormData} 
+    isFormDisabled={isFormDisabled}
+    mode={mode}
+    onSubmit={handleSubmit}
+    onCancel={handleCancel}
+    onPrev={handlePrev} 
+    showSnackbar={showSnackbar}
+    onGSTApplied={(gstData) => {
+      // Handle GST applied callback if needed
+      setFormData(prev => ({
+        ...prev,
+        ORDBK_GST_AMT: gstData.totalGstAmount,
+        FINAL_AMOUNT: gstData.finalAmount
+      }));
+    }}
+    onGSTCleared={() => {
+      // Handle GST cleared
+      setFormData(prev => ({
+        ...prev,
+        ORDBK_GST_AMT: 0,
+        FINAL_AMOUNT: prev.TOTAL_AMOUNT - (prev.DISCOUNT || 0)
+      }));
+    }}
+  />
         )}
       </Grid>
 
@@ -2266,6 +2398,38 @@ if (loading || isDataLoading) {
           )}
         </Grid>
       )}
+
+   
+<Dialog
+  open={showGstConfirmDialog}
+  onClose={() => setShowGstConfirmDialog(false)}
+>
+  <DialogTitle>Confirm GST Change</DialogTitle>
+  <DialogContent>
+    <DialogContentText>
+      Are you sure you want to disable GST? This will remove all GST calculations and rows from the Tax/Terms tab.
+    </DialogContentText>
+  </DialogContent>
+  <DialogActions>
+    <Button onClick={() => {
+      setShowGstConfirmDialog(false);
+      setFormData(prev => ({ ...prev, GST_APPL: tempGstValue }));
+      // Reset GST_TYPE when disabling
+      if (tempGstValue === "N") {
+        setFormData(prev => ({ ...prev, GST_TYPE: "" }));
+      }
+    }} color="primary">
+      Yes
+    </Button>
+    <Button onClick={() => {
+      setShowGstConfirmDialog(false);
+      // Revert back to previous value
+      setFormData(prev => ({ ...prev, GST_APPL: prev.GST_APPL === "Y" ? "Y" : "N" }));
+    }} color="primary" autoFocus>
+      No
+    </Button>
+  </DialogActions>
+</Dialog>
 
       
     </Box>

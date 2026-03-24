@@ -3457,96 +3457,103 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, compa
     }
   };
 
-  // Auto-load size details for style data
-  const fetchSizeDetailsForStyle = async (styleData) => {
-    try {
-      const fgprdKey = styleData.FGPRD_KEY;
-      const fgstyleId = styleData.FGSTYLE_ID;
-      const fgtypeKey = styleData.FGTYPE_KEY || "";
-      const fgshadeKey = styleData.FGSHADE_KEY || "";
-      const fgptnKey = styleData.FGPTN_KEY || "";
+ const fetchSizeDetailsForStyle = async (styleData) => {
+  try {
+    const fgprdKey = styleData.FGPRD_KEY;
+    const fgstyleId = styleData.FGSTYLE_ID;
+    const fgtypeKey = styleData.FGTYPE_KEY || "";
+    const fgshadeKey = styleData.FGSHADE_KEY || "";
+    const fgptnKey = styleData.FGPTN_KEY || "";
 
-      if (!fgprdKey || !fgstyleId) {
-        return;
-      }
+    if (!fgprdKey || !fgstyleId) {
+      return;
+    }
 
-      // Get COBR_ID from localStorage or companyConfig
-      const cobrId = companyConfig.COBR_ID || localStorage.getItem('COBR_ID') || '02';
+    // Get values from localStorage
+    const cobrId = companyConfig.COBR_ID || localStorage.getItem('COBR_ID') || '02';
+    const fcyrKey = localStorage.getItem('FCYR_KEY') || '25';
+    const coId = localStorage.getItem('CO_ID') || '02';
+    const clientId = localStorage.getItem('CLIENT_ID') || '5102';
 
-      // FIRST: Get STYCATRT_ID from API with FLAG: "GETSTYCATRTID"
-      const stycatrtPayload = {
-        "FGSTYLE_ID": fgstyleId,
-        "FGPRD_KEY": fgprdKey,
-        "FGTYPE_KEY": fgtypeKey,
-        "FGSHADE_KEY": fgshadeKey,
-        "FGPTN_KEY": fgptnKey,
-        "FLAG": "GETSTYCATRTID",
-        "MRP": parseFloat(styleData.MRP) || 0,
-        "PARTY_KEY": formData.PARTY_KEY || "",
-        "PARTYDTL_ID": formData.PARTYDTL_ID || 0,
-        "COBR_ID": cobrId,
-        "FCYR_KEY": "25"
-      };
+    // FIRST: Get STYCATRT_ID from API with FLAG: "GETSTYCATRTID"
+    const stycatrtPayload = {
+      "FGSTYLE_ID": fgstyleId,
+      "FGPRD_KEY": fgprdKey,
+      "FGTYPE_KEY": fgtypeKey,
+      "FGSHADE_KEY": fgshadeKey,
+      "FGPTN_KEY": fgptnKey,
+      "FLAG": "GETSTYCATRTID",
+      "MRP": parseFloat(styleData.MRP) || 0,
+      "PARTY_KEY": formData.PARTY_KEY || "",
+      "PARTYDTL_ID": formData.PARTYDTL_ID || 0,
+      "COBR_ID": cobrId,
+      "FCYR_KEY": fcyrKey,
+      "CLIENT_ID": clientId,
+      "CO_ID": coId
+    };
 
-  
+    const stycatrtResponse = await axiosInstance.post('/STYSIZE/AddSizeDetail', stycatrtPayload);
 
-      const stycatrtResponse = await axiosInstance.post('/STYSIZE/AddSizeDetail', stycatrtPayload);
-    
+    let stycatrtId = 0;
+    if (stycatrtResponse.data.DATA && stycatrtResponse.data.DATA.length > 0) {
+      stycatrtId = stycatrtResponse.data.DATA[0].STYCATRT_ID || 0;
+    }
 
-      let stycatrtId = 0;
-      if (stycatrtResponse.data.DATA && stycatrtResponse.data.DATA.length > 0) {
-        stycatrtId = stycatrtResponse.data.DATA[0].STYCATRT_ID || 0;
-      }
+    // SECOND: Get size details with enhanced payload
+    const sizeDetailsPayload = {
+      "FGSTYLE_ID": fgstyleId,
+      "FGPRD_KEY": fgprdKey,
+      "FGTYPE_KEY": fgtypeKey,
+      "FGSHADE_KEY": fgshadeKey,
+      "FGPTN_KEY": fgptnKey,
+      "MRP": parseFloat(styleData.MRP) || 0,
+      "SSP": parseFloat(styleData.SSP) || 0,
+      "PARTY_KEY": formData.PARTY_KEY || "",
+      "PARTYDTL_ID": formData.PARTYDTL_ID || 0,
+      "COBR_ID": cobrId,
+      "FCYR_KEY": fcyrKey,
+      "STYSTKDTL_ID": 0,
+      "BARCODE": "",
+      "FGITM_KEY": "",
+      "STYSTK_KEY": "",
+      "ORDBKSTY_ID": 0,
+      "CLIENT_ID": clientId,
+      "CO_ID": coId,
+      "FLAG": ""
+    };
 
-      // SECOND: Get size details with regular payload
-      const sizeDetailsPayload = {
-        "FGSTYLE_ID": fgstyleId,
-        "FGPRD_KEY": fgprdKey,
-        "FGTYPE_KEY": fgtypeKey,
-        "FGSHADE_KEY": fgshadeKey,
-        "FGPTN_KEY": fgptnKey,
-        "MRP": parseFloat(styleData.MRP) || 0,
-        "SSP": parseFloat(styleData.SSP) || 0,
-        "PARTY_KEY": formData.PARTY_KEY || "",
-        "PARTYDTL_ID": formData.PARTYDTL_ID || 0,
-        "COBR_ID": cobrId,
-        "FLAG": ""
-      };
+    const response = await axiosInstance.post('/STYSIZE/AddSizeDetail', sizeDetailsPayload);
 
- 
+    if (response.data.DATA && response.data.DATA.length > 0) {
+      const transformedSizeDetails = response.data.DATA.map((size, index) => ({
+        STYSIZE_ID: size.STYSIZE_ID || index + 1,
+        STYSIZE_NAME: size.STYSIZE_NAME || `Size ${index + 1}`,
+        FGSTYLE_ID: size.FGSTYLE_ID || fgstyleId,
+        QTY: 0,
+        ITM_AMT: 0,
+        ORDER_QTY: 0,
+        MRP: parseFloat(styleData.MRP) || 0,
+        RATE: parseFloat(styleData.SSP) || 0
+      }));
 
-      const response = await axiosInstance.post('/STYSIZE/AddSizeDetail', sizeDetailsPayload);
+      setSizeDetailsData(transformedSizeDetails);
 
-      if (response.data.DATA && response.data.DATA.length > 0) {
-        const transformedSizeDetails = response.data.DATA.map((size, index) => ({
-          STYSIZE_ID: size.STYSIZE_ID || index + 1,
-          STYSIZE_NAME: size.STYSIZE_NAME || `Size ${index + 1}`,
-          FGSTYLE_ID: size.FGSTYLE_ID || fgstyleId,
-          QTY: 0,
-          ITM_AMT: 0,
-          ORDER_QTY: 0,
-          MRP: parseFloat(styleData.MRP) || 0,
-          RATE: parseFloat(styleData.SSP) || 0
-        }));
+      // Update newItemData with STYCATRT_ID for use in payload
+      setNewItemData(prev => ({
+        ...prev,
+        stycatrtId: stycatrtId
+      }));
 
-        setSizeDetailsData(transformedSizeDetails);
-
-        // Update newItemData with STYCATRT_ID for use in payload
-        setNewItemData(prev => ({
-          ...prev,
-          stycatrtId: stycatrtId
-        }));
-
-        setIsSizeDetailsLoaded(true);
-      } else {
-        setSizeDetailsData([]);
-        setIsSizeDetailsLoaded(false);
-      }
-    } catch (error) {
-      console.error('Error auto-fetching size details:', error);
+      setIsSizeDetailsLoaded(true);
+    } else {
+      setSizeDetailsData([]);
       setIsSizeDetailsLoaded(false);
     }
-  };
+  } catch (error) {
+    console.error('Error auto-fetching size details:', error);
+    setIsSizeDetailsLoaded(false);
+  }
+};
 
   // Fetch Type dropdown data
   const fetchTypeData = async (fgstyleId) => {
@@ -3617,105 +3624,113 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, compa
   };
 
 
-  const fetchSizeDetails = async () => {
-    if (!newItemData.product || !newItemData.style) {
-      showSnackbar("Please select Product and Style first", 'error');
+ const fetchSizeDetails = async () => {
+  if (!newItemData.product || !newItemData.style) {
+    showSnackbar("Please select Product and Style first", 'error');
+    return;
+  }
+
+  try {
+    const fgprdKey = productMapping[newItemData.product];
+    const fgstyleId = styleMapping[newItemData.style];
+    const fgtypeKey = typeMapping[newItemData.type] || "";
+    const fgshadeKey = shadeMapping[newItemData.shade] || "";
+    const fgptnKey = lotNoMapping[newItemData.lotNo] || "";
+
+    if (!fgprdKey || !fgstyleId) {
       return;
     }
 
-    try {
-      const fgprdKey = productMapping[newItemData.product];
-      const fgstyleId = styleMapping[newItemData.style];
-      const fgtypeKey = typeMapping[newItemData.type] || "";
-      const fgshadeKey = shadeMapping[newItemData.shade] || "";
-      const fgptnKey = lotNoMapping[newItemData.lotNo] || "";
+    // Get values from localStorage
+    const cobrId = companyConfig.COBR_ID || localStorage.getItem('COBR_ID') || '02';
+    const fcyrKey = localStorage.getItem('FCYR_KEY') || '25';
+    const coId = localStorage.getItem('CO_ID') || '02';
+    const clientId = localStorage.getItem('CLIENT_ID') || '5102';
 
-      if (!fgprdKey || !fgstyleId) {
-        return;
-      }
+    // FIRST: Get STYCATRT_ID from API with FLAG: "GETSTYCATRTID"
+    const stycatrtPayload = {
+      "FGSTYLE_ID": fgstyleId,
+      "FGPRD_KEY": fgprdKey,
+      "FGTYPE_KEY": fgtypeKey,
+      "FGSHADE_KEY": fgshadeKey,
+      "FGPTN_KEY": fgptnKey,
+      "FLAG": "GETSTYCATRTID",
+      "MRP": parseFloat(newItemData.mrp) || 0,
+      "PARTY_KEY": formData.PARTY_KEY || "",
+      "PARTYDTL_ID": formData.PARTYDTL_ID || 0,
+      "COBR_ID": cobrId,
+      "FCYR_KEY": fcyrKey,
+      "CLIENT_ID": clientId,
+      "CO_ID": coId
+    };
 
-      // Get COBR_ID from localStorage or companyConfig
-      const cobrId = companyConfig.COBR_ID || localStorage.getItem('COBR_ID') || '02';
+    const stycatrtResponse = await axiosInstance.post('/STYSIZE/AddSizeDetail', stycatrtPayload);
 
-      // FIRST: Get STYCATRT_ID from API with FLAG: "GETSTYCATRTID"
-      const stycatrtPayload = {
-        "FGSTYLE_ID": fgstyleId,
-        "FGPRD_KEY": fgprdKey,
-        "FGTYPE_KEY": fgtypeKey,
-        "FGSHADE_KEY": fgshadeKey,
-        "FGPTN_KEY": fgptnKey,
-        "FLAG": "GETSTYCATRTID",
-        "MRP": parseFloat(newItemData.mrp) || 0,
-        "PARTY_KEY": formData.PARTY_KEY || "",
-        "PARTYDTL_ID": formData.PARTYDTL_ID || 0,
-        "COBR_ID": cobrId,
-        "FCYR_KEY": "25"
-      };
+    let stycatrtId = 0;
+    if (stycatrtResponse.data.DATA && stycatrtResponse.data.DATA.length > 0) {
+      stycatrtId = stycatrtResponse.data.DATA[0].STYCATRT_ID || 0;
+    }
 
-   
+    // SECOND: Get size details with enhanced payload
+    const sizeDetailsPayload = {
+      "FGSTYLE_ID": fgstyleId,
+      "FGPRD_KEY": fgprdKey,
+      "FGTYPE_KEY": fgtypeKey,
+      "FGSHADE_KEY": fgshadeKey,
+      "FGPTN_KEY": fgptnKey,
+      "MRP": parseFloat(newItemData.mrp) || 0,
+      "SSP": parseFloat(newItemData.rate) || 0,
+      "PARTY_KEY": formData.PARTY_KEY || "",
+      "PARTYDTL_ID": formData.PARTYDTL_ID || 0,
+      "COBR_ID": cobrId,
+      "FCYR_KEY": fcyrKey,
+      "STYSTKDTL_ID": 0,
+      "BARCODE": "",
+      "FGITM_KEY": "",
+      "STYSTK_KEY": "",
+      "ORDBKSTY_ID": 0,
+      "CLIENT_ID": clientId,
+      "CO_ID": coId,
+      "FLAG": ""
+    };
 
-      const stycatrtResponse = await axiosInstance.post('/STYSIZE/AddSizeDetail', stycatrtPayload);
+    const sizeDetailsResponse = await axiosInstance.post('/STYSIZE/AddSizeDetail', sizeDetailsPayload);
 
+    if (sizeDetailsResponse.data.DATA && sizeDetailsResponse.data.DATA.length > 0) {
+      const transformedSizeDetails = sizeDetailsResponse.data.DATA.map((size, index) => ({
+        STYSIZE_ID: size.STYSIZE_ID || index + 1,
+        STYSIZE_NAME: size.STYSIZE_NAME || `Size ${index + 1}`,
+        FGSTYLE_ID: size.FGSTYLE_ID || fgstyleId,
+        QTY: 0,
+        ITM_AMT: 0,
+        ORDER_QTY: 0,
+        MRP: parseFloat(newItemData.mrp) || 0,
+        RATE: parseFloat(newItemData.rate) || 0
+      }));
 
-      let stycatrtId = 0;
-      if (stycatrtResponse.data.DATA && stycatrtResponse.data.DATA.length > 0) {
-        stycatrtId = stycatrtResponse.data.DATA[0].STYCATRT_ID || 0;
-      }
+      setSizeDetailsData(transformedSizeDetails);
 
-      // SECOND: Get size details with regular payload
-      const sizeDetailsPayload = {
-        "FGSTYLE_ID": fgstyleId,
-        "FGPRD_KEY": fgprdKey,
-        "FGTYPE_KEY": fgtypeKey,
-        "FGSHADE_KEY": fgshadeKey,
-        "FGPTN_KEY": fgptnKey,
-        "MRP": parseFloat(newItemData.mrp) || 0,
-        "SSP": parseFloat(newItemData.rate) || 0,
-        "PARTY_KEY": formData.PARTY_KEY || "",
-        "PARTYDTL_ID": formData.PARTYDTL_ID || 0,
-        "COBR_ID": cobrId,
-        "FLAG": ""
-      };
+      // Update newItemData with STYCATRT_ID for use in payload
+      setNewItemData(prev => ({
+        ...prev,
+        stycatrtId: stycatrtId
+      }));
 
+      setIsSizeDetailsLoaded(true);
 
-
-      const sizeDetailsResponse = await axiosInstance.post('/STYSIZE/AddSizeDetail', sizeDetailsPayload);
-
-      if (sizeDetailsResponse.data.DATA && sizeDetailsResponse.data.DATA.length > 0) {
-        const transformedSizeDetails = sizeDetailsResponse.data.DATA.map((size, index) => ({
-          STYSIZE_ID: size.STYSIZE_ID || index + 1,
-          STYSIZE_NAME: size.STYSIZE_NAME || `Size ${index + 1}`,
-          FGSTYLE_ID: size.FGSTYLE_ID || fgstyleId,
-          QTY: 0,
-          ITM_AMT: 0,
-          ORDER_QTY: 0,
-          MRP: parseFloat(newItemData.mrp) || 0,
-          RATE: parseFloat(newItemData.rate) || 0
-        }));
-
-        setSizeDetailsData(transformedSizeDetails);
-
-        // Update newItemData with STYCATRT_ID for use in payload
-        setNewItemData(prev => ({
-          ...prev,
-          stycatrtId: stycatrtId
-        }));
-
-        setIsSizeDetailsLoaded(true);
-
-        // Show success message with STYCATRT_ID
-        showSnackbar(`Size details loaded successfully. STYCATRT_ID: ${stycatrtId}`, 'success');
-      } else {
-        showSnackbar("No size details found for the selected combination.", 'warning');
-        setSizeDetailsData([]);
-        setIsSizeDetailsLoaded(false);
-      }
-    } catch (error) {
-      console.error('Error fetching size details:', error);
-      showSnackbar("Error loading size details. Please try again.", 'error');
+      // Show success message with STYCATRT_ID
+      showSnackbar(`Size details loaded successfully. STYCATRT_ID: ${stycatrtId}`, 'success');
+    } else {
+      showSnackbar("No size details found for the selected combination.", 'warning');
+      setSizeDetailsData([]);
       setIsSizeDetailsLoaded(false);
     }
-  };
+  } catch (error) {
+    console.error('Error fetching size details:', error);
+    showSnackbar("Error loading size details. Please try again.", 'error');
+    setIsSizeDetailsLoaded(false);
+  }
+};
 
   // Handle style code text input change with debounce
   const handleStyleCodeInputChange = (e) => {
@@ -4004,124 +4019,65 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, compa
     setLotNoOptions([]);
   };
 
-  // Handle Confirm Add - UPDATED for STYCATRT_ID
-  const handleConfirmAdd = () => {
-    // Validation
-    if (!newItemData.product || !newItemData.style) {
-      showSnackbar("Please fill required fields: Product and Style", 'error');
-      return;
-    }
+// In Stepper2.js - Update handleConfirmAdd function
 
-    if (sizeDetailsData.length === 0) {
-      showSnackbar("Please load size details first", 'error');
-      return;
-    }
+const handleConfirmAdd = () => {
+  // Validation
+  if (!newItemData.product || !newItemData.style) {
+    showSnackbar("Please fill required fields: Product and Style", 'error');
+    return;
+  }
 
-    // At least one size should have quantity > 0
-    const sizesWithQty = sizeDetailsData.filter(size => size.QTY && size.QTY > 0);
-    if (sizesWithQty.length === 0) {
-      showSnackbar("Please enter quantity for at least one size before confirming", 'error');
-      return;
-    }
+  if (sizeDetailsData.length === 0) {
+    showSnackbar("Please load size details first", 'error');
+    return;
+  }
 
-    const fgprdKey = productMapping[newItemData.product] || productMapping[newItemData.style] || "";
-    const fgstyleId = styleMapping[newItemData.style] || "";
-    const stycatrtId = newItemData.stycatrtId || 0; // Get STYCATRT_ID from newItemData
+  // At least one size should have quantity > 0
+  const sizesWithQty = sizeDetailsData.filter(size => size.QTY && size.QTY > 0);
+  if (sizesWithQty.length === 0) {
+    showSnackbar("Please enter quantity for at least one size before confirming", 'error');
+    return;
+  }
 
-    const totalQty = sizesWithQty.reduce((sum, size) => sum + (parseFloat(size.QTY) || 0), 0);
-    const mrp = parseFloat(newItemData.mrp) || 0;
-    const rate = parseFloat(newItemData.rate) || 0;
-    const totalAmount = sizesWithQty.reduce((sum, size) => {
-      const sizeQty = parseFloat(size.QTY) || 0;
-      return sum + (sizeQty * rate);
-    }, 0);
-    const discount = parseFloat(newItemData.discount) || 0;
-    const netAmount = totalAmount - discount;
+  const fgprdKey = productMapping[newItemData.product] || productMapping[newItemData.style] || "";
+  const fgstyleId = styleMapping[newItemData.style] || "";
+  const stycatrtId = newItemData.stycatrtId || 0;
 
-    const tempId = Date.now();
+  const totalQty = sizesWithQty.reduce((sum, size) => sum + (parseFloat(size.QTY) || 0), 0);
+  const mrp = parseFloat(newItemData.mrp) || 0;
+  const rate = parseFloat(newItemData.rate) || 0;
+  const totalAmount = sizesWithQty.reduce((sum, size) => {
+    const sizeQty = parseFloat(size.QTY) || 0;
+    return sum + (sizeQty * rate);
+  }, 0);
+  const discount = parseFloat(newItemData.discount) || 0;
+  const netAmount = totalAmount - discount;
 
-    const updatedSizeDetails = sizeDetailsData.map(size => ({
-      ...size,
-      QTY: parseFloat(size.QTY) || 0,
-      ITM_AMT: (parseFloat(size.QTY) || 0) * rate
-    }));
+  const tempId = Date.now();
 
-    // Create items for EACH selected shade with FULL quantity
-    const newItems = selectedShades.map((shade, shadeIndex) => {
-      // Each shade gets full quantity (not divided)
-      const shadeAmount = totalAmount;
-      const shadeQty = totalQty;
+  const updatedSizeDetails = sizeDetailsData.map(size => ({
+    ...size,
+    QTY: parseFloat(size.QTY) || 0,
+    ITM_AMT: (parseFloat(size.QTY) || 0) * rate
+  }));
 
-      const fgshadeKey = shadeMapping[shade] || "";
-      const fgtypeKey = typeMapping[newItemData.type] || "";
-      const fgptnKey = lotNoMapping[newItemData.lotNo] || "";
+  // Create items for EACH selected shade with FULL quantity
+  const newItems = selectedShades.map((shade, shadeIndex) => {
+    const fgshadeKey = shadeMapping[shade] || "";
+    const fgtypeKey = typeMapping[newItemData.type] || "";
+    const fgptnKey = lotNoMapping[newItemData.lotNo] || "";
 
-      return {
-        id: tempId + shadeIndex,
-        BarCode: newItemData.barcode || "-",
-        product: newItemData.product,
-        style: newItemData.style || "-",
-        type: newItemData.type || "-",
-        shade: shade || "-",
-        lotNo: newItemData.lotNo || "-",
-        qty: shadeQty,
-        mrp: mrp,
-        rate: rate,
-        amount: shadeAmount,
-        varPer: parseFloat(newItemData.varPer) || 0,
-        varQty: 0,
-        varAmt: 0,
-        discAmt: discount,
-        netAmt: netAmount,
-        distributer: "-",
-        set: parseFloat(newItemData.sets) || 0,
-        originalData: {
-          ORDBKSTY_ID: tempId + shadeIndex,
-          FGITEM_KEY: newItemData.barcode || "-",
-          PRODUCT: newItemData.product,
-          STYLE: newItemData.style,
-          TYPE: newItemData.type || "-",
-          SHADE: shade || "-",
-          PATTERN: newItemData.lotNo || "-",
-          ITMQTY: shadeQty,
-          MRP: mrp,
-          ITMRATE: rate,
-          ITMAMT: shadeAmount,
-          DLV_VAR_PERC: parseFloat(newItemData.varPer) || 0,
-          DLV_VAR_QTY: 0,
-          DISC_AMT: discount,
-          NET_AMT: netAmount,
-          DISTBTR: "-",
-          SETQTY: parseFloat(newItemData.sets) || 0,
-          ORDBKSTYSZLIST: updatedSizeDetails.map(size => ({
-            ...size,
-            ORDBKSTYSZ_ID: 0
-          })),
-          FGPRD_KEY: fgprdKey,
-          FGSTYLE_ID: fgstyleId,
-          FGTYPE_KEY: fgtypeKey,
-          FGSHADE_KEY: fgshadeKey,
-          FGPTN_KEY: fgptnKey,
-          STYCATRT_ID: stycatrtId, // Include STYCATRT_ID
-          DBFLAG: mode === 'add' ? 'I' : 'I'
-        },
-        FGSTYLE_ID: fgstyleId,
-        FGPRD_KEY: fgprdKey,
-        FGTYPE_KEY: fgtypeKey,
-        FGSHADE_KEY: fgshadeKey,
-        FGPTN_KEY: fgptnKey,
-        STYCATRT_ID: stycatrtId // Store STYCATRT_ID
-      };
-    });
+    // Determine DBFLAG based on mode
+    const dbFlag = mode === 'add' ? 'I' : 'I'; // New items always get 'I'
 
-    // If no shades selected, create single item with current shade
-    const finalNewItems = selectedShades.length > 0 ? newItems : [{
-      id: tempId,
+    return {
+      id: tempId + shadeIndex,
       BarCode: newItemData.barcode || "-",
       product: newItemData.product,
       style: newItemData.style || "-",
       type: newItemData.type || "-",
-      shade: newItemData.shade || "-",
+      shade: shade || "-",
       lotNo: newItemData.lotNo || "-",
       qty: totalQty,
       mrp: mrp,
@@ -4134,122 +4090,217 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, compa
       netAmt: netAmount,
       distributer: "-",
       set: parseFloat(newItemData.sets) || 0,
-      originalData: {
-        ORDBKSTY_ID: tempId,
-        FGITEM_KEY: newItemData.barcode || "-",
-        PRODUCT: newItemData.product,
-        STYLE: newItemData.style,
-        TYPE: newItemData.type || "-",
-        SHADE: newItemData.shade || "-",
-        PATTERN: newItemData.lotNo || "-",
-        ITMQTY: totalQty,
-        MRP: mrp,
-        ITMRATE: rate,
-        ITMAMT: totalAmount,
-        DLV_VAR_PERC: parseFloat(newItemData.varPer) || 0,
-        DLV_VAR_QTY: 0,
-        DISC_AMT: discount,
-        NET_AMT: netAmount,
-        DISTBTR: "-",
-        SETQTY: parseFloat(newItemData.sets) || 0,
-        ORDBKSTYSZLIST: updatedSizeDetails.map(size => ({
-          ...size,
-          ORDBKSTYSZ_ID: 0
-        })),
-        FGPRD_KEY: fgprdKey,
-        FGSTYLE_ID: fgstyleId,
-        FGTYPE_KEY: typeMapping[newItemData.type] || "",
-        FGSHADE_KEY: shadeMapping[newItemData.shade] || "",
-        FGPTN_KEY: lotNoMapping[newItemData.lotNo] || "",
-        STYCATRT_ID: stycatrtId, // Include STYCATRT_ID
-        DBFLAG: mode === 'add' ? 'I' : 'I'
-      },
+  
+originalData: {
+  ORDBKSTY_ID: tempId + shadeIndex,
+  FGITEM_KEY: newItemData.barcode || "-",
+  PRODUCT: newItemData.product,
+  STYLE: newItemData.style,
+  TYPE: newItemData.type || "-",
+  SHADE: shade || "-",
+  PATTERN: newItemData.lotNo || "-",
+  ITMQTY: totalQty,
+  MRP: mrp,
+  ITMRATE: rate,
+  AMT: totalAmount,  // ADD THIS LINE - this is important for GST calculation
+  ITMAMT: totalAmount,  // Keep for backward compatibility
+  DLV_VAR_PERC: parseFloat(newItemData.varPer) || 0,
+  DLV_VAR_QTY: 0,
+  DISC_AMT: discount,
+  NET_AMT: netAmount,
+  DISTBTR: "-",
+  SETQTY: parseFloat(newItemData.sets) || 0,
+  ORDBKSTYSZLIST: updatedSizeDetails.map(size => ({
+    ...size,
+    ORDBKSTYSZ_ID: 0
+  })),
+  FGPRD_KEY: fgprdKey,
+  FGSTYLE_ID: fgstyleId,
+  FGTYPE_KEY: fgtypeKey,
+  FGSHADE_KEY: fgshadeKey,
+  FGPTN_KEY: fgptnKey,
+  STYCATRT_ID: stycatrtId,
+  DBFLAG: dbFlag
+},
       FGSTYLE_ID: fgstyleId,
       FGPRD_KEY: fgprdKey,
-      FGTYPE_KEY: typeMapping[newItemData.type] || "",
-      FGSHADE_KEY: shadeMapping[newItemData.shade] || "",
-      FGPTN_KEY: lotNoMapping[newItemData.lotNo] || "",
-      STYCATRT_ID: stycatrtId // Store STYCATRT_ID
-    }];
+      FGTYPE_KEY: fgtypeKey,
+      FGSHADE_KEY: fgshadeKey,
+      FGPTN_KEY: fgptnKey,
+      STYCATRT_ID: stycatrtId,
+      dbFlag: dbFlag // Add dbFlag to the row for reference
+    };
+  });
 
-    const newTableData = [...tableData, ...finalNewItems];
-    setUpdatedTableData(newTableData);
-
-    // Update formData with all items
-    const newOrdbkStyleItems = finalNewItems.map(item => ({
-      ORDBKSTY_ID: item.id,
-      FGITEM_KEY: item.BarCode,
-      PRODUCT: item.product,
-      STYLE: item.style,
-      TYPE: item.type,
-      SHADE: item.shade,
-      PATTERN: item.lotNo,
-      ITMQTY: item.qty,
-      MRP: item.mrp,
-      ITMRATE: item.rate,
-      ITMAMT: item.amount,
-      DLV_VAR_PERC: item.varPer,
-      DLV_VAR_QTY: item.varQty,
-      DISC_AMT: item.discAmt,
-      NET_AMT: item.netAmt,
-      DISTBTR: item.distributer,
-      SETQTY: item.set,
+  // If no shades selected, create single item with current shade
+  const finalNewItems = selectedShades.length > 0 ? newItems : [{
+    id: tempId,
+    BarCode: newItemData.barcode || "-",
+    product: newItemData.product,
+    style: newItemData.style || "-",
+    type: newItemData.type || "-",
+    shade: newItemData.shade || "-",
+    lotNo: newItemData.lotNo || "-",
+    qty: totalQty,
+    mrp: mrp,
+    rate: rate,
+    amount: totalAmount,
+    varPer: parseFloat(newItemData.varPer) || 0,
+    varQty: 0,
+    varAmt: 0,
+    discAmt: discount,
+    netAmt: netAmount,
+    distributer: "-",
+    set: parseFloat(newItemData.sets) || 0,
+    originalData: {
+      ORDBKSTY_ID: tempId,
+      FGITEM_KEY: newItemData.barcode || "-",
+      PRODUCT: newItemData.product,
+      STYLE: newItemData.style,
+      TYPE: newItemData.type || "-",
+      SHADE: newItemData.shade || "-",
+      PATTERN: newItemData.lotNo || "-",
+      ITMQTY: totalQty,
+      MRP: mrp,
+      ITMRATE: rate,
+      ITMAMT: totalAmount,
+      DLV_VAR_PERC: parseFloat(newItemData.varPer) || 0,
+      DLV_VAR_QTY: 0,
+      DISC_AMT: discount,
+      NET_AMT: netAmount,
+      DISTBTR: "-",
+      SETQTY: parseFloat(newItemData.sets) || 0,
       ORDBKSTYSZLIST: updatedSizeDetails.map(size => ({
         ...size,
         ORDBKSTYSZ_ID: 0
       })),
-      FGSTYLE_ID: item.FGSTYLE_ID,
-      FGPRD_KEY: item.FGPRD_KEY,
-      FGTYPE_KEY: item.FGTYPE_KEY,
-      FGSHADE_KEY: item.FGSHADE_KEY,
-      FGPTN_KEY: item.FGPTN_KEY,
-      STYCATRT_ID: item.STYCATRT_ID, // Include STYCATRT_ID
-      DBFLAG: mode === 'add' ? 'I' : 'I'
-    }));
+      FGPRD_KEY: fgprdKey,
+      FGSTYLE_ID: fgstyleId,
+      FGTYPE_KEY: typeMapping[newItemData.type] || "",
+      FGSHADE_KEY: shadeMapping[newItemData.shade] || "",
+      FGPTN_KEY: lotNoMapping[newItemData.lotNo] || "",
+      STYCATRT_ID: stycatrtId,
+      DBFLAG: mode === 'add' ? 'I' : 'I' // New items always get 'I'
+    },
+    FGSTYLE_ID: fgstyleId,
+    FGPRD_KEY: fgprdKey,
+    FGTYPE_KEY: typeMapping[newItemData.type] || "",
+    FGSHADE_KEY: shadeMapping[newItemData.shade] || "",
+    FGPTN_KEY: lotNoMapping[newItemData.lotNo] || "",
+    STYCATRT_ID: stycatrtId,
+    dbFlag: mode === 'add' ? 'I' : 'I'
+  }];
 
-    setFormData(prev => ({
-      ...prev,
-      apiResponseData: {
-        ...prev.apiResponseData,
-        ORDBKSTYLIST: [...(prev.apiResponseData?.ORDBKSTYLIST || []), ...newOrdbkStyleItems]
-      }
-    }));
+  // Update table data - KEEP EXISTING ITEMS AND ADD NEW ONES
+  const existingTableData = tableData.filter(row => 
+    // Keep rows that are either:
+    // 1. Existing items from API (have ORDBKSTY_ID > 0 and not marked for deletion)
+    // 2. Or new items already added in this session
+    (row.originalData?.ORDBKSTY_ID > 0 && row.originalData?.DBFLAG !== 'D') ||
+    (row.originalData?.ORDBKSTY_ID > 999999) // Temporary IDs from this session
+  );
+  
+  const newTableData = [...existingTableData, ...finalNewItems];
+  setUpdatedTableData(newTableData);
 
-    setIsAddingNew(false);
-    setIsSizeDetailsLoaded(false);
-    setNewItemData({
-      product: '',
-      barcode: '',
-      style: '',
-      type: '',
-      shade: '',
-      qty: '',
-      mrp: '',
-      rate: '',
-      setNo: '',
-      varPer: '',
-      stdQty: '',
-      convFact: '',
-      lotNo: '',
-      discount: '',
-      percent: '',
-      remark: '',
-      divDt: '',
-      rQty: '',
-      sets: '',
-      stycatrtId: 0 // Reset STYCATRT_ID
+  // Update formData with ALL items (existing + new)
+  // Get existing ORDBKSTYLIST items from formData (with proper DBFLAG)
+  const existingOrdbkStyleItems = (formData.apiResponseData?.ORDBKSTYLIST || [])
+    .filter(item => item.DBFLAG !== 'D') // Exclude deleted items
+    .map(item => {
+      // Ensure existing items have DBFLAG 'U' for update
+      return {
+        ...item,
+        DBFLAG: 'U' // Existing items get 'U' in edit mode
+      };
     });
-    setStyleCodeInput('');
-    setBarcodeInput('');
-    setSizeDetailsData([]);
-    setDataSource(null);
-    setSelectedShades([]);
-    setAvailableShades([]);
 
-    showSnackbar(selectedShades.length > 1 ?
-      `${selectedShades.length} items added to order (${totalQty} each)!` :
-      "Item added successfully!");
-  };
+  // Create new ORDBKSTYLIST items from finalNewItems
+  const newOrdbkStyleItems = finalNewItems.map(item => ({
+    ORDBKSTY_ID: item.id,
+    FGITEM_KEY: item.BarCode,
+    PRODUCT: item.product,
+    STYLE: item.style,
+    TYPE: item.type,
+    SHADE: item.shade,
+    PATTERN: item.lotNo,
+    ITMQTY: item.qty,
+    MRP: item.mrp,
+    ITMRATE: item.rate,
+    ITMAMT: item.amount,
+    DLV_VAR_PERC: item.varPer,
+    DLV_VAR_QTY: item.varQty,
+    DISC_AMT: item.discAmt,
+    NET_AMT: item.netAmt,
+    DISTBTR: item.distributer,
+    SETQTY: item.set,
+    ORDBKSTYSZLIST: updatedSizeDetails.map(size => ({
+      ...size,
+      ORDBKSTYSZ_ID: 0,
+      DBFLAG: 'I' // Size details for new items get 'I'
+    })),
+    FGSTYLE_ID: item.FGSTYLE_ID,
+    FGPRD_KEY: item.FGPRD_KEY,
+    FGTYPE_KEY: item.FGTYPE_KEY,
+    FGSHADE_KEY: item.FGSHADE_KEY,
+    FGPTN_KEY: item.FGPTN_KEY,
+    STYCATRT_ID: item.STYCATRT_ID,
+    DBFLAG: 'I' // New items get 'I' in edit mode
+  }));
+
+  // Combine existing and new items
+  const combinedOrdbkStyleItems = [...existingOrdbkStyleItems, ...newOrdbkStyleItems];
+
+  console.log('Combined ORDBKSTYLIST:', combinedOrdbkStyleItems.map(item => ({
+    ORDBKSTY_ID: item.ORDBKSTY_ID,
+    DBFLAG: item.DBFLAG,
+    PRODUCT: item.PRODUCT
+  })));
+
+  setFormData(prev => ({
+    ...prev,
+    apiResponseData: {
+      ...prev.apiResponseData,
+      ORDBKSTYLIST: combinedOrdbkStyleItems
+    }
+  }));
+
+  // Reset form
+  setIsAddingNew(false);
+  setIsSizeDetailsLoaded(false);
+  setNewItemData({
+    product: '',
+    barcode: '',
+    style: '',
+    type: '',
+    shade: '',
+    qty: '',
+    mrp: '',
+    rate: '',
+    setNo: '',
+    varPer: '',
+    stdQty: '',
+    convFact: '',
+    lotNo: '',
+    discount: '',
+    percent: '',
+    remark: '',
+    divDt: '',
+    rQty: '',
+    sets: '',
+    stycatrtId: 0
+  });
+  setStyleCodeInput('');
+  setBarcodeInput('');
+  setSizeDetailsData([]);
+  setDataSource(null);
+  setSelectedShades([]);
+  setAvailableShades([]);
+
+  showSnackbar(selectedShades.length > 1 ?
+    `${selectedShades.length} items added to order (${totalQty} each)!` :
+    "Item added successfully!");
+};
 
   const handleEditItem = () => {
     if (!selectedRow) {
