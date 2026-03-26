@@ -1,7 +1,7 @@
 'use client';
 import React, { useEffect, useState, useCallback, Suspense } from "react";
 import {
-  Box, TextField, Grid, Typography, Tabs, Tab, Button, Snackbar, Alert, CircularProgress,
+  Box, TextField, Grid,  Typography,Dialog ,DialogTitle ,DialogContent ,DialogContentText ,DialogActions , Tabs, Tab, Button, Snackbar, Alert, CircularProgress,
 } from "@mui/material";
 import { TbListSearch } from "react-icons/tb";
 import { useSearchParams } from "next/navigation";
@@ -48,6 +48,8 @@ const [detailMode, setDetailMode] = useState('style');
   const [branchOptions, setBranchOptions] = useState([]);
   const [showValidationErrors, setShowValidationErrors] = useState(false);
    const { hasSpecificPermission, loading: permissionsLoading } = useUserPermissions();
+       const [showGstConfirmDialog, setShowGstConfirmDialog] = useState(false);
+   const [tempGstValue, setTempGstValue] = useState(null);
     const moduleName = "Paking Slip";
   const [companyConfig, setCompanyConfig] = useState({
     CO_ID: '',
@@ -2134,14 +2136,30 @@ const fetchAllDropdownData = async () => {
                  
         ) : (
           <Stepper4
-            formData={formData}
-            setFormData={setFormData}
-            isFormDisabled={isFormDisabled}
-            mode={mode}
-            onSubmit={handleSubmit}
-            onCancel={handleCancel}
-            onPrev={handlePrev}
-            showSnackbar={showSnackbar}
+             formData={formData} 
+    setFormData={setFormData} 
+    isFormDisabled={isFormDisabled}
+    mode={mode}
+    onSubmit={handleSubmit}
+    onCancel={handleCancel}
+    onPrev={handlePrev} 
+    showSnackbar={showSnackbar}
+    onGSTApplied={(gstData) => {
+      // Handle GST applied callback if needed
+      setFormData(prev => ({
+        ...prev,
+        ORDBK_GST_AMT: gstData.totalGstAmount,
+        FINAL_AMOUNT: gstData.finalAmount
+      }));
+    }}
+    onGSTCleared={() => {
+      // Handle GST cleared
+      setFormData(prev => ({
+        ...prev,
+        ORDBK_GST_AMT: 0,
+        FINAL_AMOUNT: prev.TOTAL_AMOUNT - (prev.DISCOUNT || 0)
+      }));
+    }}
           />
         )}
       </Grid>
@@ -2216,6 +2234,38 @@ const fetchAllDropdownData = async () => {
           )}
         </Grid>
       )}
+
+      <Dialog
+        open={showGstConfirmDialog}
+        onClose={() => setShowGstConfirmDialog(false)}
+      >
+        <DialogTitle>Confirm GST Change</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Are you sure you want to disable GST? This will remove all GST calculations and rows from the Tax/Terms tab.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => {
+            setShowGstConfirmDialog(false);
+            setFormData(prev => ({ ...prev, GST_APPL: tempGstValue }));
+            // Reset GST_TYPE when disabling
+            if (tempGstValue === "N") {
+              setFormData(prev => ({ ...prev, GST_TYPE: "" }));
+            }
+          }} color="primary">
+            Yes
+          </Button>
+          <Button onClick={() => {
+            setShowGstConfirmDialog(false);
+            // Revert back to previous value
+            setFormData(prev => ({ ...prev, GST_APPL: prev.GST_APPL === "Y" ? "Y" : "N" }));
+          }} color="primary" autoFocus>
+            No
+          </Button>
+        </DialogActions>
+      </Dialog>
+      
     </Box>
   );
 };

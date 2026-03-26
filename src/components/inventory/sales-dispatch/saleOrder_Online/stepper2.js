@@ -658,96 +658,103 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, compa
     }
   };
 
-  // Auto-load size details for style data
-  const fetchSizeDetailsForStyle = async (styleData) => {
-    try {
-      const fgprdKey = styleData.FGPRD_KEY;
-      const fgstyleId = styleData.FGSTYLE_ID;
-      const fgtypeKey = styleData.FGTYPE_KEY || "";
-      const fgshadeKey = styleData.FGSHADE_KEY || "";
-      const fgptnKey = styleData.FGPTN_KEY || "";
+   const fetchSizeDetailsForStyle = async (styleData) => {
+  try {
+    const fgprdKey = styleData.FGPRD_KEY;
+    const fgstyleId = styleData.FGSTYLE_ID;
+    const fgtypeKey = styleData.FGTYPE_KEY || "";
+    const fgshadeKey = styleData.FGSHADE_KEY || "";
+    const fgptnKey = styleData.FGPTN_KEY || "";
 
-      if (!fgprdKey || !fgstyleId) {
-        return;
-      }
+    if (!fgprdKey || !fgstyleId) {
+      return;
+    }
 
-      // Get COBR_ID from localStorage or companyConfig
-      const cobrId = companyConfig.COBR_ID || localStorage.getItem('COBR_ID') || '02';
+    // Get values from localStorage
+    const cobrId = companyConfig.COBR_ID || localStorage.getItem('COBR_ID') || '02';
+    const fcyrKey = localStorage.getItem('FCYR_KEY') || '25';
+    const coId = localStorage.getItem('CO_ID') || '02';
+    const clientId = localStorage.getItem('CLIENT_ID') || '5102';
 
-      // FIRST: Get STYCATRT_ID from API with FLAG: "GETSTYCATRTID"
-      const stycatrtPayload = {
-        "FGSTYLE_ID": fgstyleId,
-        "FGPRD_KEY": fgprdKey,
-        "FGTYPE_KEY": fgtypeKey,
-        "FGSHADE_KEY": fgshadeKey,
-        "FGPTN_KEY": fgptnKey,
-        "FLAG": "GETSTYCATRTID",
-        "MRP": parseFloat(styleData.MRP) || 0,
-        "PARTY_KEY": formData.PARTY_KEY || "",
-        "PARTYDTL_ID": formData.PARTYDTL_ID || 0,
-        "COBR_ID": cobrId,
-        "FCYR_KEY": "25"
-      };
+    // FIRST: Get STYCATRT_ID from API with FLAG: "GETSTYCATRTID"
+    const stycatrtPayload = {
+      "FGSTYLE_ID": fgstyleId,
+      "FGPRD_KEY": fgprdKey,
+      "FGTYPE_KEY": fgtypeKey,
+      "FGSHADE_KEY": fgshadeKey,
+      "FGPTN_KEY": fgptnKey,
+      "FLAG": "GETSTYCATRTID",
+      "MRP": parseFloat(styleData.MRP) || 0,
+      "PARTY_KEY": formData.PARTY_KEY || "",
+      "PARTYDTL_ID": formData.PARTYDTL_ID || 0,
+      "COBR_ID": cobrId,
+      "FCYR_KEY": fcyrKey,
+      "CLIENT_ID": clientId,
+      "CO_ID": coId
+    };
 
-      console.log('Auto-fetching STYCATRT_ID with payload:', stycatrtPayload);
+    const stycatrtResponse = await axiosInstance.post('/STYSIZE/AddSizeDetail', stycatrtPayload);
 
-      const stycatrtResponse = await axiosInstance.post('/STYSIZE/AddSizeDetail', stycatrtPayload);
-      console.log('Auto STYCATRT_ID Response:', stycatrtResponse.data);
+    let stycatrtId = 0;
+    if (stycatrtResponse.data.DATA && stycatrtResponse.data.DATA.length > 0) {
+      stycatrtId = stycatrtResponse.data.DATA[0].STYCATRT_ID || 0;
+    }
 
-      let stycatrtId = 0;
-      if (stycatrtResponse.data.DATA && stycatrtResponse.data.DATA.length > 0) {
-        stycatrtId = stycatrtResponse.data.DATA[0].STYCATRT_ID || 0;
-      }
+    // SECOND: Get size details with enhanced payload
+    const sizeDetailsPayload = {
+      "FGSTYLE_ID": fgstyleId,
+      "FGPRD_KEY": fgprdKey,
+      "FGTYPE_KEY": fgtypeKey,
+      "FGSHADE_KEY": fgshadeKey,
+      "FGPTN_KEY": fgptnKey,
+      "MRP": parseFloat(styleData.MRP) || 0,
+      "SSP": parseFloat(styleData.SSP) || 0,
+      "PARTY_KEY": formData.PARTY_KEY || "",
+      "PARTYDTL_ID": formData.PARTYDTL_ID || 0,
+      "COBR_ID": cobrId,
+      "FCYR_KEY": fcyrKey,
+      "STYSTKDTL_ID": 0,
+      "BARCODE": "",
+      "FGITM_KEY": "",
+      "STYSTK_KEY": "",
+      "ORDBKSTY_ID": 0,
+      "CLIENT_ID": clientId,
+      "CO_ID": coId,
+      "FLAG": "" 
+    };
 
-      // SECOND: Get size details with regular payload
-      const sizeDetailsPayload = {
-        "FGSTYLE_ID": fgstyleId,
-        "FGPRD_KEY": fgprdKey,
-        "FGTYPE_KEY": fgtypeKey,
-        "FGSHADE_KEY": fgshadeKey,
-        "FGPTN_KEY": fgptnKey,
-        "MRP": parseFloat(styleData.MRP) || 0,
-        "SSP": parseFloat(styleData.SSP) || 0,
-        "PARTY_KEY": formData.PARTY_KEY || "",
-        "PARTYDTL_ID": formData.PARTYDTL_ID || 0,
-        "COBR_ID": cobrId,
-        "FLAG": ""
-      };
+    const response = await axiosInstance.post('/STYSIZE/AddSizeDetail', sizeDetailsPayload);
 
-      console.log('Auto-fetching size details with payload:', sizeDetailsPayload);
+    if (response.data.DATA && response.data.DATA.length > 0) {
+      const transformedSizeDetails = response.data.DATA.map((size, index) => ({
+        STYSIZE_ID: size.STYSIZE_ID || index + 1,
+        STYSIZE_NAME: size.STYSIZE_NAME || `Size ${index + 1}`,
+        FGSTYLE_ID: size.FGSTYLE_ID || fgstyleId,
+        QTY: 0,
+        ITM_AMT: 0,
+        ORDER_QTY: 0,
+        MRP: parseFloat(styleData.MRP) || 0,
+        RATE: parseFloat(styleData.SSP) || 0
+      }));
 
-      const response = await axiosInstance.post('/STYSIZE/AddSizeDetail', sizeDetailsPayload);
+      setSizeDetailsData(transformedSizeDetails);
 
-      if (response.data.DATA && response.data.DATA.length > 0) {
-        const transformedSizeDetails = response.data.DATA.map((size, index) => ({
-          STYSIZE_ID: size.STYSIZE_ID || index + 1,
-          STYSIZE_NAME: size.STYSIZE_NAME || `Size ${index + 1}`,
-          FGSTYLE_ID: size.FGSTYLE_ID || fgstyleId,
-          QTY: 0,
-          ITM_AMT: 0,
-          ORDER_QTY: 0,
-          MRP: parseFloat(styleData.MRP) || 0,
-          RATE: parseFloat(styleData.SSP) || 0
-        }));
+      // Update newItemData with STYCATRT_ID for use in payload
+      setNewItemData(prev => ({
+        ...prev,
+        stycatrtId: stycatrtId
+      }));
 
-        setSizeDetailsData(transformedSizeDetails);
-
-        // Update newItemData with STYCATRT_ID for use in payload
-        setNewItemData(prev => ({
-          ...prev,
-          stycatrtId: stycatrtId
-        }));
-
-        setIsSizeDetailsLoaded(true);
-      } else {
-        setSizeDetailsData([]);
-        setIsSizeDetailsLoaded(false);
-      }
-    } catch (error) {
-      console.error('Error auto-fetching size details:', error);
+      setIsSizeDetailsLoaded(true);
+    } else {
+      setSizeDetailsData([]);
       setIsSizeDetailsLoaded(false);
     }
-  };
+  } catch (error) {
+    console.error('Error auto-fetching size details:', error);
+    setIsSizeDetailsLoaded(false);
+  }
+};
 
   // Fetch Type dropdown data
   const fetchTypeData = async (fgstyleId) => {
@@ -818,105 +825,113 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, compa
   };
 
 
-  const fetchSizeDetails = async () => {
-    if (!newItemData.product || !newItemData.style) {
-      showSnackbar("Please select Product and Style first", 'error');
+ const fetchSizeDetails = async () => {
+  if (!newItemData.product || !newItemData.style) {
+    showSnackbar("Please select Product and Style first", 'error');
+    return;
+  }
+
+  try {
+    const fgprdKey = productMapping[newItemData.product];
+    const fgstyleId = styleMapping[newItemData.style];
+    const fgtypeKey = typeMapping[newItemData.type] || "";
+    const fgshadeKey = shadeMapping[newItemData.shade] || "";
+    const fgptnKey = lotNoMapping[newItemData.lotNo] || "";
+
+    if (!fgprdKey || !fgstyleId) {
       return;
     }
 
-    try {
-      const fgprdKey = productMapping[newItemData.product];
-      const fgstyleId = styleMapping[newItemData.style];
-      const fgtypeKey = typeMapping[newItemData.type] || "";
-      const fgshadeKey = shadeMapping[newItemData.shade] || "";
-      const fgptnKey = lotNoMapping[newItemData.lotNo] || "";
+    // Get values from localStorage
+    const cobrId = companyConfig.COBR_ID || localStorage.getItem('COBR_ID') || '02';
+    const fcyrKey = localStorage.getItem('FCYR_KEY') || '25';
+    const coId = localStorage.getItem('CO_ID') || '02';
+    const clientId = localStorage.getItem('CLIENT_ID') || '5102';
 
-      if (!fgprdKey || !fgstyleId) {
-        return;
-      }
+    // FIRST: Get STYCATRT_ID from API with FLAG: "GETSTYCATRTID"
+    const stycatrtPayload = {
+      "FGSTYLE_ID": fgstyleId,
+      "FGPRD_KEY": fgprdKey,
+      "FGTYPE_KEY": fgtypeKey,
+      "FGSHADE_KEY": fgshadeKey,
+      "FGPTN_KEY": fgptnKey,
+      "FLAG": "GETSTYCATRTID",
+      "MRP": parseFloat(newItemData.mrp) || 0,
+      "PARTY_KEY": formData.PARTY_KEY || "",
+      "PARTYDTL_ID": formData.PARTYDTL_ID || 0,
+      "COBR_ID": cobrId,
+      "FCYR_KEY": fcyrKey,
+      "CLIENT_ID": clientId,
+      "CO_ID": coId
+    };
 
-      // Get COBR_ID from localStorage or companyConfig
-      const cobrId = companyConfig.COBR_ID || localStorage.getItem('COBR_ID') || '02';
+    const stycatrtResponse = await axiosInstance.post('/STYSIZE/AddSizeDetail', stycatrtPayload);
 
-      // FIRST: Get STYCATRT_ID from API with FLAG: "GETSTYCATRTID"
-      const stycatrtPayload = {
-        "FGSTYLE_ID": fgstyleId,
-        "FGPRD_KEY": fgprdKey,
-        "FGTYPE_KEY": fgtypeKey,
-        "FGSHADE_KEY": fgshadeKey,
-        "FGPTN_KEY": fgptnKey,
-        "FLAG": "GETSTYCATRTID",
-        "MRP": parseFloat(newItemData.mrp) || 0,
-        "PARTY_KEY": formData.PARTY_KEY || "",
-        "PARTYDTL_ID": formData.PARTYDTL_ID || 0,
-        "COBR_ID": cobrId,
-        "FCYR_KEY": "25"
-      };
+    let stycatrtId = 0;
+    if (stycatrtResponse.data.DATA && stycatrtResponse.data.DATA.length > 0) {
+      stycatrtId = stycatrtResponse.data.DATA[0].STYCATRT_ID || 0;
+    }
 
-      console.log('Fetching STYCATRT_ID with payload:', stycatrtPayload);
+    // SECOND: Get size details with enhanced payload
+    const sizeDetailsPayload = {
+      "FGSTYLE_ID": fgstyleId,
+      "FGPRD_KEY": fgprdKey,
+      "FGTYPE_KEY": fgtypeKey,
+      "FGSHADE_KEY": fgshadeKey,
+      "FGPTN_KEY": fgptnKey,
+      "MRP": parseFloat(newItemData.mrp) || 0,
+      "SSP": parseFloat(newItemData.rate) || 0,
+      "PARTY_KEY": formData.PARTY_KEY || "",
+      "PARTYDTL_ID": formData.PARTYDTL_ID || 0,
+      "COBR_ID": cobrId,
+      "FCYR_KEY": fcyrKey,
+      "STYSTKDTL_ID": 0,
+      "BARCODE": "",
+      "FGITM_KEY": "",
+      "STYSTK_KEY": "",
+      "ORDBKSTY_ID": 0,
+      "CLIENT_ID": clientId,
+      "CO_ID": coId,
+      "FLAG": ""
+    };
 
-      const stycatrtResponse = await axiosInstance.post('/STYSIZE/AddSizeDetail', stycatrtPayload);
-      console.log('STYCATRT_ID Response:', stycatrtResponse.data);
+    const sizeDetailsResponse = await axiosInstance.post('/STYSIZE/AddSizeDetail', sizeDetailsPayload);
 
-      let stycatrtId = 0;
-      if (stycatrtResponse.data.DATA && stycatrtResponse.data.DATA.length > 0) {
-        stycatrtId = stycatrtResponse.data.DATA[0].STYCATRT_ID || 0;
-      }
+    if (sizeDetailsResponse.data.DATA && sizeDetailsResponse.data.DATA.length > 0) {
+      const transformedSizeDetails = sizeDetailsResponse.data.DATA.map((size, index) => ({
+        STYSIZE_ID: size.STYSIZE_ID || index + 1,
+        STYSIZE_NAME: size.STYSIZE_NAME || `Size ${index + 1}`,
+        FGSTYLE_ID: size.FGSTYLE_ID || fgstyleId,
+        QTY: 0,
+        ITM_AMT: 0,
+        ORDER_QTY: 0,
+        MRP: parseFloat(newItemData.mrp) || 0,
+        RATE: parseFloat(newItemData.rate) || 0
+      }));
 
-      // SECOND: Get size details with regular payload
-      const sizeDetailsPayload = {
-        "FGSTYLE_ID": fgstyleId,
-        "FGPRD_KEY": fgprdKey,
-        "FGTYPE_KEY": fgtypeKey,
-        "FGSHADE_KEY": fgshadeKey,
-        "FGPTN_KEY": fgptnKey,
-        "MRP": parseFloat(newItemData.mrp) || 0,
-        "SSP": parseFloat(newItemData.rate) || 0,
-        "PARTY_KEY": formData.PARTY_KEY || "",
-        "PARTYDTL_ID": formData.PARTYDTL_ID || 0,
-        "COBR_ID": cobrId,
-        "FLAG": ""
-      };
+      setSizeDetailsData(transformedSizeDetails);
 
-      console.log('Fetching size details with payload:', sizeDetailsPayload);
+      // Update newItemData with STYCATRT_ID for use in payload
+      setNewItemData(prev => ({
+        ...prev,
+        stycatrtId: stycatrtId
+      }));
 
-      const sizeDetailsResponse = await axiosInstance.post('/STYSIZE/AddSizeDetail', sizeDetailsPayload);
+      setIsSizeDetailsLoaded(true);
 
-      if (sizeDetailsResponse.data.DATA && sizeDetailsResponse.data.DATA.length > 0) {
-        const transformedSizeDetails = sizeDetailsResponse.data.DATA.map((size, index) => ({
-          STYSIZE_ID: size.STYSIZE_ID || index + 1,
-          STYSIZE_NAME: size.STYSIZE_NAME || `Size ${index + 1}`,
-          FGSTYLE_ID: size.FGSTYLE_ID || fgstyleId,
-          QTY: 0,
-          ITM_AMT: 0,
-          ORDER_QTY: 0,
-          MRP: parseFloat(newItemData.mrp) || 0,
-          RATE: parseFloat(newItemData.rate) || 0
-        }));
-
-        setSizeDetailsData(transformedSizeDetails);
-
-        // Update newItemData with STYCATRT_ID for use in payload
-        setNewItemData(prev => ({
-          ...prev,
-          stycatrtId: stycatrtId
-        }));
-
-        setIsSizeDetailsLoaded(true);
-
-        // Show success message with STYCATRT_ID
-        showSnackbar(`Size details loaded successfully. STYCATRT_ID: ${stycatrtId}`, 'success');
-      } else {
-        showSnackbar("No size details found for the selected combination.", 'warning');
-        setSizeDetailsData([]);
-        setIsSizeDetailsLoaded(false);
-      }
-    } catch (error) {
-      console.error('Error fetching size details:', error);
-      showSnackbar("Error loading size details. Please try again.", 'error');
+      // Show success message with STYCATRT_ID
+      showSnackbar(`Size details loaded successfully. STYCATRT_ID: ${stycatrtId}`, 'success');
+    } else {
+      showSnackbar("No size details found for the selected combination.", 'warning');
+      setSizeDetailsData([]);
       setIsSizeDetailsLoaded(false);
     }
-  };
+  } catch (error) {
+    console.error('Error fetching size details:', error);
+    showSnackbar("Error loading size details. Please try again.", 'error');
+    setIsSizeDetailsLoaded(false);
+  }
+};
 
   // Handle style code text input change with debounce
   const handleStyleCodeInputChange = (e) => {
