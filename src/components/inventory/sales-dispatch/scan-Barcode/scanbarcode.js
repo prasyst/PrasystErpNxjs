@@ -130,7 +130,9 @@
 //   const isDesktop = useMediaQuery(theme.breakpoints.up('lg'));
 //   const [shadeSearchQuery, setShadeSearchQuery] = useState('');
 //   // State for all functionalities
-  
+//   const [selectedCamera, setSelectedCamera] = useState('');
+// const [availableCameras, setAvailableCameras] = useState([]);
+//   const [autoScanMode, setAutoScanMode] = useState(false);
 //   const [showAdvancedFields, setShowAdvancedFields] = useState(false);
 //   const [useStyleCodeMode, setUseStyleCodeMode] = useState(false);
 //   const [fillByRatioMode, setFillByRatioMode] = useState(false); 
@@ -1562,6 +1564,14 @@
 //   } else {
 //     showSnackbar('Item added to order! Go To Cart', 'success');
 //   }
+
+//   // AUTO-REOPEN SCANNER: Check if we should auto-open scanner after adding to cart
+//   if (autoScanMode) {
+//     // Small delay to allow the snackbar to show
+//     setTimeout(() => {
+//       startScanner();
+//     }, 1000);
+//   }
 // };
 
 //   const handleFormChange = (field, value) => {
@@ -1696,75 +1706,112 @@
 //     showSnackbar('Item removed from order', 'info');
 //   };
 
-//   const initScanner = () => {
-//     if (typeof window === 'undefined') {
-//       console.error('Scanner not available on server');
-//       return;
-//     }
+//  const initScanner = (cameraId = '') => {
+//   if (typeof window === 'undefined') {
+//     console.error('Scanner not available on server');
+//     return;
+//   }
 
-//     if (qrCodeScannerRef.current) {
-//       qrCodeScannerRef.current.clear().catch(err => {
-//         console.error("Failed to clear existing scanner", err);
+//   if (qrCodeScannerRef.current) {
+//     qrCodeScannerRef.current.clear().catch(err => {
+//       console.error("Failed to clear existing scanner", err);
+//     });
+//     qrCodeScannerRef.current = null;
+//   }
+
+//   const qrReaderElement = document.getElementById('qr-reader');
+//   if (!qrReaderElement) {
+//     console.error('qr-reader element not found');
+//     setScannerError('Scanner element not found. Please try again.');
+//     return;
+//   }
+
+//   try {
+//     const scanner = new Html5QrcodeScanner(
+//       "qr-reader",
+//       {
+//         fps: 10,
+//         qrbox: { width: isMobile ? 200 : 250, height: isMobile ? 200 : 250 },
+//         rememberLastUsedCamera: true,
+//         supportedScanTypes: [Html5QrcodeScanType.SCAN_TYPE_CAMERA],
+//         showTorchButtonIfSupported: true,
+//         showZoomSliderIfSupported: true,
+//         // Add default camera if specified
+//         ...(cameraId && { videoConstraints: { deviceId: cameraId } })
+//       },
+//       false
+//     );
+
+//     const onScanSuccess = (decodedText, decodedResult) => {
+//       scanner.clear().then(() => {
+//         qrCodeScannerRef.current = null;
+//         setIsScanning(false);
+//         setShowScanner(false);
+        
+//         setNewItemData(prev => ({ ...prev, barcode: decodedText }));
+//         fetchStyleDataByBarcode(decodedText);
+//         showSnackbar('Barcode scanned successfully!', 'success');
+        
+//         // Auto-reopen scanner after cart (for requirement 2)
+//         // We'll handle this separately
+//       }).catch(err => {
+//         console.error("Failed to clear scanner", err);
 //       });
+//     };
+
+//     const onScanFailure = (error) => {
+//       if (!error.includes('NotFoundException')) {
+//         console.warn(`Scan error: ${error}`);
+//       }
+//     };
+
+//     scanner.render(onScanSuccess, onScanFailure);
+//     qrCodeScannerRef.current = scanner;
+//     setIsScanning(true);
+//     setScannerError('');
+    
+//   } catch (error) {
+//     console.error("Scanner initialization error:", error);
+//     setScannerError(`Failed to initialize scanner: ${error.message}`);
+//     showSnackbar('Scanner initialization failed. Please check camera permissions.', 'error');
+//     setShowScanner(false);
+//   }
+// };  
+
+// const getAvailableCameras = async () => {
+//   if (typeof window === 'undefined' || !Html5QrcodeScanner) return;
+  
+//   try {
+//     const devices = await navigator.mediaDevices.enumerateDevices();
+//     const videoDevices = devices.filter(device => device.kind === 'videoinput');
+//     setAvailableCameras(videoDevices);
+    
+//     // Set default camera (prefer back camera)
+//     const backCamera = videoDevices.find(device => 
+//       device.label.toLowerCase().includes('back') || 
+//       device.label.toLowerCase().includes('environment')
+//     );
+//     if (backCamera) {
+//       setSelectedCamera(backCamera.deviceId);
+//     } else if (videoDevices.length > 0) {
+//       setSelectedCamera(videoDevices[0].deviceId);
+//     }
+//   } catch (error) {
+//     console.error('Error getting cameras:', error);
+//   }
+// };
+
+// const switchCamera = (deviceId) => {
+//   setSelectedCamera(deviceId);
+//   if (qrCodeScannerRef.current) {
+//     qrCodeScannerRef.current.clear().then(() => {
 //       qrCodeScannerRef.current = null;
-//     }
-
-//     const qrReaderElement = document.getElementById('qr-reader');
-//     if (!qrReaderElement) {
-//       console.error('qr-reader element not found');
-//       setScannerError('Scanner element not found. Please try again.');
-//       return;
-//     }
-
-//     try {
-//       const scanner = new Html5QrcodeScanner(
-//         "qr-reader",
-//         {
-//           fps: 10,
-//           qrbox: { width: isMobile ? 200 : 250, height: isMobile ? 200 : 250 },
-//           rememberLastUsedCamera: true,
-//           supportedScanTypes: [Html5QrcodeScanType.SCAN_TYPE_CAMERA],
-//           showTorchButtonIfSupported: true,
-//           showZoomSliderIfSupported: true
-//         },
-//         false
-//       );
-
-//       const onScanSuccess = (decodedText, decodedResult) => {
-//         scanner.clear().then(() => {
-//           qrCodeScannerRef.current = null;
-//           setIsScanning(false);
-//           setShowScanner(false);
-          
-//           setNewItemData(prev => ({ ...prev, barcode: decodedText }));
-//           fetchStyleDataByBarcode(decodedText);
-//           showSnackbar('Barcode scanned successfully!', 'success');
-//           if (isMobile) {
-//       setActiveTab(2); 
-//     }
-//         }).catch(err => {
-//           console.error("Failed to clear scanner", err);
-//         });
-//       };
-
-//       const onScanFailure = (error) => {
-//         if (!error.includes('NotFoundException')) {
-//           console.warn(`Scan error: ${error}`);
-//         }
-//       };
-
-//       scanner.render(onScanSuccess, onScanFailure);
-//       qrCodeScannerRef.current = scanner;
-//       setIsScanning(true);
-//       setScannerError('');
-      
-//     } catch (error) {
-//       console.error("Scanner initialization error:", error);
-//       setScannerError(`Failed to initialize scanner: ${error.message}`);
-//       showSnackbar('Scanner initialization failed. Please check camera permissions.', 'error');
-//       setShowScanner(false);
-//     }
-//   };
+//       initScanner(deviceId);
+//     }).catch(err => {
+//       console.error("Failed to clear scanner", err);
+//     });
+//   }
+// };
 
 //   const startScanner = () => {
 //     if (typeof window === 'undefined') {
@@ -4486,62 +4533,92 @@
 //     </Box>
 //   );
 
-//   const renderSettingsTab = () => (
-//     <Box>
-//       {/* Settings */}
-//       <Card sx={{ 
-//         mb: 2,
-//         borderRadius: 3,
-//         boxShadow: '0 4px 12px rgba(0,0,0,0.05)'
-//       }}>
-//         <CardContent sx={{ p: 2 }}>
-//           <Typography variant="subtitle1" sx={{ 
-//             mb: 1.5, 
-//             fontWeight: '600',
-//             color: '#1976d2'
-//           }}>
-//             Order Settings
-//           </Typography>
-          
-//           <List sx={{ width: '100%' }}>
-            
-            
-//             <ListItem>
-//               <ListItemIcon>
-//                 <PrintIcon sx={{ color: '#1976d2' }} />
-//               </ListItemIcon>
-//               <ListItemText 
-//                 primary="Print Settings" 
-//                 secondary="Configure printer and label settings"
+// const renderSettingsTab = () => (
+//   <Box>
+//     {/* Settings */}
+//     <Card sx={{ 
+//       mb: 2,
+//       borderRadius: 3,
+//       boxShadow: '0 4px 12px rgba(0,0,0,0.05)'
+//     }}>
+//       <CardContent sx={{ p: 2 }}>
+//         <Typography variant="subtitle1" sx={{ 
+//           mb: 1.5, 
+//           fontWeight: '600',
+//           color: '#1976d2'
+//         }}>
+//           Order Settings
+//         </Typography>
+        
+//         {/* Auto-Scan Toggle */}
+//         <Box sx={{ 
+//           p: 1.5, 
+//           backgroundColor: '#f8f9fa',
+//           borderRadius: 2,
+//           mb: 2
+//         }}>
+//           <FormControlLabel
+//             control={
+//               <Checkbox
+//                 checked={autoScanMode}
+//                 onChange={(e) => setAutoScanMode(e.target.checked)}
+//                 sx={{
+//                   color: '#1976d2',
+//                   '&.Mui-checked': {
+//                     color: '#1976d2',
+//                   },
+//                 }}
 //               />
-//               <ChevronRightIcon sx={{ color: '#666' }} />
-//             </ListItem>
-            
-//           </List>
-          
-//           <Button
-//             fullWidth
-//             variant="outlined"
-//             startIcon={<RefreshIcon />}
-//             onClick={fetchInitialData}
-//             sx={{
-//               mt: 2,
-//               py: 1.5,
-//               borderRadius: 2,
-//               borderColor: '#1976d2',
-//               color: '#1976d2',
-//               '&:hover': {
-//                 borderColor: '#1565c0',
-//                 backgroundColor: 'rgba(25, 118, 210, 0.04)'
-//               }
-//             }}
-//           >
-//             Refresh Data
-//           </Button>
-//         </CardContent>
-//       </Card>
-//     </Box>
-//   );
+//             }
+//             label={
+//               <Box>
+//                 <Typography variant="body2" sx={{ fontWeight: '500' }}>
+//                   Auto-Open Scanner After Adding to Cart
+//                 </Typography>
+//                 <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+//                   When enabled, scanner will automatically reopen after each scan
+//                 </Typography>
+//               </Box>
+//             }
+//           />
+//         </Box>
+        
+//         <List sx={{ width: '100%' }}>
+//           <ListItem>
+//             <ListItemIcon>
+//               <PrintIcon sx={{ color: '#1976d2' }} />
+//             </ListItemIcon>
+//             <ListItemText 
+//               primary="Print Settings" 
+//               secondary="Configure printer and label settings"
+//             />
+//             <ChevronRightIcon sx={{ color: '#666' }} />
+//           </ListItem>
+//         </List>
+        
+//         <Button
+//           fullWidth
+//           variant="outlined"
+//           startIcon={<RefreshIcon />}
+//           onClick={fetchInitialData}
+//           sx={{
+//             mt: 2,
+//             py: 1.5,
+//             borderRadius: 2,
+//             borderColor: '#1976d2',
+//             color: '#1976d2',
+//             '&:hover': {
+//               borderColor: '#1565c0',
+//               backgroundColor: 'rgba(25, 118, 210, 0.04)'
+//             }
+//           }}
+//         >
+//           Refresh Data
+//         </Button>
+//       </CardContent>
+//     </Card>
+//   </Box>
+// );
 
 //   // ==================== MAIN RENDER ====================
 //   return (
@@ -5019,103 +5096,148 @@
 // </Dialog>
 
 //       {/* Barcode Scanner Dialog */}
-//       {isClient && (
-//         <Dialog
-//           open={showScanner}
-//           onClose={stopScanner}
-//           maxWidth="md"
-//           fullWidth
-//           fullScreen={isMobile}
-//           PaperProps={{
-//             sx: {
-//               maxWidth: { xs: '100%', sm: '80%', md: '600px' },
-//               height: { xs: '100vh', sm: '600px' },
-//               margin: { xs: 0, sm: 'auto' },
-//               borderRadius: { xs: 0, sm: 3 }
-//             }
-//           }}
-//         >
-//           <DialogTitle sx={{ 
-//             display: 'flex', 
-//             justifyContent: 'space-between', 
-//             alignItems: 'center',
-//             backgroundColor: '#1976d2',
-//             color: 'white'
-//           }}>
-//             <Typography variant="h6">📷 Scan Barcode</Typography>
-//             <IconButton onClick={stopScanner} sx={{ color: 'white' }}>
-//               <CloseIcon />
-//             </IconButton>
-//           </DialogTitle>
-          
-//           <DialogContent sx={{ 
-//             p: 2,
-//             display: 'flex',
-//             flexDirection: 'column',
-//             alignItems: 'center',
-//             justifyContent: 'center'
-//           }}>
-//             <Typography variant="body2" sx={{ 
-//               mb: 2, 
-//               color: 'text.secondary',
-//               textAlign: 'center'
-//             }}>
-//               Point your camera at the barcode
-//             </Typography>
-            
-//             <Box
-//               id="qr-reader"
+// {isClient && (
+//   <Dialog
+//     open={showScanner}
+//     onClose={stopScanner}
+//     maxWidth="md"
+//     fullWidth
+//     fullScreen={isMobile}
+//     PaperProps={{
+//       sx: {
+//         maxWidth: { xs: '100%', sm: '80%', md: '600px' },
+//         height: { xs: '100vh', sm: '600px' },
+//         margin: { xs: 0, sm: 'auto' },
+//         borderRadius: { xs: 0, sm: 3 }
+//       }
+//     }}
+//   >
+//     <DialogTitle sx={{ 
+//       display: 'flex', 
+//       justifyContent: 'space-between', 
+//       alignItems: 'center',
+//       backgroundColor: '#1976d2',
+//       color: 'white'
+//     }}>
+//       <Typography variant="h6">📷 Scan Barcode</Typography>
+//       <IconButton onClick={stopScanner} sx={{ color: 'white' }}>
+//         <CloseIcon />
+//       </IconButton>
+//     </DialogTitle>
+    
+//     <DialogContent sx={{ 
+//       p: 2,
+//       display: 'flex',
+//       flexDirection: 'column',
+//       alignItems: 'center',
+//       justifyContent: 'center'
+//     }}>
+//       <Typography variant="body2" sx={{ 
+//         mb: 2, 
+//         color: 'text.secondary',
+//         textAlign: 'center'
+//       }}>
+//         Point your camera at the barcode
+//       </Typography>
+      
+//       {/* Camera Switch Button */}
+//       {availableCameras.length > 1 && (
+//         <Box sx={{ 
+//           display: 'flex', 
+//           justifyContent: 'center',
+//           mb: 2,
+//           gap: 1,
+//           flexWrap: 'wrap'
+//         }}>
+//           {availableCameras.map((camera) => (
+//             <Button
+//               key={camera.deviceId}
+//               variant={selectedCamera === camera.deviceId ? 'contained' : 'outlined'}
+//               size="small"
+//               onClick={() => switchCamera(camera.deviceId)}
 //               sx={{
-//                 width: '100%',
-//                 height: { xs: '70vh', sm: '400px' },
-//                 border: '2px dashed #ccc',
-//                 borderRadius: 2,
-//                 overflow: 'hidden',
-//                 backgroundColor: '#000'
+//                 minWidth: '100px',
+//                 fontSize: '12px',
+//                 backgroundColor: selectedCamera === camera.deviceId ? '#1976d2' : 'transparent',
+//                 color: selectedCamera === camera.deviceId ? 'white' : '#1976d2',
+//                 borderColor: '#1976d2',
+//                 '&:hover': {
+//                   backgroundColor: selectedCamera === camera.deviceId ? '#1565c0' : 'rgba(25, 118, 210, 0.04)'
+//                 }
 //               }}
-//             />
-            
-//             <Typography variant="caption" sx={{ 
-//               mt: 2, 
-//               display: 'block', 
-//               color: 'text.secondary',
-//               textAlign: 'center'
-//             }}>
-//               The scanner will automatically detect barcodes
-//             </Typography>
-//           </DialogContent>
-          
-//           <DialogActions sx={{ 
-//             p: 2,
-//             backgroundColor: '#f5f5f5'
-//           }}>
-//             <Button 
-//               onClick={stopScanner} 
-//               variant="outlined"
-//               sx={{ mr: 2 }}
 //             >
-//               Cancel
+//               {camera.label.includes('back') || camera.label.includes('environment') 
+//                 ? '📷 Back Camera' 
+//                 : camera.label.includes('front') || camera.label.includes('user')
+//                   ? '🤳 Front Camera' 
+//                   : `Camera ${availableCameras.indexOf(camera) + 1}`}
 //             </Button>
-//             <Typography variant="body2" sx={{ 
-//               flexGrow: 1, 
-//               textAlign: 'center', 
-//               color: 'text.secondary',
-//               fontSize: '12px'
-//             }}>
-//               Camera permission required • Works best in good light
-//             </Typography>
-//           </DialogActions>
-//         </Dialog>
+//           ))}
+//         </Box>
 //       )}
+      
+//       <Box
+//         id="qr-reader"
+//         sx={{
+//           width: '100%',
+//           height: { xs: '60vh', sm: '350px' },
+//           border: '2px dashed #ccc',
+//           borderRadius: 2,
+//           overflow: 'hidden',
+//           backgroundColor: '#000'
+//         }}
+//       />
+      
+//       <Typography variant="caption" sx={{ 
+//         mt: 2, 
+//         display: 'block', 
+//         color: 'text.secondary',
+//         textAlign: 'center'
+//       }}>
+//         The scanner will automatically detect barcodes
+//       </Typography>
+//     </DialogContent>
+    
+//     <DialogActions sx={{ 
+//       p: 2,
+//       backgroundColor: '#f5f5f5',
+//       display: 'flex',
+//       justifyContent: 'space-between'
+//     }}>
+//       <Button 
+//         onClick={stopScanner} 
+//         variant="outlined"
+//       >
+//         Cancel
+//       </Button>
+      
+//       <Typography variant="body2" sx={{ 
+//         textAlign: 'center', 
+//         color: 'text.secondary',
+//         fontSize: '12px'
+//       }}>
+//         Camera permission required • Works best in good light
+//       </Typography>
+      
+//       {/* Optional: Add a refresh button */}
+//       <Button 
+//         size="small"
+//         onClick={() => {
+//           if (selectedCamera) {
+//             switchCamera(selectedCamera);
+//           }
+//         }}
+//       >
+//         <RefreshIcon fontSize="small" />
+//       </Button>
+//     </DialogActions>
+//   </Dialog>
+// )}
 //     </>
 //   );
 // };
 
 // export default ScanBarcode;
-
-
-
-
 
 
 
@@ -6680,25 +6802,31 @@ const handleConfirmItem = () => {
   });
   setScannerError('');
   
+  // Close scanner if it was open
+  if (showScanner) {
+    stopScanner();
+  }
   
   if (isMobile) {
     setActiveTab(1); 
     setViewMode('scan');
   }
 
-  if (fillByShadeMode && selectedShades.length > 1) {
-    showSnackbar(`${selectedShades.length} items added to order (${totalQty} each)! Go To Cart`, 'success');
-  } else {
-    showSnackbar('Item added to order! Go To Cart', 'success');
-  }
+ if (fillByShadeMode && selectedShades.length > 1) {
+  showSnackbar(`${selectedShades.length} items added to order (${totalQty} each)! Go To Cart`, 'success');
+} else {
+  showSnackbar('Item added to order! Go To Cart', 'success');
+}
 
-  // AUTO-REOPEN SCANNER: Check if we should auto-open scanner after adding to cart
-  if (autoScanMode) {
-    // Small delay to allow the snackbar to show
-    setTimeout(() => {
+ if (autoScanMode) {
+  // Small delay to allow the snackbar to show and UI to update
+  setTimeout(() => {
+    // Check if scanner is not already open
+    if (!showScanner) {
       startScanner();
-    }, 1000);
-  }
+    }
+  }, 1000);
+}
 };
 
   const handleFormChange = (field, value) => {
@@ -6833,17 +6961,20 @@ const handleConfirmItem = () => {
     showSnackbar('Item removed from order', 'info');
   };
 
- const initScanner = (cameraId = '') => {
+const initScanner = async (cameraId = '') => {
   if (typeof window === 'undefined') {
     console.error('Scanner not available on server');
     return;
   }
 
+  // Stop existing scanner if any
   if (qrCodeScannerRef.current) {
-    qrCodeScannerRef.current.clear().catch(err => {
+    try {
+      await qrCodeScannerRef.current.stop();
+      qrCodeScannerRef.current = null;
+    } catch (err) {
       console.error("Failed to clear existing scanner", err);
-    });
-    qrCodeScannerRef.current = null;
+    }
   }
 
   const qrReaderElement = document.getElementById('qr-reader');
@@ -6853,90 +6984,157 @@ const handleConfirmItem = () => {
     return;
   }
 
+  // Clear the element's inner HTML to avoid duplicates
+  qrReaderElement.innerHTML = '';
+
   try {
-    const scanner = new Html5QrcodeScanner(
-      "qr-reader",
-      {
-        fps: 10,
-        qrbox: { width: isMobile ? 200 : 250, height: isMobile ? 200 : 250 },
-        rememberLastUsedCamera: true,
-        supportedScanTypes: [Html5QrcodeScanType.SCAN_TYPE_CAMERA],
-        showTorchButtonIfSupported: true,
-        showZoomSliderIfSupported: true,
-        // Add default camera if specified
-        ...(cameraId && { videoConstraints: { deviceId: cameraId } })
-      },
-      false
-    );
+    // Dynamically import html5-qrcode
+    const { Html5Qrcode } = await import('html5-qrcode');
+    const html5QrCode = new Html5Qrcode("qr-reader");
+    qrCodeScannerRef.current = html5QrCode;
 
-    const onScanSuccess = (decodedText, decodedResult) => {
-      scanner.clear().then(() => {
-        qrCodeScannerRef.current = null;
-        setIsScanning(false);
-        setShowScanner(false);
-        
-        setNewItemData(prev => ({ ...prev, barcode: decodedText }));
-        fetchStyleDataByBarcode(decodedText);
-        showSnackbar('Barcode scanned successfully!', 'success');
-        
-        // Auto-reopen scanner after cart (for requirement 2)
-        // We'll handle this separately
-      }).catch(err => {
-        console.error("Failed to clear scanner", err);
-      });
+    const config = {
+      fps: 10,
+      qrbox: { width: isMobile ? 250 : 300, height: isMobile ? 250 : 300 },
+      aspectRatio: 1.0,
+      showTorchButtonIfSupported: true,
+      showZoomSliderIfSupported: true,
+      defaultZoomValueIfSupported: 2,
+      rememberLastUsedCamera: true,
     };
 
-    const onScanFailure = (error) => {
-      if (!error.includes('NotFoundException')) {
-        console.warn(`Scan error: ${error}`);
+    let cameraToUse = cameraId || selectedCamera;
+    
+    // If no camera specified, try to use back camera by default
+    if (!cameraToUse) {
+      const cameras = await getAvailableCameras();
+      const backCamera = cameras.find(device => 
+        device.label.toLowerCase().includes('back') || 
+        device.label.toLowerCase().includes('environment') ||
+        device.label.toLowerCase().includes('rear')
+      );
+      if (backCamera) {
+        cameraToUse = backCamera.deviceId;
       }
-    };
+    }
 
-    scanner.render(onScanSuccess, onScanFailure);
-    qrCodeScannerRef.current = scanner;
+    await html5QrCode.start(
+      cameraToUse || { facingMode: "environment" },
+      config,
+      (decodedText, decodedResult) => {
+        // Success callback - barcode detected
+        if (qrCodeScannerRef.current) {
+          html5QrCode.stop().then(() => {
+            qrCodeScannerRef.current = null;
+            setIsScanning(false);
+            setShowScanner(false);
+            
+            setNewItemData(prev => ({ ...prev, barcode: decodedText }));
+            fetchStyleDataByBarcode(decodedText);
+            showSnackbar('Barcode scanned successfully!', 'success');
+          }).catch(err => {
+            console.error("Failed to stop scanner", err);
+          });
+        }
+      },
+      (errorMessage) => {
+        // Error callback - ignore NotFoundException as it's normal during scanning
+        if (!errorMessage.includes('NotFoundException')) {
+          console.warn(`Scan error: ${errorMessage}`);
+        }
+      }
+    );
+    
     setIsScanning(true);
     setScannerError('');
     
   } catch (error) {
     console.error("Scanner initialization error:", error);
-    setScannerError(`Failed to initialize scanner: ${error.message}`);
-    showSnackbar('Scanner initialization failed. Please check camera permissions.', 'error');
+    setScannerError(`Failed to start camera: ${error.message}`);
+    showSnackbar('Camera access failed. Please check permissions.', 'error');
     setShowScanner(false);
   }
 };  
 
 const getAvailableCameras = async () => {
-  if (typeof window === 'undefined' || !Html5QrcodeScanner) return;
+  if (typeof window === 'undefined') return [];
   
   try {
+    // First request permission to get camera labels
+    const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+    // Stop the stream immediately after getting permission
+    stream.getTracks().forEach(track => track.stop());
+    
     const devices = await navigator.mediaDevices.enumerateDevices();
     const videoDevices = devices.filter(device => device.kind === 'videoinput');
+    
+    console.log('Available cameras:', videoDevices.map(d => ({
+      id: d.deviceId,
+      label: d.label || 'Camera'
+    })));
+    
     setAvailableCameras(videoDevices);
     
-    // Set default camera (prefer back camera)
-    const backCamera = videoDevices.find(device => 
-      device.label.toLowerCase().includes('back') || 
-      device.label.toLowerCase().includes('environment')
-    );
-    if (backCamera) {
-      setSelectedCamera(backCamera.deviceId);
-    } else if (videoDevices.length > 0) {
-      setSelectedCamera(videoDevices[0].deviceId);
+    // Set default camera if not already set
+    if (!selectedCamera && videoDevices.length > 0) {
+      // Prefer back camera
+      const backCamera = videoDevices.find(device => 
+        device.label.toLowerCase().includes('back') || 
+        device.label.toLowerCase().includes('environment') ||
+        device.label.toLowerCase().includes('rear')
+      );
+      
+      const frontCamera = videoDevices.find(device => 
+        device.label.toLowerCase().includes('front') || 
+        device.label.toLowerCase().includes('user') ||
+        device.label.toLowerCase().includes('face')
+      );
+      
+      if (backCamera) {
+        setSelectedCamera(backCamera.deviceId);
+      } else if (frontCamera) {
+        setSelectedCamera(frontCamera.deviceId);
+      } else if (videoDevices[0]) {
+        setSelectedCamera(videoDevices[0].deviceId);
+      }
     }
+    
+    return videoDevices;
   } catch (error) {
     console.error('Error getting cameras:', error);
+    setScannerError('Unable to access cameras. Please check permissions.');
+    return [];
   }
 };
 
-const switchCamera = (deviceId) => {
+const switchCamera = async (deviceId) => {
+  if (!deviceId) return;
+  
   setSelectedCamera(deviceId);
-  if (qrCodeScannerRef.current) {
-    qrCodeScannerRef.current.clear().then(() => {
+  
+  // If scanner is currently open, restart it with new camera
+  if (showScanner && qrCodeScannerRef.current) {
+    try {
+      // Stop current scanner
+      await qrCodeScannerRef.current.stop().catch(err => {
+        console.log("Scanner already stopped", err);
+      });
       qrCodeScannerRef.current = null;
-      initScanner(deviceId);
-    }).catch(err => {
-      console.error("Failed to clear scanner", err);
-    });
+      
+      // Wait a moment before starting new scanner
+      setTimeout(() => {
+        initScanner(deviceId);
+        showSnackbar('Camera switched successfully', 'success');
+      }, 500);
+    } catch (err) {
+      console.error("Failed to switch camera:", err);
+      // Try to restart scanner with new camera
+      setTimeout(() => {
+        if (showScanner) {
+          initScanner(deviceId);
+        }
+      }, 500);
+    }
   }
 };
 
@@ -7280,23 +7478,39 @@ const switchCamera = (deviceId) => {
     };
   }, []);
 
-  useEffect(() => {
-    if (showScanner && isClient) {
-      const timer = setTimeout(() => {
-        initScanner();
-      }, 500);
+useEffect(() => {
+  let mounted = true;
+  
+  if (showScanner && isClient) {
+    const initialize = async () => {
+      // Get available cameras first
+      const cameras = await getAvailableCameras();
       
-      return () => {
-        clearTimeout(timer);
-        if (qrCodeScannerRef.current) {
-          qrCodeScannerRef.current.clear().catch(err => {
-            console.error("Cleanup error", err);
-          });
-          qrCodeScannerRef.current = null;
-        }
-      };
-    }
-  }, [showScanner, isClient]);
+      if (mounted && cameras.length > 0) {
+        // Small delay to ensure DOM is ready
+        setTimeout(() => {
+          if (mounted && showScanner) {
+            initScanner(selectedCamera);
+          }
+        }, 500);
+      } else if (mounted && cameras.length === 0) {
+        setScannerError('No cameras found on this device');
+      }
+    };
+    
+    initialize();
+    
+    return () => {
+      mounted = false;
+      if (qrCodeScannerRef.current) {
+        qrCodeScannerRef.current.stop().catch(err => {
+          console.error("Cleanup error", err);
+        });
+        qrCodeScannerRef.current = null;
+      }
+    };
+  }
+}, [showScanner, isClient]);
 
   if (!isClient) {
     return (
@@ -9661,8 +9875,7 @@ const switchCamera = (deviceId) => {
   );
 
 const renderSettingsTab = () => (
-  <Box>
-    {/* Settings */}
+ <Box>
     <Card sx={{ 
       mb: 2,
       borderRadius: 3,
@@ -9677,7 +9890,7 @@ const renderSettingsTab = () => (
           Order Settings
         </Typography>
         
-        {/* Auto-Scan Toggle */}
+        {/* Auto-Scan Toggle - THIS IS THE KEY TOGGLE */}
         <Box sx={{ 
           p: 1.5, 
           backgroundColor: '#f8f9fa',
@@ -10222,7 +10435,7 @@ const renderSettingsTab = () => (
   </DialogActions>
 </Dialog>
 
-      {/* Barcode Scanner Dialog */}
+{/* Barcode Scanner Dialog */}
 {isClient && (
   <Dialog
     open={showScanner}
@@ -10239,6 +10452,7 @@ const renderSettingsTab = () => (
       }
     }}
   >
+    {/* FIXED: Remove nested Typography */}
     <DialogTitle sx={{ 
       display: 'flex', 
       justifyContent: 'space-between', 
@@ -10246,7 +10460,10 @@ const renderSettingsTab = () => (
       backgroundColor: '#1976d2',
       color: 'white'
     }}>
-      <Typography variant="h6">📷 Scan Barcode</Typography>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+        <CameraIcon />
+        <span style={{ fontSize: '1.1rem', fontWeight: 500 }}>Scan Barcode</span>
+      </Box>
       <IconButton onClick={stopScanner} sx={{ color: 'white' }}>
         <CloseIcon />
       </IconButton>
@@ -10267,42 +10484,61 @@ const renderSettingsTab = () => (
         Point your camera at the barcode
       </Typography>
       
-      {/* Camera Switch Button */}
+      {/* Camera Switch Buttons */}
       {availableCameras.length > 1 && (
         <Box sx={{ 
           display: 'flex', 
           justifyContent: 'center',
           mb: 2,
-          gap: 1,
-          flexWrap: 'wrap'
+          gap: 1.5,
+          flexWrap: 'wrap',
+          width: '100%'
         }}>
-          {availableCameras.map((camera) => (
-            <Button
-              key={camera.deviceId}
-              variant={selectedCamera === camera.deviceId ? 'contained' : 'outlined'}
-              size="small"
-              onClick={() => switchCamera(camera.deviceId)}
-              sx={{
-                minWidth: '100px',
-                fontSize: '12px',
-                backgroundColor: selectedCamera === camera.deviceId ? '#1976d2' : 'transparent',
-                color: selectedCamera === camera.deviceId ? 'white' : '#1976d2',
-                borderColor: '#1976d2',
-                '&:hover': {
-                  backgroundColor: selectedCamera === camera.deviceId ? '#1565c0' : 'rgba(25, 118, 210, 0.04)'
-                }
-              }}
-            >
-              {camera.label.includes('back') || camera.label.includes('environment') 
-                ? '📷 Back Camera' 
-                : camera.label.includes('front') || camera.label.includes('user')
-                  ? '🤳 Front Camera' 
-                  : `Camera ${availableCameras.indexOf(camera) + 1}`}
-            </Button>
-          ))}
+          {availableCameras.map((camera, idx) => {
+            const isBackCamera = camera.label?.toLowerCase().includes('back') || 
+                                 camera.label?.toLowerCase().includes('environment') ||
+                                 camera.label?.toLowerCase().includes('rear');
+            const isFrontCamera = camera.label?.toLowerCase().includes('front') || 
+                                  camera.label?.toLowerCase().includes('user') ||
+                                  camera.label?.toLowerCase().includes('face');
+            
+            let cameraLabel = `Camera ${idx + 1}`;
+            let cameraIcon = "📷";
+            
+            if (isBackCamera) {
+              cameraLabel = "Back Camera";
+              cameraIcon = "📱";
+            } else if (isFrontCamera) {
+              cameraLabel = "Front Camera";
+              cameraIcon = "🤳";
+            }
+            
+            return (
+              <Button
+                key={camera.deviceId}
+                variant={selectedCamera === camera.deviceId ? 'contained' : 'outlined'}
+                size="medium"
+                onClick={() => switchCamera(camera.deviceId)}
+                sx={{
+                  minWidth: '120px',
+                  py: 1,
+                  backgroundColor: selectedCamera === camera.deviceId ? '#1976d2' : 'transparent',
+                  color: selectedCamera === camera.deviceId ? 'white' : '#1976d2',
+                  borderColor: '#1976d2',
+                  '&:hover': {
+                    backgroundColor: selectedCamera === camera.deviceId ? '#1565c0' : 'rgba(25, 118, 210, 0.04)'
+                  }
+                }}
+                startIcon={<span>{cameraIcon}</span>}
+              >
+                {cameraLabel}
+              </Button>
+            );
+          })}
         </Box>
       )}
       
+      {/* Scanner Container */}
       <Box
         id="qr-reader"
         sx={{
@@ -10311,10 +10547,12 @@ const renderSettingsTab = () => (
           border: '2px dashed #ccc',
           borderRadius: 2,
           overflow: 'hidden',
-          backgroundColor: '#000'
+          backgroundColor: '#000',
+          position: 'relative'
         }}
       />
       
+      {/* Instructions */}
       <Typography variant="caption" sx={{ 
         mt: 2, 
         display: 'block', 
@@ -10323,6 +10561,17 @@ const renderSettingsTab = () => (
       }}>
         The scanner will automatically detect barcodes
       </Typography>
+      
+      {/* Additional Help Text */}
+      {availableCameras.length === 0 && (
+        <Typography variant="caption" sx={{ 
+          mt: 1,
+          color: 'warning.main',
+          textAlign: 'center'
+        }}>
+          Loading cameras... Please ensure camera permissions are granted.
+        </Typography>
+      )}
     </DialogContent>
     
     <DialogActions sx={{ 
@@ -10334,8 +10583,9 @@ const renderSettingsTab = () => (
       <Button 
         onClick={stopScanner} 
         variant="outlined"
+        color="error"
       >
-        Cancel
+        Close Scanner
       </Button>
       
       <Typography variant="body2" sx={{ 
@@ -10346,16 +10596,18 @@ const renderSettingsTab = () => (
         Camera permission required • Works best in good light
       </Typography>
       
-      {/* Optional: Add a refresh button */}
+      {/* Refresh Button */}
       <Button 
         size="small"
-        onClick={() => {
+        onClick={async () => {
+          await getAvailableCameras();
           if (selectedCamera) {
             switchCamera(selectedCamera);
           }
         }}
+        startIcon={<RefreshIcon fontSize="small" />}
       >
-        <RefreshIcon fontSize="small" />
+        Refresh
       </Button>
     </DialogActions>
   </Dialog>
