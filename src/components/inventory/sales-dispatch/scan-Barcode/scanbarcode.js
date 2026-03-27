@@ -6757,27 +6757,7 @@ const handleConfirmItem = () => {
     setTableData(prev => [...prev, newItem]);
   }
 
-  // Reset form
-  setNewItemData({
-    barcode: '',
-    product: '',
-    style: '',
-    type: '',
-    shade: '',
-    mrp: '',
-    rate: '',
-    qty: '',
-    discount: '0',
-    sets: '1',
-    convFact: '1',
-    remark: '',
-    varPer: '0',
-    stdQty: '',
-    setNo: '',
-    percent: '0',
-    rQty: '',
-    divDt: ''
-  });
+ 
   
   if (useStyleCodeMode) {
     setStyleCodeInput('');
@@ -6802,32 +6782,51 @@ const handleConfirmItem = () => {
   });
   setScannerError('');
   
-  // Close scanner if it was open
   if (showScanner) {
     stopScanner();
   }
   
   if (isMobile) {
-    setActiveTab(1); 
+    setActiveTab(1);
     setViewMode('scan');
   }
 
- if (fillByShadeMode && selectedShades.length > 1) {
-  showSnackbar(`${selectedShades.length} items added to order (${totalQty} each)! Go To Cart`, 'success');
-} else {
-  showSnackbar('Item added to order! Go To Cart', 'success');
-}
+  if (fillByShadeMode && selectedShades.length > 1) {
+    showSnackbar(`${selectedShades.length} items added to order (${totalQty} each)! Go To Cart`, 'success');
+  } else {
+    showSnackbar('Item added to order! Go To Cart', 'success');
+  }
 
- if (autoScanMode) {
-  // Small delay to allow the snackbar to show and UI to update
-  setTimeout(() => {
-    // Check if scanner is not already open
-    if (!showScanner) {
-      startScanner();
-    }
-  }, 1000);
-}
+  // UPDATED AUTO-SCAN LOGIC
+  if (autoScanMode) {
+    // Wait longer for the snackbar and UI updates to complete
+    setTimeout(() => {
+      // Check if scanner is not already open
+      if (!showScanner && !isScanning) {
+        // Give extra time for any cleanup
+        setTimeout(() => {
+          startScanner();
+        }, 500);
+      }
+    }, 1500);
+  }
 };
+
+// Add this near your other useEffects (around line 300)
+useEffect(() => {
+  if (isClient) {
+    const savedAutoScanMode = localStorage.getItem('autoScanMode');
+    if (savedAutoScanMode !== null) {
+      setAutoScanMode(savedAutoScanMode === 'true');
+    }
+  }
+}, [isClient]);
+
+useEffect(() => {
+  if (isClient) {
+    localStorage.setItem('autoScanMode', autoScanMode.toString());
+  }
+}, [autoScanMode, isClient]);
 
   const handleFormChange = (field, value) => {
     const updatedFormData = {
@@ -7147,16 +7146,19 @@ const switchCamera = async (deviceId) => {
     setScannerError('');
   };
 
-  const stopScanner = () => {
-    if (qrCodeScannerRef.current) {
-      qrCodeScannerRef.current.clear().catch(error => {
-        console.error("Failed to clear scanner", error);
+ const stopScanner = () => {
+  if (qrCodeScannerRef.current) {
+    qrCodeScannerRef.current.stop()
+      .catch(error => {
+        console.error("Failed to stop scanner", error);
+      })
+      .finally(() => {
+        qrCodeScannerRef.current = null;
+        setIsScanning(false);
       });
-      qrCodeScannerRef.current = null;
-    }
-    setIsScanning(false);
-    setShowScanner(false);
-  };
+  }
+  setShowScanner(false);
+};
 
   const prepareSubmitPayload = () => {
     const dbFlag = 'I';
@@ -9875,7 +9877,7 @@ useEffect(() => {
   );
 
 const renderSettingsTab = () => (
- <Box>
+  <Box>
     <Card sx={{ 
       mb: 2,
       borderRadius: 3,
@@ -9890,10 +9892,10 @@ const renderSettingsTab = () => (
           Order Settings
         </Typography>
         
-        {/* Auto-Scan Toggle - THIS IS THE KEY TOGGLE */}
+        {/* Auto-Scan Toggle */}
         <Box sx={{ 
           p: 1.5, 
-          backgroundColor: '#f8f9fa',
+          backgroundColor: autoScanMode ? '#e3f2fd' : '#f8f9fa',
           borderRadius: 2,
           mb: 2
         }}>
