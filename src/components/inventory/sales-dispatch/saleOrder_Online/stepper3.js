@@ -458,7 +458,6 @@ const fetchGSTRates = useCallback(async () => {
     // Calculate total amount from active items
     let totalAmount = 0;
     activeItems.forEach(item => {
-      // Check multiple possible field names for amount
       const itemAmount = parseFloat(item.AMT) || 
                          parseFloat(item.ITMAMT) || 
                          parseFloat(item.AMOUNT) || 
@@ -468,36 +467,80 @@ const fetchGSTRates = useCallback(async () => {
     
     console.log('Total Amount from active items:', totalAmount);
     
-    // Calculate total discount from terms - THIS IS THE KEY FIX
-    let totalDiscountAmount = 0;
-    if (formData.apiResponseData?.ORDBKTERMLIST && formData.apiResponseData.ORDBKTERMLIST.length > 0) {
-      // Get active discount terms (not marked for deletion)
-      const activeDiscountTerms = formData.apiResponseData.ORDBKTERMLIST.filter(
-        term => term.DBFLAG !== 'D'
-      );
+    // ========== CRITICAL FIX: Get ALL discount terms from current topTableData ==========
+    // Get all non-GST rows (discount terms) from the current top table data
+    const existingNonGstRows = topTableData.filter(row => 
+      !row.originalData?.isGstRow && 
+      (!row.originalData?.DBFLAG || row.originalData.DBFLAG !== 'D')
+    );
+    
+    console.log('Existing discount terms from topTableData:', existingNonGstRows);
+    
+    // If there are no discount terms, we need to check ORDBKTERMLIST from formData
+    let discountTerms = existingNonGstRows;
+    
+    if (discountTerms.length === 0 && formData.apiResponseData?.ORDBKTERMLIST) {
+      // Load from ORDBKTERMLIST
+      discountTerms = formData.apiResponseData.ORDBKTERMLIST
+        .filter(term => term.DBFLAG !== 'D' && term.TAXGRP_NAME === 0)
+        .map((term, index) => ({
+          id: term.ORDBKTERM_ID || `term_${index + 1}`,
+          type: "Term",
+          taxType: term.TAX_NAME || "",
+          tax: term.TERM_DESC || "",
+          rate: term.TAX_RATE || term.TERM_PERCENT || 0,
+          taxable: term.TAXABLE_AMT || 0,
+          taxAmount: term.TAX_AMT || 0,
+          termGroup: term.TERMGRP_NAME || "",
+          term: term.TERM_NAME || "",
+          termPercent: term.TERM_PERCENT || 0,
+          termR: term.TERM_FIX_AMT || 0,
+          originalData: {
+            ...term,
+            isTermRow: true
+          }
+        }));
       
-      console.log('Active discount terms:', activeDiscountTerms);
-      
-      // Calculate discount amount based on term type
-      for (const term of activeDiscountTerms) {
-        if (term.TERM_FIX_AMT > 0) {
-          // Fixed amount discount
-          totalDiscountAmount += parseFloat(term.TERM_FIX_AMT) || 0;
-          console.log(`Fixed discount: ${term.TERM_FIX_AMT}`);
-        } else if (term.TERM_PERCENT > 0) {
-          // Percentage discount based on total amount
-          const percentDiscount = (totalAmount * (parseFloat(term.TERM_PERCENT) || 0)) / 100;
-          totalDiscountAmount += percentDiscount;
-          console.log(`Percentage discount ${term.TERM_PERCENT}%: ${percentDiscount}`);
-        }
-      }
+      console.log('Loaded discount terms from ORDBKTERMLIST:', discountTerms);
     }
     
-    console.log('Total Discount from terms:', totalDiscountAmount);
+    console.log('Discount terms to apply sequentially:', discountTerms);
     
-    // Net amount after discount (taxable amount)
-    const netAmountAfterDiscount = Math.max(0, totalAmount - totalDiscountAmount);
-    console.log('Net Amount After Discount (Taxable Amount):', netAmountAfterDiscount);
+    // ========== CRITICAL FIX: Apply discounts SEQUENTIALLY to get final taxable amount ==========
+    let currentAmount = totalAmount;
+    const discountBreakdown = [];
+    
+    // Process each discount term in order (maintain their sequence)
+    for (const term of discountTerms) {
+      let discountAmount = 0;
+      
+      if (term.termR > 0) {
+        // Fixed amount discount
+        discountAmount = parseFloat(term.termR);
+      } else if (term.termPercent > 0) {
+        // Percentage discount - apply to current amount (sequential)
+        discountAmount = (currentAmount * parseFloat(term.termPercent)) / 100;
+      } else if (term.taxAmount > 0) {
+        // Use existing tax amount
+        discountAmount = parseFloat(term.taxAmount);
+      }
+      
+      discountBreakdown.push({
+        termName: term.term,
+        percent: term.termPercent,
+        fixAmount: term.termR,
+        appliedOn: currentAmount,
+        discountAmount: discountAmount,
+        newAmount: currentAmount - discountAmount
+      });
+      
+      currentAmount = currentAmount - discountAmount;
+    }
+    
+    console.log('Sequential discount breakdown:', discountBreakdown);
+    console.log('Final taxable amount after all discounts:', currentAmount);
+    
+    const netAmountAfterDiscount = Math.max(0, currentAmount);
     
     // If no taxable amount, show warning
     if (netAmountAfterDiscount === 0) {
@@ -514,28 +557,25 @@ const fetchGSTRates = useCallback(async () => {
     let totalIgstAmount = 0;
     let totalGstAmount = 0;
     let totalItemAmount = 0;
-    let totalDiscAmount = totalDiscountAmount;
+    let totalDiscAmount = totalAmount - netAmountAfterDiscount;
 
     // Group items by HSNCODE_KEY
     const itemsByHsnCode = {};
     
     activeItems.forEach(item => {
-      // Get HSN code - check multiple possible locations
+      // Get HSN code
       let hsnCodeKey = item.HSNCODE_KEY;
       let hsnCode = item.HSN_CODE;
       
-      // Try to get HSN from size list if not available at item level
       if ((!hsnCodeKey || !hsnCode) && item.ORDBKSTYSZLIST && item.ORDBKSTYSZLIST.length > 0) {
         const firstSize = item.ORDBKSTYSZLIST[0];
         hsnCodeKey = firstSize.HSNCODE_KEY;
         hsnCode = firstSize.HSN_CODE;
       }
       
-      // Try alternative field names
       if (!hsnCodeKey) hsnCodeKey = item.HSN_CODE_KEY || item.HSNCODE;
       if (!hsnCode) hsnCode = item.HSN_CODE_NAME || "64021010";
       
-      // Default if still not found
       if (!hsnCodeKey) hsnCodeKey = "IG001";
       if (!hsnCode) hsnCode = "64021010";
       
@@ -550,13 +590,11 @@ const fetchGSTRates = useCallback(async () => {
         };
       }
       
-      // Get item amount - check multiple possible field names
       const itemAmount = parseFloat(item.AMT) || 
                          parseFloat(item.ITMAMT) || 
                          parseFloat(item.AMOUNT) || 
                          0;
       
-      // Get item quantity - check multiple possible field names
       const itemQty = parseFloat(item.QTY) || 
                       parseFloat(item.ITMQTY) || 
                       parseFloat(item.QUANTITY) || 
@@ -569,7 +607,6 @@ const fetchGSTRates = useCallback(async () => {
     });
 
     console.log('Items grouped by HSN code:', itemsByHsnCode);
-    console.log('Number of HSN groups:', Object.keys(itemsByHsnCode).length);
 
     // Process each HSN code group
     for (const [hsnCodeKey, hsnData] of Object.entries(itemsByHsnCode)) {
@@ -579,7 +616,6 @@ const fetchGSTRates = useCallback(async () => {
       
       const firstItem = hsnData.items[0];
       
-      // Get MRP and RATE from item
       const mrp = parseFloat(firstItem.MRP) || 
                   parseFloat(firstItem.ITMRATE) || 
                   parseFloat(firstItem.RATE) || 
@@ -608,15 +644,15 @@ const fetchGSTRates = useCallback(async () => {
         if (response.data.RESPONSESTATUSCODE === 1 && response.data.DATA && response.data.DATA.length > 0) {
           const gstData = response.data.DATA[0];
           
-          const gstType = formData.GST_TYPE; // 'S' for State GST, 'I' for IGST
+          const gstType = formData.GST_TYPE;
           
-          // Calculate proportional discount for this HSN group
+          // Calculate proportional discount for this HSN based on total discount
           const hsnTotalAmount = hsnData.totalAmount;
           let hsnDiscount = 0;
           
-          if (totalAmount > 0 && totalDiscountAmount > 0) {
+          if (totalAmount > 0 && totalDiscAmount > 0) {
             // Distribute discount proportionally based on item amount
-            hsnDiscount = (hsnTotalAmount / totalAmount) * totalDiscountAmount;
+            hsnDiscount = (hsnTotalAmount / totalAmount) * totalDiscAmount;
           }
           
           // CORRECT: Taxable amount after discount for this HSN
@@ -633,46 +669,40 @@ const fetchGSTRates = useCallback(async () => {
 
           // Calculate GST based on GST_TYPE
           if (gstType === "I" || gstType === "IGST") {
-            // IGST calculation - apply to discounted amount
             hsnGstAmount = (discountedHsnAmount * igstRate) / 100;
             igstAmount = hsnGstAmount;
             console.log(`IGST Calculation: ${discountedHsnAmount} * ${igstRate}% = ${hsnGstAmount}`);
           } else {
-            // CGST + SGST calculation
             sgstAmount = (discountedHsnAmount * sgstRate) / 100;
             cgstAmount = (discountedHsnAmount * cgstRate) / 100;
             hsnGstAmount = sgstAmount + cgstAmount;
             console.log(`State GST Calculation: ${discountedHsnAmount} * (${sgstRate}% + ${cgstRate}%) = ${hsnGstAmount}`);
           }
 
-          // Check if this GST item already exists in the original data from API response
+          // Check if this GST item already exists
           let existingGstItem = null;
           
-          // First check in the current formData's ORDBKGSTLIST
           if (formData.apiResponseData?.ORDBKGSTLIST && formData.apiResponseData.ORDBKGSTLIST.length > 0) {
             existingGstItem = formData.apiResponseData.ORDBKGSTLIST.find(
               gst => gst.HSNCODE_KEY === hsnCodeKey && gst.DBFLAG !== 'D'
             );
           }
 
-          // Determine DBFLAG based on mode and existence
+          // Determine DBFLAG
           let dbFlag;
           if (mode === 'add') {
             dbFlag = 'I';
           } else if (mode === 'edit') {
-            // In edit mode, check if this is an existing GST item that was previously saved
             if (existingGstItem && existingGstItem.ORDBK_GST_ID > 0) {
-              // Existing GST item - Update
               dbFlag = 'U';
             } else {
-              // New GST item - Insert
               dbFlag = 'I';
             }
           } else {
             dbFlag = existingGstItem ? 'U' : 'I';
           }
 
-          console.log(`GST item for HSN ${hsnCodeKey}: DBFLAG = ${dbFlag}, ORDBK_GST_ID = ${existingGstItem?.ORDBK_GST_ID || 0}`);
+          console.log(`GST item for HSN ${hsnCodeKey}: DBFLAG = ${dbFlag}`);
 
           // Create GST item with CORRECT values
           const gstItem = {
@@ -688,8 +718,8 @@ const fetchGSTRates = useCallback(async () => {
             UNIT_KEY: gstData.UNIT_KEY || "UN005",
             GST_RATE_SLAB_ID: parseInt(gstData.GST_RATE_SLAB_ID) || 39,
             ITM_AMT: hsnTotalAmount,
-            DISC_AMT: hsnDiscount, // THIS IS THE KEY FIX - Set discount amount
-            NET_AMT: discountedHsnAmount, // THIS IS THE KEY FIX - Set net amount after discount
+            DISC_AMT: hsnDiscount,
+            NET_AMT: discountedHsnAmount,
             SGST_RATE: (gstType === "I" || gstType === "IGST") ? 0 : sgstRate,
             SGST_AMT: sgstAmount,
             CGST_RATE: (gstType === "I" || gstType === "IGST") ? 0 : cgstRate,
@@ -726,7 +756,6 @@ const fetchGSTRates = useCallback(async () => {
 
           // Accumulate totals
           totalItemAmount += hsnTotalAmount;
-          totalDiscAmount += hsnDiscount;
           totalTaxableAmount += discountedHsnAmount;
           totalSgstAmount += sgstAmount;
           totalCgstAmount += cgstAmount;
@@ -741,7 +770,7 @@ const fetchGSTRates = useCallback(async () => {
     }
 
     console.log('Final calculations:');
-    console.log('Total Taxable Amount (after discount):', totalTaxableAmount);
+    console.log('Total Taxable Amount (after sequential discount):', totalTaxableAmount);
     console.log('Total GST Amount:', totalGstAmount);
     console.log('Total Item Amount:', totalItemAmount);
     console.log('Total Discount Amount:', totalDiscAmount);
@@ -754,7 +783,6 @@ const fetchGSTRates = useCallback(async () => {
     const topTableGstRows = [];
 
     if (gstType === "I" || gstType === "IGST") {
-      // IGST - Single row with correct taxable amount
       const igstRate = gstTableItems.length > 0 ? gstTableItems[0].igstRate : 0;
       topTableGstRows.push({
         id: `igst_total_${Date.now()}`,
@@ -774,7 +802,6 @@ const fetchGSTRates = useCallback(async () => {
         }
       });
     } else {
-      // CGST + SGST - Two rows
       const cgstRate = gstTableItems.length > 0 ? gstTableItems[0].cgstRate : 0;
       const sgstRate = gstTableItems.length > 0 ? gstTableItems[0].sgstRate : 0;
       
@@ -815,15 +842,34 @@ const fetchGSTRates = useCallback(async () => {
       });
     }
 
-    // Get existing non-GST terms (discounts) from topTableData
-    const existingNonGstRows = topTableData.filter(row => 
-      !row.originalData?.isGstRow && 
-      (!row.originalData?.DBFLAG || row.originalData.DBFLAG !== 'D')
-    );
+    // ========== FIXED: Preserve ALL discount terms with CORRECT sequential taxable amounts ==========
+    // Create updated discount terms with correct taxable amount for EACH discount (sequential)
+    const updatedDiscountTerms = discountTerms.map((term, index) => {
+      // Find the corresponding discount breakdown
+      const breakdown = discountBreakdown[index];
+      
+      // For the first discount, taxable amount is totalAmount
+      // For subsequent discounts, taxable amount is the amount after previous discounts
+      const taxableAmountForThisTerm = index === 0 ? totalAmount : discountBreakdown[index - 1]?.newAmount || totalAmount;
+      
+      return {
+        ...term,
+        taxable: taxableAmountForThisTerm, // Show the amount on which this discount was applied
+        taxAmount: breakdown ? breakdown.discountAmount : term.taxAmount,
+        originalData: {
+          ...term.originalData,
+          TAXABLE_AMT: taxableAmountForThisTerm, // Store the correct taxable amount for this term
+          TAX_AMT: breakdown ? breakdown.discountAmount : term.taxAmount,
+          DBFLAG: term.originalData?.DBFLAG || (term.originalData?.ORDBKTERM_ID > 0 ? 'U' : 'I')
+        }
+      };
+    });
     
-    // Combine existing terms with new GST rows
-    const updatedTopTableData = [...existingNonGstRows, ...topTableGstRows];
+    // Combine discount terms with GST rows
+    const updatedTopTableData = [...updatedDiscountTerms, ...topTableGstRows];
     setTopTableData(updatedTopTableData);
+    
+    console.log('Updated top table data with correct sequential taxable amounts:', updatedTopTableData);
 
     // Calculate final amount
     const calculatedFinalAmount = totalTaxableAmount + totalGstAmount;
@@ -841,35 +887,41 @@ const fetchGSTRates = useCallback(async () => {
       totalGstAmount: totalGstAmount
     });
 
-    // Update ORDBKTERMLIST with correct taxable amount and discount calculation
-    const updatedTermList = existingNonGstRows.map(item => {
-      // Find the original term from API response
-      const originalTerm = formData.apiResponseData?.ORDBKTERMLIST?.find(
-        term => term.ORDBKTERM_ID === item.originalData?.ORDBKTERM_ID
-      );
-      
-      // Determine DBFLAG
-      let dbFlag = item.originalData?.DBFLAG;
-      if (!dbFlag) {
-        dbFlag = (item.originalData?.ORDBKTERM_ID > 0) ? 'U' : 'I';
-      }
-      
-      // Calculate discount amount correctly based on total amount
-      let calculatedTaxAmount = item.taxAmount;
-      if (item.termPercent > 0) {
-        // Percentage-based discount
-        calculatedTaxAmount = (totalAmount * item.termPercent) / 100;
-      } else if (item.termR > 0) {
-        // Fixed amount discount
-        calculatedTaxAmount = item.termR;
-      }
-      
+    // Update ORDBKTERMLIST with correct values
+    const updatedTermListForApi = updatedDiscountTerms.map(term => {
       return {
-        ...originalTerm,
-        DBFLAG: dbFlag,
-        ORDBKTERM_ID: item.originalData?.ORDBKTERM_ID || 0,
-        TAXABLE_AMT: totalAmount,
-        TAX_AMT: calculatedTaxAmount,
+        DBFLAG: term.originalData?.DBFLAG || (term.originalData?.ORDBKTERM_ID > 0 ? 'U' : 'I'),
+        TAXGRP_NAME: 0, // 0 for discount terms
+        TAX_NAME: term.taxType || "",
+        TAX_RATE: parseFloat(term.rate) || 0,
+        TAX_FORM: "",
+        T_AOT1_D: "",
+        T_AOT1_R: 0,
+        TERMGRP_NAME: term.termGroup || "",
+        TERM_NAME: term.term || "",
+        TERM_PERCENT: parseFloat(term.termPercent) || 0,
+        TERM_FIX_AMT: parseFloat(term.termR) || 0,
+        TERM_RATE: 0,
+        TERM_PERQTY: 0,
+        TERM_DESC: term.tax || "",
+        TERM_OPR: "+",
+        TAXABLE_AMT: term.taxable, // Use the sequential taxable amount
+        TAX_AMT: term.taxAmount,
+        AOT1_AMT: 0,
+        TAX_KEY: "",
+        STATUS: "1",
+        TERM_KEY: termNameToKey[term.term] || "",
+        TAXGRP_KEY: "",
+        TERMGRP_KEY: termGrpNameToKey[term.termGroup] || "",
+        TERM_VAL_YN: term.term || "1",
+        TAXGRP_ABRV: "",
+        ORDBKTERM_ID: term.originalData?.ORDBKTERM_ID || 0,
+        CHG_TAXABLE: " ",
+        TAX_ABRV: "",
+        T_AOT2_D: "",
+        T_AOT2_R: 0,
+        AOT2_AMT: 0,
+        GST_APP: "Y",
         ORDBK_KEY: formData.ORDBK_KEY
       };
     });
@@ -890,7 +942,7 @@ const fetchGSTRates = useCallback(async () => {
       apiResponseData: {
         ...prev.apiResponseData,
         ORDBKGSTLIST: ordbkGstList,
-        ORDBKTERMLIST: updatedTermList
+        ORDBKTERMLIST: updatedTermListForApi
       }
     }));
 
@@ -905,7 +957,7 @@ const fetchGSTRates = useCallback(async () => {
   } finally {
     setIsGstCalculating(false);
   }
-}, [formData, mode, topTableData, showSnackbar, isGstCalculating]);
+}, [formData, mode, topTableData, showSnackbar, isGstCalculating, termNameToKey, termGrpNameToKey]);
 
 
 const clearGSTData = useCallback(() => {
