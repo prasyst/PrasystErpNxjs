@@ -2,12 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import {
-    Box,
-    TextField,
-    Button,
-    Paper,
-    Typography,
-    Grid
+    Box, TextField, Button, Paper, Typography, Grid
 } from '@mui/material';
 import FormGroup from '@mui/material/FormGroup';
 import FormControlLabel from '@mui/material/FormControlLabel';
@@ -20,6 +15,7 @@ import axiosInstance from '../../../../lib/axios';
 import KeyboardArrowLeftIcon from "@mui/icons-material/KeyboardArrowLeft";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import AutoVibe from '@/GlobalFunction/CustomAutoComplete/AutoVibe';
+import { useUserPermissions } from '@/app/hooks/useUserPermissions';
 
 const ServiceComplaint = () => {
 
@@ -49,6 +45,8 @@ const ServiceComplaint = () => {
     const searchParams = useSearchParams();
     const Complaint = searchParams.get('TKTSERVICEID');
     const CO_ID = localStorage.getItem('CO_ID');
+    const { hasSpecificPermission, loading: permissionsLoading } = useUserPermissions();
+    const moduleName = 'service/complaint';
 
     const fetchComplaintData = useCallback(async (currentComplaintId, flag = "R") => {
 
@@ -93,7 +91,6 @@ const ServiceComplaint = () => {
                 }
             }
         } catch (error) {
-            console.error('Error fetching data:', error);
             toast.error('Error fetching data. Please try again.');
         }
     }, [CO_ID, router]);
@@ -127,17 +124,14 @@ const ServiceComplaint = () => {
         const fetchCat = async () => {
             try {
                 const response = await axiosInstance.post(`TktCat/GetTktCatDrp`);
-                console.log("API response:", response.data.DATA);
                 if (
-                    response.data.STATUS === 0 &&
-                    response.data.RESPONSESTATUSCODE === 1
+                    response.data.STATUS === 0 && response.data.RESPONSESTATUSCODE === 1
                 ) {
                     setCats(response.data.DATA);
                 } else {
                     toast.error("Failed to fetch Ticket Category Name");
                 }
             } catch (error) {
-                console.error("Error fetching Ticket Category Name", error);
                 toast.error("Error fetching Ticket Category Name. Please try again.");
             }
         };
@@ -153,17 +147,14 @@ const ServiceComplaint = () => {
                         TktCatId: formData.TKTCATID,
                     }
                     );
-                    console.log("API response:", response.data.DATA);
                     if (
-                        response.data.STATUS === 0 &&
-                        response.data.RESPONSESTATUSCODE === 1
+                        response.data.STATUS === 0 && response.data.RESPONSESTATUSCODE === 1
                     ) {
                         setSCats(response.data.DATA);
                     } else {
                         toast.error("Failed to fetch Ticket Sub Category Name");
                     }
                 } catch (error) {
-                    console.error("Error fetching Ticket Sub Category Name", error);
                     toast.error("Error fetching Ticket Sub Category Name. Please try again.");
                 }
             }
@@ -175,17 +166,14 @@ const ServiceComplaint = () => {
         const fetchSeverity = async () => {
             try {
                 const response = await axiosInstance.post(`TktService/GetTktSvrtyDrp`);
-                console.log("API response:", response.data.DATA);
                 if (
-                    response.data.STATUS === 0 &&
-                    response.data.RESPONSESTATUSCODE === 1
+                    response.data.STATUS === 0 && response.data.RESPONSESTATUSCODE === 1
                 ) {
                     setSev(response.data.DATA);
                 } else {
                     toast.error("Failed to fetch Ticket Severity");
                 }
             } catch (error) {
-                console.error("Error fetching Ticket Severity", error);
                 toast.error("Error fetching Ticket Severity. Please try again.");
             }
         };
@@ -197,17 +185,14 @@ const ServiceComplaint = () => {
         const fetchType = async () => {
             try {
                 const response = await axiosInstance.post(`TktService/GetTktTypeDrp`);
-                console.log("API response:", response.data.DATA);
                 if (
-                    response.data.STATUS === 0 &&
-                    response.data.RESPONSESTATUSCODE === 1
+                    response.data.STATUS === 0 && response.data.RESPONSESTATUSCODE === 1
                 ) {
                     setType(response.data.DATA);
                 } else {
                     toast.error("Failed to fetch Ticket Type");
                 }
             } catch (error) {
-                console.error("Error fetching Ticket Type", error);
                 toast.error("Error fetching Ticket Type. Please try again.");
             }
         };
@@ -219,7 +204,6 @@ const ServiceComplaint = () => {
         const fetchTag = async () => {
             try {
                 const response = await axiosInstance.post(`TktService/GetTktTagDrp`);
-                console.log("API response:", response.data.DATA);
                 if (
                     response.data.STATUS === 0 &&
                     response.data.RESPONSESTATUSCODE === 1
@@ -229,7 +213,6 @@ const ServiceComplaint = () => {
                     toast.error("Failed to fetch Ticket Tag");
                 }
             } catch (error) {
-                console.error("Error fetching Ticket Tag", error);
                 toast.error("Error fetching Ticket Tag. Please try again.");
             }
         };
@@ -293,7 +276,6 @@ const ServiceComplaint = () => {
             REMARK: ''
         });
         setCurrentComplaintId(null);
-
     };
 
     const handleEdit = () => {
@@ -315,7 +297,7 @@ const ServiceComplaint = () => {
     };
 
     const handleExit = () => {
-        router.push('/masterpage?activeTab=ticketing');
+        router.push('/ticketpage');
     };
 
     const handleTable = () => {
@@ -499,7 +481,7 @@ const ServiceComplaint = () => {
 
                     <Grid sx={{ display: "flex", justifyContent: "end", marginRight: '-6px' }}>
                         <CrudButton
-                            moduleName=""
+                            moduleName={moduleName}
                             mode={mode}
                             onAdd={handleAdd}
                             onEdit={handleEdit}
@@ -508,6 +490,10 @@ const ServiceComplaint = () => {
                             readOnlyMode={mode === "view"}
                             onPrevious={handlePrevious}
                             onNext={handleNext}
+                            canAdd={hasSpecificPermission(moduleName, 'ADD')}
+                            canEdit={hasSpecificPermission(moduleName, 'EDIT')}
+                            canDelete={hasSpecificPermission(moduleName, 'DELETE')}
+                            canView={hasSpecificPermission(moduleName, 'VIEW')}
                         />
                     </Grid>
                 </Grid>
@@ -713,7 +699,6 @@ const ServiceComplaint = () => {
                             }}
                         />
                     </Grid>
-
                 </Grid>
 
                 <Grid sx={{
@@ -774,13 +759,10 @@ const ServiceComplaint = () => {
                                 onClick={handleCancel}>
                                 Cancel
                             </Button>
-
                         </>
                     )}
                 </Grid>
-
             </Grid >
-
         </Grid >
     );
 };

@@ -2,12 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import {
-    Box,
-    TextField,
-    Button,
-    Paper,
-    Typography,
-    Grid
+    Box, TextField, Button, Paper, Typography, Grid
 } from '@mui/material';
 import FormGroup from '@mui/material/FormGroup';
 import FormControlLabel from '@mui/material/FormControlLabel';
@@ -20,6 +15,7 @@ import axiosInstance from '../../../../lib/axios';
 import KeyboardArrowLeftIcon from "@mui/icons-material/KeyboardArrowLeft";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import AutoVibe from '@/GlobalFunction/CustomAutoComplete/AutoVibe';
+import { useUserPermissions } from '@/app/hooks/useUserPermissions';
 
 const TicketCatMst = () => {
 
@@ -39,6 +35,8 @@ const TicketCatMst = () => {
     const searchParams = useSearchParams();
     const TicketCat = searchParams.get('TKTCATID');
     const CO_ID = localStorage.getItem('CO_ID');
+    const { hasSpecificPermission, loading: permissionsLoading } = useUserPermissions();
+    const moduleName = 'TCM';
 
     const fetchTicketCatData = useCallback(async (currentTicCatId, flag = "R") => {
 
@@ -201,7 +199,7 @@ const TicketCatMst = () => {
     };
 
     const handleExit = () => {
-        router.push('/masterpage?activeTab=ticketing');
+        router.push('/ticketpage');
     };
 
     const handleTable = () => {
@@ -377,7 +375,7 @@ const TicketCatMst = () => {
 
                     <Grid sx={{ display: "flex", justifyContent: "end", marginRight: '-6px' }}>
                         <CrudButton
-                            moduleName=""
+                            moduleName={moduleName}
                             mode={mode}
                             onAdd={handleAdd}
                             onEdit={handleEdit}
@@ -386,6 +384,10 @@ const TicketCatMst = () => {
                             readOnlyMode={mode === "view"}
                             onPrevious={handlePrevious}
                             onNext={handleNext}
+                            canAdd={hasSpecificPermission(moduleName, 'ADD')}
+                            canEdit={hasSpecificPermission(moduleName, 'EDIT')}
+                            canDelete={hasSpecificPermission(moduleName, 'DELETE')}
+                            canView={hasSpecificPermission(moduleName, 'VIEW')}
                         />
                     </Grid>
                 </Grid>
@@ -538,9 +540,7 @@ const TicketCatMst = () => {
                         </>
                     )}
                 </Grid>
-
             </Grid >
-
         </Grid >
     );
 };
