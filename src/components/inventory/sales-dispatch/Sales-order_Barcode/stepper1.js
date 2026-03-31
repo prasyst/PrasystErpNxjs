@@ -2928,16 +2928,15 @@ const handleInputChange = (e) => {
       // Fetch party details for auto-population
       fetchPartyDetailsForAutoFill(partyKey);
 
-      setFormData(prev => ({
-        ...prev,
-        PARTY_KEY: partyKey,
-        Party: value,
-        // Only auto-populate shipping party if it's empty or same as current party
-        SHIPPING_PARTY: prev.SHIPPING_PARTY === prev.Party ? value : prev.SHIPPING_PARTY,
-        // Don't auto-set shipping party key if shipping party is different
-        SHP_PARTY_KEY: prev.SHIPPING_PARTY === prev.Party ? partyKey : prev.SHP_PARTY_KEY,
-        // Branch will be auto-selected in fetchPartyDetails
-      }));
+     setFormData(prev => ({
+    ...prev,
+    PARTY_KEY: partyKey,
+    Party: value,
+    // FIXED: Always update shipping party to match the selected party
+    SHIPPING_PARTY: value,  // Changed from conditional to always update
+    SHP_PARTY_KEY: partyKey,  // Changed from conditional to always update
+    // Branch will be auto-selected in fetchPartyDetails
+  }));
     }
 
     // If branch is selected, only auto-select shipping place if it's currently empty or same as branch
