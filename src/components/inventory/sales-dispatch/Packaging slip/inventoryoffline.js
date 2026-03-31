@@ -1596,7 +1596,7 @@ const handleDelete = async () => {
 
   // Handle Next button click
   const handleNext = () => {
-    if (tabIndex < 2) {
+    if (tabIndex < 3) {
       setTabIndex(tabIndex + 1);
     }
   };
