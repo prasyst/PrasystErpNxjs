@@ -21,7 +21,7 @@ import {
   Autocomplete,
   Tabs,
   Tab,
-  Radio, Checkbox,
+  Radio, Checkbox, CircularProgress,
   Tooltip,
   useTheme, FormControl, FormLabel, RadioGroup, FormControlLabel
 } from '@mui/material';
@@ -67,7 +67,12 @@ const Tna = () => {
   const [filteredRmData, setFilteredRmData] = useState([]);
   const [filteredTrimData, setFilteredTrimData] = useState([]);
   const router = useRouter();
+  const [loadingMainData, setLoadingMainData] = useState(false);
+  const [loadingRoutingData, setLoadingRoutingData] = useState(false);
+  const [loadingRmData, setLoadingRmData] = useState(false);
+  const [loadingTrimData, setLoadingTrimData] = useState(false);
 
+console.log('filteredRoutingData', filteredRoutingData)
   useEffect(() => {
     setIsClient(true);
     setCobrid(localStorage.getItem('COBR_ID') || '');
@@ -188,6 +193,7 @@ const Tna = () => {
   }, [selectedBranch, selectedParty])
 
   const handleGetData = async () => {
+    setLoadingMainData(true);
     try {
       const payload = {
         "PageNumber": 1,
@@ -260,7 +266,10 @@ const Tna = () => {
     } catch (error) {
       console.error('Error fetching orders:', error);
       return [];
+    } finally {
+      setLoadingMainData(false);
     }
+
   }
 
   const handleRadioChange = async (row) => {
@@ -295,7 +304,8 @@ const Tna = () => {
       };
 
       const response = await axiosInstance.post('/TNA/GetTNAProstg?currentPage=1&limit=25', payload);
-      const result = response.data.DATA.map((item) => ({
+      if(response.data?.DATA && response.data.DATA.length > 0){
+       const result = response.data.DATA.map((item) => ({
         REC_DOZ: item.REC_DOZ,
         PLAN_DT: item.PLAN_DT,
         EST_DT: item.EST_DT,
@@ -315,11 +325,15 @@ const Tna = () => {
         PROSTG_KEY: item.PROSTG_KEY,
         TNADTL_ID: item.TNADTL_ID
       }));
-
-      setRoutingData(result)
+        setRoutingData(result)
       setFilteredRoutingData(result);
       setEditableRoutingData(result);
-      setRmData([]);
+      }else{
+        setRoutingData([]);
+      setFilteredRoutingData([]);
+      setEditableRoutingData([]);
+      }
+
     } catch (error) {
       console.error('Error fetching routing data:', error);
     }
@@ -329,6 +343,7 @@ const Tna = () => {
       setRmData([]);
       return;
     }
+    setLoadingRmData(true);
     try {
       const payload = {
         "PageNumber": 1,
@@ -372,7 +387,7 @@ const Tna = () => {
       console.error('Error fetching RM data:', error);
       setRmData([]);
     } finally {
-
+      setLoadingRmData(false);
     }
   };
   const fetchTRimData = async () => {
@@ -380,6 +395,7 @@ const Tna = () => {
       setTrimData([]);
       return;
     }
+    setLoadingTrimData(true);
     try {
       const payload = {
         "PageNumber": 1,
@@ -421,7 +437,7 @@ const Tna = () => {
         ITMSUBGRP_KEY: item.ITMSUBGRP_KEY,
         ITMCAT_KEY: item.ITMCAT_KEY,
         TNATRIM_ID: item.TNATRIM_ID,
-        ITM_KEY:item.ITM_KEY
+        ITM_KEY: item.ITM_KEY
       })) || [];
 
       setTrimData(result);
@@ -431,7 +447,7 @@ const Tna = () => {
       console.error('Error fetching RM data:', error);
       setTrimData([]);
     } finally {
-
+      setLoadingTrimData(false);
     }
   };
 
@@ -471,14 +487,6 @@ const Tna = () => {
   };
 
 
-  // const handleRoutingInputChange = (index, field, value) => {
-  //   const newData = [...editableRoutingData];
-  //   newData[index] = {
-  //     ...newData[index],
-  //     [field]: value
-  //   };
-  //   setEditableRoutingData(newData);
-  // };
   const handleRoutingInputChange = (index, field, value) => {
     const newData = [...editableRoutingData];
     newData[index] = {
@@ -650,7 +658,7 @@ const Tna = () => {
             "RATE": rm.RATE || 0,
             "AMOUNT": rm.AMOUNT || 0,
             "REMK": rm.REMK || "",
-             "STKST": rm.STKST ? 1 : 0,
+            "STKST": rm.STKST ? 1 : 0,
             "STK_QTY": rm.STK_QTY || 0
           });
         });
@@ -817,6 +825,7 @@ const Tna = () => {
     else if (activeTab === 2) {
       const filtered = trimData.filter(item => {
         return (
+          (item.ITM_KEY && item.ITM_KEY.toLowerCase().includes(lowercasedQuery)) ||
           (item.ITM_DETAIL && item.ITM_DETAIL.toLowerCase().includes(lowercasedQuery)) ||
           (item.ITMSUBGRP_NAME && item.ITMSUBGRP_NAME.toLowerCase().includes(lowercasedQuery)) ||
           (item.ACCSHADE_NAME && item.ACCSHADE_NAME.toLowerCase().includes(lowercasedQuery)) ||
@@ -836,8 +845,8 @@ const Tna = () => {
     }
   };
 
-  const handleBack=()=>{
-    router.push('/dashboard');
+  const handleBack = () => {
+    router.push('/tnapage/tnatable');
   }
 
   return (
@@ -1003,7 +1012,7 @@ const Tna = () => {
                 <Box sx={{
                   display: 'flex',
                   alignItems: 'center',
-                  gap:{xs:1,md: 0.3},
+                  gap: { xs: 1, md: 0.3 },
                   mt: { xs: 0, md: '20px' }
                 }}>
 
@@ -1022,7 +1031,7 @@ const Tna = () => {
                     >
                       <FormControlLabel
                         value="item"
-                        control={<Radio size="small" sx={{ p:{xs:0.5,md: 0.25} }} />}
+                        control={<Radio size="small" sx={{ p: { xs: 0.5, md: 0.25 } }} />}
                         label="Item"
                         sx={{
                           m: 0,
@@ -1039,7 +1048,7 @@ const Tna = () => {
                           m: 0,
                           "& .MuiFormControlLabel-label": {
                             fontSize: "0.80rem",
-                        
+
                           },
                         }}
                       />
@@ -1405,7 +1414,7 @@ const Tna = () => {
                     onChange={(e) => handleSearch(e.target.value)}
                     sx={{
                       width: { xs: '100%', sm: '200px' },
-                      marginRight:{xs:'none',sm:'10px'},
+                      marginRight: { xs: 'none', sm: '10px' },
                       '& .MuiOutlinedInput-root': {
                         height: { xs: '32px', sm: '30px' },
                         fontSize: { xs: '0.78rem', sm: '1rem' },
@@ -1414,9 +1423,9 @@ const Tna = () => {
                         },
                         '& fieldset': {
                           borderColor: '#3d3b3b',
-                          borderWidth: {xs:'1px',sm:'2px'}
+                          borderWidth: { xs: '1px', sm: '2px' }
                         },
-                        
+
                       }
                     }}
 
@@ -1489,131 +1498,140 @@ const Tna = () => {
                         ))}
                       </Box>
 
-                      {filteredRoutingData.map((row, index) => (
-                        <Box
-                          key={index}
-                          sx={{
-                            display: 'contents',
-                            '& > div': {
-                              borderRight: '1px solid',
-                              borderBottom: '1px solid',
-                              borderColor: 'divider',
-                              display: 'flex',
-                              alignItems: 'center',
-                              // justifyContent: 'center',
-                              minHeight: '26px',
-                            },
-                            '& > div:last-child': {
-                              borderRight: 'none',
-                            },
-                            '&:nth-of-type(even) > div': {
-                              backgroundColor: '#f8fafc',
-                            },
-                            '&:hover > div': {
-                              backgroundColor: '#f1f5f9',
-                            },
-                          }}
-                        >
-                          <Box sx={{ px: 1 ,justifyContent:'flex-start'}}>
-                            <Chip
-                              label={row.PROSTGGRP_NAME}
-                              size="small"
-                              sx={{
-                                backgroundColor: '#e0f2fe',
-                                color: '#0369a1',
-                                fontWeight: 500,
-                               justifyContent:'flex-start'
-                              }}
-                            />
+                      {filteredRoutingData.length === 0 ?
+                        (<Box sx={{
+                          gridColumn: '1 / -1',
+                          display: 'flex',
+                          justifyContent: 'center',
+                          alignItems: 'center',
+                          p: 4,
+                          textAlign: 'center'
+                        }}>No data Found</Box>) : 
+                        (filteredRoutingData.map((row, index) => (
+                          <Box
+                            key={index}
+                            sx={{
+                              display: 'contents',
+                              '& > div': {
+                                borderRight: '1px solid',
+                                borderBottom: '1px solid',
+                                borderColor: 'divider',
+                                display: 'flex',
+                                alignItems: 'center',
+                                // justifyContent: 'center',
+                                minHeight: '26px',
+                              },
+                              '& > div:last-child': {
+                                borderRight: 'none',
+                              },
+                              '&:nth-of-type(even) > div': {
+                                backgroundColor: '#f8fafc',
+                              },
+                              '&:hover > div': {
+                                backgroundColor: '#f1f5f9',
+                              },
+                            }}
+                          >
+                            <Box sx={{ px: 1, justifyContent: 'flex-start' }}>
+                              <Chip
+                                label={row.PROSTGGRP_NAME}
+                                size="small"
+                                sx={{
+                                  backgroundColor: '#e0f2fe',
+                                  color: '#0369a1',
+                                  fontWeight: 500,
+                                  justifyContent: 'flex-start'
+                                }}
+                              />
+                            </Box>
+                            <Box sx={{ px: 1 }}>
+                              <Tooltip title={row.PROSTG_NAME} arrow>
+                                <Box sx={{
+                                  width: '100%',
+                                  maxWidth: '100%',
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis',
+                                  whiteSpace: 'nowrap',
+                                  textAlign: 'left',
+                                }}>
+                                  {row.PROSTG_NAME}
+                                </Box>
+                              </Tooltip>
+                            </Box>
+                            <Box sx={{ justifyContent: 'center' }}>
+                              <Chip
+                                label={row.DAYS}
+                                size="small"
+                                sx={{
+                                  fontWeight: 600,
+                                  backgroundColor: '#fef3c7',
+                                  color: '#92400e',
+                                }}
+                              />
+                            </Box>
+                            <Box sx={{ px: 1, justifyContent: 'center' }}>
+                              {row.PLAN_DT ? formatDate(row.PLAN_DT) : '-'}
+                            </Box>
+                            <Box sx={{ px: 1 }}>
+                              <TextField
+                                type="date"
+                                size="small"
+                                value={editableRoutingData[index]?.EST_DT?.split('T')[0] || ''}
+                                onChange={(e) => handleRoutingInputChange(index, 'EST_DT', e.target.value)}
+                                sx={{
+                                  '& .MuiInputBase-input': {
+                                    padding: '4px 8px',
+                                    fontSize: '0.875rem'
+                                  }
+                                }}
+                              />
+                            </Box>
+                            <Box sx={{ px: 1, justifyContent: 'center' }}>
+                              {row.ACT_DT ? formatDate(row.ACT_DT) : '-'}
+                            </Box>
+                            <Box sx={{ px: 1, justifyContent: 'center' }}>
+                              <TextField
+                                size="small"
+                                value={editableRoutingData[index]?.REMK || ''}
+                                onChange={(e) => handleRoutingInputChange(index, 'REMK', e.target.value)}
+                                sx={{
+                                  '& .MuiInputBase-input': {
+                                    padding: '4px 8px',
+                                    fontSize: '0.875rem'
+                                  }
+                                }}
+                              />
+                            </Box>
+                            <Box sx={{ px: 1, fontWeight: 600 }}>
+                              <Tooltip title={row.PROD_OUT_QTY} arrow>
+                                <Box sx={{
+                                  width: '100%',
+                                  maxWidth: '100%',
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis',
+                                  whiteSpace: 'nowrap',
+                                  textAlign: 'center',
+                                }}>
+                                  {row.PROD_OUT_QTY}
+                                </Box>
+                              </Tooltip>
+                            </Box>
+                            <Box sx={{ px: 1, fontWeight: 600 }}>
+                              <Tooltip title={row.BAL_QTY} arrow>
+                                <Box sx={{
+                                  width: '100%',
+                                  maxWidth: '100%',
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis',
+                                  whiteSpace: 'nowrap',
+                                  textAlign: 'center',
+                                }}>
+                                  {row.BAL_QTY}
+                                </Box>
+                              </Tooltip>
+                            </Box>
                           </Box>
-                          <Box sx={{ px: 1 }}>
-                            <Tooltip title={row.PROSTG_NAME} arrow>
-                              <Box sx={{
-                                width: '100%',
-                                maxWidth: '100%',
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                                whiteSpace: 'nowrap',
-                                textAlign: 'left',
-                              }}>
-                                {row.PROSTG_NAME}
-                              </Box>
-                            </Tooltip>
-                          </Box>
-                          <Box sx={{ justifyContent: 'center' }}>
-                            <Chip
-                              label={row.DAYS}
-                              size="small"
-                              sx={{
-                                fontWeight: 600,
-                                backgroundColor: '#fef3c7',
-                                color: '#92400e',
-                              }}
-                            />
-                          </Box>
-                          <Box sx={{ px: 1,justifyContent: 'center' }}>
-                            {row.PLAN_DT ? formatDate(row.PLAN_DT) : '-'}
-                          </Box>
-                          <Box sx={{ px: 1 }}>
-                            <TextField
-                              type="date"
-                              size="small"
-                              value={editableRoutingData[index]?.EST_DT?.split('T')[0] || ''}
-                              onChange={(e) => handleRoutingInputChange(index, 'EST_DT', e.target.value)}
-                              sx={{
-                                '& .MuiInputBase-input': {
-                                  padding: '4px 8px',
-                                  fontSize: '0.875rem'
-                                }
-                              }}
-                            />
-                          </Box>
-                          <Box sx={{ px: 1 ,justifyContent: 'center'}}>
-                            {row.ACT_DT ? formatDate(row.ACT_DT) : '-'}
-                          </Box>
-                          <Box sx={{ px: 1,justifyContent: 'center' }}>
-                            <TextField
-                              size="small"
-                              value={editableRoutingData[index]?.REMK || ''}
-                              onChange={(e) => handleRoutingInputChange(index, 'REMK', e.target.value)}
-                              sx={{
-                                '& .MuiInputBase-input': {
-                                  padding: '4px 8px',
-                                  fontSize: '0.875rem'
-                                }
-                              }}
-                            />
-                          </Box>
-                          <Box sx={{ px: 1, fontWeight: 600 }}>
-                            <Tooltip title={row.PROD_OUT_QTY} arrow>
-                              <Box sx={{
-                                width: '100%',
-                                maxWidth: '100%',
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                                whiteSpace: 'nowrap',
-                                textAlign: 'center',
-                              }}>
-                                {row.PROD_OUT_QTY}
-                              </Box>
-                            </Tooltip>
-                          </Box>
-                          <Box sx={{ px: 1, fontWeight: 600 }}>
-                            <Tooltip title={row.BAL_QTY} arrow>
-                              <Box sx={{
-                                width: '100%',
-                                maxWidth: '100%',
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                                whiteSpace: 'nowrap',
-                                textAlign: 'center',
-                              }}>
-                                {row.BAL_QTY}
-                              </Box>
-                            </Tooltip>
-                          </Box>
-                        </Box>
-                      ))}
+                        )))}
                     </Box>
                   </TableContainer>
                 </Box>
@@ -1630,58 +1648,47 @@ const Tna = () => {
                       borderRadius: 2,
                       border: '1px solid',
                       borderColor: 'divider',
+                      position: 'relative',
                     }}
                   >
-                    <Box
-                      sx={{
-                        display: 'grid',
-                        gridTemplateColumns: '60px repeat(10, minmax(140px, 1fr))',
-                        minWidth: '100%',
-                        width: '100%',
-                        fontSize: '15px',
-                      }}
-                    >
+                    {loadingRmData ? (
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          justifyContent: 'center',
+                          alignItems: 'center',
+                          height: '100%',
+                          minHeight: 150,
+                        }}
+                      >
+                        <CircularProgress size={40} />
+                      </Box>
+                    ) : (
+                      <Box
+                        sx={{
+                          display: 'grid',
+                          gridTemplateColumns: '60px repeat(10, minmax(140px, 1fr))',
+                          minWidth: '100%',
+                          width: '100%',
+                          fontSize: '15px',
+                        }}
+                      >
 
-                      <Box sx={{
-                        display: 'contents',
-                        position: 'sticky',
-                        top: 0,
-                        zIndex: 1,
-                      }}>
-                        <Box
-                          sx={{
-                            gridColumn: '1',
-                            p: 0.6,
-                            textAlign: 'center',
-                            fontWeight: 600,
-                            color: 'rgba(0, 0, 0, 0.87)',
-                            backgroundColor: '#f1f5f9',
-                            borderRight: '1px solid',
-                            borderBottom: '1px solid',
-                            borderColor: 'divider',
-                            whiteSpace: 'nowrap',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            wordBreak: 'break-word',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                          }}
-                        >
-                          Select
-                        </Box>
-
-                        {['RM_NAME', 'DESIGN',  'REMK','QTY', 'BAL_QTY', 'PO_QTY', 'GRN_QTY', 'STK_QTY', 'RATE', 'AMOUNT'].map((header, idx) => (
+                        <Box sx={{
+                          display: 'contents',
+                          position: 'sticky',
+                          top: 0,
+                          zIndex: 1,
+                        }}>
                           <Box
-                            key={header}
                             sx={{
-                              gridColumn: `${idx + 2}`,
+                              gridColumn: '1',
                               p: 0.6,
                               textAlign: 'center',
                               fontWeight: 600,
                               color: 'rgba(0, 0, 0, 0.87)',
                               backgroundColor: '#f1f5f9',
-                              borderRight: idx === 9 ? 'none' : '1px solid',
+                              borderRight: '1px solid',
                               borderBottom: '1px solid',
                               borderColor: 'divider',
                               whiteSpace: 'nowrap',
@@ -1693,193 +1700,237 @@ const Tna = () => {
                               textOverflow: 'ellipsis',
                             }}
                           >
-                            {header}
+                            Select
                           </Box>
-                        ))}
-                      </Box>
 
-                      {filteredRmData.map((row, index) => (
-                        <Box
-                          key={index}
-                          sx={{
-                            display: 'contents',
-                            '& > div': {
+                          {['RM_NAME', 'DESIGN', 'REMK', 'QTY', 'BAL_QTY', 'PO_QTY', 'GRN_QTY', 'STK_QTY', 'RATE', 'AMOUNT'].map((header, idx) => (
+                            <Box
+                              key={header}
+                              sx={{
+                                gridColumn: `${idx + 2}`,
+                                p: 0.6,
+                                textAlign: 'center',
+                                fontWeight: 600,
+                                color: 'rgba(0, 0, 0, 0.87)',
+                                backgroundColor: '#f1f5f9',
+                                borderRight: idx === 9 ? 'none' : '1px solid',
+                                borderBottom: '1px solid',
+                                borderColor: 'divider',
+                                whiteSpace: 'nowrap',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                wordBreak: 'break-word',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                              }}
+                            >
+                              {header}
+                            </Box>
+                          ))}
+                        </Box>
+
+                        {filteredRmData.length === 0 ? (
+                          <Box
+                            sx={{
+                              gridColumn: '1 / -1', 
+                              display: 'flex',
+                              justifyContent: 'center',
+                              alignItems: 'center',
+                              minHeight: 180,
+                              color: 'text.secondary',
+                              fontSize: '0.875rem',
+                              backgroundColor: '#fafafa',
                               borderRight: '1px solid',
                               borderBottom: '1px solid',
                               borderColor: 'divider',
-                              display: 'flex',
-                              alignItems: 'center',
-                              // justifyContent: 'center',
-                              minHeight: '26px',
-                            },
-                            '& > div:last-child': {
-                              borderRight: 'none',
-                            },
-                            '&:nth-of-type(even) > div': {
-                              backgroundColor: '#f8fafc',
-                            },
-                            '&:hover > div': {
-                              backgroundColor: '#f1f5f9',
-                            },
-                          }}
-                        >
-                          <Box sx={{ px: 0.8 }}>
-                            <Checkbox
-                              size="small"
-                              checked={editableRmData[index]?.STKST || false}
-                              onChange={(e) => handleRmInputChange(index, 'STKST', e.target.checked)}
-                              sx={{
-                                '&.MuiCheckbox-root': {
-                                  padding: '1px',
-                                 textAlign: 'center',
-                                }
-                              }}
-                            />
+                            }}
+                          >
+                            No records found
                           </Box>
+                        ) : (
+                          filteredRmData.map((row, index) => (
+                            <Box
+                              key={index}
+                              sx={{
+                                display: 'contents',
+                                '& > div': {
+                                  borderRight: '1px solid',
+                                  borderBottom: '1px solid',
+                                  borderColor: 'divider',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  minHeight: '26px',
+                                },
+                                '& > div:last-child': {
+                                  borderRight: 'none',
+                                },
+                                '&:nth-of-type(even) > div': {
+                                  backgroundColor: '#f8fafc',
+                                },
+                                '&:hover > div': {
+                                  backgroundColor: '#f1f5f9',
+                                },
+                              }}
+                            >
+                              <Box sx={{ px: 0.8 }}>
+                                <Checkbox
+                                  size="small"
+                                  checked={editableRmData[index]?.STKST || false}
+                                  onChange={(e) => handleRmInputChange(index, 'STKST', e.target.checked)}
+                                  sx={{
+                                    '&.MuiCheckbox-root': {
+                                      padding: '1px',
+                                      textAlign: 'center',
+                                    }
+                                  }}
+                                />
+                              </Box>
 
-                          <Box sx={{ px: 1,justifyContent:'flex-start'}}>
-                            <Chip
-                              label={row.FAB_NAME}
-                              size="small"
-                              sx={{
-                                backgroundColor: '#e0f2fe',
-                                color: '#0369a1',
-                                fontWeight: 500
-                              }}
-                            />
-                          </Box>
-                          <Box sx={{ px: 1,justifyContent:'flex-start' }}>
-                            <Tooltip title={row.DESIGN} arrow>
-                              <Box sx={{
-                                width: '100%',
-                                maxWidth: '100%',
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                                whiteSpace: 'nowrap',
-                                // textAlign: 'center',
-                              }}>
-                                {row.DESIGN}
+                              <Box sx={{ px: 1, justifyContent: 'flex-start' }}>
+                                <Chip
+                                  label={row.FAB_NAME}
+                                  size="small"
+                                  sx={{
+                                    backgroundColor: '#e0f2fe',
+                                    color: '#0369a1',
+                                    fontWeight: 500
+                                  }}
+                                />
                               </Box>
-                            </Tooltip>
-                          </Box>
-                          
-                          <Box sx={{ px: 1 }}>
-                            <TextField
-                              size="small"
-                              value={editableRmData[index]?.REMK || ''}
-                              onChange={(e) => handleRmInputChange(index, 'REMK', e.target.value)}
-                              sx={{
-                                '& .MuiInputBase-input': {
-                                  padding: '4px 8px',
-                                  fontSize: '0.875rem'
-                                }
-                              }}
-                            />
-                          </Box>
-                          <Box sx={{justifyContent:'center'}}>
-                            <Chip
-                              label={row.QUANTITY}
-                              size="small"
-                              sx={{
-                                fontWeight: 600,
-                                backgroundColor: '#fef3c7',
-                                color: '#92400e',
-                              }}
-                            />
-                          </Box>
-                          <Box sx={{ px: 1 }}>
-                            <Tooltip title={row.BAL_QTY} arrow>
-                              <Box sx={{
-                                width: '100%',
-                                maxWidth: '100%',
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                                whiteSpace: 'nowrap',
-                                textAlign: 'center',
-                              }}>
-                                {row.BAL_QTY}
+                              <Box sx={{ px: 1, justifyContent: 'flex-start' }}>
+                                <Tooltip title={row.DESIGN} arrow>
+                                  <Box sx={{
+                                    width: '100%',
+                                    maxWidth: '100%',
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis',
+                                    whiteSpace: 'nowrap',
+                                  }}>
+                                    {row.DESIGN}
+                                  </Box>
+                                </Tooltip>
                               </Box>
-                            </Tooltip>
-                          </Box>
-                          <Box sx={{ px: 1, fontWeight: 600 }}>
-                            <Tooltip title={row.PO_QTY} arrow>
-                              <Box sx={{
-                                width: '100%',
-                                maxWidth: '100%',
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                                whiteSpace: 'nowrap',
-                                textAlign: 'center',
-                              }}>
-                                {row.PO_QTY}
+
+                              <Box sx={{ px: 1 }}>
+                                <TextField
+                                  size="small"
+                                  value={editableRmData[index]?.REMK || ''}
+                                  onChange={(e) => handleRmInputChange(index, 'REMK', e.target.value)}
+                                  sx={{
+                                    '& .MuiInputBase-input': {
+                                      padding: '4px 8px',
+                                      fontSize: '0.875rem'
+                                    }
+                                  }}
+                                />
                               </Box>
-                            </Tooltip>
-                          </Box>
-                          <Box sx={{ px: 1, fontWeight: 600 }}>
-                            <Tooltip title={row.GRN_QTY} arrow>
-                              <Box sx={{
-                                width: '100%',
-                                maxWidth: '100%',
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                                whiteSpace: 'nowrap',
-                                textAlign: 'center',
-                              }}>
-                                {row.GRN_QTY}
+                              <Box sx={{ justifyContent: 'center' }}>
+                                <Chip
+                                  label={row.QUANTITY}
+                                  size="small"
+                                  sx={{
+                                    fontWeight: 600,
+                                    backgroundColor: '#fef3c7',
+                                    color: '#92400e',
+                                  }}
+                                />
                               </Box>
-                            </Tooltip>
-                          </Box>
-                          <Box sx={{ px: 1, fontWeight: 600 }}>
-                            <Tooltip title={row.STK_QTY} arrow>
-                              <Box sx={{
-                                width: '100%',
-                                maxWidth: '100%',
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                                whiteSpace: 'nowrap',
-                                textAlign: 'center',
-                              }}>
-                                {row.STK_QTY}
+                              <Box sx={{ px: 1 }}>
+                                <Tooltip title={row.BAL_QTY} arrow>
+                                  <Box sx={{
+                                    width: '100%',
+                                    maxWidth: '100%',
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis',
+                                    whiteSpace: 'nowrap',
+                                    textAlign: 'center',
+                                  }}>
+                                    {row.BAL_QTY}
+                                  </Box>
+                                </Tooltip>
                               </Box>
-                            </Tooltip>
-                          </Box>
-                          <Box sx={{ px: 1 }}>
-                            <Tooltip title={row.RATE} arrow>
-                              <Box sx={{
-                                width: '100%',
-                                maxWidth: '100%',
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                                whiteSpace: 'nowrap',
-                                textAlign: 'center',
-                              }}>
-                                {row.RATE}
+                              <Box sx={{ px: 1, fontWeight: 600 }}>
+                                <Tooltip title={row.PO_QTY} arrow>
+                                  <Box sx={{
+                                    width: '100%',
+                                    maxWidth: '100%',
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis',
+                                    whiteSpace: 'nowrap',
+                                    textAlign: 'center',
+                                  }}>
+                                    {row.PO_QTY}
+                                  </Box>
+                                </Tooltip>
                               </Box>
-                            </Tooltip>
-                          </Box>
-                          <Box sx={{ px: 1 }}>
-                            <Tooltip title={row.AMOUNT} arrow>
-                              <Box sx={{
-                                width: '100%',
-                                maxWidth: '100%',
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                                whiteSpace: 'nowrap',
-                                textAlign: 'center',
-                              }}>
-                                {row.AMOUNT}
+                              <Box sx={{ px: 1, fontWeight: 600 }}>
+                                <Tooltip title={row.GRN_QTY} arrow>
+                                  <Box sx={{
+                                    width: '100%',
+                                    maxWidth: '100%',
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis',
+                                    whiteSpace: 'nowrap',
+                                    textAlign: 'center',
+                                  }}>
+                                    {row.GRN_QTY}
+                                  </Box>
+                                </Tooltip>
                               </Box>
-                            </Tooltip>
-                          </Box>
-                        </Box>
-                      ))}
-                    </Box>
+                              <Box sx={{ px: 1, fontWeight: 600 }}>
+                                <Tooltip title={row.STK_QTY} arrow>
+                                  <Box sx={{
+                                    width: '100%',
+                                    maxWidth: '100%',
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis',
+                                    whiteSpace: 'nowrap',
+                                    textAlign: 'center',
+                                  }}>
+                                    {row.STK_QTY}
+                                  </Box>
+                                </Tooltip>
+                              </Box>
+                              <Box sx={{ px: 1 }}>
+                                <Tooltip title={row.RATE} arrow>
+                                  <Box sx={{
+                                    width: '100%',
+                                    maxWidth: '100%',
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis',
+                                    whiteSpace: 'nowrap',
+                                    textAlign: 'center',
+                                  }}>
+                                    {row.RATE}
+                                  </Box>
+                                </Tooltip>
+                              </Box>
+                              <Box sx={{ px: 1 }}>
+                                <Tooltip title={row.AMOUNT} arrow>
+                                  <Box sx={{
+                                    width: '100%',
+                                    maxWidth: '100%',
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis',
+                                    whiteSpace: 'nowrap',
+                                    textAlign: 'center',
+                                  }}>
+                                    {row.AMOUNT}
+                                  </Box>
+                                </Tooltip>
+                              </Box>
+                            </Box>
+                          ))
+                        )}
+                      </Box>
+                    )}
                   </TableContainer>
                 </Box>
               )}
 
               {activeTab === 2 && (
-                <Box >
+                <Box>
                   <TableContainer
                     component={Paper}
                     sx={{
@@ -1889,267 +1940,299 @@ const Tna = () => {
                       borderRadius: 2,
                       border: '1px solid',
                       borderColor: 'divider',
+                      position: 'relative',
                     }}
                   >
-                    <Box
-                      sx={{
-                        display: 'grid',
-                        gridTemplateColumns: 'repeat(14, minmax(150px, 1fr))',
-                        minWidth: '100%',
-                        width: '100%',
-                        // height: '18px',
-                        fontSize: '15px',
-                      }}
-                    >
-                      <Box sx={{
-                        display: 'contents',
-                        position: 'sticky',
-                        top: 0,
-                        zIndex: 1,
-                      }}>
-                        {['ITM_KEY','SUBGROUP','ITM_DETAIL',   'ACCSHADE_NAME', 'ACCSIZE_NAME', 'REMK', 'QTY', 'BAL_QTY', 'PO_QTY', 'GRN_QTY', 'STK_QTY', 'MIN_QTY','RATE', 'AMOUNT',].map((header, idx) => (
-                          <Box
-                            key={header}
-                            sx={{
-                              gridColumn: `${idx + 1}`,
-                              p: 0.6,
-                              textAlign: 'center',
-                              fontWeight: 600,
-                              color: 'rgba(0, 0, 0, 0.87)',
-                              backgroundColor: '#f1f5f9',
-                              borderRight: idx === 12 ? 'none' : '1px solid',
-                              borderBottom: '1px solid',
-                              borderColor: 'divider',
-                              whiteSpace: 'nowrap',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              wordBreak: 'break-word',
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis',
-                            }}
-                          >
-                            {header}
-                          </Box>
-                        ))}
+                    {loadingTrimData ? (
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          justifyContent: 'center',
+                          alignItems: 'center',
+                          height: '100%',
+                          minHeight: 150,
+                        }}
+                      >
+                        <CircularProgress size={40} />
                       </Box>
+                    ) : (
+                      <Box
+                        sx={{
+                          display: 'grid',
+                          gridTemplateColumns: 'repeat(14, minmax(150px, 1fr))',
+                          minWidth: '100%',
+                          width: '100%',
+                          fontSize: '15px',
+                        }}
+                      >
+                        <Box sx={{
+                          display: 'contents',
+                          position: 'sticky',
+                          top: 0,
+                          zIndex: 1,
+                        }}>
+                          {['ITM_CODE', 'SUBGROUP', 'ITM_DETAIL', 'ACCSHADE_NAME', 'ACCSIZE_NAME', 'REMK', 'QTY', 'BAL_QTY', 'PO_QTY', 'GRN_QTY', 'STK_QTY', 'MIN_QTY', 'RATE', 'AMOUNT'].map((header, idx) => (
+                            <Box
+                              key={header}
+                              sx={{
+                                gridColumn: `${idx + 1}`,
+                                p: 0.6,
+                                textAlign: 'center',
+                                fontWeight: 600,
+                                color: 'rgba(0, 0, 0, 0.87)',
+                                backgroundColor: '#f1f5f9',
+                                borderRight: idx === 13 ? 'none' : '1px solid',
+                                borderBottom: '1px solid',
+                                borderColor: 'divider',
+                                whiteSpace: 'nowrap',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                wordBreak: 'break-word',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                              }}
+                            >
+                              {header}
+                            </Box>
+                          ))}
+                        </Box>
 
-                      {filteredTrimData.map((row, index) => (
-                        <Box
-                          key={index}
-                          sx={{
-                            display: 'contents',
-                            '& > div': {
+                        {filteredTrimData.length === 0 ? (
+                          <Box
+                            sx={{
+                              gridColumn: '1 / -1',
+                              display: 'flex',
+                              justifyContent: 'center',
+                              alignItems: 'center',
+                              minHeight: 180,
+                              color: 'text.secondary',
+                              fontSize: '0.875rem',
+                              backgroundColor: '#fafafa',
                               borderRight: '1px solid',
                               borderBottom: '1px solid',
                               borderColor: 'divider',
-                              display: 'flex',
-                              alignItems: 'center',
-                              // justifyContent: 'center',
-                              minHeight: '26px',
-                            },
-                            '& > div:last-child': {
-                              borderRight: 'none',
-                            },
-                            '&:nth-of-type(even) > div': {
-                              backgroundColor: '#f8fafc',
-                            },
-                            '&:hover > div': {
-                              backgroundColor: '#f1f5f9',
-                            },
-                          }}
-                        >
-                           <Box sx={{ px: 1 ,justifyContent:'center'}}>
-                            <Chip
-                              label={row.ITM_KEY}
-                              size="small"
+                            }}
+                          >
+                            No records found
+                          </Box>
+                        ) : (
+                          filteredTrimData.map((row, index) => (
+                            <Box
+                              key={index}
                               sx={{
-                                backgroundColor: '#e0f2fe',
-                                color: '#0369a1',
-                                fontWeight: 500
+                                display: 'contents',
+                                '& > div': {
+                                  borderRight: '1px solid',
+                                  borderBottom: '1px solid',
+                                  borderColor: 'divider',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  minHeight: '26px',
+                                },
+                                '& > div:last-child': {
+                                  borderRight: 'none',
+                                },
+                                '&:nth-of-type(even) > div': {
+                                  backgroundColor: '#f8fafc',
+                                },
+                                '&:hover > div': {
+                                  backgroundColor: '#f1f5f9',
+                                },
                               }}
-                            />
-                          </Box>
-                           <Box sx={{ px: 1,justifyContent:'flex-start' }}>
-                            <Tooltip title={row.ITMSUBGRP_NAME} arrow>
-                              <Box sx={{
-                                width: '100%',
-                                maxWidth: '100%',
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                                whiteSpace: 'nowrap',
-                              }}>
-                                {row.ITMSUBGRP_NAME}
+                            >
+                              <Box sx={{ px: 1, justifyContent: 'center' }}>
+                                <Chip
+                                  label={row.ITM_KEY}
+                                  size="small"
+                                  sx={{
+                                    backgroundColor: '#e0f2fe',
+                                    color: '#0369a1',
+                                    fontWeight: 500
+                                  }}
+                                />
                               </Box>
-                            </Tooltip>
-                          </Box>
-                       
-                          <Box sx={{ px: 1 ,justifyContent:'flex-start'}}>
-                            <Chip
-                              label={row.ITM_DETAIL}
-                              size="small"
-                              sx={{
-                                backgroundColor: '#e0f2fe',
-                                color: '#0369a1',
-                                fontWeight: 500
-                              }}
-                            />
-                          </Box>
-                         
-                          
-                          <Box sx={{ px: 1 }}>
-                            <Tooltip title={row.ACCSHADE_NAME} arrow>
-                              <Box sx={{
-                                width: '100%',
-                                maxWidth: '100%',
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                                whiteSpace: 'nowrap',
-                                textAlign: 'center',
-                              }}>
-                                {row.ACCSHADE_NAME || '-'}
+                              <Box sx={{ px: 1, justifyContent: 'flex-start' }}>
+                                <Tooltip title={row.ITMSUBGRP_NAME} arrow>
+                                  <Box sx={{
+                                    width: '100%',
+                                    maxWidth: '100%',
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis',
+                                    whiteSpace: 'nowrap',
+                                  }}>
+                                    {row.ITMSUBGRP_NAME}
+                                  </Box>
+                                </Tooltip>
                               </Box>
-                            </Tooltip>
-                          </Box>
-                          <Box sx={{ px: 1 }}>
-                            <Tooltip title={row.ACCSIZE_NAME} arrow>
-                              <Box sx={{
-                                width: '100%',
-                                maxWidth: '100%',
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                                whiteSpace: 'nowrap',
-                                textAlign: 'center',
-                              }}>
-                                {row.ACCSIZE_NAME || '-'}
+
+                              <Box sx={{ px: 1, justifyContent: 'flex-start' }}>
+                                <Chip
+                                  label={row.ITM_DETAIL}
+                                  size="small"
+                                  sx={{
+                                    backgroundColor: '#e0f2fe',
+                                    color: '#0369a1',
+                                    fontWeight: 500
+                                  }}
+                                />
                               </Box>
-                            </Tooltip>
-                          </Box>
-                          <Box sx={{ px: 1 }}>
-                            <TextField
-                              size="small"
-                              value={editableTrimData[index]?.REMK || ''}
-                              onChange={(e) => handleTrimInputChange(index, 'REMK', e.target.value)}
-                              sx={{
-                                '& .MuiInputBase-input': {
-                                  padding: '4px 8px',
-                                  fontSize: '0.875rem'
-                                }
-                              }}
-                            />
-                          </Box>
-                             <Box sx={{justifyContent:'center'}}>
-                            <Chip
-                              label={row.QUANTITY}
-                              size="small"
-                              sx={{
-                                fontWeight: 600,
-                                backgroundColor: '#fef3c7',
-                                color: '#92400e',
-                              }}
-                            />
-                          </Box>
-                          <Box sx={{ px: 1 }}>
-                            <Tooltip title={row.BAL_QTY} arrow>
-                              <Box sx={{
-                                width: '100%',
-                                maxWidth: '100%',
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                                whiteSpace: 'nowrap',
-                                textAlign: 'center',
-                              }}>
-                                {row.BAL_QTY}
+
+                              <Box sx={{ px: 1 }}>
+                                <Tooltip title={row.ACCSHADE_NAME} arrow>
+                                  <Box sx={{
+                                    width: '100%',
+                                    maxWidth: '100%',
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis',
+                                    whiteSpace: 'nowrap',
+                                    textAlign: 'center',
+                                  }}>
+                                    {row.ACCSHADE_NAME || '-'}
+                                  </Box>
+                                </Tooltip>
                               </Box>
-                            </Tooltip>
-                          </Box>
-                          <Box sx={{ px: 1, fontWeight: 600 }}>
-                            <Tooltip title={row.PO_QTY} arrow>
-                              <Box sx={{
-                                width: '100%',
-                                maxWidth: '100%',
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                                whiteSpace: 'nowrap',
-                                textAlign: 'center',
-                              }}>
-                                {row.PO_QTY}
+                              <Box sx={{ px: 1 }}>
+                                <Tooltip title={row.ACCSIZE_NAME} arrow>
+                                  <Box sx={{
+                                    width: '100%',
+                                    maxWidth: '100%',
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis',
+                                    whiteSpace: 'nowrap',
+                                    textAlign: 'center',
+                                  }}>
+                                    {row.ACCSIZE_NAME || '-'}
+                                  </Box>
+                                </Tooltip>
                               </Box>
-                            </Tooltip>
-                          </Box>
-                          <Box sx={{ px: 1, fontWeight: 600 }}>
-                            <Tooltip title={row.GRN_QTY} arrow>
-                              <Box sx={{
-                                width: '100%',
-                                maxWidth: '100%',
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                                whiteSpace: 'nowrap',
-                                textAlign: 'center',
-                              }}>
-                                {row.GRN_QTY}
+                              <Box sx={{ px: 1 }}>
+                                <TextField
+                                  size="small"
+                                  value={editableTrimData[index]?.REMK || ''}
+                                  onChange={(e) => handleTrimInputChange(index, 'REMK', e.target.value)}
+                                  sx={{
+                                    '& .MuiInputBase-input': {
+                                      padding: '4px 8px',
+                                      fontSize: '0.875rem'
+                                    }
+                                  }}
+                                />
                               </Box>
-                            </Tooltip>
-                          </Box>
-                          <Box sx={{ px: 1, fontWeight: 600 }}>
-                            <Tooltip title={row.STK_QTY} arrow>
-                              <Box sx={{
-                                width: '100%',
-                                maxWidth: '100%',
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                                whiteSpace: 'nowrap',
-                                textAlign: 'center',
-                              }}>
-                                {row.STK_QTY}
+                              <Box sx={{ justifyContent: 'center' }}>
+                                <Chip
+                                  label={row.QUANTITY}
+                                  size="small"
+                                  sx={{
+                                    fontWeight: 600,
+                                    backgroundColor: '#fef3c7',
+                                    color: '#92400e',
+                                  }}
+                                />
                               </Box>
-                            </Tooltip>
-                          </Box>
-                          <Box sx={{ px: 1, fontWeight: 600 }}>
-                            <Tooltip title={row.MIN_STK} arrow>
-                              <Box sx={{
-                                width: '100%',
-                                maxWidth: '100%',
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                                whiteSpace: 'nowrap',
-                                textAlign: 'center',
-                              }}>
-                                {row.MIN_STK}
+                              <Box sx={{ px: 1 }}>
+                                <Tooltip title={row.BAL_QTY} arrow>
+                                  <Box sx={{
+                                    width: '100%',
+                                    maxWidth: '100%',
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis',
+                                    whiteSpace: 'nowrap',
+                                    textAlign: 'center',
+                                  }}>
+                                    {row.BAL_QTY}
+                                  </Box>
+                                </Tooltip>
                               </Box>
-                            </Tooltip>
-                          </Box>
-                          <Box sx={{ px: 1 }}>
-                            <Tooltip title={row.RATE} arrow>
-                              <Box sx={{
-                                width: '100%',
-                                maxWidth: '100%',
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                                whiteSpace: 'nowrap',
-                                textAlign: 'center',
-                              }}>
-                                {row.RATE}
+                              <Box sx={{ px: 1, fontWeight: 600 }}>
+                                <Tooltip title={row.PO_QTY} arrow>
+                                  <Box sx={{
+                                    width: '100%',
+                                    maxWidth: '100%',
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis',
+                                    whiteSpace: 'nowrap',
+                                    textAlign: 'center',
+                                  }}>
+                                    {row.PO_QTY}
+                                  </Box>
+                                </Tooltip>
                               </Box>
-                            </Tooltip>
-                          </Box>
-                          <Box sx={{ px: 1 }}>
-                            <Tooltip title={row.AMOUNT} arrow>
-                              <Box sx={{
-                                width: '100%',
-                                maxWidth: '100%',
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                                whiteSpace: 'nowrap',
-                                textAlign: 'center',
-                              }}>
-                                {row.AMOUNT}
+                              <Box sx={{ px: 1, fontWeight: 600 }}>
+                                <Tooltip title={row.GRN_QTY} arrow>
+                                  <Box sx={{
+                                    width: '100%',
+                                    maxWidth: '100%',
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis',
+                                    whiteSpace: 'nowrap',
+                                    textAlign: 'center',
+                                  }}>
+                                    {row.GRN_QTY}
+                                  </Box>
+                                </Tooltip>
                               </Box>
-                            </Tooltip>
-                          </Box>
-                        </Box>
-                      ))}
-                    </Box>
+                              <Box sx={{ px: 1, fontWeight: 600 }}>
+                                <Tooltip title={row.STK_QTY} arrow>
+                                  <Box sx={{
+                                    width: '100%',
+                                    maxWidth: '100%',
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis',
+                                    whiteSpace: 'nowrap',
+                                    textAlign: 'center',
+                                  }}>
+                                    {row.STK_QTY}
+                                  </Box>
+                                </Tooltip>
+                              </Box>
+                              <Box sx={{ px: 1, fontWeight: 600 }}>
+                                <Tooltip title={row.MIN_STK} arrow>
+                                  <Box sx={{
+                                    width: '100%',
+                                    maxWidth: '100%',
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis',
+                                    whiteSpace: 'nowrap',
+                                    textAlign: 'center',
+                                  }}>
+                                    {row.MIN_STK}
+                                  </Box>
+                                </Tooltip>
+                              </Box>
+                              <Box sx={{ px: 1 }}>
+                                <Tooltip title={row.RATE} arrow>
+                                  <Box sx={{
+                                    width: '100%',
+                                    maxWidth: '100%',
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis',
+                                    whiteSpace: 'nowrap',
+                                    textAlign: 'center',
+                                  }}>
+                                    {row.RATE}
+                                  </Box>
+                                </Tooltip>
+                              </Box>
+                              <Box sx={{ px: 1 }}>
+                                <Tooltip title={row.AMOUNT} arrow>
+                                  <Box sx={{
+                                    width: '100%',
+                                    maxWidth: '100%',
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis',
+                                    whiteSpace: 'nowrap',
+                                    textAlign: 'center',
+                                  }}>
+                                    {row.AMOUNT}
+                                  </Box>
+                                </Tooltip>
+                              </Box>
+                            </Box>
+                          ))
+                        )}
+                      </Box>
+                    )}
                   </TableContainer>
                 </Box>
               )}

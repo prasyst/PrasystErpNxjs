@@ -398,6 +398,10 @@ const UpdateTrims = () => {
       alert('Please select an order first');
       return;
     }
+    if (!currentTnaKey) {
+  toast.error('TNA key not found. First Prepare TNA.');
+  return;
+}
 
     try {
       const selectedRow = data.find(row => row.ORDBKSTYSZ_ID === selectedRowId);
@@ -1156,7 +1160,7 @@ const UpdateTrims = () => {
                   <Tab
                     label={
                       <Box sx={{ display: { xs: 'none', sm: 'inline' } }}>
-                        Trims
+                        Update Trims
                       </Box>
                     }
                     icon={<Box sx={{ display: { xs: 'inline', sm: 'none' } }}>Trims</Box>}
