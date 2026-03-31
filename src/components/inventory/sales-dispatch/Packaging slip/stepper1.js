@@ -892,16 +892,15 @@ const handleSeriesChange = async (e) => {
       // Fetch party details for auto-population
       fetchPartyDetailsForAutoFill(partyKey);
 
-      setFormData(prev => ({
-        ...prev,
-        PARTY_KEY: partyKey,
-        Party: value,
-      
-        SHIPPING_PARTY: prev.SHIPPING_PARTY === prev.Party ? value : prev.SHIPPING_PARTY,
-    
-        SHP_PARTY_KEY: prev.SHIPPING_PARTY === prev.Party ? partyKey : prev.SHP_PARTY_KEY,
-    
-      }));
+       setFormData(prev => ({
+    ...prev,
+    PARTY_KEY: partyKey,
+    Party: value,
+    // FIXED: Always update shipping party to match the selected party
+    SHIPPING_PARTY: value,  // Changed from conditional to always update
+    SHP_PARTY_KEY: partyKey,  // Changed from conditional to always update
+    // Branch will be auto-selected in fetchPartyDetails
+  }));
     }
 
    
