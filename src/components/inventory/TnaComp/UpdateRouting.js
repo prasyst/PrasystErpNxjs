@@ -286,6 +286,7 @@ const UpdateRouting = () => {
       };
 
       const response = await axiosInstance.post('/TNA/GetTNAProstg?currentPage=1&limit=25', payload);
+       if(response.data?.DATA && response.data.DATA.length > 0){
       const result = response.data.DATA.map((item) => ({
         REC_DOZ: item.REC_DOZ,
         PLAN_DT: item.PLAN_DT,
@@ -306,11 +307,15 @@ const UpdateRouting = () => {
         PROSTG_KEY: item.PROSTG_KEY,
         TNADTL_ID: item.TNADTL_ID
       }));
-
-      setRoutingData(result)
+       setRoutingData(result)
       setFilteredRoutingData(result);
       setEditableRoutingData(result);
-      setRmData([]);
+    }else{
+       setRoutingData([]);
+      setFilteredRoutingData([]);
+      setEditableRoutingData([]);
+    }
+ 
     } catch (error) {
       console.error('Error fetching routing data:', error);
     }
@@ -401,7 +406,10 @@ const UpdateRouting = () => {
     if (!selectedRow) {
       throw new Error('Selected row not found');
     }
-
+if (!currentTnaKey) {
+  toast.error('TNA key not found. First Prepare TNA.');
+  return;
+}
     let tnaKey = currentTnaKey;
     let tnaNo = currentTnaNo;
     let dbFlag = "I";
@@ -610,7 +618,7 @@ const UpdateRouting = () => {
   };
 
   const handleBack=()=>{
-    router.push('/dashboard');
+    router.push('/tnapage/');
   }
 
   return (
@@ -1137,10 +1145,10 @@ const UpdateRouting = () => {
                       }}>
                         <ViewWeekIcon fontSize="small" sx={{ fontSize: { xs: '0.9rem', sm: 'inherit' } }} />
                         <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>
-                          Routing
+                          Update Routing
                         </Box>
                         <Box component="span" sx={{ display: { xs: 'inline', sm: 'none' } }}>
-                          Routing
+                          Update Routing
                         </Box>
                       </Box>
                     }
@@ -1244,132 +1252,140 @@ const UpdateRouting = () => {
                           </Box>
                         ))}
                       </Box>
-
-                      {filteredRoutingData.map((row, index) => (
-                        <Box
-                          key={index}
-                          sx={{
-                            display: 'contents',
-                            '& > div': {
-                              borderRight: '1px solid',
-                              borderBottom: '1px solid',
-                              borderColor: 'divider',
-                              display: 'flex',
-                              alignItems: 'center',
-                              // justifyContent: 'center',
-                              minHeight: '26px',
-                            },
-                            '& > div:last-child': {
-                              borderRight: 'none',
-                            },
-                            '&:nth-of-type(even) > div': {
-                              backgroundColor: '#f8fafc',
-                            },
-                            '&:hover > div': {
-                              backgroundColor: '#f1f5f9',
-                            },
-                          }}
-                        >
-                          <Box sx={{ px: 1 ,justifyContent:'flex-start'}}>
-                            <Chip
-                              label={row.PROSTGGRP_NAME}
-                              size="small"
-                              sx={{
-                                backgroundColor: '#e0f2fe',
-                                color: '#0369a1',
-                                fontWeight: 500,
-                               justifyContent:'flex-start'
-                              }}
-                            />
+                      {filteredRoutingData.length === 0 ? (<Box sx={{
+                        gridColumn: '1 / -1',
+                        display: 'flex',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        p: 4,
+                        textAlign: 'center'
+                      }}>No data Found</Box>) : (
+                        filteredRoutingData.map((row, index) => (
+                          <Box
+                            key={index}
+                            sx={{
+                              display: 'contents',
+                              '& > div': {
+                                borderRight: '1px solid',
+                                borderBottom: '1px solid',
+                                borderColor: 'divider',
+                                display: 'flex',
+                                alignItems: 'center',
+                                minHeight: '26px',
+                              },
+                              '& > div:last-child': {
+                                borderRight: 'none',
+                              },
+                              '&:nth-of-type(even) > div': {
+                                backgroundColor: '#f8fafc',
+                              },
+                              '&:hover > div': {
+                                backgroundColor: '#f1f5f9',
+                              },
+                            }}
+                          >
+                            <Box sx={{ px: 1, justifyContent: 'flex-start' }}>
+                              <Chip
+                                label={row.PROSTGGRP_NAME}
+                                size="small"
+                                sx={{
+                                  backgroundColor: '#e0f2fe',
+                                  color: '#0369a1',
+                                  fontWeight: 500,
+                                  justifyContent: 'flex-start'
+                                }}
+                              />
+                            </Box>
+                            <Box sx={{ px: 1 }}>
+                              <Tooltip title={row.PROSTG_NAME} arrow>
+                                <Box sx={{
+                                  width: '100%',
+                                  maxWidth: '100%',
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis',
+                                  whiteSpace: 'nowrap',
+                                  textAlign: 'left',
+                                }}>
+                                  {row.PROSTG_NAME}
+                                </Box>
+                              </Tooltip>
+                            </Box>
+                            <Box sx={{ justifyContent: 'center' }}>
+                              <Chip
+                                label={row.DAYS}
+                                size="small"
+                                sx={{
+                                  fontWeight: 600,
+                                  backgroundColor: '#fef3c7',
+                                  color: '#92400e',
+                                }}
+                              />
+                            </Box>
+                            <Box sx={{ px: 1, justifyContent: 'center' }}>
+                              {row.PLAN_DT ? formatDate(row.PLAN_DT) : '-'}
+                            </Box>
+                            <Box sx={{ px: 1 }}>
+                              <TextField
+                                type="date"
+                                size="small"
+                                value={editableRoutingData[index]?.EST_DT?.split('T')[0] || ''}
+                                onChange={(e) => handleRoutingInputChange(index, 'EST_DT', e.target.value)}
+                                sx={{
+                                  '& .MuiInputBase-input': {
+                                    padding: '4px 8px',
+                                    fontSize: '0.875rem'
+                                  }
+                                }}
+                              />
+                            </Box>
+                            <Box sx={{ px: 1, justifyContent: 'center' }}>
+                              {row.ACT_DT ? formatDate(row.ACT_DT) : '-'}
+                            </Box>
+                            <Box sx={{ px: 1, justifyContent: 'center' }}>
+                              <TextField
+                                size="small"
+                                value={editableRoutingData[index]?.REMK || ''}
+                                onChange={(e) => handleRoutingInputChange(index, 'REMK', e.target.value)}
+                                sx={{
+                                  '& .MuiInputBase-input': {
+                                    padding: '4px 8px',
+                                    fontSize: '0.875rem'
+                                  }
+                                }}
+                              />
+                            </Box>
+                            <Box sx={{ px: 1, fontWeight: 600 }}>
+                              <Tooltip title={row.PROD_OUT_QTY} arrow>
+                                <Box sx={{
+                                  width: '100%',
+                                  maxWidth: '100%',
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis',
+                                  whiteSpace: 'nowrap',
+                                  textAlign: 'center',
+                                }}>
+                                  {row.PROD_OUT_QTY}
+                                </Box>
+                              </Tooltip>
+                            </Box>
+                            <Box sx={{ px: 1, fontWeight: 600 }}>
+                              <Tooltip title={row.BAL_QTY} arrow>
+                                <Box sx={{
+                                  width: '100%',
+                                  maxWidth: '100%',
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis',
+                                  whiteSpace: 'nowrap',
+                                  textAlign: 'center',
+                                }}>
+                                  {row.BAL_QTY}
+                                </Box>
+                              </Tooltip>
+                            </Box>
                           </Box>
-                          <Box sx={{ px: 1 }}>
-                            <Tooltip title={row.PROSTG_NAME} arrow>
-                              <Box sx={{
-                                width: '100%',
-                                maxWidth: '100%',
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                                whiteSpace: 'nowrap',
-                                textAlign: 'left',
-                              }}>
-                                {row.PROSTG_NAME}
-                              </Box>
-                            </Tooltip>
-                          </Box>
-                          <Box sx={{ justifyContent: 'center' }}>
-                            <Chip
-                              label={row.DAYS}
-                              size="small"
-                              sx={{
-                                fontWeight: 600,
-                                backgroundColor: '#fef3c7',
-                                color: '#92400e',
-                              }}
-                            />
-                          </Box>
-                          <Box sx={{ px: 1,justifyContent: 'center' }}>
-                            {row.PLAN_DT ? formatDate(row.PLAN_DT) : '-'}
-                          </Box>
-                          <Box sx={{ px: 1 }}>
-                            <TextField
-                              type="date"
-                              size="small"
-                              value={editableRoutingData[index]?.EST_DT?.split('T')[0] || ''}
-                              onChange={(e) => handleRoutingInputChange(index, 'EST_DT', e.target.value)}
-                              sx={{
-                                '& .MuiInputBase-input': {
-                                  padding: '4px 8px',
-                                  fontSize: '0.875rem'
-                                }
-                              }}
-                            />
-                          </Box>
-                          <Box sx={{ px: 1 ,justifyContent: 'center'}}>
-                            {row.ACT_DT ? formatDate(row.ACT_DT) : '-'}
-                          </Box>
-                          <Box sx={{ px: 1,justifyContent: 'center' }}>
-                            <TextField
-                              size="small"
-                              value={editableRoutingData[index]?.REMK || ''}
-                              onChange={(e) => handleRoutingInputChange(index, 'REMK', e.target.value)}
-                              sx={{
-                                '& .MuiInputBase-input': {
-                                  padding: '4px 8px',
-                                  fontSize: '0.875rem'
-                                }
-                              }}
-                            />
-                          </Box>
-                          <Box sx={{ px: 1, fontWeight: 600 }}>
-                            <Tooltip title={row.PROD_OUT_QTY} arrow>
-                              <Box sx={{
-                                width: '100%',
-                                maxWidth: '100%',
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                                whiteSpace: 'nowrap',
-                                textAlign: 'center',
-                              }}>
-                                {row.PROD_OUT_QTY}
-                              </Box>
-                            </Tooltip>
-                          </Box>
-                          <Box sx={{ px: 1, fontWeight: 600 }}>
-                            <Tooltip title={row.BAL_QTY} arrow>
-                              <Box sx={{
-                                width: '100%',
-                                maxWidth: '100%',
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                                whiteSpace: 'nowrap',
-                                textAlign: 'center',
-                              }}>
-                                {row.BAL_QTY}
-                              </Box>
-                            </Tooltip>
-                          </Box>
-                        </Box>
-                      ))}
+                        ))
+                      )}
+                      
                     </Box>
                   </TableContainer>
                 </Box>

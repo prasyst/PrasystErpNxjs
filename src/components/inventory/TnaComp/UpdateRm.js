@@ -385,6 +385,10 @@ const UpdateRm = () => {
       if (!selectedRow) {
         throw new Error('Selected row not found');
       }
+    if (!currentTnaKey) {
+    toast.error('TNA key not found. First Prepare TNA.');
+    return;
+  }
 
       let tnaKey = currentTnaKey;
       let tnaNo = currentTnaNo;
@@ -1134,10 +1138,10 @@ const UpdateRm = () => {
                   <Tab
                     label={
                       <Box sx={{ display: { xs: 'none', sm: 'inline' } }}>
-                        RM
+                       Update RM 
                       </Box>
                     }
-                    icon={<Box sx={{ display: { xs: 'inline', sm: 'none' } }}>RM</Box>}
+                    icon={<Box sx={{ display: { xs: 'inline', sm: 'none' } }}>Update RM</Box>}
                     iconPosition="start"
                   />
                  
