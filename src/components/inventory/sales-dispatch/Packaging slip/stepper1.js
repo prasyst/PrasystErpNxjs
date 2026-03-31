@@ -2313,10 +2313,10 @@ const handleSeriesChange = async (e) => {
         </Grid>
 
         <Grid container spacing={1} direction={{ xs: 'column', sm: 'row', md: 'row' }} flexWrap="wrap">
-          {/* Delivery Schedule Radio Group */}
+         
           <Grid size={{ xs: 12, sm: 6, md: 4 }}>
             <Box sx={{ display: 'flex', alignItems: 'center' }}>
-              <FormLabel
+              {/* <FormLabel
                 sx={{
                   marginRight: '12px',
                   fontSize: '14px',
@@ -2327,7 +2327,7 @@ const handleSeriesChange = async (e) => {
                 component="legend"
               >
                 Delivery Schedule
-              </FormLabel>
+              </FormLabel> */}
               <RadioGroup
                 row
                 name="Delivery_Shedule"
@@ -2337,101 +2337,27 @@ const handleSeriesChange = async (e) => {
               >
                 <FormControlLabel
                   disabled={isFormDisabled}
-                  value="comman"
+                  value="MRP"
                   control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
-                  label={<Typography sx={{ fontSize: '12px', whiteSpace: 'nowrap' }}>Comman</Typography>}
+                  label={<Typography sx={{ fontSize: '12px', whiteSpace: 'nowrap' }}>MRP</Typography>}
                 />
                 <FormControlLabel
                   disabled={isFormDisabled}
-                  value="style"
+                  value="WSP"
                   control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
-                  label={<Typography sx={{ fontSize: '12px', whiteSpace: 'nowrap' }}>Style Wise</Typography>}
+                  label={<Typography sx={{ fontSize: '12px', whiteSpace: 'nowrap' }}>WSP</Typography>}
+                />
+                <FormControlLabel
+                  disabled={isFormDisabled}
+                  value="PurRT"
+                  control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
+                  label={<Typography sx={{ fontSize: '12px', whiteSpace: 'nowrap' }}>Pur RT</Typography>}
                 />
               </RadioGroup>
             </Box>
           </Grid>
 
-          {/* Order TNA Radio Group */}
-          <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center' }}>
-              <FormLabel
-                sx={{
-                  marginRight: '12px',
-                  fontSize: '14px',
-                  fontWeight: 'bold',
-                  color: 'black',
-                  whiteSpace: 'nowrap',
-                }}
-                component="legend"
-              >
-                Order TNA
-              </FormLabel>
-              <RadioGroup
-                row
-                name="Order_TNA"
-                onChange={handleInputChange}
-                disabled={isFormDisabled}
-                value={formData.Order_TNA || 'ItemWise'}
-              >
-                <FormControlLabel
-                  disabled={isFormDisabled}
-                  value="ItemWise"
-                  control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
-                  label={<Typography sx={{ fontSize: '12px', whiteSpace: 'nowrap' }}>ItemWise</Typography>}
-                />
-                <FormControlLabel
-                  disabled={isFormDisabled}
-                  value="SizeWise"
-                  control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
-                  label={<Typography sx={{ fontSize: '12px', whiteSpace: 'nowrap' }}>SizeWise</Typography>}
-                />
-              </RadioGroup>
-            </Box>
-          </Grid>
-
-          {/* Status Radio Group */}
-          <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center' }}>
-              <FormLabel
-                sx={{
-                  marginRight: '12px',
-                  fontSize: '14px',
-                  fontWeight: 'bold',
-                  color: 'black',
-                  whiteSpace: 'nowrap',
-                }}
-                component="legend"
-              >
-                Status
-              </FormLabel>
-              <RadioGroup
-                row
-                name="Status"
-                onChange={handleInputChange}
-                disabled={isFormDisabled}
-                value={formData.Status || 'O'}
-              >
-                <FormControlLabel
-                  disabled={isFormDisabled}
-                  value="O"
-                  control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
-                  label={<Typography sx={{ fontSize: '12px', whiteSpace: 'nowrap' }}>Open</Typography>}
-                />
-                <FormControlLabel
-                  disabled={isFormDisabled}
-                  value="C"
-                  control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
-                  label={<Typography sx={{ fontSize: '12px', whiteSpace: 'nowrap' }}>Cancel</Typography>}
-                />
-                <FormControlLabel
-                  disabled={isFormDisabled}
-                  value="S"
-                  control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
-                  label={<Typography sx={{ fontSize: '12px', whiteSpace: 'nowrap' }}>Short</Typography>}
-                />
-              </RadioGroup>
-            </Box>
-          </Grid>
+          
         </Grid>
       </Box>
     </Box>

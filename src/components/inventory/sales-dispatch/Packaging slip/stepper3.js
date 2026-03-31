@@ -2707,24 +2707,26 @@ const handleConfirmAdd = () => {
             Previous
           </Button>
 
-          <Button 
-            variant="contained" 
-            color="primary" 
-            onClick={onNext}
-              //  disabled={!itemsConfirmed}
-           
-            sx={{ 
-              minWidth: '60px', 
-              height: '36px',
-              backgroundColor: '#635bff',
-              '&:disabled': {
-                backgroundColor: '#cccccc',
-                color: '#666666'
-              }
-            }}
-          >
-            Next
-          </Button>
+         <Button
+                     variant="contained"
+                     color="primary"
+                     onClick={onNext}
+                     sx={{
+                       minWidth: '60px',
+                       height: '36px',
+                       textTransform: 'none',
+                       backgroundColor: '#635bff',
+                       '&:disabled': {
+                         backgroundColor: '#cccccc',
+                         color: '#666666'
+                       },
+                       '&:hover': {
+                         backgroundColor: '#4e44e0',
+                       },
+                     }}
+                   >
+                     Next
+                   </Button>
         </Stack>
         
       </Box>
