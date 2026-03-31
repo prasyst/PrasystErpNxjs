@@ -2,12 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import {
-    Box,
-    TextField,
-    Button,
-    Paper,
-    Typography,
-    Grid
+    Box, TextField, Button, Paper, Typography, Grid
 } from '@mui/material';
 import FormGroup from '@mui/material/FormGroup';
 import FormControlLabel from '@mui/material/FormControlLabel';
@@ -20,6 +15,7 @@ import axiosInstance from '../../../../lib/axios';
 import KeyboardArrowLeftIcon from "@mui/icons-material/KeyboardArrowLeft";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import AutoVibe from '@/GlobalFunction/CustomAutoComplete/AutoVibe';
+import { useUserPermissions } from '@/app/hooks/useUserPermissions';
 
 const TicketSubCatMst = () => {
 
@@ -41,6 +37,8 @@ const TicketSubCatMst = () => {
     const searchParams = useSearchParams();
     const TicketSubCat = searchParams.get('TKTSUBCATID');
     const CO_ID = localStorage.getItem('CO_ID');
+    const { hasSpecificPermission, loading: permissionsLoading } = useUserPermissions();
+    const moduleName = 'Ticket SubCategory';
 
     const fetchTicketSubCatData = useCallback(async (currentTicSCatId, flag = "R") => {
 
@@ -81,7 +79,6 @@ const TicketSubCatMst = () => {
                 }
             }
         } catch (error) {
-            console.error('Error fetching ticket sub category data:', error);
             toast.error('Error fetching ticket sub category data. Please try again.');
         }
     }, [CO_ID, router]);
@@ -120,7 +117,6 @@ const TicketSubCatMst = () => {
                     toast.error("Failed to fetch Ticket Category Name");
                 }
             } catch (error) {
-                console.error("Error fetching Ticket Category Name", error);
                 toast.error("Error fetching Ticket Category Name. Please try again.");
             }
         };
@@ -146,7 +142,6 @@ const TicketSubCatMst = () => {
                     toast.error("Failed to fetch Employee Name");
                 }
             } catch (error) {
-                console.error("Error fetching Employee Name", error);
                 toast.error("Error fetching Employee Name. Please try again.");
             }
         };
@@ -228,7 +223,7 @@ const TicketSubCatMst = () => {
     };
 
     const handleExit = () => {
-        router.push('/masterpage?activeTab=ticketing');
+        router.push('/ticketpage');
     };
 
     const handleTable = () => {
@@ -407,7 +402,7 @@ const TicketSubCatMst = () => {
 
                     <Grid sx={{ display: "flex", justifyContent: "end", marginRight: '-6px' }}>
                         <CrudButton
-                            moduleName=""
+                            moduleName={moduleName}
                             mode={mode}
                             onAdd={handleAdd}
                             onEdit={handleEdit}
@@ -416,6 +411,10 @@ const TicketSubCatMst = () => {
                             readOnlyMode={mode === "view"}
                             onPrevious={handlePrevious}
                             onNext={handleNext}
+                            canAdd={hasSpecificPermission(moduleName, 'Add')}
+                            canEdit={hasSpecificPermission(moduleName, 'EDIT')}
+                            canDelete={hasSpecificPermission(moduleName, 'DELETE')}
+                            canView={hasSpecificPermission(moduleName, 'VIEW')}
                         />
                     </Grid>
                 </Grid>
@@ -593,9 +592,7 @@ const TicketSubCatMst = () => {
                         </>
                     )}
                 </Grid>
-
             </Grid >
-
         </Grid >
     );
 };

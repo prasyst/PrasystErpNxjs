@@ -90,11 +90,11 @@
 //   const fetchMenuItems = async () => {
 //     // Temporary: Use hardcoded ID 1 for testing
 //     const effectiveUserId = "1";
-    
+
 //     try {
 //       setLoading(true);
 //       console.log('Fetching menus for user ID:', effectiveUserId);
-      
+
 //       const response = await axiosInstance.post('/MODULE/RetriveWebUserprivs', {
 //         "FLAG": "UR",
 //         "TBLNAME": "WebUserprivs",
@@ -225,7 +225,7 @@
 //   // Get icon based on module name
 //   const getIconForModule = (moduleName) => {
 //     if (!moduleName) return MdOutlineApartment;
-    
+
 //     const name = moduleName.toLowerCase();
 //     const iconMap = {
 //       'dashboard': MdDashboard,
@@ -265,7 +265,7 @@
 //         return icon;
 //       }
 //     }
-    
+
 //     return MdOutlineApartment; // Default icon
 //   };
 
@@ -1246,25 +1246,25 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
   const [isUserInteracted, setIsUserInteracted] = useState(false);
 
   // Get userId from localStorage - ye useEffect replace karo
-useEffect(() => {
-  // Directly get USER_ID from localStorage
-  const userIdFromStorage = localStorage.getItem('USER_ID');
-  if (userIdFromStorage) {
-    setUserId(userIdFromStorage);
-    console.log('User ID from localStorage:', userIdFromStorage);
-  } else {
-    // Fallback to user object if exists
-    const userData = localStorage.getItem('user');
-    if (userData) {
-      try {
-        const parsedUser = JSON.parse(userData);
-        setUserId(parsedUser.USER_ID || parsedUser.userId || null);
-      } catch (error) {
-        console.error('Error parsing user data:', error);
+  useEffect(() => {
+    // Directly get USER_ID from localStorage
+    const userIdFromStorage = localStorage.getItem('USER_ID');
+    if (userIdFromStorage) {
+      setUserId(userIdFromStorage);
+      console.log('User ID from localStorage:', userIdFromStorage);
+    } else {
+      // Fallback to user object if exists
+      const userData = localStorage.getItem('user');
+      if (userData) {
+        try {
+          const parsedUser = JSON.parse(userData);
+          setUserId(parsedUser.USER_ID || parsedUser.userId || null);
+        } catch (error) {
+          console.error('Error parsing user data:', error);
+        }
       }
     }
-  }
-}, []);
+  }, []);
 
   // Fetch company name from API
   useEffect(() => {
@@ -1287,101 +1287,72 @@ useEffect(() => {
     fetchCompanyName();
   }, []);
 
- // Fetch menu items from API - temporary fix with hardcoded ID
-useEffect(() => {
-  const fetchMenuItems = async () => {
-    // Temporary: Use hardcoded ID 1 for testing
-    const effectiveUserId = "1";
-    
-    try {
-      setLoading(true);
-      console.log('Fetching menus for user ID:', effectiveUserId);
-      
-      const response = await axiosInstance.post('/MODULE/RetriveWebUserprivs', {
-        "FLAG": "UR",
-        "TBLNAME": "WebUserprivs",
-        "FLDNAME": "User_Id",
-        "ID": effectiveUserId,
-        "ORDERBYFLD": "",
-        "CWHAER": "",
-        "CO_ID": ""
-      });
+  // Fetch menu items from API - temporary fix with hardcoded ID
+  useEffect(() => {
+    const fetchMenuItems = async () => {
+      // Temporary: Use hardcoded ID 1 for testing
+      const effectiveUserId = "1";
 
-      console.log('Menu API Response:', response.data);
+      try {
+        setLoading(true);
+        console.log('Fetching menus for user ID:', effectiveUserId);
 
-      if (response.data && response.data.DATA && response.data.DATA.length > 0) {
-        const validData = response.data.DATA.filter(item => item.MOD_NAME || item.MOD_DESC);
-        const menuTree = buildMenuTree(validData);
-        setMenuItems(menuTree);
-        console.log('Menu tree built:', menuTree);
-      } else {
-        console.log('No menu data received');
-        setMenuItems([]);
-      }
-    } catch (error) {
-      console.error('Error fetching menu items:', error);
-      setMenuItems([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+        const response = await axiosInstance.post('/MODULE/RetriveWebUserprivs', {
+          "FLAG": "UR",
+          "TBLNAME": "WebUserprivs",
+          "FLDNAME": "User_Id",
+          "ID": effectiveUserId,
+          "ORDERBYFLD": "",
+          "CWHAER": "",
+          "CO_ID": ""
+        });
 
-  fetchMenuItems();
-}, []); // Remove userId dependency for testing
+        console.log('Menu API Response:', response.data);
 
-// Build menu tree from flat API data
-const buildMenuTree = (data) => {
-  const itemMap = {};
-  const rootItems = [];
-  const allItemIds = new Set();
-
-  // First pass: Create all items and collect all IDs
-  data.forEach(item => {
-    if (!item.MOD_ID) return;
-    allItemIds.add(item.MOD_ID.toString());
-  });
-
-  // Second pass: Create all items with permissions
-  data.forEach(item => {
-    if (!item.MOD_ID) return;
-
-    const hasPermission = 
-      item.ADD_PRIV === "1" || 
-      item.EDIT_PRIV === "1" || 
-      item.DELETE_PRIV === "1" || 
-      item.SELECT_PRIV === "1";
-
-    // Include if has permission OR if it's a parent of a permitted item
-    if (hasPermission || (item.PARENT_ID && allItemIds.has(item.PARENT_ID.toString()))) {
-      itemMap[item.MOD_ID] = {
-        id: item.MOD_ID,
-        name: item.MOD_DESC || item.MOD_NAME || `Module ${item.MOD_ID}`,
-        path: item.MOD_ROUTIG || '#',
-        parentId: item.PARENT_ID === "0" || item.PARENT_ID === 0 || !item.PARENT_ID ? null : item.PARENT_ID.toString(),
-        children: [],
-        icon: getIconForModule(item.MOD_NAME || item.MOD_DESC),
-        permissions: {
-          add: item.ADD_PRIV === "1",
-          edit: item.EDIT_PRIV === "1",
-          delete: item.DELETE_PRIV === "1",
-          view: item.SELECT_PRIV === "1"
+        if (response.data && response.data.DATA && response.data.DATA.length > 0) {
+          const validData = response.data.DATA.filter(item => item.MOD_NAME || item.MOD_DESC);
+          const menuTree = buildMenuTree(validData);
+          setMenuItems(menuTree);
+          console.log('Menu tree built:', menuTree);
+        } else {
+          console.log('No menu data received');
+          setMenuItems([]);
         }
-      };
-    }
-  });
+      } catch (error) {
+        console.error('Error fetching menu items:', error);
+        setMenuItems([]);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  // Third pass: Add parent items if they don't exist but have children
-  const additionalParents = new Set();
-  Object.values(itemMap).forEach(item => {
-    if (item.parentId && !itemMap[item.parentId]) {
-      additionalParents.add(item.parentId);
-    }
-  });
+    fetchMenuItems();
+  }, []); // Remove userId dependency for testing
 
-  // Fetch parent items from original data
-  if (additionalParents.size > 0) {
+  // Build menu tree from flat API data
+  const buildMenuTree = (data) => {
+    const itemMap = {};
+    const rootItems = [];
+    const allItemIds = new Set();
+
+    // First pass: Create all items and collect all IDs
     data.forEach(item => {
-      if (additionalParents.has(item.MOD_ID.toString()) && !itemMap[item.MOD_ID]) {
+      if (!item.MOD_ID) return;
+      allItemIds.add(item.MOD_ID.toString());
+    });
+
+    // Second pass: Create all items with permissions
+    data.forEach(item => {
+      if (!item.MOD_ID) return;
+
+      const hasPermission =
+        item.ADD_PRIV === "1" ||
+        item.EDIT_PRIV === "1" ||
+        item.DELETE_PRIV === "1" ||
+        item.SELECT_PRIV === "1";
+
+      // Include if has permission OR if it's a parent of a permitted item
+      if (hasPermission || (item.PARENT_ID && allItemIds.has(item.PARENT_ID.toString()))) {
         itemMap[item.MOD_ID] = {
           id: item.MOD_ID,
           name: item.MOD_DESC || item.MOD_NAME || `Module ${item.MOD_ID}`,
@@ -1390,44 +1361,73 @@ const buildMenuTree = (data) => {
           children: [],
           icon: getIconForModule(item.MOD_NAME || item.MOD_DESC),
           permissions: {
-            add: false,
-            edit: false,
-            delete: false,
-            view: false
+            add: item.ADD_PRIV === "1",
+            edit: item.EDIT_PRIV === "1",
+            delete: item.DELETE_PRIV === "1",
+            view: item.SELECT_PRIV === "1"
           }
         };
       }
     });
-  }
 
-  // Build hierarchy
-  Object.values(itemMap).forEach(item => {
-    if (item.parentId && itemMap[item.parentId]) {
-      itemMap[item.parentId].children.push(item);
-    } else {
-      rootItems.push(item);
-    }
-  });
-
-  // Sort items by MOD_ID (increasing order) - API response ke according
-  const sortItemsById = (items) => {
-    items.sort((a, b) => (parseInt(a.id) || 0) - (parseInt(b.id) || 0));
-    items.forEach(item => {
-      if (item.children.length > 0) {
-        sortItemsById(item.children);
+    // Third pass: Add parent items if they don't exist but have children
+    const additionalParents = new Set();
+    Object.values(itemMap).forEach(item => {
+      if (item.parentId && !itemMap[item.parentId]) {
+        additionalParents.add(item.parentId);
       }
     });
-  };
 
-  sortItemsById(rootItems);
-  console.log('Final Menu Tree (ID sorted):', rootItems);
-  return rootItems;
-};
+    // Fetch parent items from original data
+    if (additionalParents.size > 0) {
+      data.forEach(item => {
+        if (additionalParents.has(item.MOD_ID.toString()) && !itemMap[item.MOD_ID]) {
+          itemMap[item.MOD_ID] = {
+            id: item.MOD_ID,
+            name: item.MOD_DESC || item.MOD_NAME || `Module ${item.MOD_ID}`,
+            path: item.MOD_ROUTIG || '#',
+            parentId: item.PARENT_ID === "0" || item.PARENT_ID === 0 || !item.PARENT_ID ? null : item.PARENT_ID.toString(),
+            children: [],
+            icon: getIconForModule(item.MOD_NAME || item.MOD_DESC),
+            permissions: {
+              add: false,
+              edit: false,
+              delete: false,
+              view: false
+            }
+          };
+        }
+      });
+    }
+
+    // Build hierarchy
+    Object.values(itemMap).forEach(item => {
+      if (item.parentId && itemMap[item.parentId]) {
+        itemMap[item.parentId].children.push(item);
+      } else {
+        rootItems.push(item);
+      }
+    });
+
+    // Sort items by MOD_ID (increasing order) - API response ke according
+    const sortItemsById = (items) => {
+      items.sort((a, b) => (parseInt(a.id) || 0) - (parseInt(b.id) || 0));
+      items.forEach(item => {
+        if (item.children.length > 0) {
+          sortItemsById(item.children);
+        }
+      });
+    };
+
+    sortItemsById(rootItems);
+    console.log('Final Menu Tree (ID sorted):', rootItems);
+    return rootItems;
+  };
 
   // Get icon based on module name
   const getIconForModule = (moduleName) => {
     if (!moduleName) return MdOutlineApartment;
-    
+
     const name = moduleName.toLowerCase();
     const iconMap = {
       'dashboard': MdDashboard,
@@ -1467,7 +1467,7 @@ const buildMenuTree = (data) => {
         return icon;
       }
     }
-    
+
     return MdOutlineApartment; // Default icon
   };
 
@@ -1509,6 +1509,16 @@ const buildMenuTree = (data) => {
     setActiveParent(item.name);
     setActiveChild(null);
     setActiveGrandchild(null);
+
+    const itemNameLower = item.name.toLowerCase().trim();
+    if (itemNameLower === 'ticketing' || itemNameLower.includes('ticket')) {
+      handleNavigationWithTracking('/ticketpage', item.name, false);
+
+      // Close mobile sidebar if open
+      if (isMobile) onClose();
+
+      return; // Important: Stop further execution for Ticketing
+    }
 
     if (item.children && item.children.length > 0) {
       toggleSection(item.name);

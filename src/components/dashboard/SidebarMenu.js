@@ -731,7 +731,6 @@ export const sidebarMenuItems = [
           { name: 'Party Brand Parameter', icon: MdBuild, path: '#' },
         ],
       },
-      ,
       {
         name: 'Process',
         icon: FaTruck,
@@ -1222,7 +1221,8 @@ export const sidebarMenuItems = [
   {
     name: 'Ticketing',
     icon: TiTicket,
-    path: '/masterpage?activeTab=ticketing',
+    // path: '/masterpage?activeTab=ticketing',
+    path: '/ticketpage',
     children: [
       { name: 'Dashboard', icon: MdReceipt, path: '/tickets/ticket-dashboard' },
       {
