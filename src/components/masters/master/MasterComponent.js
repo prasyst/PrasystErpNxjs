@@ -524,7 +524,7 @@ export default function MasterPage() {
   const router = useRouter();
   const { addRecentPath } = useRecentPaths();
 
-  // Get userId from localStorage
+  
   useEffect(() => {
     setIsClient(true);
     const userIdFromStorage = localStorage.getItem('USER_ID');
@@ -534,7 +534,7 @@ export default function MasterPage() {
     }
   }, []);
 
-  // Fetch menu items from API
+
   useEffect(() => {
     const fetchMenuItems = async () => {
       const effectiveUserId = userId || "1";
@@ -556,17 +556,41 @@ export default function MasterPage() {
         console.log('MasterPage API Response:', response.data);
 
         if (response.data && response.data.DATA) {
-          // Filter items that belong to Masters (PARENT_ID = "2" or are children of Masters)
+         
+          const mastersModule = response.data.DATA.find(item => 
+            item.MOD_NAME === "Masters" || 
+            item.MOD_DESC === "Masters" ||
+            (item.PARENT_ID === "0" && (item.MOD_NAME?.toLowerCase().includes('master') || item.MOD_DESC?.toLowerCase().includes('master')))
+          );
+          
+          const mastersId = mastersModule ? mastersModule.MOD_ID.toString() : "2";
+          console.log('Masters Module ID:', mastersId);
+          
+         
+          const topLevelTabs = response.data.DATA.filter(item => 
+            item.PARENT_ID === mastersId && 
+            item.MOD_NAME && 
+            item.MOD_NAME.trim() !== ''
+          );
+          
+          console.log('Top Level Tabs under Masters:', topLevelTabs);
+          
+     
+          const topLevelTabIds = new Set(topLevelTabs.map(tab => tab.MOD_ID.toString()));
+          
+         
           const mastersItems = response.data.DATA.filter(item => {
-            // Include items that are direct children of Masters (PARENT_ID = "2")
-            if (item.PARENT_ID === "2") return true;
-            // Include items whose parent is under Masters
+          
+            if (item.PARENT_ID === mastersId) return true;
+            
+            if (topLevelTabIds.has(item.PARENT_ID)) return true;
+           
             const parentItem = response.data.DATA.find(p => p.MOD_ID.toString() === item.PARENT_ID);
-            if (parentItem && parentItem.PARENT_ID === "2") return true;
+            if (parentItem && parentItem.PARENT_ID === mastersId) return true;
             return false;
           });
           
-          const menuTree = buildMenuTree(mastersItems, response.data.DATA);
+          const menuTree = buildMenuTree(mastersItems, response.data.DATA, mastersId);
           setMenuData(menuTree);
           console.log('Menu Tree Built:', menuTree);
         } else {
@@ -583,13 +607,13 @@ export default function MasterPage() {
     fetchMenuItems();
   }, [userId]);
 
-  // Build menu tree from API data
-  const buildMenuTree = (data, allData) => {
+
+  const buildMenuTree = (data, allData, mastersId) => {
     const itemMap = {};
     const rootItems = [];
     const parentChildMap = {};
 
-    // First pass: Create all items (including those without permissions if they are parents)
+   
     data.forEach(item => {
       if (!item.MOD_ID) return;
 
@@ -599,8 +623,10 @@ export default function MasterPage() {
         item.DELETE_PRIV === "1" || 
         item.SELECT_PRIV === "1";
 
-      // Include if has permission OR if it's a parent item (like Company, Customers etc.)
-      if (hasPermission || item.PARENT_ID === "2") {
+
+      const isTopLevelTab = item.PARENT_ID === mastersId;
+      
+      if (hasPermission || isTopLevelTab) {
         const moduleName = item.MOD_DESC || item.MOD_NAME;
         const parentId = item.PARENT_ID === "0" || !item.PARENT_ID ? null : item.PARENT_ID;
         
@@ -618,7 +644,7 @@ export default function MasterPage() {
           }
         };
 
-        if (parentId) {
+        if (parentId && parentId !== mastersId) {
           if (!parentChildMap[parentId]) {
             parentChildMap[parentId] = [];
           }
@@ -627,9 +653,21 @@ export default function MasterPage() {
       }
     });
 
-    // Add parent items that might be missing (like Company, Customers etc.)
-    const masterParentIds = ["7", "9", "11", "13"]; // Company, Vendors, Customers, Products
-    masterParentIds.forEach(parentId => {
+  
+    const topLevelTabIds = new Set();
+    
+ 
+    Object.values(itemMap).forEach(item => {
+      if (item.parentId && item.parentId !== mastersId && !itemMap[item.parentId]) {
+        const parentItem = allData.find(d => d.MOD_ID.toString() === item.parentId);
+        if (parentItem && parentItem.PARENT_ID === mastersId) {
+          topLevelTabIds.add(item.parentId);
+        }
+      }
+    });
+
+ 
+    topLevelTabIds.forEach(parentId => {
       if (!itemMap[parentId]) {
         const parentItem = allData.find(item => item.MOD_ID.toString() === parentId);
         if (parentItem) {
@@ -637,7 +675,7 @@ export default function MasterPage() {
             id: parentItem.MOD_ID,
             name: parentItem.MOD_DESC || parentItem.MOD_NAME,
             path: parentItem.MOD_ROUTIG || '#',
-            parentId: "2", // All these are children of Masters
+            parentId: mastersId,
             children: [],
             permissions: {
               add: false,
@@ -650,17 +688,17 @@ export default function MasterPage() {
       }
     });
 
-    // Build hierarchy - children under their parents
+    
     Object.values(itemMap).forEach(item => {
-      if (item.parentId && item.parentId !== "2" && itemMap[item.parentId]) {
+      if (item.parentId && item.parentId !== mastersId && itemMap[item.parentId]) {
         itemMap[item.parentId].children.push(item);
-      } else if (item.parentId === "2") {
-        // These are top-level tabs (Company, Customers, Products, Vendors)
+      } else if (item.parentId === mastersId) {
+       
         rootItems.push(item);
       }
     });
 
-    // Sort items
+   
     const sortItems = (items) => {
       items.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
       items.forEach(item => {
@@ -671,13 +709,13 @@ export default function MasterPage() {
     };
     sortItems(rootItems);
 
-    // Transform to MasterPage format
+    
     const transformed = rootItems.map(item => ({
       id: item.id,
       name: item.name,
       children: item.children
         .filter(child => {
-          // Only include children that have permission
+         
           const hasChildPermission = 
             child.permissions.add || 
             child.permissions.edit || 
@@ -691,7 +729,7 @@ export default function MasterPage() {
           icon: getIconForModule(child.name),
           permissions: child.permissions
         }))
-    })).filter(tab => tab.children.length > 0); // Only show tabs that have visible children
+    })).filter(tab => tab.children.length > 0); 
 
     console.log('Transformed Menu Data:', transformed);
     return transformed;

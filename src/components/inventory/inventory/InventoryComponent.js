@@ -486,7 +486,6 @@
 
 
 
-
 'use client';
 import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
@@ -518,10 +517,10 @@ import {
   Style as StyleIcon,
   QrCodeScanner as QrCodeScannerIcon,
   LocalMall as LocalMallIcon,
-  Search as SearchIcon, // Add this import
-  People as PeopleIcon, // Add this import
-  Summarize as SummarizeIcon, // Add this import
-  AttachMoney as MoneyIcon, // Add this import
+  Search as SearchIcon,
+  People as PeopleIcon,
+  Summarize as SummarizeIcon,
+  AttachMoney as MoneyIcon,
 } from '@mui/icons-material';
 import { MdOutlineProductionQuantityLimits, MdInventory, MdShoppingCart, MdLocalShipping } from 'react-icons/md';
 import { FaBoxes, FaTruck, FaHandshake, FaClipboardList } from 'react-icons/fa';
@@ -556,7 +555,7 @@ export default function InventoryPage() {
   const router = useRouter();
   const { addRecentPath } = useRecentPaths();
 
-  // Get userId from localStorage
+  
   useEffect(() => {
     setIsClient(true);
     const userIdFromStorage = localStorage.getItem('USER_ID');
@@ -566,7 +565,7 @@ export default function InventoryPage() {
     }
   }, []);
 
-  // Fetch menu items from API
+ 
   useEffect(() => {
     const fetchMenuItems = async () => {
       const effectiveUserId = userId || "1";
@@ -588,19 +587,36 @@ export default function InventoryPage() {
         console.log('InventoryPage API Response:', response.data);
 
         if (response.data && response.data.DATA) {
-          // Get all data
           const allData = response.data.DATA;
           
-          // First, find all items that are children of Inventory (PARENT_ID = "3")
-          // These will be our tabs (Sales/Dispatch, Sampling & Development)
-          const tabItems = allData.filter(item => 
-            item.PARENT_ID === "3" && (item.MOD_NAME || item.MOD_DESC)
+         
+          const inventoryModule = allData.find(item => 
+            (item.MOD_NAME === "Inventory" || item.MOD_DESC === "Inventory") &&
+            item.PARENT_ID === "0"
           );
           
-          console.log('Tab Items (PARENT_ID = 3):', tabItems);
+          if (!inventoryModule) {
+            console.warn('Inventory module not found in API response');
+            setMenuData([]);
+            setLoading(false);
+            return;
+          }
           
-          // Build menu tree with proper hierarchy
-          const menuTree = buildInventoryMenu(allData, tabItems);
+          const inventoryId = inventoryModule.MOD_ID.toString();
+          console.log('Inventory Module ID (dynamically found):', inventoryId);
+          
+          
+          const tabItems = allData.filter(item => 
+            item.PARENT_ID === inventoryId && 
+            (item.MOD_NAME || item.MOD_DESC) &&
+            item.MOD_NAME !== null &&
+            item.MOD_NAME.trim() !== ''
+          );
+          
+          console.log('Tab Items (direct children of Inventory):', tabItems);
+          
+          
+          const menuTree = buildInventoryMenu(allData, tabItems, inventoryId);
           setMenuData(menuTree);
           console.log('Final Inventory Menu Tree:', menuTree);
         } else {
@@ -617,12 +633,20 @@ export default function InventoryPage() {
     fetchMenuItems();
   }, [userId]);
 
-  // Build inventory menu with proper hierarchy
-  const buildInventoryMenu = (allData, tabItems) => {
+ 
+  const buildInventoryMenu = (allData, tabItems, inventoryId) => {
     const itemMap = {};
     const rootTabs = [];
 
-    // First pass: Create all items that have permissions
+  
+    const parentIdsUnderInventory = new Set();
+    allData.forEach(item => {
+      if (item.PARENT_ID === inventoryId && item.MOD_ID) {
+        parentIdsUnderInventory.add(item.MOD_ID.toString());
+      }
+    });
+
+   
     allData.forEach(item => {
       if (!item.MOD_ID || !(item.MOD_NAME || item.MOD_DESC)) return;
 
@@ -632,8 +656,12 @@ export default function InventoryPage() {
         item.DELETE_PRIV === "1" || 
         item.SELECT_PRIV === "1";
 
-      // Only include items that have at least one permission
-      if (hasPermission) {
+     
+      const isParentOfPermittedItem = parentIdsUnderInventory.has(item.MOD_ID.toString()) && 
+        tabItems.some(tab => tab.MOD_ID.toString() === item.MOD_ID.toString());
+
+      
+      if (hasPermission || isParentOfPermittedItem) {
         const moduleName = item.MOD_DESC || item.MOD_NAME;
         const parentId = item.PARENT_ID === "0" || !item.PARENT_ID ? null : item.PARENT_ID;
         
@@ -653,28 +681,31 @@ export default function InventoryPage() {
       }
     });
 
-    // Build hierarchy - children under their parents
+   
     Object.values(itemMap).forEach(item => {
-      if (item.parentId && itemMap[item.parentId]) {
-        // This item is a child of another item
+      if (item.parentId && item.parentId !== inventoryId && itemMap[item.parentId]) {
+        
         itemMap[item.parentId].children.push(item);
       }
     });
 
-    // Create tabs from tabItems (items with PARENT_ID = "3")
+  
     tabItems.forEach(tabItem => {
-      if (itemMap[tabItem.MOD_ID]) {
-        // This tab exists in our itemMap (has permissions)
-        rootTabs.push(itemMap[tabItem.MOD_ID]);
+      const tabId = tabItem.MOD_ID.toString();
+      
+      if (itemMap[tabId]) {
+        
+        if (itemMap[tabId].children.length > 0) {
+          rootTabs.push(itemMap[tabId]);
+        }
       } else {
-        // Tab doesn't have direct permissions but might have children with permissions
-        // Check if any children have permissions
+       
         const childrenWithPermissions = Object.values(itemMap).filter(
-          item => item.parentId === tabItem.MOD_ID.toString()
+          item => item.parentId === tabId
         );
         
         if (childrenWithPermissions.length > 0) {
-          // Create a placeholder tab
+        
           rootTabs.push({
             id: tabItem.MOD_ID,
             name: tabItem.MOD_DESC || tabItem.MOD_NAME || `Module ${tabItem.MOD_ID}`,
@@ -692,15 +723,15 @@ export default function InventoryPage() {
       }
     });
 
-    // Sort tabs by name
+   
     rootTabs.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
 
-    // Sort children within each tab
+    
     rootTabs.forEach(tab => {
       tab.children.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
     });
 
-    // Transform to the format expected by the UI
+    
     const transformed = rootTabs.map(tab => ({
       id: tab.id,
       name: tab.name,
@@ -710,7 +741,7 @@ export default function InventoryPage() {
         icon: getIconForModule(child.name),
         permissions: child.permissions
       }))
-    })).filter(tab => tab.children.length > 0); // Only show tabs that have children
+    })).filter(tab => tab.children.length > 0); 
 
     return transformed;
   };
@@ -736,8 +767,10 @@ export default function InventoryPage() {
     if (name.includes('stock adjustment')) return CompareArrowsIcon;
     if (name.includes('inventory valuation')) return MoneyIcon;
     if (name.includes('pending')) return AssignmentIcon;
+    if (name.includes('packing')) return ReceiptIcon;
+    if (name.includes('quality')) return CheckCircleIcon;
     
-    return InventoryIcon; // Default icon
+    return InventoryIcon; 
   };
 
   const handleTabChange = (event, newValue) => {
