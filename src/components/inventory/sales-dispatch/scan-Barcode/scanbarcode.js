@@ -5249,10 +5249,6 @@
 
 
 
-
-
-
-
 'use client';
 import React, { useState, useEffect, useRef, useCallback, Suspense } from 'react';
 import {
@@ -6807,6 +6803,7 @@ const handleConfirmItem = () => {
   });
   setScannerError('');
   
+  
   if (isMobile) {
     setActiveTab(1); 
     setViewMode('scan');
@@ -6818,27 +6815,9 @@ const handleConfirmItem = () => {
     showSnackbar('Item added to order! Go To Cart', 'success');
   }
 
-  // AUTO-REOPEN SCANNER: Improved logic
-  if (autoScanMode) {
-    // First, stop any existing scanner
-    stopScanner();
-    
-    // Small delay to allow the snackbar to show and states to update
-    setTimeout(() => {
-      // Clear the current barcode input
-      setNewItemData(prev => ({ ...prev, barcode: '' }));
-      
-      // Start scanner again
-      startScanner();
-      
-      // Focus on the input field after scanner opens
-      setTimeout(() => {
-        if (barcodeInputRef.current) {
-          barcodeInputRef.current.focus();
-        }
-      }, 500);
-    }, 800);
-  }
+  setTimeout(() => {
+  startScanner();
+}, 500);
 };
 
   const handleFormChange = (field, value) => {
@@ -6973,13 +6952,12 @@ const handleConfirmItem = () => {
     showSnackbar('Item removed from order', 'info');
   };
 
-const initScanner = (cameraId = '') => {
+ const initScanner = (cameraId = '') => {
   if (typeof window === 'undefined') {
     console.error('Scanner not available on server');
     return;
   }
 
-  // Clean up existing scanner
   if (qrCodeScannerRef.current) {
     qrCodeScannerRef.current.clear().catch(err => {
       console.error("Failed to clear existing scanner", err);
@@ -7004,25 +6982,24 @@ const initScanner = (cameraId = '') => {
         supportedScanTypes: [Html5QrcodeScanType.SCAN_TYPE_CAMERA],
         showTorchButtonIfSupported: true,
         showZoomSliderIfSupported: true,
+        // Add default camera if specified
         ...(cameraId && { videoConstraints: { deviceId: cameraId } })
       },
       false
     );
 
     const onScanSuccess = (decodedText, decodedResult) => {
-      // Stop scanning immediately after successful scan
       scanner.clear().then(() => {
         qrCodeScannerRef.current = null;
         setIsScanning(false);
         setShowScanner(false);
         
-        // Set the barcode and fetch data
         setNewItemData(prev => ({ ...prev, barcode: decodedText }));
         fetchStyleDataByBarcode(decodedText);
         showSnackbar('Barcode scanned successfully!', 'success');
         
-        // If auto-scan mode is enabled, we'll reopen scanner after adding to cart
-        // This is handled in handleConfirmItem
+        // Auto-reopen scanner after cart (for requirement 2)
+        // We'll handle this separately
       }).catch(err => {
         console.error("Failed to clear scanner", err);
       });
@@ -7045,18 +7022,7 @@ const initScanner = (cameraId = '') => {
     showSnackbar('Scanner initialization failed. Please check camera permissions.', 'error');
     setShowScanner(false);
   }
-}; 
-
-useEffect(() => {
-  if (isClient && autoScanMode) {
-    // Auto-start scanner when page loads if auto-scan mode is enabled
-    const timer = setTimeout(() => {
-      startScanner();
-    }, 1000);
-    
-    return () => clearTimeout(timer);
-  }
-}, [isClient, autoScanMode]);
+};  
 
 const getAvailableCameras = async () => {
   if (typeof window === 'undefined' || !Html5QrcodeScanner) return;
@@ -7093,28 +7059,14 @@ const switchCamera = (deviceId) => {
   }
 };
 
- const startScanner = () => {
-  if (typeof window === 'undefined') {
-    showSnackbar('Scanner not available on server', 'error');
-    return;
-  }
-  
-  // Make sure to clear any existing scanner instance
-  if (qrCodeScannerRef.current) {
-    qrCodeScannerRef.current.clear().catch(error => {
-      console.error("Failed to clear scanner before starting", error);
-    });
-    qrCodeScannerRef.current = null;
-  }
-  
-  setShowScanner(true);
-  setScannerError('');
-  
-  // Small delay to ensure DOM is ready
-  setTimeout(() => {
-    initScanner(selectedCamera);
-  }, 100);
-};
+  const startScanner = () => {
+    if (typeof window === 'undefined') {
+      showSnackbar('Scanner not available on server', 'error');
+      return;
+    }
+    setShowScanner(true);
+    setScannerError('');
+  };
 
   const stopScanner = () => {
     if (qrCodeScannerRef.current) {
@@ -10532,6 +10484,3 @@ const renderSettingsTab = () => (
 };
 
 export default ScanBarcode;
-
-
-
