@@ -18,10 +18,24 @@ const Cards = () => {
   const theme = useTheme();
   const [fcyr, setFcyr] = useState(localStorage.getItem("FCYR_KEY"));
   const [cobrId, setCobrId] = useState(localStorage.getItem("COBR_ID"));
-  const currentYear = dayjs().year();
-  const previousYear = currentYear - 1;
-  const [dateFrom, setDateFrom] = useState(dayjs(`${previousYear}-04-01`));
-  const [dateTo, setDateTo] = useState(dayjs(`${currentYear}-03-31`));
+  // const currentYear = dayjs().year();
+  // const previousYear = currentYear - 1;
+  // const [dateFrom, setDateFrom] = useState(dayjs(`${previousYear}-04-01`));
+  // const [dateTo, setDateTo] = useState(dayjs(`${currentYear}-03-31`));
+  const today = dayjs();
+  const currentYear = today.year();
+  const month = today.month() + 1; // dayjs months are 0-indexed
+
+  const fyStart = month >= 4
+    ? dayjs(`${currentYear}-04-01`)
+    : dayjs(`${currentYear - 1}-04-01`);
+
+  const fyEnd = month >= 4
+    ? dayjs(`${currentYear + 1}-03-31`)
+    : dayjs(`${currentYear}-03-31`);
+
+  const [dateFrom, setDateFrom] = useState(fyStart);
+  const [dateTo, setDateTo] = useState(fyEnd);
   const [totalRev, setTotalRev] = useState([]);
   const [totalColl, setTotalColl] = useState([]);
   const [totalOut, setTotalOut] = useState([]);

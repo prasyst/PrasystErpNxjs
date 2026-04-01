@@ -1243,7 +1243,7 @@ export const sidebarMenuItems = [
     icon: MdAccountBalance,
     path: '/tnapage',
     children: [
-     { name: 'TNADASH', icon: AssistantNavigationIcon, path: '/tnapage/tnadash/' },
+      { name: 'TNADASH', icon: AssistantNavigationIcon, path: '/tnapage/tnadash/' },
       { name: 'Update Routing', icon: RiBarcodeLine, path: '/tnapage/updaterouting/' },
       { name: 'Update Rm', icon: AltRouteIcon, path: '/tnapage/updaterm/' },
       { name: 'Update Trims', icon: ContentCutIcon, path: '/tnapage/updatetrims/' },

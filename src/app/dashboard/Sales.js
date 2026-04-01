@@ -28,11 +28,24 @@ const Sales = () => {
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const isSmallMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
-  const currentYear = dayjs().year();
-  const previousYear = currentYear - 1;
+  // const currentYear = dayjs().year();
+  // const previousYear = currentYear - 1;
+  // const [dateFrom, setDateFrom] = useState(dayjs(`${previousYear}-04-01`));
+  // const [dateTo, setDateTo] = useState(dayjs(`${currentYear}-03-31`));
+  const today = dayjs();
+  const currentYear = today.year();
+  const month = today.month() + 1; 
 
-  const [dateFrom, setDateFrom] = useState(dayjs(`${previousYear}-04-01`));
-  const [dateTo, setDateTo] = useState(dayjs(`${currentYear}-03-31`));
+  const fyStart = month >= 4
+    ? dayjs(`${currentYear}-04-01`)
+    : dayjs(`${currentYear - 1}-04-01`);
+
+  const fyEnd = month >= 4
+    ? dayjs(`${currentYear + 1}-03-31`)
+    : dayjs(`${currentYear}-03-31`);
+
+  const [dateFrom, setDateFrom] = useState(fyStart);
+  const [dateTo, setDateTo] = useState(fyEnd);
   const [cobrid] = useState(localStorage.getItem('COBR_ID') || '');
   const [fcyr] = useState(localStorage.getItem('FCYR_KEY') || '');
   const [recentTran, setRecentTran] = useState([]);
