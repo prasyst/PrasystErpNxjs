@@ -22,6 +22,7 @@
     "@mui/x-date-pickers-pro": "^8.11.0",
     "@react-pdf/renderer": "^4.3.0",
     "@reduxjs/toolkit": "^2.8.2",
+    "@yudiel/react-qr-scanner": "^2.5.1",
     "ag-grid-community": "^34.1.1",
     "ag-grid-enterprise": "^34.1.1",
     "ag-grid-react": "^34.1.1",
