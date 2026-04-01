@@ -52,10 +52,24 @@ const StyledCard2 = styled(Paper)(({ theme }) => ({
 
 const SalesDashboard = () => {
     const theme = useTheme();
-    const currentYear = dayjs().year();
-    const previousYear = currentYear - 1;
-    const [dateFrom, setDateFrom] = useState(dayjs(`${previousYear}-04-01`));
-    const [dateTo, setDateTo] = useState(dayjs(`${currentYear}-03-31`));
+    // const currentYear = dayjs().year();
+    // const previousYear = currentYear - 1;
+    // const [dateFrom, setDateFrom] = useState(dayjs(`${previousYear}-04-01`));
+    // const [dateTo, setDateTo] = useState(dayjs(`${currentYear}-03-31`));
+    const today = dayjs();
+    const currentYear = today.year();
+    let fyStart, fyEnd;
+
+    if (today.month() + 1 >= 4) {
+        fyStart = dayjs(`${currentYear}-04-01`);
+        fyEnd = dayjs(`${currentYear + 1}-03-31`);
+    } else {
+        fyStart = dayjs(`${currentYear - 1}-04-01`);
+        fyEnd = dayjs(`${currentYear}-03-31`);
+    }
+
+    const [dateFrom, setDateFrom] = useState(fyStart);
+    const [dateTo, setDateTo] = useState(fyEnd);
     const [tableData, setTableData] = useState([]);
     const [partywise, setPartyWise] = useState([]);
     const [stateWise, setStateWise] = useState([]);
