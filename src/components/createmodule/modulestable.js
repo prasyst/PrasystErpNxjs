@@ -190,7 +190,6 @@ export default function ModuleTable() {
         toast.error("Failed to retrieve module data");
       }
     } catch (error) {
-      console.error("Error retrieving module data:", error);
       toast.error("Error retrieving module data: " + (error.response?.data?.MESSAGE || error.message));
       
       // If retrieve fails, still try to navigate with the row data
