@@ -524,13 +524,11 @@ export default function MasterPage() {
   const router = useRouter();
   const { addRecentPath } = useRecentPaths();
 
-  
   useEffect(() => {
     setIsClient(true);
     const userIdFromStorage = localStorage.getItem('USER_ID');
     if (userIdFromStorage) {
       setUserId(userIdFromStorage);
-      console.log('User ID from localStorage:', userIdFromStorage);
     }
   }, []);
 
@@ -538,11 +536,8 @@ export default function MasterPage() {
   useEffect(() => {
     const fetchMenuItems = async () => {
       const effectiveUserId = userId || "1";
-      
       try {
         setLoading(true);
-        console.log('Fetching menus for user ID:', effectiveUserId);
-        
         const response = await axiosInstance.post('/MODULE/RetriveWebUserprivs', {
           "FLAG": "UR",
           "TBLNAME": "WebUserprivs",
@@ -553,51 +548,34 @@ export default function MasterPage() {
           "CO_ID": ""
         });
 
-        console.log('MasterPage API Response:', response.data);
-
         if (response.data && response.data.DATA) {
-         
-          const mastersModule = response.data.DATA.find(item => 
-            item.MOD_NAME === "Masters" || 
+          const mastersModule = response.data.DATA.find(item =>
+            item.MOD_NAME === "Masters" ||
             item.MOD_DESC === "Masters" ||
             (item.PARENT_ID === "0" && (item.MOD_NAME?.toLowerCase().includes('master') || item.MOD_DESC?.toLowerCase().includes('master')))
           );
-          
+
           const mastersId = mastersModule ? mastersModule.MOD_ID.toString() : "2";
-          console.log('Masters Module ID:', mastersId);
-          
-         
-          const topLevelTabs = response.data.DATA.filter(item => 
-            item.PARENT_ID === mastersId && 
-            item.MOD_NAME && 
+          const topLevelTabs = response.data.DATA.filter(item =>
+            item.PARENT_ID === mastersId &&
+            item.MOD_NAME &&
             item.MOD_NAME.trim() !== ''
           );
-          
-          console.log('Top Level Tabs under Masters:', topLevelTabs);
-          
-     
           const topLevelTabIds = new Set(topLevelTabs.map(tab => tab.MOD_ID.toString()));
-          
-         
           const mastersItems = response.data.DATA.filter(item => {
-          
             if (item.PARENT_ID === mastersId) return true;
-            
             if (topLevelTabIds.has(item.PARENT_ID)) return true;
-           
             const parentItem = response.data.DATA.find(p => p.MOD_ID.toString() === item.PARENT_ID);
             if (parentItem && parentItem.PARENT_ID === mastersId) return true;
             return false;
           });
-          
+
           const menuTree = buildMenuTree(mastersItems, response.data.DATA, mastersId);
           setMenuData(menuTree);
-          console.log('Menu Tree Built:', menuTree);
         } else {
           setMenuData([]);
         }
       } catch (error) {
-        console.error('Error fetching menu items:', error);
         setMenuData([]);
       } finally {
         setLoading(false);
@@ -607,29 +585,26 @@ export default function MasterPage() {
     fetchMenuItems();
   }, [userId]);
 
-
   const buildMenuTree = (data, allData, mastersId) => {
     const itemMap = {};
     const rootItems = [];
     const parentChildMap = {};
-
-   
     data.forEach(item => {
       if (!item.MOD_ID) return;
 
-      const hasPermission = 
-        item.ADD_PRIV === "1" || 
-        item.EDIT_PRIV === "1" || 
-        item.DELETE_PRIV === "1" || 
+      const hasPermission =
+        item.ADD_PRIV === "1" ||
+        item.EDIT_PRIV === "1" ||
+        item.DELETE_PRIV === "1" ||
         item.SELECT_PRIV === "1";
 
 
       const isTopLevelTab = item.PARENT_ID === mastersId;
-      
+
       if (hasPermission || isTopLevelTab) {
         const moduleName = item.MOD_DESC || item.MOD_NAME;
         const parentId = item.PARENT_ID === "0" || !item.PARENT_ID ? null : item.PARENT_ID;
-        
+
         itemMap[item.MOD_ID] = {
           id: item.MOD_ID,
           name: moduleName,
@@ -653,10 +628,8 @@ export default function MasterPage() {
       }
     });
 
-  
     const topLevelTabIds = new Set();
-    
- 
+
     Object.values(itemMap).forEach(item => {
       if (item.parentId && item.parentId !== mastersId && !itemMap[item.parentId]) {
         const parentItem = allData.find(d => d.MOD_ID.toString() === item.parentId);
@@ -666,7 +639,6 @@ export default function MasterPage() {
       }
     });
 
- 
     topLevelTabIds.forEach(parentId => {
       if (!itemMap[parentId]) {
         const parentItem = allData.find(item => item.MOD_ID.toString() === parentId);
@@ -688,17 +660,14 @@ export default function MasterPage() {
       }
     });
 
-    
     Object.values(itemMap).forEach(item => {
       if (item.parentId && item.parentId !== mastersId && itemMap[item.parentId]) {
         itemMap[item.parentId].children.push(item);
       } else if (item.parentId === mastersId) {
-       
         rootItems.push(item);
       }
     });
 
-   
     const sortItems = (items) => {
       items.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
       items.forEach(item => {
@@ -709,17 +678,15 @@ export default function MasterPage() {
     };
     sortItems(rootItems);
 
-    
     const transformed = rootItems.map(item => ({
       id: item.id,
       name: item.name,
       children: item.children
         .filter(child => {
-         
-          const hasChildPermission = 
-            child.permissions.add || 
-            child.permissions.edit || 
-            child.permissions.delete || 
+          const hasChildPermission =
+            child.permissions.add ||
+            child.permissions.edit ||
+            child.permissions.delete ||
             child.permissions.view;
           return hasChildPermission;
         })
@@ -729,9 +696,8 @@ export default function MasterPage() {
           icon: getIconForModule(child.name),
           permissions: child.permissions
         }))
-    })).filter(tab => tab.children.length > 0); 
+    })).filter(tab => tab.children.length > 0);
 
-    console.log('Transformed Menu Data:', transformed);
     return transformed;
   };
 
