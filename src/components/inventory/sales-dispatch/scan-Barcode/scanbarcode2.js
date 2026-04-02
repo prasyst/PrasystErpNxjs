@@ -527,11 +527,11 @@ const ScanBarcode = () => {
           showSnackbar('Barcode scanned successfully!', 'success');
           
           // Auto restart scanner if enabled
-          if (autoScanMode) {
-            setTimeout(() => {
-              startScanner();
-            }, 1000);
-          }
+          // if (autoScanMode) {
+          //   setTimeout(() => {
+          //     startScanner();
+          //   }, 1000);
+          // }
         }
       };
 
@@ -5087,9 +5087,9 @@ const ScanBarcode = () => {
               await fetchStyleDataByBarcode(decodedText);
               showSnackbar('Barcode scanned successfully!', 'success');
               isScanningRef.current = false;
-              if (autoScanMode) {
-                setTimeout(() => startScanner(), 1000);
-              }
+              // if (autoScanMode) {
+              //   setTimeout(() => startScanner(), 1000);
+              // }
             }
           }
         }}
