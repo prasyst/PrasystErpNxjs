@@ -1,65 +1,15 @@
 'use client';
 import React, { useState, useEffect, useRef, useCallback, Suspense } from 'react';
 import {
-  Box,
-  Grid,
-  TextField,
-  Typography,
-  Button,
-  Stack,
-  IconButton,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  CircularProgress,
-  Alert,
-  Snackbar,
-  Card,
-  CardContent,
-  FormControlLabel,
-  Checkbox,
-  FormGroup,
-  Divider,
-  Paper,
-  Modal,
-  Fade,
-  Select,
-  MenuItem,
-  InputLabel,
-  FormControl,
-  Chip,
-  OutlinedInput,
-  AppBar,
-  Toolbar,
-  Drawer,
-  List,
-  ListItem,
-  ListItemIcon,
-  ListItemText,
-  BottomNavigation,
-  BottomNavigationAction,
-  Fab,
-  Avatar,
-  Badge,
-  useMediaQuery,
-  useTheme,
-  SwipeableDrawer,
-  Tabs,
-  Tab,
-  Stepper,
-  Step,
-  StepLabel,
-  CardHeader,
-  CardActions,
-  InputAdornment,
-  alpha,
-  Collapse,
-  ListItemButton
+  Box, Grid, TextField, Typography, Button, Stack, IconButton, Dialog, DialogTitle, DialogContent, DialogActions, CircularProgress,
+  Alert, Snackbar, Card, CardContent, FormControlLabel, Checkbox, FormGroup, Divider, Paper, Modal, Fade, Select, MenuItem, InputLabel,
+  FormControl, Chip, OutlinedInput, AppBar, Toolbar, Drawer, List, ListItem, ListItemIcon, ListItemText, BottomNavigation, BottomNavigationAction,
+  Fab, Avatar, Badge, useMediaQuery, useTheme, SwipeableDrawer, Tabs, Tab, Stepper, Step, StepLabel, CardHeader, CardActions, InputAdornment,
+  alpha, Collapse, ListItemButton
 } from '@mui/material';
-import { 
-  CameraAlt as CameraIcon, 
-  Close as CloseIcon, 
+import {
+  CameraAlt as CameraIcon,
+  Close as CloseIcon,
   QrCodeScanner as QrCodeIcon,
   Search as SearchIcon,
   Add as AddIcon,
@@ -133,38 +83,38 @@ const ScanBarcode = () => {
   const isTablet = useMediaQuery(theme.breakpoints.between('sm', 'md'));
   const isDesktop = useMediaQuery(theme.breakpoints.up('lg'));
   const [shadeSearchQuery, setShadeSearchQuery] = useState('');
-  
+
   // State for all functionalities
   const [selectedCamera, setSelectedCamera] = useState('');
   const [availableCameras, setAvailableCameras] = useState([]);
   const [autoScanMode, setAutoScanMode] = useState(true); // Default to true
-  const [showAdvancedFields, setShowAdvancedFields] = useState(false);
+  const [showAdvancedFields, setShowAdvancedFields] = useState(true);
   const [useStyleCodeMode, setUseStyleCodeMode] = useState(false);
-  const [fillByRatioMode, setFillByRatioMode] = useState(false); 
-  const [fillByShadeMode, setFillByShadeMode] = useState(false); 
+  const [fillByRatioMode, setFillByRatioMode] = useState(false);
+  const [fillByShadeMode, setFillByShadeMode] = useState(false);
   const [showOrderModal, setShowOrderModal] = useState(false);
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
   const [activeTab, setActiveTab] = useState(0);
   const [scanMode, setScanMode] = useState('barcode'); // 'barcode', 'style', 'manual'
   const [viewMode, setViewMode] = useState('scan'); // 'scan', 'details', 'ratios', 'cart'
-  
+
   const [availableShades, setAvailableShades] = useState([]);
   const [selectedShades, setSelectedShades] = useState([]);
   const [shadeViewMode, setShadeViewMode] = useState('allocated');
-  
+
   const [currentProductInfo, setCurrentProductInfo] = useState({
     barcode: '',
     style: '',
     product: ''
   });
-  
+
   const [ratioData, setRatioData] = useState({
     totalQty: '',
     ratios: {}
   });
-  
+
   const router = useRouter();
-  
+
   const [formData, setFormData] = useState({
     Party: '',
     PARTY_KEY: '',
@@ -177,7 +127,7 @@ const ScanBarcode = () => {
     Order_Type: 'Sales And Work-Order',
     ORDBK_TYPE: '2',
     Status: 'O',
-    
+
     ORDER_NO: '',
     ORDER_DATE: new Date().toLocaleDateString('en-GB'),
     LAST_ORD_NO: '',
@@ -234,9 +184,9 @@ const ScanBarcode = () => {
 
   const [sizeDetailsData, setSizeDetailsData] = useState([]);
   const [tableData, setTableData] = useState([]);
-  
+
   const [availableSizes, setAvailableSizes] = useState([]);
-  
+
   const [partyOptions, setPartyOptions] = useState([]);
   const [branchOptions, setBranchOptions] = useState([]);
   const [shippingPartyOptions, setShippingPartyOptions] = useState([]);
@@ -268,11 +218,11 @@ const ScanBarcode = () => {
   const [isLoadingBarcode, setIsLoadingBarcode] = useState(false);
   const [isLoadingData, setIsLoadingData] = useState(false);
   const [isClient, setIsClient] = useState(false);
-  
-  const [snackbar, setSnackbar] = useState({ 
-    open: false, 
-    message: '', 
-    severity: 'success' 
+
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: '',
+    severity: 'success'
   });
 
   const [currentStyleData, setCurrentStyleData] = useState(null);
@@ -290,16 +240,16 @@ const ScanBarcode = () => {
   // Initialize
   useEffect(() => {
     setIsClient(true);
-    
+
     if (typeof window !== 'undefined') {
       const storedCO_ID = localStorage.getItem('CO_ID') || '';
       const storedCOBR_ID = localStorage.getItem('COBR_ID') || '';
-      
+
       setCompanyConfig({
         CO_ID: storedCO_ID,
         COBR_ID: storedCOBR_ID
       });
-      
+
       fetchInitialData();
       generateOrderNumber();
       getAvailableCameras();
@@ -320,7 +270,7 @@ const ScanBarcode = () => {
       height: isMobile ? 44 : 40,
       fontSize: isMobile ? '15px' : '14px',
       borderRadius: isMobile ? '12px' : '6px',
-      width: '180px'
+      width: '100%'
     },
     '& .MuiInputLabel-root': {
       fontSize: isMobile ? '15px' : '14px',
@@ -447,15 +397,15 @@ const ScanBarcode = () => {
   // Get available cameras
   const getAvailableCameras = async () => {
     if (typeof window === 'undefined') return;
-    
+
     try {
       const devices = await navigator.mediaDevices.enumerateDevices();
       const videoDevices = devices.filter(device => device.kind === 'videoinput');
       setAvailableCameras(videoDevices);
-      
+
       // Set default camera (prefer back camera)
-      const backCamera = videoDevices.find(device => 
-        device.label.toLowerCase().includes('back') || 
+      const backCamera = videoDevices.find(device =>
+        device.label.toLowerCase().includes('back') ||
         device.label.toLowerCase().includes('environment')
       );
       if (backCamera) {
@@ -471,7 +421,7 @@ const ScanBarcode = () => {
   // Initialize scanner
   const initScanner = useCallback(async (cameraId = '') => {
     if (typeof window === 'undefined') return;
-    
+
     // Clear existing scanner
     if (html5QrCodeRef.current) {
       try {
@@ -493,11 +443,11 @@ const ScanBarcode = () => {
     container.innerHTML = '';
 
     const cameraIdToUse = cameraId || selectedCamera;
-    
+
     try {
       const html5QrCode = new Html5Qrcode("qr-reader-container");
       html5QrCodeRef.current = html5QrCode;
-      
+
       const config = {
         fps: 10,
         qrbox: { width: isMobile ? 250 : 300, height: isMobile ? 250 : 300 },
@@ -510,7 +460,7 @@ const ScanBarcode = () => {
         if (isScanningRef.current) {
           // Stop scanning temporarily
           isScanningRef.current = false;
-          
+
           // Stop the scanner
           if (html5QrCodeRef.current) {
             try {
@@ -519,13 +469,13 @@ const ScanBarcode = () => {
               console.error('Error stopping scanner:', err);
             }
           }
-          
+
           // Process the scanned barcode
           setShowScanner(false);
           setNewItemData(prev => ({ ...prev, barcode: decodedText }));
           await fetchStyleDataByBarcode(decodedText);
           showSnackbar('Barcode scanned successfully!', 'success');
-          
+
           // Auto restart scanner if enabled
           // if (autoScanMode) {
           //   setTimeout(() => {
@@ -548,13 +498,12 @@ const ScanBarcode = () => {
         onScanSuccess,
         onScanFailure
       );
-      
+
       isScanningRef.current = true;
       setIsScanning(true);
       setScannerError('');
-      
+
     } catch (error) {
-      console.error('Scanner initialization error:', error);
       setScannerError(`Failed to initialize scanner: ${error.message}`);
       showSnackbar('Scanner initialization failed. Please check camera permissions.', 'error');
       setIsScanning(false);
@@ -562,21 +511,21 @@ const ScanBarcode = () => {
     }
   }, [selectedCamera, isMobile, autoScanMode]);
 
- const startScanner = useCallback(() => {
-  setShowScanner(true);
-  setScannerError('');
-}, []);
+  const startScanner = useCallback(() => {
+    setShowScanner(true);
+    setScannerError('');
+  }, []);
 
- const stopScanner = useCallback(() => {
-  setShowScanner(false);
-  setIsScanning(false);
-  isScanningRef.current = false;
-}, []);
+  const stopScanner = useCallback(() => {
+    setShowScanner(false);
+    setIsScanning(false);
+    isScanningRef.current = false;
+  }, []);
 
   // Switch camera
   const switchCamera = useCallback(async (deviceId) => {
     setSelectedCamera(deviceId);
-    
+
     if (html5QrCodeRef.current && isScanningRef.current) {
       try {
         await html5QrCodeRef.current.stop();
@@ -584,7 +533,7 @@ const ScanBarcode = () => {
       } catch (err) {
         console.error('Error switching camera:', err);
       }
-      
+
       setTimeout(() => {
         initScanner(deviceId);
       }, 100);
@@ -595,7 +544,7 @@ const ScanBarcode = () => {
     const isChecked = event.target.checked;
     setFillEqualQtyMode(isChecked);
     setShowEqualQtyInput(isChecked);
-    
+
     if (!isChecked) {
       setEqualQtyValue('');
     }
@@ -609,11 +558,11 @@ const ScanBarcode = () => {
 
     const qty = parseFloat(equalQtyValue);
     const updatedSizeDetails = [...sizeDetailsData];
-    
+
     updatedSizeDetails.forEach((size, index) => {
       const rate = parseFloat(newItemData.rate) || 0;
       const amount = qty * rate;
-      
+
       updatedSizeDetails[index] = {
         ...updatedSizeDetails[index],
         QTY: qty,
@@ -623,14 +572,14 @@ const ScanBarcode = () => {
     });
 
     setSizeDetailsData(updatedSizeDetails);
-    
+
     const totalQty = updatedSizeDetails.reduce((sum, size) => sum + (parseFloat(size.QTY) || 0), 0);
-    setNewItemData(prev => ({ 
-      ...prev, 
+    setNewItemData(prev => ({
+      ...prev,
       qty: totalQty.toString(),
       rate: totalQty > 0 ? (qty * updatedSizeDetails.length * parseFloat(prev.rate) / totalQty).toFixed(2) : prev.rate
     }));
-    
+
     showSnackbar(`Equal quantity (${qty}) applied to all ${updatedSizeDetails.length} sizes!`, 'success');
   };
 
@@ -681,19 +630,19 @@ const ScanBarcode = () => {
     const fgtypeKey = item.FGTYPE_KEY || item.fgtypeKey || "";
     const fgshadeKey = item.FGSHADE_KEY || item.fgshadeKey || "";
     const fgptnKey = item.FGPTN_KEY || item.fgptnKey || "";
-    
+
     const cleanFgprdKey = fgprdKey.trim();
     const cleanFgstyleId = fgstyleId.toString().trim();
     const cleanFgtypeKey = fgtypeKey.trim();
     const cleanFgshadeKey = fgshadeKey.trim();
     const cleanFgptnKey = fgptnKey.trim();
-    
+
     let fgItemKey = cleanFgprdKey;
     if (cleanFgstyleId) fgItemKey += cleanFgstyleId;
     if (cleanFgtypeKey) fgItemKey += cleanFgtypeKey;
     if (cleanFgshadeKey) fgItemKey += cleanFgshadeKey;
     if (cleanFgptnKey) fgItemKey += cleanFgptnKey;
-    
+
     return fgItemKey || "";
   };
 
@@ -705,31 +654,31 @@ const ScanBarcode = () => {
       };
 
       const response = await axiosInstance.post('/Fgshade/GetFgshadedrp', payload);
-      
+
       if (response.data.DATA && Array.isArray(response.data.DATA)) {
         const shades = response.data.DATA.map(item => ({
           FGSHADE_NAME: item.FGSHADE_NAME || '',
           FGSHADE_KEY: item.FGSHADE_KEY || '',
           FGSTYLE_ID: item.FGSTYLE_ID || fgstyleId
         }));
-        
+
         const newShadeMap = {};
         response.data.DATA.forEach(item => {
           if (item.FGSHADE_NAME && item.FGSHADE_KEY) {
             newShadeMap[item.FGSHADE_NAME] = item.FGSHADE_KEY;
           }
         });
-        
+
         setShadeMapping(newShadeMap);
         setAvailableShades(shades);
-        
+
         if (mode === 'allocated' && shades.length > 0) {
           const firstShade = shades[0].FGSHADE_NAME;
           const firstShadeKey = shades[0].FGSHADE_KEY;
-          
+
           setSelectedShades([firstShade]);
           setSelectedShadeKey(firstShadeKey);
-          
+
           setNewItemData(prev => ({
             ...prev,
             shade: firstShade,
@@ -739,7 +688,7 @@ const ScanBarcode = () => {
           setSelectedShades([]);
           setSelectedShadeKey('');
         }
-        
+
         return shades;
       } else {
         setAvailableShades([]);
@@ -748,7 +697,6 @@ const ScanBarcode = () => {
         return [];
       }
     } catch (error) {
-      console.error('Error fetching shades:', error);
       showSnackbar('Error fetching shades', 'error');
       setAvailableShades([]);
       setSelectedShades([]);
@@ -761,18 +709,18 @@ const ScanBarcode = () => {
     const { target: { value } } = event;
     const selectedValues = typeof value === 'string' ? value.split(',') : value;
     setSelectedShades(selectedValues);
-    
+
     if (selectedValues.length > 0) {
       const firstSelectedShade = selectedValues[0];
       const shadeKey = shadeMapping[firstSelectedShade] || '';
-      
+
       setSelectedShadeKey(shadeKey);
       setNewItemData(prev => ({
         ...prev,
         shade: firstSelectedShade,
         fgshadeKey: shadeKey
       }));
-      
+
       if (currentStyleData && shadeKey) {
         fetchSizeDetailsForStyle(currentStyleData, firstSelectedShade);
       }
@@ -799,7 +747,7 @@ const ScanBarcode = () => {
   const generateOrderNumber = async () => {
     try {
       setIsLoadingData(true);
-      
+
       const seriesPayload = {
         "MODULENAME": "Ordbk",
         "TBLNAME": "Ordbk",
@@ -814,10 +762,10 @@ const ScanBarcode = () => {
       };
 
       const seriesResponse = await axiosInstance.post('/GetSeriesSettings/GetSeriesLastNewKey', seriesPayload);
-      
+
       if (seriesResponse.data.DATA && seriesResponse.data.DATA.length > 0) {
         const prefix = seriesResponse.data.DATA[0].CPREFIX;
-        
+
         const orderPayload = {
           "MODULENAME": "Ordbk",
           "TBLNAME": "Ordbk",
@@ -832,11 +780,11 @@ const ScanBarcode = () => {
         };
 
         const orderResponse = await axiosInstance.post('/GetSeriesSettings/GetSeriesLastNewKey', orderPayload);
-        
+
         if (orderResponse.data.DATA && orderResponse.data.DATA.length > 0) {
           const orderData = orderResponse.data.DATA[0];
           const correctOrdbkKey = `25${companyConfig.COBR_ID}${orderData.ID}`;
-          
+
           setFormData(prev => ({
             ...prev,
             ORDER_NO: orderData.ID,
@@ -865,7 +813,6 @@ const ScanBarcode = () => {
         fetchSeasonData()
       ]);
     } catch (error) {
-      console.error('Error fetching initial data:', error);
       showSnackbar('Error loading initial data', 'error');
     } finally {
       setIsLoadingData(false);
@@ -881,7 +828,7 @@ const ScanBarcode = () => {
         const parties = response.data.DATA.map(item => item.PARTY_NAME || '');
         setPartyOptions(parties);
         setShippingPartyOptions(parties);
-        
+
         const mapping = {};
         response.data.DATA.forEach(item => {
           if (item.PARTY_NAME && item.PARTY_KEY) {
@@ -889,11 +836,11 @@ const ScanBarcode = () => {
           }
         });
         setPartyMapping(mapping);
-        
+
         if (parties.length > 0 && !formData.Party) {
           const firstParty = parties[0];
           const firstPartyKey = mapping[firstParty];
-          
+
           setFormData(prev => ({
             ...prev,
             Party: firstParty,
@@ -901,42 +848,41 @@ const ScanBarcode = () => {
             SHIPPING_PARTY: firstParty,
             SHP_PARTY_KEY: firstPartyKey
           }));
-          
+
           fetchPartyDetails(firstPartyKey);
         }
       }
     } catch (error) {
-      console.error("Error fetching parties:", error);
       showSnackbar('Error fetching parties', 'error');
     }
   };
 
   const fetchPartyDetails = async (partyKey, isShippingParty = false) => {
     if (!partyKey) return;
-    
+
     try {
       const response = await axiosInstance.post("Party/GetPartyDtlDrp", {
         PARTY_KEY: partyKey
       });
-      
+
       if (response.data.STATUS === 0 && Array.isArray(response.data.DATA)) {
         const branches = response.data.DATA.map(item => item.PLACE || '');
-        
+
         const mapping = {};
         response.data.DATA.forEach(item => {
           if (item.PLACE && item.PARTYDTL_ID) {
             mapping[item.PLACE] = item.PARTYDTL_ID;
           }
         });
-        
+
         if (isShippingParty) {
           setShippingPlaceOptions(branches);
           setShippingBranchMapping(mapping);
-          
+
           if (branches.length > 0 && !formData.SHIPPING_PLACE) {
             const firstBranch = branches[0];
             const firstBranchId = mapping[firstBranch];
-            
+
             setFormData(prev => ({
               ...prev,
               SHIPPING_PLACE: firstBranch,
@@ -946,11 +892,11 @@ const ScanBarcode = () => {
         } else {
           setBranchOptions(branches);
           setBranchMapping(mapping);
-          
+
           if (branches.length > 0 && !formData.Branch) {
             const firstBranch = branches[0];
             const firstBranchId = mapping[firstBranch];
-            
+
             setFormData(prev => ({
               ...prev,
               Branch: firstBranch,
@@ -964,7 +910,6 @@ const ScanBarcode = () => {
         }
       }
     } catch (error) {
-      console.error("Error fetching party details:", error);
       showSnackbar('Error fetching branch details', 'error');
     }
   };
@@ -984,7 +929,7 @@ const ScanBarcode = () => {
       if (response.data.DATA && Array.isArray(response.data.DATA)) {
         const brokers = response.data.DATA.map(item => item.BROKER_NAME || '');
         setBrokerOptions(brokers);
-        
+
         const mapping = {};
         response.data.DATA.forEach(item => {
           if (item.BROKER_NAME && item.BROKER_KEY) {
@@ -1014,7 +959,7 @@ const ScanBarcode = () => {
         const salespersons = response.data.DATA.map(item => item.SALEPERSON_NAME || '');
         setSalesperson1Options(salespersons);
         setSalesperson2Options(salespersons);
-        
+
         const mapping = {};
         response.data.DATA.forEach(item => {
           if (item.SALEPERSON_NAME && item.SALEPERSON_KEY) {
@@ -1039,7 +984,7 @@ const ScanBarcode = () => {
       if (response.data.DATA && Array.isArray(response.data.DATA)) {
         const merchandisers = response.data.DATA.map(item => item.USER_NAME || '');
         setMerchandiserOptions(merchandisers);
-        
+
         const mapping = {};
         response.data.DATA.forEach(item => {
           if (item.USER_NAME && item.USER_ID) {
@@ -1069,7 +1014,7 @@ const ScanBarcode = () => {
       if (response.data.DATA && Array.isArray(response.data.DATA)) {
         const seasons = response.data.DATA.map(item => item.SEASON_NAME || '');
         setSeasonOptions(seasons);
-        
+
         const mapping = {};
         response.data.DATA.forEach(item => {
           if (item.SEASON_NAME && item.SEASON_KEY) {
@@ -1088,11 +1033,11 @@ const ScanBarcode = () => {
       setScannerError('Please enter a barcode');
       return;
     }
-    
+
     try {
       setIsLoadingBarcode(true);
       setScannerError('');
-      
+
       const payload = {
         "FGSTYLE_ID": "",
         "FGPRD_KEY": "",
@@ -1104,28 +1049,28 @@ const ScanBarcode = () => {
       const response = await axiosInstance.post('/FGSTYLE/GetFgstyleDrp', payload);
 
       if (response.data.DATA && response.data.DATA.length > 0) {
-        const exactMatch = response.data.DATA.find(item => 
+        const exactMatch = response.data.DATA.find(item =>
           item.ALT_BARCODE && item.ALT_BARCODE.toString() === barcode.trim()
         );
-        
+
         const styleData = exactMatch || response.data.DATA[0];
-        
+
         const productKey = styleData.FGPRD_KEY || "";
-        
+
         const isSameProduct = (
           currentProductInfo.productKey === productKey &&
           currentProductInfo.style === (styleData.FGSTYLE_CODE || styleData.FGSTYLE_NAME || '')
         );
-        
+
         const newProductInfo = {
           barcode: styleData.ALT_BARCODE || styleData.STYSTKDTL_KEY || barcode,
           style: styleData.FGSTYLE_CODE || styleData.FGSTYLE_NAME || '',
           product: styleData.FGPRD_NAME || '',
           productKey: productKey
         };
-        
+
         setCurrentProductInfo(newProductInfo);
-        
+
         if (currentProductInfo.productKey && !isSameProduct) {
           if (Object.keys(ratioData.ratios).length > 0) {
             showSnackbar('Product has changed. Please enter new ratios for this product.', 'warning');
@@ -1141,12 +1086,12 @@ const ScanBarcode = () => {
             showSnackbar('Previous ratios loaded for this product', 'info');
           }
         }
-        
+
         setCurrentStyleData(styleData);
-        
+
         const shadeValue = styleData.FGSHADE_NAME || '';
         const sizeValue = styleData.STYSIZE_NAME || '';
-        
+
         setNewItemData({
           ...newItemData,
           barcode: newProductInfo.barcode,
@@ -1163,24 +1108,23 @@ const ScanBarcode = () => {
           convFact: '1',
           remark: ''
         });
-        
+
         await fetchSizeDetailsForStyle(styleData, newItemData.shade);
-        
+
         if (styleData.FGSTYLE_ID) {
           await fetchShadesForStyle(styleData.FGSTYLE_ID, shadeViewMode);
         }
-        
+
         if (isMobile) {
-          setActiveTab(2); 
+          setActiveTab(2);
           setViewMode('details');
         }
-        
+
       } else {
         setScannerError('No product found for this barcode. Please check the barcode and try again.');
         showSnackbar('Product not found', 'warning');
       }
     } catch (error) {
-      console.error('Error fetching style data:', error);
       setScannerError('Error fetching product details. Please try again.');
       showSnackbar('Error fetching product', 'error');
     } finally {
@@ -1198,7 +1142,7 @@ const ScanBarcode = () => {
     try {
       setIsLoadingStyleCode(true);
       setScannerError('');
-      
+
       const payload = {
         "FGSTYLE_ID": "",
         "FGPRD_KEY": "",
@@ -1210,33 +1154,33 @@ const ScanBarcode = () => {
 
       if (response.data.DATA && response.data.DATA.length > 0) {
         const styleData = response.data.DATA[0];
-        
+
         let selectedStyleData = styleData;
         if (styleCodeInput && styleCodeInput.trim() !== '') {
-          const exactMatch = response.data.DATA.find(item => 
+          const exactMatch = response.data.DATA.find(item =>
             item.ALT_BARCODE && item.ALT_BARCODE.toString() === styleCodeInput.trim()
           );
           if (exactMatch) {
             selectedStyleData = exactMatch;
           }
         }
-        
+
         const productKey = selectedStyleData.FGPRD_KEY || "";
-        
+
         const isSameProduct = (
           currentProductInfo.productKey === productKey &&
           currentProductInfo.style === (selectedStyleData.FGSTYLE_CODE || selectedStyleData.FGSTYLE_NAME || '')
         );
-        
+
         const newProductInfo = {
           barcode: selectedStyleData.ALT_BARCODE || selectedStyleData.STYSTKDTL_KEY || '',
           style: selectedStyleData.FGSTYLE_CODE || selectedStyleData.FGSTYLE_NAME || '',
           product: selectedStyleData.FGPRD_NAME || '',
           productKey: productKey
         };
-        
+
         setCurrentProductInfo(newProductInfo);
-        
+
         if (currentProductInfo.productKey && !isSameProduct) {
           if (Object.keys(ratioData.ratios).length > 0) {
             showSnackbar('Product has changed. Please enter new ratios for this product.', 'warning');
@@ -1252,12 +1196,12 @@ const ScanBarcode = () => {
             showSnackbar('Previous ratios loaded for this product', 'info');
           }
         }
-        
+
         setCurrentStyleData(selectedStyleData);
-        
+
         const shadeValue = selectedStyleData.FGSHADE_NAME || '';
         const sizeValue = selectedStyleData.STYSIZE_NAME || '';
-        
+
         setNewItemData({
           ...newItemData,
           barcode: newProductInfo.barcode,
@@ -1274,26 +1218,25 @@ const ScanBarcode = () => {
           convFact: '1',
           remark: ''
         });
-        
+
         showSnackbar('Product found successfully by style code!');
-        
+
         await fetchSizeDetailsForStyle(styleData, newItemData.shade);
-        
+
         if (selectedStyleData.FGSTYLE_ID) {
           await fetchShadesForStyle(selectedStyleData.FGSTYLE_ID, shadeViewMode);
         }
-        
+
         if (isMobile) {
           setActiveTab(2);
           setViewMode('details');
         }
-        
+
       } else {
         setScannerError('No product found for this style code. Please check the style code and try again.');
         showSnackbar('Product not found', 'warning');
       }
     } catch (error) {
-      console.error('Error fetching style data by code:', error);
       setScannerError('Error fetching product details. Please try again.');
       showSnackbar('Error fetching product', 'error');
     } finally {
@@ -1304,11 +1247,11 @@ const ScanBarcode = () => {
   const handleStyleCodeInputChange = (e) => {
     const value = e.target.value;
     setStyleCodeInput(value);
-    
+
     if (styleCodeTimeoutRef.current) {
       clearTimeout(styleCodeTimeoutRef.current);
     }
-    
+
     if (value && value.trim() !== '') {
       styleCodeTimeoutRef.current = setTimeout(() => {
         fetchStyleDataByCode(value.trim());
@@ -1330,7 +1273,7 @@ const ScanBarcode = () => {
       const fgprdKey = styleData.FGPRD_KEY;
       const fgstyleId = styleData.FGSTYLE_ID;
       const fgtypeKey = styleData.FGTYPE_KEY || "";
-      
+
       let fgshadeKey = "";
       if (selectedShadeName && shadeMapping[selectedShadeName]) {
         fgshadeKey = shadeMapping[selectedShadeName];
@@ -1341,7 +1284,7 @@ const ScanBarcode = () => {
       } else if (selectedShadeKey) {
         fgshadeKey = selectedShadeKey;
       }
-      
+
       const fgptnKey = styleData.FGPTN_KEY || "";
 
       if (!fgprdKey || !fgstyleId) {
@@ -1406,13 +1349,13 @@ const ScanBarcode = () => {
         }));
 
         setSizeDetailsData(transformedSizeDetails);
-        
+
         setCurrentStyleData(prev => ({
           ...prev,
           STYCATRT_ID: stycatrtId,
           FGSHADE_KEY: fgshadeKey
         }));
-        
+
         const availableSizesForRatio = response.data.DATA.map(size => ({
           STYSIZE_ID: size.STYSIZE_ID,
           STYSIZE_NAME: size.STYSIZE_NAME,
@@ -1421,48 +1364,48 @@ const ScanBarcode = () => {
           STYCATRT_ID: stycatrtId,
           FGSHADE_KEY: fgshadeKey
         }));
-        
+
         setAvailableSizes(availableSizesForRatio);
-        
+
       } else {
         const stysizeName = styleData.STYSIZE_NAME || 'Default';
         const stysizeId = styleData.STYSIZE_ID || 1;
-        
+
         const defaultSizes = [
-          { 
+          {
             STYSIZE_NAME: stysizeName,
-            STYSIZE_ID: stysizeId, 
-            QTY: 0, 
-            MRP: parseFloat(styleData.MRP) || 0, 
+            STYSIZE_ID: stysizeId,
+            QTY: 0,
+            MRP: parseFloat(styleData.MRP) || 0,
             RATE: parseFloat(styleData.SSP) || 0,
             WSP: parseFloat(styleData.SSP) || 0,
             STYCATRT_ID: stycatrtId,
             FGSHADE_KEY: fgshadeKey
           }
         ];
-        
+
         setAvailableSizes(defaultSizes);
         setSizeDetailsData(defaultSizes);
       }
     } catch (error) {
       console.error('Error fetching size details:', error);
-      
+
       const stysizeName = styleData.STYSIZE_NAME || 'Default';
       const stysizeId = styleData.STYSIZE_ID || 1;
-      
+
       const defaultSizes = [
-        { 
+        {
           STYSIZE_NAME: stysizeName,
-          STYSIZE_ID: stysizeId, 
-          QTY: 0, 
-          MRP: parseFloat(newItemData.mrp) || 0, 
+          STYSIZE_ID: stysizeId,
+          QTY: 0,
+          MRP: parseFloat(newItemData.mrp) || 0,
           RATE: parseFloat(newItemData.rate) || 0,
           WSP: parseFloat(newItemData.rate) || 0,
           STYCATRT_ID: 0,
           FGSHADE_KEY: selectedShadeKey || ''
         }
       ];
-      
+
       setAvailableSizes(defaultSizes);
       setSizeDetailsData(defaultSizes);
     }
@@ -1476,9 +1419,9 @@ const ScanBarcode = () => {
         [sizeName]: value
       }
     };
-    
+
     setRatioData(newRatioData);
-    
+
     if (currentProductInfo.productKey) {
       saveRatioDataToStorage(currentProductInfo.productKey, newRatioData);
     }
@@ -1489,9 +1432,9 @@ const ScanBarcode = () => {
       ...ratioData,
       totalQty: value
     };
-    
+
     setRatioData(newRatioData);
-    
+
     if (currentProductInfo.productKey) {
       saveRatioDataToStorage(currentProductInfo.productKey, newRatioData);
     }
@@ -1502,7 +1445,7 @@ const ScanBarcode = () => {
       showSnackbar('Please enable Ratio Fill mode first', 'error');
       return;
     }
-    
+
     const totalQty = parseFloat(ratioData.totalQty);
     if (!totalQty || totalQty <= 0) {
       showSnackbar('Please enter a valid total quantity', 'error');
@@ -1511,7 +1454,7 @@ const ScanBarcode = () => {
 
     const ratios = ratioData.ratios;
     const sizeNames = Object.keys(ratios);
-    
+
     if (sizeNames.length === 0) {
       showSnackbar('Please enter ratios for at least one size', 'error');
       return;
@@ -1534,12 +1477,12 @@ const ScanBarcode = () => {
       const ratio = parseFloat(ratios[sizeName]) || 0;
       const exactQty = (ratio / totalRatio) * totalQty;
       const roundedQty = Math.round(exactQty);
-      
+
       const sizeIndex = updatedSizeDetails.findIndex(size => size.STYSIZE_NAME === sizeName);
       if (sizeIndex !== -1) {
         const wsp = updatedSizeDetails[sizeIndex].WSP || updatedSizeDetails[sizeIndex].RATE || 0;
         const amount = roundedQty * wsp;
-        
+
         updatedSizeDetails[sizeIndex] = {
           ...updatedSizeDetails[sizeIndex],
           QTY: roundedQty,
@@ -1557,7 +1500,7 @@ const ScanBarcode = () => {
         const wsp = updatedSizeDetails[firstSizeIndex].WSP || updatedSizeDetails[firstSizeIndex].RATE || 0;
         const newQty = updatedSizeDetails[firstSizeIndex].QTY + difference;
         const newAmount = newQty * wsp;
-        
+
         updatedSizeDetails[firstSizeIndex] = {
           ...updatedSizeDetails[firstSizeIndex],
           QTY: newQty,
@@ -1567,16 +1510,16 @@ const ScanBarcode = () => {
     }
 
     setSizeDetailsData(updatedSizeDetails);
-    
+
     const newTotalQty = updatedSizeDetails.reduce((sum, size) => sum + (parseFloat(size.QTY) || 0), 0);
     const totalAmount = updatedSizeDetails.reduce((sum, size) => sum + (parseFloat(size.ITM_AMT) || 0), 0);
-    
-    setNewItemData(prev => ({ 
-      ...prev, 
+
+    setNewItemData(prev => ({
+      ...prev,
       qty: newTotalQty.toString(),
       rate: newTotalQty > 0 ? (totalAmount / newTotalQty).toFixed(2) : prev.rate
     }));
-    
+
     if (fillByShadeMode && selectedShades.length > 0) {
       const perShadeQty = newTotalQty;
       showSnackbar(`Quantities filled successfully! Each shade will get: ${perShadeQty}`, 'success');
@@ -1603,7 +1546,7 @@ const ScanBarcode = () => {
       const newItems = selectedShades.map(shade => {
         const shadeAmount = amount;
         const shadeQty = totalQty;
-        
+
         return {
           id: Date.now() + Math.random(),
           barcode: newItemData.barcode,
@@ -1675,11 +1618,11 @@ const ScanBarcode = () => {
       rQty: '',
       divDt: ''
     });
-    
+
     if (useStyleCodeMode) {
       setStyleCodeInput('');
     }
-    
+
     setCurrentProductInfo({
       barcode: '',
       style: '',
@@ -1691,16 +1634,16 @@ const ScanBarcode = () => {
     setAvailableSizes([]);
     setAvailableShades([]);
     setSelectedShades([]);
-    setFillByRatioMode(false); 
-    setFillByShadeMode(false); 
+    setFillByRatioMode(false);
+    setFillByShadeMode(false);
     setRatioData({
       totalQty: '',
       ratios: {}
     });
     setScannerError('');
-    
+
     if (isMobile) {
-      setActiveTab(1); 
+      setActiveTab(1);
       setViewMode('scan');
     }
 
@@ -1731,24 +1674,24 @@ const ScanBarcode = () => {
       ...formData,
       [field]: value
     };
-    
+
     if (field === 'Party' && partyMapping[value]) {
       updatedFormData.PARTY_KEY = partyMapping[value];
       updatedFormData.SHIPPING_PARTY = value;
       updatedFormData.SHP_PARTY_KEY = partyMapping[value];
-      
+
       updatedFormData.SHIPPING_PLACE = '';
       updatedFormData.SHP_PARTYDTL_ID = '';
-      
+
       fetchPartyDetails(partyMapping[value]);
     }
-    
+
     if (field === 'SHIPPING_PARTY' && partyMapping[value]) {
       updatedFormData.SHP_PARTY_KEY = partyMapping[value];
       updatedFormData.SHIPPING_PLACE = '';
       fetchPartyDetails(partyMapping[value], true);
     }
-    
+
     if (field === 'Branch' && branchMapping[value]) {
       updatedFormData.PARTYDTL_ID = branchMapping[value];
       if (!updatedFormData.SHIPPING_PLACE) {
@@ -1756,31 +1699,31 @@ const ScanBarcode = () => {
         updatedFormData.SHP_PARTYDTL_ID = branchMapping[value];
       }
     }
-    
+
     if (field === 'SHIPPING_PLACE' && shippingBranchMapping[value]) {
       updatedFormData.SHP_PARTYDTL_ID = shippingBranchMapping[value];
     }
-    
+
     if (field === 'Broker' && brokerMapping[value]) {
       updatedFormData.BROKER_KEY = brokerMapping[value];
     }
-    
+
     if (field === 'SALESPERSON_1' && salesperson1Mapping[value]) {
       updatedFormData.SALEPERSON1_KEY = salesperson1Mapping[value];
     }
-    
+
     if (field === 'SALESPERSON_2' && salesperson2Mapping[value]) {
       updatedFormData.SALEPERSON2_KEY = salesperson2Mapping[value];
     }
-    
+
     if (field === 'MERCHANDISER_NAME' && merchandiserMapping[value]) {
       updatedFormData.MERCHANDISER_ID = merchandiserMapping[value];
     }
-    
+
     if (field === 'SEASON' && seasonMapping[value]) {
       updatedFormData.CURR_SEASON_KEY = seasonMapping[value];
     }
-    
+
     setFormData(updatedFormData);
   };
 
@@ -1796,7 +1739,7 @@ const ScanBarcode = () => {
       setScannerError('Please enter a barcode');
       return;
     }
-    
+
     fetchStyleDataByBarcode(newItemData.barcode);
   };
 
@@ -1824,7 +1767,7 @@ const ScanBarcode = () => {
     const qty = parseFloat(newQty) || 0;
     const rate = parseFloat(newItemData.rate) || 0;
     const amount = qty * rate;
-    
+
     updatedSizeDetails[index] = {
       ...updatedSizeDetails[index],
       QTY: qty,
@@ -1833,7 +1776,7 @@ const ScanBarcode = () => {
     };
 
     setSizeDetailsData(updatedSizeDetails);
-    
+
     const totalQty = updatedSizeDetails.reduce((sum, size) => sum + (parseFloat(size.QTY) || 0), 0);
     setNewItemData(prev => ({ ...prev, qty: totalQty.toString() }));
   };
@@ -1861,7 +1804,7 @@ const ScanBarcode = () => {
   const prepareSubmitPayload = () => {
     const dbFlag = 'I';
     const currentDate = new Date().toISOString().replace('T', ' ').split('.')[0];
-    
+
     const userId = localStorage.getItem('USER_ID') || '1';
     const userName = localStorage.getItem('USER_NAME') || 'Admin';
 
@@ -1878,7 +1821,7 @@ const ScanBarcode = () => {
 
     const transformedOrdbkStyleList = tableData.map((item, index) => {
       const tempId = Date.now() + index;
-      
+
       const fgstyleId = item.styleData?.FGSTYLE_ID || 0;
       const fgprdKey = item.styleData?.FGPRD_KEY || '';
       const fgtypeKey = item.styleData?.FGTYPE_KEY || '';
@@ -1888,7 +1831,7 @@ const ScanBarcode = () => {
       }
       const fgptnKey = item.styleData?.FGPTN_KEY || '';
       const stycatrtId = item.STYCATRT_ID || item.styleData?.STYCATRT_ID || 0;
-      
+
       const fgItemKey = generateFgItemKey({
         FGPRD_KEY: fgprdKey,
         FGSTYLE_ID: fgstyleId,
@@ -1988,7 +1931,7 @@ const ScanBarcode = () => {
       DBFLAG: dbFlag,
       FCYR_KEY: "25",
       CO_ID: companyConfig.CO_ID,
-      COBR_ID: companyConfig.COBR_ID, 
+      COBR_ID: companyConfig.COBR_ID,
       ORDBK_NO: formData.ORDER_NO || "",
       CURR_SEASON_KEY: formData.CURR_SEASON_KEY || "",
       ORDBK_X: "",
@@ -2059,17 +2002,16 @@ const ScanBarcode = () => {
 
   const formatDateForAPI = (dateString) => {
     if (!dateString) return "1900-01-01T00:00:00";
-    
+
     try {
       if (dateString.includes('/')) {
         const [day, month, year] = dateString.split('/');
         return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}T00:00:00`;
       }
-      
+
       const date = new Date(dateString);
       return date.toISOString().split('T')[0] + 'T00:00:00';
     } catch (error) {
-      console.error('Error formatting date for API:', error);
       return "1900-01-01T00:00:00";
     }
   };
@@ -2087,16 +2029,16 @@ const ScanBarcode = () => {
 
     try {
       setIsLoadingData(true);
-      
+
       const payload = prepareSubmitPayload();
       const userName = localStorage.getItem('USER_NAME') || 'Admin';
       const strCobrid = companyConfig.COBR_ID;
-      
+
       const response = await axiosInstance.post(
-        `/ORDBK/ApiMangeOrdbk?UserName=${userName}&strCobrid=${strCobrid}`, 
+        `/ORDBK/ApiMangeOrdbk?UserName=${userName}&strCobrid=${strCobrid}`,
         payload
       );
-      
+
       if (response.data.RESPONSESTATUSCODE === 1) {
         showSnackbar(`Order submitted successfully! Order No: ${formData.ORDER_NO}`, 'success');
 
@@ -2104,11 +2046,11 @@ const ScanBarcode = () => {
           setActiveTab(0);
           setViewMode('scan');
         }
-        
+
         setTableData([]);
         setFormData(prev => ({
           ...prev,
-          ORDER_NO: '', 
+          ORDER_NO: '',
           ORDER_DATE: new Date().toLocaleDateString('en-GB'),
           PARTY_ORD_NO: '',
           SEASON: '',
@@ -2118,7 +2060,7 @@ const ScanBarcode = () => {
           ORG_DLV_DT: '',
           REMARK_STATUS: ''
         }));
-        
+
         setNewItemData({
           barcode: '',
           product: '',
@@ -2139,7 +2081,7 @@ const ScanBarcode = () => {
           rQty: '',
           divDt: ''
         });
-        
+
         setStyleCodeInput('');
         setCurrentStyleData(null);
         setSizeDetailsData([]);
@@ -2153,14 +2095,13 @@ const ScanBarcode = () => {
           ratios: {}
         });
         setScannerError('');
-        
+
         await generateOrderNumber();
-        
+
       } else {
         showSnackbar('Error submitting order: ' + (response.data.RESPONSEMESSAGE || 'Unknown error'), 'error');
       }
     } catch (error) {
-      console.error('Error submitting order:', error);
       showSnackbar('Error submitting order. Please try again.', 'error');
     } finally {
       setIsLoadingData(false);
@@ -2180,9 +2121,9 @@ const ScanBarcode = () => {
 
   if (!isClient) {
     return (
-      <Box sx={{ 
-        p: { xs: 1, sm: 2 }, 
-        maxWidth: '100%', 
+      <Box sx={{
+        p: { xs: 1, sm: 2 },
+        maxWidth: '100%',
         margin: '0 auto',
         minHeight: '100vh',
         display: 'flex',
@@ -2197,37 +2138,37 @@ const ScanBarcode = () => {
 
   // ==================== MOBILE VIEW ====================
   const renderMobileView = () => (
-    <Box sx={{ 
+    <Box sx={{
       p: 0,
-      maxWidth: '100%', 
+      maxWidth: '100%',
       margin: '0 auto',
       minHeight: '100vh',
       backgroundColor: '#f5f5f5'
     }}>
       {/* Mobile App Bar */}
-      <AppBar position="sticky" sx={{ 
+      <AppBar position="sticky" sx={{
         backgroundColor: '#1976d2',
         boxShadow: '0 2px 10px rgba(0,0,0,0.1)'
       }}>
-        <Toolbar sx={{ 
+        <Toolbar sx={{
           minHeight: '56px',
           px: 2
         }}>
-          
-          <Typography variant="h6" sx={{ 
+
+          <Typography variant="h6" sx={{
             flexGrow: 1,
             fontSize: '1.1rem',
             fontWeight: '600'
           }}>
             📦 Barcode Scan
           </Typography>
-          
+
           <Badge badgeContent={tableData.length} color="error">
             <IconButton color="inherit" onClick={handleCartIconClick}>
               <CartIcon />
             </IconButton>
           </Badge>
-          
+
           <IconButton color="inherit" onClick={handleTable} sx={{ ml: 1 }}>
             <TbListSearch style={{ fontSize: '24px' }} />
           </IconButton>
@@ -2239,10 +2180,10 @@ const ScanBarcode = () => {
       </AppBar>
 
       {/* Mobile Navigation Tabs */}
-      <Paper sx={{ 
-        position: 'sticky', 
-        top: 56, 
-        zIndex: 1000, 
+      <Paper sx={{
+        position: 'sticky',
+        top: 56,
+        zIndex: 1000,
         borderRadius: 0,
         borderBottom: '1px solid #e0e0e0'
       }}>
@@ -2270,21 +2211,21 @@ const ScanBarcode = () => {
         {activeTab === 1 && (
           <Box>
             {/* Scan Mode Selector */}
-            <Card sx={{ 
-              mb: 2, 
+            <Card sx={{
+              mb: 2,
               borderRadius: 3,
               boxShadow: '0 4px 12px rgba(0,0,0,0.05)'
             }}>
               <CardContent sx={{ p: 2 }}>
-                <Typography variant="subtitle1" sx={{ 
-                  mb: 1.5, 
+                <Typography variant="subtitle1" sx={{
+                  mb: 1.5,
                   fontWeight: '600',
                   color: '#1976d2'
                 }}>
                   Select Scan Mode
                 </Typography>
                 <Grid container spacing={1.5}>
-                  <Grid item xs={4}>
+                  <Grid size={{ xs: 6 }}>
                     <Button
                       fullWidth
                       variant={scanMode === 'barcode' ? 'contained' : 'outlined'}
@@ -2298,18 +2239,22 @@ const ScanBarcode = () => {
                         backgroundColor: scanMode === 'barcode' ? '#1976d2' : 'transparent',
                         color: scanMode === 'barcode' ? 'white' : '#1976d2',
                         borderColor: '#1976d2',
+                        display: 'flex',
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: 1,
                         '&:hover': {
-                          backgroundColor: scanMode === 'barcode' ? '#1565c0' : 'rgba(25, 118, 210, 0.04)'
-                        }
+                          backgroundColor:
+                            scanMode === 'barcode' ? '#1565c0' : 'rgba(25, 118, 210, 0.04)',
+                        },
                       }}
                     >
-                      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                        <QrCodeIcon sx={{ fontSize: '24px', mb: 0.5 }} />
-                        <Typography variant="caption">Barcode</Typography>
-                      </Box>
+                      <QrCodeIcon sx={{ fontSize: 24 }} />
+                      <Typography variant="button">Barcode</Typography>
                     </Button>
                   </Grid>
-                  <Grid item xs={4}>
+                  <Grid size={{ xs: 6 }}>
                     <Button
                       fullWidth
                       variant={scanMode === 'style' ? 'contained' : 'outlined'}
@@ -2323,15 +2268,19 @@ const ScanBarcode = () => {
                         backgroundColor: scanMode === 'style' ? '#1976d2' : 'transparent',
                         color: scanMode === 'style' ? 'white' : '#1976d2',
                         borderColor: '#1976d2',
+                        display: 'flex',
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: 1,
                         '&:hover': {
-                          backgroundColor: scanMode === 'style' ? '#1565c0' : 'rgba(25, 118, 210, 0.04)'
-                        }
+                          backgroundColor:
+                            scanMode === 'style' ? '#1565c0' : 'rgba(25, 118, 210, 0.04)',
+                        },
                       }}
                     >
-                      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                        <SearchIcon sx={{ fontSize: '24px', mb: 0.5 }} />
-                        <Typography variant="caption">Style Code</Typography>
-                      </Box>
+                      <SearchIcon sx={{ fontSize: 24 }} />
+                      <Typography variant="button">Style Code</Typography>
                     </Button>
                   </Grid>
                 </Grid>
@@ -2339,7 +2288,7 @@ const ScanBarcode = () => {
             </Card>
 
             {/* Scan Input Section */}
-            <Card sx={{ 
+            <Card sx={{
               mb: 2,
               borderRadius: 3,
               boxShadow: '0 4px 12px rgba(0,0,0,0.05)'
@@ -2347,14 +2296,14 @@ const ScanBarcode = () => {
               <CardContent sx={{ p: 2 }}>
                 {scanMode === 'barcode' && (
                   <Box>
-                    <Typography variant="subtitle1" sx={{ 
-                      mb: 1.5, 
+                    <Typography variant="subtitle1" sx={{
+                      mb: 1.5,
                       fontWeight: '600',
                       color: '#1976d2'
                     }}>
                       Scan Barcode
                     </Typography>
-                    
+
                     <Box sx={{ mb: 2 }}>
                       <TextField
                         label="Enter Barcode"
@@ -2374,7 +2323,7 @@ const ScanBarcode = () => {
                         InputProps={{
                           endAdornment: (
                             <InputAdornment position="end">
-                              <IconButton 
+                              <IconButton
                                 onClick={handleManualBarcodeSubmit}
                                 disabled={!newItemData.barcode || isLoadingBarcode}
                               >
@@ -2385,7 +2334,7 @@ const ScanBarcode = () => {
                         }}
                       />
                     </Box>
-                    
+
                     <Button
                       fullWidth
                       variant="contained"
@@ -2409,14 +2358,14 @@ const ScanBarcode = () => {
 
                 {scanMode === 'style' && (
                   <Box>
-                    <Typography variant="subtitle1" sx={{ 
-                      mb: 1.5, 
+                    <Typography variant="subtitle1" sx={{
+                      mb: 1.5,
                       fontWeight: '600',
                       color: '#1976d2'
                     }}>
                       Enter Style Code
                     </Typography>
-                    
+
                     <TextField
                       label="Style Code"
                       variant="outlined"
@@ -2435,7 +2384,7 @@ const ScanBarcode = () => {
                       InputProps={{
                         endAdornment: (
                           <InputAdornment position="end">
-                            <IconButton 
+                            <IconButton
                               onClick={() => fetchStyleDataByCode(styleCodeInput.trim())}
                               disabled={!styleCodeInput || isLoadingStyleCode}
                             >
@@ -2474,9 +2423,9 @@ const ScanBarcode = () => {
                 )}
 
                 {(isLoadingBarcode || isLoadingStyleCode) && (
-                  <Box sx={{ 
-                    display: 'flex', 
-                    alignItems: 'center', 
+                  <Box sx={{
+                    display: 'flex',
+                    alignItems: 'center',
                     justifyContent: 'center',
                     mt: 2,
                     py: 2
@@ -2516,10 +2465,10 @@ const ScanBarcode = () => {
       </Fab>
 
       {/* Bottom Navigation */}
-      <Paper sx={{ 
-        position: 'fixed', 
-        bottom: 0, 
-        left: 0, 
+      <Paper sx={{
+        position: 'fixed',
+        bottom: 0,
+        left: 0,
         right: 0,
         zIndex: 1000,
         borderTop: '1px solid #e0e0e0'
@@ -2550,16 +2499,16 @@ const ScanBarcode = () => {
 
   // ==================== DESKTOP VIEW ====================
   const renderDesktopView = () => (
-    <Box sx={{ 
-      p: { xs: 1, sm: 2, md: 3 }, 
-      maxWidth: '100%', 
+    <Box sx={{
+      p: { xs: 1, sm: 2, md: 3 },
+      maxWidth: '100%',
       margin: '0 auto',
       minHeight: '100vh',
       backgroundColor: '#f5f5f5'
     }}>
       {/* Desktop Header with Show/Hide Order Fields */}
-      <Box sx={{ 
-        display: 'flex', 
+      <Box sx={{
+        display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
         mb: 2,
@@ -2579,7 +2528,7 @@ const ScanBarcode = () => {
           >
             📦 Barcode Scanner
           </Typography>
-          
+
           {/* Desktop Show/Hide Order Fields Checkbox */}
           <FormGroup>
             <FormControlLabel
@@ -2609,7 +2558,7 @@ const ScanBarcode = () => {
           <IconButton onClick={handleTable} sx={{ color: '#1976d2' }}>
             <TbListSearch style={{ width: '24px', height: '24px' }} />
           </IconButton>
-          
+
           <Badge badgeContent={tableData.length} color="error">
             <IconButton onClick={handleCartIconClick} sx={{ color: '#1976d2' }}>
               <CartIcon />
@@ -2621,27 +2570,27 @@ const ScanBarcode = () => {
       {/* Desktop Layout Grid */}
       <Grid container spacing={2}>
         {/* Left Column - Scanning & Product Details */}
-        <Grid item xs={12} md={6}>
+        <Grid size={{ xs: 12, md: 12 }}>
           {/* Barcode Scanner Section */}
           <Card elevation={2} sx={{ mb: 2 }}>
             <CardContent>
-              <Box sx={{ 
-                mb: 1, 
-                display: 'flex', 
+              <Box sx={{
+                mb: 1,
+                display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
                 flexWrap: 'wrap',
                 gap: 2
               }}>
-                <Typography variant="h6" sx={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
+                <Typography variant="h6" sx={{
+                  display: 'flex',
+                  alignItems: 'center',
                   gap: 1,
                   fontSize: '1.1rem'
                 }}>
                   <QrCodeIcon /> Product Scanning
                 </Typography>
-                
+
                 <FormGroup>
                   <FormControlLabel
                     control={
@@ -2659,7 +2608,7 @@ const ScanBarcode = () => {
                   />
                 </FormGroup>
               </Box>
-              
+
               <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems="center">
                 <Box sx={{ flex: 1, width: '100%' }}>
                   {useStyleCodeMode ? (
@@ -2674,7 +2623,7 @@ const ScanBarcode = () => {
                       sx={textInputSxtop}
                       InputProps={{
                         endAdornment: (
-                          <IconButton 
+                          <IconButton
                             onClick={() => fetchStyleDataByCode(styleCodeInput.trim())}
                             disabled={!styleCodeInput || isLoadingStyleCode}
                             sx={{ mr: -1 }}
@@ -2696,7 +2645,7 @@ const ScanBarcode = () => {
                       sx={textInputSxtop}
                       InputProps={{
                         endAdornment: (
-                          <IconButton 
+                          <IconButton
                             onClick={handleManualBarcodeSubmit}
                             disabled={!newItemData.barcode || isLoadingBarcode}
                             sx={{ mr: -1 }}
@@ -2708,13 +2657,13 @@ const ScanBarcode = () => {
                     />
                   )}
                 </Box>
-                
+
                 {!useStyleCodeMode && (
                   <Button
                     variant="contained"
                     startIcon={<CameraIcon />}
                     onClick={startScanner}
-                    sx={{ 
+                    sx={{
                       backgroundColor: '#1976d2',
                       color: 'white',
                       minWidth: { xs: '100%', sm: 150 },
@@ -2753,9 +2702,9 @@ const ScanBarcode = () => {
                 <Typography variant="h6" sx={{ mb: 1, fontSize: '1.1rem' }}>
                   Product Details {(isLoadingBarcode || isLoadingStyleCode) && '(Loading...)'}
                 </Typography>
-                
+
                 <Grid container spacing={1}>
-                  <Grid item xs={6} md={3}>
+                  <Grid size={{ xs: 6, md: 3 }}>
                     <TextField
                       label="Barcode"
                       variant="filled"
@@ -2766,8 +2715,8 @@ const ScanBarcode = () => {
                       size="small"
                     />
                   </Grid>
-                  
-                  <Grid item xs={6} md={3}>
+
+                  <Grid size={{ xs: 6, md: 3 }}>
                     <TextField
                       label="Product"
                       variant="filled"
@@ -2778,8 +2727,8 @@ const ScanBarcode = () => {
                       size="small"
                     />
                   </Grid>
-                  
-                  <Grid item xs={6} md={3}>
+
+                  <Grid size={{ xs: 6, md: 3 }}>
                     <TextField
                       label="Style"
                       variant="filled"
@@ -2790,8 +2739,8 @@ const ScanBarcode = () => {
                       size="small"
                     />
                   </Grid>
-                  
-                  <Grid item xs={6} md={3}>
+
+                  <Grid size={{ xs: 6, md: 3 }}>
                     <TextField
                       label="Type"
                       variant="filled"
@@ -2802,8 +2751,8 @@ const ScanBarcode = () => {
                       size="small"
                     />
                   </Grid>
-                  
-                  <Grid item xs={6} md={3}>
+
+                  <Grid size={{ xs: 6, md: 3 }}>
                     <TextField
                       label="Shade"
                       variant="filled"
@@ -2814,8 +2763,8 @@ const ScanBarcode = () => {
                       size="small"
                     />
                   </Grid>
-                  
-                  <Grid item xs={6} md={3}>
+
+                  <Grid size={{ xs: 6, md: 3 }}>
                     <TextField
                       label="MRP"
                       variant="filled"
@@ -2826,8 +2775,8 @@ const ScanBarcode = () => {
                       size="small"
                     />
                   </Grid>
-                  
-                  <Grid item xs={6} md={3}>
+
+                  <Grid size={{ xs: 6, md: 3 }}>
                     <TextField
                       label="Rate"
                       variant="filled"
@@ -2838,8 +2787,8 @@ const ScanBarcode = () => {
                       size="small"
                     />
                   </Grid>
-  
-                  <Grid item xs={12} md={3}>
+
+                  <Grid isize={{ xs: 6, md: 3 }}>
                     <TextField
                       label="Remark"
                       variant="filled"
@@ -2857,18 +2806,18 @@ const ScanBarcode = () => {
         </Grid>
 
         {/* Right Column - Order Details */}
-        <Grid item xs={12} md={6}>
+        <Grid size={{ xs: 12, md: 12 }} >
           {/* Order Form Fields (Collapsible) */}
           {showAdvancedFields && (
             <Card elevation={2} sx={{ mb: 2 }}>
               <CardContent>
-                <Typography variant="h6" sx={{ mb: 1,mt: 5, fontSize: '1.1rem' }}>
+                <Typography variant="h6" sx={{ mb: 1, fontSize: '1.1rem' }}>
                   📋 Order Details
                 </Typography>
-                
+
                 <Grid container spacing={1}>
-                  <Grid item xs={12} container spacing={1}>
-                    <Grid item xs={6} md={3}>
+                  <Grid size={{ xs: 12, md: 12 }} container spacing={1}>
+                    <Grid size={{ xs: 12, md: 3 }}>
                       <TextField
                         label="Series"
                         variant="filled"
@@ -2879,8 +2828,8 @@ const ScanBarcode = () => {
                         size="small"
                       />
                     </Grid>
-                    
-                    <Grid item xs={6} md={3}>
+
+                    <Grid size={{ xs: 12, md: 3 }}>
                       <TextField
                         label="Last Order No"
                         variant="filled"
@@ -2891,8 +2840,8 @@ const ScanBarcode = () => {
                         size="small"
                       />
                     </Grid>
-                    
-                    <Grid item xs={6} md={3}>
+
+                    <Grid size={{ xs: 12, md: 3 }}>
                       <TextField
                         label="Order No"
                         variant="filled"
@@ -2904,8 +2853,8 @@ const ScanBarcode = () => {
                         required
                       />
                     </Grid>
-                    
-                    <Grid item xs={6} md={3}>
+
+                    <Grid size={{ xs: 12, md: 3 }}>
                       <LocalizationProvider dateAdapter={AdapterDateFns}>
                         <DatePicker
                           label="Order Date"
@@ -2915,15 +2864,23 @@ const ScanBarcode = () => {
                           slotProps={{
                             textField: {
                               fullWidth: true,
-                              variant: "filled",
-                              sx: datePickerSx,
+                              variant: "outlined",
+                              sx: {
+                                "& .MuiInputBase-root": {
+                                  height: "34px",
+                                  borderRadius: 2,
+                                },
+                                '& .MuiPickersSectionList-root': {
+                                  padding: '11px 0',
+                                },
+                              },
                             },
                           }}
                         />
                       </LocalizationProvider>
                     </Grid>
-                    
-                    <Grid item xs={12} md={6}>
+
+                    <Grid size={{ xs: 12, md: 6 }}>
                       <AutoVibe
                         id="Party"
                         getOptionLabel={(option) => option || ''}
@@ -2936,8 +2893,8 @@ const ScanBarcode = () => {
                         size="small"
                       />
                     </Grid>
-                    
-                    <Grid item xs={12} md={6}>
+
+                    <Grid size={{ xs: 12, md: 6 }}>
                       <AutoVibe
                         id="Branch"
                         getOptionLabel={(option) => option || ''}
@@ -2951,7 +2908,7 @@ const ScanBarcode = () => {
                       />
                     </Grid>
 
-                    <Grid item xs={12} md={6}>
+                    <Grid size={{ xs: 12, md: 6 }}>
                       <AutoVibe
                         id="SHIPPING_PARTY"
                         getOptionLabel={(option) => option || ''}
@@ -2964,8 +2921,8 @@ const ScanBarcode = () => {
                         size="small"
                       />
                     </Grid>
-                    
-                    <Grid item xs={12} md={6}>
+
+                    <Grid size={{ xs: 12, md: 6 }}>
                       <AutoVibe
                         id="SHIPPING_PLACE"
                         getOptionLabel={(option) => option || ''}
@@ -2979,7 +2936,7 @@ const ScanBarcode = () => {
                       />
                     </Grid>
 
-                    <Grid item xs={12} md={6}>
+                    <Grid size={{ xs: 12, md: 3 }}>
                       <AutoVibe
                         id="Broker"
                         getOptionLabel={(option) => option || ''}
@@ -2992,8 +2949,8 @@ const ScanBarcode = () => {
                         size="small"
                       />
                     </Grid>
-                    
-                    <Grid item xs={12} md={6}>
+
+                    <Grid size={{ xs: 12, md: 3 }}>
                       <AutoVibe
                         id="SALESPERSON_1"
                         getOptionLabel={(option) => option || ''}
@@ -3006,8 +2963,8 @@ const ScanBarcode = () => {
                         size="small"
                       />
                     </Grid>
-                    
-                    <Grid item xs={12} md={6}>
+
+                    <Grid size={{ xs: 12, md: 3 }}>
                       <AutoVibe
                         id="SALESPERSON_2"
                         getOptionLabel={(option) => option || ''}
@@ -3020,8 +2977,8 @@ const ScanBarcode = () => {
                         size="small"
                       />
                     </Grid>
-                    
-                    <Grid item xs={12} md={6}>
+
+                    <Grid size={{ xs: 12, md: 3 }}>
                       <AutoVibe
                         id="MERCHANDISER_NAME"
                         getOptionLabel={(option) => option || ''}
@@ -3034,8 +2991,8 @@ const ScanBarcode = () => {
                         size="small"
                       />
                     </Grid>
-                    
-                    <Grid item xs={12} md={6}>
+
+                    <Grid size={{ xs: 12, md: 6 }}>
                       <AutoVibe
                         id="SEASON"
                         getOptionLabel={(option) => option || ''}
@@ -3058,9 +3015,9 @@ const ScanBarcode = () => {
           {availableSizes.length > 0 && (
             <Card elevation={0.5} sx={{ mb: 1 }}>
               <CardContent>
-                <Box sx={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
+                <Box sx={{
+                  display: 'flex',
+                  alignItems: 'center',
                   justifyContent: 'space-between',
                   mb: 0.1,
                   flexWrap: 'wrap'
@@ -3068,7 +3025,7 @@ const ScanBarcode = () => {
                   <Typography variant="h6" sx={{ fontSize: '1.1rem' }}>
                     Fill By Ratio
                   </Typography>
-                  
+
                   <Box sx={{ display: 'flex', gap: 2 }}>
                     <FormGroup>
                       <FormControlLabel
@@ -3087,7 +3044,7 @@ const ScanBarcode = () => {
                         label="Ratio Fill"
                       />
                     </FormGroup>
-                    
+
                     <FormGroup>
                       <FormControlLabel
                         control={
@@ -3107,7 +3064,7 @@ const ScanBarcode = () => {
                     </FormGroup>
                   </Box>
                 </Box>
-                
+
                 {/* Show Ratio Component only when fillByRatioMode is true */}
                 {fillByRatioMode && (
                   <Box>
@@ -3130,30 +3087,30 @@ const ScanBarcode = () => {
                         }}
                       />
                     </Box>
-                    
+
                     {/* Horizontal Ratio Table */}
                     <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: '600' }}>
                       Enter Ratios for Each Size:
                     </Typography>
 
-                    <Box sx={{ 
+                    <Box sx={{
                       overflowX: 'auto',
                       backgroundColor: '#f8f9fa',
                       borderRadius: 1,
                       p: 1,
                       mb: 0.7
                     }}>
-                      <table style={{ 
-                        width: '100%', 
+                      <table style={{
+                        width: '100%',
                         borderCollapse: 'collapse',
                         minWidth: `${availableSizes.length * 50}px`
                       }}>
                         <thead>
                           <tr style={{ backgroundColor: '#e9ecef' }}>
                             {availableSizes.map((size) => (
-                              <th key={`th-${size.STYSIZE_ID}`} style={{ 
+                              <th key={`th-${size.STYSIZE_ID}`} style={{
                                 padding: '10px',
-                                border: '1px solid #dee2e6', 
+                                border: '1px solid #dee2e6',
                                 textAlign: 'center',
                                 fontSize: '14px',
                                 fontWeight: '600',
@@ -3167,8 +3124,8 @@ const ScanBarcode = () => {
                         <tbody>
                           <tr>
                             {availableSizes.map((size, index) => (
-                              <td key={`td-${size.STYSIZE_ID}`} style={{ 
-                                padding: '2px', 
+                              <td key={`td-${size.STYSIZE_ID}`} style={{
+                                padding: '2px',
                                 border: '1px solid #dee2e6',
                                 textAlign: 'center',
                                 backgroundColor: '#fff'
@@ -3189,8 +3146,8 @@ const ScanBarcode = () => {
                                       textAlign: 'center'
                                     }
                                   }}
-                                  inputProps={{ 
-                                    min: 0, 
+                                  inputProps={{
+                                    min: 0,
                                     step: 0.1,
                                     style: { textAlign: 'center' }
                                   }}
@@ -3201,14 +3158,14 @@ const ScanBarcode = () => {
                         </tbody>
                       </table>
                     </Box>
-                    
+
                     {/* Fill Qty Button */}
                     <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
                       <Button
                         variant="contained"
                         onClick={fillQuantitiesByRatio}
                         disabled={!ratioData.totalQty || parseFloat(ratioData.totalQty) <= 0}
-                        sx={{ 
+                        sx={{
                           backgroundColor: '#4CAF50',
                           color: 'white',
                           '&:hover': { backgroundColor: '#45a049' },
@@ -3220,19 +3177,19 @@ const ScanBarcode = () => {
                     </Box>
                   </Box>
                 )}
-                
+
                 {/* Show Shade Selection only when fillByShadeMode is true */}
                 {fillByShadeMode && availableShades.length > 0 && (
                   <Box sx={{ mt: 2 }}>
-                    <Box sx={{ 
-                      display: 'flex', 
+                    <Box sx={{
+                      display: 'flex',
                       flexDirection: { xs: 'column', sm: 'row' },
                       alignItems: { xs: 'stretch', sm: 'center' },
                       gap: 1,
                       mb: 1
                     }}>
-                      <Box sx={{ 
-                        display: 'flex', 
+                      <Box sx={{
+                        display: 'flex',
                         gap: 1,
                         alignItems: 'center'
                       }}>
@@ -3240,7 +3197,7 @@ const ScanBarcode = () => {
                           variant={shadeViewMode === 'all' ? 'contained' : 'outlined'}
                           onClick={handleAllShadesClick}
                           size="small"
-                          sx={{ 
+                          sx={{
                             minWidth: '60px',
                             backgroundColor: shadeViewMode === 'all' ? '#1976d2' : 'transparent',
                             color: shadeViewMode === 'all' ? 'white' : '#1976d2',
@@ -3256,7 +3213,7 @@ const ScanBarcode = () => {
                           variant={shadeViewMode === 'allocated' ? 'contained' : 'outlined'}
                           onClick={handleAllocatedShadesClick}
                           size="small"
-                          sx={{ 
+                          sx={{
                             minWidth: '80px',
                             backgroundColor: shadeViewMode === 'allocated' ? '#1976d2' : 'transparent',
                             color: shadeViewMode === 'allocated' ? 'white' : '#1976d2',
@@ -3269,8 +3226,8 @@ const ScanBarcode = () => {
                           Allocated
                         </Button>
                       </Box>
-                      
-                      <FormControl sx={{ 
+
+                      <FormControl sx={{
                         flex: 1,
                         minWidth: { xs: '100%', sm: '200px' }
                       }}>
@@ -3299,7 +3256,7 @@ const ScanBarcode = () => {
                         </Select>
                       </FormControl>
                     </Box>
-                    
+
                     {selectedShades.length > 0 && (
                       <Alert severity="info" sx={{ mt: 1 }}>
                         Selected {selectedShades.length} shade(s). Quantity will be added for each selected shade.
@@ -3316,81 +3273,81 @@ const ScanBarcode = () => {
             <Card elevation={1} sx={{ mb: 1 }}>
               <CardContent>
                 <Typography variant="h6" sx={{ mb: 1, fontSize: '1.1rem' }}>
-                  Size Details (Qty) :<strong style={{ color: '#1976d2' }}>{calculateTotalQty()}</strong>
+                  Size Details (Qty): <strong style={{ color: '#1976d2' }}>{calculateTotalQty()}</strong>
                 </Typography>
-                
-                <Box sx={{ 
+
+                <Box sx={{
                   overflowX: 'auto',
                   backgroundColor: '#f8f9fa',
                   borderRadius: 1,
                   p: 1
                 }}>
-                  <table style={{ 
-                    width: '100%', 
+                  <table style={{
+                    width: '100%',
                     borderCollapse: 'collapse',
                     minWidth: '500px'
                   }}>
                     <thead>
                       <tr style={{ backgroundColor: '#e9ecef' }}>
-                        <th style={{ 
+                        <th style={{
                           padding: '2px 8px',
-                          border: '1px solid #dee2e6', 
+                          border: '1px solid #dee2e6',
                           textAlign: 'left',
                           fontSize: '14px',
                           fontWeight: '600'
                         }}>Size</th>
-                        <th style={{ 
-                          padding: '2px 8px', 
-                          border: '1px solid #dee2e6', 
+                        <th style={{
+                          padding: '2px 8px',
+                          border: '1px solid #dee2e6',
                           textAlign: 'center',
                           fontSize: '14px',
                           fontWeight: '600'
                         }}>Qty</th>
-                        <th style={{ 
-                          padding: '2px 8px', 
-                          border: '1px solid #dee2e6', 
+                        <th style={{
+                          padding: '2px 8px',
+                          border: '1px solid #dee2e6',
                           textAlign: 'center',
                           fontSize: '14px',
                           fontWeight: '600'
                         }}>FG</th>
-                        <th style={{ 
-                          padding: '2px 8px', 
-                          border: '1px solid #dee2e6', 
+                        <th style={{
+                          padding: '2px 8px',
+                          border: '1px solid #dee2e6',
                           textAlign: 'center',
                           fontSize: '14px',
                           fontWeight: '600'
                         }}>Proc</th>
-                        <th style={{ 
-                          padding: '2px 8px', 
-                          border: '1px solid #dee2e6', 
+                        <th style={{
+                          padding: '2px 8px',
+                          border: '1px solid #dee2e6',
                           textAlign: 'center',
                           fontSize: '14px',
                           fontWeight: '600'
                         }}>Ord</th>
-                        <th style={{ 
-                          padding: '2px 8px', 
-                          border: '1px solid #dee2e6', 
+                        <th style={{
+                          padding: '2px 8px',
+                          border: '1px solid #dee2e6',
                           textAlign: 'center',
                           fontSize: '14px',
                           fontWeight: '600'
                         }}>Bal</th>
-                        <th style={{ 
+                        <th style={{
                           padding: '2px 8px',
-                          border: '1px solid #dee2e6', 
+                          border: '1px solid #dee2e6',
                           textAlign: 'right',
                           fontSize: '14px',
                           fontWeight: '600'
                         }}>MRP</th>
-                        <th style={{ 
+                        <th style={{
                           padding: '2px 8px',
-                          border: '1px solid #dee2e6', 
+                          border: '1px solid #dee2e6',
                           textAlign: 'right',
                           fontSize: '14px',
                           fontWeight: '600'
                         }}>Rate</th>
-                        <th style={{ 
+                        <th style={{
                           padding: '2px 8px',
-                          border: '1px solid #dee2e6', 
+                          border: '1px solid #dee2e6',
                           textAlign: 'right',
                           fontSize: '14px',
                           fontWeight: '600'
@@ -3404,9 +3361,9 @@ const ScanBarcode = () => {
                         const issueQty = parseFloat(size.ISU_QTY) || 0;
                         const processQty = orderQty + issueQty;
                         const balQty = parseFloat(size.BAL_QTY) || 0;
-                        
+
                         return (
-                          <tr key={index} style={{ 
+                          <tr key={index} style={{
                             backgroundColor: index % 2 === 0 ? '#fff' : '#f8f9fa',
                             borderBottom: '1px solid #dee2e6'
                           }}>
@@ -3416,9 +3373,9 @@ const ScanBarcode = () => {
                               fontSize: '13px',
                               lineHeight: '1.2'
                             }}>{size.STYSIZE_NAME}</td>
-                            
-                            <td style={{ 
-                              padding: '5px', 
+
+                            <td style={{
+                              padding: '5px',
                               border: '1px solid #dee2e6',
                               textAlign: 'center'
                             }}>
@@ -3441,8 +3398,8 @@ const ScanBarcode = () => {
                                 inputProps={{ min: 0 }}
                               />
                             </td>
-                            
-                            <td style={{ 
+
+                            <td style={{
                               padding: '4px 8px',
                               border: '1px solid #dee2e6',
                               textAlign: 'center',
@@ -3450,8 +3407,8 @@ const ScanBarcode = () => {
                             }}>
                               {readyQty.toFixed(3)}
                             </td>
-                            
-                            <td style={{ 
+
+                            <td style={{
                               padding: '4px 8px',
                               border: '1px solid #dee2e6',
                               textAlign: 'center',
@@ -3459,8 +3416,8 @@ const ScanBarcode = () => {
                             }}>
                               {processQty.toFixed(3)}
                             </td>
-                            
-                            <td style={{ 
+
+                            <td style={{
                               padding: '4px 8px',
                               border: '1px solid #dee2e6',
                               textAlign: 'center',
@@ -3468,8 +3425,8 @@ const ScanBarcode = () => {
                             }}>
                               {orderQty.toFixed(3)}
                             </td>
-                            
-                            <td style={{ 
+
+                            <td style={{
                               padding: '4px 8px',
                               border: '1px solid #dee2e6',
                               textAlign: 'center',
@@ -3477,23 +3434,23 @@ const ScanBarcode = () => {
                             }}>
                               {balQty.toFixed(3)}
                             </td>
-                            
-                            <td style={{ 
-                              padding: '10px', 
+
+                            <td style={{
+                              padding: '10px',
                               border: '1px solid #dee2e6',
                               textAlign: 'right',
                               fontSize: '14px'
                             }}>{size.MRP || 0}</td>
-                            
-                            <td style={{ 
-                              padding: '10px', 
+
+                            <td style={{
+                              padding: '10px',
                               border: '1px solid #dee2e6',
                               textAlign: 'right',
                               fontSize: '14px'
                             }}>{size.WSP || 0}</td>
-                            
-                            <td style={{ 
-                              padding: '10px', 
+
+                            <td style={{
+                              padding: '10px',
                               border: '1px solid #dee2e6',
                               textAlign: 'right',
                               fontSize: '14px',
@@ -3507,11 +3464,11 @@ const ScanBarcode = () => {
                     </tbody>
                   </table>
                 </Box>
-                
-                <Box sx={{ 
-                  mt: 2, 
-                  display: 'flex', 
-                  justifyContent: 'space-between', 
+
+                <Box sx={{
+                  mt: 2,
+                  display: 'flex',
+                  justifyContent: 'space-between',
                   alignItems: 'center',
                   flexWrap: 'wrap',
                   gap: 2
@@ -3529,13 +3486,13 @@ const ScanBarcode = () => {
                       </Typography>
                     )}
                   </Box>
-                  
+
                   <Button
                     variant="contained"
                     startIcon={<AddIcon />}
                     onClick={handleConfirmItem}
                     disabled={calculateTotalQty() === 0}
-                    sx={{ 
+                    sx={{
                       backgroundColor: '#4CAF50',
                       color: 'white',
                       '&:hover': { backgroundColor: '#45a049' },
@@ -3556,7 +3513,7 @@ const ScanBarcode = () => {
               fullWidth
               onClick={handleSubmitOrder}
               disabled={isLoadingData || tableData.length === 0}
-              sx={{ 
+              sx={{
                 backgroundColor: '#2196F3',
                 color: 'white',
                 py: 1.5,
@@ -3577,23 +3534,23 @@ const ScanBarcode = () => {
   const renderOrderTab = () => (
     <Box>
       {/* Order Form */}
-      <Card sx={{ 
+      <Card sx={{
         mb: 2,
         borderRadius: 3,
         boxShadow: '0 4px 12px rgba(0,0,0,0.05)'
       }}>
         <CardContent sx={{ p: 2 }}>
-          <Box sx={{ 
-            display: 'flex', 
+          <Box sx={{
+            display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
             mb: 2
           }}>
-            <Typography variant="subtitle1" sx={{ 
+            <Typography variant="subtitle1" sx={{
               fontWeight: '600',
               color: '#1976d2'
             }}>
-              Order Details
+              Party Details
             </Typography>
             <FormControlLabel
               control={
@@ -3611,7 +3568,7 @@ const ScanBarcode = () => {
               }
               label={
                 <Typography variant="caption" sx={{ fontSize: '12px' }}>
-                  {showAdvancedFields ? 'Hide Advanced' : 'Show Advanced'}
+                  {showAdvancedFields ? 'Hide' : 'Show'}
                 </Typography>
               }
             />
@@ -3620,12 +3577,12 @@ const ScanBarcode = () => {
           {showAdvancedFields && (
             <Box>
               <Grid container spacing={1} sx={{ mt: 0.5 }}>
-                <Grid size xs={12} sm={6}>
+                <Grid size={{ xs: 12, sm: 6 }}>
                   <AutoVibe
                     id="Party"
                     getOptionLabel={(option) => option || ''}
                     options={partyOptions}
-                    label="Party *"
+                    label={<span>Party <span style={{ color: 'red' }}>*</span></span>}
                     name="Party"
                     value={formData.Party}
                     onChange={(e, value) => handleFormChange('Party', value)}
@@ -3633,12 +3590,13 @@ const ScanBarcode = () => {
                       ...DropInputSx,
                       '& .MuiInputBase-root': {
                         height: '44px',
-                        width: '150px',
+                        padding: '20px 0px',
+                        // width: '150px',
                       },
                     }}
                   />
                 </Grid>
-                <Grid size xs={12} sm={6}>
+                <Grid size={{ xs: 12, sm: 6 }}>
                   <AutoVibe
                     id="Branch"
                     getOptionLabel={(option) => option || ''}
@@ -3651,7 +3609,8 @@ const ScanBarcode = () => {
                       ...DropInputSx,
                       '& .MuiInputBase-root': {
                         height: '44px',
-                        width: '138px',
+                        padding: '20px 0px',
+                        // width: '138px',
                       },
                     }}
                   />
@@ -3659,7 +3618,7 @@ const ScanBarcode = () => {
               </Grid>
 
               <Grid container spacing={1} sx={{ mt: 0.5 }}>
-                <Grid item xs={6}>
+                <Grid size={{ xs: 12 }}>
                   <AutoVibe
                     id="SHIPPING_PARTY"
                     getOptionLabel={(option) => option || ''}
@@ -3672,12 +3631,13 @@ const ScanBarcode = () => {
                       ...DropInputSx,
                       '& .MuiInputBase-root': {
                         height: '44px',
-                        width: '150px',
+                        // width: '150px',
+                        padding: '20px 0px',
                       },
                     }}
                   />
                 </Grid>
-                <Grid item xs={6}>
+                <Grid size={{ xs: 12 }}>
                   <AutoVibe
                     id="SHIPPING_PLACE"
                     getOptionLabel={(option) => option || ''}
@@ -3690,7 +3650,8 @@ const ScanBarcode = () => {
                       ...DropInputSx,
                       '& .MuiInputBase-root': {
                         height: '44px',
-                        width: '138px',
+                        // width: '138px',
+                        padding: '20px 0px',
                       },
                     }}
                   />
@@ -3698,7 +3659,7 @@ const ScanBarcode = () => {
               </Grid>
 
               <Grid container spacing={1} sx={{ mt: 0.5 }}>
-                <Grid item xs={6}>
+                <Grid size={{ xs: 12 }}>
                   <AutoVibe
                     id="Broker"
                     getOptionLabel={(option) => option || ''}
@@ -3711,12 +3672,13 @@ const ScanBarcode = () => {
                       ...DropInputSx,
                       '& .MuiInputBase-root': {
                         height: '44px',
-                        width: '150px',
+                        // width: '150px',
+                        padding: '20px 0px'
                       },
                     }}
                   />
                 </Grid>
-                <Grid item xs={6}>
+                <Grid size={{ xs: 12 }}>
                   <AutoVibe
                     id="SEASON"
                     getOptionLabel={(option) => option || ''}
@@ -3729,7 +3691,8 @@ const ScanBarcode = () => {
                       ...DropInputSx,
                       '& .MuiInputBase-root': {
                         height: '44px',
-                        width: '138px',
+                        // width: '138px',
+                        padding: '20px 0px',
                       },
                     }}
                   />
@@ -3739,15 +3702,15 @@ const ScanBarcode = () => {
           )}
 
           <Box sx={{ mt: 2 }}>
-            <Typography variant="subtitle2" sx={{ 
-              mb: 1, 
+            <Typography variant="subtitle2" sx={{
+              mb: 1,
               fontWeight: '600',
               color: '#1976d2'
             }}>
-              Order Summary
+              Order Details
             </Typography>
             <Grid container spacing={2}>
-              <Grid size={{ xs: 12, sm: 6 }}>
+              <Grid size={{ xs: 6, sm: 6 }}>
                 <TextField
                   label="Order No"
                   variant="outlined"
@@ -3762,7 +3725,7 @@ const ScanBarcode = () => {
                   }}
                 />
               </Grid>
-              <Grid size={{ xs: 12, sm: 6 }}>
+              <Grid size={{ xs: 6, sm: 6 }}>
                 <LocalizationProvider dateAdapter={AdapterDateFns}>
                   <DatePicker
                     label="Order Date"
@@ -3775,8 +3738,11 @@ const ScanBarcode = () => {
                         variant: "outlined",
                         sx: {
                           "& .MuiInputBase-root": {
-                            height: "44px",
+                            height: "34px",
                             borderRadius: 2,
+                          },
+                          '& .MuiPickersSectionList-root': {
+                            padding: '11px 0',
                           },
                         },
                       },
@@ -3795,34 +3761,33 @@ const ScanBarcode = () => {
     <Box>
       {/* Product Details */}
       {(newItemData.product || isLoadingBarcode || isLoadingStyleCode) && (
-        <Card sx={{ 
-          mb: 2,
+        <Card sx={{
+          mb: 4,
           borderRadius: 3,
-          boxShadow: '0 4px 12px rgba(0,0,0,0.05)'
+          boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
         }}>
           <CardContent sx={{ p: 2 }}>
-            <Typography variant="subtitle1" sx={{ 
-              mb: 1.5, 
+            <Typography variant="subtitle1" sx={{
+              mb: 1.5,
               fontWeight: '600',
               color: '#1976d2'
             }}>
-              Product Details
+              Product Details - {formData.ORDER_NO}
             </Typography>
-            
+
             <Grid container spacing={1.5}>
-              <Grid item xs={6}>
-                <Box sx={{ 
-                  p: 0.5, 
+              <Grid size={{ xs: 6 }}>
+                <Box sx={{
+                  p: 0.5,
                   backgroundColor: '#f8f9fa',
                   borderRadius: 2,
                   border: '1px solid #e0e0e0',
                   width: '150px',
                   height: '50px'
                 }}>
-                  <Typography variant="caption" sx={{ 
-                    display: 'block', 
+                  <Typography variant="caption" sx={{
+                    display: 'block',
                     color: '#666',
-                    mb: 0.5
                   }}>
                     Product
                   </Typography>
@@ -3831,19 +3796,18 @@ const ScanBarcode = () => {
                   </Typography>
                 </Box>
               </Grid>
-              <Grid item xs={6}>
-                <Box sx={{ 
-                  p: 0.5, 
+              <Grid size={{ xs: 6 }}>
+                <Box sx={{
+                  p: 0.5,
                   backgroundColor: '#f8f9fa',
                   borderRadius: 2,
                   border: '1px solid #e0e0e0',
                   width: '130px',
                   height: '50px'
                 }}>
-                  <Typography variant="caption" sx={{ 
-                    display: 'block', 
+                  <Typography variant="caption" sx={{
+                    display: 'block',
                     color: '#666',
-                    mb: 0.5
                   }}>
                     Style
                   </Typography>
@@ -3852,19 +3816,18 @@ const ScanBarcode = () => {
                   </Typography>
                 </Box>
               </Grid>
-              <Grid item xs={6}>
-                <Box sx={{ 
-                  p: 0.5, 
+              <Grid size={{ xs: 6 }}>
+                <Box sx={{
+                  p: 0.5,
                   backgroundColor: '#f8f9fa',
                   borderRadius: 2,
                   border: '1px solid #e0e0e0',
                   width: '150px',
                   height: '50px'
                 }}>
-                  <Typography variant="caption" sx={{ 
-                    display: 'block', 
+                  <Typography variant="caption" sx={{
+                    display: 'block',
                     color: '#666',
-                    mb: 0.5
                   }}>
                     Shade
                   </Typography>
@@ -3873,19 +3836,18 @@ const ScanBarcode = () => {
                   </Typography>
                 </Box>
               </Grid>
-              <Grid item xs={6}>
-                <Box sx={{ 
-                  p: 0.5, 
+              <Grid size={{ xs: 6 }}>
+                <Box sx={{
+                  p: 0.5,
                   backgroundColor: '#f8f9fa',
                   borderRadius: 2,
                   border: '1px solid #e0e0e0',
                   width: '130px',
                   height: '50px'
                 }}>
-                  <Typography variant="caption" sx={{ 
-                    display: 'block', 
+                  <Typography variant="caption" sx={{
+                    display: 'block',
                     color: '#666',
-                    mb: 0.5
                   }}>
                     MRP
                   </Typography>
@@ -3898,23 +3860,28 @@ const ScanBarcode = () => {
 
             {/* Ratio Settings */}
             {availableSizes.length > 0 && (
-              <Card sx={{ 
+              <Card sx={{
                 mb: 2,
                 borderRadius: 3,
                 boxShadow: '0 4px 12px rgba(0,0,0,0.05)'
               }}>
-                <CardContent sx={{ p: 1 }}>
-                  <Box sx={{ 
-                    display: 'flex', 
+                <CardContent sx={{
+                  p: 1,
+                  '&:last-child': {
+                    pb: 0,
+                  },
+                }}>
+                  <Box sx={{
+                    display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'center',
-                    mb: 2
+                    mb: 0
                   }}>
-                    <Typography variant="subtitle1" sx={{ 
+                    <Typography variant="subtitle1" sx={{
                       fontWeight: '600',
                       color: '#1976d2'
                     }}>
-                      Ratio Settings
+                      Copy Ratio
                     </Typography>
                     <FormGroup row>
                       <FormControlLabel
@@ -3992,24 +3959,24 @@ const ScanBarcode = () => {
                           inputProps: { min: 0 }
                         }}
                       />
-                      
+
                       {/* Ratio Inputs */}
-                      <Typography variant="subtitle2" sx={{ 
-                        mb: 1, 
+                      <Typography variant="subtitle2" sx={{
+                        mb: 1,
                         fontWeight: '600',
                         color: '#1976d2'
                       }}>
                         Ratios for Each Size:
                       </Typography>
-                      
-                      <Box sx={{ 
+
+                      <Box sx={{
                         display: 'flex',
                         overflowX: 'auto',
                         gap: 0.3,
                         pb: 0.4
                       }}>
                         {availableSizes.map((size) => (
-                          <Box key={size.STYSIZE_ID} sx={{ 
+                          <Box key={size.STYSIZE_ID} sx={{
                             minWidth: '50px',
                             p: 0.5,
                             backgroundColor: 'white',
@@ -4017,8 +3984,8 @@ const ScanBarcode = () => {
                             border: '1px solid #e0e0e0',
                             textAlign: 'center'
                           }}>
-                            <Typography variant="caption" sx={{ 
-                              display: 'block', 
+                            <Typography variant="caption" sx={{
+                              display: 'block',
                               color: '#666',
                               mb: 0.3
                             }}>
@@ -4039,15 +4006,15 @@ const ScanBarcode = () => {
                                   textAlign: 'center'
                                 }
                               }}
-                              inputProps={{ 
-                                min: 0, 
+                              inputProps={{
+                                min: 0,
                                 step: 0.1
                               }}
                             />
                           </Box>
                         ))}
                       </Box>
-                      
+
                       <Button
                         fullWidth
                         variant="contained"
@@ -4078,19 +4045,19 @@ const ScanBarcode = () => {
                         variant="outlined"
                         onClick={() => setShadeModalOpen(true)}
                         startIcon={<FilterListIcon />}
-                        sx={{ 
+                        sx={{
                           mb: 2,
                           justifyContent: 'flex-start',
-                          backgroundColor: selectedShades.length > 0 
-                            ? 'rgba(25, 118, 210, 0.08)' 
+                          backgroundColor: selectedShades.length > 0
+                            ? 'rgba(25, 118, 210, 0.08)'
                             : 'white'
                         }}
                       >
-                        {selectedShades.length > 0 
+                        {selectedShades.length > 0
                           ? `${selectedShades.length} shade(s) selected`
                           : 'Select Shades'}
                       </Button>
-                      
+
                       {/* Show selected shades as chips */}
                       {selectedShades.length > 0 && (
                         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
@@ -4114,17 +4081,34 @@ const ScanBarcode = () => {
                 </CardContent>
               </Card>
             )}
-            
+
             {sizeDetailsData.length > 0 && (
               <Card elevation={1} sx={{ mb: 0.3 }}>
                 <CardContent>
-                  <Typography variant="h6" sx={{ mb: 0.3, fontSize: '1.1rem' }}>
-                    Size Details (Qty) :<strong style={{ color: '#1976d2' }}>{calculateTotalQty()}</strong>
-                  </Typography>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                    <Typography variant="h6" sx={{ mb: 0.3, fontSize: '1.1rem' }}>
+                      Size (Qty): <strong style={{ color: '#1976d2' }}>{calculateTotalQty()}</strong>
+                    </Typography>
+
+                    <Button size='small'
+                      variant="contained"
+                      startIcon={<AddIcon />}
+                      onClick={handleConfirmItem}
+                      disabled={calculateTotalQty() === 0}
+                      sx={{
+                        backgroundColor: '#4CAF50',
+                        color: 'white',
+                        '&:hover': { backgroundColor: '#45a049' },
+                        // minWidth: '140px'
+                      }}
+                    >
+                      Add to Cart
+                    </Button>
+                  </Box>
 
                   {/* Fill with equal QTY section - MOBILE VIEW */}
-                  <Box sx={{ 
-                    display: 'flex', 
+                  <Box sx={{
+                    display: 'flex',
                     flexDirection: 'column',
                     mb: 0.3,
                     p: 0.5,
@@ -4132,9 +4116,9 @@ const ScanBarcode = () => {
                     borderRadius: 2,
                     border: '1px solid #1976d2'
                   }}>
-                    <Box sx={{ 
-                      display: 'flex', 
-                      alignItems: 'center', 
+                    <Box sx={{
+                      display: 'flex',
+                      alignItems: 'center',
                       justifyContent: 'space-between',
                       mb: showEqualQtyInput ? 1 : 0
                     }}>
@@ -4155,7 +4139,7 @@ const ScanBarcode = () => {
                             />
                           }
                           label={
-                            <Typography variant="body2" sx={{ 
+                            <Typography variant="body2" sx={{
                               fontWeight: '500',
                               fontSize: '13px',
                               color: fillEqualQtyMode ? '#1976d2' : 'inherit'
@@ -4185,20 +4169,20 @@ const ScanBarcode = () => {
                     </Box>
 
                     {showEqualQtyInput && (
-                      <Box sx={{ 
-                        display: 'flex', 
+                      <Box sx={{
+                        display: 'flex',
                         flexDirection: 'column',
                         gap: 1,
                         width: '100%'
                       }}>
-                        
+
                         <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
                           <TextField
                             type="number"
                             value={equalQtyValue}
                             onChange={(e) => handleEqualQtyValueChange(e.target.value)}
                             onKeyPress={handleEqualQtyKeyPress}
-                            placeholder="Enter quantity"
+                            placeholder="Enter Qty"
                             fullWidth
                             size="small"
                             sx={{
@@ -4212,28 +4196,28 @@ const ScanBarcode = () => {
                               inputProps: { min: 0 }
                             }}
                           />
-                          <Button
+                          <Button size='small'
                             variant="contained"
                             onClick={handleEqualQtyApply}
                             disabled={!equalQtyValue || parseFloat(equalQtyValue) <= 0}
                             sx={{
-                              backgroundColor: '#1976d2',
+                              backgroundColor: '#36af10',
                               color: 'white',
                               minWidth: '50px',
                               height: '36px',
                               '&:hover': {
-                                backgroundColor: '#1976d2'
+                                backgroundColor: '#36af10'
                               }
                             }}
                           >
                             OK
                           </Button>
-                          <Button
+                          <Button size='small'
                             variant="outlined"
                             onClick={handleEqualQtyCancel}
                             sx={{
-                              borderColor: '#1976d2',
-                              color: '#1976d2',
+                              borderColor: '#d21919',
+                              color: '#d21919',
                               minWidth: '60px',
                               height: '36px'
                             }}
@@ -4244,79 +4228,79 @@ const ScanBarcode = () => {
                       </Box>
                     )}
                   </Box>
-                  
-                  <Box sx={{ 
+
+                  <Box sx={{
                     overflowX: 'auto',
                     backgroundColor: '#f8f9fa',
                     borderRadius: 1,
-                    p: 1
+                    p: 0
                   }}>
-                    <table style={{ 
-                      width: '100%', 
+                    <table style={{
+                      width: '100%',
                       borderCollapse: 'collapse',
                       minWidth: '500px'
                     }}>
                       <thead>
                         <tr style={{ backgroundColor: '#e9ecef' }}>
-                          <th style={{ 
+                          <th style={{
                             padding: '2px 8px',
-                            border: '1px solid #dee2e6', 
+                            border: '1px solid #dee2e6',
                             textAlign: 'left',
                             fontSize: '14px',
                             fontWeight: '600'
                           }}>Size</th>
-                          <th style={{ 
-                            padding: '2px 8px', 
-                            border: '1px solid #dee2e6', 
+                          <th style={{
+                            padding: '2px 8px',
+                            border: '1px solid #dee2e6',
                             textAlign: 'center',
                             fontSize: '14px',
                             fontWeight: '600'
                           }}>Qty</th>
-                          <th style={{ 
-                            padding: '2px 8px', 
-                            border: '1px solid #dee2e6', 
+                          <th style={{
+                            padding: '2px 8px',
+                            border: '1px solid #dee2e6',
                             textAlign: 'center',
                             fontSize: '14px',
                             fontWeight: '600'
                           }}>FG</th>
-                          <th style={{ 
-                            padding: '2px 8px', 
-                            border: '1px solid #dee2e6', 
+                          <th style={{
+                            padding: '2px 8px',
+                            border: '1px solid #dee2e6',
                             textAlign: 'center',
                             fontSize: '14px',
                             fontWeight: '600'
                           }}>Proc</th>
-                          <th style={{ 
-                            padding: '2px 8px', 
-                            border: '1px solid #dee2e6', 
+                          <th style={{
+                            padding: '2px 8px',
+                            border: '1px solid #dee2e6',
                             textAlign: 'center',
                             fontSize: '14px',
                             fontWeight: '600'
                           }}>Ord</th>
-                          <th style={{ 
-                            padding: '2px 8px', 
-                            border: '1px solid #dee2e6', 
+                          <th style={{
+                            padding: '2px 8px',
+                            border: '1px solid #dee2e6',
                             textAlign: 'center',
                             fontSize: '14px',
                             fontWeight: '600'
                           }}>Bal</th>
-                          <th style={{ 
+                          <th style={{
                             padding: '2px 8px',
-                            border: '1px solid #dee2e6', 
+                            border: '1px solid #dee2e6',
                             textAlign: 'right',
                             fontSize: '14px',
                             fontWeight: '600'
                           }}>MRP</th>
-                          <th style={{ 
+                          <th style={{
                             padding: '2px 8px',
-                            border: '1px solid #dee2e6', 
+                            border: '1px solid #dee2e6',
                             textAlign: 'right',
                             fontSize: '14px',
                             fontWeight: '600'
                           }}>Rate</th>
-                          <th style={{ 
+                          <th style={{
                             padding: '2px 8px',
-                            border: '1px solid #dee2e6', 
+                            border: '1px solid #dee2e6',
                             textAlign: 'right',
                             fontSize: '14px',
                             fontWeight: '600'
@@ -4330,9 +4314,9 @@ const ScanBarcode = () => {
                           const issueQty = parseFloat(size.ISU_QTY) || 0;
                           const processQty = orderQty + issueQty;
                           const balQty = parseFloat(size.BAL_QTY) || 0;
-                          
+
                           return (
-                            <tr key={index} style={{ 
+                            <tr key={index} style={{
                               backgroundColor: index % 2 === 0 ? '#fff' : '#f8f9fa',
                               borderBottom: '1px solid #dee2e6'
                             }}>
@@ -4342,9 +4326,9 @@ const ScanBarcode = () => {
                                 fontSize: '13px',
                                 lineHeight: '1.2'
                               }}>{size.STYSIZE_NAME}</td>
-                              
-                              <td style={{ 
-                                padding: '5px', 
+
+                              <td style={{
+                                padding: '5px',
                                 border: '1px solid #dee2e6',
                                 textAlign: 'center'
                               }}>
@@ -4367,8 +4351,8 @@ const ScanBarcode = () => {
                                   inputProps={{ min: 0 }}
                                 />
                               </td>
-                              
-                              <td style={{ 
+
+                              <td style={{
                                 padding: '4px 8px',
                                 border: '1px solid #dee2e6',
                                 textAlign: 'center',
@@ -4376,8 +4360,8 @@ const ScanBarcode = () => {
                               }}>
                                 {readyQty.toFixed(3)}
                               </td>
-                              
-                              <td style={{ 
+
+                              <td style={{
                                 padding: '4px 8px',
                                 border: '1px solid #dee2e6',
                                 textAlign: 'center',
@@ -4385,8 +4369,8 @@ const ScanBarcode = () => {
                               }}>
                                 {processQty.toFixed(3)}
                               </td>
-                              
-                              <td style={{ 
+
+                              <td style={{
                                 padding: '4px 8px',
                                 border: '1px solid #dee2e6',
                                 textAlign: 'center',
@@ -4394,8 +4378,8 @@ const ScanBarcode = () => {
                               }}>
                                 {orderQty.toFixed(3)}
                               </td>
-                              
-                              <td style={{ 
+
+                              <td style={{
                                 padding: '4px 8px',
                                 border: '1px solid #dee2e6',
                                 textAlign: 'center',
@@ -4403,23 +4387,23 @@ const ScanBarcode = () => {
                               }}>
                                 {balQty.toFixed(3)}
                               </td>
-                              
-                              <td style={{ 
-                                padding: '10px', 
+
+                              <td style={{
+                                padding: '10px',
                                 border: '1px solid #dee2e6',
                                 textAlign: 'right',
                                 fontSize: '14px'
                               }}>{size.MRP || 0}</td>
-                              
-                              <td style={{ 
-                                padding: '10px', 
+
+                              <td style={{
+                                padding: '10px',
                                 border: '1px solid #dee2e6',
                                 textAlign: 'right',
                                 fontSize: '14px'
                               }}>{size.WSP || 0}</td>
-                              
-                              <td style={{ 
-                                padding: '10px', 
+
+                              <td style={{
+                                padding: '10px',
                                 border: '1px solid #dee2e6',
                                 textAlign: 'right',
                                 fontSize: '14px',
@@ -4433,11 +4417,11 @@ const ScanBarcode = () => {
                       </tbody>
                     </table>
                   </Box>
-                  
-                  <Box sx={{ 
-                    mt: 2, 
-                    display: 'flex', 
-                    justifyContent: 'space-between', 
+
+                  <Box sx={{
+                    mt: 2,
+                    display: 'flex',
+                    justifyContent: 'space-between',
                     alignItems: 'center',
                     flexWrap: 'wrap',
                     gap: 2
@@ -4455,13 +4439,13 @@ const ScanBarcode = () => {
                         </Typography>
                       )}
                     </Box>
-                    
-                    <Button
+
+                    {/* <Button
                       variant="contained"
                       startIcon={<AddIcon />}
                       onClick={handleConfirmItem}
                       disabled={calculateTotalQty() === 0}
-                      sx={{ 
+                      sx={{
                         backgroundColor: '#4CAF50',
                         color: 'white',
                         '&:hover': { backgroundColor: '#45a049' },
@@ -4469,7 +4453,7 @@ const ScanBarcode = () => {
                       }}
                     >
                       Add to Cart
-                    </Button>
+                    </Button> */}
                   </Box>
                 </CardContent>
               </Card>
@@ -4483,23 +4467,23 @@ const ScanBarcode = () => {
   const renderSettingsTab = () => (
     <Box>
       {/* Settings */}
-      <Card sx={{ 
+      <Card sx={{
         mb: 2,
         borderRadius: 3,
         boxShadow: '0 4px 12px rgba(0,0,0,0.05)'
       }}>
         <CardContent sx={{ p: 2 }}>
-          <Typography variant="subtitle1" sx={{ 
-            mb: 1.5, 
+          <Typography variant="subtitle1" sx={{
+            mb: 1.5,
             fontWeight: '600',
             color: '#1976d2'
           }}>
             Order Settings
           </Typography>
-          
+
           {/* Auto-Scan Toggle */}
-          <Box sx={{ 
-            p: 1.5, 
+          <Box sx={{
+            p: 1.5,
             backgroundColor: '#f8f9fa',
             borderRadius: 2,
             mb: 2
@@ -4529,20 +4513,20 @@ const ScanBarcode = () => {
               }
             />
           </Box>
-          
+
           <List sx={{ width: '100%' }}>
             <ListItem>
               <ListItemIcon>
                 <PrintIcon sx={{ color: '#1976d2' }} />
               </ListItemIcon>
-              <ListItemText 
-                primary="Print Settings" 
+              <ListItemText
+                primary="Print Settings"
                 secondary="Configure printer and label settings"
               />
               <ChevronRightIcon sx={{ color: '#666' }} />
             </ListItem>
           </List>
-          
+
           <Button
             fullWidth
             variant="outlined"
@@ -4576,8 +4560,8 @@ const ScanBarcode = () => {
         onClose={() => setSnackbar({ ...snackbar, open: false })}
         anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
       >
-        <Alert 
-          onClose={() => setSnackbar({ ...snackbar, open: false })} 
+        <Alert
+          onClose={() => setSnackbar({ ...snackbar, open: false })}
           severity={snackbar.severity}
           sx={{ width: '100%' }}
         >
@@ -4602,7 +4586,7 @@ const ScanBarcode = () => {
             left: '50%',
             transform: 'translate(-50%, -50%)',
             width: { xs: '95%', sm: '90%', md: '85%', lg: '80%' },
-            maxHeight: '90vh',
+            maxHeight: '75vh',
             bgcolor: 'background.paper',
             borderRadius: 3,
             boxShadow: 24,
@@ -4612,7 +4596,7 @@ const ScanBarcode = () => {
           }}>
             {/* Modal Header */}
             <Box sx={{
-              p: 2,
+              p: 1,
               backgroundColor: '#1976d2',
               color: 'white',
               display: 'flex',
@@ -4628,16 +4612,16 @@ const ScanBarcode = () => {
             </Box>
 
             {/* Modal Content - Scrollable */}
-            <Box sx={{ 
+            <Box sx={{
               p: 2,
               overflow: 'auto',
               flexGrow: 1
             }}>
               {tableData.length === 0 ? (
-                <Box sx={{ 
-                  display: 'flex', 
-                  flexDirection: 'column', 
-                  alignItems: 'center', 
+                <Box sx={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
                   justifyContent: 'center',
                   height: '200px',
                   color: 'text.secondary'
@@ -4649,158 +4633,129 @@ const ScanBarcode = () => {
               ) : (
                 <>
                   {/* Order Items Table */}
-                  <Box sx={{ 
-                    overflowX: 'auto',
-                    backgroundColor: '#f8f9fa',
-                    borderRadius: 2,
-                    mb: 2
-                  }}>
-                    <table style={{ 
-                      width: '100%', 
-                      borderCollapse: 'collapse',
-                      minWidth: '600px'
-                    }}>
+                  <Box
+                    sx={{
+                      overflowX: 'auto',
+                      overflowY: 'auto',
+                      backgroundColor: '#f8f9fa',
+                      borderRadius: 2,
+                      mb: 2,
+                      maxHeight: 210,
+                    }}
+                  >
+                    <table
+                      style={{
+                        width: '100%',
+                        borderCollapse: 'collapse',
+                        minWidth: '600px',
+                        fontSize: '14px',
+                        lineHeight: 1.2,
+                      }}
+                    >
                       <thead>
-                        <tr style={{ backgroundColor: '#e9ecef' }}>
-                          <th style={{ 
-                            padding: '12px', 
-                            border: '1px solid #dee2e6', 
-                            textAlign: 'left',
-                            fontSize: '14px',
-                            fontWeight: '600'
-                          }}>Style/ShadeType</th>
-                          <th style={{ 
-                            padding: '12px', 
-                            border: '1px solid #dee2e6', 
-                            textAlign: 'left',
-                            fontSize: '14px',
-                            fontWeight: '600'
-                          }}>QTY</th>
-                          <th style={{ 
-                            padding: '12px', 
-                            border: '1px solid #dee2e6', 
-                            textAlign: 'right',
-                            fontSize: '14px',
-                            fontWeight: '600'
-                          }}>Rate</th>
-                          <th style={{ 
-                            padding: '12px', 
-                            border: '1px solid #dee2e6', 
-                            textAlign: 'right',
-                            fontSize: '14px',
-                            fontWeight: '600'
-                          }}>Amt</th>
-                          <th style={{ 
-                            padding: '12px', 
-                            border: '1px solid #dee2e6', 
-                            textAlign: 'right',
-                            fontSize: '14px',
-                            fontWeight: '600'
-                          }}>Product</th>
-                          <th style={{ 
-                            padding: '12px', 
-                            border: '1px solid #dee2e6', 
-                            textAlign: 'center',
-                            fontSize: '14px',
-                            fontWeight: '600'
-                          }}>Action</th>
+                        <tr style={{
+                          backgroundColor: '#e9ecef',
+                          position: 'sticky',
+                          top: 0,
+                          zIndex: 1,
+                        }}>
+                          {['Style/ShadeType', 'QTY', 'Rate', 'Amt', 'Product', 'Action'].map((col) => (
+                            <th key={col} style={{
+                              padding: '4px 6px',
+                              border: '1px solid #dee2e6',
+                              textAlign: col === 'Rate' || col === 'Amt' || col === 'Product' ? 'right' :
+                                col === 'Action' ? 'center' : 'left',
+                              fontWeight: 600,
+                              lineHeight: 1.2,
+                              backgroundColor: '#e9ecef',
+                            }}>
+                              {col}
+                            </th>
+                          ))}
                         </tr>
                       </thead>
                       <tbody>
                         {tableData.map((item, index) => (
-                          <tr key={item.id} style={{ 
+                          <tr key={item.id} style={{
                             backgroundColor: index % 2 === 0 ? '#fff' : '#f8f9fa',
-                            borderBottom: '1px solid #dee2e6'
+                            borderBottom: '1px solid #dee2e6',
                           }}>
-                            <td style={{ 
-                              padding: '12px', 
-                              border: '1px solid #dee2e6',
-                              fontSize: '14px'
-                            }}>{item.style} - {item.shade} - {item.type}</td>
-
-                            <td style={{ 
-                              padding: '12px',
-                              border: '1px solid #dee2e6',
-                              fontSize: '14px'
-                            }}>{item.qty}</td>
-                            
-                            <td style={{ 
-                              padding: '12px',
-                              border: '1px solid #dee2e6',
-                              textAlign: 'right',
-                              fontSize: '14px'
-                            }}>₹{item.rate}</td>
-                            <td style={{ 
-                              padding: '12px',
-                              border: '1px solid #dee2e6',
-                              textAlign: 'right',
-                              fontSize: '14px',
-                              fontWeight: '500'
-                            }}>₹{item.amount.toFixed(2)}</td>
-                            <td style={{ 
-                              padding: '12px',
-                              border: '1px solid #dee2e6',
-                              textAlign: 'right',
-                              fontSize: '14px',
-                              fontWeight: '500'
-                            }}>{item.product}</td>
-                            <td style={{ 
-                              padding: '12px', 
-                              border: '1px solid #dee2e6',
-                              textAlign: 'center'
-                            }}>
-                              <IconButton 
-                                onClick={() => handleDeleteItem(item.id)}
-                                size="small"
-                                sx={{ color: '#f44336' }}
-                              >
+                            {[
+                              `${item.style} - ${item.shade} - ${item.type}`,
+                              item.qty,
+                              `₹${item.rate}`,
+                              `₹${item.amount.toFixed(2)}`,
+                              item.product,
+                              <IconButton onClick={() => handleDeleteItem(item.id)} size="small" sx={{ color: '#f44336' }}>
                                 <DeleteIcon fontSize="small" />
                               </IconButton>
-                            </td>
+                            ].map((cell, i) => (
+                              <td key={i} style={{
+                                padding: '4px 6px',
+                                border: '1px solid #dee2e6',
+                                fontSize: '14px',
+                                lineHeight: 1.2,
+                                textAlign: i >= 2 && i <= 4 ? 'right' : i === 5 ? 'center' : 'left',
+                                fontWeight: i === 3 || i === 4 ? 500 : 'normal',
+                              }}>
+                                {cell}
+                              </td>
+                            ))}
                           </tr>
                         ))}
                       </tbody>
                     </table>
                   </Box>
-                  
+
                   {/* Order Summary */}
-                  <Box sx={{ 
-                    p: 2, 
-                    backgroundColor: '#e8f5e9', 
-                    borderRadius: 2 
+                  <Box sx={{
+                    p: 2,
+                    backgroundColor: '#e8f5e9',
+                    borderRadius: 2
                   }}>
                     <Typography variant="h6" sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
                       📊 Order Summary
                     </Typography>
-                    <Grid container spacing={2} sx={{ mb: 2 }}>
-                      <Grid item xs={6} sm={3}>
+                    <Grid container spacing={1}>
+                      <Grid size={{ xs: 6, sm: 3 }}>
                         <Typography variant="body2" sx={{ color: 'text.secondary' }}>Total Items:</Typography>
                         <Typography variant="h6" sx={{ color: '#1976d2' }}>{tableData.length}</Typography>
                       </Grid>
-                      <Grid item xs={6} sm={3}>
+                      <Grid size={{ xs: 6, sm: 3 }}>
                         <Typography variant="body2" sx={{ color: 'text.secondary' }}>Total Quantity:</Typography>
                         <Typography variant="h6" sx={{ color: '#1976d2' }}>
                           {tableData.reduce((sum, item) => sum + item.qty, 0)}
                         </Typography>
                       </Grid>
-                      <Grid item xs={6} sm={3}>
-                        <Typography variant="body2" sx={{ color: 'text.secondary' }}>Total Amount:</Typography>
-                        <Typography variant="h6" sx={{ color: '#1976d2' }}>
-                          ₹{tableData.reduce((sum, item) => sum + item.amount, 0).toFixed(2)}
-                        </Typography>
+                      <Grid size={{ xs: 12, sm: 3 }}>
+                        <Box
+                          sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 1,
+                          }}
+                        >
+                          <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                            Total Amount:
+                          </Typography>
+                          <Typography variant="h6" sx={{ color: '#1976d2' }}>
+                            ₹{tableData.reduce((sum, item) => sum + item.amount, 0).toFixed(2)}
+                          </Typography>
+                        </Box>
                       </Grid>
-                      <Grid item xs={6} sm={3}>
+                      <Grid size={{ xs: 12, sm: 3 }}>
                         <Button
                           variant="contained"
                           fullWidth
                           onClick={handleSubmitOrder}
                           disabled={isLoadingData}
-                          sx={{ 
+                          sx={{
+                            textTransform: 'none',
                             backgroundColor: '#4caf50',
                             '&:hover': { backgroundColor: '#388e3c' }
                           }}
                         >
-                          {isLoadingData ? <CircularProgress size={24} /> : 'Submit Order'}
+                          {isLoadingData ? <CircularProgress size={24} /> : 'Complete Order'}
                         </Button>
                       </Grid>
                     </Grid>
@@ -4821,27 +4776,28 @@ const ScanBarcode = () => {
           sx: {
             maxWidth: '920px',
             width: '100%',
-            maxHeight: '85vh'
+            maxHeight: '65vh'
           }
         }}
       >
-        <DialogTitle sx={{ 
-          display: 'flex', 
-          justifyContent: 'space-between', 
+        <DialogTitle sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
           alignItems: 'center',
           backgroundColor: '#1976d2',
-          color: 'white'
+          color: 'white',
+          p: 1
         }}>
-          <Typography variant="h6">Select Shades</Typography>
+          <Typography variant="h5">Select Shades</Typography>
           <IconButton onClick={() => setShadeModalOpen(false)} sx={{ color: 'white' }}>
             <CloseIcon />
           </IconButton>
         </DialogTitle>
-        
+
         <DialogContent sx={{ p: 3 }}>
           {/* View Mode Buttons */}
-          <Box sx={{ 
-            display: 'flex', 
+          <Box sx={{
+            display: 'flex',
             gap: 1,
             mb: 1,
             mt: 1,
@@ -4851,7 +4807,7 @@ const ScanBarcode = () => {
               variant={shadeViewMode === 'all' ? 'contained' : 'outlined'}
               onClick={handleAllShadesClick}
               size="medium"
-              sx={{ 
+              sx={{
                 minWidth: '120px',
                 backgroundColor: shadeViewMode === 'all' ? '#1976d2' : 'transparent',
                 color: shadeViewMode === 'all' ? 'white' : '#1976d2',
@@ -4867,7 +4823,7 @@ const ScanBarcode = () => {
               variant={shadeViewMode === 'allocated' ? 'contained' : 'outlined'}
               onClick={handleAllocatedShadesClick}
               size="medium"
-              sx={{ 
+              sx={{
                 minWidth: '120px',
                 backgroundColor: shadeViewMode === 'allocated' ? '#1976d2' : 'transparent',
                 color: shadeViewMode === 'allocated' ? 'white' : '#1976d2',
@@ -4887,7 +4843,18 @@ const ScanBarcode = () => {
             placeholder="Search shades..."
             value={shadeSearchQuery}
             onChange={(e) => setShadeSearchQuery(e.target.value)}
-            sx={{ mb: 2 }}
+            sx={{
+              mb: 2,
+              '& .MuiInputBase-root': {
+                height: 42, // adjust height
+                '& .MuiInputBase-input': {
+                  padding: '4px 8px',
+                },
+              },
+              '& .MuiInputAdornment-root': {
+                margin: 0,
+              },
+            }}
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
@@ -4908,15 +4875,15 @@ const ScanBarcode = () => {
           />
 
           {/* Shades List - Single Column */}
-          <Box sx={{ 
-            maxHeight: '400px', 
+          <Box sx={{
+            maxHeight: '400px',
             overflowY: 'auto',
             border: '1px solid #e0e0e0',
             borderRadius: '4px',
             p: 0.3
           }}>
             {availableShades
-              .filter(shade => 
+              .filter(shade =>
                 shade.FGSHADE_NAME.toLowerCase().includes(shadeSearchQuery.toLowerCase())
               )
               .map((shade) => {
@@ -4950,7 +4917,7 @@ const ScanBarcode = () => {
                     <Checkbox
                       checked={isChecked}
                       size="small"
-                      sx={{ 
+                      sx={{
                         p: 0,
                         mr: 1.5
                       }}
@@ -4967,30 +4934,30 @@ const ScanBarcode = () => {
                   </Box>
                 );
               })}
-            
-            {availableShades.filter(shade => 
+
+            {availableShades.filter(shade =>
               shade.FGSHADE_NAME.toLowerCase().includes(shadeSearchQuery.toLowerCase())
             ).length === 0 && (
-              <Box sx={{ 
-                display: 'flex', 
-                flexDirection: 'column', 
-                alignItems: 'center', 
-                justifyContent: 'center',
-                height: '150px',
-                color: 'text.secondary'
-              }}>
-                <InventoryIcon sx={{ fontSize: 48, mb: 2, opacity: 0.5 }} />
-                <Typography variant="h6">No shades found</Typography>
-                <Typography variant="body2">
-                  {shadeSearchQuery ? 'Try a different search term' : 'Try changing the view mode'}
-                </Typography>
-              </Box>
-            )}
+                <Box sx={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  height: '150px',
+                  color: 'text.secondary'
+                }}>
+                  <InventoryIcon sx={{ fontSize: 48, mb: 2, opacity: 0.5 }} />
+                  <Typography variant="h6">No shades found</Typography>
+                  <Typography variant="body2">
+                    {shadeSearchQuery ? 'Try a different search term' : 'Try changing the view mode'}
+                  </Typography>
+                </Box>
+              )}
           </Box>
         </DialogContent>
-        
+
         <DialogActions sx={{ p: 0.5, borderTop: '1px solid #e0e0e0' }}>
-          <Button 
+          <Button size='small'
             onClick={() => {
               setSelectedShades([]);
               setShadeSearchQuery('');
@@ -5003,19 +4970,19 @@ const ScanBarcode = () => {
           </Button>
           <Box sx={{ flex: 1 }} />
 
-          <Button
+          <Button size='small'
             onClick={() => {
               if (selectedShades.length > 0) {
                 const firstSelectedShade = selectedShades[0];
                 const shadeKey = shadeMapping[firstSelectedShade] || '';
-                
+
                 setSelectedShadeKey(shadeKey);
                 setNewItemData(prev => ({
                   ...prev,
                   shade: firstSelectedShade,
                   fgshadeKey: shadeKey
                 }));
-                
+
                 if (currentStyleData && shadeKey) {
                   fetchSizeDetailsForStyle(currentStyleData, firstSelectedShade);
                 }
@@ -5025,7 +4992,7 @@ const ScanBarcode = () => {
               showSnackbar(`${selectedShades.length} shade(s) selected`, 'success');
             }}
             variant="contained"
-            color="primary"
+            sx={{ backgroundColor: '#0e6106' }}
             disabled={selectedShades.length === 0}
           >
             Done
@@ -5034,115 +5001,115 @@ const ScanBarcode = () => {
       </Dialog>
 
       {/* Barcode Scanner Dialog - Google Pay Style */}
-{isClient && (
-  <Dialog
-    open={showScanner}
-    onClose={stopScanner}
-    maxWidth="md"
-    fullWidth
-    fullScreen={isMobile}
-    PaperProps={{
-      sx: {
-        maxWidth: { xs: '100%', sm: '80%', md: '500px' },
-        height: { xs: '100vh', sm: '580px' },
-        margin: { xs: 0, sm: 'auto' },
-        borderRadius: { xs: 0, sm: 3 },
-        backgroundColor: '#000',
-        overflow: 'hidden'
-      }
-    }}
-  >
-    {/* Header */}
-    <Box sx={{
-      position: 'absolute',
-      top: 0,
-      left: 0,
-      right: 0,
-      zIndex: 10,
-      display: 'flex',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      px: 2,
-      py: 1.5,
-      background: 'linear-gradient(to bottom, rgba(0,0,0,0.7), transparent)'
-    }}>
-      <Typography variant="h6" sx={{ color: 'white', fontWeight: 600 }}>
-        📷 Scan Barcode
-      </Typography>
-      <IconButton onClick={stopScanner} sx={{ color: 'white' }}>
-        <CloseIcon />
-      </IconButton>
-    </Box>
-
-    {/* Scanner - Full Screen */}
-    <Box sx={{ width: '100%', height: '100%', position: 'relative' }}>
-      <Scanner
-        onScan={async (results) => {
-          if (results && results.length > 0) {
-            const decodedText = results[0].rawValue;
-            if (decodedText && !isScanningRef.current) {
-              isScanningRef.current = true;
-              setShowScanner(false);
-              setNewItemData(prev => ({ ...prev, barcode: decodedText }));
-              await fetchStyleDataByBarcode(decodedText);
-              showSnackbar('Barcode scanned successfully!', 'success');
-              isScanningRef.current = false;
-              // if (autoScanMode) {
-              //   setTimeout(() => startScanner(), 1000);
-              // }
+      {isClient && (
+        <Dialog
+          open={showScanner}
+          onClose={stopScanner}
+          maxWidth="md"
+          fullWidth
+          fullScreen={isMobile}
+          PaperProps={{
+            sx: {
+              maxWidth: { xs: '100%', sm: '80%', md: '500px' },
+              height: { xs: '100vh', sm: '580px' },
+              margin: { xs: 0, sm: 'auto' },
+              borderRadius: { xs: 0, sm: 3 },
+              backgroundColor: '#000',
+              overflow: 'hidden'
             }
-          }
-        }}
-        onError={(error) => {
-          console.warn('Scanner error:', error);
-        }}
-        constraints={{
-          facingMode: 'environment', // back camera by default
-          width: { ideal: 1280 },
-          height: { ideal: 720 }
-        }}
-        styles={{
-          container: {
-            width: '100%',
-            height: '100%',
-            position: 'relative'
-          },
-          video: {
-            width: '100%',
-            height: '100%',
-            objectFit: 'cover'
-          }
-        }}
-        components={{
-          audio: false,
-          torch: true,       // torch button dikhega
-          zoom: true,        // zoom slider
-          finder: true,      // center frame/box
-        }}
-        scanDelay={300}
-      />
-    </Box>
+          }}
+        >
+          {/* Header */}
+          <Box sx={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            zIndex: 10,
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            px: 2,
+            py: 1.5,
+            background: 'linear-gradient(to bottom, rgba(0,0,0,0.7), transparent)'
+          }}>
+            <Typography variant="h6" sx={{ color: 'white', fontWeight: 600 }}>
+              📷 Scan Barcode
+            </Typography>
+            <IconButton onClick={stopScanner} sx={{ color: 'white' }}>
+              <CloseIcon />
+            </IconButton>
+          </Box>
 
-    {/* Bottom Bar */}
-    <Box sx={{
-      position: 'absolute',
-      bottom: 0,
-      left: 0,
-      right: 0,
-      zIndex: 10,
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      px: 2,
-      py: 2,
-      background: 'linear-gradient(to top, rgba(0,0,0,0.7), transparent)'
-    }}>
-      <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.8)', textAlign: 'center' }}>
-       Please scan Your Barcode 
-      </Typography>
-    </Box>
-  </Dialog>
-)}
+          {/* Scanner - Full Screen */}
+          <Box sx={{ width: '100%', height: '100%', position: 'relative' }}>
+            <Scanner
+              onScan={async (results) => {
+                if (results && results.length > 0) {
+                  const decodedText = results[0].rawValue;
+                  if (decodedText && !isScanningRef.current) {
+                    isScanningRef.current = true;
+                    setShowScanner(false);
+                    setNewItemData(prev => ({ ...prev, barcode: decodedText }));
+                    await fetchStyleDataByBarcode(decodedText);
+                    showSnackbar('Barcode scanned successfully!', 'success');
+                    isScanningRef.current = false;
+                    // if (autoScanMode) {
+                    //   setTimeout(() => startScanner(), 1000);
+                    // }
+                  }
+                }
+              }}
+              onError={(error) => {
+                console.warn('Scanner error:', error);
+              }}
+              constraints={{
+                facingMode: 'environment', // back camera by default
+                width: { ideal: 1280 },
+                height: { ideal: 720 }
+              }}
+              styles={{
+                container: {
+                  width: '100%',
+                  height: '100%',
+                  position: 'relative'
+                },
+                video: {
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover'
+                }
+              }}
+              components={{
+                audio: false,
+                torch: true,       // torch button dikhega
+                zoom: true,        // zoom slider
+                finder: true,      // center frame/box
+              }}
+              scanDelay={300}
+            />
+          </Box>
+
+          {/* Bottom Bar */}
+          <Box sx={{
+            position: 'absolute',
+            bottom: 0,
+            left: 0,
+            right: 0,
+            zIndex: 10,
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            px: 2,
+            py: 2,
+            background: 'linear-gradient(to top, rgba(0,0,0,0.7), transparent)'
+          }}>
+            <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.8)', textAlign: 'center' }}>
+              Please scan Your Barcode
+            </Typography>
+          </Box>
+        </Dialog>
+      )}
     </>
   );
 };
