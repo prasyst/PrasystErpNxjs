@@ -34,7 +34,7 @@
 
 //     const [focused, setFocused] = React.useState(false);
 //     const shouldShrink = !!value || focused;
-    
+
 //     return (
 //      <FormControl fullWidth>
 //         <Autocomplete
@@ -57,7 +57,7 @@
 //           clearOnBlur={false}
 //           onFocus={() => setFocused(true)}
 //           onBlur={() => setFocused(false)}
-          
+
 //           // NEW: Custom render for dropdown options
 //           renderOption={(props, option) => {
 //             const label = getOptionLabel(option);
@@ -77,7 +77,7 @@
 //               </li>
 //             );
 //           }}
-          
+
 //           // NEW: Custom Paper component for dropdown
 //           PaperComponent={(props) => (
 //             <div
@@ -134,7 +134,7 @@
 //             }}
 //           />
 //         )}
-        
+
 //         {showRefreshIcon && onRefreshClick && (
 //           <RefreshIcon
 //             onClick={(e) => {
@@ -236,6 +236,14 @@ const AutoVibe = React.forwardRef(
               minWidth: `${minWidth}px !important`,
             }
           }
+        }}
+        ListboxProps={{
+          sx: {
+            '& .MuiAutocomplete-option': {
+              padding: '2px 8px',    // top/bottom + left/right
+              minHeight: 'auto',     // override default minHeight
+            },
+          },
         }}
         renderInput={(params) => (
           <TextField
