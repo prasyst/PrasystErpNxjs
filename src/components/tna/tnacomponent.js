@@ -9,6 +9,7 @@ import {
 } from 'react-icons/ri';
 import ContentCutIcon from '@mui/icons-material/ContentCut';
 import AltRouteIcon from '@mui/icons-material/AltRoute';
+import AssessmentIcon from '@mui/icons-material/Assessment';
 import AssistantNavigationIcon from '@mui/icons-material/AssistantNavigation';
 
 import { useRecentPaths } from '../../app/context/RecentPathsContext';
@@ -102,6 +103,7 @@ export default function TnaComponentPage() {
       { name: 'Update Routing', icon: RiBarcodeLine, path: '/tnapage/updaterouting/' },
       { name: 'Update Rm', icon: AltRouteIcon, path: '/tnapage/updaterm/' },
       { name: 'Update Trims', icon: ContentCutIcon, path: '/tnapage/updatetrims/' },
+      { name: 'TNA Report', icon: AssessmentIcon, path: '/tnapage/tnareport/' },
     ],
     },
 
