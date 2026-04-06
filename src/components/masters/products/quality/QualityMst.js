@@ -17,6 +17,7 @@ import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import { TbListSearch } from "react-icons/tb";
 import CrudButton from '@/GlobalFunction/CrudButton';
 import ConfirmDelDialog from '@/GlobalFunction/ConfirmDelDialog';
+import { useUserPermissions } from '@/app/hooks/useUserPermissions';
 
 const FORM_MODE = getFormMode();
 const QualityMst = () => {
@@ -50,6 +51,8 @@ const QualityMst = () => {
     const username = localStorage.getItem('USER_NAME');
     const PARTY_KEY = localStorage.getItem('PARTY_KEY');
     const COBR_ID = localStorage.getItem('COBR_ID');
+    const { hasSpecificPermission, loading: permissionsLoading } = useUserPermissions();
+    const moduleName = 'Quality';
 
     const handleChangeStatus = (event) => {
         const updatedStatus = event.target.checked ? "1" : "0";
@@ -414,7 +417,7 @@ const QualityMst = () => {
         router.push("/masters/products/quality/qualitytable");
     };
 
-    const handleExit = () => { router.push("/masterpage?activeTab=products") };
+    const handleExit = () => { router.push("/masterpage/?activeTab=13") };
 
     const Buttonsx = {
         backgroundColor: '#39ace2',
@@ -585,7 +588,7 @@ const QualityMst = () => {
 
                     <Grid sx={{ display: "flex", justifyContent: "end", marginRight: '-6px' }}>
                         <CrudButton
-                            moduleName=""
+                            moduleName={moduleName}
                             mode={mode}
                             onAdd={handleAdd}
                             onEdit={handleEdit}
@@ -595,6 +598,10 @@ const QualityMst = () => {
                             readOnlyMode={mode === FORM_MODE.read}
                             onPrevious={handlePrevious}
                             onNext={handleNext}
+                            canAdd={hasSpecificPermission(moduleName, 'ADD')}
+                            canEdit={hasSpecificPermission(moduleName, 'EDIT')}
+                            canDelete={hasSpecificPermission(moduleName, 'DELETE')}
+                            canView={hasSpecificPermission(moduleName, 'VIEW')}
                         />
                     </Grid>
                 </Grid>

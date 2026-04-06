@@ -70,13 +70,32 @@ const TicketDetailsDialog = ({
                 CO_ID: ""
             };
 
-            const response = await axiosInstance.post(
-                "TrnTkt/RetriveTrnTkt",
-                payload
-            );
+            const response = await axiosInstance.post("TrnTkt/RetriveTrnTkt", payload);
 
             if (response.data.STATUS === 0 && response.data.DATA?.trnTktDtlList?.[0]) {
                 const ticketData = response.data.DATA.trnTktDtlList[0];
+
+                const cleanImageUrl = (imgUrl) => {
+                    if (!imgUrl) return null;
+
+                    let url = String(imgUrl).trim();
+
+                    // 1. Fix common malformed protocol (http:/ instead of http://)
+                    url = url.replace(/^http:\/(?!\/)/, 'http://');
+
+                    // 2. Remove unwanted localhost:4001 proxy prefix (Main Issue)
+                    url = url.replace(/^http:\/\/localhost:4001\//, 'http://');
+
+                    // 3. If still not a full URL, prepend the correct backend base URL
+                    if (!url.startsWith('http')) {
+                        const backendBase = 'http://43.230.196.22:8180';
+                        url = url.startsWith('/')
+                            ? `${backendBase}${url}`
+                            : `${backendBase}/${url}`;
+                    }
+
+                    return url;
+                };
 
                 const mappedTicket = {
                     TKTKEY: ticketData.TktKey,
@@ -87,7 +106,8 @@ const TicketDetailsDialog = ({
                     priority: ticketData.TktSvrtyName || "Medium",
                     status: ticketData.TktStatus === "O" ? "open" :
                         ticketData.TktStatus === "P" ? "in-progress" :
-                            ticketData.TktStatus === "R" ? "resolved" : ticketData.TktStatus === "H" ? "Hold" : "closed",
+                            ticketData.TktStatus === "R" ? "resolved" :
+                                ticketData.TktStatus === "H" ? "Hold" : "closed",
                     assignee: ticketData.TechEMP_NAME || "Unassigned",
                     reporter: ticketData.RaiseByNm || "Unknown",
                     createdAt: ticketData.TktDate,
@@ -101,7 +121,8 @@ const TicketDetailsDialog = ({
                     location: ticketData.CCN_Key || "",
                     tktType: ticketData.TktTypeName || "",
                     tktTag: ticketData.TktTagName || "",
-                    resolveRemark: ticketData.RslvRmrk || ""
+                    resolveRemark: ticketData.RslvRmrk || "",
+                    ticketImage: cleanImageUrl(ticketData.TktImage),
                 };
 
                 setTicketDetails(mappedTicket);
@@ -604,7 +625,43 @@ const TicketDetailsDialog = ({
                                         {/* Attachments Section */}
                                         <Box>
                                             <Typography variant="subtitle2" fontWeight={500} gutterBottom>
-                                                Attach Images
+                                                Ticket Image
+                                            </Typography>
+
+                                            {ticketDetails.ticketImage && (
+                                                <Box sx={{ mb: 3 }}>
+                                                    <Box
+                                                        sx={{
+                                                            mt: 1,
+                                                            border: '1px solid #e0e0e0',
+                                                            borderRadius: 2,
+                                                            overflow: 'hidden',
+                                                            bgcolor: '#f8f9fa',
+                                                            display: 'flex',
+                                                            justifyContent: 'center',
+                                                            p: 1
+                                                        }}
+                                                    >
+                                                        <img
+                                                            key={`${ticketDetails.TKTKEY}-${Date.now()}`}
+                                                            src={`${ticketDetails.ticketImage}?t=${Date.now()}`}
+                                                            style={{
+                                                                maxWidth: '100%',
+                                                                maxHeight: '280px',
+                                                                objectFit: 'contain',
+                                                                borderRadius: 4
+                                                            }}
+                                                            onError={(e) => {
+                                                                e.target.style.display = 'none';
+                                                            }}
+                                                        />
+                                                    </Box>
+                                                </Box>
+                                            )}
+
+                                            {/* Upload New Images (for resolution) */}
+                                            <Typography variant="subtitle2" fontWeight={500} gutterBottom sx={{ mt: ticketDetails.ticketImage ? 3 : 0 }}>
+                                                Attach New Images for Resolution
                                             </Typography>
 
                                             <Box
@@ -619,7 +676,7 @@ const TicketDetailsDialog = ({
                                                         bgcolor: '#f1f5f9',
                                                         borderColor: '#9ca3af'
                                                     },
-                                                    mb: 1
+                                                    mb: 2
                                                 }}
                                                 onClick={() => fileInputRef.current?.click()}
                                             >
@@ -631,13 +688,7 @@ const TicketDetailsDialog = ({
                                                     style={{ display: 'none' }}
                                                     onChange={handleFileUpload}
                                                 />
-                                                <AttachFileIcon
-                                                    sx={{
-                                                        fontSize: 48,
-                                                        color: '#9ca3af',
-                                                        mb: 1
-                                                    }}
-                                                />
+                                                <AttachFileIcon sx={{ fontSize: 48, color: '#9ca3af', mb: 1 }} />
                                                 <Typography fontWeight={500} color="#6b7280" gutterBottom>
                                                     Click to upload images
                                                 </Typography>
@@ -646,6 +697,7 @@ const TicketDetailsDialog = ({
                                                 </Typography>
                                             </Box>
 
+                                            {/* Selected Files for Upload */}
                                             {attachments.length > 0 && (
                                                 <Box>
                                                     <Typography variant="subtitle2" fontWeight={500} mb={1}>
@@ -665,10 +717,7 @@ const TicketDetailsDialog = ({
                                                                 }}
                                                             >
                                                                 <Box display="flex" alignItems="center" gap={1.5}>
-                                                                    <AttachFileIcon
-                                                                        fontSize="small"
-                                                                        sx={{ color: '#6b7280' }}
-                                                                    />
+                                                                    <AttachFileIcon fontSize="small" sx={{ color: '#6b7280' }} />
                                                                     <Box>
                                                                         <Typography variant="body2" fontWeight={500}>
                                                                             {file.fileName}

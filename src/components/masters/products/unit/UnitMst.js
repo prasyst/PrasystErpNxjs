@@ -12,12 +12,11 @@ import debounce from 'lodash.debounce';
 import axiosInstance from '@/lib/axios';
 import CustomAutocomplete from '@/GlobalFunction/CustomAutoComplete/CustomAutoComplete';
 import { useSearchParams } from 'next/navigation';
-import CrudButtons from '@/GlobalFunction/CrudButtons';
 import { TbListSearch } from "react-icons/tb";
 import KeyboardArrowLeftIcon from "@mui/icons-material/KeyboardArrowLeft";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import CrudButton from '@/GlobalFunction/CrudButton';
-import PaginationButtons from '@/GlobalFunction/PaginationButtons';
+import { useUserPermissions } from '@/app/hooks/useUserPermissions';
 
 const FORM_MODE = getFormMode();
 const UnitMst = () => {
@@ -53,6 +52,8 @@ const UnitMst = () => {
     const username = localStorage.getItem('USER_NAME');
     const PARTY_KEY = localStorage.getItem('PARTY_KEY');
     const COBR_ID = localStorage.getItem('COBR_ID');
+    const { hasSpecificPermission, loading: permissionsLoading } = useUserPermissions();
+    const moduleName = "Unit Master";
 
     const unitOptions = [
         { Id: '0', Name: 'N' },
@@ -430,7 +431,7 @@ const UnitMst = () => {
     };
 
     const handleExit = () => {
-        router.push('/masterpage?activeTab=products');
+        router.push('/masterpage/?activeTab=13');
     };
 
     const handleInputChange = (e) => {
@@ -556,7 +557,7 @@ const UnitMst = () => {
 
                     <Grid sx={{ display: "flex", justifyContent: "end", marginRight: '-6px' }}>
                         <CrudButton
-                            moduleName=""
+                            moduleName={moduleName}
                             mode={mode}
                             onAdd={handleAdd}
                             onEdit={handleEdit}
@@ -565,6 +566,10 @@ const UnitMst = () => {
                             readOnlyMode={mode === FORM_MODE.read}
                             onPrevious={handlePrevious}
                             onNext={handleNext}
+                            canAdd={hasSpecificPermission(moduleName, 'ADD')}
+                            canEdit={hasSpecificPermission(moduleName, 'EDIT')}
+                            canDelete={hasSpecificPermission(moduleName, 'DELETE')}
+                            canView={hasSpecificPermission(moduleName, 'VIEW')}
                         />
                     </Grid>
                 </Grid>

@@ -16,6 +16,7 @@ import { useSearchParams } from 'next/navigation';
 import { TbListSearch } from "react-icons/tb";
 import CrudButton from '@/GlobalFunction/CrudButton';
 import ConfirmDelDialog from '@/GlobalFunction/ConfirmDelDialog';
+import { useUserPermissions } from '@/app/hooks/useUserPermissions';
 
 const FORM_MODE = getFormMode();
 const PatternMst = () => {
@@ -50,6 +51,8 @@ const PatternMst = () => {
     const username = localStorage.getItem('USER_NAME');
     const PARTY_KEY = localStorage.getItem('PARTY_KEY');
     const COBR_ID = localStorage.getItem('COBR_ID');
+    const { hasSpecificPermission, loading: permissionsLoading } = useUserPermissions();
+    const moduleName = 'Pattern Master';
 
     const handleChangeStatus = (event) => {
         const updatedStatus = event.target.checked ? "1" : "0";
@@ -59,55 +62,6 @@ const PatternMst = () => {
             Status: updatedStatus
         }))
     };
-
-    // const fetchRetriveData = async (currentFGPTN_KEY, flag = "R", isManualSearch = false) => {
-    //     try {
-    //         const response = await axiosInstance.post('Fgptn/RetriveFgptn', {
-    //             "FLAG": flag,
-    //             "TBLNAME": "Fgptn",
-    //             "FLDNAME": "Fgptn_KEY",
-    //             "ID": currentFGPTN_KEY,
-    //             "ORDERBYFLD": "",
-    //             "CWHAER": "",
-    //             "CO_ID": CO_ID
-    //         });
-    //         const { data: { STATUS, DATA, RESPONSESTATUSCODE, MESSAGE } } = response;
-    //         if (STATUS === 0 && Array.isArray(DATA) && RESPONSESTATUSCODE == 1) {
-    //             const categoryData = DATA[0];
-    //             setForm({
-    //                 FGPTN_KEY: categoryData.FGPTN_KEY,
-    //                 FGPTN_NAME: categoryData.FGPTN_NAME,
-    //                 FGPTN_ABRV: categoryData.FGPTN_ABRV || '',
-    //                 FGPTN_CODE: categoryData.FGPTN_CODE || '',
-    //                 SERIES: categoryData.SERIES || '',
-    //                 FGPTN_LST_CODE: categoryData.FGPTN_LST_CODE || '',
-    //                 Status: categoryData.STATUS,
-    //             });
-    //             setStatus(DATA[0].STATUS);
-    //             setCurrentFGPTN_KEY(categoryData.FGPTN_KEY);
-
-    //                // ✅ Update URL
-    //         const newParams = new URLSearchParams();
-    //         newParams.set("FGPTN_KEY", categoryData.FGPTN_KEY);
-    //         router.replace(`/masters/products/pattern?${newParams.toString()}`);
-    //         } else {
-    //             if (isManualSearch) {
-    //                 toast.error(`${MESSAGE} FOR ${currentFGPTN_KEY}`);
-    //                 setForm({
-    //                     FGPTN_KEY: '',
-    //                     FGPTN_NAME: '',
-    //                     FGPTN_ABRV: '',
-    //                     FGPTN_CODE: '',
-    //                     SERIES: '',
-    //                     FGPTN_LST_CODE: '',
-    //                     Status: 0,
-    //                 });
-    //             }
-    //         }
-    //     } catch (err) {
-    //         console.error(err);
-    //     }
-    // };
 
     const fetchRetriveData = useCallback(async (currentFGPTN_KEY, flag = "R", isManualSearch = false) => {
         try {
@@ -462,7 +416,7 @@ const PatternMst = () => {
     };
 
     const handleExit = () => {
-        router.push("/masterpage?activeTab=products");
+        router.push("/masterpage/?activeTab=13");
     };
 
     const handleInputChange = (e) => {
@@ -588,7 +542,7 @@ const PatternMst = () => {
 
                     <Grid sx={{ display: "flex", justifyContent: "end", marginRight: '-6px' }}>
                         <CrudButton
-                            moduleName=""
+                            moduleName={moduleName}
                             mode={mode}
                             onView={handlePrint}
                             onAdd={handleAdd}
@@ -598,6 +552,10 @@ const PatternMst = () => {
                             readOnlyMode={mode === FORM_MODE.read}
                             onPrevious={handlePrevious}
                             onNext={handleNext}
+                            canAdd={hasSpecificPermission(moduleName, 'ADD')}
+                            canEdit={hasSpecificPermission(moduleName, 'EDIT')}
+                            canView={hasSpecificPermission(moduleName, 'VIEW')}
+                            canDelete={hasSpecificPermission(moduleName, 'DELETE')}
                         />
                     </Grid>
                 </Grid>
