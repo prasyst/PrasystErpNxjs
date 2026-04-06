@@ -5324,6 +5324,7 @@ const ScanBarcode = () => {
   const [salesperson1Options, setSalesperson1Options] = useState([]);
   const [salesperson2Options, setSalesperson2Options] = useState([]);
   const [merchandiserOptions, setMerchandiserOptions] = useState([]);
+  const [scannerChangeQtyMode, setScannerChangeQtyMode] = useState(false);
   const [seasonOptions, setSeasonOptions] = useState([]);
   const [orderTypeOptions, setOrderTypeOptions] = useState(['Sales And Work-Order', 'Sales Order', 'Work Order']);
   const [statusOptions] = useState(['O', 'C', 'S']);
@@ -5530,7 +5531,6 @@ const [initialQuantitiesLoaded, setInitialQuantitiesLoaded] = useState(false);
     },
   };
 
-// Handle manual input submit (barcode or style code based on checkbox)
 const handleManualInputSubmit = async () => {
   const inputValue = manualInputValue.trim();
   if (!inputValue) {
@@ -5545,7 +5545,6 @@ const handleManualInputSubmit = async () => {
     let response;
     
     if (isStyleCodeMode) {
-      // Search by Style Code
       const payload = {
         "FGSTYLE_ID": "",
         "FGPRD_KEY": "",
@@ -5555,7 +5554,6 @@ const handleManualInputSubmit = async () => {
       };
       response = await axiosInstance.post('/FGSTYLE/GetFgstyleDrp', payload);
     } else {
-      // Search by Barcode
       const payload = {
         "FGSTYLE_ID": "",
         "FGPRD_KEY": "",
@@ -5571,7 +5569,8 @@ const handleManualInputSubmit = async () => {
       setShowScanner(false);
       setManualInputValue('');
       await processFoundProduct(styleData, inputValue);
-      showSnackbar(`Product found successfully by ${isStyleCodeMode ? 'style code' : 'barcode'}!`, 'success');
+      
+      // Don't show success message here as processFoundProduct will handle it
     } else {
       setManualInputError(`No product found for this ${isStyleCodeMode ? 'style code' : 'barcode'}. Please check and try again.`);
     }
@@ -5583,7 +5582,6 @@ const handleManualInputSubmit = async () => {
   }
 };
 
-// Process found product
 const processFoundProduct = async (styleData, inputValue) => {
   const productKey = styleData.FGPRD_KEY || "";
 
@@ -5621,6 +5619,22 @@ const processFoundProduct = async (styleData, inputValue) => {
 
   if (styleData.FGSTYLE_ID) {
     await fetchShadesForStyle(styleData.FGSTYLE_ID, shadeViewMode);
+  }
+
+ 
+  if (!scannerChangeQtyMode) {
+    // Wait a bit for size details to load
+    setTimeout(() => {
+      // Check if there are size details with quantities
+      if (sizeDetailsData.length > 0 && calculateTotalQty() > 0) {
+        handleConfirmItem();
+        showSnackbar('Item automatically added to cart!', 'success');
+      } else if (sizeDetailsData.length > 0 && calculateTotalQty() === 0) {
+        showSnackbar('Please add quantities before adding to cart', 'warning');
+      }
+    }, 500);
+  } else {
+    showSnackbar('Change Qty mode: Please adjust quantities and click Add to Cart', 'info');
   }
 
   if (isMobile) {
@@ -6380,108 +6394,43 @@ const fetchPartyDetails = async (partyKey, isShippingParty = false, shouldAutoSe
   };
 
   const fetchStyleDataByBarcode = async (barcode) => {
-    if (!barcode || barcode.trim() === '') {
-      setScannerError('Please enter a barcode');
-      return;
+  if (!barcode || barcode.trim() === '') {
+    setScannerError('Please enter a barcode');
+    return;
+  }
+
+  try {
+    setIsLoadingBarcode(true);
+    setScannerError('');
+
+    const payload = {
+      "FGSTYLE_ID": "",
+      "FGPRD_KEY": "",
+      "FGSTYLE_CODE": "",
+      "ALT_BARCODE": barcode.trim(),
+      "FLAG": ""
+    };
+
+    const response = await axiosInstance.post('/FGSTYLE/GetFgstyleDrp', payload);
+
+    if (response.data.DATA && response.data.DATA.length > 0) {
+      const exactMatch = response.data.DATA.find(item =>
+        item.ALT_BARCODE && item.ALT_BARCODE.toString() === barcode.trim()
+      );
+
+      const styleData = exactMatch || response.data.DATA[0];
+      await processFoundProduct(styleData, barcode);
+    } else {
+      setScannerError('No product found for this barcode. Please check the barcode and try again.');
+      showSnackbar('Product not found', 'warning');
     }
-
-    try {
-      setIsLoadingBarcode(true);
-      setScannerError('');
-
-      const payload = {
-        "FGSTYLE_ID": "",
-        "FGPRD_KEY": "",
-        "FGSTYLE_CODE": "",
-        "ALT_BARCODE": barcode.trim(),
-        "FLAG": ""
-      };
-
-      const response = await axiosInstance.post('/FGSTYLE/GetFgstyleDrp', payload);
-
-      if (response.data.DATA && response.data.DATA.length > 0) {
-        const exactMatch = response.data.DATA.find(item =>
-          item.ALT_BARCODE && item.ALT_BARCODE.toString() === barcode.trim()
-        );
-
-        const styleData = exactMatch || response.data.DATA[0];
-
-        const productKey = styleData.FGPRD_KEY || "";
-
-        const isSameProduct = (
-          currentProductInfo.productKey === productKey &&
-          currentProductInfo.style === (styleData.FGSTYLE_CODE || styleData.FGSTYLE_NAME || '')
-        );
-
-        const newProductInfo = {
-          barcode: styleData.ALT_BARCODE || styleData.STYSTKDTL_KEY || barcode,
-          style: styleData.FGSTYLE_CODE || styleData.FGSTYLE_NAME || '',
-          product: styleData.FGPRD_NAME || '',
-          productKey: productKey
-        };
-
-        setCurrentProductInfo(newProductInfo);
-
-        if (currentProductInfo.productKey && !isSameProduct) {
-          if (Object.keys(ratioData.ratios).length > 0) {
-            showSnackbar('Product has changed. Please enter new ratios for this product.', 'warning');
-          }
-          setRatioData({
-            totalQty: '',
-            ratios: {}
-          });
-        } else {
-          const savedRatioData = getRatioDataFromStorage(productKey);
-          if (savedRatioData.ratios && Object.keys(savedRatioData.ratios).length > 0) {
-            setRatioData(savedRatioData);
-            showSnackbar('Previous ratios loaded for this product', 'info');
-          }
-        }
-
-        setCurrentStyleData(styleData);
-
-        const shadeValue = styleData.FGSHADE_NAME || '';
-        const sizeValue = styleData.STYSIZE_NAME || '';
-
-        setNewItemData({
-          ...newItemData,
-          barcode: newProductInfo.barcode,
-          product: newProductInfo.product,
-          style: newProductInfo.style,
-          type: styleData.FGTYPE_NAME || '',
-          shade: shadeValue,
-          size: sizeValue,
-          mrp: styleData.MRP ? styleData.MRP.toString() : '0',
-          rate: styleData.SSP ? styleData.SSP.toString() : '0',
-          qty: '',
-          discount: '0',
-          sets: '1',
-          convFact: '1',
-          remark: ''
-        });
-
-        await fetchSizeDetailsForStyle(styleData, newItemData.shade);
-
-        if (styleData.FGSTYLE_ID) {
-          await fetchShadesForStyle(styleData.FGSTYLE_ID, shadeViewMode);
-        }
-
-        if (isMobile) {
-          setActiveTab(2);
-          setViewMode('details');
-        }
-
-      } else {
-        setScannerError('No product found for this barcode. Please check the barcode and try again.');
-        showSnackbar('Product not found', 'warning');
-      }
-    } catch (error) {
-      setScannerError('Error fetching product details. Please try again.');
-      showSnackbar('Error fetching product', 'error');
-    } finally {
-      setIsLoadingBarcode(false);
-    }
-  };
+  } catch (error) {
+    setScannerError('Error fetching product details. Please try again.');
+    showSnackbar('Error fetching product', 'error');
+  } finally {
+    setIsLoadingBarcode(false);
+  }
+};
 
   const handleBackButton = () => {
     router.push('/inventorypage/?activeTab=sales-dispatch');
@@ -10497,253 +10446,359 @@ const handleFormChange = async (field, value) => {
       </Dialog>
 
       {/* Barcode Scanner Dialog - Google Pay Style */}
-      {isClient && (
-        <Dialog
-          open={showScanner}
-          onClose={stopScanner}
-          maxWidth="md"
-          fullWidth
-          fullScreen={isMobile}
-          PaperProps={{
-            sx: {
-              maxWidth: { xs: '100%', sm: '80%', md: '500px' },
-              height: { xs: '100vh', sm: '580px' },
-              margin: { xs: 0, sm: 'auto' },
-              borderRadius: { xs: 0, sm: 3 },
-              backgroundColor: '#000',
-              overflow: 'hidden'
-            }
-          }}
-        >
-          {/* Header */}
-          <Box sx={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            zIndex: 10,
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            px: 2,
-            py: 1.5,
-            background: 'linear-gradient(to bottom, rgba(0,0,0,0.7), transparent)'
-          }}>
-            <Typography variant="h6" sx={{ color: 'white', fontWeight: 600 }}>
-              📷 Scan Barcode
-            </Typography>
-            <IconButton onClick={stopScanner} sx={{ color: 'white' }}>
-              <CloseIcon />
-            </IconButton>
-          </Box>
+{isClient && (
+  <Dialog
+    open={showScanner}
+    onClose={stopScanner}
+    maxWidth="md"
+    fullWidth
+    fullScreen={isMobile}
+    PaperProps={{
+      sx: {
+        maxWidth: { xs: '100%', sm: '80%', md: '500px' },
+        height: { xs: '100vh', sm: '620px' },
+        margin: { xs: 0, sm: 'auto' },
+        borderRadius: { xs: 0, sm: 3 },
+        backgroundColor: '#000',
+        overflow: 'hidden'
+      }
+    }}
+  >
+    {/* Header */}
+    <Box sx={{
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      zIndex: 10,
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      px: 2,
+      py: 1.5,
+      background: 'linear-gradient(to bottom, rgba(0,0,0,0.7), transparent)'
+    }}>
+      <Typography variant="h6" sx={{ color: 'white', fontWeight: 600 }}>
+        📷 Scan Barcode
+      </Typography>
+      <IconButton onClick={stopScanner} sx={{ color: 'white' }}>
+        <CloseIcon />
+      </IconButton>
+    </Box>
 
-          {/* Scanner - Full Screen */}
-          <Box sx={{ width: '100%', height: '100%', position: 'relative' }}>
-            <Scanner
-              onScan={async (results) => {
-                if (results && results.length > 0) {
-                  const decodedText = results[0].rawValue;
-                  if (decodedText && !isScanningRef.current) {
-                    isScanningRef.current = true;
-                    setShowScanner(false);
-                    setNewItemData(prev => ({ ...prev, barcode: decodedText }));
-                    await fetchStyleDataByBarcode(decodedText);
-                    showSnackbar('Barcode scanned successfully!', 'success');
-                    isScanningRef.current = false;
-                    // if (autoScanMode) {
-                    //   setTimeout(() => startScanner(), 1000);
-                    // }
-                  }
-                }
-              }}
-              onError={(error) => {
-                console.warn('Scanner error:', error);
-              }}
-              constraints={{
-                facingMode: 'environment', 
-                width: { ideal: 1280 },
-                height: { ideal: 720 }
-              }}
-              styles={{
-                container: {
-                  width: '100%',
-                  height: '100%',
-                  position: 'relative'
-                },
-                video: {
-                  width: '100%',
-                  height: '100%',
-                  objectFit: 'cover'
-                }
-              }}
-              components={{
-                audio: false,
-                torch: true,       // torch button dikhega
-                zoom: true,        // zoom slider
-                finder: true,      // center frame/box
-              }}
-              scanDelay={300}
-            />
-          </Box>
-
-<Box sx={{
-  position: 'absolute',
-  bottom: 0,
-  left: 0,
-  right: 0,
-  zIndex: 10,
+    {/* Scanner - Full Screen */}
+   
+<Box sx={{ 
+  width: '100%', 
+  height: '100%', 
+  position: 'relative',
   display: 'flex',
   flexDirection: 'column',
-  alignItems: 'center',
-  px: 2,
-  py: 2,
-  background: 'linear-gradient(to top, rgba(0,0,0,0.8), transparent)'
+  justifyContent: 'flex-start', 
+  overflow: 'hidden'
 }}>
-  {/* Scan instruction text */}
-  <Typography variant="caption" sx={{ 
-    color: 'rgba(255,255,255,0.9)', 
-    textAlign: 'center',
-    mb: 1.5,
-    fontWeight: 500,
-    fontSize: '12px'
-  }}>
-    Position barcode in frame to scan automatically
-  </Typography>
-
-  {/* Divider */}
-  <Divider sx={{ 
-    width: '80%', 
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    mb: 1.5 
-  }} />
-
-  {/* Manual Input Section */}
+  
   <Box sx={{
+    position: 'relative',
     width: '100%',
-    maxWidth: '320px',
-    backgroundColor: 'rgba(0,0,0,0.75)',
-    backdropFilter: 'blur(8px)',
-    borderRadius: 3,
-    p: 1.5,
-    border: '1px solid rgba(255,255,255,0.15)'
+    flex: 1,
+    
+    marginBottom: { xs: '180px', sm: '200px', md: '220px' },
+   
   }}>
-    <Typography variant="caption" sx={{ 
-      color: 'rgba(255,255,255,0.7)', 
-      display: 'block',
-      mb: 1,
-      fontSize: '11px',
-      textAlign: 'center'
-    }}>
-      Or enter manually:
-    </Typography>
-    
-    {/* Checkbox for toggling between Barcode and Style Code */}
-    <FormControlLabel
-      control={
-        <Checkbox
-          checked={isStyleCodeMode}
-          onChange={(e) => setIsStyleCodeMode(e.target.checked)}
-          size="small"
-          sx={{
-            color: 'rgba(255,255,255,0.7)',
-            '&.Mui-checked': {
-              color: '#1976d2',
-            },
-          }}
-        />
-      }
-      label={
-        <Typography variant="caption" sx={{ 
-          color: 'rgba(255,255,255,0.8)',
-          fontSize: '11px'
-        }}>
-          {isStyleCodeMode ? 'Enter Style Code' : 'Enter Barcode'}
-        </Typography>
-      }
-      sx={{ mb: 1 }}
-    />
-    
-    <TextField
-      fullWidth
-      variant="outlined"
-      placeholder={isStyleCodeMode ? "Enter Style Code " : "Enter Barcode Number"}
-      value={manualInputValue}
-      onChange={(e) => setManualInputValue(e.target.value)}
-      onKeyPress={(e) => {
-        if (e.key === 'Enter') {
-          handleManualInputSubmit();
-        }
-      }}
-      size="small"
-      sx={{
-        '& .MuiOutlinedInput-root': {
-          backgroundColor: 'rgba(255,255,255,0.95)',
-          borderRadius: 2,
-          height: '40px',
-          '& fieldset': {
-            borderColor: 'rgba(25, 118, 210, 0.5)',
-          },
-          '&:hover fieldset': {
-            borderColor: '#1976d2',
-          },
-          '&.Mui-focused fieldset': {
-            borderColor: '#1976d2',
-          },
-        },
-        '& .MuiInputBase-input': {
-          color: '#333',
-          fontSize: '13px',
-          padding: '8px 12px',
-        }
-      }}
-      InputProps={{
-        endAdornment: (
-          <InputAdornment position="end">
-            <IconButton 
-              onClick={handleManualInputSubmit}
-              disabled={!manualInputValue || manualInputValue.trim() === '' || isManualInputLoading}
-              size="small"
-              sx={{ 
-                backgroundColor: '#1976d2',
-                color: 'white',
-                padding: '4px',
-                '&:hover': {
-                  backgroundColor: '#1565c0'
-                },
-                '&.Mui-disabled': {
-                  backgroundColor: 'rgba(25, 118, 210, 0.5)',
-                  color: 'white'
-                }
-              }}
-            >
-              {isManualInputLoading ? <CircularProgress size={16} color="inherit" /> : <SearchIcon sx={{ fontSize: 18 }} />}
-            </IconButton>
-          </InputAdornment>
-        )
-      }}
-    />
-    
-    {manualInputError && (
-      <Alert 
-        severity="error" 
-        sx={{ 
-          mt: 1, 
-          borderRadius: 2,
-          padding: '0px 8px',
-          '& .MuiAlert-message': {
-            fontSize: '11px',
-            padding: '4px 0'
+    <Scanner
+      onScan={async (results) => {
+        if (results && results.length > 0) {
+          const decodedText = results[0].rawValue;
+          if (decodedText && !isScanningRef.current) {
+            isScanningRef.current = true;
+            setShowScanner(false);
+            setNewItemData(prev => ({ ...prev, barcode: decodedText }));
+            await fetchStyleDataByBarcode(decodedText);
+            showSnackbar('Barcode scanned successfully!', 'success');
+            isScanningRef.current = false;
           }
-        }} 
-        onClose={() => setManualInputError('')}
-      >
-        {manualInputError}
-      </Alert>
-    )}
+        }
+      }}
+      onError={(error) => {
+        console.warn('Scanner error:', error);
+      }}
+      constraints={{
+        facingMode: 'environment', 
+        width: { ideal: 1280 },
+        height: { ideal: 720 }
+      }}
+      styles={{
+        container: {
+          width: '100%',
+          height: '100%',
+          position: 'relative',
+        },
+        video: {
+          width: '100%',
+          height: '100%',
+          objectFit: 'cover',
+        }
+      }}
+      components={{
+        audio: false,
+        torch: true,
+        zoom: true,
+        finder: true,
+      }}
+      scanDelay={300}
+    />
   </Box>
 </Box>
-        </Dialog>
-      )}
+
+    <Box sx={{
+      position: 'absolute',
+      bottom: 0,
+      left: 0,
+      right: 0,
+      zIndex: 10,
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      px: 2,
+      py: 2,
+      background: 'linear-gradient(to top, rgba(0,0,0,0.8), transparent)'
+    }}>
+      {/* Scan instruction text */}
+      <Typography variant="caption" sx={{ 
+        color: 'rgba(255,255,255,0.9)', 
+        textAlign: 'center',
+        mb: 1.5,
+        fontWeight: 500,
+        fontSize: '12px'
+      }}>
+        Position barcode in frame to scan automatically
+      </Typography>
+
+      {/* Divider */}
+      <Divider sx={{ 
+        width: '80%', 
+        backgroundColor: 'rgba(255,255,255,0.2)',
+        mb: 1.5 
+      }} />
+
+     
+      <Box sx={{
+        width: '100%',
+        maxWidth: '320px',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        mb: 1.5,
+        gap: 1
+      }}>
+        {/* Style Code Checkbox */}
+        <Box sx={{
+          flex: 1,
+          backgroundColor: 'rgba(0,0,0,0.5)',
+          borderRadius: 2,
+          px: 1,
+          py: 0.5
+        }}>
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={isStyleCodeMode}
+                onChange={(e) => setIsStyleCodeMode(e.target.checked)}
+                size="small"
+                sx={{
+                  color: 'rgba(255,255,255,0.7)',
+                  '&.Mui-checked': {
+                    color: '#1976d2',
+                  },
+                }}
+              />
+            }
+            label={
+              <Typography variant="caption" sx={{ 
+                color: 'rgba(255,255,255,0.8)',
+                fontSize: '11px'
+              }}>
+                Style Code
+              </Typography>
+            }
+          />
+        </Box>
+
+        {/* Change Qty Checkbox */}
+        <Box sx={{
+          flex: 1,
+          backgroundColor: 'rgba(0,0,0,0.5)',
+          borderRadius: 2,
+          px: 1,
+          py: 0.5
+        }}>
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={scannerChangeQtyMode}
+                onChange={(e) => {
+                  setScannerChangeQtyMode(e.target.checked);
+                  
+                  if (e.target.checked) {
+                    showSnackbar('Change Qty Mode: Manual add to cart required', 'info');
+                  } else {
+                    showSnackbar('Auto-add Mode: Items will be added automatically', 'info');
+                  }
+                }}
+                size="small"
+                sx={{
+                  color: 'rgba(255,255,255,0.7)',
+                  '&.Mui-checked': {
+                    color: '#ff9800',
+                  },
+                }}
+              />
+            }
+            label={
+              <Typography variant="caption" sx={{ 
+                color: 'rgba(255,255,255,0.8)',
+                fontSize: '11px'
+              }}>
+                Change Qty
+              </Typography>
+            }
+          />
+        </Box>
+      </Box>
+
+      
+      <Box sx={{
+        width: '100%',
+        maxWidth: '320px',
+        backgroundColor: 'rgba(0,0,0,0.75)',
+        backdropFilter: 'blur(8px)',
+        borderRadius: 3,
+        p: 1.5,
+        border: '1px solid rgba(255,255,255,0.15)'
+      }}>
+        <Typography variant="caption" sx={{ 
+          color: 'rgba(255,255,255,0.7)', 
+          display: 'block',
+          mb: 1,
+          fontSize: '11px',
+          textAlign: 'center'
+        }}>
+          Or enter manually:
+        </Typography>
+        
+        <TextField
+          fullWidth
+          variant="outlined"
+          placeholder={isStyleCodeMode ? "Enter Style Code" : "Enter Barcode Number"}
+          value={manualInputValue}
+          onChange={(e) => setManualInputValue(e.target.value)}
+          onKeyPress={(e) => {
+            if (e.key === 'Enter') {
+              handleManualInputSubmit();
+            }
+          }}
+          size="small"
+          sx={{
+            '& .MuiOutlinedInput-root': {
+              backgroundColor: 'rgba(255,255,255,0.95)',
+              borderRadius: 2,
+              height: '40px',
+              '& fieldset': {
+                borderColor: 'rgba(25, 118, 210, 0.5)',
+              },
+              '&:hover fieldset': {
+                borderColor: '#1976d2',
+              },
+              '&.Mui-focused fieldset': {
+                borderColor: '#1976d2',
+              },
+            },
+            '& .MuiInputBase-input': {
+              color: '#333',
+              fontSize: '13px',
+              padding: '8px 12px',
+            }
+          }}
+          InputProps={{
+            endAdornment: (
+              <InputAdornment position="end">
+                <IconButton 
+                  onClick={handleManualInputSubmit}
+                  disabled={!manualInputValue || manualInputValue.trim() === '' || isManualInputLoading}
+                  size="small"
+                  sx={{ 
+                    backgroundColor: '#1976d2',
+                    color: 'white',
+                    padding: '4px',
+                    '&:hover': {
+                      backgroundColor: '#1565c0'
+                    },
+                    '&.Mui-disabled': {
+                      backgroundColor: 'rgba(25, 118, 210, 0.5)',
+                      color: 'white'
+                    }
+                  }}
+                >
+                  {isManualInputLoading ? <CircularProgress size={16} color="inherit" /> : <SearchIcon sx={{ fontSize: 18 }} />}
+                </IconButton>
+              </InputAdornment>
+            )
+          }}
+        />
+        
+        {manualInputError && (
+          <Alert 
+            severity="error" 
+            sx={{ 
+              mt: 1, 
+              borderRadius: 2,
+              padding: '0px 8px',
+              '& .MuiAlert-message': {
+                fontSize: '11px',
+                padding: '4px 0'
+              }
+            }} 
+            onClose={() => setManualInputError('')}
+          >
+            {manualInputError}
+          </Alert>
+        )}
+        
+        {/* Mode Indicator */}
+        <Box sx={{ 
+          mt: 1, 
+          display: 'flex', 
+          justifyContent: 'center',
+          gap: 2
+        }}>
+          <Chip 
+            label={scannerChangeQtyMode ? "Manual Mode" : "Auto Mode"}
+            size="small"
+            sx={{
+              backgroundColor: scannerChangeQtyMode ? '#ff9800' : '#4caf50',
+              color: 'white',
+              height: '20px', 
+              '& .MuiChip-label': { fontSize: '10px', px: 1 }
+            }}
+          />
+          {!scannerChangeQtyMode && (
+            <Chip 
+              label="Auto Add to Cart"
+              size="small"
+              sx={{
+                backgroundColor: '#1976d2',
+                color: 'white',
+                height: '20px',
+                '& .MuiChip-label': { fontSize: '10px', px: 1 }
+              }}
+            />
+          )}
+        </Box>
+      </Box>
+    </Box>
+  </Dialog>
+)}
       
     </>
   );
