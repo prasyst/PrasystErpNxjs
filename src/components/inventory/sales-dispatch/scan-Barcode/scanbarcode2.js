@@ -5570,7 +5570,7 @@ const handleManualInputSubmit = async () => {
       setManualInputValue('');
       await processFoundProduct(styleData, inputValue);
       
-      // Don't show success message here as processFoundProduct will handle it
+     
     } else {
       setManualInputError(`No product found for this ${isStyleCodeMode ? 'style code' : 'barcode'}. Please check and try again.`);
     }
@@ -5615,24 +5615,25 @@ const processFoundProduct = async (styleData, inputValue) => {
     remark: ''
   });
 
+  // Wait for size details to load
   await fetchSizeDetailsForStyle(styleData, newItemData.shade);
 
   if (styleData.FGSTYLE_ID) {
     await fetchShadesForStyle(styleData.FGSTYLE_ID, shadeViewMode);
   }
 
- 
+  
   if (!scannerChangeQtyMode) {
-    // Wait a bit for size details to load
+   
     setTimeout(() => {
-      // Check if there are size details with quantities
-      if (sizeDetailsData.length > 0 && calculateTotalQty() > 0) {
+      const totalQty = calculateTotalQty();
+      if (sizeDetailsData.length > 0 && totalQty > 0) {
         handleConfirmItem();
         showSnackbar('Item automatically added to cart!', 'success');
-      } else if (sizeDetailsData.length > 0 && calculateTotalQty() === 0) {
-        showSnackbar('Please add quantities before adding to cart', 'warning');
+      } else if (sizeDetailsData.length > 0 && totalQty === 0) {
+        showSnackbar('No quantities loaded. Please add quantities manually.', 'warning');
       }
-    }, 500);
+    }, 300);
   } else {
     showSnackbar('Change Qty mode: Please adjust quantities and click Add to Cart', 'info');
   }
@@ -6568,97 +6569,96 @@ const fetchPartyDetails = async (partyKey, isShippingParty = false, shouldAutoSe
     }
   };
 
-  const fetchSizeDetailsForStyle = async (styleData, selectedShadeName = '') => {
-    try {
-      const fgprdKey = styleData.FGPRD_KEY;
-      const fgstyleId = styleData.FGSTYLE_ID;
-      const fgtypeKey = styleData.FGTYPE_KEY || "";
+ const fetchSizeDetailsForStyle = async (styleData, selectedShadeName = '') => {
+  try {
+    const fgprdKey = styleData.FGPRD_KEY;
+    const fgstyleId = styleData.FGSTYLE_ID;
+    const fgtypeKey = styleData.FGTYPE_KEY || "";
 
-      let fgshadeKey = "";
-      if (selectedShadeName && shadeMapping[selectedShadeName]) {
-        fgshadeKey = shadeMapping[selectedShadeName];
-      } else if (styleData.FGSHADE_KEY) {
-        fgshadeKey = styleData.FGSHADE_KEY;
-      } else if (newItemData.shade && shadeMapping[newItemData.shade]) {
-        fgshadeKey = shadeMapping[newItemData.shade];
-      } else if (selectedShadeKey) {
-        fgshadeKey = selectedShadeKey;
-      }
+    let fgshadeKey = "";
+    if (selectedShadeName && shadeMapping[selectedShadeName]) {
+      fgshadeKey = shadeMapping[selectedShadeName];
+    } else if (styleData.FGSHADE_KEY) {
+      fgshadeKey = styleData.FGSHADE_KEY;
+    } else if (newItemData.shade && shadeMapping[newItemData.shade]) {
+      fgshadeKey = shadeMapping[newItemData.shade];
+    } else if (selectedShadeKey) {
+      fgshadeKey = selectedShadeKey;
+    }
 
-      const fgptnKey = styleData.FGPTN_KEY || "";
+    const fgptnKey = styleData.FGPTN_KEY || "";
 
-      if (!fgprdKey || !fgstyleId) {
-        return;
-      }
+    if (!fgprdKey || !fgstyleId) {
+      return;
+    }
 
-      const stycatrtPayload = {
-        "FGSTYLE_ID": fgstyleId,
-        "FGPRD_KEY": fgprdKey,
-        "FGTYPE_KEY": fgtypeKey,
-        "FGSHADE_KEY": fgshadeKey,
-        "FGPTN_KEY": fgptnKey,
-        "FLAG": "GETSTYCATRTID",
-        "MRP": parseFloat(styleData.MRP) || 0,
-        "PARTY_KEY": formData.PARTY_KEY || "",
-        "PARTYDTL_ID": formData.PARTYDTL_ID || 0,
-        "COBR_ID": companyConfig.COBR_ID || "02",
-        "FCYR_KEY": "25"
-      };
+    const stycatrtPayload = {
+      "FGSTYLE_ID": fgstyleId,
+      "FGPRD_KEY": fgprdKey,
+      "FGTYPE_KEY": fgtypeKey,
+      "FGSHADE_KEY": fgshadeKey,
+      "FGPTN_KEY": fgptnKey,
+      "FLAG": "GETSTYCATRTID",
+      "MRP": parseFloat(styleData.MRP) || 0,
+      "PARTY_KEY": formData.PARTY_KEY || "",
+      "PARTYDTL_ID": formData.PARTYDTL_ID || 0,
+      "COBR_ID": companyConfig.COBR_ID || "02",
+      "FCYR_KEY": "25"
+    };
 
-      const stycatrtResponse = await axiosInstance.post('/STYSIZE/AddSizeDetail', stycatrtPayload);
+    const stycatrtResponse = await axiosInstance.post('/STYSIZE/AddSizeDetail', stycatrtPayload);
 
-      let stycatrtId = 0;
-      if (stycatrtResponse.data.DATA && stycatrtResponse.data.DATA.length > 0) {
-        stycatrtId = stycatrtResponse.data.DATA[0].STYCATRT_ID || 0;
-      }
+    let stycatrtId = 0;
+    if (stycatrtResponse.data.DATA && stycatrtResponse.data.DATA.length > 0) {
+      stycatrtId = stycatrtResponse.data.DATA[0].STYCATRT_ID || 0;
+    }
 
-      const sizeDetailsPayload = {
-        "FGSTYLE_ID": fgstyleId,
-        "FGPRD_KEY": fgprdKey,
-        "FGTYPE_KEY": fgtypeKey,
-        "FGSHADE_KEY": fgshadeKey,
-        "FGPTN_KEY": fgptnKey,
-        "MRP": parseFloat(styleData.MRP) || 0,
-        "SSP": parseFloat(styleData.SSP) || 0,
-        "PARTY_KEY": formData.PARTY_KEY || "",
-        "PARTYDTL_ID": formData.PARTYDTL_ID || 0,
-        "COBR_ID": companyConfig.COBR_ID || "02",
-        "FLAG": "S",
-        "FCYR_KEY": "25"
-      };
+    const sizeDetailsPayload = {
+      "FGSTYLE_ID": fgstyleId,
+      "FGPRD_KEY": fgprdKey,
+      "FGTYPE_KEY": fgtypeKey,
+      "FGSHADE_KEY": fgshadeKey,
+      "FGPTN_KEY": fgptnKey,
+      "MRP": parseFloat(styleData.MRP) || 0,
+      "SSP": parseFloat(styleData.SSP) || 0,
+      "PARTY_KEY": formData.PARTY_KEY || "",
+      "PARTYDTL_ID": formData.PARTYDTL_ID || 0,
+      "COBR_ID": companyConfig.COBR_ID || "02",
+      "FLAG": "S",
+      "FCYR_KEY": "25"
+    };
 
-      const response = await axiosInstance.post('/STYSIZE/AddSizeDetail', sizeDetailsPayload);
+    const response = await axiosInstance.post('/STYSIZE/AddSizeDetail', sizeDetailsPayload);
 
-      if (response.data.DATA && response.data.DATA.length > 0) {
-        const transformedSizeDetails = response.data.DATA.map((size, index) => ({
-          STYSIZE_ID: size.STYSIZE_ID || index + 1,
-          STYSIZE_NAME: size.STYSIZE_NAME || `Size ${index + 1}`,
-          FGSTYLE_ID: size.FGSTYLE_ID || fgstyleId,
-          QTY: 0,
-          ITM_AMT: 0,
-          ORDER_QTY: 0,
-          MRP: parseFloat(styleData.MRP) || 0,
-          RATE: parseFloat(styleData.SSP) || 0,
-          ALT_BARCODE: styleData.ALT_BARCODE || "",
-          STYCATRT_ID: stycatrtId,
-          FGSHADE_KEY: fgshadeKey,
-          FG_QTY: parseFloat(size.FG_QTY) || 0,
-          PORD_QTY: parseFloat(size.PORD_QTY) || 0,
-          ISU_QTY: parseFloat(size.ISU_QTY) || 0,
-          BAL_QTY: parseFloat(size.BAL_QTY) || 0,
-        }));
+    let finalSizeDetails = [];
 
-         const productKeyForQuantities = `${styleData.FGPRD_KEY || ''}_${styleData.FGSTYLE_ID || ''}`;
-      
+    if (response.data.DATA && response.data.DATA.length > 0) {
+      const transformedSizeDetails = response.data.DATA.map((size, index) => ({
+        STYSIZE_ID: size.STYSIZE_ID || index + 1,
+        STYSIZE_NAME: size.STYSIZE_NAME || `Size ${index + 1}`,
+        FGSTYLE_ID: size.FGSTYLE_ID || fgstyleId,
+        QTY: 0,
+        ITM_AMT: 0,
+        ORDER_QTY: 0,
+        MRP: parseFloat(styleData.MRP) || 0,
+        RATE: parseFloat(styleData.SSP) || 0,
+        ALT_BARCODE: styleData.ALT_BARCODE || "",
+        STYCATRT_ID: stycatrtId,
+        FGSHADE_KEY: fgshadeKey,
+        FG_QTY: parseFloat(size.FG_QTY) || 0,
+        PORD_QTY: parseFloat(size.PORD_QTY) || 0,
+        ISU_QTY: parseFloat(size.ISU_QTY) || 0,
+        BAL_QTY: parseFloat(size.BAL_QTY) || 0,
+      }));
+
       const savedQuantities = loadSizeQuantitiesForProduct();
       
       // Apply saved quantities (unless changeQtyMode is enabled)
-      let finalSizeDetails = transformedSizeDetails;
       if (!changeQtyMode && savedQuantities) {
         finalSizeDetails = transformedSizeDetails.map(size => {
           const savedQty = savedQuantities[size.STYSIZE_NAME];
           if (savedQty !== undefined && savedQty > 0) {
-            const rate = parseFloat(newItemData.rate) || 0;
+            const rate = parseFloat(styleData.SSP) || 0;
             const amount = parseFloat(savedQty) * rate;
             return {
               ...size,
@@ -6669,79 +6669,84 @@ const fetchPartyDetails = async (partyKey, isShippingParty = false, shouldAutoSe
           }
           return size;
         });
-        
-        // Update total qty in newItemData
-        const totalQty = finalSizeDetails.reduce((sum, size) => sum + (parseFloat(size.QTY) || 0), 0);
-        setNewItemData(prev => ({ ...prev, qty: totalQty.toString() }));
-        
-        if (totalQty > 0) {
-          showSnackbar(`Auto-filled ${totalQty} quantities from last time!`, 'info');
-        }
+      } else {
+        finalSizeDetails = transformedSizeDetails;
       }
       
       setSizeDetailsData(finalSizeDetails);
-        // setSizeDetailsData(transformedSizeDetails);
 
-        setCurrentStyleData(prev => ({
-          ...prev,
-          STYCATRT_ID: stycatrtId,
-          FGSHADE_KEY: fgshadeKey
-        }));
-
-        const availableSizesForRatio = response.data.DATA.map(size => ({
-          STYSIZE_ID: size.STYSIZE_ID,
-          STYSIZE_NAME: size.STYSIZE_NAME,
-          MRP: size.MRP,
-          WSP: size.WSP || size.RATE,
-          STYCATRT_ID: stycatrtId,
-          FGSHADE_KEY: fgshadeKey
-        }));
-
-        setAvailableSizes(availableSizesForRatio);
-
-      } else {
-        const stysizeName = styleData.STYSIZE_NAME || 'Default';
-        const stysizeId = styleData.STYSIZE_ID || 1;
-
-        const defaultSizes = [
-          {
-            STYSIZE_NAME: stysizeName,
-            STYSIZE_ID: stysizeId,
-            QTY: 0,
-            MRP: parseFloat(styleData.MRP) || 0,
-            RATE: parseFloat(styleData.SSP) || 0,
-            WSP: parseFloat(styleData.SSP) || 0,
-            STYCATRT_ID: stycatrtId,
-            FGSHADE_KEY: fgshadeKey
-          }
-        ];
-
-        setAvailableSizes(defaultSizes);
-        setSizeDetailsData(defaultSizes);
+      // Update total qty in newItemData
+      const totalQty = finalSizeDetails.reduce((sum, size) => sum + (parseFloat(size.QTY) || 0), 0);
+      setNewItemData(prev => ({ ...prev, qty: totalQty.toString() }));
+      
+      if (totalQty > 0 && !changeQtyMode) {
+        showSnackbar(`Auto-filled ${totalQty} quantities from last time!`, 'info');
       }
-    } catch (error) {
-      console.error('Error fetching size details:', error);
 
+      setCurrentStyleData(prev => ({
+        ...prev,
+        STYCATRT_ID: stycatrtId,
+        FGSHADE_KEY: fgshadeKey
+      }));
+
+      const availableSizesForRatio = response.data.DATA.map(size => ({
+        STYSIZE_ID: size.STYSIZE_ID,
+        STYSIZE_NAME: size.STYSIZE_NAME,
+        MRP: size.MRP,
+        WSP: size.WSP || size.RATE,
+        STYCATRT_ID: stycatrtId,
+        FGSHADE_KEY: fgshadeKey
+      }));
+
+      setAvailableSizes(availableSizesForRatio);
+
+    } else {
       const stysizeName = styleData.STYSIZE_NAME || 'Default';
       const stysizeId = styleData.STYSIZE_ID || 1;
 
-      const defaultSizes = [
+      finalSizeDetails = [
         {
           STYSIZE_NAME: stysizeName,
           STYSIZE_ID: stysizeId,
           QTY: 0,
-          MRP: parseFloat(newItemData.mrp) || 0,
-          RATE: parseFloat(newItemData.rate) || 0,
-          WSP: parseFloat(newItemData.rate) || 0,
-          STYCATRT_ID: 0,
-          FGSHADE_KEY: selectedShadeKey || ''
+          MRP: parseFloat(styleData.MRP) || 0,
+          RATE: parseFloat(styleData.SSP) || 0,
+          WSP: parseFloat(styleData.SSP) || 0,
+          STYCATRT_ID: stycatrtId,
+          FGSHADE_KEY: fgshadeKey
         }
       ];
 
-      setAvailableSizes(defaultSizes);
-      setSizeDetailsData(defaultSizes);
+      setAvailableSizes(finalSizeDetails);
+      setSizeDetailsData(finalSizeDetails);
     }
-  };
+    
+    return finalSizeDetails;
+    
+  } catch (error) {
+    console.error('Error fetching size details:', error);
+
+    const stysizeName = styleData.STYSIZE_NAME || 'Default';
+    const stysizeId = styleData.STYSIZE_ID || 1;
+
+    const defaultSizes = [
+      {
+        STYSIZE_NAME: stysizeName,
+        STYSIZE_ID: stysizeId,
+        QTY: 0,
+        MRP: parseFloat(newItemData.mrp) || 0,
+        RATE: parseFloat(newItemData.rate) || 0,
+        WSP: parseFloat(newItemData.rate) || 0,
+        STYCATRT_ID: 0,
+        FGSHADE_KEY: selectedShadeKey || ''
+      }
+    ];
+
+    setAvailableSizes(defaultSizes);
+    setSizeDetailsData(defaultSizes);
+    return defaultSizes;
+  }
+};
 
   const handleRatioChange = (sizeName, value) => {
     const newRatioData = {
