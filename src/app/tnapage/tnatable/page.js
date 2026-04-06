@@ -1,12 +1,11 @@
 
+import Tna from '../../../components/inventory/TnaComp/Tna';
 import { Suspense } from 'react';
-
-import Tnadashtable from '../../../components/inventory/TnaComp/Tnadashtable';
-
-export default function updaterouting() {
+import Tnatable from '../../../components/inventory/TnaComp/Tnatable';
+export default function tna() {
 return (
     <Suspense>
-      <Tnadashtable/>
+      <Tnatable />
     </Suspense>
   );
 }
