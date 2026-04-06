@@ -152,8 +152,8 @@ export default function PartyMstTable() {
               theme="ag-theme-quartz"
               isDarkMode={false}
               pagination={true}
-              paginationPageSize={25}
-              paginationPageSizeSelector={[25, 50, 100, 250, 500, 1000]}
+              paginationPageSize={1000}
+              paginationPageSizeSelector={[500, 1000,2000,5000]}
               quickFilter={true}
               onRowClick={(params) => {
                 console.log('Row clicked:', params);

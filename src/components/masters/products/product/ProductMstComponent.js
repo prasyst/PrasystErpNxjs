@@ -1,17 +1,7 @@
 'use client';
 import React, { useEffect, useState, useCallback, Suspense } from 'react';
 import {
-  Box,
-  Grid,
-  TextField,
-  Typography,
-  Button,
-  Stack,
-  FormControlLabel,
-  FormLabel,
-  Radio,
-  RadioGroup,
-  Checkbox,
+  Box, Grid, TextField, Typography, Button, Stack, FormControlLabel, FormLabel, Radio, RadioGroup, Checkbox, Paper,
 } from '@mui/material';
 import { useSearchParams, useRouter } from 'next/navigation';
 import debounce from 'lodash.debounce';
@@ -23,10 +13,9 @@ import AutoVibe from '../../../../GlobalFunction/CustomAutoComplete/AutoVibe';
 import axiosInstance from '../../../../lib/axios';
 import { getFormMode } from '../../../../lib/helpers';
 import EditableTable from '@/atoms/EditTable';
-import CrudButtons from "@/GlobalFunction/CrudButtons";
-import PaginationButtons from '@/GlobalFunction/PaginationButtons';
 import z from 'zod';
 import { TbListSearch } from "react-icons/tb";
+import { useUserPermissions } from '@/app/hooks/useUserPermissions';
 
 const columns = [
   { label: 'Size', field: 'FGSIZE_NAME', type: 'text' },
@@ -45,7 +34,6 @@ const productFormSchema = z.object({
 
 const ProductMst = () => {
   const router = useRouter();
-
   const [options, setOptions] = useState([]);
   const [isFormDisabled, setIsFormDisabled] = useState(true);
   const [series, setSeries] = useState([]);
@@ -65,6 +53,8 @@ const ProductMst = () => {
   const FCYR_KEY = localStorage.getItem('FCYR_KEY');
   const COBR_ID = localStorage.getItem('COBR_ID');
   const CO_ID = localStorage.getItem('CO_ID');
+  const { hasSpecificPermission, loading: permissionsLoading } = useUserPermissions();
+  const moduleName = 'Product Master';
 
   const initialRow = {
     FGSIZE_ID: "",
@@ -118,52 +108,30 @@ const ProductMst = () => {
     fgSizeEntities: [initialRow]
   }]);
 
-  // const textInputSx = {
-  //   '& .MuiInputBase-root': {
-  //     height: 36, 
-  //     fontSize: '14px', 
-  //   },
-  //   '& .MuiInputLabel-root': {
-  //     fontSize: '14px',
-  //     top: '-8px', 
-  //   },
-  //   '& .MuiFilledInput-root': {
-  //     backgroundColor: '#fafafa',
-  //     border: '1px solid #e0e0e0',
-  //     borderRadius: '6px',
-  //     overflow: 'hidden',
-  //     height: 36,
-  //     fontSize: '14px',
-  //   },
-  //   '& .MuiFilledInput-root:before': {
-  //     display: 'none',
-  //   },
-  //   '& .MuiFilledInput-root:after': {
-  //     display: 'none',
-  //   },
-  //   '& .MuiInputBase-input': {
-  //     padding: '10px 12px !important',
-  //     fontSize: '14px !important',
-  //     lineHeight: '1.4',
-  //   },
-  // };
-
   const textInputSx = {
     '& .MuiInputBase-root': {
-      height: 36,
-      fontSize: '14px',
+      height: 38,
+      fontSize: '15px',
+      borderRadius: '4px',
+      backgroundColor: '#fafafa',
+      border: '1px solid #e0e0e0',
+      padding: '6px 12px',
+      transition: 'border-color 0.3s, box-shadow 0.3s',
+      '&:hover': {
+        borderColor: '#4caf50',
+      },
     },
     '& .MuiInputLabel-root': {
-      fontSize: '14px',
-      top: '-8px',
+      fontSize: '15px',
+      top: '-6px',
+      color: '#666',
+      transition: 'color 0.3s, font-size 0.3s, top 0.3s',
     },
     '& .MuiFilledInput-root': {
       backgroundColor: '#fafafa',
       border: '1px solid #e0e0e0',
-      borderRadius: '6px',
-      overflow: 'hidden',
-      height: 36,
-      fontSize: '14px',
+      borderRadius: '4px',
+      transition: 'border-color 0.3s, box-shadow 0.3s',
     },
     '& .MuiFilledInput-root:before': {
       display: 'none',
@@ -172,68 +140,54 @@ const ProductMst = () => {
       display: 'none',
     },
     '& .MuiInputBase-input': {
-      padding: '10px 12px !important',
-      fontSize: '14px !important',
-      lineHeight: '1.4',
+      padding: '8px 12px',
+      fontSize: '15px',
+      lineHeight: '1.5',
+      color: '#333',
+      '&::placeholder': {
+        color: '#888',
+      },
+    },
+    '& .MuiInputBase-root.Mui-focused': {
+      borderColor: '#4caf50',
+      boxShadow: '0 0 5px rgba(76, 175, 80, 0.2)',
+    },
+    '& .MuiFilledInput-root.Mui-disabled': {
+      backgroundColor: '#f1f1f1',
+      border: '1px solid #ddd',
     },
     '& .MuiFilledInput-root.Mui-disabled': {
       backgroundColor: '#fff'
     }
   };
 
-  // const DropInputSx = {
-  //   '& .MuiInputBase-root': {
-  //     height: 36, 
-  //     fontSize: '14px', 
-  //   },
-  //   '& .MuiInputLabel-root': {
-  //     fontSize: '14px',
-  //     top: '-4px', 
-  //   },
-  //   '& .MuiFilledInput-root': {
-  //     backgroundColor: '#fafafa',
-  //     border: '1px solid #e0e0e0',
-  //     borderRadius: '6px',
-  //     overflow: 'hidden',
-  //     height: 36,
-  //     fontSize: '14px',
-  //     paddingRight: '36px', 
-  //   },
-  //   '& .MuiFilledInput-root:before': {
-  //     display: 'none',
-  //   },
-  //   '& .MuiFilledInput-root:after': {
-  //     display: 'none',
-  //   },
-  //   '& .MuiInputBase-input': {
-  //     padding: '10px 12px',
-  //     fontSize: '14px',
-  //     lineHeight: '1.4',
-  //   },
-  //   '& .MuiAutocomplete-endAdornment': {
-  //     top: '50%',
-  //     transform: 'translateY(-50%)',
-  //     right: '10px',
-  //   },
-  // };
-
   const DropInputSx = {
     '& .MuiInputBase-root': {
-      height: 36,
+      height: 38,
       fontSize: '14px',
+      borderRadius: '6px',
+      backgroundColor: '#ffffff',
+      border: '1px solid #e0e0e0',
+      padding: '6px 6px',
+      paddingTop: '6px',
+      transition: 'border-color 0.3s, box-shadow 0.3s',
+      '&:hover': {
+        borderColor: '#4caf50',
+      },
     },
     '& .MuiInputLabel-root': {
-      fontSize: '14px',
-      top: '-4px',
+      fontSize: '15px',
+      top: '-6px',
+      color: '#666',
+      transition: 'color 0.3s, font-size 0.3s, top 0.3s',
     },
     '& .MuiFilledInput-root': {
-      backgroundColor: '#fafafa',
+      backgroundColor: '#ffffff',
       border: '1px solid #e0e0e0',
       borderRadius: '6px',
-      overflow: 'hidden',
-      height: 36,
-      fontSize: '14px',
+      transition: 'border-color 0.3s, box-shadow 0.3s',
       paddingRight: '36px',
+      height: 38,
     },
     '& .MuiFilledInput-root:before': {
       display: 'none',
@@ -242,18 +196,31 @@ const ProductMst = () => {
       display: 'none',
     },
     '& .MuiInputBase-input': {
-      padding: '10px 12px',
+      padding: '8px 12px',
       fontSize: '14px',
-      lineHeight: '1.4',
+      lineHeight: '1.5',
+      color: '#333',
+      '&::placeholder': {
+        color: '#888',
+      },
     },
     '& .MuiAutocomplete-endAdornment': {
       top: '50%',
       transform: 'translateY(-50%)',
-      right: '10px',
+      right: '12px',
     },
     '& .MuiFilledInput-root.Mui-disabled': {
-      backgroundColor: '#fff'
-    }
+      backgroundColor: '#ffffff',
+      border: '1px solid #ddd',
+    },
+    '& .MuiAutocomplete-popupIndicator': {
+      color: '#4caf50',
+    },
+    '& .MuiAutocomplete-listbox': {
+      borderRadius: '4px',
+      boxShadow: '0px 4px 6px rgba(0, 0, 0, 0.1)',
+      backgroundColor: '#ffffff',
+    },
   };
 
   const Buttonsx = {
@@ -396,11 +363,7 @@ const ProductMst = () => {
           });
         }
       }
-      // else {
-      //   toast.error('Failed to fetch product data');
-      // }
     } catch (error) {
-      console.error('Error fetching product data:', error);
       toast.error('Error fetching product data. Please try again.');
     }
   }, [CO_ID, router]);
@@ -480,14 +443,12 @@ const ProductMst = () => {
       }
     };
     fetchCategories();
-
   }, []);
 
   useEffect(() => {
     const fetchProductGroup = async () => {
       try {
         const response = await axiosInstance.post(`ProdGrp/GetProdGrpDrp`);
-        console.log("API response:", response.data.DATA);
         if (
           response.data.STATUS === 0 &&
           response.data.RESPONSESTATUSCODE === 1
@@ -497,7 +458,6 @@ const ProductMst = () => {
           toast.error("Failed to fetch Product Group");
         }
       } catch (error) {
-        console.error("Error fetching Product Group", error);
         toast.error("Error fetching Product Group. Please try again.");
       }
     };
@@ -509,7 +469,6 @@ const ProductMst = () => {
     const fetchUnit = async () => {
       try {
         const response = await axiosInstance.post(`Unit/GetUnitDrp`);
-        console.log("API response:", response.data.DATA);
         if (
           response.data.STATUS === 0 &&
           response.data.RESPONSESTATUSCODE === 1
@@ -519,7 +478,6 @@ const ProductMst = () => {
           toast.error("Failed to fetch Brand");
         }
       } catch (error) {
-        console.error("Error fetching Brand", error);
         toast.error("Error fetching Brand. Please try again.");
       }
     };
@@ -530,18 +488,15 @@ const ProductMst = () => {
   useEffect(() => {
     const fetchTax = async () => {
       try {
-        const response = await axiosInstance.post(`Tax/GetTaxDrp`);
-        console.log("API response:", response.data.DATA);
+        const response = await axiosInstance.post(`Tax/GetTaxDrp`, {
+          Flag: "",
+          TaxGrp_KEY: ""
+        });
         if (
-          response.data.STATUS === 0 &&
-          response.data.RESPONSESTATUSCODE === 1
-        ) {
+          response.data.STATUS === 0 && response.data.RESPONSESTATUSCODE === 1) {
           setTax(response.data.DATA);
-        } else {
-          toast.error("Failed to fetch Tax");
         }
       } catch (error) {
-        console.error("Error fetching Tax", error);
         toast.error("Error fetching Tax. Please try again.");
       }
     };
@@ -553,17 +508,13 @@ const ProductMst = () => {
     const fetchBrand = async () => {
       try {
         const response = await axiosInstance.post(`Brand/GetBrandDrp`);
-        console.log("API response:", response.data.DATA);
         if (
-          response.data.STATUS === 0 &&
-          response.data.RESPONSESTATUSCODE === 1
-        ) {
+          response.data.STATUS === 0 && response.data.RESPONSESTATUSCODE === 1) {
           setBrand(response.data.DATA);
         } else {
           toast.error("Failed to fetch Brand");
         }
       } catch (error) {
-        console.error("Error fetching Brand", error);
         toast.error("Error fetching Brand. Please try again.");
       }
     };
@@ -575,17 +526,13 @@ const ProductMst = () => {
     const fetchHSNCode = async () => {
       try {
         const response = await axiosInstance.post(`Hsncode/GetHSNCODEDrp`);
-        console.log("API response:", response.data.DATA);
         if (
-          response.data.STATUS === 0 &&
-          response.data.RESPONSESTATUSCODE === 1
-        ) {
+          response.data.STATUS === 0 && response.data.RESPONSESTATUSCODE === 1) {
           setHSNCODE(response.data.DATA);
         } else {
           toast.error("Failed to fetch HSNCODE");
         }
       } catch (error) {
-        console.error("Error fetching HSNCODE", error);
         toast.error("Error fetching HSNCODE. Please try again.");
       }
     };
@@ -594,7 +541,6 @@ const ProductMst = () => {
   }, []);
 
   const handleAdd = async () => {
-
     setMode('add');
     setIsFormDisabled(false);
     setForm({
@@ -617,7 +563,7 @@ const ProductMst = () => {
       CREATED_DT: "",
       TAX_KEY: "",
       TERM_KEY: "",
-      EFF_DT: "",
+      EFF_DT: new Date().toISOString().split("T")[0],
       UNIT_KEY: "",
       UNIT_NAME: "",
       SR_CODE: "",
@@ -657,9 +603,7 @@ const ProductMst = () => {
 
       });
       if (
-        responseFirst.data.STATUS === 0 &&
-        responseFirst.data.RESPONSESTATUSCODE === 1
-      ) {
+        responseFirst.data.STATUS === 0 && responseFirst.data.RESPONSESTATUSCODE === 1) {
         const cprefix = responseFirst.data.DATA[0]?.CPREFIX || "";
 
         CPREFIX = cprefix;
@@ -674,7 +618,6 @@ const ProductMst = () => {
         toast.error("Failed to fetch Series");
       }
     } catch (error) {
-      console.error("Error fetching Series", error);
       toast.error("Error fetching Series. Please try again.");
     }
 
@@ -691,12 +634,9 @@ const ProductMst = () => {
         TRNSTYPE: "M",
         SERIESID: 0,
         FLAG: ""
-
       });
       if (
-        responseSecond.data.STATUS === 0 &&
-        responseSecond.data.RESPONSESTATUSCODE === 1
-      ) {
+        responseSecond.data.STATUS === 0 && responseSecond.data.RESPONSESTATUSCODE === 1) {
         setSeriesData(responseSecond.data.DATA);
 
         setForm((prev) => ({
@@ -705,15 +645,12 @@ const ProductMst = () => {
           LASTID: responseSecond.data.DATA[0]?.LASTID || ""
         }));
 
-
       } else {
         toast.error("Failed to fetch Series");
       }
     } catch (error) {
-      console.error("Error fetching Series", error);
       toast.error("Error fetching Series. Please try again.");
     }
-
   };
 
   const debouncedApiCall = debounce(async (newSeries) => {
@@ -767,13 +704,12 @@ const ProductMst = () => {
       return;
     };
     debouncedApiCall(newSeries);
-  }
+  };
 
   const handleSubmit = async () => {
 
     const result = productFormSchema.safeParse(form);
     if (!result.success) {
-      console.log("Validation Errors:", result.error.format());
       return toast.info("Please fill in all required inputs correctly", {
         autoClose: 1000,
       });
@@ -810,7 +746,6 @@ const ProductMst = () => {
     }));
 
     const payload = [{
-
       FGPRD_KEY: form.FGPRD_KEY || 0,
       FGCAT_KEY: data.FGCAT_KEY || "",
       FGCAT_NAME: form.FGCAT_NAME || "",
@@ -857,7 +792,6 @@ const ProductMst = () => {
       payload.UPDATED_BY = 2;
       response = await axiosInstance.patch(`Product/ManageFgPrdSize?UserName=${(UserName)}&strCobrid=${COBR_ID}`, payload);
 
-      console.log("payload", payload);
     } else {
       payload.CREATED_BY = 2;
       response = await axiosInstance.post(`Product/ManageFgPrdSize?UserName=${(UserName)}&strCobrid=${COBR_ID}`, payload);
@@ -865,15 +799,15 @@ const ProductMst = () => {
 
     if (response.data.STATUS === 0 && response.data.RESPONSESTATUSCODE === 1) {
       toast.success(response.data.MESSAGE);
+      setMode('view');
       setIsFormDisabled(true);
-
     } else {
       toast.error(response.data.MESSAGE || 'Operation failed');
     }
   };
 
   const handleExit = () => {
-    router.push('/masterpage?activeTab=products');
+    router.push('/masterpage/?activeTab=13');
   };
 
   const handleTable = () => {
@@ -1086,8 +1020,9 @@ const ProductMst = () => {
               sx={textInputSx}
               inputProps={{
                 style: {
-                  padding: '4px 8px',
-                  fontSize: '12px',
+                  padding: '6px 0px',
+                  marginTop: '10px',
+                  fontSize: '14px'
                 },
               }}
             />
@@ -1096,7 +1031,7 @@ const ProductMst = () => {
 
           <Grid sx={{ display: "flex", justifyContent: "end", marginRight: '-6px' }}>
             <CrudButton
-              moduleName=""
+              moduleName={moduleName}
               mode={mode}
               onAdd={handleAdd}
               onEdit={handleEdit}
@@ -1105,6 +1040,10 @@ const ProductMst = () => {
               readOnlyMode={mode === "view"}
               onPrevious={handlePrevious}
               onNext={handleNext}
+              canAdd={hasSpecificPermission(moduleName, 'ADD')}
+              canEdit={hasSpecificPermission(moduleName, 'EDIT')}
+              canDelete={hasSpecificPermission(moduleName, 'DELETE')}
+              canView={hasSpecificPermission(moduleName, 'VIEW')}
             />
           </Grid>
         </Grid>
@@ -1121,8 +1060,9 @@ const ProductMst = () => {
               sx={textInputSx}
               inputProps={{
                 style: {
-                  padding: '6px 8px',
-                  fontSize: '12px',
+                  padding: '6px 0px',
+                  marginTop: '10px',
+                  fontSize: '14px'
                 },
               }}
             />
@@ -1139,14 +1079,15 @@ const ProductMst = () => {
               sx={textInputSx}
               inputProps={{
                 style: {
-                  padding: '6px 8px',
+                  padding: '6px 0px',
+                  marginTop: '6px',
                   fontSize: '12px',
                 },
               }}
             />
           </Grid>
-           <Grid size={{ xs: 12, sm: 6, md: 3 }}></Grid>
-           <Grid size={{ xs: 12, sm: 6, md: 3 }}></Grid>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}></Grid>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}></Grid>
           <Grid size={{ xs: 12, sm: 6, md: 1.5 }}>
             <TextField
               label="Code"
@@ -1159,8 +1100,9 @@ const ProductMst = () => {
               sx={textInputSx}
               inputProps={{
                 style: {
-                  padding: '6px 8px',
-                  fontSize: '12px',
+                  padding: '6px 0px',
+                  marginTop: '10px',
+                  fontSize: '14px'
                 },
               }}
             />
@@ -1177,8 +1119,9 @@ const ProductMst = () => {
               sx={textInputSx}
               inputProps={{
                 style: {
-                  padding: '6px 8px',
-                  fontSize: '12px',
+                  padding: '6px 0px',
+                  marginTop: '10px',
+                  fontSize: '14px'
                 },
               }}
             />
@@ -1189,11 +1132,7 @@ const ProductMst = () => {
               disabled={isFormDisabled}
               options={categories}
               getOptionLabel={(option) => option.FGCAT_NAME || ""}
-              label={
-                <span>
-                  Category <span style={{ color: 'red' }}>*</span>
-                </span>
-              }
+              label={<span>Category <span style={{ color: 'red' }}>*</span></span>}
               name="FGCAT_KEY"
               value={categories.find(option => String(option.FGCAT_KEY) === String(form.FGCAT_KEY)) || null || ""}
               onChange={(e, newValue) => {
@@ -1214,7 +1153,13 @@ const ProductMst = () => {
                   return updatedForm;
                 });
               }}
-              sx={DropInputSx}
+              sx={{
+                ...DropInputSx,
+                '& .MuiFilledInput-root': {
+                  ...DropInputSx['& .MuiFilledInput-root'],
+                  paddingTop: '16px !important',
+                },
+              }}
               inputProps={{
                 style: {
                   padding: '6px 8px',
@@ -1225,11 +1170,7 @@ const ProductMst = () => {
           </Grid>
           <Grid size={{ xs: 12, sm: 6, md: 6 }}>
             <TextField
-              label={
-                <span>
-                  Name <span style={{ color: 'red' }}>*</span>
-                </span>
-              }
+              label={<span>Name <span style={{ color: 'red' }}>*</span></span>}
               variant="filled"
               fullWidth
               onChange={handleInputChange}
@@ -1239,8 +1180,9 @@ const ProductMst = () => {
               sx={textInputSx}
               inputProps={{
                 style: {
-                  padding: '6px 8px',
-                  fontSize: '12px',
+                  padding: '6px 0px',
+                  marginTop: '10px',
+                  fontSize: '14px'
                 },
               }}
             />
@@ -1260,10 +1202,16 @@ const ProductMst = () => {
                   PRODGRP_NAME: newValue ? newValue.PRODGRP_KEY : '',
                 }));
               }}
-              sx={DropInputSx}
+              sx={{
+                ...DropInputSx,
+                '& .MuiFilledInput-root': {
+                  ...DropInputSx['& .MuiFilledInput-root'],
+                  paddingTop: '16px !important',
+                },
+              }}
               inputProps={{
                 style: {
-                  padding: '6px 8px',
+                  padding: '6px 0px',
                   fontSize: '12px',
                 },
               }}
@@ -1282,8 +1230,9 @@ const ProductMst = () => {
               sx={textInputSx}
               inputProps={{
                 style: {
-                  padding: '6px 8px',
-                  fontSize: '12px',
+                  padding: '6px 0px',
+                  marginTop: '10px',
+                  fontSize: '14px'
                 },
               }}
             />
@@ -1301,8 +1250,9 @@ const ProductMst = () => {
               sx={textInputSx}
               inputProps={{
                 style: {
-                  padding: '6px 8px',
-                  fontSize: '12px',
+                  padding: '6px 0px',
+                  marginTop: '10px',
+                  fontSize: '14px'
                 },
               }}
             />
@@ -1319,8 +1269,9 @@ const ProductMst = () => {
               sx={textInputSx}
               inputProps={{
                 style: {
-                  padding: '6px 8px',
-                  fontSize: '12px',
+                  padding: '6px 0px',
+                  marginTop: '10px',
+                  fontSize: '14px'
                 },
               }}
             />
@@ -1337,8 +1288,9 @@ const ProductMst = () => {
               sx={textInputSx}
               inputProps={{
                 style: {
-                  padding: '6px 8px',
-                  fontSize: '12px',
+                  padding: '6px 0px',
+                  marginTop: '6px',
+                  fontSize: '14px',
                 },
               }}
             />
@@ -1359,7 +1311,13 @@ const ProductMst = () => {
                   UNIT_NAME: newValue ? newValue.UNIT_KEY : '',
                 }));
               }}
-              sx={DropInputSx}
+              sx={{
+                ...DropInputSx,
+                '& .MuiFilledInput-root': {
+                  ...DropInputSx['& .MuiFilledInput-root'],
+                  paddingTop: '16px !important',
+                },
+              }}
               inputProps={{
                 style: {
                   padding: '6px 8px',
@@ -1383,7 +1341,13 @@ const ProductMst = () => {
                   TAX_NAME: newValue ? newValue.TAX_KEY : '',
                 }));
               }}
-              sx={DropInputSx}
+              sx={{
+                ...DropInputSx,
+                '& .MuiFilledInput-root': {
+                  ...DropInputSx['& .MuiFilledInput-root'],
+                  paddingTop: '16px !important',
+                },
+              }}
               inputProps={{
                 style: {
                   padding: '6px 8px',
@@ -1392,11 +1356,7 @@ const ProductMst = () => {
               }}
             />
           </Grid>
-          <Grid size={{ xs: 12, sm: 6, md: 6 }} sx={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '10px'
-          }}>
+          <Grid size={{ xs: 12, sm: 6, md: 6 }} sx={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <FormLabel sx={{ margin: '8px 14px 4px 2px', fontSize: '14px', fontWeight: 'bold', color: 'black' }} component="legend">Round Off</FormLabel>
             <RadioGroup
               row
@@ -1435,7 +1395,13 @@ const ProductMst = () => {
                   BRAND_NAME: newValue ? newValue.BRAND_KEY : '',
                 }));
               }}
-              sx={DropInputSx}
+              sx={{
+                ...DropInputSx,
+                '& .MuiFilledInput-root': {
+                  ...DropInputSx['& .MuiFilledInput-root'],
+                  paddingTop: '16px !important',
+                },
+              }}
               inputProps={{
                 style: {
                   padding: '6px 8px',
@@ -1454,7 +1420,13 @@ const ProductMst = () => {
               name=""
               value={''}
               onChange={handleInputChange}
-              sx={DropInputSx}
+              sx={{
+                ...DropInputSx,
+                '& .MuiFilledInput-root': {
+                  ...DropInputSx['& .MuiFilledInput-root'],
+                  paddingTop: '16px !important',
+                },
+              }}
               inputProps={{
                 style: {
                   padding: '6px 8px',
@@ -1479,7 +1451,13 @@ const ProductMst = () => {
               name=""
               value={''}
               onChange={handleInputChange}
-              sx={DropInputSx}
+              sx={{
+                ...DropInputSx,
+                '& .MuiFilledInput-root': {
+                  ...DropInputSx['& .MuiFilledInput-root'],
+                  paddingTop: '16px !important',
+                },
+              }}
               inputProps={{
                 style: {
                   padding: '6px 8px',
@@ -1503,7 +1481,13 @@ const ProductMst = () => {
                   HSN_CODE: newValue ? newValue.HSNCODE_KEY : '',
                 }));
               }}
-              sx={DropInputSx}
+              sx={{
+                ...DropInputSx,
+                '& .MuiFilledInput-root': {
+                  ...DropInputSx['& .MuiFilledInput-root'],
+                  paddingTop: '16px !important',
+                },
+              }}
               inputProps={{
                 style: {
                   padding: '6px 8px',
@@ -1522,7 +1506,13 @@ const ProductMst = () => {
               name=""
               value={''}
               onChange={handleInputChange}
-              sx={DropInputSx}
+              sx={{
+                ...DropInputSx,
+                '& .MuiFilledInput-root': {
+                  ...DropInputSx['& .MuiFilledInput-root'],
+                  paddingTop: '16px !important',
+                },
+              }}
               inputProps={{
                 style: {
                   padding: '6px 8px',
@@ -1594,6 +1584,13 @@ const ProductMst = () => {
                 value={form.EFF_DT || ""}
                 name="EFF_DT"
                 sx={textInputSx}
+                inputProps={{
+                  style: {
+                    padding: '6px 0px',
+                    marginTop: '10px',
+                    fontSize: '14px'
+                  },
+                }}
                 InputLabelProps={{
                   shrink: true,
                 }}
@@ -1732,11 +1729,9 @@ const ProductMst = () => {
         </Grid>
 
       </Grid >
-
     </Grid >
-
   )
-}
+};
 
 export default function Wrapper() {
   return (

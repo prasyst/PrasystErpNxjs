@@ -15,6 +15,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import axiosInstance from '@/lib/axios';
 import { pdf } from '@react-pdf/renderer';
 import PrintShadeDt from './PrintShadeDt';
+import { useUserPermissions } from '@/app/hooks/useUserPermissions';
 
 const FORM_MODE = getFormMode();
 
@@ -47,7 +48,6 @@ const ShadeMst = () => {
     const [mode, setMode] = useState(FORM_MODE.read);
     const [Status, setStatus] = useState("1");
     const [openConfirmDialog, setOpenConfirmDialog] = useState(false);
-
     const [form, setForm] = useState({
         SearchByCd: '',
         SERIES: '',
@@ -70,6 +70,8 @@ const ShadeMst = () => {
     const FGSHADE_ABRVRef = useRef(null);
     const FGSHADE_ALT_CODERef = useRef(null);
     const SERIESRef = useRef(null);
+    const {hasSpecificPermission, loading: permissionsLoading} = useUserPermissions();
+    const moduleName = 'Shade'
 
     const fetchRetriveData = useCallback(
         async (id, flag = "R", isManualSearch = false) => {
@@ -310,7 +312,7 @@ const ShadeMst = () => {
         }
     };
 
-    const handleExit = () => router.push("/masterpage?activeTab=products");
+    const handleExit = () => router.push("/masterpage/?activeTab=13");
 
     const handleTable = () => {
         router.push('/masters/products/shade/shadetable');

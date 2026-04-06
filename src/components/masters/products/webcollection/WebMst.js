@@ -16,6 +16,7 @@ import CustomAutocomplete from '@/GlobalFunction/CustomAutoComplete/CustomAutoCo
 import PrintWebDt from './PrintWebDt';
 import { useSearchParams } from 'next/navigation';
 import ConfirmDelDialog from '@/GlobalFunction/ConfirmDelDialog';
+import { useUserPermissions } from '@/app/hooks/useUserPermissions';
 
 const FORM_MODE = getFormMode();
 const WebMst = () => {
@@ -48,6 +49,8 @@ const WebMst = () => {
     const username = localStorage.getItem('USER_NAME');
     const PARTY_KEY = localStorage.getItem('PARTY_KEY');
     const COBR_ID = localStorage.getItem('COBR_ID');
+    const { hasSpecificPermission, loading: permissionsLoading } = useUserPermissions();
+    const moduleName = 'Web Collection';
 
     const handleChangeStatus = (event) => {
         const updatedStatus = event.target.checked ? "1" : "0";
@@ -394,7 +397,7 @@ const WebMst = () => {
     };
 
     const handleExit = () => {
-        router.push('/masterpage?activeTab=products');
+        router.push('/masterpage?activeTab=13');
     };
 
     const handleTable = () => {
@@ -570,7 +573,7 @@ const WebMst = () => {
 
                     <Grid sx={{ display: "flex", justifyContent: "end", marginRight: '-6px' }}>
                         <CrudButton
-                            moduleName=""
+                            moduleName={moduleName}
                             mode={mode}
                             onAdd={handleAdd}
                             onEdit={handleEdit}
@@ -580,6 +583,10 @@ const WebMst = () => {
                             readOnlyMode={mode === FORM_MODE.read}
                             onPrevious={handlePrevious}
                             onNext={handleNext}
+                            canAdd={hasSpecificPermission(moduleName, 'ADD')}
+                            canView={hasSpecificPermission(moduleName, 'VIEW')}
+                            canEdit={hasSpecificPermission(moduleName, 'EDIT')}
+                            canDelete={hasSpecificPermission(moduleName, 'DELETE')}
                         />
                     </Grid>
                 </Grid>

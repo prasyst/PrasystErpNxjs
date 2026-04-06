@@ -16,6 +16,7 @@ import axiosInstance from '@/lib/axios';
 import { useSearchParams } from 'next/navigation';
 import { pdf } from '@react-pdf/renderer';
 import { TbListSearch } from "react-icons/tb";
+import { useUserPermissions } from '@/app/hooks/useUserPermissions';
 
 const FORM_MODE = getFormMode();
 
@@ -87,6 +88,8 @@ const ProductGrp = () => {
     const username = localStorage.getItem('USER_NAME');
     const PARTY_KEY = localStorage.getItem('PARTY_KEY');
     const COBR_ID = localStorage.getItem('COBR_ID');
+    const { hasSpecificPermission, loading: permissionsLoading } = useUserPermissions();
+    const moduleName = 'Product Group';
 
     const handleChangeStatus = (event) => {
         const updatedStatus = event.target.checked ? "1" : "0";
@@ -458,7 +461,7 @@ const ProductGrp = () => {
         }
     };
 
-    const handleExit = () => { router.push("/masterpage?activeTab=products") };
+    const handleExit = () => { router.push("/masterpage/?activeTab=13") };
 
     return (
         <>
@@ -542,7 +545,7 @@ const ProductGrp = () => {
 
                         <Grid sx={{ display: "flex", justifyContent: "end", marginRight: '-6px' }}>
                             <CrudButton
-                                moduleName="QC Group"
+                                moduleName={moduleName}
                                 mode={mode}
                                 onAdd={handleAdd}
                                 onEdit={handleEdit}
@@ -551,6 +554,10 @@ const ProductGrp = () => {
                                 readOnlyMode={mode === FORM_MODE.read}
                                 onPrevious={handlePrevious}
                                 onNext={handleNext}
+                                canAdd={hasSpecificPermission(moduleName, 'ADD')}
+                                canEdit={hasSpecificPermission(moduleName, 'EDIT')}
+                                canDelete={hasSpecificPermission(moduleName, 'DELETE')}
+                                canView={hasSpecificPermission(moduleName, 'VIEW')}
                             />
                         </Grid>
                     </Grid>

@@ -17,6 +17,7 @@ import { toast, ToastContainer } from 'react-toastify';
 import PrintProdSrDt from './PrintProdSrDt';
 import CustomAutocomplete from '@/GlobalFunction/CustomAutoComplete/CustomAutoComplete';
 import ConfirmDelDialog from '@/GlobalFunction/ConfirmDelDialog';
+import { useUserPermissions } from '@/app/hooks/useUserPermissions';
 
 const FORM_MODE = getFormMode();
 const ProdSrMst = () => {
@@ -44,6 +45,8 @@ const ProdSrMst = () => {
     const COBR_ID = localStorage.getItem('COBR_ID');
     const CO_ID = localStorage.getItem('CO_ID');
     const [prod, setProd] = useState([]);
+    const { hasSpecificPermission, loading: permissionsLoading } = useUserPermissions();
+    const moduleName = 'Produ Series'
 
     const handleChangeStatus = (event) => {
         const updatedStatus = event.target.checked ? "1" : "0";
@@ -308,7 +311,7 @@ const ProdSrMst = () => {
         }
     };
 
-    const handleExit = () => { router.push("/masterpage?activeTab=products") };
+    const handleExit = () => { router.push("/masterpage?activeTab=13") };
 
     const handleTable = () => {
         router.push("/masters/products/prodseries/prodtable");
@@ -483,7 +486,7 @@ const ProdSrMst = () => {
 
                     <Grid sx={{ display: "flex", justifyContent: "end", marginRight: '-6px' }}>
                         <CrudButton
-                            moduleName=""
+                            moduleName={moduleName}
                             mode={mode}
                             onAdd={handleAdd}
                             onEdit={handleEdit}
@@ -493,6 +496,10 @@ const ProdSrMst = () => {
                             readOnlyMode={mode === FORM_MODE.read}
                             onPrevious={handlePrevious}
                             onNext={handleNext}
+                            canAdd={hasSpecificPermission(moduleName, 'ADD')}
+                            canEdit={hasSpecificPermission(moduleName, 'EDIT')}
+                            canView={hasSpecificPermission(moduleName, 'VIEW')}
+                            canDelete={hasSpecificPermission(moduleName, 'DELETE')}
                         />
                     </Grid>
                 </Grid>

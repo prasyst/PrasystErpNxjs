@@ -18,8 +18,7 @@ import { pdf } from '@react-pdf/renderer';
 import { TbListSearch } from "react-icons/tb";
 import CustomAutocomplete from '@/GlobalFunction/CustomAutoComplete/CustomAutoComplete';
 import PrintCatDt from './PrintCatDt';
-import CrudButtons from '@/GlobalFunction/CrudButtons';
-import PaginationButtons from '@/GlobalFunction/PaginationButtons';
+import { useUserPermissions } from '@/app/hooks/useUserPermissions';
 
 const FORM_MODE = getFormMode();
 const categoryFormSchema = z.object({
@@ -36,7 +35,6 @@ const columns = [
 ];
 
 const CategoryMst = () => {
-
     const router = useRouter();
     const searchParams = useSearchParams();
     const FGCAT_KEY = searchParams.get('FGCAT_KEY');
@@ -72,6 +70,8 @@ const CategoryMst = () => {
     const COBR_ID = localStorage.getItem('COBR_ID');
     const CO_ID = localStorage.getItem('CO_ID');
     const [showReportTable, setShowReportTable] = useState(false);
+    const { hasSpecificPermission, loading: permissionsLoading } = useUserPermissions();
+    const moduleName = 'Category Master';
 
     const segmentOptions = [
         { Id: 0, Name: '' },
@@ -491,7 +491,7 @@ const CategoryMst = () => {
     };
 
     const handleExit = async () => {
-        router.push("/masterpage?activeTab=products");
+        router.push("/masterpage/?activeTab=13");
     };
 
     const handleInputChange = (e) => {
@@ -662,7 +662,7 @@ const CategoryMst = () => {
 
                     <Grid sx={{ display: "flex", justifyContent: "end", marginRight: '-6px' }}>
                         <CrudButton
-                            moduleName="QC Group"
+                            moduleName={moduleName}
                             mode={mode}
                             onAdd={handleAdd}
                             onEdit={handleEdit}
@@ -671,6 +671,10 @@ const CategoryMst = () => {
                             readOnlyMode={mode === FORM_MODE.read}
                             onPrevious={handlePrevious}
                             onNext={handleNext}
+                            canAdd={hasSpecificPermission(moduleName, 'ADD')}
+                            canEdit={hasSpecificPermission(moduleName, 'EDIT')}
+                            canDelete={hasSpecificPermission(moduleName, 'DELETE')}
+                            canView={hasSpecificPermission(moduleName, 'VIEW')}
                         />
                     </Grid>
                 </Grid>

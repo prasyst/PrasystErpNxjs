@@ -17,8 +17,7 @@ import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import { TbListSearch } from "react-icons/tb";
 import CrudButton from '@/GlobalFunction/CrudButton';
 import ConfirmDelDialog from '@/GlobalFunction/ConfirmDelDialog';
-import CrudButtons from '@/GlobalFunction/CrudButtons';
-import PaginationButtons from '@/GlobalFunction/PaginationButtons';
+import { useUserPermissions } from '@/app/hooks/useUserPermissions';
 
 const FORM_MODE = getFormMode();
 
@@ -54,6 +53,8 @@ const TypeMst = () => {
     const username = localStorage.getItem('USER_NAME');
     const PARTY_KEY = localStorage.getItem('PARTY_KEY');
     const COBR_ID = localStorage.getItem('COBR_ID');
+    const { hasSpecificPermission, loading: permissionsLoading } = useUserPermissions();
+    const moduleName = 'Type Master';
 
     const handleChangeStatus = (event) => {
         const updatedStatus = event.target.checked ? "1" : "0";
@@ -421,7 +422,7 @@ const TypeMst = () => {
     };
 
     const handleExit = () => {
-        router.push('/masterpage?activeTab=products');
+        router.push('/masterpage/?activeTab=13');
     };
 
     const Buttonsx = {
@@ -593,7 +594,7 @@ const TypeMst = () => {
 
                     <Grid sx={{ display: "flex", justifyContent: "end", marginRight: '-6px' }}>
                         <CrudButton
-                            moduleName=""
+                            moduleName={moduleName}
                             mode={mode}
                             onAdd={handleAdd}
                             onView={handlePrint}
@@ -603,6 +604,10 @@ const TypeMst = () => {
                             readOnlyMode={mode === FORM_MODE.read}
                             onPrevious={handlePrevious}
                             onNext={handleNext}
+                            canAdd={hasSpecificPermission(moduleName, 'ADD')}
+                            canEdit={hasSpecificPermission(moduleName, 'EDIT')}
+                            canDelete={hasSpecificPermission(moduleName, 'DELETE')}
+                            canView={hasSpecificPermission(moduleName, 'VIEW')}
                         />
                     </Grid>
                 </Grid>
