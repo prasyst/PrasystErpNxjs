@@ -19,7 +19,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 
 const FORM_MODE = getFormMode();
 
-const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, companyConfig, onCancel, onNext, onPrev, showSnackbar, showValidationErrors }) => {
+const Stepper2 = ({ formData, pickOrderItems = [] , setFormData, isFormDisabled, mode, onSubmit, companyConfig, onCancel, onNext, onPrev, showSnackbar, showValidationErrors }) => {
   const [selectedProduct, setSelectedProduct] = useState(null); 
   const [selectedStyle, setSelectedStyle] = useState(null);
   const [selectedRow, setSelectedRow] = useState(null);
@@ -28,7 +28,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, compa
   const [isEditingSize, setIsEditingSize] = useState(false);
   const [editingRowData, setEditingRowData] = useState(null);
   const [hasRecords, setHasRecords] = useState(false);
-
+const [pickOrderItemsProcessed, setPickOrderItemsProcessed] = useState(false);
   // State for dropdown options
   const [productOptions, setProductOptions] = useState([]);
   const [styleOptions, setStyleOptions] = useState([]);
@@ -60,7 +60,121 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, compa
   // State for size details loading
   const [isSizeDetailsLoaded, setIsSizeDetailsLoaded] = useState(false);
 
-  // State for table filters
+ useEffect(() => {
+  if (pickOrderItems && pickOrderItems.length > 0 && !pickOrderItemsProcessed) {
+    // Transform pick order items to match table data format
+    const newItems = pickOrderItems.map((item, index) => {
+      const tempId = Date.now() + index;
+      
+      return {
+        id: tempId,
+        BarCode: item.barcode || "-",
+        orderNo: item.orderNo || '',       
+        balQty: item.balQty || item.qty || 0,
+  orderDate: item.orderDate || '', 
+        product: item.product,
+        style: item.style,
+        type: item.type || "-",
+        shade: item.shade || "-",
+        lotNo: item.lotNo || "-",
+        qty: item.qty || 0,
+        mrp: item.mrp || 0,
+        rate: item.rate || 0,
+        amount: item.amount || 0,
+        varPer: item.varPer || 0,
+        varQty: 0,
+        varAmt: 0,
+        discAmt: item.discAmt || 0,
+        netAmt: item.netAmt || item.amount || 0,
+        distributer: "-",
+        set: item.set || 0,
+        originalData: {
+          ORDBKSTY_ID: item.originalData?.ORDBKSTY_ID || tempId,
+          FGITEM_KEY: item.barcode || "-",
+          PRODUCT: item.product,
+          STYLE: item.style,
+          TYPE: item.type || "-",
+          SHADE: item.shade || "-",
+          PATTERN: item.lotNo || "-",
+          ITMQTY: item.qty || 0,
+          MRP: item.mrp || 0,
+          ITMRATE: item.rate || 0,
+          ITMAMT: item.amount || 0,
+          DLV_VAR_PERC: 0,
+          DLV_VAR_QTY: 0,
+          DISC_AMT: item.discAmt || 0,
+          NET_AMT: item.netAmt || 0,
+          DISTBTR: "-",
+          SETQTY: item.set || 0,
+          ORDBKSTYSZLIST: item.sizeDetails || [],
+          FGPRD_KEY: item.FGPRD_KEY || "",
+          FGSTYLE_ID: item.FGSTYLE_ID || 0,
+          FGTYPE_KEY: "",
+          FGSHADE_KEY: item.FGSHADE_KEY || "",
+          FGPTN_KEY: "",
+          DBFLAG: 'I'
+        },
+        FGSTYLE_ID: item.FGSTYLE_ID || 0,
+        FGPRD_KEY: item.FGPRD_KEY || "",
+        FGTYPE_KEY: "",
+        FGSHADE_KEY: item.FGSHADE_KEY || "",
+        FGPTN_KEY: "",
+        STYCATRT_ID: 0
+      };
+    });
+    
+    // Add to existing table data
+    const newTableData = [...tableData, ...newItems];
+    setUpdatedTableData(newTableData);
+    
+    // Update formData
+    const newOrdbkStyleItems = newItems.map(item => ({
+      ORDBKSTY_ID: item.id,
+      FGITEM_KEY: item.BarCode,
+      PRODUCT: item.product,
+      STYLE: item.style,
+      TYPE: item.type,
+      SHADE: item.shade,
+      PATTERN: item.lotNo,
+      ITMQTY: item.qty,
+      MRP: item.mrp,
+      ITMRATE: item.rate,
+      ITMAMT: item.amount,
+      DLV_VAR_PERC: 0,
+      DLV_VAR_QTY: 0,
+      DISC_AMT: item.discAmt,
+      NET_AMT: item.netAmt,
+      DISTBTR: "-",
+      SETQTY: item.set,
+      ORDBKSTYSZLIST: item.originalData?.ORDBKSTYSZLIST || [],
+      FGSTYLE_ID: item.FGSTYLE_ID,
+      FGPRD_KEY: item.FGPRD_KEY,
+      FGTYPE_KEY: "",
+      FGSHADE_KEY: item.FGSHADE_KEY,
+      FGPTN_KEY: "",
+      DBFLAG: 'I'
+    }));
+    
+    setFormData(prev => ({
+      ...prev,
+      apiResponseData: {
+        ...prev.apiResponseData,
+        ORDBKSTYLIST: [...(prev.apiResponseData?.ORDBKSTYLIST || []), ...newOrdbkStyleItems]
+      }
+    }));
+    
+    showSnackbar(`${newItems.length} items added from Pick Order!`);
+    setPickOrderItemsProcessed(true);
+  }
+}, [pickOrderItems,pickOrderItemsProcessed]);
+
+useEffect(() => {
+  if (pickOrderItems && pickOrderItems.length === 0) {
+    setPickOrderItemsProcessed(false);
+  }
+}, [pickOrderItems]);
+
+
   const [tableFilters, setTableFilters] = useState({
     BarCode: '',
     product: '',
@@ -1742,25 +1856,21 @@ const fetchSizeDetails = async () => {
     return !(isAddingNew || isEditingSize);
   };
 
-  const columns = [
-    { id: 'product', label: 'Product', minWidth: 120 },
-    { id: 'style', label: 'Style', minWidth: 80 },
-    { id: 'type', label: 'Type', minWidth: 80 },
-    { id: 'shade', label: 'Shade', minWidth: 100 },
-    { id: 'lotNo', label: 'Lot No', minWidth: 100 },
-    { id: 'qty', label: 'Qty', minWidth: 70, align: 'right' },
-    { id: 'mrp', label: 'MRP', minWidth: 70, align: 'right' },
-    { id: 'rate', label: 'Rate', minWidth: 70, align: 'right' },
-    { id: 'amount', label: 'Amount', minWidth: 80, align: 'right' },
-    { id: 'varPer', label: 'Var Per', minWidth: 80, align: 'right' },
-    { id: 'varQty', label: 'Var Qty', minWidth: 80, align: 'right' },
-    { id: 'varAmt', label: 'Var Amt', minWidth: 80, align: 'right' },
-    { id: 'discAmt', label: 'Disc Amt', minWidth: 80, align: 'right' },
-    { id: 'netAmt', label: 'Net Amt', minWidth: 80, align: 'right' },
-    { id: 'divDt', label: 'Div Dt', minWidth: 80, align: 'right' },
-    { id: 'distributer', label: 'Distributer', minWidth: 80, align: 'right' },
-    { id: 'set', label: 'Set', minWidth: 80, align: 'right' },
-  ];
+ const columns = [
+  { id: 'orderNo', label: 'Order No', minWidth: 100 },
+  { id: 'orderDate', label: 'Order Date', minWidth: 80 },
+  { id: 'product', label: 'Product', minWidth: 150 },
+  { id: 'style', label: 'Style', minWidth: 120 },
+  { id: 'type', label: 'Type', minWidth: 80 },
+  { id: 'shade', label: 'Shade', minWidth: 80 },
+  { id: 'lotNo', label: 'Lot No', minWidth: 80 },
+  { id: 'qty', label: 'Qty', minWidth: 70, align: 'right' },
+  { id: 'balQty', label: 'Bal Qty', minWidth: 70, align: 'right' },
+  { id: 'rate', label: 'Rate', minWidth: 70, align: 'right' },
+  { id: 'amount', label: 'Amount', minWidth: 80, align: 'right' },
+  { id: 'netAmt', label: 'Net Amt', minWidth: 80, align: 'right' },
+  { id: 'set', label: 'Set', minWidth: 60, align: 'right' },
+];
 
   return (
     <Box>

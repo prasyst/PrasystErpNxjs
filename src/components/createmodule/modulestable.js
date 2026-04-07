@@ -175,27 +175,31 @@ export default function ModuleTable() {
 
       const { data: { STATUS, DATA, RESPONSESTATUSCODE } } = retrieveResponse;
 
-      if (STATUS === 0 && Array.isArray(DATA) && RESPONSESTATUSCODE === 1) {
+      if (STATUS === 0 && Array.isArray(DATA) && RESPONSESTATUSCODE === 1 && DATA.length > 0) {
         const moduleData = DATA[0];
         
-        // Navigate to the form with the module ID - FIXED ROUTING PATH
+        // Navigate to the form with the module ID
         const params = new URLSearchParams({
-          MOD_ID: moduleData.MOD_ID.toString(),
-          mode: "view"
+          MOD_ID: moduleData.MOD_ID.toString()
         }).toString();
         
-        // Using the correct path /createmodule/ instead of /masters/modules/createmodule/
+        // Use the correct path
         router.push(`/createmodule?${params}`);
       } else {
         toast.error("Failed to retrieve module data");
+        // Fallback navigation with just the ID
+        const params = new URLSearchParams({
+          MOD_ID: row.MOD_ID.toString()
+        }).toString();
+        router.push(`/createmodule?${params}`);
       }
     } catch (error) {
+      console.error("Error retrieving module data:", error);
       toast.error("Error retrieving module data: " + (error.response?.data?.MESSAGE || error.message));
       
-      // If retrieve fails, still try to navigate with the row data
+      // Fallback navigation with just the row data
       const params = new URLSearchParams({
-        MOD_ID: row.MOD_ID.toString(),
-        mode: "view"
+        MOD_ID: row.MOD_ID.toString()
       }).toString();
       
       router.push(`/createmodule?${params}`);

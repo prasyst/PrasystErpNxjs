@@ -50,6 +50,7 @@ const [detailMode, setDetailMode] = useState('style');
    const { hasSpecificPermission, loading: permissionsLoading } = useUserPermissions();
        const [showGstConfirmDialog, setShowGstConfirmDialog] = useState(false);
    const [tempGstValue, setTempGstValue] = useState(null);
+   const [pickOrderItems, setPickOrderItems] = useState([]);
     const moduleName = "Paking Slip";
   const [companyConfig, setCompanyConfig] = useState({
     CO_ID: '',
@@ -198,6 +199,82 @@ const [detailMode, setDetailMode] = useState('style');
 
   const searchParams = useSearchParams();
   const ordbkKey = searchParams.get("ordbkKey");
+
+  const handlePickOrderConfirm = (selectedItems) => {
+  setPickOrderItems(selectedItems);
+  console.log('Selected items from order:', selectedItems);
+  
+  // Transform selected items to Stepper2 format and add to formData
+  const transformedItems = selectedItems.map((item, index) => {
+    const tempId = Date.now() + index;
+    
+    return {
+      id: tempId,
+      BarCode: item.FGPRD_KEY || "-",
+      product: item.FGPRD_NAME || "",
+      style: item.FGSTYLE_NAME || "",
+      type: item.FGTYPE_NAME || "",
+      shade: item.FGSHADE_NAME || "",
+      lotNo: item.FGPTN_NAME || "",
+      qty: item.SELECTED_QTY || item.BAL_QTY,
+      mrp: item.MRP_PRN || item.RATE || 0,
+      rate: item.RATE || 0,
+      amount: (item.SELECTED_QTY || item.BAL_QTY) * (item.RATE || 0),
+      varPer: item.DLV_VAR_PERCENT || 0,
+      varQty: 0,
+      varAmt: 0,
+      discAmt: item.DISC_AMT || 0,
+      netAmt: item.NET_AMOUNT || 0,
+      distributer: item.DISTBTR_NAME || "-",
+      set: item.SETQTY || 0,
+      originalData: {
+        ORDBKSTY_ID: tempId,
+        FGITEM_KEY: item.FGPRD_KEY || "-",
+        PRODUCT: item.FGPRD_NAME || "",
+        STYLE: item.FGSTYLE_NAME || "",
+        TYPE: item.FGTYPE_NAME || "",
+        SHADE: item.FGSHADE_NAME || "",
+        PATTERN: item.FGPTN_NAME || "",
+        ITMQTY: item.SELECTED_QTY || item.BAL_QTY,
+        MRP: item.MRP_PRN || item.RATE || 0,
+        ITMRATE: item.RATE || 0,
+        ITMAMT: (item.SELECTED_QTY || item.BAL_QTY) * (item.RATE || 0),
+        DLV_VAR_PERC: item.DLV_VAR_PERCENT || 0,
+        DLV_VAR_QTY: 0,
+        DISC_AMT: item.DISC_AMT || 0,
+        NET_AMT: item.NET_AMOUNT || 0,
+        DISTBTR: item.DISTBTR_NAME || "-",
+        SETQTY: item.SETQTY || 0,
+        ORDBKSTYSZLIST: [],
+        FGPRD_KEY: item.FGPRD_KEY || "",
+        FGSTYLE_ID: item.FGSTYLE_ID || 0,
+        FGTYPE_KEY: item.FGTYPE_KEY || "",
+        FGSHADE_KEY: item.FGSHADE_KEY || "",
+        FGPTN_KEY: item.FGPTN_KEY || "",
+        DBFLAG: 'I'
+      },
+      FGSTYLE_ID: item.FGSTYLE_ID || 0,
+      FGPRD_KEY: item.FGPRD_KEY || "",
+      FGTYPE_KEY: item.FGTYPE_KEY || "",
+      FGSHADE_KEY: item.FGSHADE_KEY || "",
+      FGPTN_KEY: item.FGPTN_KEY || ""
+    };
+  });
+  
+  // Add to existing formData
+  setFormData(prev => ({
+    ...prev,
+    apiResponseData: {
+      ...prev.apiResponseData,
+      ORDBKSTYLIST: [
+        ...(prev.apiResponseData?.ORDBKSTYLIST || []),
+        ...transformedItems
+      ]
+    }
+  }));
+  
+  showSnackbar(`${transformedItems.length} items added from order`, 'success');
+};
 
   // In SalesOrderOffline.js - Add this to handle URL parameters
 useEffect(() => {
@@ -1921,7 +1998,7 @@ const fetchAllDropdownData = async () => {
         </Grid>
         <Grid>
           <Typography align="center" variant="h6">
-            {tabIndex === 0 ? "Packing Slip " : tabIndex === 1 ? "Item Details" : tabIndex === 1 ? "BarCode Details" : "Terms Details"}
+            {tabIndex === 0 ? "Packing Slip(Order Ref) " : tabIndex === 1 ? "Item Details" : tabIndex === 1 ? "BarCode Details" : "Terms Details"}
           </Typography>
         </Grid>
 
@@ -2066,6 +2143,7 @@ const fetchAllDropdownData = async () => {
           <Stepper1
             formData={formData}
             setFormData={setFormData}
+             
             isFormDisabled={isFormDisabled}
             mode={mode}
             onSubmit={handleSubmit}
@@ -2099,6 +2177,14 @@ const fetchAllDropdownData = async () => {
             isDataLoading={isDataLoading}
             branchOptions={[]}
             setBranchOptions={setBranchOptions}
+             onPickOrderConfirm={(selectedItems) => {
+  
+    console.log('Items to add to Stepper2:', selectedItems);
+    
+    setPickOrderItems(selectedItems);
+    
+    setTabIndex(1);
+  }}
               detailMode={detailMode}
   setDetailMode={setDetailMode}
   companyConfig={companyConfig} 
@@ -2113,6 +2199,7 @@ const fetchAllDropdownData = async () => {
             onCancel={handleCancel}
             onNext={handleNext}
             onPrev={handlePrev}
+             pickOrderItems={pickOrderItems}
             showSnackbar={showSnackbar}
             showValidationErrors={showValidationErrors}
             companyConfig={companyConfig}
