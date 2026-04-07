@@ -287,7 +287,8 @@ const Tnatable = React.memo(function Tnatable() {
           id: index,
           ...row,
           ORDER_Date: row.ORDBK_DT || null,
-          DLV_DT: row.DLV_DT || null
+          DLV_DT: row.DLV_DT || null,
+          ORDBK_KEY: row.ORDBK_KEY || null,
         }));
         setRows(formattedData);
         setRecordCount(formattedData.length);
@@ -340,13 +341,15 @@ const Tnatable = React.memo(function Tnatable() {
     });
   }, []);
 
-  const handleRowDoubleClick = useCallback((event) => {
-    const rowData = event.data;
+  const handleRowDoubleClick = useCallback((row) => {
+   const rowData = row;
+  console.log("ORDBK_KEY:", rowData?.ORDBK_KEY);
     if (rowData?.ORDBK_KEY) {
-      router.push(`/tnapage/tnadetailestable?orderKey=${rowData.ORDBK_KEY}`);
-    } else {
-      router.push(`/tnapage/tnadetailestable`);
-    }
+       router.push(`/tnapage/tnadetailestable?ordbk_key=${rowData.ORDBK_KEY}`);
+    } 
+    // else {
+    //   router.push(`/tnapage/tnadetailestable`);
+    // }
   }, [router]);
 
   const handleSelectionChanged = useCallback((event) => {
