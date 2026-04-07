@@ -1,35 +1,24 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Box,
-  Typography,
-  TextField,
-  Button,
-  IconButton,
-  CircularProgress,
-  Chip,
-  Stack,
+  Dialog, DialogTitle, DialogContent, DialogActions, Box, Typography, TextField, Button, IconButton, CircularProgress, Chip, Stack,
 } from '@mui/material';
-import { 
-  Close as CloseIcon, 
-  Add as AddIcon, 
+import {
+  Close as CloseIcon,
+  Add as AddIcon,
   AttachFile as AttachFileIcon,
   Delete as DeleteIcon,
-  Image as ImageIcon 
+  Image as ImageIcon
 } from '@mui/icons-material';
 import axiosInstance from '@/lib/axios';
 import { toast } from 'react-toastify';
 
-const FollowupDialog = ({ 
-  open, 
-  onClose, 
+const FollowupDialog = ({
+  open,
+  onClose,
   ticket,
-  onSuccess 
+  onSuccess
 }) => {
   const [formData, setFormData] = useState({
     FlwDt: '',
@@ -38,15 +27,12 @@ const FollowupDialog = ({
     TktImage: '',
     ImgName: ''
   });
-  
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
 
-//   const USER_ID = localStorage.getItem("USER_ID");
-//   const EMP_KEY = localStorage.getItem("EMP_KEY");
-
-  React.useEffect(() => {
+  useEffect(() => {
     if (ticket) {
       const today = new Date().toISOString().split('T')[0];
       setFormData({
@@ -81,7 +67,7 @@ const FollowupDialog = ({
     const file = e.target.files[0];
     if (!file) return;
 
-    const maxSize = 5 * 1024 * 1024; 
+    const maxSize = 5 * 1024 * 1024;
     if (file.size > maxSize) {
       toast.error("File size too large. Maximum size is 5MB.");
       return;
@@ -98,18 +84,17 @@ const FollowupDialog = ({
 
     try {
       const base64String = await convertToBase64(file);
-     
+
       const base64Data = base64String.split(',')[1];
-      
+
       setFormData(prev => ({
         ...prev,
-        TktImage: base64Data, 
+        TktImage: base64Data,
         ImgName: file.name
       }));
-      
+
       toast.success("Image uploaded successfully!");
     } catch (error) {
-      console.error("Error converting image to base64:", error);
       toast.error("Failed to process image. Please try again.");
       setSelectedFile(null);
     } finally {
@@ -155,9 +140,9 @@ const FollowupDialog = ({
         TktKey: ticket.TKTKEY,
         ToDo: formData.ToDo,
         Remark: formData.Remark || "",
-        FlwBy: 1, 
-        CREATED_BY: 1, 
-        TktImage:  "",
+        FlwBy: 1,
+        CREATED_BY: 1,
+        TktImage: "",
         ImgName: ""
       };
 
@@ -222,8 +207,8 @@ const FollowupDialog = ({
               Add Follow-up
             </Typography>
           </Box>
-          <IconButton 
-            onClick={handleClose} 
+          <IconButton
+            onClick={handleClose}
             size="small"
             disabled={isSubmitting}
             sx={{
@@ -241,7 +226,7 @@ const FollowupDialog = ({
           </Typography>
         )}
       </DialogTitle>
-      
+
       <DialogContent sx={{ py: 0 }}>
         <Box >
 
@@ -279,14 +264,14 @@ const FollowupDialog = ({
               sx: { borderRadius: 1.5 }
             }}
           />
-          {/* <Box sx={{ mt: 1, mb: 1 }}>
+          <Box sx={{ mt: 1, mb: 1 }}>
             <Typography variant="subtitle2" fontWeight="500" gutterBottom>
-              Attach Image (Optional)
+              Attach Image
             </Typography>
-            
+
             {selectedFile ? (
-              <Box sx={{ 
-                p: 2, 
+              <Box sx={{
+                p: 2,
                 border: '1px dashed',
                 borderColor: 'primary.main',
                 borderRadius: 2,
@@ -307,9 +292,9 @@ const FollowupDialog = ({
                     </Typography>
                   </Box>
                 </Box>
-                <IconButton 
-                  size="small" 
-                  color="error" 
+                <IconButton
+                  size="small"
+                  color="error"
                   onClick={removeImage}
                   disabled={isSubmitting}
                 >
@@ -348,7 +333,7 @@ const FollowupDialog = ({
                 </label>
               </>
             )}
-            
+
             {isUploadingImage && (
               <Box sx={{ mt: 2 }}>
                 <Typography variant="caption" color="text.secondary">
@@ -357,11 +342,11 @@ const FollowupDialog = ({
                 <CircularProgress size={16} sx={{ ml: 1 }} />
               </Box>
             )}
-            
+
             <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 1 }}>
               Max file size: 5MB • Supported formats: JPG, PNG, GIF, WebP
             </Typography>
-          </Box> */}
+          </Box>
 
           {formData.TktImage && !isUploadingImage && (
             <Box sx={{ mt: 2 }}>
@@ -399,13 +384,13 @@ const FollowupDialog = ({
           )}
         </Box>
       </DialogContent>
-      
+
       <DialogActions sx={{ px: 3, pb: 3 }}>
-        <Button 
-          onClick={handleClose} 
+        <Button
+          onClick={handleClose}
           disabled={isSubmitting}
           variant="outlined"
-          sx={{ 
+          sx={{
             borderRadius: 1.5,
             px: 3
           }}
@@ -418,7 +403,7 @@ const FollowupDialog = ({
           variant="contained"
           disabled={isSubmitting || isUploadingImage}
           startIcon={isSubmitting ? <CircularProgress size={20} /> : null}
-          sx={{ 
+          sx={{
             borderRadius: 1.5,
             px: 3,
             '&:disabled': {

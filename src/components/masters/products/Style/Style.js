@@ -1,17 +1,7 @@
 'use client';
 import React, { useEffect, useState, useCallback, Suspense } from 'react';
 import {
-    Box,
-    Grid,
-    TextField,
-    Typography,
-    Button,
-    Stack,
-    FormControlLabel,
-    FormLabel,
-    Radio,
-    RadioGroup,
-    Checkbox, Link
+    Box, Grid, TextField, Typography, Button, Stack, FormControlLabel, FormLabel, Radio, RadioGroup, Checkbox, Link
 } from '@mui/material';
 import { useSearchParams, useRouter } from 'next/navigation';
 import debounce from 'lodash.debounce';
@@ -156,7 +146,6 @@ const Style = () => {
     };
 
     const fetchStyleData = useCallback(async (currentStyleId, flag = "R") => {
-
         try {
             const response = await axiosInstance.post(`FGSTYLE/RetriveFgstyle`, {
                 "FGSTYLE_ID": currentStyleId,
@@ -184,7 +173,6 @@ const Style = () => {
                 toast.info(response.data.MESSAGE);
             }
         } catch (error) {
-            console.error('Error fetching style data:', error);
             toast.error('Error fetching style data. Please try again.');
         }
     }, [router]);
@@ -197,10 +185,8 @@ const Style = () => {
         } else {
             setMode('view');
             setFormData({
-
                 MRP: "",
                 DBFLAG: ""
-
             });
             setIsFormDisabled(true);
         }
@@ -327,18 +313,16 @@ const Style = () => {
         >
             <ToastContainer />
 
-            <Grid container
+            <Grid container spacing={2}
                 sx={{
                     display: 'flex',
                     flexDirection: 'column',
                     marginInline: { xs: '5%', sm: '5%', md: '2%', lg: '2%', xl: '2%' },
                 }}
-                spacing={2}
             >
 
-                <Grid container justifyContent="space-between"
+                <Grid container spacing={2} justifyContent="space-between"
                     sx={{ marginInline: { xs: '5%', sm: '5%', md: '5%', lg: '0%', xl: '0%' } }}
-                    spacing={2}
                 >
                     <Grid>
                         <Button
@@ -364,7 +348,6 @@ const Style = () => {
                         <Typography align="center" variant="h6">
                             Article/Style Master
                         </Typography>
-
                     </Grid>
 
                     <Grid sx={{ display: 'flex' }}>
@@ -1400,7 +1383,6 @@ const Style = () => {
                             }}
                         />
                     </Grid>
-
                 </Grid>
 
                 <Grid sx={{
@@ -1438,7 +1420,6 @@ const Style = () => {
                     )}
                     {(mode === 'edit' || mode === 'add') && (
                         <>
-
                             <Button variant="contained"
                                 sx={{
                                     backgroundColor: '#635bff',
@@ -1461,17 +1442,13 @@ const Style = () => {
                                 onClick={handleCancel}>
                                 Cancel
                             </Button>
-
                         </>
                     )}
                 </Grid>
-
             </Grid>
-
         </Grid >
-
     )
-}
+};
 
 export default function Wrapper() {
     return (
@@ -1480,10 +1457,3 @@ export default function Wrapper() {
         </Suspense>
     );
 }
-
-
-
-
-
-
-
