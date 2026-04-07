@@ -5,40 +5,63 @@ import {
   Button,
   TextField,
   CircularProgress,
-  Autocomplete,
   Grid,
-  Paper
+  Paper,
+  Typography,
+  Alert,
 } from "@mui/material";
 import axiosInstance from '../../../lib/axios';
 import { useRouter } from 'next/navigation';
+import AddIcon from '@mui/icons-material/Add';
+import SearchIcon from '@mui/icons-material/Search';
 
 import ReusableTable, { getCustomDateFilter } from '../../datatable/ReusableTable';
 
+const formatDate = (date) => {
+  if (!date) return '-';
+  const d = new Date(date);
+  if (isNaN(d.getTime())) return '-';
+  const day = String(d.getDate()).padStart(2, '0');
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const year = String(d.getFullYear()).slice();
+  return `${day}/${month}/${year}`;
+};
 
+const DateCellRenderer = (params) => {
+  return <span>{formatDate(params.value)}</span>;
+};
 
 const getStatusChip = (status) => {
-  if (!status) return <span>-</span>;
- 
+  if (!status) return <span style={{ color: '#999' }}>-</span>;
+
   const statusColorMap = {
-    'Complete': '#4caf50',    
-    'Pending': '#ff9800', 
-    'Partial': '#c9b90b'      
+    'Complete': { bg: '#4caf50', text: '#ffffff' },
+    'Pending': { bg: '#ff9800', text: '#ffffff' },
+    'Partial': { bg: '#f44336', text: '#ffffff' },
+    'In Progress': { bg: '#2196f3', text: '#ffffff' },
+    'Cancelled': { bg: '#9e9e9e', text: '#ffffff' }
   };
-  
-  const backgroundColor = statusColorMap[status] || '#757575';
-  const textColor = '#ffffff';
+
+  const colors = statusColorMap[status] || { bg: '#757575', text: '#ffffff' };
 
   return (
-    <div style={{ display: 'flex', alignItems: 'center', height: '100%' }}>
+    <div style={{ display: 'flex', alignItems: 'center',justifyContent: 'center', height: '100%', }}>
       <span style={{
-        backgroundColor: backgroundColor,
-        color: textColor,
-        padding: '0px 12px', 
-        fontSize: '12px',
-        fontWeight: 500,
+        backgroundColor: colors.bg,
+        color: colors.text,
+        padding: '0px 10px',
+        borderRadius: '12px',
+        fontSize: '10px',
+        fontWeight: 600,
         display: 'inline-block',
         textAlign: 'center',
-        whiteSpace: 'nowrap'
+        whiteSpace: 'nowrap',
+        letterSpacing: '0.3px',
+        height: '22px',
+        lineHeight: '20px',
+         width: '80px',
+         overflow: 'hidden',
+         textOverflow: 'ellipsis'
       }}>
         {status}
       </span>
@@ -46,34 +69,46 @@ const getStatusChip = (status) => {
   );
 };
 
+const setFilterParams = {
+  defaultToNothingSelected: true,
+  selectAllOnMiniFilter: false,
+  suppressSelectAll: false,
+  newRowsAction: 'keep',
+};
 
 const columnDefs = [
-    {
+  {
     field: "PARTY_NAME",
     headerName: "PARTY NAME",
-    width: 200,
+    width: 250,
     filter: 'agSetColumnFilter',
-    filterParams: {
-      defaultToNothingSelected: true,
-    },
-    sortable: true
+    filterParams: setFilterParams,
+    sortable: true,
+    cellStyle: { fontWeight: 500 }
   },
   {
     field: "ORDBK_KEY",
-    headerName: "ORDBK_KEY",
+    headerName: "ORDER KEY",
     width: 130,
-    maxWidth: 140,
     filter: 'agSetColumnFilter',
-    filterParams: {
-      defaultToNothingSelected: true, 
-    },
-    sortable: true
+    filterParams: setFilterParams,
+    sortable: true,
+    cellStyle: { fontWeight: 500, color: '#6949e9', cursor: 'pointer' }
   },
-
+  {
+    field: "ORDBK_NO",
+    headerName: "ORDER NO",
+    width: 130,
+    filter: 'agSetColumnFilter',
+    filterParams: setFilterParams,
+    sortable: true,
+    cellStyle: { fontWeight: 500, color: '#1976d2', cursor: 'pointer' }
+  },
   {
     field: "ORDER_Date",
     headerName: "ORDER DATE",
     width: 130,
+    cellRenderer: DateCellRenderer,
     filter: 'agDateColumnFilter',
     filterParams: {
       browserDatePicker: true,
@@ -93,8 +128,9 @@ const columnDefs = [
   },
   {
     field: "DLV_DT",
-    headerName: "DELIVERY DT",
-    width: 130,
+    headerName: "DELIVERY DATE",
+    width: 140,
+    cellRenderer: DateCellRenderer,
     filter: 'agDateColumnFilter',
     filterParams: {
       browserDatePicker: true,
@@ -112,129 +148,132 @@ const columnDefs = [
     },
     sortable: true
   },
-
   {
     field: "TotalCount",
-    headerName: "TOTALCOUNT",
-    width: 140,
+    headerName: "TOTAL ITEMS",
+    width: 100,
     filter: 'agSetColumnFilter',
-    filterParams: {
-      defaultToNothingSelected: true, 
-    },
-    sortable: true
-  },
-  {
-    field: "BOMSOCKS_ST",
-    headerName: "BOMSOCKS STATUS",
-    width: 120,
-    maxWidth: 130,
-   filter: 'agSetColumnFilter',
-    filterParams: {
-      defaultToNothingSelected: true,
-    },
+    filterParams: setFilterParams,
     sortable: true,
-      cellRenderer: (params) => {
-      return getStatusChip(params.value);
-    }
-  
+    cellStyle: { textAlign: 'center' },
+    cellRenderer: (params) => <span style={{ fontWeight: 600, color: '#2c3e50' }}>{params.value || 0}</span>
   },
   {
     field: "TNA_ST",
     headerName: "TNA STATUS",
-    width: 130,
+    width: 140,
     filter: 'agSetColumnFilter',
-    filterParams: {
-      defaultToNothingSelected: true,
-    },
+    filterParams: setFilterParams,
     sortable: true,
-     cellRenderer: (params) => {
-      return getStatusChip(params.value);
-    }
+    cellRenderer: (params) => getStatusChip(params.value),
+       cellStyle: { display: 'flex', alignItems: 'center' }
   },
- 
-  
+  {
+    field: "BOMSOCKS_ST",
+    headerName: "BOM STATUS",
+    width: 140,
+    filter: 'agSetColumnFilter',
+    filterParams: setFilterParams,
+    sortable: true,
+    cellRenderer: (params) => getStatusChip(params.value),
+      cellStyle: { display: 'flex', alignItems: 'center' }
+  },
 ];
 
-export default function Tnatable() {
+const DateFilters = React.memo(({ dateRange, onDateChange, isLoading, onGetData, onNewOrder }) => {
+  return (
+    <Paper elevation={0} sx={{ p: 1, borderRadius: 2 ,ml:2}}>
+      <Grid container spacing={2} alignItems="center">
+        <Grid size={{ xs: 12, md: 2.5 }}>
+          <TextField
+            fullWidth
+            label="From Date"
+            type="date"
+            value={dateRange.FROM_DT}
+            onChange={(e) => onDateChange('FROM_DT', e.target.value)}
+            size="small"
+            sx={{ bgcolor: '#fff' }}
+          />
+        </Grid>
+        <Grid size={{ xs: 12, md: 2.5 }}>
+          <TextField
+            fullWidth
+            label="To Date"
+            type="date"
+            value={dateRange.To_DT}
+            onChange={(e) => onDateChange('To_DT', e.target.value)}
+            size="small"
+            sx={{ bgcolor: '#fff' }}
+          />
+        </Grid>
+
+        <Grid size={{ xs: 12, md: 2 }}>
+          <Button
+            fullWidth
+            variant="contained"
+            onClick={onGetData}
+            disabled={isLoading}
+            startIcon={isLoading ? <CircularProgress size={20} /> : <SearchIcon />}
+            sx={{ height: '38px', bgcolor: '#1976d2', '&:hover': { bgcolor: '#1565c0' } }}
+          >
+            {isLoading ? 'Loading...' : 'Get Data'}
+          </Button>
+        </Grid>
+        <Grid size={{ xs: 12, md: 1 }}>
+          <Button
+            fullWidth
+            variant="outlined"
+            onClick={onNewOrder}
+            startIcon={<AddIcon />}
+            sx={{ height: '38px' }}
+          >
+            New
+          </Button>
+        </Grid>
+      </Grid>
+    </Paper>
+  );
+});
+
+const Tnatable = React.memo(function Tnatable() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
-
-  const [partySearchResults, setPartySearchResults] = useState([]);
-  const [isCustomer, setIsCustomer] = useState(false);
-  const [partyName, setPartyName] = useState("");
   const [selectedRows, setSelectedRows] = useState([]);
-  const [cobrid, setCobrid] = useState('');
-  const [fcyr, setFcyr] = useState('');
-  const [clientId, setClientId] = useState('')
-  const [isClient, setIsClient] = useState(false);
-  const [userId, setUserId] = useState()
-  const [form, setForm] = useState({
-    PARTY_KEY: "",
-    PARTYDTL_ID: "",
-    PARTY_NAME: ""
-  });
   const [rows, setRows] = useState([]);
-  
+  const [lastFetchTime, setLastFetchTime] = useState(null);
+  const [recordCount, setRecordCount] = useState(0);
+  const [isInitialized, setIsInitialized] = useState(false);
 
-  const [dateRange, setDateRange] = useState({
-    FROM_DT: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], 
-    To_DT: new Date().toISOString().split('T')[0] 
-  });
+  const hasFetchedRef = useRef(false);
+  const gridApiRef = useRef(null);
+  const formRef = useRef({ PARTY_KEY: "" });
+  const cobridRef = useRef('');
+  const fcyrRef = useRef('');
 
-  useEffect(() => {
-    setIsClient(true);
-    setCobrid(localStorage.getItem('COBR_ID') || '');
-    setFcyr(localStorage.getItem('FCYR_KEY') || '');
-    setClientId(localStorage.getItem('CLIENT_ID') || '');
-    setUserId(localStorage.getItem('USER_ID') || '')
+  const getDateRangeFromMonths = useCallback((months) => {
+    const toDate = new Date();
+    const fromDate = new Date();
+    fromDate.setMonth(fromDate.getMonth() - months);
+    return {
+      FROM_DT: fromDate.toISOString().split('T')[0],
+      To_DT: toDate.toISOString().split('T')[0]
+    };
   }, []);
 
-  useEffect(() => {
-    if (isClient) {
-      fetchPartiesByName();
-    }
-  }, [isClient]);
+  const [dateRange, setDateRange] = useState(() => getDateRangeFromMonths(3));
 
-  useEffect(() => {
-    const userRole = localStorage.getItem('userRole');
-    if (userRole === 'customer') {
-      setIsCustomer(true);
-      const storedPartyName = localStorage.getItem('PARTY_NAME');
-      const storedPartyKey = localStorage.getItem('PARTY_KEY');
-      setForm(prev => ({
-        ...prev,
-        PARTY_KEY: storedPartyKey || "",
-        PARTYDTL_ID: "",
-      }));
-      setPartyName(storedPartyName || "");
-    }
-    fetchPartiesByName();
-  }, []);
-
-  const fetchPartiesByName = async (name = "") => {
-    try {
-      const response = await axiosInstance.post("Party/GetParty_By_Name", {
-        PARTY_NAME: name
-      });
-      if (response.data.STATUS === 0 && Array.isArray(response.data.DATA)) {
-        setPartySearchResults(response.data.DATA);
-      } else {
-        setPartySearchResults([]);
-      }
-    } catch (error) {
-      console.error("API error", error);
-      setPartySearchResults([]);
-    }
-  };
 
   const fetchTableData = useCallback(async () => {
+    if (!cobridRef.current || !fcyrRef.current) return;
+
     setIsLoading(true);
+
     try {
       const response = await axiosInstance.post(`/TNA/GetTNADashTNAData`, {
         "FLAG": "",
-        "FCYR_KEY": fcyr,
-        "COBR_ID": cobrid,
-        "PARTY_KEY": form.PARTY_KEY,
+        "FCYR_KEY": fcyrRef.current,
+        "COBR_ID": cobridRef.current,
+        "PARTY_KEY": formRef.current.PARTY_KEY,
         "PARTYDTL_ID": 0,
         "ORDBK_KEY": "",
         "FROM_DT": dateRange.FROM_DT,
@@ -242,141 +281,178 @@ export default function Tnatable() {
       });
 
       const { data: { STATUS, DATA } } = response;
-      if (STATUS === 0 && Array.isArray(DATA)) {
+
+      if (STATUS === 0 && Array.isArray(DATA) && DATA.length > 0) {
         const formattedData = DATA.map((row, index) => ({
           id: index,
           ...row,
-          ORDER_Date: row.ORDBK_DT ? new Date(row.ORDBK_DT) : null,
-          DLV_DT: row.DLV_DT ? new Date(row.DLV_DT) : null
+          ORDER_Date: row.ORDBK_DT || null,
+          DLV_DT: row.DLV_DT || null
         }));
         setRows(formattedData);
+        setRecordCount(formattedData.length);
       } else {
         setRows([]);
+        setRecordCount(0);
       }
+      setLastFetchTime(new Date());
     } catch (error) {
       console.error("Error fetching order data:", error);
       setRows([]);
+      setRecordCount(0);
     } finally {
       setIsLoading(false);
     }
-  }, [form.PARTY_KEY, fcyr, cobrid, dateRange.FROM_DT, dateRange.To_DT]);
+  }, [dateRange]);
 
 
+  useEffect(() => {
+    const cobridValue = localStorage.getItem('COBR_ID') || '';
+    const fcyrValue = localStorage.getItem('FCYR_KEY') || '';
+    const userRole = localStorage.getItem('userRole');
 
-  const handleGetData = () => {
-    fetchTableData();
-  };
+    cobridRef.current = cobridValue;
+    fcyrRef.current = fcyrValue;
 
-  const handleDateChange = (field) => (event) => {
-    setDateRange(prev => ({
-      ...prev,
-      [field]: event.target.value
-    }));
-  };
+    if (userRole === 'customer') {
+      formRef.current.PARTY_KEY = localStorage.getItem('PARTY_KEY') || "";
+    }
 
-  const handleRowClick = useCallback((event) => {
-    console.log('Row clicked:', event.data);
+    setIsInitialized(true);
   }, []);
 
-const handleRowDoubleClick = useCallback((event) => {
-  const rowData = event.data;
-//   if (rowData && rowData.ORDBK_KEY) {
-    router.push(`/tnapage/tnadetailestable`);
-//   }
-}, [router]);
+  useEffect(() => {
+    if (isInitialized && !hasFetchedRef.current && cobridRef.current && fcyrRef.current) {
+      hasFetchedRef.current = true;
+      fetchTableData();
+    }
+  }, [isInitialized, fetchTableData]);
+
+  const handleGetData = useCallback(() => {
+    fetchTableData();
+  }, [fetchTableData]);
+
+
+  const handleDateChange = useCallback((field, value) => {
+    setDateRange(prev => {
+      if (prev[field] === value) return prev;
+      return { ...prev, [field]: value };
+    });
+  }, []);
+
+  const handleRowDoubleClick = useCallback((event) => {
+    const rowData = event.data;
+    if (rowData?.ORDBK_KEY) {
+      router.push(`/tnapage/tnadetailestable?orderKey=${rowData.ORDBK_KEY}`);
+    } else {
+      router.push(`/tnapage/tnadetailestable`);
+    }
+  }, [router]);
 
   const handleSelectionChanged = useCallback((event) => {
     const selectedNodes = event.api.getSelectedNodes();
     const selectedData = selectedNodes.map(node => node.data);
     setSelectedRows(selectedData);
-    console.log('Selected rows:', selectedData);
   }, []);
 
-  return (
-    <Grid className="p-2 w-full">
-      <Grid className="w-full mx-auto" style={{ maxWidth: '100%' }}>
-        <Paper elevation={2} sx={{ p: 1, mb: 1,ml:2 }}>
-          <Grid container spacing={2} alignItems="center">
-            <Grid size={{ xs: 12 ,md:2.5}} >
-              <TextField
-                fullWidth
-                label="From Date"
-                type="date"
-                value={dateRange.FROM_DT}
-                onChange={handleDateChange('FROM_DT')}
-                InputLabelProps={{ shrink: true }}
-                size="small"
-              />
-            </Grid>
-            <Grid size={{ xs: 12 ,md:2.5}}>
-              <TextField
-                fullWidth
-                label="To Date"
-                type="date"
-                value={dateRange.To_DT}
-                onChange={handleDateChange('To_DT')}
-                InputLabelProps={{ shrink: true }}
-                size="small"
-              />
-            </Grid>
-            <Grid item xs={12} sm={2} md={2}>
-              <Button
-                fullWidth
-                variant="contained"
-                onClick={handleGetData}
-                disabled={isLoading}
-                sx={{ height: '35px' }}
-              >
-                {isLoading ? <CircularProgress size={24} /> : 'Get Data'}
-              </Button>
-            </Grid>
-          </Grid>
-        </Paper>
+  const handleNewOrder = useCallback(() => {
+    router.push("/tnapage/tnadash");
+  }, [router]);
 
-        <Grid style={{ height: 'calc(100vh - 150px)', width: '100%' }}>
-          <ReusableTable
-            columnDefs={columnDefs}
-            rowData={rows}
-            height="100%"
-            theme="ag-theme-quartz"
-            isDarkMode={false}
-            pagination={true}
-            paginationPageSize={100}
-            paginationPageSizeSelector={[ 100, 250, 500, 1000]}
-            quickFilter={true}
-            onRowClick={handleRowClick}
-            onRowDoubleClick={handleRowDoubleClick}
-            onSelectionChanged={handleSelectionChanged}
-            loading={isLoading}
-            enableExport={true}
-            exportSelectedOnly={true}
-            selectedRows={selectedRows}
-            enableCheckbox={true}
-            compactMode={true}
-            rowHeight={24}
-             headerHeight={30}
-            defaultColDef={{
-              resizable: true,
-              sortable: true,
-              filter: true,
-              flex: 1,
-              minWidth: 100
-            }}
-            customGridOptions={{
-              suppressRowClickSelection: true,
-              rowSelection: 'multiple',
-              animateRows: true,
-              enableCellTextSelection: true,
-              ensureDomOrder: true
-            }}
-            exportParams={{
-              suppressTextAsCDATA: true,
-              fileName: 'Order_Details',
-              sheetName: 'Order Details'
-            }}
+
+
+  const NoDataMessage = useMemo(() => () => (
+    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', py: 8 }}>
+      <Alert severity="info" sx={{ maxWidth: 500 }}>
+        <Typography variant="h6" gutterBottom>No Data Available</Typography>
+        <Typography variant="body2">Please select date range and click "Get Data" to load records.</Typography>
+      </Alert>
+    </Box>
+  ), []);
+
+  const defaultColDef = useMemo(() => ({
+    resizable: true,
+    sortable: true,
+    filter: true,
+    flex: 1,
+    minWidth: 100
+  }), []);
+
+  const customGridOptions = useMemo(() => ({
+    suppressRowClickSelection: true,
+    rowSelection: 'multiple',
+    animateRows: true,
+    enableCellTextSelection: true,
+    ensureDomOrder: true,
+    noRowsOverlayComponent: NoDataMessage,
+  }), [NoDataMessage]);
+
+  const exportParams = useMemo(() => ({
+    suppressTextAsCDATA: true,
+    fileName: `TNA_Data_${new Date().toISOString().split('T')[0]}`,
+    sheetName: 'TNA Dashboard Data'
+  }), []);
+
+  if (!isInitialized) {
+    return null;
+  }
+
+  return (
+    <Box sx={{ p: 1, bgcolor: '#f5f5f5', }}>
+      <Grid container spacing={2}>
+        <Grid size={12}>
+          <DateFilters
+            dateRange={dateRange}
+            onDateChange={handleDateChange}
+            isLoading={isLoading}
+            onGetData={handleGetData}
+            onNewOrder={handleNewOrder}
           />
         </Grid>
+
+        <div style={{ height: 'calc(100vh - 150px)', width: '100%' }}>
+          {isLoading ? (
+            <div style={{
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              height: '100%'
+            }}>
+              <CircularProgress />
+            </div>
+          ) : (
+            <ReusableTable
+              key="tna-table"
+              columnDefs={columnDefs}
+              rowData={rows}
+              height="100%"
+              theme="ag-theme-quartz"
+              isDarkMode={false}
+              pagination={true}
+              paginationPageSize={100}
+              paginationPageSizeSelector={[100, 250, 500, 1000]}
+              quickFilter={true}
+              quickFilterPlaceholder="Search orders..."
+              onRowDoubleClick={handleRowDoubleClick}
+              onSelectionChanged={handleSelectionChanged}
+              loading={isLoading}
+              enableExport={true}
+              exportSelectedOnly={true}
+              selectedRows={selectedRows}
+              enableCheckbox={true}
+              compactMode={true}
+              rowHeight={28}
+              headerHeight={36}
+              defaultColDef={defaultColDef}
+              customGridOptions={customGridOptions}
+              exportParams={exportParams}
+            />
+          )}
+
+        </div>
       </Grid>
-    </Grid>
+    </Box>
   );
-}
+});
+
+export default Tnatable;
