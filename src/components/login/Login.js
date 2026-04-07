@@ -71,6 +71,12 @@ const Login = () => {
   const [showCreatePwdLink, setShowCreatePwdLink] = useState(false);
   const [empNameForModal, setEmpNameForModal] = useState('');
   const [mobilePassword, setMobilePassword] = useState('');
+  const [emailOtp, setEmailOtp] = useState('');
+  const [enteredOtp, setEnteredOtp] = useState(['', '', '', '']);
+  const [otpVerified, setOtpVerified] = useState(false);
+  const [showVerifiedIcon, setShowVerifiedIcon] = useState(false);
+  const [otpErrorMsg, setOtpErrorMsg] = useState('');
+  const [employeeEmailForOtp, setEmployeeEmailForOtp] = useState('');
 
   useEffect(() => {
     const checkMobile = async () => {
@@ -252,45 +258,151 @@ const Login = () => {
 
   const openCreatePasswordModal = async () => {
     try {
-      const res1 = await axiosInstance.post('Employee/EmployeeLogin', {
+      const res = await axiosInstance.post('Employee/EmployeeLogin', {
         MOBILE_NO: form.mobile,
         EmpPswd: "",
         FLAG: "",
         EMP_KEY: ""
       });
-      if (res1.data.STATUS !== 0) {
-        toast.error("Could not fetch employee details");
+
+      if (res.data.STATUS !== 0 || !res.data.DATA?.length) {
+        toast.error(res.data.MESSAGE || "Employee not found");
         return;
       }
-      const fetchedEmpKey = res1.data.DATA[0].EMP_KEY || '';
-      setEmpKey(fetchedEmpKey);
 
-      // Step 2: Get employee name with FLAG = "NewRe"
-      const res2 = await axiosInstance.post('Employee/EmployeeLogin', {
-        MOBILE_NO: form.mobile,
-        EmpPswd: "",
-        FLAG: "NewRe",
-        EMP_KEY: fetchedEmpKey
-      });
+      const empData = res.data.DATA[0];
 
-      if (res2.data.STATUS === 0 && res2.data.DATA && res2.data.DATA.length > 0) {
-        setEmpNameForModal(res2.data.DATA[0].EMP_NAME || 'Employee');
-      } else {
-        setEmpNameForModal('Employee');
+      const employeeName = empData.EMP_NAME?.trim() || 'Employee';
+      const employeeEmail = empData.EMAIL?.trim() || '';
+
+      setEmpKey(empData.EMP_KEY || '');
+      setEmpNameForModal(employeeName);
+      setEmployeeEmailForOtp(employeeEmail);;
+
+      if (!employeeEmail) {
+        toast.error("Email not found for this employee. Please contact admin.");
+        return;
       }
 
+      // Step 2: Generate OTP from Backend
+      const otpResponse = await axiosInstance.post('Email/OtpGenerate', {});
+
+      if (otpResponse.data.STATUS !== 0) {
+        toast.error(otpResponse.data.MESSAGE || "Failed to generate OTP");
+        return;
+      }
+
+      // Extract 4-digit OTP
+      let generatedOtpFromApi = null;
+      const rawData = otpResponse.data.DATA || otpResponse.data.Message || "";
+
+      const match = String(rawData).match(/(\d{4})/);
+      if (match && match[0]) {
+        generatedOtpFromApi = match[0];
+      } else if (otpResponse.data.OTP) {
+        generatedOtpFromApi = otpResponse.data.OTP;
+      }
+
+      if (!generatedOtpFromApi) {
+        toast.error("Failed to extract OTP from server");
+        return;
+      }
+
+      // Step 3: Send Email
+      const mailSent = await sendMailOtp(employeeEmail, generatedOtpFromApi);
+
+      if (mailSent) {
+        setEmailOtp(generatedOtpFromApi);
+        toast.success(`OTP sent successfully to ${employeeEmail}`);
+      } else {
+        toast.warning("OTP generated but email could not be sent.");
+        setEmailOtp(generatedOtpFromApi);
+      }
       setCreatePwdOpen(true);
+      setEnteredOtp(['', '', '', '']);
+      setNewPassword('');
+      setConfirmPassword('');
+      setOtpErrorMsg('');
     } catch (err) {
-      console.error("Error loading employee data", err);
-      setCreatePwdOpen(false);
+      toast.error("Something went wrong. Please try again.");
     }
   };
+
+  // Handle individual OTP input change with auto-focus + verification
+  const handleOtpChange = (e, index) => {
+    const value = e.target.value.replace(/[^0-9]/g, '');
+    if (value.length > 1) return;
+
+    const newOtp = [...enteredOtp];
+    newOtp[index] = value;
+    setEnteredOtp(newOtp);
+    setOtpErrorMsg('');
+
+    // Auto focus next input
+    if (value && index < 3) {
+      const nextInput = document.getElementById(`otp-${index + 1}`);
+      nextInput?.focus();
+    }
+
+    // Check verification only when all 4 digits are entered
+    if (index === 3 && value) {
+      const enteredOtpString = [...newOtp.slice(0, 3), value].join('');
+
+      if (enteredOtpString.length === 4) {
+        if (enteredOtpString === emailOtp) {
+          setOtpVerified(true);
+          setShowVerifiedIcon(true);
+          setOtpErrorMsg('');
+        } else {
+          setOtpVerified(false);
+          setShowVerifiedIcon(false);
+          setOtpErrorMsg('Invalid OTP');
+        }
+      }
+    }
+  };
+
+  const handleOtpKeyDown = (e, index) => {
+    if (e.key === 'Backspace') {
+      if (enteredOtp[index]) {
+        const newOtp = [...enteredOtp];
+        newOtp[index] = '';
+        setEnteredOtp(newOtp);
+      } else if (index > 0) {
+        const prevInput = document.getElementById(`otp-${index - 1}`);
+        prevInput?.focus();
+
+        const newOtp = [...enteredOtp];
+        newOtp[index - 1] = '';
+        setEnteredOtp(newOtp);
+      }
+    }
+  };
+
   // Create new password
   const handleCreatePassword = async () => {
+    const enteredOtpString = enteredOtp.join('');
+
+    if (enteredOtpString.length !== 4) {
+      setOtpErrorMsg('Please enter the 4-digit OTP');
+      toast.error('Please enter the 4-digit OTP');
+      return;
+    }
+
+    if (enteredOtpString !== emailOtp) {
+      setOtpErrorMsg('Invalid OTP');
+      toast.error('Invalid OTP. Please try again.');
+      return;
+    }
+
+    // OTP is correct
+    setOtpVerified(true);
+
     if (newPassword !== confirmPassword) {
       toast.error('Passwords do not match');
       return;
     }
+
     if (newPassword.length < 4) {
       toast.error('Password must be at least 4 characters');
       return;
@@ -309,8 +421,10 @@ const Login = () => {
         setCreatePwdOpen(false);
         setNewPassword('');
         setConfirmPassword('');
+        setEnteredOtp(['', '', '', '']);
         setShowCreatePwdLink(false);
         setIsNewUser(false);
+        setOtpVerified(false);
       } else {
         toast.error(res.data.MESSAGE || 'Failed to create password');
       }
@@ -318,6 +432,7 @@ const Login = () => {
       toast.error('Error creating password');
     }
   };
+
   //  Login for User (Employee) with Mobile + Password
   const handleEmployeeLogin = async () => {
     if (!mobilePassword) return toast.error('Enter password');
@@ -435,6 +550,46 @@ const Login = () => {
     setOtpSent(false);
     setGeneratedOtp('');
     setMobilePassword('');
+  };
+
+  const sendMailOtp = async (email, otp) => {
+    if (!email || !email.includes('@')) {
+      toast.error("Invalid email address");
+      return false;
+    };
+
+    if (!otp) {
+      toast.error("OTP is missing");
+      return false;
+    };
+
+    try {
+      const response = await axiosInstance.post('Email/SendEmail', {
+        TASK_ID: 0,
+        COBR_ID: "02",
+        USER_ID: 1,
+        PARTY_KEY: "",
+        ToEmail: [email],
+        Subject: "Your OTP Code for Password Setup",
+        ImgFolderNm: "",
+        Body: `Dear User,<br><br>
+             Your OTP for creating new password is: <strong>${otp}</strong><br><br>
+             This OTP is valid for 10 minutes.<br>
+             Please do not share this OTP with anyone.<br><br>
+             Regards,<br>Pratham Systech Team`,
+        DocAttachments: []
+      });
+
+      if (response.data.STATUS === 0) {
+        return true;
+      } else {
+        toast.error(response.data.MESSAGE || "Failed to send email");
+        return false;
+      }
+    } catch (err) {
+      toast.error("Failed to send OTP email. Please try again.");
+      return false;
+    }
   };
 
   return (
@@ -1525,9 +1680,79 @@ const Login = () => {
         autoHideDuration={3000}
         sx={{ zIndex: 9999 }}
       />
-      <Dialog open={createPwdOpen} onClose={() => setCreatePwdOpen(false)}>
-        <DialogTitle sx={{ textAlign: 'center' }}>New Password for {empNameForModal}</DialogTitle>
+      <Dialog
+        open={createPwdOpen}
+        onClose={() => setCreatePwdOpen(false)}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle sx={{ textAlign: 'center', fontWeight: 600 }}>
+          New Password for {empNameForModal}
+        </DialogTitle>
+
         <DialogContent>
+
+          <Box sx={{ mb: 2, textAlign: 'center' }}>
+            <Typography variant="subtitle1" sx={{ mb: 1 }}>
+              Enter the 4-digit OTP sent to <strong>{employeeEmailForOtp}</strong>
+            </Typography>
+
+            <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1 }}>
+              {[0, 1, 2, 3].map((i) => (
+                <TextField
+                  key={i}
+                  id={`otp-${i}`}
+                  inputProps={{
+                    maxLength: 1,
+                    style: {
+                      textAlign: 'center',
+                      fontSize: '1.2rem',
+                      padding: '10px',
+                      width: '30px',
+                      height: '30px',
+                    },
+                    placeholder: '0',
+                  }}
+                  variant="outlined"
+                  value={enteredOtp[i] || ''}
+                  onChange={(e) => handleOtpChange(e, i)}
+                  onKeyDown={(e) => handleOtpKeyDown(e, i)}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: 2,
+                    },
+                  }}
+                />
+              ))}
+
+              {showVerifiedIcon && (
+                <Box >
+                  <CheckCircleIcon
+                    sx={{
+                      color: '#00C853',
+                      fontSize: 32,
+                      mt: 0.5,
+                      animation: 'pop 0.3s ease'
+                    }}
+                  />
+                </Box>
+              )}
+
+              {otpErrorMsg && (
+                <Typography color="error" variant="body2" sx={{ mt: 1 }}>
+                  <ErrorIcon
+                    sx={{
+                      color: 'red',
+                      fontSize: 32,
+                      mt: 0.5,
+                      animation: 'pop 0.3s ease'
+                    }}
+                  />
+                </Typography>
+              )}
+            </Box>
+          </Box>
+
           <TextField
             autoFocus
             margin="dense"
@@ -1553,6 +1778,7 @@ const Login = () => {
             }}
             sx={{ mt: 1 }}
           />
+
           <TextField
             margin="dense"
             label="Confirm Password"
@@ -1577,11 +1803,25 @@ const Login = () => {
             }}
           />
         </DialogContent>
+
         <DialogActions>
-          <Button onClick={handleCreatePassword} variant="contained" color="primary">
+          <Button
+            onClick={handleCreatePassword}
+            variant="contained"
+            color="primary"
+            disabled={enteredOtp.join('').length !== 4}
+            sx={{ textTransform: 'none' }}
+          >
             Create Password
           </Button>
-          <Button onClick={() => setCreatePwdOpen(false)}>Cancel</Button>
+          <Button
+            variant='outlined'
+            color='error'
+            onClick={() => setCreatePwdOpen(false)}
+            sx={{ textTransform: 'none' }}
+          >
+            Cancel
+          </Button>
         </DialogActions>
       </Dialog>
 
