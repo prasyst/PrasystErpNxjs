@@ -7,11 +7,11 @@ import Tab from '@mui/material/Tab';
 import {
   RiBarcodeLine
 } from 'react-icons/ri';
+import UpdateIcon from '@mui/icons-material/Update';
 import ContentCutIcon from '@mui/icons-material/ContentCut';
 import AltRouteIcon from '@mui/icons-material/AltRoute';
 import AssessmentIcon from '@mui/icons-material/Assessment';
-import AssistantNavigationIcon from '@mui/icons-material/AssistantNavigation';
-
+import DashboardIcon from '@mui/icons-material/Dashboard';
 import { useRecentPaths } from '../../app/context/RecentPathsContext';
 
 function TabPanel(props) {
@@ -54,7 +54,7 @@ export default function TnaComponentPage() {
   const handleCardClick = (path, name) => {
     if (path && path !== '#') {
       addRecentPath(path, name);
-      router.push(path); 
+      router.push(path);
     }
   };
 
@@ -99,8 +99,8 @@ export default function TnaComponentPage() {
       id: 'company',
       name: 'TNA',
       children: [
-        { name: 'TNA DASH', icon: AssistantNavigationIcon, path: '/tnapage/tnatable' }, 
-        { name: 'Update Routing', icon: RiBarcodeLine, path: '/tnapage/updaterouting' },
+        { name: 'TNA DASH', icon: DashboardIcon, path: '/tnapage/tnatable' },
+        { name: 'Update Routing', icon: UpdateIcon, path: '/tnapage/updaterouting' },
         { name: 'Update Rm', icon: AltRouteIcon, path: '/tnapage/updaterm' },
         { name: 'Update Trims', icon: ContentCutIcon, path: '/tnapage/updatetrims' },
         { name: 'TNA Report', icon: AssessmentIcon, path: '/tnapage/tnareport' },

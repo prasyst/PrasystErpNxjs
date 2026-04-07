@@ -7651,7 +7651,7 @@ const handleFormChange = async (field, value) => {
                       }}
                     >
                       <SearchIcon sx={{ fontSize: 24 }} />
-                      <Typography variant="button">Style Code</Typography>
+                      <Typography variant="button">Style</Typography>
                     </Button>
                   </Grid>
                 </Grid>
