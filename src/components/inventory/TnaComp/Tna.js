@@ -1124,8 +1124,8 @@ console.log('filteredRoutingData', filteredRoutingData)
                   </Box>
                   {[
                     'ORDBK_DT', 'DLV_DT', 'KINT_DT', 'DAYS_CAL', 'BAL_QTY', 'PORD_REF',
-                    'STYLE_CODE', 'FGTYPE_NAME', 'FGSHADE_NAME', 'FGPTN_NAME',
-                    'STYSIZE_NAME', 'TNA_KEY'
+                    'STYLE_CODE', 'TYPE_NAME', 'SHADE_NAME', 'FGPTN_NAME',
+                    'SIZE_NAME', 'TNA_KEY'
                   ].map((header, idx) => (
                     <Box
                       key={header}

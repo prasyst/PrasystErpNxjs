@@ -10,7 +10,7 @@ import {
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import axiosInstance from '../../../lib/axios';
-import { useRouter } from 'next/navigation';
+import { useRouter,useSearchParams } from 'next/navigation';
 import RestoreIcon from '@mui/icons-material/Restore';
 import ReusableTable, { getCustomDateFilter } from '../../datatable/ReusableTable';
 
@@ -220,6 +220,8 @@ export default function Tnadashtable() {
     PARTY_NAME: ""
   });
   const [rows, setRows] = useState([]);
+  const searchParams = useSearchParams();
+const ordbkKey = searchParams.get('ordbk_key');
 
    useEffect(() => {
     setIsClient(true);
@@ -312,7 +314,8 @@ export default function Tnadashtable() {
             "PageSize": 25,
             "SearchText": "",
             "PARTY_KEY": form.PARTY_KEY,
-            "PARTYDTL_ID": 0
+            "PARTYDTL_ID": 0,
+            "ORDBK_KEY":ordbkKey
         });
 
       const { data: { STATUS, DATA } } = response;
@@ -330,7 +333,7 @@ export default function Tnadashtable() {
     } finally {
       setIsLoading(false);
     }
-  }, [form.PARTY_KEY]);
+  }, [form.PARTY_KEY,ordbkKey]);
 
   useEffect(() => {
     fetchTableData();
