@@ -55,36 +55,55 @@ const CreateModule = () => {
     const router = useRouter();
     const searchParams = useSearchParams();
     const MOD_ID = searchParams.get('MOD_ID');
+    const modeParam = searchParams.get('mode');
+    
+    // All hooks must be called in the same order every time
     const [currentMOD_ID, setCurrentMOD_ID] = useState(null);
     const [modules, setModules] = useState([]);
     const [filteredModules, setFilteredModules] = useState([]);
     const [loading, setLoading] = useState(false);
     const [searchText, setSearchText] = useState('');
-
+    const [openConfirmDialog, setOpenConfirmDialog] = useState(false);
+    const [Status, setStatus] = useState("1");
+    
+    const MOD_NAMERef = useRef(null);
+    const MOD_DESCRef = useRef(null);
+    
+    // Get localStorage values safely (client-side only)
+    const [CO_ID, setCO_ID] = useState('');
+    const [userRole, setUserRole] = useState('');
+    const [username, setUsername] = useState('');
+    const [PARTY_KEY, setPARTY_KEY] = useState('');
+    const [COBR_ID, setCOBR_ID] = useState('');
+    
     const [form, setForm] = useState({
         SearchByCd: '',
         MOD_ID: '',
         MOD_NAME: '',
         MOD_DESC: '',
         PARENT_ID: '',
-        PARENT_NAME: '', // For display purposes
+        PARENT_NAME: '',
         MOD_ROUTIG: '',
         MOD_TBLNAME: '',
         Status: "1",
     });
 
-    const [openConfirmDialog, setOpenConfirmDialog] = useState(false);
-    const MOD_NAMERef = useRef(null);
-    const MOD_DESCRef = useRef(null);
+    // Initialize mode based on MOD_ID and mode parameter
     const [mode, setMode] = useState(() => {
-        return MOD_ID ? FORM_MODE.read : FORM_MODE.add;
+        if (MOD_ID) {
+            return modeParam === 'edit' ? FORM_MODE.edit : FORM_MODE.read;
+        }
+        return FORM_MODE.add;
     });
-    const [Status, setStatus] = useState("1");
-    const CO_ID = localStorage.getItem('CO_ID');
-    const userRole = localStorage.getItem('userRole');
-    const username = localStorage.getItem('USER_NAME');
-    const PARTY_KEY = localStorage.getItem('PARTY_KEY');
-    const COBR_ID = localStorage.getItem('COBR_ID');
+
+    // Initialize localStorage values after component mounts
+    useEffect(() => {
+        setCO_ID(localStorage.getItem('CO_ID') || '');
+        setUserRole(localStorage.getItem('userRole') || '');
+        setUsername(localStorage.getItem('USER_NAME') || '');
+        setPARTY_KEY(localStorage.getItem('PARTY_KEY') || '');
+        setCOBR_ID(localStorage.getItem('COBR_ID') || '');
+    }, []);
 
     // Fetch all modules for dropdown
     const fetchAllModules = useCallback(async (search = '') => {
@@ -105,24 +124,13 @@ const CreateModule = () => {
 
                 setModules(filteredData);
                 setFilteredModules(filteredData);
-
-                // If we have a PARENT_ID in form, find and set the parent name
-                if (form.PARENT_ID) {
-                    const parentModule = filteredData.find(m => m.MOD_ID.toString() === form.PARENT_ID.toString());
-                    if (parentModule) {
-                        setForm(prev => ({
-                            ...prev,
-                            PARENT_NAME: parentModule.MOD_NAME
-                        }));
-                    }
-                }
             }
         } catch (err) {
             toast.error("Error loading modules");
         } finally {
             setLoading(false);
         }
-    }, [mode, currentMOD_ID, form.PARENT_ID]);
+    }, [mode, currentMOD_ID]);
 
     // Debounced search function
     const handleSearchChange = useCallback((event, value) => {
@@ -142,6 +150,8 @@ const CreateModule = () => {
 
     // Fetch module data for retrieve mode
     const fetchRetriveData = useCallback(async (id, flag = "R", isManualSearch = false) => {
+        if (!id) return;
+        
         try {
             const response = await axiosInstance.post('Module/RetriveWebModules', {
                 FLAG: flag,
@@ -155,24 +165,28 @@ const CreateModule = () => {
 
             const { data: { STATUS, DATA, RESPONSESTATUSCODE, MESSAGE } } = response;
 
-            if (STATUS === 0 && Array.isArray(DATA) && RESPONSESTATUSCODE === 1) {
+            if (STATUS === 0 && Array.isArray(DATA) && RESPONSESTATUSCODE === 1 && DATA.length > 0) {
                 const moduleData = DATA[0];
 
                 // Find parent module name
                 let parentName = '';
                 if (moduleData.PARENT_ID && moduleData.PARENT_ID !== "0") {
-                    const parentResponse = await axiosInstance.post('Module/RetriveWebModules', {
-                        FLAG: "R",
-                        TBLNAME: "WebMODULES",
-                        FLDNAME: "Mod_ID",
-                        ID: moduleData.PARENT_ID,
-                        ORDERBYFLD: "",
-                        CWHAER: "",
-                        CO_ID: CO_ID || ""
-                    });
+                    try {
+                        const parentResponse = await axiosInstance.post('Module/RetriveWebModules', {
+                            FLAG: "R",
+                            TBLNAME: "WebMODULES",
+                            FLDNAME: "Mod_ID",
+                            ID: moduleData.PARENT_ID,
+                            ORDERBYFLD: "",
+                            CWHAER: "",
+                            CO_ID: CO_ID || ""
+                        });
 
-                    if (parentResponse.data.STATUS === 0 && parentResponse.data.DATA) {
-                        parentName = parentResponse.data.DATA[0]?.MOD_NAME || '';
+                        if (parentResponse.data.STATUS === 0 && parentResponse.data.DATA && parentResponse.data.DATA.length > 0) {
+                            parentName = parentResponse.data.DATA[0]?.MOD_NAME || '';
+                        }
+                    } catch (parentErr) {
+                        console.error("Error fetching parent module:", parentErr);
                     }
                 }
 
@@ -189,10 +203,6 @@ const CreateModule = () => {
                 });
                 setStatus(moduleData.STATUS || "0");
                 setCurrentMOD_ID(moduleData.MOD_ID);
-
-                const newParams = new URLSearchParams();
-                newParams.set("MOD_ID", moduleData.MOD_ID);
-                router.replace(`/createmodule?${newParams.toString()}`);
             } else {
                 if (isManualSearch) {
                     toast.error(`${MESSAGE || 'No data found'} for ID: ${id}`);
@@ -200,12 +210,13 @@ const CreateModule = () => {
                 }
             }
         } catch (err) {
+            console.error("Error fetching module data:", err);
             toast.error("Error fetching module data");
         }
-    }, [CO_ID, router]);
+    }, [CO_ID]);
 
     // Reset form function
-    const resetForm = () => {
+    const resetForm = useCallback(() => {
         setForm({
             SearchByCd: '',
             MOD_ID: '',
@@ -220,7 +231,7 @@ const CreateModule = () => {
         setStatus("1");
         setCurrentMOD_ID(null);
         setSearchText('');
-    };
+    }, []);
 
     // Initial load
     useEffect(() => {
@@ -232,17 +243,25 @@ const CreateModule = () => {
         if (MOD_ID) {
             setCurrentMOD_ID(MOD_ID);
             fetchRetriveData(MOD_ID);
-            setMode(FORM_MODE.read);
+            setMode(modeParam === 'edit' ? FORM_MODE.edit : FORM_MODE.read);
         } else {
             resetForm();
             setMode(FORM_MODE.add);
         }
-    }, [MOD_ID, fetchRetriveData]);
+    }, [MOD_ID, modeParam, fetchRetriveData, resetForm]);
 
-    // Refresh modules when mode changes
+    // Update parent name when modules are loaded and PARENT_ID exists
     useEffect(() => {
-        fetchAllModules();
-    }, [mode, currentMOD_ID, fetchAllModules]);
+        if (form.PARENT_ID && modules.length > 0) {
+            const parentModule = modules.find(m => m.MOD_ID?.toString() === form.PARENT_ID?.toString());
+            if (parentModule && parentModule.MOD_NAME !== form.PARENT_NAME) {
+                setForm(prev => ({
+                    ...prev,
+                    PARENT_NAME: parentModule.MOD_NAME
+                }));
+            }
+        }
+    }, [modules, form.PARENT_ID, form.PARENT_NAME]);
 
     const handleChangeStatus = (event) => {
         const updatedStatus = event.target.checked ? "1" : "0";
@@ -314,6 +333,7 @@ const CreateModule = () => {
                 }
             }
         } catch (error) {
+            console.error("Submit error:", error);
             toast.error("Error submitting form: " + (error.response?.data?.MESSAGE || error.message));
         }
     };
@@ -422,12 +442,20 @@ const CreateModule = () => {
                 toast.error(MESSAGE);
             }
         } catch (error) {
+            console.error("Delete error:", error);
             toast.error("Error deleting module");
         }
     };
 
     const handleEdit = () => {
         setMode(FORM_MODE.edit);
+        // Update URL to reflect edit mode
+        const params = new URLSearchParams();
+        if (currentMOD_ID) {
+            params.set("MOD_ID", currentMOD_ID);
+            params.set("mode", "edit");
+            router.replace(`/createmodule?${params.toString()}`);
+        }
     };
 
     const handleExit = () => {
@@ -440,341 +468,340 @@ const CreateModule = () => {
         }
     };
 
+    // Get the selected module object for Autocomplete
+    const selectedModule = modules.find(m => m.MOD_ID?.toString() === form.PARENT_ID?.toString()) || null;
+
     return (
-        <>
-            <Grid
-                sx={{
-                    width: '100%',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    boxSizing: 'border-box',
-                    minHeight: '80vh',
-                    overflowX: 'hidden',
-                    overflowY: 'auto',
-                    p: 2
-                }}
-            >
-                <ToastContainer />
+        <Grid
+            sx={{
+                width: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'center',
+                alignItems: 'center',
+                boxSizing: 'border-box',
+                minHeight: '80vh',
+                overflowX: 'hidden',
+                overflowY: 'auto',
+                p: 2
+            }}
+        >
+            <ToastContainer />
 
-                <Grid container spacing={2} sx={{ maxWidth: '1200px', width: '100%' }}>
-                    <Grid size={{ xs: 12 }}>
-                        <Grid container justifyContent="space-between" alignItems="center" spacing={2}>
-                            <Grid item>
-                                <Button
-                                    variant="contained"
-                                    size="small"
-                                    sx={{ background: 'linear-gradient(290deg, #d4d4d4, #d4d4d4) !important', minWidth: '40px' }}
-                                    disabled={mode !== FORM_MODE.read}
-                                    onClick={handlePrevious}
-                                >
-                                    <KeyboardArrowLeftIcon />
-                                </Button>
-                                <Button
-                                    variant="contained"
-                                    size="small"
-                                    sx={{ background: 'linear-gradient(290deg, #b9d0e9, #e9f2fa) !important', ml: 1, minWidth: '40px' }}
-                                    disabled={mode !== FORM_MODE.read}
-                                    onClick={handleNext}
-                                >
-                                    <NavigateNextIcon />
-                                </Button>
-                            </Grid>
-
-                            <Grid item>
-                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                                    <Typography variant="h6" sx={{ mb: 0 }}>
-                                        Module Master
-                                    </Typography>
-                                    <TbListSearch
-                                        onClick={handleTable}
-                                        style={{
-                                            color: 'rgb(99, 91, 255)',
-                                            width: '32px',
-                                            height: '32px',
-                                            cursor: 'pointer'
-                                        }}
-                                    />
-                                </Box>
-                            </Grid>
-
-                            <Grid item>
-                                <CrudButton
-                                    moduleName="Module"
-                                    mode={mode}
-                                    onAdd={handleAdd}
-                                    onEdit={handleEdit}
-                                    onDelete={handleDelete}
-                                    onExit={handleExit}
-                                    readOnlyMode={mode === FORM_MODE.read}
-                                    onPrevious={handlePrevious}
-                                    onNext={handleNext}
-                                />
-                            </Grid>
+            <Grid container spacing={2} sx={{ maxWidth: '1200px', width: '100%' }}>
+                <Grid size={{ xs: 12 }}>
+                    <Grid container justifyContent="space-between" alignItems="center" spacing={2}>
+                        <Grid>
+                            <Button
+                                variant="contained"
+                                size="small"
+                                sx={{ background: 'linear-gradient(290deg, #d4d4d4, #d4d4d4) !important', minWidth: '40px' }}
+                                disabled={mode !== FORM_MODE.read}
+                                onClick={handlePrevious}
+                            >
+                                <KeyboardArrowLeftIcon />
+                            </Button>
+                            <Button
+                                variant="contained"
+                                size="small"
+                                sx={{ background: 'linear-gradient(290deg, #b9d0e9, #e9f2fa) !important', ml: 1, minWidth: '40px' }}
+                                disabled={mode !== FORM_MODE.read}
+                                onClick={handleNext}
+                            >
+                                <NavigateNextIcon />
+                            </Button>
                         </Grid>
-                    </Grid>
 
-                    {/* Form Fields */}
-                    <Grid size={{ xs: 12 }}>
-                        <Grid container spacing={2}>
-                            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-                                <Autocomplete
-                                    id="parent-module-autocomplete"
-                                    options={filteredModules}
-                                    loading={loading}
-                                    value={filteredModules.find(m => m.MOD_ID?.toString() === form.PARENT_ID) || null}
-                                    onChange={handleParentChange}
-                                    onInputChange={handleSearchChange}
-                                    getOptionLabel={(option) => `${option.MOD_NAME} (${option.MOD_ID})`}
-                                    isOptionEqualToValue={(option, value) => option.MOD_ID === value.MOD_ID}
-                                    disabled={mode === FORM_MODE.read}
-                                    renderInput={(params) => (
-                                        <TextField
-                                            {...params}
-                                            label="Parent Module"
-                                            variant="filled"
-                                            sx={textInputSx}
-                                            InputProps={{
-                                                ...params.InputProps,
-
-                                                endAdornment: (
-                                                    <>
-                                                        {loading ? <CircularProgress color="inherit" size={20} /> : null}
-                                                        {params.InputProps.endAdornment}
-                                                    </>
-                                                ),
-                                            }}
-                                            placeholder="Type to search modules..."
-                                        />
-                                    )}
-                                    renderOption={(props, option) => (
-                                        <li {...props}>
-                                            <Box>
-                                                <Typography variant="body1">
-                                                    {option.MOD_NAME}
-                                                </Typography>
-
-                                            </Box>
-                                        </li>
-                                    )}
-                                    noOptionsText="No modules found"
-                                />
-                            </Grid>
-
-                            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-                                <TextField
-                                    label={<span>Module Name<span style={{ color: "red" }}>*</span></span>}
-                                    inputRef={MOD_NAMERef}
-                                    variant="filled"
-                                    fullWidth
-                                    onChange={handleInputChange}
-                                    value={form.MOD_NAME}
-                                    name="MOD_NAME"
-                                    disabled={mode === FORM_MODE.read}
-                                    sx={textInputSx}
-                                    inputProps={{
-                                        style: {
-                                            padding: '6px 0px',
-                                            marginTop: '6px',
-                                            fontSize: '12px'
-                                        },
+                        <Grid>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                                <Typography variant="h6" sx={{ mb: 0 }}>
+                                    Module Master
+                                </Typography>
+                                <TbListSearch
+                                    onClick={handleTable}
+                                    style={{
+                                        color: 'rgb(99, 91, 255)',
+                                        width: '32px',
+                                        height: '32px',
+                                        cursor: 'pointer'
                                     }}
                                 />
-                            </Grid>
-
-                            {/* Menu Name */}
-                            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-                                <TextField
-                                    label="Menu Name"
-                                    variant="filled"
-                                    fullWidth
-                                    onChange={handleInputChange}
-                                    value={form.MOD_NAME}
-                                    name="MENU_NAME"
-                                    disabled={mode === FORM_MODE.read}
-                                    sx={textInputSx}
-                                    inputProps={{
-                                        style: {
-                                            padding: '6px 0px',
-                                            marginTop: '6px',
-                                            fontSize: '12px'
-                                        },
-                                    }}
-                                />
-                            </Grid>
-
-                            {/* Module Description */}
-                            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-                                <TextField
-                                    label="Module Description"
-                                    inputRef={MOD_DESCRef}
-                                    variant="filled"
-                                    fullWidth
-                                    onChange={handleInputChange}
-                                    value={form.MOD_DESC}
-                                    name="MOD_DESC"
-                                    disabled={mode === FORM_MODE.read}
-                                    sx={textInputSx}
-                                    inputProps={{
-                                        style: {
-                                            padding: '6px 0px',
-                                            marginTop: '6px',
-                                            fontSize: '12px'
-                                        },
-                                    }}
-                                />
-                            </Grid>
-
-                            {/* Module Routing */}
-                            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-                                <TextField
-                                    label="Module Routing"
-                                    variant="filled"
-                                    fullWidth
-                                    onChange={handleInputChange}
-                                    value={form.MOD_ROUTIG}
-                                    name="MOD_ROUTIG"
-                                    disabled={mode === FORM_MODE.read}
-                                    sx={textInputSx}
-                                    placeholder="/path/to/module"
-                                    inputProps={{
-                                        style: {
-                                            padding: '6px 0px',
-                                            marginTop: '6px',
-                                            fontSize: '12px'
-                                        },
-                                    }}
-                                />
-                            </Grid>
-
-                            {/* Table Name */}
-                            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-                                <TextField
-                                    label="Table Name"
-                                    variant="filled"
-                                    fullWidth
-                                    onChange={handleInputChange}
-                                    value={form.MOD_TBLNAME}
-                                    name="MOD_TBLNAME"
-                                    disabled={mode === FORM_MODE.read}
-                                    sx={textInputSx}
-                                    inputProps={{
-                                        style: {
-                                            padding: '6px 0px',
-                                            marginTop: '6px',
-                                            fontSize: '12px'
-                                        },
-                                    }}
-                                />
-                            </Grid>
-
-                            {/* Status Checkbox */}
-                            <Grid size={{ xs: 12, sm: 6, md: 4 }} display="flex" alignItems="center">
-                                <FormControlLabel
-                                    control={
-                                        <Checkbox
-                                            disabled={mode === FORM_MODE.read}
-                                            checked={Status === "1"}
-                                            onChange={handleChangeStatus}
-                                            sx={{
-                                                '&.Mui-checked': {
-                                                    color: '#39ace2',
-                                                }
-                                            }}
-                                        />
-                                    }
-                                    label="Active"
-                                />
-                            </Grid>
+                            </Box>
                         </Grid>
-                    </Grid>
 
-                    {/* Action Buttons */}
-                    <Grid item size={{ xs: 12 }} sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
-                        {mode === FORM_MODE.read && (
-                            <>
-                                <Button
-                                    variant="contained"
-                                    disabled
-                                    sx={{ mr: 1 }}
-                                >
-                                    Submit
-                                </Button>
-                                <Button
-                                    variant="contained"
-                                    disabled
-                                >
-                                    Cancel
-                                </Button>
-                            </>
-                        )}
-                        {(mode === FORM_MODE.edit || mode === FORM_MODE.add) && (
-                            <>
-                                <Button
-                                    variant="contained"
-                                    onClick={handleSubmit}
-                                    sx={{
-                                        backgroundColor: '#635bff',
-                                        color: '#fff',
-                                        mr: 1,
-                                        '&:hover': { backgroundColor: '#4f4be0' }
-                                    }}
-                                >
-                                    Submit
-                                </Button>
-                                <Button
-                                    variant="contained"
-                                    onClick={handleCancel}
-                                    sx={{
-                                        backgroundColor: '#635bff',
-                                        color: '#fff',
-                                        '&:hover': { backgroundColor: '#4f4be0' }
-                                    }}
-                                >
-                                    Cancel
-                                </Button>
-                            </>
-                        )}
+                        <Grid>
+                            <CrudButton
+                                moduleName="Module"
+                                mode={mode}
+                                onAdd={handleAdd}
+                                onEdit={handleEdit}
+                                onDelete={handleDelete}
+                                onExit={handleExit}
+                                readOnlyMode={mode === FORM_MODE.read}
+                                onPrevious={handlePrevious}
+                                onNext={handleNext}
+                            />
+                        </Grid>
                     </Grid>
                 </Grid>
 
-                {/* Delete Confirmation Dialog */}
-                <Dialog
-                    open={openConfirmDialog}
-                    onClose={handleCloseConfirmDialog}
-                >
-                    <DialogTitle>Confirm Deletion</DialogTitle>
-                    <DialogContent>
-                        <DialogContentText>
-                            Are you sure you want to delete this module?
-                        </DialogContentText>
-                    </DialogContent>
-                    <DialogActions>
-                        <Button size='small'
-                            sx={{
-                                backgroundColor: '#b82e2e',
-                                color: 'white',
-                                '&:hover': { backgroundColor: '#b82e2e' },
-                            }}
-                            onClick={handleConfirmDelete}
-                        >
-                            Yes
-                        </Button>
-                        <Button size='small'
-                            sx={{
-                                backgroundColor: '#1ea113',
-                                color: 'white',
-                                '&:hover': { backgroundColor: '#1ea113' },
-                            }}
-                            onClick={handleCloseConfirmDialog}
-                        >
-                            No
-                        </Button>
-                    </DialogActions>
-                </Dialog>
+                {/* Form Fields */}
+                <Grid size={{ xs: 12 }}>
+                    <Grid container spacing={2}>
+                        <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+                            <Autocomplete
+                                id="parent-module-autocomplete"
+                                options={filteredModules}
+                                loading={loading}
+                                value={selectedModule}
+                                onChange={handleParentChange}
+                                onInputChange={handleSearchChange}
+                                getOptionLabel={(option) => `${option.MOD_NAME} (${option.MOD_ID})`}
+                                isOptionEqualToValue={(option, value) => option.MOD_ID === value?.MOD_ID}
+                                disabled={mode === FORM_MODE.read}
+                                renderInput={(params) => (
+                                    <TextField
+                                        {...params}
+                                        label="Parent Module"
+                                        variant="filled"
+                                        sx={textInputSx}
+                                        InputProps={{
+                                            ...params.InputProps,
+                                            endAdornment: (
+                                                <>
+                                                    {loading ? <CircularProgress color="inherit" size={20} /> : null}
+                                                    {params.InputProps.endAdornment}
+                                                </>
+                                            ),
+                                        }}
+                                        placeholder="Type to search modules..."
+                                    />
+                                )}
+                                renderOption={(props, option) => (
+                                    <li {...props}>
+                                        <Box>
+                                            <Typography variant="body1">
+                                                {option.MOD_NAME}
+                                            </Typography>
+                                        </Box>
+                                    </li>
+                                )}
+                                noOptionsText="No modules found"
+                            />
+                        </Grid>
+
+                        <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+                            <TextField
+                                label={<span>Module Name<span style={{ color: "red" }}>*</span></span>}
+                                inputRef={MOD_NAMERef}
+                                variant="filled"
+                                fullWidth
+                                onChange={handleInputChange}
+                                value={form.MOD_NAME}
+                                name="MOD_NAME"
+                                disabled={mode === FORM_MODE.read}
+                                sx={textInputSx}
+                                inputProps={{
+                                    style: {
+                                        padding: '6px 0px',
+                                        marginTop: '6px',
+                                        fontSize: '12px'
+                                    },
+                                }}
+                            />
+                        </Grid>
+
+                        {/* Menu Name */}
+                        <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+                            <TextField
+                                label="Menu Name"
+                                variant="filled"
+                                fullWidth
+                                onChange={handleInputChange}
+                                value={form.MOD_NAME}
+                                name="MENU_NAME"
+                                disabled={mode === FORM_MODE.read}
+                                sx={textInputSx}
+                                inputProps={{
+                                    style: {
+                                        padding: '6px 0px',
+                                        marginTop: '6px',
+                                        fontSize: '12px'
+                                    },
+                                }}
+                            />
+                        </Grid>
+
+                        {/* Module Description */}
+                        <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+                            <TextField
+                                label="Module Description"
+                                inputRef={MOD_DESCRef}
+                                variant="filled"
+                                fullWidth
+                                onChange={handleInputChange}
+                                value={form.MOD_DESC}
+                                name="MOD_DESC"
+                                disabled={mode === FORM_MODE.read}
+                                sx={textInputSx}
+                                inputProps={{
+                                    style: {
+                                        padding: '6px 0px',
+                                        marginTop: '6px',
+                                        fontSize: '12px'
+                                    },
+                                }}
+                            />
+                        </Grid>
+
+                        {/* Module Routing */}
+                        <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+                            <TextField
+                                label="Module Routing"
+                                variant="filled"
+                                fullWidth
+                                onChange={handleInputChange}
+                                value={form.MOD_ROUTIG}
+                                name="MOD_ROUTIG"
+                                disabled={mode === FORM_MODE.read}
+                                sx={textInputSx}
+                                placeholder="/path/to/module"
+                                inputProps={{
+                                    style: {
+                                        padding: '6px 0px',
+                                        marginTop: '6px',
+                                        fontSize: '12px'
+                                    },
+                                }}
+                            />
+                        </Grid>
+
+                        {/* Table Name */}
+                        <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+                            <TextField
+                                label="Table Name"
+                                variant="filled"
+                                fullWidth
+                                onChange={handleInputChange}
+                                value={form.MOD_TBLNAME}
+                                name="MOD_TBLNAME"
+                                disabled={mode === FORM_MODE.read}
+                                sx={textInputSx}
+                                inputProps={{
+                                    style: {
+                                        padding: '6px 0px',
+                                        marginTop: '6px',
+                                        fontSize: '12px'
+                                    },
+                                }}
+                            />
+                        </Grid>
+
+                        {/* Status Checkbox */}
+                        <Grid size={{ xs: 12, sm: 6, md: 4 }} display="flex" alignItems="center">
+                            <FormControlLabel
+                                control={
+                                    <Checkbox
+                                        disabled={mode === FORM_MODE.read}
+                                        checked={Status === "1"}
+                                        onChange={handleChangeStatus}
+                                        sx={{
+                                            '&.Mui-checked': {
+                                                color: '#39ace2',
+                                            }
+                                        }}
+                                    />
+                                }
+                                label="Active"
+                            />
+                        </Grid>
+                    </Grid>
+                </Grid>
+
+                {/* Action Buttons */}
+                <Grid size={{ xs: 12 }} sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
+                    {mode === FORM_MODE.read && (
+                        <>
+                            <Button
+                                variant="contained"
+                                disabled
+                                sx={{ mr: 1 }}
+                            >
+                                Submit
+                            </Button>
+                            <Button
+                                variant="contained"
+                                disabled
+                            >
+                                Cancel
+                            </Button>
+                        </>
+                    )}
+                    {(mode === FORM_MODE.edit || mode === FORM_MODE.add) && (
+                        <>
+                            <Button
+                                variant="contained"
+                                onClick={handleSubmit}
+                                sx={{
+                                    backgroundColor: '#635bff',
+                                    color: '#fff',
+                                    mr: 1,
+                                    '&:hover': { backgroundColor: '#4f4be0' }
+                                }}
+                            >
+                                Submit
+                            </Button>
+                            <Button
+                                variant="contained"
+                                onClick={handleCancel}
+                                sx={{
+                                    backgroundColor: '#635bff',
+                                    color: '#fff',
+                                    '&:hover': { backgroundColor: '#4f4be0' }
+                                }}
+                            >
+                                Cancel
+                            </Button>
+                        </>
+                    )}
+                </Grid>
             </Grid>
-        </>
+
+            {/* Delete Confirmation Dialog */}
+            <Dialog
+                open={openConfirmDialog}
+                onClose={handleCloseConfirmDialog}
+            >
+                <DialogTitle>Confirm Deletion</DialogTitle>
+                <DialogContent>
+                    <DialogContentText>
+                        Are you sure you want to delete this module?
+                    </DialogContentText>
+                </DialogContent>
+                <DialogActions>
+                    <Button size='small'
+                        sx={{
+                            backgroundColor: '#b82e2e',
+                            color: 'white',
+                            '&:hover': { backgroundColor: '#b82e2e' },
+                        }}
+                        onClick={handleConfirmDelete}
+                    >
+                        Yes
+                    </Button>
+                    <Button size='small'
+                        sx={{
+                            backgroundColor: '#1ea113',
+                            color: 'white',
+                            '&:hover': { backgroundColor: '#1ea113' },
+                        }}
+                        onClick={handleCloseConfirmDialog}
+                    >
+                        No
+                    </Button>
+                </DialogActions>
+            </Dialog>
+        </Grid>
     );
 };
 

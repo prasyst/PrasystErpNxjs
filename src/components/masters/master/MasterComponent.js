@@ -447,7 +447,6 @@
 
 
 
-
 'use client';
 import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
@@ -532,7 +531,6 @@ export default function MasterPage() {
     }
   }, []);
 
-
   useEffect(() => {
     const fetchMenuItems = async () => {
       const effectiveUserId = userId || "1";
@@ -576,19 +574,23 @@ export default function MasterPage() {
           setMenuData([]);
         }
       } catch (error) {
+        console.error("Error fetching menu items:", error);
         setMenuData([]);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchMenuItems();
+    if (userId) {
+      fetchMenuItems();
+    }
   }, [userId]);
 
   const buildMenuTree = (data, allData, mastersId) => {
     const itemMap = {};
     const rootItems = [];
     const parentChildMap = {};
+    
     data.forEach(item => {
       if (!item.MOD_ID) return;
 
@@ -598,17 +600,22 @@ export default function MasterPage() {
         item.DELETE_PRIV === "1" ||
         item.SELECT_PRIV === "1";
 
-
       const isTopLevelTab = item.PARENT_ID === mastersId;
 
       if (hasPermission || isTopLevelTab) {
         const moduleName = item.MOD_DESC || item.MOD_NAME;
         const parentId = item.PARENT_ID === "0" || !item.PARENT_ID ? null : item.PARENT_ID;
 
+        // Ensure path starts with a forward slash if it doesn't already
+        let path = item.MOD_ROUTIG || '#';
+        if (path !== '#' && !path.startsWith('/')) {
+          path = '/' + path;
+        }
+
         itemMap[item.MOD_ID] = {
           id: item.MOD_ID,
           name: moduleName,
-          path: item.MOD_ROUTIG || '#',
+          path: path,
           parentId: parentId,
           children: [],
           permissions: {
@@ -643,10 +650,16 @@ export default function MasterPage() {
       if (!itemMap[parentId]) {
         const parentItem = allData.find(item => item.MOD_ID.toString() === parentId);
         if (parentItem) {
+          // Ensure path starts with forward slash
+          let path = parentItem.MOD_ROUTIG || '#';
+          if (path !== '#' && !path.startsWith('/')) {
+            path = '/' + path;
+          }
+          
           itemMap[parentId] = {
             id: parentItem.MOD_ID,
             name: parentItem.MOD_DESC || parentItem.MOD_NAME,
-            path: parentItem.MOD_ROUTIG || '#',
+            path: path,
             parentId: mastersId,
             children: [],
             permissions: {
@@ -770,7 +783,8 @@ export default function MasterPage() {
   const handleCardClick = (path, name) => {
     if (path && path !== '#') {
       addRecentPath(path, name);
-      window.location.href = path;
+      // Use router.push instead of window.location.href for client-side navigation
+      router.push(path);
     }
   };
 
@@ -778,10 +792,14 @@ export default function MasterPage() {
     if (!isClient || loading) return;
 
     const tabParam = searchParams.get('activeTab') || '';
-    const index = menuData.findIndex(tab => tab.id.toString() === tabParam);
-    if (tabParam && index !== -1 && index !== activeTab) {
-      setActiveTab(index);
-    } else if (!tabParam && menuData.length > 0) {
+    if (tabParam && menuData.length > 0) {
+      const index = menuData.findIndex(tab => tab.id.toString() === tabParam);
+      if (index !== -1 && index !== activeTab) {
+        setActiveTab(index);
+      } else if (index === -1 && activeTab === -1 && menuData.length > 0) {
+        setActiveTab(0);
+      }
+    } else if (!tabParam && menuData.length > 0 && activeTab === -1) {
       setActiveTab(0);
     }
   }, [searchParams, isClient, loading, menuData, activeTab]);

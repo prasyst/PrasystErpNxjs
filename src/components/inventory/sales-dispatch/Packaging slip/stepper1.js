@@ -11,6 +11,7 @@ import AutoVibe from '../../../../GlobalFunction/CustomAutoComplete/AutoVibe';
 import axiosInstance from '../../../../lib/axios';
 import { getFormMode } from '../../../../lib/helpers';
 import { toast, ToastContainer } from 'react-toastify';
+import PickOrderModal from './PickOrderModal';
 
 const FORM_MODE = getFormMode();
 
@@ -18,6 +19,7 @@ const Stepper1 = ({
   formData,
   setFormData,
   isFormDisabled,
+  onPickOrderConfirm,
   mode,
   onSubmit,
   onCancel,
@@ -61,6 +63,8 @@ setDetailMode,
   const [salesperson1Options, setSalesperson1Options] = useState([]);
   const [salesperson2Options, setSalesperson2Options] = useState([]);
   const [consigneeOptions, setConsigneeOptions] = useState([]);
+  const [pickOrderModalOpen, setPickOrderModalOpen] = useState(false);
+const [selectedPickOrderItems, setSelectedPickOrderItems] = useState([]);
   const [seasonOptions, setSeasonOptions] = useState([]);
   const [transporterOptions, setTransporterOptions] = useState([]);
   const [shippingPartyOptions, setShippingPartyOptions] = useState([]);
@@ -392,6 +396,15 @@ const handleSeriesChange = async (e) => {
       return [];
     }
   };
+
+const handlePickOrderConfirm = (selectedItems) => {
+  console.log('Selected items from PickOrder:', selectedItems);
+  // Pass selected items to parent component
+  if (onPickOrderConfirm) {
+    onPickOrderConfirm(selectedItems);
+  }
+  setPickOrderModalOpen(false);
+};
 
   // Fetch Transporter Data
   const fetchTransporterData = async () => {
@@ -2354,12 +2367,42 @@ const handleSeriesChange = async (e) => {
                   label={<Typography sx={{ fontSize: '12px', whiteSpace: 'nowrap' }}>Pur RT</Typography>}
                 />
               </RadioGroup>
+
+              <Button
+  variant="contained"
+  size="small"
+  onClick={() => setPickOrderModalOpen(true)}
+  disabled={isFormDisabled || !formData.Party || !formData.Branch}
+  sx={{
+    backgroundColor: '#4caf50',
+    color: 'white',
+    textTransform: 'none',
+    height: '36px',
+    marginLeft: '16px',
+    '&:hover': {
+      backgroundColor: '#45a049',
+    },
+    '&:disabled': {
+      backgroundColor: '#cccccc',
+      color: '#666666'
+    }
+  }}
+>
+  Pick from Order
+</Button>
             </Box>
           </Grid>
 
           
         </Grid>
       </Box>
+    <PickOrderModal
+  open={pickOrderModalOpen}
+  onClose={() => setPickOrderModalOpen(false)}
+  onConfirm={handlePickOrderConfirm}
+  formData={formData}
+  companyConfig={companyConfig}
+/>
     </Box>
   )
 }
