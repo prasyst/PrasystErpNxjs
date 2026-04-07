@@ -14,22 +14,63 @@ import { useRouter } from 'next/navigation';
 import RestoreIcon from '@mui/icons-material/Restore';
 import ReusableTable, { getCustomDateFilter } from '../../datatable/ReusableTable';
 
-const columnDefs = [
-//   {
-//     headerName: "Select",
-//     width: 50,
-//     maxWidth: 40,
-//     checkboxSelection: true,
-//     headerCheckboxSelection: true,
-//     // pinned: 'left',
-//     lockPosition: true,
-//     suppressMenu: true,
-//     sortable: false,
-//     filter: false,
-//     resizable: false,
 
-//     headerClass: 'checkbox-header'
-//   },
+
+
+const getStatusChip = (status) => {
+  if (!status) return <span style={{ color: '#999' }}>-</span>;
+
+  const statusColorMap = {
+    'Yes': { bg: '#4caf50', text: '#ffffff' },
+    'Pending': { bg: '#ff9800', text: '#ffffff' },
+    'No': { bg: '#f44336', text: '#ffffff' },
+    'In Progress': { bg: '#2196f3', text: '#ffffff' },
+    'Cancelled': { bg: '#9e9e9e', text: '#ffffff' }
+  };
+
+  const colors = statusColorMap[status] || { bg: '#757575', text: '#ffffff' };
+
+  return (
+    <div style={{ display: 'flex', alignItems: 'center',justifyContent: 'center', height: '100%', }}>
+      <span style={{
+        backgroundColor: colors.bg,
+        color: colors.text,
+        padding: '0px 6px',
+        borderRadius: '12px',
+        fontSize: '10px',
+        fontWeight: 600,
+        display: 'inline-block',
+        textAlign: 'center',
+        whiteSpace: 'nowrap',
+        letterSpacing: '0.3px',
+        height: '22px',
+        lineHeight: '20px',
+         width: '80px',
+         overflow: 'hidden',
+         textOverflow: 'ellipsis'
+      }}>
+        {status}
+      </span>
+    </div>
+  );
+};
+
+const columnDefs = [
+  {
+    headerName: "Select",
+    width: 50,
+    maxWidth: 40,
+    checkboxSelection: true,
+    headerCheckboxSelection: true,
+    // pinned: 'left',
+    lockPosition: true,
+    suppressMenu: true,
+    sortable: false,
+    filter: false,
+    resizable: false,
+
+    headerClass: 'checkbox-header'
+  },
   {
     field: "ORDBK_KEY",
     headerName: "ORDBK_KEY",
@@ -44,7 +85,7 @@ const columnDefs = [
  
   {
     field: "FGPRD_NAME",
-    headerName: "FGPRD_NAME",
+    headerName: "PRODUCT NAME",
     width: 160,
     filter: 'agSetColumnFilter',
     filterParams: {
@@ -54,7 +95,7 @@ const columnDefs = [
   },
   {
     field: "STYSIZE_NAME",
-    headerName: "STYSIZE_NAME",
+    headerName: "SIZE NAME",
     width: 160,
     filter: 'agSetColumnFilter',
     filterParams: {
@@ -106,7 +147,7 @@ const columnDefs = [
   },
   {
     field: "FGSTYLE_CODE",
-    headerName: "FGSTYLE_CODE",
+    headerName: "STYLE CODE",
     width: 230,
     filter: 'agSetColumnFilter',
     filterParams: {
@@ -114,16 +155,7 @@ const columnDefs = [
     },
     sortable: true
   },
-  {
-    field: "TOTALCOUNT",
-    headerName: "TOTALCOUNT",
-    width: 140,
-    filter: 'agSetColumnFilter',
-    filterParams: {
-      defaultToNothingSelected: true, 
-    },
-    sortable: true
-  },
+  
   {
     field: "DAYS_CAL",
     headerName: "DAYS_CAL",
@@ -139,9 +171,15 @@ const columnDefs = [
   },
   {
     field: "TNA_ST",
-    headerName: "TNA_STATUS",
+    headerName: "TNA STATUS",
     width: 130,
-    filter: 'agNumberColumnFilter',
+     filter: 'agSetColumnFilter',
+    filterParams: {
+      defaultToNothingSelected: true, 
+    },
+    cellRenderer: (params) => getStatusChip(params.value),
+    sortable: true,
+     cellStyle: { display: 'flex', alignItems: 'center' }
   },
   {
     field: "AMT",
@@ -459,7 +497,7 @@ export default function Tnadashtable() {
           </Box>
         </Box>
 
-        {/* AG Grid Table */}
+
         <div style={{ height: 'calc(100vh - 150px)', width: '100%' }}>
           {isLoading ? (
             <div style={{
@@ -490,7 +528,8 @@ export default function Tnadashtable() {
               selectedRows={selectedRows}
               enableCheckbox={true}
               compactMode={true}
-              rowHeight={24}
+              rowHeight={28}
+              headerHeight={36}
               defaultColDef={{
                 resizable: true,
                 sortable: true,

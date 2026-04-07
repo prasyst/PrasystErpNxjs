@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { Box, Typography, Card, CardContent, Grid, styled, } from '@mui/material';
+import { Box, Typography, Card, CardContent, Grid, styled } from '@mui/material';
 import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
 import {
@@ -38,7 +38,7 @@ export default function TnaComponentPage() {
   const [isClient, setIsClient] = useState(false);
   const searchParams = useSearchParams();
   const router = useRouter();
-  const { recentPaths, addRecentPath, removeRecentPath, clearRecentPaths } = useRecentPaths(); // Use the context
+  const { addRecentPath } = useRecentPaths();
 
   useEffect(() => {
     setIsClient(true);
@@ -54,7 +54,7 @@ export default function TnaComponentPage() {
   const handleCardClick = (path, name) => {
     if (path && path !== '#') {
       addRecentPath(path, name);
-      window.location.href = path;
+      router.push(path); 
     }
   };
 
@@ -98,15 +98,14 @@ export default function TnaComponentPage() {
     {
       id: 'company',
       name: 'TNA',
-       children: [
-     { name: 'TNADASH', icon: AssistantNavigationIcon, path: '/tnapage/tnatable/' },
-      { name: 'Update Routing', icon: RiBarcodeLine, path: '/tnapage/updaterouting/' },
-      { name: 'Update Rm', icon: AltRouteIcon, path: '/tnapage/updaterm/' },
-      { name: 'Update Trims', icon: ContentCutIcon, path: '/tnapage/updatetrims/' },
-      { name: 'TNA Report', icon: AssessmentIcon, path: '/tnapage/tnareport/' },
-    ],
+      children: [
+        { name: 'TNA DASH', icon: AssistantNavigationIcon, path: '/tnapage/tnatable' }, 
+        { name: 'Update Routing', icon: RiBarcodeLine, path: '/tnapage/updaterouting' },
+        { name: 'Update Rm', icon: AltRouteIcon, path: '/tnapage/updaterm' },
+        { name: 'Update Trims', icon: ContentCutIcon, path: '/tnapage/updatetrims' },
+        { name: 'TNA Report', icon: AssessmentIcon, path: '/tnapage/tnareport' },
+      ],
     },
-
   ];
 
   return (
@@ -156,34 +155,6 @@ export default function TnaComponentPage() {
             <TabPanel key={tab.id} value={activeTab} index={index}>
               <Grid container spacing={2}>
                 {tab.children?.map((item, itemIndex) => {
-                  if (item.isHeader) {
-                    return (
-                      <Grid size={{ xs: 12 }} key={`header-${itemIndex}`} sx={{ mt: 1, mb: 2 }}>
-                        <Typography
-                          variant="h6"
-                          sx={{
-                            fontWeight: 700,
-                            color: '#635bff',
-                            fontSize: '1.1rem',
-                            display: 'block',
-                            marginTop: '1px',
-                            marginBottom: '10px',
-                          }}
-                        >
-                          {item.name}
-                        </Typography>
-                        <Box
-                          sx={{
-                            height: 2,
-                            width: 15000,
-                            backgroundColor: '#635bff',
-                            borderRadius: 2,
-                            mt: 1, mr: 5
-                          }}
-                        />
-                      </Grid>
-                    );
-                  }
                   const ItemIcon = item.icon;
                   return (
                     <Grid size={{ xs: 6, sm: 3, md: 3, lg: 1.5 }} key={itemIndex}>
@@ -191,7 +162,6 @@ export default function TnaComponentPage() {
                         sx={{
                           cursor: item.path !== '#' ? 'pointer' : 'default',
                           transition: 'all 0.3s ease',
-                          // width: 150,
                           height: '100%',
                           background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
                           border: '1px solid #e0e0e0',
@@ -203,7 +173,7 @@ export default function TnaComponentPage() {
                             color: 'white',
                           } : {},
                         }}
-                        onClick={() => item.path !== '#' && handleCardClick(item.path, item.name)}
+                        onClick={() => handleCardClick(item.path, item.name)}
                       >
                         <CardContent sx={{
                           textAlign: 'center',
