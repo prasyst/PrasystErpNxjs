@@ -239,7 +239,7 @@ const Login = () => {
     }
   };
 
-  const handleVerifyOtp = () => {
+ const handleVerifyOtp = async () => {
     if (!otp || otp.length !== 6) {
       toast.info("Please enter a valid 6-digit otp.");
     }
@@ -249,6 +249,7 @@ const Login = () => {
       localStorage.setItem('FCYR_KEY', lastTwoDigits);
       localStorage.setItem('authenticated', 'true');
       localStorage.setItem('userRole', role);
+      await fetchAndSaveUserParams();
       setShowLogin(false);
       setModalOpen(true);
     } else {
@@ -362,6 +363,78 @@ const Login = () => {
     }
   };
 
+  // Add this function to fetch and save User Parameters
+const fetchAndSaveUserParams = async () => {
+  try {
+    const response = await axiosInstance.post('USERPARAM/RetriveUserParam', {
+      USERPM_ID: 0,
+      USERPM_NAME: "",
+      REMARK: "",
+      FLAG: ""
+    });
+    
+    if (response.data.STATUS === 0 && response.data.DATA) {
+      // Save the entire DATA array to localStorage
+      localStorage.setItem('USER_PARAMS', JSON.stringify(response.data.DATA));
+      
+      // Also save individual parameters for easy access
+      const userParamsMap = {};
+      response.data.DATA.forEach(param => {
+        userParamsMap[param.USERPM_NAME] = {
+          USERPM_ID: param.USERPM_ID,
+          REMARK: param.REMARK,
+          SECPM_ID: param.SECPM_ID,
+          SECPM_NAME: param.SECPM_NAME,
+          COBR_ID: param.COBR_ID,
+          NAME: param.NAME
+        };
+      });
+      localStorage.setItem('USER_PARAMS_MAP', JSON.stringify(userParamsMap));
+      
+      console.log('User parameters saved successfully:', response.data.DATA);
+      return response.data.DATA;
+    } else {
+      console.error('Failed to fetch user parameters:', response.data.MESSAGE);
+      return [];
+    }
+  } catch (err) {
+    console.error('Error fetching user parameters:', err);
+    return [];
+  }
+};
+
+// Helper function to get user parameter by name
+const getUserParamByName = (paramName) => {
+  try {
+    const paramsMap = JSON.parse(localStorage.getItem('USER_PARAMS_MAP') || '{}');
+    return paramsMap[paramName] || null;
+  } catch (err) {
+    console.error('Error getting user param:', err);
+    return null;
+  }
+};
+
+// Helper function to get user parameter by ID
+const getUserParamById = (paramId) => {
+  try {
+    const params = JSON.parse(localStorage.getItem('USER_PARAMS') || '[]');
+    return params.find(param => param.USERPM_ID === paramId) || null;
+  } catch (err) {
+    console.error('Error getting user param by ID:', err);
+    return null;
+  }
+};
+
+// Helper function to get all user parameters
+const getAllUserParams = () => {
+  try {
+    return JSON.parse(localStorage.getItem('USER_PARAMS') || '[]');
+  } catch (err) {
+    console.error('Error getting all user params:', err);
+    return [];
+  }
+};
+
   const handleOtpKeyDown = (e, index) => {
     if (e.key === 'Backspace') {
       if (enteredOtp[index]) {
@@ -457,6 +530,7 @@ const Login = () => {
         localStorage.setItem('EMP_NAME', employeeData.EMP_NAME);
         if (employeeData.EMP_KEY) {
           localStorage.setItem('EMP_KEY', employeeData.EMP_KEY);
+          await fetchAndSaveUserParams();
           router.push('/employeepage');
         }
         if (employeeData.EMP_NAME) {
@@ -507,6 +581,8 @@ const Login = () => {
         localStorage.setItem('userRole', 'user');
         localStorage.removeItem('EMP_KEY');
         localStorage.removeItem('EMP_NAME');
+
+         await fetchAndSaveUserParams();
         setShowLogin(false);
         setModalOpen(true);
       } else {
@@ -542,6 +618,8 @@ const Login = () => {
     localStorage.removeItem('USER_ID');
     localStorage.removeItem('EMP_KEY');
     localStorage.removeItem('EMP_NAME');
+      localStorage.removeItem('USER_PARAMS'); 
+  localStorage.removeItem('USER_PARAMS_MAP');
 
     setShowLogin(true);
     setModalOpen(false);
