@@ -200,80 +200,97 @@ const [detailMode, setDetailMode] = useState('style');
   const searchParams = useSearchParams();
   const ordbkKey = searchParams.get("ordbkKey");
 
-  const handlePickOrderConfirm = (selectedItems) => {
-  setPickOrderItems(selectedItems);
+ // In SalesOrderOffline.js, update the handlePickOrderConfirm function:
+
+const handlePickOrderConfirm = (selectedItems) => {
   console.log('Selected items from order:', selectedItems);
   
-  // Transform selected items to Stepper2 format and add to formData
-  const transformedItems = selectedItems.map((item, index) => {
-    const tempId = Date.now() + index;
+  // Clear any existing items from pickOrderItems first
+  // This ensures we don't have duplicates
+  if (selectedItems && selectedItems.length > 0) {
+    setPickOrderItems(selectedItems);
     
-    return {
-      id: tempId,
-      BarCode: item.FGPRD_KEY || "-",
-      product: item.FGPRD_NAME || "",
-      style: item.FGSTYLE_NAME || "",
-      type: item.FGTYPE_NAME || "",
-      shade: item.FGSHADE_NAME || "",
-      lotNo: item.FGPTN_NAME || "",
-      qty: item.SELECTED_QTY || item.BAL_QTY,
-      mrp: item.MRP_PRN || item.RATE || 0,
-      rate: item.RATE || 0,
-      amount: (item.SELECTED_QTY || item.BAL_QTY) * (item.RATE || 0),
-      varPer: item.DLV_VAR_PERCENT || 0,
-      varQty: 0,
-      varAmt: 0,
-      discAmt: item.DISC_AMT || 0,
-      netAmt: item.NET_AMOUNT || 0,
-      distributer: item.DISTBTR_NAME || "-",
-      set: item.SETQTY || 0,
-      originalData: {
-        ORDBKSTY_ID: tempId,
-        FGITEM_KEY: item.FGPRD_KEY || "-",
-        PRODUCT: item.FGPRD_NAME || "",
-        STYLE: item.FGSTYLE_NAME || "",
-        TYPE: item.FGTYPE_NAME || "",
-        SHADE: item.FGSHADE_NAME || "",
-        PATTERN: item.FGPTN_NAME || "",
-        ITMQTY: item.SELECTED_QTY || item.BAL_QTY,
-        MRP: item.MRP_PRN || item.RATE || 0,
-        ITMRATE: item.RATE || 0,
-        ITMAMT: (item.SELECTED_QTY || item.BAL_QTY) * (item.RATE || 0),
-        DLV_VAR_PERC: item.DLV_VAR_PERCENT || 0,
-        DLV_VAR_QTY: 0,
-        DISC_AMT: item.DISC_AMT || 0,
-        NET_AMT: item.NET_AMOUNT || 0,
-        DISTBTR: item.DISTBTR_NAME || "-",
-        SETQTY: item.SETQTY || 0,
-        ORDBKSTYSZLIST: [],
-        FGPRD_KEY: item.FGPRD_KEY || "",
+    // Also directly add to formData here to avoid duplicate processing
+    const transformedItems = selectedItems.map((item, index) => {
+      const tempId = Date.now() + index;
+      
+      return {
+        id: tempId,
+        BarCode: item.BarCode || item.FGPRD_KEY || "-",
+        product: item.product || item.FGPRD_NAME || "",
+        style: item.style || item.FGSTYLE_NAME || "",
+        type: item.type || item.FGTYPE_NAME || "",
+        shade: item.shade || item.FGSHADE_NAME || "",
+        lotNo: item.lotNo || item.FGPTN_NAME || "",
+        qty: item.qty || item.BAL_QTY,
+        mrp: item.mrp || item.MRP_PRN || item.RATE || 0,
+        rate: item.rate || item.RATE || 0,
+        amount: item.amount || (item.qty || item.BAL_QTY) * (item.rate || item.RATE || 0),
+        varPer: item.varPer || item.DLV_VAR_PERCENT || 0,
+        varQty: 0,
+        varAmt: 0,
+        discAmt: item.discAmt || item.DISC_AMT || 0,
+        netAmt: item.netAmt || item.NET_AMOUNT || 0,
+        distributer: item.distributer || "-",
+        set: item.set || item.SETQTY || 0,
+        originalData: {
+          ORDBKSTY_ID: tempId,
+          FGITEM_KEY: item.BarCode || item.FGPRD_KEY || "-",
+          PRODUCT: item.product || item.FGPRD_NAME || "",
+          STYLE: item.style || item.FGSTYLE_NAME || "",
+          TYPE: item.type || item.FGTYPE_NAME || "",
+          SHADE: item.shade || item.FGSHADE_NAME || "",
+          PATTERN: item.lotNo || item.FGPTN_NAME || "",
+          ITMQTY: item.qty || item.BAL_QTY,
+          MRP: item.mrp || item.MRP_PRN || item.RATE || 0,
+          ITMRATE: item.rate || item.RATE || 0,
+          ITMAMT: (item.qty || item.BAL_QTY) * (item.rate || item.RATE || 0),
+          DLV_VAR_PERC: item.varPer || item.DLV_VAR_PERCENT || 0,
+          DLV_VAR_QTY: 0,
+          DISC_AMT: item.discAmt || item.DISC_AMT || 0,
+          NET_AMT: item.netAmt || item.NET_AMOUNT || 0,
+          DISTBTR: item.distributer || "-",
+          SETQTY: item.set || item.SETQTY || 0,
+          ORDBKSTYSZLIST: item.sizeDetails || [],
+          FGPRD_KEY: item.FGPRD_KEY || "",
+          FGSTYLE_ID: item.FGSTYLE_ID || 0,
+          FGTYPE_KEY: item.FGTYPE_KEY || "",
+          FGSHADE_KEY: item.FGSHADE_KEY || "",
+          FGPTN_KEY: item.FGPTN_KEY || "",
+          DBFLAG: 'I'
+        },
         FGSTYLE_ID: item.FGSTYLE_ID || 0,
+        FGPRD_KEY: item.FGPRD_KEY || "",
         FGTYPE_KEY: item.FGTYPE_KEY || "",
         FGSHADE_KEY: item.FGSHADE_KEY || "",
-        FGPTN_KEY: item.FGPTN_KEY || "",
-        DBFLAG: 'I'
-      },
-      FGSTYLE_ID: item.FGSTYLE_ID || 0,
-      FGPRD_KEY: item.FGPRD_KEY || "",
-      FGTYPE_KEY: item.FGTYPE_KEY || "",
-      FGSHADE_KEY: item.FGSHADE_KEY || "",
-      FGPTN_KEY: item.FGPTN_KEY || ""
-    };
-  });
-  
-  // Add to existing formData
-  setFormData(prev => ({
-    ...prev,
-    apiResponseData: {
-      ...prev.apiResponseData,
-      ORDBKSTYLIST: [
-        ...(prev.apiResponseData?.ORDBKSTYLIST || []),
-        ...transformedItems
-      ]
-    }
-  }));
-  
-  showSnackbar(`${transformedItems.length} items added from order`, 'success');
+        FGPTN_KEY: item.FGPTN_KEY || ""
+      };
+    });
+    
+    // Directly update formData.apiResponseData.ORDBKSTYLIST
+    setFormData(prev => {
+      const existingItems = prev.apiResponseData?.ORDBKSTYLIST || [];
+      // Create a Map to avoid duplicates based on some unique key
+      const existingKeys = new Set(existingItems.map(item => 
+        `${item.FGPRD_KEY}-${item.FGSTYLE_ID}-${item.FGSHADE_KEY}`
+      ));
+      
+      const newItems = transformedItems.filter(item => {
+        const key = `${item.FGPRD_KEY}-${item.FGSTYLE_ID}-${item.FGSHADE_KEY}`;
+        return !existingKeys.has(key);
+      });
+      
+      return {
+        ...prev,
+        apiResponseData: {
+          ...prev.apiResponseData,
+          ORDBKSTYLIST: [...existingItems, ...newItems]
+        }
+      };
+    });
+    
+    showSnackbar(`${transformedItems.length} items added from order`, 'success');
+  }
 };
 
   // In SalesOrderOffline.js - Add this to handle URL parameters
@@ -1194,38 +1211,69 @@ const preparePackSubmitPayload = () => {
     }
   };
 
-  // Function to validate form data - SIMPLIFIED VALIDATION
-  const validateForm = () => {
-    const requiredFields = [
-      { field: 'Party', name: 'Party' },
-      { field: 'ORDER_NO', name: 'Order No' },
-      { field: 'ORDER_DATE', name: 'Order Date' }
-    ];
+  // Function to validate form data - FIXED for pick order items
+const validateForm = () => {
+  const requiredFields = [
+    { field: 'Party', name: 'Party' },
+    { field: 'ORDER_NO', name: 'Order No' },
+    { field: 'ORDER_DATE', name: 'Order Date' }
+  ];
 
-    const missingFields = requiredFields.filter(item => !formData[item.field]);
+  const missingFields = requiredFields.filter(item => !formData[item.field]);
 
-    if (missingFields.length > 0) {
-      const fieldNames = missingFields.map(item => item.name).join(', ');
-      showSnackbar(`Please fill required fields: ${fieldNames}`, 'error');
+  if (missingFields.length > 0) {
+    const fieldNames = missingFields.map(item => item.name).join(', ');
+    showSnackbar(`Please fill required fields: ${fieldNames}`, 'error');
+    return false;
+  }
+
+  // Get items from multiple possible sources
+  let items = [];
+  
+  // Try to get from ORDBKSTYLIST first
+  if (formData.apiResponseData?.ORDBKSTYLIST && formData.apiResponseData.ORDBKSTYLIST.length > 0) {
+    items = formData.apiResponseData.ORDBKSTYLIST;
+  }
+  
+  // If no items in ORDBKSTYLIST, check if there's data in the stepper components
+  // The updatedTableData from Stepper2/Stepper3 might not have been synced yet
+  
+  if (items.length === 0) {
+    showSnackbar('Please add at least one item in Details tab', 'error');
+    return false;
+  }
+
+  // Filter out deleted items (DBFLAG === 'D')
+  const activeItems = items.filter(item => item.DBFLAG !== 'D');
+  
+  if (activeItems.length === 0) {
+    showSnackbar('Please add at least one item in Details tab', 'error');
+    return false;
+  }
+
+  // Validate each active item
+  for (let item of activeItems) {
+    // Check if item has required fields
+    if (!item.PRODUCT && !item.product) {
+      showSnackbar('Please ensure all items have Product', 'error');
       return false;
     }
-
-    // Validate Stepper2 data if we have items
-    if (formData.apiResponseData?.ORDBKSTYLIST && formData.apiResponseData.ORDBKSTYLIST.length > 0) {
-      const items = formData.apiResponseData.ORDBKSTYLIST;
-      for (let item of items) {
-        if (!item.PRODUCT || !item.STYLE || !item.ITMQTY || item.ITMQTY <= 0) {
-          showSnackbar('Please ensure all items have Product, Style, and valid Quantity', 'error');
-          return false;
-        }
-      }
-    } else {
-      showSnackbar('Please add at least one item in Details tab', 'error');
+    if (!item.STYLE && !item.style) {
+      showSnackbar('Please ensure all items have Style', 'error');
       return false;
     }
+    
+    // Get quantity from various possible field names
+    const itemQty = item.ITMQTY || item.qty || item.QUANTITY || 0;
+    if (!itemQty || itemQty <= 0) {
+      showSnackbar('Please ensure all items have valid Quantity', 'error');
+      return false;
+    }
+  }
 
-    return true;
-  };
+  return true;
+};
+
 
 // Replace the existing handleSubmit with this new version
 const handleSubmit = async () => {
@@ -2212,6 +2260,7 @@ const fetchAllDropdownData = async () => {
                       isFormDisabled={isFormDisabled}
                       mode={mode}
                       onSubmit={handleSubmit}
+                       pickOrderItems={pickOrderItems}
                       onCancel={handleCancel}
                       onNext={handleNext}
                       onPrev={handlePrev} 
