@@ -590,7 +590,7 @@ export default function MasterPage() {
     const itemMap = {};
     const rootItems = [];
     const parentChildMap = {};
-    
+
     data.forEach(item => {
       if (!item.MOD_ID) return;
 
@@ -655,7 +655,7 @@ export default function MasterPage() {
           if (path !== '#' && !path.startsWith('/')) {
             path = '/' + path;
           }
-          
+
           itemMap[parentId] = {
             id: parentItem.MOD_ID,
             name: parentItem.MOD_DESC || parentItem.MOD_NAME,

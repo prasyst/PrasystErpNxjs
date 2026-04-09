@@ -51,7 +51,7 @@ const Header = ({ isSidebarCollapsed, onMenuToggle, isMobile }) => {
   const [clientId, setClientId] = useState('');
   const recognitionRef = useRef(null);
   const synthRef = useRef(null);
-  
+
   const [notifications, setNotifications] = useState([
     { id: 1, text: 'New ticket assigned to you', time: '5 min ago', read: false, type: 'ticket' },
     { id: 2, text: 'Inventory stock running low', time: '1 hour ago', read: false, type: 'inventory' },
@@ -85,10 +85,10 @@ const Header = ({ isSidebarCollapsed, onMenuToggle, isMobile }) => {
   const generateIndianVariations = (text) => {
     const variations = new Set();
     const lowerText = text.toLowerCase().trim();
-    
+
     // Add original
     variations.add(lowerText);
-    
+
     // Common Indian mispronunciations
     const transformations = [
       // "RM Purchase Order" variations
@@ -98,12 +98,12 @@ const Header = ({ isSidebarCollapsed, onMenuToggle, isMobile }) => {
       (str) => str.replace(/rm purchase/gi, 'आरएम पर्चेज'),
       (str) => str.replace(/purchase order/gi, 'पर्चेज ऑर्डर'),
       (str) => str.replace(/rm order/gi, 'आरएम ऑर्डर'),
-      
+
       // "Sales Order" variations
       (str) => str.replace(/sales order/gi, 'सेल्स ऑर्डर'),
       (str) => str.replace(/sales order/gi, 'सेल ऑर्डर'),
       (str) => str.replace(/sales order/gi, 'salesorder'),
-      
+
       // General word variations
       (str) => {
         let result = str;
@@ -115,25 +115,25 @@ const Header = ({ isSidebarCollapsed, onMenuToggle, isMobile }) => {
         });
         return result;
       },
-      
+
       // Remove spaces
       (str) => str.replace(/\s+/g, ''),
       (str) => str.replace(/\s+/g, ' ').trim(),
-      
+
       // Common Indian abbreviations
       (str) => str.replace(/\braw material\b/gi, 'rm'),
       (str) => str.replace(/\brm\b/gi, 'raw material'),
-      
+
       // Double letters (common in Indian accent)
       (str) => str.replace(/([a-z])\1/gi, '$1'),
       (str) => str.replace(/([bcdfghjklmnpqrstvwxyz])/gi, '$1$1'),
-      
+
       // Vowel variations
       (str) => str.replace(/a/gi, 'aa'),
       (str) => str.replace(/i/gi, 'ee'),
       (str) => str.replace(/u/gi, 'oo'),
     ];
-    
+
     // Generate variations
     transformations.forEach(transform => {
       try {
@@ -145,7 +145,7 @@ const Header = ({ isSidebarCollapsed, onMenuToggle, isMobile }) => {
         // Ignore errors
       }
     });
-    
+
     // Add common partial queries for "RM Purchase Order"
     if (lowerText.includes('rm') && lowerText.includes('purchase') && lowerText.includes('order')) {
       variations.add('rm purchase');
@@ -156,7 +156,7 @@ const Header = ({ isSidebarCollapsed, onMenuToggle, isMobile }) => {
       variations.add('raw material purchase');
       variations.add('raw material order');
     }
-    
+
     return Array.from(variations);
   };
 
@@ -164,33 +164,33 @@ const Header = ({ isSidebarCollapsed, onMenuToggle, isMobile }) => {
   const calculateSimilarity = (str1, str2) => {
     const s1 = str1.toLowerCase().trim();
     const s2 = str2.toLowerCase().trim();
-    
+
     // Exact match
     if (s1 === s2) return 1.0;
-    
+
     // Check if one contains the other
     if (s1.includes(s2) || s2.includes(s1)) {
       return 0.9;
     }
-    
+
     // Check Indian variations
     const item = searchableItems.find(item => {
       const variations = generateIndianVariations(item.name);
-      return variations.some(variation => 
+      return variations.some(variation =>
         variation === s1 || variation === s2 ||
         s1.includes(variation) || variation.includes(s1) ||
         s2.includes(variation) || variation.includes(s2)
       );
     });
-    
+
     if (item) {
       return 0.85;
     }
-    
+
     // Word-wise matching for Indian accent
     const words1 = s1.split(/\s+/);
     const words2 = s2.split(/\s+/);
-    
+
     // Check if all words from s1 are in s2 (or variations)
     let matchCount = 0;
     words1.forEach(word1 => {
@@ -199,21 +199,21 @@ const Header = ({ isSidebarCollapsed, onMenuToggle, isMobile }) => {
       } else {
         // Check if word1 is a variation of any word in words2
         const word1Variations = generateIndianVariations(word1);
-        if (word1Variations.some(variation => 
+        if (word1Variations.some(variation =>
           words2.some(word2 => calculateWordSimilarity(variation, word2) > 0.7)
         )) {
           matchCount++;
         }
       }
     });
-    
+
     const similarityScore = matchCount / Math.max(words1.length, words2.length);
-    
+
     // Boost score for partial matches (e.g., "rm purchase" for "rm purchase order")
     if (words1.length < words2.length && matchCount === words1.length) {
       return Math.max(similarityScore, 0.8);
     }
-    
+
     return similarityScore;
   };
 
@@ -223,30 +223,30 @@ const Header = ({ isSidebarCollapsed, onMenuToggle, isMobile }) => {
 
   const calculateWordSimilarity = (word1, word2) => {
     if (word1 === word2) return 1.0;
-    
+
     // Check Indian accent map
     for (const [key, values] of Object.entries(indianAccentMap)) {
-      if ((word1 === key && values.includes(word2)) || 
-          (word2 === key && values.includes(word1))) {
+      if ((word1 === key && values.includes(word2)) ||
+        (word2 === key && values.includes(word1))) {
         return 0.9;
       }
     }
-    
+
     // Check if words are variations
     const variations1 = generateIndianVariations(word1);
     const variations2 = generateIndianVariations(word2);
-    
+
     if (variations1.includes(word2) || variations2.includes(word1)) {
       return 0.85;
     }
-    
+
     // Levenshtein distance for fuzzy matching
     const len1 = word1.length;
     const len2 = word2.length;
     const maxLen = Math.max(len1, len2);
-    
+
     if (maxLen === 0) return 1.0;
-    
+
     const matrix = [];
     for (let i = 0; i <= len1; i++) {
       matrix[i] = [i];
@@ -254,7 +254,7 @@ const Header = ({ isSidebarCollapsed, onMenuToggle, isMobile }) => {
     for (let j = 0; j <= len2; j++) {
       matrix[0][j] = j;
     }
-    
+
     for (let i = 1; i <= len1; i++) {
       for (let j = 1; j <= len2; j++) {
         const cost = word1[i - 1] === word2[j - 1] ? 0 : 1;
@@ -265,7 +265,7 @@ const Header = ({ isSidebarCollapsed, onMenuToggle, isMobile }) => {
         );
       }
     }
-    
+
     const distance = matrix[len1][len2];
     return 1 - (distance / maxLen);
   };
@@ -284,99 +284,99 @@ const Header = ({ isSidebarCollapsed, onMenuToggle, isMobile }) => {
   }, []);
 
   const fetchCompanyAndBranchNames = async () => {
-  try {
-    const coId = localStorage.getItem('CO_ID');
-    const cobrId = localStorage.getItem('COBR_ID');
+    try {
+      const coId = localStorage.getItem('CO_ID');
+      const cobrId = localStorage.getItem('COBR_ID');
 
-    if (coId && cobrId) {
-      // Fetch Client ID first
-      try {
-        const clientIdResponse = await axiosInstance.get('USERS/GetClientId');
-        console.log('Client ID Response:', clientIdResponse.data);
-        
-        if (clientIdResponse.data?.STATUS === 0 && clientIdResponse.data.DATA) {
-          // Extract number from "Client Id is 5102"
-          const clientIdMatch = clientIdResponse.data.DATA.match(/\d+/);
-          if (clientIdMatch) {
-            setClientId(clientIdMatch[0]);
-             localStorage.setItem('CLIENT_ID', clientIdMatch[0]);
-            console.log('Client ID Set:', clientIdMatch[0]);
+      if (coId && cobrId) {
+        // Fetch Client ID first
+        try {
+          const clientIdResponse = await axiosInstance.get('USERS/GetClientId');
+          console.log('Client ID Response:', clientIdResponse.data);
+
+          if (clientIdResponse.data?.STATUS === 0 && clientIdResponse.data.DATA) {
+            // Extract number from "Client Id is 5102"
+            const clientIdMatch = clientIdResponse.data.DATA.match(/\d+/);
+            if (clientIdMatch) {
+              setClientId(clientIdMatch[0]);
+              localStorage.setItem('CLIENT_ID', clientIdMatch[0]);
+              console.log('Client ID Set:', clientIdMatch[0]);
+            }
+          }
+        } catch (error) {
+          console.error('Error fetching client ID:', error);
+        }
+
+        // Fetch Company
+        const companyResponse = await axiosInstance.post('COMPANY/Getdrpcofill', {
+          CO_ID: "",
+          Flag: ""
+        });
+
+        if (companyResponse.data?.STATUS === 0 && Array.isArray(companyResponse.data.DATA)) {
+          const company = companyResponse.data.DATA.find(c => c.CO_ID === coId);
+          if (company) {
+            setCompanyName(company.CO_NAME);
           }
         }
-      } catch (error) {
-        console.error('Error fetching client ID:', error);
-      }
 
-      // Fetch Company
-      const companyResponse = await axiosInstance.post('COMPANY/Getdrpcofill', {
-        CO_ID: "",
-        Flag: ""
-      });
+        // Fetch Branch
+        const branchResponse = await axiosInstance.post('COMPANY/Getdrpcobrfill', {
+          COBR_ID: "",
+          CO_ID: coId,
+          Flag: ""
+        });
 
-      if (companyResponse.data?.STATUS === 0 && Array.isArray(companyResponse.data.DATA)) {
-        const company = companyResponse.data.DATA.find(c => c.CO_ID === coId);
-        if (company) {
-          setCompanyName(company.CO_NAME);
+        if (branchResponse.data?.STATUS === 0 && Array.isArray(branchResponse.data.DATA)) {
+          const branch = branchResponse.data.DATA.find(b => b.COBR_ID === cobrId);
+          if (branch) {
+            setBranchName(branch.COBR_NAME);
+          }
         }
       }
-
-      // Fetch Branch
-      const branchResponse = await axiosInstance.post('COMPANY/Getdrpcobrfill', {
-        COBR_ID: "",
-        CO_ID: coId,
-        Flag: ""
-      });
-
-      if (branchResponse.data?.STATUS === 0 && Array.isArray(branchResponse.data.DATA)) {
-        const branch = branchResponse.data.DATA.find(b => b.COBR_ID === cobrId);
-        if (branch) {
-          setBranchName(branch.COBR_NAME);
-        }
-      }
+    } catch (error) {
+      console.error('Error fetching company/branch names:', error);
     }
-  } catch (error) {
-    console.error('Error fetching company/branch names:', error);
-  }
-};
+  };
 
   useEffect(() => {
     // Check if browser supports Web Speech API
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     const speechSynthesis = window.speechSynthesis;
-    
+
     if (SpeechRecognition && speechSynthesis) {
       setVoiceSupported(true);
       synthRef.current = speechSynthesis;
-      
+
       // Create recognition instance with Indian English
       const recognition = new SpeechRecognition();
       recognition.continuous = false;
       recognition.interimResults = false;
       recognition.lang = 'en-IN'; // Indian English
       recognition.maxAlternatives = 5; // Get multiple alternatives for better matching
-      
+
       // Handle results
       recognition.onresult = (event) => {
         const results = event.results[0];
         const alternatives = [];
-        
+
         // Collect all alternatives
         for (let i = 0; i < results.length; i++) {
           alternatives.push(results[i].transcript.toLowerCase().trim());
         }
-        
+
         const bestTranscript = alternatives[0];
         console.log('Voice input alternatives:', alternatives);
         setVoiceMessage(`Searching for: "${bestTranscript}"`);
-        
+
         // Find best match among all menu items
         let bestMatch = null;
         let bestSimilarity = 0;
         const allMatches = [];
-        
+
         searchableItems.forEach(item => {
           let maxSimilarity = 0;
-          
+
           // Check against each alternative
           alternatives.forEach(transcript => {
             const similarity = calculateSimilarity(transcript, item.name.toLowerCase());
@@ -384,7 +384,7 @@ const Header = ({ isSidebarCollapsed, onMenuToggle, isMobile }) => {
               maxSimilarity = similarity;
             }
           });
-          
+
           // Check Indian variations
           const variations = generateIndianVariations(item.name);
           variations.forEach(variation => {
@@ -395,54 +395,54 @@ const Header = ({ isSidebarCollapsed, onMenuToggle, isMobile }) => {
               }
             });
           });
-          
+
           // Check partial matches (e.g., "rm purchase" for "RM Purchase Order")
           const itemWords = item.name.toLowerCase().split(/\s+/);
           alternatives.forEach(transcript => {
             const inputWords = transcript.split(/\s+/);
-            
+
             // Check if all input words match item words
             const allWordsMatch = inputWords.every(inputWord =>
               itemWords.some(itemWord => calculateWordSimilarity(inputWord, itemWord) > 0.6)
             );
-            
+
             if (allWordsMatch && maxSimilarity < 0.8) {
               maxSimilarity = Math.max(maxSimilarity, 0.8);
             }
-            
+
             // Check if any word matches
             const anyWordMatch = inputWords.some(inputWord =>
               itemWords.some(itemWord => calculateWordSimilarity(inputWord, itemWord) > 0.6)
             );
-            
+
             if (anyWordMatch && maxSimilarity < 0.7) {
               maxSimilarity = Math.max(maxSimilarity, 0.7);
             }
           });
-          
+
           if (maxSimilarity > 0) {
             allMatches.push({
               item: item,
               similarity: maxSimilarity
             });
           }
-          
+
           if (maxSimilarity > bestSimilarity) {
             bestSimilarity = maxSimilarity;
             bestMatch = { item: item, similarity: maxSimilarity };
           }
         });
-        
+
         // Sort all matches by similarity
         allMatches.sort((a, b) => b.similarity - a.similarity);
-        
+
         console.log('All matches:', allMatches);
-        
+
         if (bestMatch && bestMatch.similarity > 0.7) {
           // High confidence match
           console.log('Best match found:', bestMatch.item.name, 'Similarity:', bestMatch.similarity);
           setVoiceMessage(`Opening ${bestMatch.item.name}`);
-          
+
           speakText(`Opening ${bestMatch.item.name}. You said "${bestTranscript}"`, () => {
             // Open in new tab
             window.open(bestMatch.item.path, '_blank');
@@ -453,11 +453,11 @@ const Header = ({ isSidebarCollapsed, onMenuToggle, isMobile }) => {
           // Suggest top matches
           const topMatches = allMatches.slice(0, 3);
           setVoiceMessage(`Found ${allMatches.length} similar modules`);
-          
-          const suggestionText = topMatches.map((match, i) => 
+
+          const suggestionText = topMatches.map((match, i) =>
             `${i + 1}. ${match.item.name}`
           ).join(', ');
-          
+
           speakText(`Did you mean: ${suggestionText}? Please select from the search results.`, () => {
             // Show suggestions in search results
             setSearchResults(topMatches.map(match => match.item));
@@ -469,19 +469,19 @@ const Header = ({ isSidebarCollapsed, onMenuToggle, isMobile }) => {
           // No match found
           console.log('No match found for:', bestTranscript);
           setVoiceMessage('Module not found');
-          
+
           speakText(`Sorry, I couldn't find "${bestTranscript}". Please try a different module name or use text search.`, () => {
             setVoiceMessage('');
             setIsListening(false);
           });
         }
       };
-      
+
       recognition.onerror = (event) => {
         console.error('Voice recognition error:', event.error);
         setIsListening(false);
         setVoiceMessage('');
-        
+
         if (event.error === 'no-speech') {
           speakText('I didn\'t hear anything. Please speak clearly and try again.');
         } else if (event.error === 'not-allowed') {
@@ -492,20 +492,20 @@ const Header = ({ isSidebarCollapsed, onMenuToggle, isMobile }) => {
           speakText('Sorry, there was an error with voice recognition. Please try again.');
         }
       };
-      
+
       recognition.onend = () => {
         if (isListening && !aiSpeaking) {
           setIsListening(false);
           setVoiceMessage('');
         }
       };
-      
+
       recognitionRef.current = recognition;
     } else {
       setVoiceSupported(false);
       console.warn('Web Speech API not supported in this browser');
     }
-    
+
     return () => {
       if (recognitionRef.current) {
         recognitionRef.current.stop();
@@ -522,55 +522,55 @@ const Header = ({ isSidebarCollapsed, onMenuToggle, isMobile }) => {
       if (callback) callback();
       return;
     }
-    
+
     // Cancel any ongoing speech
     synthRef.current.cancel();
-    
+
     setAiSpeaking(true);
-    
+
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.rate = 1.0; // Normal speed for Indian English
     utterance.pitch = 1.0;
     utterance.volume = 1.0;
     utterance.lang = 'en-IN'; // Indian English
-    
+
     // Try to get an Indian voice
     const voices = synthRef.current.getVoices();
     let selectedVoice = null;
-    
+
     // Prefer Indian voices
-    selectedVoice = voices.find(voice => 
-      voice.lang === 'en-IN' || 
+    selectedVoice = voices.find(voice =>
+      voice.lang === 'en-IN' ||
       voice.name.includes('India') ||
       voice.name.includes('Indian')
     );
-    
+
     // If no Indian voice, try female voice for clarity
     if (!selectedVoice) {
-      selectedVoice = voices.find(voice => 
-        voice.name.includes('Female') || 
-        voice.name.includes('Samantha') || 
+      selectedVoice = voices.find(voice =>
+        voice.name.includes('Female') ||
+        voice.name.includes('Samantha') ||
         voice.name.includes('Victoria') ||
         voice.name.includes('Zira') ||
         voice.name.includes('Hazel')
       );
     }
-    
+
     if (selectedVoice) {
       utterance.voice = selectedVoice;
     }
-    
+
     utterance.onend = () => {
       setAiSpeaking(false);
       if (callback) callback();
     };
-    
+
     utterance.onerror = (event) => {
       console.error('Speech synthesis error:', event);
       setAiSpeaking(false);
       if (callback) callback();
     };
-    
+
     setTimeout(() => {
       synthRef.current.speak(utterance);
     }, 100);
@@ -582,7 +582,7 @@ const Header = ({ isSidebarCollapsed, onMenuToggle, isMobile }) => {
       alert('Voice recognition is not supported in your browser. Please use Chrome, Edge, or Safari.');
       return;
     }
-    
+
     if (isListening) {
       // Stop listening and speaking
       if (recognitionRef.current) {
@@ -600,7 +600,7 @@ const Header = ({ isSidebarCollapsed, onMenuToggle, isMobile }) => {
         setIsListening(true);
         setIsSearchExpanded(true);
         setVoiceMessage('AI Assistant listening...');
-        
+
         // AI introduction with Indian accent hints
         speakText('Hello! Please say the name of the module you want to search for.', () => {
           // After AI finishes speaking, start listening
@@ -617,7 +617,7 @@ const Header = ({ isSidebarCollapsed, onMenuToggle, isMobile }) => {
             speakText('Sorry, I could not start listening. Please try again.');
           }
         });
-        
+
       } catch (error) {
         console.error('Error starting voice assistant:', error);
         setIsListening(false);
@@ -665,45 +665,45 @@ const Header = ({ isSidebarCollapsed, onMenuToggle, isMobile }) => {
       const results = searchableItems.filter(item => {
         const itemName = item.name.toLowerCase();
         const searchQueryLower = query.toLowerCase();
-        
+
         // Direct match
         if (itemName.includes(searchQueryLower)) {
           return true;
         }
-        
+
         // Check Indian variations
         const variations = generateIndianVariations(item.name);
         if (variations.some(variation => variation.includes(searchQueryLower))) {
           return true;
         }
-        
+
         // Word-wise matching for partial queries
         const searchWords = searchQueryLower.split(/\s+/);
         const itemWords = itemName.split(/\s+/);
-        
+
         // Check if all search words are present in item
         const allWordsMatch = searchWords.every(searchWord =>
-          itemWords.some(itemWord => 
-            itemWord.includes(searchWord) || 
+          itemWords.some(itemWord =>
+            itemWord.includes(searchWord) ||
             calculateWordSimilarity(searchWord, itemWord) > 0.6
           )
         );
-        
+
         if (allWordsMatch) {
           return true;
         }
-        
+
         // Check if any word matches significantly
         const significantMatch = searchWords.some(searchWord => {
           if (searchWord.length < 3) return false;
-          return itemWords.some(itemWord => 
+          return itemWords.some(itemWord =>
             calculateWordSimilarity(searchWord, itemWord) > 0.8
           );
         });
-        
+
         return significantMatch;
       });
-      
+
       setSearchResults(results);
       setShowSearchResults(true);
     } else {
@@ -786,7 +786,7 @@ const Header = ({ isSidebarCollapsed, onMenuToggle, isMobile }) => {
     const date = new Date(timestamp);
     const now = new Date();
     const diffInSeconds = Math.floor((now - date) / 1000);
-    
+
     if (diffInSeconds < 60) return 'Just now';
     if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
     if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
@@ -858,7 +858,7 @@ const Header = ({ isSidebarCollapsed, onMenuToggle, isMobile }) => {
           position: 'fixed',
           top: 0,
           right: 0,
-          left: isMobile ? '0' : (isSidebarCollapsed ? '80px' : '250px'),
+          left: isMobile ? '0' : (isSidebarCollapsed ? '75px' : '240px'),
           zIndex: 50,
           borderBottom: '1px solid #e0e0e0',
           transition: 'left 0.3s ease, padding 0.3s ease',
@@ -868,7 +868,6 @@ const Header = ({ isSidebarCollapsed, onMenuToggle, isMobile }) => {
           boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
         }}
       >
-
         <div className="flex items-center gap-3 md:gap-4" style={{ flex: 1 }}>
           {isMobile && (
             <button
@@ -901,8 +900,8 @@ const Header = ({ isSidebarCollapsed, onMenuToggle, isMobile }) => {
               borderRadius: '2rem',
               padding: '0.5rem',
               overflow: 'visible',
-              border: isSearchExpanded 
-                ? (isListening ? '2px solid #ff4757' : '2px solid rgba(255, 255, 255, 0.8)') 
+              border: isSearchExpanded
+                ? (isListening ? '2px solid #ff4757' : '2px solid rgba(255, 255, 255, 0.8)')
                 : '2px solid transparent',
               transition: 'all 0.3s ease-out',
               width: isSearchExpanded ? (isMobile ? '200px' : '380px') : '40px',
@@ -958,13 +957,13 @@ const Header = ({ isSidebarCollapsed, onMenuToggle, isMobile }) => {
               <button
                 onClick={handleVoiceSearch}
                 style={{
-                  background: isListening 
-                    ? (aiSpeaking ? 'rgba(99, 91, 255, 0.3)' : 'rgba(255, 71, 87, 0.3)') 
+                  background: isListening
+                    ? (aiSpeaking ? 'rgba(99, 91, 255, 0.3)' : 'rgba(255, 71, 87, 0.3)')
                     : 'none',
                   border: 'none',
                   cursor: 'pointer',
-                  color: isListening 
-                    ? (aiSpeaking ? '#635bff' : '#ff4757') 
+                  color: isListening
+                    ? (aiSpeaking ? '#635bff' : '#ff4757')
                     : 'white',
                   display: 'flex',
                   alignItems: 'center',
@@ -985,7 +984,7 @@ const Header = ({ isSidebarCollapsed, onMenuToggle, isMobile }) => {
                 ) : (
                   <IoMdMic size={20} />
                 )}
-                
+
                 {/* Listening indicator */}
                 {isListening && (
                   <span style={{
@@ -1081,7 +1080,7 @@ const Header = ({ isSidebarCollapsed, onMenuToggle, isMobile }) => {
                     </span>
                   )}
                 </div>
-                
+
                 {/* Indian Accent Tips */}
                 {voiceSupported && (
                   <div style={{
@@ -1092,11 +1091,11 @@ const Header = ({ isSidebarCollapsed, onMenuToggle, isMobile }) => {
                     color: '#635bff',
                   }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
-                      
+
                     </div>
                   </div>
                 )}
-                
+
                 {searchResults.map((item, index) => {
                   const IconComponent = getIconComponent(item.icon);
 
@@ -1200,61 +1199,60 @@ const Header = ({ isSidebarCollapsed, onMenuToggle, isMobile }) => {
 
           {/* Company and Branch Name Display - ONLY for Desktop */}
           {!isMobile && (companyName || branchName) && (
-  <div
-    style={{
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'flex-start',
-      marginLeft: '1rem',
-      padding: '0.5rem 1rem',
-      backgroundColor: 'rgba(255, 255, 255, 0.1)',
-      borderRadius: '8px',
-      border: '1px solid rgba(255, 255, 255, 0.2)',
-      maxWidth: '350px',
-      flexShrink: 0,
-    }}
-  >
-    {companyName && (
-      <span
-        style={{
-          color: 'rgba(255, 255, 255, 0.9)',
-          fontSize: '0.85rem',
-          lineHeight: '1.3',
-          whiteSpace: 'nowrap',
-          fontWeight: '500',
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-          width: '100%',
-        }}
-        title={`${companyName}${clientId ? ` (${clientId})` : ''}`}
-      >
-        {/* {companyName}{clientId && <span style={{ fontWeight: '600',fontSize: '1rem', color: 'rgba(255, 255, 255, 1)' }}> ({clientId})</span>} */}
-      </span>
-    )}
-    {branchName && (
-      <span
-        style={{
-          color: 'rgba(255, 255, 255, 0.95)',
-          fontSize: '1rem',
-          lineHeight: '1.3',
-          marginTop: '0.2rem',
-          whiteSpace: 'nowrap',
-          fontWeight: '600',
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-          width: '100%',
-        }}
-        title={branchName}
-      >
-        {companyName}{clientId && <span style={{ fontWeight: '600',fontSize: '1rem', color: 'rgba(255, 255, 255, 1)' }}> ({clientId})</span>}
-      </span>
-    )}
-  </div>
-)}
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'flex-start',
+                marginLeft: '1rem',
+                padding: '0.5rem 1rem',
+                backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                borderRadius: '8px',
+                border: '1px solid rgba(255, 255, 255, 0.2)',
+                maxWidth: '350px',
+                flexShrink: 0,
+              }}
+            >
+              {companyName && (
+                <span
+                  style={{
+                    color: 'rgba(255, 255, 255, 0.9)',
+                    fontSize: '0.85rem',
+                    lineHeight: '1.3',
+                    whiteSpace: 'nowrap',
+                    fontWeight: '500',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    width: '100%',
+                  }}
+                  title={`${companyName}${clientId ? ` (${clientId})` : ''}`}
+                >
+                  {/* {companyName}{clientId && <span style={{ fontWeight: '600',fontSize: '1rem', color: 'rgba(255, 255, 255, 1)' }}> ({clientId})</span>} */}
+                </span>
+              )}
+              {branchName && (
+                <span
+                  style={{
+                    color: 'rgba(255, 255, 255, 0.95)',
+                    fontSize: '1rem',
+                    lineHeight: '1.3',
+                    marginTop: '0.2rem',
+                    whiteSpace: 'nowrap',
+                    fontWeight: '600',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    width: '100%',
+                  }}
+                  title={branchName}
+                >
+                  {companyName}{clientId && <span style={{ fontWeight: '600', fontSize: '1rem', color: 'rgba(255, 255, 255, 1)' }}> ({clientId})</span>}
+                </span>
+              )}
+            </div>
+          )}
         </div>
 
         <div className="flex items-center gap-2 md:gap-3" style={{ flexShrink: 0 }}>
-          {/* Recently Visited Button */}
           <div ref={recentlyVisitedRef} style={{ position: 'relative' }}>
             <button
               onClick={() => {
@@ -1301,249 +1299,248 @@ const Header = ({ isSidebarCollapsed, onMenuToggle, isMobile }) => {
               )}
             </button>
 
-           {isRecentlyVisitedOpen && (
-  <div style={{
-    position: 'absolute',
-    top: '100%',
-    right: isMobile ? '0' : 0,
-    left: isMobile ? '0' : 'auto',
-    backgroundColor: 'white',
-    border: '1px solid #e0e0e0',
-    borderRadius: isMobile ? '8px' : '12px',
-    width: isMobile ? '250px' : '320px',
-    maxHeight: isMobile ? '50vh' : '400px',
-    zIndex: 1000,
-    boxShadow: '0 8px 25px rgba(0,0,0,0.15)',
-    marginTop: '0.5rem',
-    marginRight: isMobile ? '0.5rem' : '0',
-  }}>
-    <div style={{
-      padding: isMobile ? '0.6rem 0.75rem' : '1rem',
-      borderBottom: '1px solid #f0f0f0',
-      display: 'flex',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      gap: '0.5rem',
-    }}>
-      <span style={{ 
-        fontWeight: '600', 
-        color: '#333',
-        fontSize: isMobile ? '0.85rem' : '1rem',
-        display: 'flex',
-        alignItems: 'center',
-        gap: '0.4rem',
-      }}>
-        Recently Visited
-        {recentPaths.length > 0 && (
-          <span style={{
-            fontSize: isMobile ? '0.65rem' : '0.8rem',
-            backgroundColor: '#635bff',
-            color: 'white',
-            padding: isMobile ? '0.15rem 0.4rem' : '0.2rem 0.5rem',
-            borderRadius: '8px',
-            fontWeight: '500',
-          }}>
-            {recentPaths.length}
-          </span>
-        )}
-      </span>
-      {recentPaths.length > 0 && (
-        <button
-          onClick={clearRecentPaths}
-          style={{
-            background: 'none',
-            border: 'none',
-            color: '#635bff',
-            fontSize: isMobile ? '0.7rem' : '0.8rem',
-            cursor: 'pointer',
-            fontWeight: '500',
-            padding: isMobile ? '0.2rem' : '0',
-            whiteSpace: 'nowrap',
-          }}
-        >
-          Clear All
-        </button>
-      )}
-    </div>
-
-    <div style={{ 
-      maxHeight: isMobile ? 'calc(50vh - 100px)' : '300px', 
-      overflowY: 'auto',
-      scrollbarWidth: isMobile ? 'none' : 'thin',
-      msOverflowStyle: isMobile ? 'none' : 'auto',
-    }}>
-      {isMobile && (
-        <style>
-          {`
-            @media (max-width: 768px) {
-              div[style*="maxHeight"]::-webkit-scrollbar {
-                display: none;
-              }
-            }
-          `}
-        </style>
-      )}
-      {recentPaths.length > 0 ? (
-        recentPaths.map((item, index) => (
-          <div
-            key={item.id}
-            style={{
-              padding: isMobile ? '0.5rem 0.6rem' : '0.75rem 1rem',
-              borderBottom: index < recentPaths.length - 1 ? '1px solid #f8f8f8' : 'none',
-              cursor: 'pointer',
-              backgroundColor: '#fff',
-              transition: 'background-color 0.2s ease',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: '0.4rem',
-            }}
-            className="hover:bg-gray-50"
-            onClick={() => handleRecentPathClick(item.path)}
-            title={`Click to open "${item.name}" in new tab`}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '0.4rem' : '0.75rem', flex: 1, minWidth: 0 }}>
+            {isRecentlyVisitedOpen && (
               <div style={{
-                width: isMobile ? '20px' : '28px',
-                height: isMobile ? '20px' : '28px',
-                borderRadius: isMobile ? '4px' : '6px',
-                backgroundColor: '#f0f2ff',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: '#635bff',
-                fontSize: isMobile ? '0.65rem' : '0.8rem',
-                fontWeight: '600',
-                flexShrink: 0,
+                position: 'absolute',
+                top: '100%',
+                right: isMobile ? '0' : 0,
+                left: isMobile ? '0' : 'auto',
+                backgroundColor: 'white',
+                border: '1px solid #e0e0e0',
+                borderRadius: isMobile ? '8px' : '12px',
+                width: isMobile ? '250px' : '320px',
+                maxHeight: isMobile ? '50vh' : '400px',
+                zIndex: 1000,
+                boxShadow: '0 8px 25px rgba(0,0,0,0.15)',
+                marginTop: '0.5rem',
+                marginRight: isMobile ? '0.5rem' : '0',
               }}>
-                {index + 1}
-              </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{
-                  fontSize: isMobile ? '0.75rem' : '0.9rem',
-                  color: '#333',
-                  fontWeight: '500',
-                  lineHeight: '1.3',
-                  marginBottom: isMobile ? '0.15rem' : '0.2rem',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
-                }}>
-                  {item.name}
-                </div>
-                <div style={{
-                  fontSize: isMobile ? '0.65rem' : '0.7rem',
-                  color: '#999',
+                  padding: isMobile ? '0.6rem 0.75rem' : '1rem',
+                  borderBottom: '1px solid #f0f0f0',
                   display: 'flex',
+                  justifyContent: 'space-between',
                   alignItems: 'center',
-                  gap: '0.3rem',
+                  gap: '0.5rem',
                 }}>
                   <span style={{
-                    fontSize: isMobile ? '0.6rem' : '0.65rem',
-                    color: '#635bff',
-                    backgroundColor: '#f0f2ff',
-                    padding: isMobile ? '0.05rem 0.3rem' : '0.1rem 0.4rem',
-                    borderRadius: '3px',
-                    fontWeight: '500',
+                    fontWeight: '600',
+                    color: '#333',
+                    fontSize: isMobile ? '0.85rem' : '1rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.4rem',
                   }}>
-                    New Tab
+                    Recently Visited
+                    {recentPaths.length > 0 && (
+                      <span style={{
+                        fontSize: isMobile ? '0.65rem' : '0.8rem',
+                        backgroundColor: '#635bff',
+                        color: 'white',
+                        padding: isMobile ? '0.15rem 0.4rem' : '0.2rem 0.5rem',
+                        borderRadius: '8px',
+                        fontWeight: '500',
+                      }}>
+                        {recentPaths.length}
+                      </span>
+                    )}
                   </span>
-                  <span>•</span>
-                  <span>{formatTimeAgo(item.timestamp)}</span>
+                  {recentPaths.length > 0 && (
+                    <button
+                      onClick={clearRecentPaths}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: '#635bff',
+                        fontSize: isMobile ? '0.7rem' : '0.8rem',
+                        cursor: 'pointer',
+                        fontWeight: '500',
+                        padding: isMobile ? '0.2rem' : '0',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      Clear All
+                    </button>
+                  )}
                 </div>
+
+                <div style={{
+                  maxHeight: isMobile ? 'calc(50vh - 100px)' : '300px',
+                  overflowY: 'auto',
+                  scrollbarWidth: isMobile ? 'none' : 'thin',
+                  msOverflowStyle: isMobile ? 'none' : 'auto',
+                }}>
+                  {isMobile && (
+                    <style>
+                      {`
+                        @media (max-width: 768px) {
+                          div[style*="maxHeight"]::-webkit-scrollbar {
+                            display: none;
+                          }
+                        }
+                      `}
+                    </style>
+                  )}
+                  {recentPaths.length > 0 ? (
+                    recentPaths.map((item, index) => (
+                      <div
+                        key={item.id}
+                        style={{
+                          padding: isMobile ? '0.5rem 0.6rem' : '0.75rem 1rem',
+                          borderBottom: index < recentPaths.length - 1 ? '1px solid #f8f8f8' : 'none',
+                          cursor: 'pointer',
+                          backgroundColor: '#fff',
+                          transition: 'background-color 0.2s ease',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          gap: '0.4rem',
+                        }}
+                        className="hover:bg-gray-50"
+                        onClick={() => handleRecentPathClick(item.path)}
+                        title={`Click to open "${item.name}" in new tab`}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '0.4rem' : '0.75rem', flex: 1, minWidth: 0 }}>
+                          <div style={{
+                            width: isMobile ? '20px' : '28px',
+                            height: isMobile ? '20px' : '28px',
+                            borderRadius: isMobile ? '4px' : '6px',
+                            backgroundColor: '#f0f2ff',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: '#635bff',
+                            fontSize: isMobile ? '0.65rem' : '0.8rem',
+                            fontWeight: '600',
+                            flexShrink: 0,
+                          }}>
+                            {index + 1}
+                          </div>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{
+                              fontSize: isMobile ? '0.75rem' : '0.9rem',
+                              color: '#333',
+                              fontWeight: '500',
+                              lineHeight: '1.3',
+                              marginBottom: isMobile ? '0.15rem' : '0.2rem',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap',
+                            }}>
+                              {item.name}
+                            </div>
+                            <div style={{
+                              fontSize: isMobile ? '0.65rem' : '0.7rem',
+                              color: '#999',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '0.3rem',
+                            }}>
+                              <span style={{
+                                fontSize: isMobile ? '0.6rem' : '0.65rem',
+                                color: '#635bff',
+                                backgroundColor: '#f0f2ff',
+                                padding: isMobile ? '0.05rem 0.3rem' : '0.1rem 0.4rem',
+                                borderRadius: '3px',
+                                fontWeight: '500',
+                              }}>
+                                New Tab
+                              </span>
+                              <span>•</span>
+                              <span>{formatTimeAgo(item.timestamp)}</span>
+                            </div>
+                          </div>
+                        </div>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            removeRecentPath(item.id);
+                          }}
+                          style={{
+                            background: 'none',
+                            border: 'none',
+                            color: '#999',
+                            cursor: 'pointer',
+                            fontSize: isMobile ? '1.1rem' : '1.4rem',
+                            padding: isMobile ? '0.15rem' : '0.25rem',
+                            borderRadius: '4px',
+                            transition: 'all 0.2s ease',
+                            flexShrink: 0,
+                            lineHeight: '1',
+                          }}
+                          className="hover:bg-gray-100 hover:text-red-500"
+                          title="Remove"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ))
+                  ) : (
+                    <div style={{
+                      padding: isMobile ? '1.5rem 0.75rem' : '2rem 1rem',
+                      textAlign: 'center',
+                      color: '#999',
+                      fontSize: isMobile ? '0.8rem' : '0.9rem',
+                    }}>
+                      <div style={{ fontSize: isMobile ? '1.5rem' : '2rem', marginBottom: '0.4rem', color: '#ccc' }}>
+                        <IoIosTime />
+                      </div>
+                      No recent visits
+                      <div style={{ fontSize: isMobile ? '0.7rem' : '0.8rem', color: '#ccc', marginTop: '0.4rem' }}>
+                        Visit pages to see them here
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {recentPaths.length > 0 && (
+                  <div style={{
+                    padding: isMobile ? '0.5rem 0.6rem' : '0.75rem 1rem',
+                    borderTop: '1px solid #f0f0f0',
+                    fontSize: isMobile ? '0.65rem' : '0.75rem',
+                    color: '#999',
+                    textAlign: 'center',
+                    backgroundColor: '#f9f9f9',
+                    borderBottomLeftRadius: isMobile ? '8px' : '12px',
+                    borderBottomRightRadius: isMobile ? '8px' : '12px',
+                  }}>
+                    <span style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '0.25rem',
+                    }}>
+                      <span style={{ color: '#635bff' }}>ℹ️</span>
+                      Click to open in new tab
+                    </span>
+                  </div>
+                )}
               </div>
-            </div>
+            )}
+          </div>
+          <Link href="/AI-Reporting-tool" passHref>
             <button
-              onClick={(e) => {
-                e.stopPropagation();
-                removeRecentPath(item.id);
-              }}
               style={{
                 background: 'none',
                 border: 'none',
-                color: '#999',
                 cursor: 'pointer',
-                fontSize: isMobile ? '1.1rem' : '1.4rem',
-                padding: isMobile ? '0.15rem' : '0.25rem',
-                borderRadius: '4px',
+                color: 'white',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: '40px',
+                height: '40px',
+                borderRadius: '50%',
                 transition: 'all 0.2s ease',
-                flexShrink: 0,
-                lineHeight: '1',
+                position: 'relative',
               }}
-              className="hover:bg-gray-100 hover:text-red-500"
-              title="Remove"
+              className="hover:bg-white hover:bg-opacity-10 active:bg-opacity-20"
+              title="AI Financial Analyst Pro"
+              aria-label="Open AI Financial Tool"
             >
-              ×
+              <FaRobot size={20} />
             </button>
-          </div>
-        ))
-      ) : (
-        <div style={{
-          padding: isMobile ? '1.5rem 0.75rem' : '2rem 1rem',
-          textAlign: 'center',
-          color: '#999',
-          fontSize: isMobile ? '0.8rem' : '0.9rem',
-        }}>
-          <div style={{ fontSize: isMobile ? '1.5rem' : '2rem', marginBottom: '0.4rem', color: '#ccc' }}>
-            <IoIosTime />
-          </div>
-          No recent visits
-          <div style={{ fontSize: isMobile ? '0.7rem' : '0.8rem', color: '#ccc', marginTop: '0.4rem' }}>
-            Visit pages to see them here
-          </div>
-        </div>
-      )}
-    </div>
-    
-    {recentPaths.length > 0 && (
-      <div style={{
-        padding: isMobile ? '0.5rem 0.6rem' : '0.75rem 1rem',
-        borderTop: '1px solid #f0f0f0',
-        fontSize: isMobile ? '0.65rem' : '0.75rem',
-        color: '#999',
-        textAlign: 'center',
-        backgroundColor: '#f9f9f9',
-        borderBottomLeftRadius: isMobile ? '8px' : '12px',
-        borderBottomRightRadius: isMobile ? '8px' : '12px',
-      }}>
-        <span style={{ 
-          display: 'flex', 
-          alignItems: 'center', 
-          justifyContent: 'center', 
-          gap: '0.25rem',
-        }}>
-          <span style={{ color: '#635bff' }}>ℹ️</span>
-          Click to open in new tab
-        </span>
-      </div>
-    )}
-  </div>
-)}
-          </div>
-<Link href="/AI-Reporting-tool" passHref>
-          <button
- 
-  style={{
-    background: 'none',
-    border: 'none',
-    cursor: 'pointer',
-    color: 'white',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: '40px',
-    height: '40px',
-    borderRadius: '50%',
-    transition: 'all 0.2s ease',
-    position: 'relative',
-  }}
-  className="hover:bg-white hover:bg-opacity-10 active:bg-opacity-20"
-  title="AI Financial Analyst Pro"
-  aria-label="Open AI Financial Tool"
->
-  <FaRobot size={20} />
-</button>
-</Link>
+          </Link>
 
           {/* Pinned Modules */}
           <Link href="/pinned-modules" passHref>
@@ -1593,28 +1590,28 @@ const Header = ({ isSidebarCollapsed, onMenuToggle, isMobile }) => {
             </button>
           </Link>
 
-           <Tooltip title="Flow Diagram Builder">
-          <button
-            onClick={handleFlowDiagramClick}
-            style={{
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              color: 'white',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: '40px',
-              height: '40px',
-              borderRadius: '50%',
-              transition: 'all 0.2s ease',
-            }}
-            className="hover:bg-white hover:bg-opacity-10 active:bg-opacity-20"
-            aria-label="Flow Diagram Builder"
-          >
-            <BackupTableIcon style={{ fontSize: '20px' }} />
-          </button>
-        </Tooltip>
+          <Tooltip title="Flow Diagram Builder">
+            <button
+              onClick={handleFlowDiagramClick}
+              style={{
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                color: 'white',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: '40px',
+                height: '40px',
+                borderRadius: '50%',
+                transition: 'all 0.2s ease',
+              }}
+              className="hover:bg-white hover:bg-opacity-10 active:bg-opacity-20"
+              aria-label="Flow Diagram Builder"
+            >
+              <BackupTableIcon style={{ fontSize: '20px' }} />
+            </button>
+          </Tooltip>
 
           {/* Notifications */}
           <div ref={notificationsRef} style={{ position: 'relative' }}>
@@ -1665,132 +1662,132 @@ const Header = ({ isSidebarCollapsed, onMenuToggle, isMobile }) => {
             </button>
 
             {isNotificationsOpen && (
-  <div style={{
-    position: 'absolute',
-    top: '100%',
-    right: isMobile ? '0' : 0,
-    left: isMobile ? '-100px' : 'auto',
-    backgroundColor: 'white',
-    border: '1px solid #e0e0e0',
-    borderRadius: isMobile ? '8px' : '12px',
-    width: isMobile ? '230px' : '320px',
-    maxHeight: isMobile ? '50vh' : '400px',
-    zIndex: 1000,
-    boxShadow: '0 8px 25px rgba(0,0,0,0.15)',
-    marginTop: '0.5rem',
-    marginRight: isMobile ? '0.5rem' : '0',
-  }}>
-    <div style={{
-      padding: isMobile ? '0.6rem 0.75rem' : '1rem',
-      borderBottom: '1px solid #f0f0f0',
-      display: 'flex',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-    }}>
-      <span style={{ 
-        fontWeight: '600', 
-        color: '#333',
-        fontSize: isMobile ? '0.85rem' : '1rem',
-      }}>
-        Notifications
-      </span>
-      {notifications.length > 0 && (
-        <button
-          onClick={clearAllNotifications}
-          style={{
-            background: 'none',
-            border: 'none',
-            color: '#635bff',
-            fontSize: isMobile ? '0.7rem' : '0.8rem',
-            cursor: 'pointer',
-            fontWeight: '500',
-            whiteSpace: 'nowrap',
-          }}
-        >
-          Clear All
-        </button>
-      )}
-    </div>
-
-    <div style={{ 
-      maxHeight: isMobile ? 'calc(50vh - 100px)' : '300px', 
-      overflowY: 'auto',
-      scrollbarWidth: isMobile ? 'none' : 'thin',
-      msOverflowStyle: isMobile ? 'none' : 'auto',
-    }}>
-      {isMobile && (
-        <style>
-          {`
-            @media (max-width: 768px) {
-              div[style*="maxHeight"]::-webkit-scrollbar {
-                display: none;
-              }
-            }
-          `}
-        </style>
-      )}
-      {notifications.length > 0 ? (
-        notifications.map((notification) => (
-          <div
-            key={notification.id}
-            style={{
-              padding: isMobile ? '0.6rem 0.7rem' : '0.875rem 1rem',
-              borderBottom: '1px solid #f8f8f8',
-              cursor: 'pointer',
-              backgroundColor: notification.read ? '#fff' : '#f8fbff',
-              transition: 'background-color 0.2s ease',
-            }}
-            className="hover:bg-gray-50"
-            onClick={() => markNotificationAsRead(notification.id)}
-          >
-            <div style={{ display: 'flex', alignItems: 'flex-start', gap: isMobile ? '0.4rem' : '0.75rem' }}>
-              <span style={{ fontSize: isMobile ? '0.9rem' : '1.2rem', flexShrink: 0, lineHeight: '1' }}>
-                {getNotificationIcon(notification.type)}
-              </span>
-              <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{
+                position: 'absolute',
+                top: '100%',
+                right: isMobile ? '0' : 0,
+                left: isMobile ? '-100px' : 'auto',
+                backgroundColor: 'white',
+                border: '1px solid #e0e0e0',
+                borderRadius: isMobile ? '8px' : '12px',
+                width: isMobile ? '230px' : '320px',
+                maxHeight: isMobile ? '50vh' : '400px',
+                zIndex: 1000,
+                boxShadow: '0 8px 25px rgba(0,0,0,0.15)',
+                marginTop: '0.5rem',
+                marginRight: isMobile ? '0.5rem' : '0',
+              }}>
                 <div style={{
-                  fontSize: isMobile ? '0.75rem' : '0.9rem',
-                  color: '#333',
-                  fontWeight: notification.read ? '400' : '500',
-                  lineHeight: '1.3',
-                  wordBreak: 'break-word',
+                  padding: isMobile ? '0.6rem 0.75rem' : '1rem',
+                  borderBottom: '1px solid #f0f0f0',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
                 }}>
-                  {notification.text}
+                  <span style={{
+                    fontWeight: '600',
+                    color: '#333',
+                    fontSize: isMobile ? '0.85rem' : '1rem',
+                  }}>
+                    Notifications
+                  </span>
+                  {notifications.length > 0 && (
+                    <button
+                      onClick={clearAllNotifications}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: '#635bff',
+                        fontSize: isMobile ? '0.7rem' : '0.8rem',
+                        cursor: 'pointer',
+                        fontWeight: '500',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      Clear All
+                    </button>
+                  )}
                 </div>
+
                 <div style={{
-                  fontSize: isMobile ? '0.65rem' : '0.75rem',
-                  color: '#999',
-                  marginTop: isMobile ? '0.2rem' : '0.25rem',
+                  maxHeight: isMobile ? 'calc(50vh - 100px)' : '300px',
+                  overflowY: 'auto',
+                  scrollbarWidth: isMobile ? 'none' : 'thin',
+                  msOverflowStyle: isMobile ? 'none' : 'auto',
                 }}>
-                  {notification.time}
+                  {isMobile && (
+                    <style>
+                      {`
+                        @media (max-width: 768px) {
+                          div[style*="maxHeight"]::-webkit-scrollbar {
+                            display: none;
+                          }
+                        }
+                      `}
+                    </style>
+                  )}
+                  {notifications.length > 0 ? (
+                    notifications.map((notification) => (
+                      <div
+                        key={notification.id}
+                        style={{
+                          padding: isMobile ? '0.6rem 0.7rem' : '0.875rem 1rem',
+                          borderBottom: '1px solid #f8f8f8',
+                          cursor: 'pointer',
+                          backgroundColor: notification.read ? '#fff' : '#f8fbff',
+                          transition: 'background-color 0.2s ease',
+                        }}
+                        className="hover:bg-gray-50"
+                        onClick={() => markNotificationAsRead(notification.id)}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'flex-start', gap: isMobile ? '0.4rem' : '0.75rem' }}>
+                          <span style={{ fontSize: isMobile ? '0.9rem' : '1.2rem', flexShrink: 0, lineHeight: '1' }}>
+                            {getNotificationIcon(notification.type)}
+                          </span>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{
+                              fontSize: isMobile ? '0.75rem' : '0.9rem',
+                              color: '#333',
+                              fontWeight: notification.read ? '400' : '500',
+                              lineHeight: '1.3',
+                              wordBreak: 'break-word',
+                            }}>
+                              {notification.text}
+                            </div>
+                            <div style={{
+                              fontSize: isMobile ? '0.65rem' : '0.75rem',
+                              color: '#999',
+                              marginTop: isMobile ? '0.2rem' : '0.25rem',
+                            }}>
+                              {notification.time}
+                            </div>
+                          </div>
+                          {!notification.read && (
+                            <div style={{
+                              width: isMobile ? '5px' : '8px',
+                              height: isMobile ? '5px' : '8px',
+                              borderRadius: '50%',
+                              backgroundColor: '#635bff',
+                              marginTop: '0.4rem',
+                              flexShrink: 0,
+                            }} />
+                          )}
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div style={{
+                      padding: isMobile ? '1.5rem 0.75rem' : '2rem 1rem',
+                      textAlign: 'center',
+                      color: '#999',
+                      fontSize: isMobile ? '0.8rem' : '0.9rem',
+                    }}>
+                      No notifications
+                    </div>
+                  )}
                 </div>
               </div>
-              {!notification.read && (
-                <div style={{
-                  width: isMobile ? '5px' : '8px',
-                  height: isMobile ? '5px' : '8px',
-                  borderRadius: '50%',
-                  backgroundColor: '#635bff',
-                  marginTop: '0.4rem',
-                  flexShrink: 0,
-                }} />
-              )}
-            </div>
-          </div>
-        ))
-      ) : (
-        <div style={{
-          padding: isMobile ? '1.5rem 0.75rem' : '2rem 1rem',
-          textAlign: 'center',
-          color: '#999',
-          fontSize: isMobile ? '0.8rem' : '0.9rem',
-        }}>
-          No notifications
-        </div>
-      )}
-    </div>
-  </div>
-)}
+            )}
           </div>
 
           {/* User Profile Dropdown */}
@@ -1987,13 +1984,13 @@ const Header = ({ isSidebarCollapsed, onMenuToggle, isMobile }) => {
                     <span>🔒</span>
                     <span>Change Password</span>
                   </button>
-                  
+
                   <button
                     onClick={handleLogout}
                     style={{
                       width: '100%',
                       padding: '0.3rem 1rem',
-                      marginBottom:'3px',
+                      marginBottom: '3px',
                       background: 'none',
                       border: 'none',
                       textAlign: 'left',

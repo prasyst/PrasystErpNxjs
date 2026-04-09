@@ -1511,14 +1511,14 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
     setActiveGrandchild(null);
 
     const itemNameLower = item.name.toLowerCase().trim();
-    if (itemNameLower === 'ticketing' || itemNameLower.includes('ticket')) {
-      handleNavigationWithTracking('/ticketpage', item.name, false);
+    // if (itemNameLower === 'ticketing' || itemNameLower.includes('ticket')) {
+    //   handleNavigationWithTracking('/ticketpage', item.name, false);
 
-      // Close mobile sidebar if open
-      if (isMobile) onClose();
+    //   // Close mobile sidebar if open
+    //   if (isMobile) onClose();
 
-      return; // Important: Stop further execution for Ticketing
-    }
+    //   return; // Important: Stop further execution for Ticketing
+    // }
 
     if (item.children && item.children.length > 0) {
       toggleSection(item.name);
