@@ -4,19 +4,20 @@ import {
     Box, Grid, TextField, Typography, Button, Stack, FormControlLabel, FormLabel, Radio, RadioGroup, Checkbox, Link
 } from '@mui/material';
 import { useSearchParams, useRouter } from 'next/navigation';
-import debounce from 'lodash.debounce';
 import { toast, ToastContainer } from 'react-toastify';
 import KeyboardArrowLeftIcon from "@mui/icons-material/KeyboardArrowLeft";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
 import CrudButton from '@/GlobalFunction/CrudButton';
-import AutoVibe from '@/GlobalFunction/CustomAutoComplete/AutoVibe';
+import AutoVibe from '../../../../GlobalFunction/CustomAutoComplete/AutoVibe';
 import axiosInstance from '@/lib/axios';
 import { getFormMode } from '@/lib/helpers';
 import EditableTable from '@/atoms/EditTable';
 import z from 'zod';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import { TbListSearch } from "react-icons/tb";
+import { textInputSx } from '../../../../../public/styles/textInputSx';
+import { DropInputSx } from '../../../../../public/styles/dropInputSx';
 
 const columns = [
     { label: 'Style', field: '', type: 'text' },
@@ -57,7 +58,6 @@ const Attributes = [
 
 const Style = () => {
     const router = useRouter();
-
     const [isFormDisabled, setIsFormDisabled] = useState(true);
     const [mode, setMode] = useState('view');
     const [prdGrp, setprdGrp] = useState([]);
@@ -66,109 +66,46 @@ const Style = () => {
     const searchParams = useSearchParams();
     const FGStyle = searchParams.get('FGSTYLE_ID');
     const [formData, setFormData] = useState({
-
         DBFLAG: "",
         MRP: '',
         HSNCODE_KEY: ''
-
     });
-
-    const textInputSx = {
-        '& .MuiInputBase-root': {
-            height: 36,
-            fontSize: '14px',
-        },
-        '& .MuiInputLabel-root': {
-            fontSize: '14px',
-            top: '-8px',
-        },
-        '& .MuiFilledInput-root': {
-            backgroundColor: '#fafafa',
-            border: '1px solid #e0e0e0',
-            borderRadius: '6px',
-            overflow: 'hidden',
-            height: 36,
-            fontSize: '14px',
-        },
-        '& .MuiFilledInput-root:before': {
-            display: 'none',
-        },
-        '& .MuiFilledInput-root:after': {
-            display: 'none',
-        },
-        '& .MuiInputBase-input': {
-            padding: '10px 12px !important',
-            fontSize: '14px !important',
-            lineHeight: '1.4',
-        },
-        '& .MuiFilledInput-root.Mui-disabled': {
-            backgroundColor: '#fff'
-        }
-    };
-
-    const DropInputSx = {
-        '& .MuiInputBase-root': {
-            height: 36,
-            fontSize: '14px',
-        },
-        '& .MuiInputLabel-root': {
-            fontSize: '14px',
-            top: '-4px',
-        },
-        '& .MuiFilledInput-root': {
-            backgroundColor: '#fafafa',
-            border: '1px solid #e0e0e0',
-            borderRadius: '6px',
-            overflow: 'hidden',
-            height: 36,
-            fontSize: '14px',
-            paddingRight: '36px',
-        },
-        '& .MuiFilledInput-root:before': {
-            display: 'none',
-        },
-        '& .MuiFilledInput-root:after': {
-            display: 'none',
-        },
-        '& .MuiInputBase-input': {
-            padding: '10px 12px',
-            fontSize: '14px',
-            lineHeight: '1.4',
-        },
-        '& .MuiAutocomplete-endAdornment': {
-            top: '50%',
-            transform: 'translateY(-50%)',
-            right: '10px',
-        },
-        '& .MuiFilledInput-root.Mui-disabled': {
-            backgroundColor: '#fff'
-        }
-    };
+    const [prodDrp, setProdDrp] = useState([]);
+    const [selectedProd, setSelectedProd] = useState(null);
+    const [typeDrp, setTypeDrp] = useState([]);
+    const [selectedType, setSelectedType] = useState(null);
+    const [brandDrp, setBrandDrp] = useState([]);
+    const [selectedBrand, setSelectedBrand] = useState(null);
+    const [unitDrp, setUnitDrp] = useState([]);
+    const [selectedUnit, setSelectedUnit] = useState([]);
+    const [qualityDrp, setQualityDrp] = useState([]);
+    const [selectedQuality, setSelectedQuality] = useState([]);
+    const [prodSr, setProdSr] = useState([]);
+    const [selectedProSr, setSelectedProSr] = useState(null);
+    const [seasonDrp, setSeasonDrp] = useState([]);
+    const [selectedSeason, setSelectedSeason] = useState(null);
 
     const fetchStyleData = useCallback(async (currentStyleId, flag = "R") => {
         try {
             const response = await axiosInstance.post(`FGSTYLE/RetriveFgstyle`, {
-                "FGSTYLE_ID": currentStyleId,
-                "FLAG": flag,
+                FGSTYLE_ID: currentStyleId,
+                FLAG: flag,
             });
 
             if (response.data.STATUS === 0 && response.data.RESPONSESTATUSCODE === 1) {
                 const styleData = response?.data?.DATA?.FGSTYLEList[0];
 
                 setFormData({
-
                     DBFLAG: mode === 'retrieve' ? 'R' : mode === 'edit' ? 'U' : '',
                     MRP: styleData?.MRP || "",
                     HSNCODE_KEY: styleData?.HSNCODE_KEY || ''
-
                 });
 
                 setIsFormDisabled(true);
                 setCurrentStyleId(styleData?.FGSTYLE_ID);
                 const newParams = new URLSearchParams();
                 newParams.set("FGSTYLE_ID", styleData.FGSTYLE_ID);
-                router.replace(`/inverntory/style?${newParams.toString()}`);
-
+                router.replace(`/masters/products/style?${newParams.toString()}`);
             } else if (response.data.STATUS === 1 && response.data.RESPONSESTATUSCODE === 2) {
                 toast.info(response.data.MESSAGE);
             }
@@ -193,14 +130,12 @@ const Style = () => {
         setMode('view');
     }, [FGStyle, fetchStyleData]);
 
-    const handleSubmit = async () => { };
-
     const handleExit = () => {
-        router.push('/dashboard');
+        router.push('/masterpage/?activeTab=13');
     };
 
     const handleTable = () => {
-        router.push('/inverntory/style/styleTable');
+        router.push('/masters/products/style/styleTable');
     };
 
     const handleInputChange = (e) => {
@@ -297,6 +232,116 @@ const Style = () => {
         );
     };
 
+    useEffect(() => {
+        fetchProduct();
+        fetchType();
+        fetchBrand();
+        fetchUnit();
+        fetchQuality();
+        fetchProductSr();
+        fetchSeason();
+    }, [])
+
+    const fetchProduct = async () => {
+        try {
+            const response = await axiosInstance.post('Product/GetFgPrdDrp', {
+                FLAG: ""
+            });
+            if (response.data.STATUS === 0) {
+                setProdDrp(response.data.DATA);
+            } else {
+                setProdDrp([]);
+            }
+        } catch (error) {
+            toast.error("Error while fetching the products.");
+        }
+    };
+
+    const fetchType = async () => {
+        try {
+            const response = await axiosInstance.post('FgType/GetFgTypeDrp', {
+                FGSTYLE_ID: 0,
+                FLAG: ""
+            });
+            if (response.data.STATUS === 0) {
+                setTypeDrp(response.data.DATA);
+            } else {
+                setTypeDrp([]);
+            }
+        } catch (error) {
+            toast.error("Error while fetching Type.");
+        }
+    };
+
+    const fetchBrand = async () => {
+        try {
+            const response = await axiosInstance.post('Brand/GetBrandDrp', {});
+            if (response.data.STATUS === 0) {
+                setBrandDrp(response.data.DATA);
+            } else {
+                setBrandDrp([]);
+            }
+        } catch (error) {
+            toast.error("Error while fetching Brand.");
+        }
+    };
+
+    const fetchUnit = async () => {
+        try {
+            const response = await axiosInstance.post('Unit/GetUnitDrp', {});
+            if (response.data.STATUS === 0) {
+                setUnitDrp(response.data.DATA);
+            } else {
+                setUnitDrp([]);
+            }
+        } catch (error) {
+            toast.error("Error while fetching unit.");
+        }
+    };
+
+    const fetchQuality = async () => {
+        try {
+            const response = await axiosInstance.post('QUALITY/GetQUALITYDrp', {});
+            if (response.data.STATUS === 0) {
+                setQualityDrp(response.data.DATA);
+            } else {
+                setQualityDrp([]);
+            }
+        } catch (error) {
+            toast.error("Error while fetching quality.");
+        }
+    };
+
+    const fetchProductSr = async () => {
+        try {
+            const response = await axiosInstance.post('PRODSRMST/GetPRODSRMSTDrp', {})
+            if (response.data.STATUS === 0) {
+                setProdSr(response.data.DATA);
+            } else {
+                setProdSr([])
+            }
+        } catch (error) {
+            toast.error('Error while fetching the product.');
+        }
+    };
+
+    const fetchSeason = async () => {
+        try {
+            const response = await axiosInstance.post('SEASON/GetSEASONDrp', {})
+            if (response.data.STATUS === 0) {
+                setSeasonDrp(response.data.DATA);
+            } else {
+                setSeasonDrp([])
+            }
+        } catch (error) {
+            toast.error('Error while fetching the product.');
+        }
+    };
+
+    const handleSubmit = async () => {
+        toast.info("Working on it.");
+    };
+
     return (
         <Grid
             sx={{
@@ -320,7 +365,6 @@ const Style = () => {
                     marginInline: { xs: '5%', sm: '5%', md: '2%', lg: '2%', xl: '2%' },
                 }}
             >
-
                 <Grid container spacing={2} justifyContent="space-between"
                     sx={{ marginInline: { xs: '5%', sm: '5%', md: '5%', lg: '0%', xl: '0%' } }}
                 >
@@ -369,18 +413,23 @@ const Style = () => {
                     </Grid>
                 </Grid>
 
-                <Grid container spacing={0.5}>
+                <Grid container spacing={1}>
                     <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                         <AutoVibe
-                            id=""
+                            id="FGPRD_KEY"
                             disabled={isFormDisabled}
-                            getOptionLabel={(option) => option || ''}
-                            options={prdGrp}
+                            options={prodDrp}
+                            getOptionLabel={(option) => option.FGPRD_NAME || ''}
                             label="Product"
-                            name=""
-                            value={''}
-                            onChange={''}
-                            sx={DropInputSx}
+                            value={selectedProd}
+                            onChange={(event, newValue) => setSelectedProd(newValue)}
+                            sx={{
+                                ...DropInputSx,
+                                '& .MuiFilledInput-root': {
+                                    ...DropInputSx['& .MuiFilledInput-root'],
+                                    paddingTop: '16px !important',
+                                },
+                            }}
                             inputProps={{
                                 style: {
                                     padding: '6px 8px',
@@ -401,8 +450,9 @@ const Style = () => {
                             sx={textInputSx}
                             inputProps={{
                                 style: {
-                                    padding: '6px 8px',
-                                    fontSize: '12px',
+                                    padding: '6px 0px',
+                                    marginTop: '10px',
+                                    fontSize: '14px'
                                 },
                             }}
                         />
@@ -411,15 +461,21 @@ const Style = () => {
                     <Grid size={{ xs: 12, sm: 6, md: 3.5 }}></Grid>
                     <Grid size={{ xs: 12, sm: 6, md: 2.5 }}>
                         <AutoVibe
-                            id=""
+                            id="PRODSRMST_ID"
                             disabled={isFormDisabled}
-                            getOptionLabel={(option) => option || ''}
-                            options={prdGrp}
+                            getOptionLabel={(option) => option.SERIES || ''}
+                            options={prodSr}
                             label="Catalogue/Product SR"
                             name=""
-                            value={''}
-                            onChange={''}
-                            sx={DropInputSx}
+                            value={selectedProSr}
+                            onChange={(event, newValue) => setSelectedProSr(newValue)}
+                            sx={{
+                                ...DropInputSx,
+                                '& .MuiFilledInput-root': {
+                                    ...DropInputSx['& .MuiFilledInput-root'],
+                                    paddingTop: '16px !important',
+                                },
+                            }}
                             inputProps={{
                                 style: {
                                     padding: '6px 8px',
@@ -428,9 +484,22 @@ const Style = () => {
                             }}
                         />
                     </Grid>
-                    <Grid size={{ xs: 12, sm: 6, md: 2 }} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                        <Typography>FGStyleID</Typography>
-                        <Typography>40842</Typography>
+                    <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+                        <TextField
+                            label="FGStyleID"
+                            value="40842"
+                            disabled
+                            variant="filled"
+                            fullWidth
+                            sx={textInputSx}
+                            inputProps={{
+                                style: {
+                                    padding: '6px 0px',
+                                    marginTop: '10px',
+                                    fontSize: '14px'
+                                },
+                            }}
+                        />
                     </Grid>
 
                     <Grid size={{ xs: 12, sm: 6, md: 1.5 }}>
@@ -445,23 +514,30 @@ const Style = () => {
                             sx={textInputSx}
                             inputProps={{
                                 style: {
-                                    padding: '6px 8px',
-                                    fontSize: '12px',
+                                    padding: '6px 0px',
+                                    marginTop: '10px',
+                                    fontSize: '14px'
                                 },
                             }}
                         />
                     </Grid>
                     <Grid size={{ xs: 12, sm: 6, md: 1.5 }}>
                         <AutoVibe
-                            id="FGCAT_KEY"
+                            id="FGTYPE_KEY"
                             disabled={isFormDisabled}
-                            options={''}
-                            getOptionLabel={(option) => option || ""}
+                            options={typeDrp}
+                            getOptionLabel={(option) => option.FGTYPE_NAME || ""}
                             label="Type"
-                            name=""
-                            value={""}
-                            onChange={''}
-                            sx={DropInputSx}
+                            name="FGCAT_KEY"
+                            value={selectedType}
+                            onChange={(event, newValue) => setSelectedType(newValue)}
+                            sx={{
+                                ...DropInputSx,
+                                '& .MuiFilledInput-root': {
+                                    ...DropInputSx['& .MuiFilledInput-root'],
+                                    paddingTop: '16px !important',
+                                },
+                            }}
                             inputProps={{
                                 style: {
                                     padding: '6px 8px',
@@ -482,8 +558,9 @@ const Style = () => {
                             sx={textInputSx}
                             inputProps={{
                                 style: {
-                                    padding: '6px 8px',
-                                    fontSize: '12px',
+                                    padding: '6px 0px',
+                                    marginTop: '10px',
+                                    fontSize: '14px'
                                 },
                             }}
                         />
@@ -500,8 +577,9 @@ const Style = () => {
                             sx={textInputSx}
                             inputProps={{
                                 style: {
-                                    padding: '6px 8px',
-                                    fontSize: '12px',
+                                    padding: '6px 0px',
+                                    marginTop: '10px',
+                                    fontSize: '14px'
                                 },
                             }}
                         />
@@ -518,23 +596,30 @@ const Style = () => {
                             sx={textInputSx}
                             inputProps={{
                                 style: {
-                                    padding: '6px 8px',
-                                    fontSize: '12px',
+                                    padding: '6px 0px',
+                                    marginTop: '10px',
+                                    fontSize: '14px'
                                 },
                             }}
                         />
                     </Grid>
                     <Grid size={{ xs: 12, sm: 6, md: 1.5 }}>
                         <AutoVibe
-                            id="FGCAT_KEY"
+                            id="QLTY_KEY"
                             disabled={isFormDisabled}
-                            options={''}
-                            getOptionLabel={(option) => option || ""}
+                            options={qualityDrp}
+                            getOptionLabel={(option) => option.QLTY_NAME || ""}
                             label="Base/Quality"
                             name=""
-                            value={""}
-                            onChange={''}
-                            sx={DropInputSx}
+                            value={selectedQuality}
+                            onChange={(event, newValue) => setSelectedQuality(newValue)}
+                            sx={{
+                                ...DropInputSx,
+                                '& .MuiFilledInput-root': {
+                                    ...DropInputSx['& .MuiFilledInput-root'],
+                                    paddingTop: '16px !important',
+                                },
+                            }}
                             inputProps={{
                                 style: {
                                     padding: '6px 8px',
@@ -545,18 +630,23 @@ const Style = () => {
                     </Grid>
                     <Grid size={{ xs: 12, sm: 6, md: 1.5 }}>
                         <AutoVibe
-                            id="FGCAT_KEY"
+                            id="BRAND_KEY"
                             disabled={isFormDisabled}
-                            options={''}
-                            getOptionLabel={(option) => option || ""}
+                            options={brandDrp}
+                            getOptionLabel={(option) => option.BRAND_NAME || ''}
                             label="Brand"
-                            name=""
-                            value={""}
-                            onChange={''}
-                            sx={DropInputSx}
+                            value={selectedBrand}
+                            onChange={(event, newValue) => setSelectedBrand(newValue)}
+                            sx={{
+                                ...DropInputSx,
+                                '& .MuiFilledInput-root': {
+                                    ...DropInputSx['& .MuiFilledInput-root'],
+                                    paddingTop: '16px !important',
+                                },
+                            }}
                             inputProps={{
                                 style: {
-                                    padding: '6px 8px',
+                                    padding: '6px 0px',
                                     fontSize: '12px',
                                 },
                             }}
@@ -564,18 +654,23 @@ const Style = () => {
                     </Grid>
                     <Grid size={{ xs: 12, sm: 6, md: 1 }}>
                         <AutoVibe
-                            id="FGCAT_KEY"
+                            id="UNIT_KEY"
                             disabled={isFormDisabled}
-                            options={''}
-                            getOptionLabel={(option) => option || ""}
+                            options={unitDrp}
+                            getOptionLabel={(option) => option.UNIT_NAME || ''}
                             label="Unit"
-                            name=""
-                            value={""}
-                            onChange={''}
-                            sx={DropInputSx}
+                            value={selectedUnit}
+                            onChange={(event, newValue) => setSelectedUnit(newValue)}
+                            sx={{
+                                ...DropInputSx,
+                                '& .MuiFilledInput-root': {
+                                    ...DropInputSx['& .MuiFilledInput-root'],
+                                    paddingTop: '16px !important',
+                                },
+                            }}
                             inputProps={{
                                 style: {
-                                    padding: '6px 8px',
+                                    padding: '6px 0px',
                                     fontSize: '12px',
                                 },
                             }}
@@ -632,8 +727,9 @@ const Style = () => {
                             sx={textInputSx}
                             inputProps={{
                                 style: {
-                                    padding: '6px 8px',
-                                    fontSize: '12px',
+                                    padding: '6px 0px',
+                                    marginTop: '10px',
+                                    fontSize: '14px'
                                 },
                             }}
                         />
@@ -650,8 +746,9 @@ const Style = () => {
                             sx={textInputSx}
                             inputProps={{
                                 style: {
-                                    padding: '6px 8px',
-                                    fontSize: '12px',
+                                    padding: '6px 0px',
+                                    marginTop: '10px',
+                                    fontSize: '14px'
                                 },
                             }}
                         />
@@ -669,8 +766,9 @@ const Style = () => {
                             sx={textInputSx}
                             inputProps={{
                                 style: {
-                                    padding: '6px 8px',
-                                    fontSize: '12px',
+                                    padding: '6px 0px',
+                                    marginTop: '10px',
+                                    fontSize: '14px'
                                 },
                             }}
                         />
@@ -688,8 +786,9 @@ const Style = () => {
                             sx={textInputSx}
                             inputProps={{
                                 style: {
-                                    padding: '6px 8px',
-                                    fontSize: '12px',
+                                    padding: '6px 0px',
+                                    marginTop: '10px',
+                                    fontSize: '14px'
                                 },
                             }}
                         />
@@ -746,8 +845,9 @@ const Style = () => {
                             sx={textInputSx}
                             inputProps={{
                                 style: {
-                                    padding: '6px 8px',
-                                    fontSize: '12px',
+                                    padding: '6px 0px',
+                                    marginTop: '10px',
+                                    fontSize: '14px'
                                 },
                             }}
                         />
@@ -765,8 +865,9 @@ const Style = () => {
                             sx={textInputSx}
                             inputProps={{
                                 style: {
-                                    padding: '6px 8px',
-                                    fontSize: '12px',
+                                    padding: '6px 0px',
+                                    marginTop: '10px',
+                                    fontSize: '14px'
                                 },
                             }}
                         />
@@ -784,8 +885,9 @@ const Style = () => {
                             sx={textInputSx}
                             inputProps={{
                                 style: {
-                                    padding: '6px 8px',
-                                    fontSize: '12px',
+                                    padding: '6px 0px',
+                                    marginTop: '10px',
+                                    fontSize: '14px'
                                 },
                             }}
                         />
@@ -905,8 +1007,9 @@ const Style = () => {
                             sx={textInputSx}
                             inputProps={{
                                 style: {
-                                    padding: '6px 8px',
-                                    fontSize: '12px',
+                                    padding: '6px 0px',
+                                    marginTop: '10px',
+                                    fontSize: '14px'
                                 },
                             }}
                         />
@@ -951,8 +1054,9 @@ const Style = () => {
                             sx={textInputSx}
                             inputProps={{
                                 style: {
-                                    padding: '6px 8px',
-                                    fontSize: '12px',
+                                    padding: '6px 0px',
+                                    marginTop: '10px',
+                                    fontSize: '14px'
                                 },
                             }}
                         />
@@ -992,15 +1096,21 @@ const Style = () => {
 
                     <Grid size={{ xs: 12, sm: 6, md: 1.5 }}>
                         <AutoVibe
-                            id=""
+                            id="SEASON_KEY"
                             disabled={isFormDisabled}
-                            options={''}
-                            getOptionLabel={(option) => option || ""}
+                            options={seasonDrp}
+                            getOptionLabel={(option) => option.SEASON_NAME || ""}
                             label="Season"
                             name=""
-                            value={""}
-                            onChange={''}
-                            sx={DropInputSx}
+                            value={selectedSeason}
+                            onChange={(e, newValue) => setSelectedSeason(newValue)}
+                            sx={{
+                                ...DropInputSx,
+                                '& .MuiFilledInput-root': {
+                                    ...DropInputSx['& .MuiFilledInput-root'],
+                                    paddingTop: '16px !important',
+                                },
+                            }}
                             inputProps={{
                                 style: {
                                     padding: '6px 8px',
@@ -1038,12 +1148,12 @@ const Style = () => {
                             onChange={handleInputChange}
                             name=""
                             value={""}
-                            disabled={true}
                             sx={textInputSx}
                             inputProps={{
                                 style: {
-                                    padding: '6px 8px',
-                                    fontSize: '12px',
+                                    padding: '6px 0px',
+                                    marginTop: '10px',
+                                    fontSize: '14px'
                                 },
                             }}
                         />
@@ -1134,74 +1244,6 @@ const Style = () => {
                         <Typography sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                             Shade Alloc
                         </Typography>
-                        {/* <Box
-                            sx={{
-                                display: 'flex',
-                                flexDirection: 'row',
-                                gap: '8px'
-                            }}
-                        >
-                            <Button
-                                component="span"
-                                variant="contained"
-                                sx={{
-                                    minHeight: '10px',
-                                    padding: '1px 4px',
-                                    fontSize: '0.675rem',
-                                    width: '50px',
-                                    minWidth: '10px'
-                                }}
-                            >
-                                Single
-                            </Button>
-                            <Button
-                                component="span"
-                                variant="contained"
-                                sx={{
-                                    minHeight: '10px',
-                                    padding: '1px 4px',
-                                    fontSize: '0.675rem',
-                                    width: '50px',
-                                    minWidth: '10px'
-                                }}
-                            >
-                                Multi
-                            </Button>
-                        </Box>
-                        <Box
-                            sx={{
-                                display: 'flex',
-                                flexDirection: 'row',
-                                gap: '8px'
-                            }}
-                        >
-                            <Button
-                                component="span"
-                                variant="contained"
-                                sx={{
-                                    minHeight: '10px',
-                                    padding: '1px 4px',
-                                    fontSize: '0.675rem',
-                                    width: '50px',
-                                    minWidth: '10px'
-                                }}
-                            >
-                                Delete
-                            </Button>
-                            <Button
-                                component="span"
-                                variant="contained"
-                                sx={{
-                                    minHeight: '10px',
-                                    padding: '1px 4px',
-                                    fontSize: '0.675rem',
-                                    width: '50px',
-                                    minWidth: '10px'
-                                }}
-                            >
-                                Lock
-                            </Button>
-                        </Box> */}
                         <Button
                             component="span"
                             variant="contained"

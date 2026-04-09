@@ -36,7 +36,7 @@ const TicketCatMst = () => {
     const TicketCat = searchParams.get('TKTCATID');
     const CO_ID = localStorage.getItem('CO_ID');
     const { hasSpecificPermission, loading: permissionsLoading } = useUserPermissions();
-    const moduleName = 'TCM';
+    const moduleName = 'Ticket Category Master';
 
     const fetchTicketCatData = useCallback(async (currentTicCatId, flag = "R") => {
 

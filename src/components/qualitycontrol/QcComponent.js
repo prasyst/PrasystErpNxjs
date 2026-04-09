@@ -96,8 +96,8 @@ export default function QcComponentPage() {
 
     const menuData = [
         {
-            id: 'Quality Control',
-            name: 'Quality Control',
+            id: 'QC Mst',
+            name: 'QC Master',
             children: [
                 { name: 'QC Group', icon: HomeIcon, path: '/qualitycontrol/qcgrp/qcgroup' },
                 { name: 'QC Parameter', icon: SettingsIcon, path: '/qualitycontrol/qcparameter/qcparamtr' },
