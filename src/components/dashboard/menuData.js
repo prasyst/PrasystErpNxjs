@@ -1,13 +1,9 @@
 // src/data/menuData.js
 import {
-  MdDashboard, MdSearch, MdOutlineApartment, MdChevronRight,
-  MdDomain, MdMap, MdOutlineGroupWork, MdCategory, MdWarehouse, MdWork,
-  MdAccountBox, MdEmojiPeople, MdAccessibility, MdLocalShipping, MdPeople,
-  MdPersonAdd, MdClass, MdLocalOffer, MdStars, MdRateReview, MdBuild,
-  MdLocalMall, MdCollectionsBookmark, MdStraighten, MdBrandingWatermark,
-  MdReceipt, MdGavel, MdAssignment, MdAttachMoney, MdEvent, MdAnalytics,
-  MdSettings, MdInventory, MdAccountBalance, MdPayments, MdSummarize,
-  MdPushPin, MdOutlinePushPin, MdOutlineInventory
+  MdDashboard, MdSearch, MdOutlineApartment, MdChevronRight, MdDomain, MdMap, MdOutlineGroupWork, MdCategory, MdWarehouse, MdWork,
+  MdAccountBox, MdEmojiPeople, MdAccessibility, MdLocalShipping, MdPeople, MdPersonAdd, MdClass, MdLocalOffer, MdStars, MdRateReview, MdBuild,
+  MdLocalMall, MdCollectionsBookmark, MdStraighten, MdBrandingWatermark, MdReceipt, MdGavel, MdAssignment, MdAttachMoney, MdEvent, MdAnalytics,
+  MdSettings, MdInventory, MdAccountBalance, MdPayments, MdSummarize, MdPushPin, MdOutlinePushPin, MdOutlineInventory
 } from 'react-icons/md';
 
 import { FaBuilding, FaTruck, FaUserTag, FaHandshake, FaBalanceScale, FaBoxOpen, FaBoxes, FaUserTie, FaRupeeSign } from 'react-icons/fa';
@@ -78,7 +74,7 @@ export const menuItems = [
   { name: 'Dashboard', icon: MdDashboard, path: '/dashboard' },
   // { name: 'SalesDash', icon: FaRupeeSign, path: '/dashboard/sales-dashboard' },
   // { name: 'Stock Enquiry', icon: MdSearch, path: '/dashboard/stock-enquiry-table' },
-  
+
   {
     name: 'Masters',
     icon: MdOutlineApartment,
@@ -489,7 +485,7 @@ export const menuItems = [
 
 export const getAllMenuItemsWithPaths = (items = menuItems) => {
   let result = [];
-  
+
   items.forEach(item => {
     if (item.path && item.path !== '#') {
       result.push({
@@ -498,12 +494,12 @@ export const getAllMenuItemsWithPaths = (items = menuItems) => {
         icon: item.icon
       });
     }
-    
+
     if (item.children) {
       result = result.concat(getAllMenuItemsWithPaths(item.children));
     }
   });
-  
+
   return result;
 };
 

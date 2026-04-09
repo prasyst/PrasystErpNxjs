@@ -45,7 +45,7 @@ import { LocalizationProvider } from "../context/LocalizationContext";
 import { RecentPathsProvider } from '../app/context/RecentPathsContext';
 
 export const metadata = {
-  title: "PrasystERP",
+  title: "Pratham Systech India Ltd",
   description: "PRASYST - The symbol of business integration.",
   icons: {
     icon: '/images/FavIcon.png'
