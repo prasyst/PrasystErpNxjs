@@ -207,14 +207,13 @@ const DateFilters = React.memo(({ dateRange, onDateChange, isLoading, onGetData,
           />
         </Grid>
 
-        <Grid size={{ xs: 12, md: 2 }}>
+        <Grid size={{ xs: 12, md: 1 }}>
           <Button
             fullWidth
             variant="contained"
             onClick={onGetData}
             disabled={isLoading}
-            startIcon={isLoading ? <CircularProgress size={20} /> : <SearchIcon />}
-            sx={{ height: '38px', bgcolor: '#1976d2', '&:hover': { bgcolor: '#1565c0' } }}
+            sx={{ height: '38px', whiteSpace: 'nowrap', bgcolor: '#1976d2', '&:hover': { bgcolor: '#1565c0' } }}
           >
             {isLoading ? 'Loading...' : 'Get Data'}
           </Button>
