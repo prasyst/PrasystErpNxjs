@@ -35,6 +35,8 @@ import axiosInstance from '../../../lib/axios';
 import { toast, ToastContainer } from 'react-toastify';
 import ConfirmDailog from '@/components/ReusableConfirmDailog/ConfirmDailog';
 import { useRouter } from 'next/navigation';
+import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
+import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 
 const Tna = () => {
   const [selectedParty, setSelectedParty] = useState(null);
@@ -72,7 +74,43 @@ const Tna = () => {
   const [loadingRmData, setLoadingRmData] = useState(false);
   const [loadingTrimData, setLoadingTrimData] = useState(false);
 
-console.log('filteredRoutingData', filteredRoutingData)
+  const handleDeleteRoutingRow = (index) => {
+  const newData = [...editableRoutingData];
+  newData.splice(index, 1);
+  setEditableRoutingData(newData);
+  setFilteredRoutingData(newData);
+};
+
+
+const handleMoveUp = (ORDBKSTY_ID) => {
+  if (!ORDBKSTY_ID) return;
+  
+  const currentIndex = editableRoutingData.findIndex(item => item.ORDBKSTY_ID === ORDBKSTY_ID);
+  if (currentIndex === -1 || currentIndex === 0) return;
+  
+  const newData = [...editableRoutingData];
+  const [movedRow] = newData.splice(currentIndex, 1);
+  newData.unshift(movedRow);
+  
+  setEditableRoutingData(newData);
+  setFilteredRoutingData(newData);
+};
+
+const handleMoveDown = (ORDBKSTY_ID) => {
+  if (!ORDBKSTY_ID) return;
+  
+  const currentIndex = editableRoutingData.findIndex(item => item.ORDBKSTY_ID === ORDBKSTY_ID);
+  if (currentIndex === -1 || currentIndex === editableRoutingData.length - 1) return;
+  
+  const newData = [...editableRoutingData];
+  const [movedRow] = newData.splice(currentIndex, 1);
+  newData.push(movedRow);
+  
+  setEditableRoutingData(newData);
+  setFilteredRoutingData(newData);
+};
+
+
   useEffect(() => {
     setIsClient(true);
     setCobrid(localStorage.getItem('COBR_ID') || '');
@@ -1458,10 +1496,9 @@ console.log('filteredRoutingData', filteredRoutingData)
                     <Box
                       sx={{
                         display: 'grid',
-                        gridTemplateColumns: 'repeat(9, minmax(140px, 1fr))',
+                        gridTemplateColumns: '80px repeat(9, minmax(140px, 1fr))',
                         minWidth: '100%',
                         width: '100%',
-                        // height: '18px',
                         fontSize: '15px',
                       }}
                     >
@@ -1471,11 +1508,30 @@ console.log('filteredRoutingData', filteredRoutingData)
                         top: 0,
                         zIndex: 1,
                       }}>
+                        <Box
+                          sx={{
+                            gridColumn: '1',
+                            p: 0.6,
+                            textAlign: 'center',
+                            fontWeight: 600,
+                            color: 'rgba(0, 0, 0, 0.87)',
+                            backgroundColor: '#f1f5f9',
+                            borderRight: '1px solid',
+                            borderBottom: '1px solid',
+                            borderColor: 'divider',
+                            whiteSpace: 'nowrap',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                          }}
+                        >
+                          ACTIONS
+                        </Box>
                         {['PROSTGGRP_NAME', 'PROSTG_NAME', 'DAYS', 'PLAN_DT', 'EST_DT', 'ACT_DT', 'REMK', 'PROD_OUT_QTY', 'BAL_QTY'].map((header, idx) => (
                           <Box
                             key={header}
                             sx={{
-                              gridColumn: `${idx + 1}`,
+                              gridColumn: `${idx + 2}`,
                               p: 0.6,
                               textAlign: 'left',
                               fontWeight: 600,
@@ -1498,16 +1554,17 @@ console.log('filteredRoutingData', filteredRoutingData)
                         ))}
                       </Box>
 
-                      {filteredRoutingData.length === 0 ?
-                        (<Box sx={{
+                      {filteredRoutingData.length === 0 ? (
+                        <Box sx={{
                           gridColumn: '1 / -1',
                           display: 'flex',
                           justifyContent: 'center',
                           alignItems: 'center',
                           p: 4,
                           textAlign: 'center'
-                        }}>No data Found</Box>) : 
-                        (filteredRoutingData.map((row, index) => (
+                        }}>No data Found</Box>
+                      ) : (
+                        filteredRoutingData.map((row, index) => (
                           <Box
                             key={index}
                             sx={{
@@ -1518,7 +1575,6 @@ console.log('filteredRoutingData', filteredRoutingData)
                                 borderColor: 'divider',
                                 display: 'flex',
                                 alignItems: 'center',
-                                // justifyContent: 'center',
                                 minHeight: '26px',
                               },
                               '& > div:last-child': {
@@ -1532,6 +1588,51 @@ console.log('filteredRoutingData', filteredRoutingData)
                               },
                             }}
                           >
+                            {/* Action Buttons */}
+                            <Box sx={{
+                              px: 1,
+                              justifyContent: 'center',
+                              gap: 0.5,
+                              display: 'flex'
+                            }}>
+                              <IconButton
+                                size="small"
+                                onClick={() => handleMoveUp(row.TNADTL_ID)}
+                                disabled={index === 0}
+                                sx={{
+                                  padding: '2px',
+                                  '&.Mui-disabled': {
+                                    opacity: 0.3
+                                  }
+                                }}
+                              >
+                                <ArrowUpwardIcon fontSize="small" />
+                              </IconButton>
+                              <IconButton
+                                size="small"
+                                onClick={() => handleMoveDown(row.ORDBKSTY_ID)}
+                                disabled={index === filteredRoutingData.length - 1}
+                                sx={{
+                                  padding: '2px',
+                                  '&.Mui-disabled': {
+                                    opacity: 0.3
+                                  }
+                                }}
+                              >
+                                <ArrowDownwardIcon fontSize="small" />
+                              </IconButton>
+                              <IconButton
+                                size="small"
+                                onClick={() => handleDeleteRoutingRow(index)}
+                                sx={{
+                                  padding: '2px',
+                                  color: 'error.main'
+                                }}
+                              >
+                                <DeleteIcon fontSize="small" />
+                              </IconButton>
+                            </Box>
+
                             <Box sx={{ px: 1, justifyContent: 'flex-start' }}>
                               <Chip
                                 label={row.PROSTGGRP_NAME}
@@ -1631,7 +1732,8 @@ console.log('filteredRoutingData', filteredRoutingData)
                               </Tooltip>
                             </Box>
                           </Box>
-                        )))}
+                        ))
+                      )}
                     </Box>
                   </TableContainer>
                 </Box>

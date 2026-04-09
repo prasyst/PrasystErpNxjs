@@ -617,7 +617,7 @@ const UpdateRm = () => {
   };
 
   const handleBack=()=>{
-    router.push('/dashboard');
+    router.push('/tnapage');
   }
 
   return (
