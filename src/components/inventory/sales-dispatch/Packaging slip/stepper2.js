@@ -54,24 +54,29 @@ const [pickOrderItemsProcessed, setPickOrderItemsProcessed] = useState(false);
   const [isLoadingBarcode, setIsLoadingBarcode] = useState(false);
   const barcodeTimeoutRef = useRef(null);
 
-  // Track source of data loading
+  
   const [dataSource, setDataSource] = useState(null);
 
-  // State for size details loading
+ 
   const [isSizeDetailsLoaded, setIsSizeDetailsLoaded] = useState(false);
 
- useEffect(() => {
-  if (pickOrderItems && pickOrderItems.length > 0 && !pickOrderItemsProcessed) {
-    // Transform pick order items to match table data format
+const hasProcessedPickOrder = useRef(false);
+
+useEffect(() => {
+  
+  if (pickOrderItems && pickOrderItems.length > 0 && !hasProcessedPickOrder.current && !isEditingSize && !isAddingNew) {
+    hasProcessedPickOrder.current = true;
+    
+   
     const newItems = pickOrderItems.map((item, index) => {
       const tempId = Date.now() + index;
       
       return {
         id: tempId,
-        BarCode: item.barcode || "-",
+        BarCode: item.barcode || item.BarCode || "-",
         orderNo: item.orderNo || '',       
         balQty: item.balQty || item.qty || 0,
-  orderDate: item.orderDate || '', 
+        orderDate: item.orderDate || '', 
         product: item.product,
         style: item.style,
         type: item.type || "-",
@@ -89,8 +94,8 @@ const [pickOrderItemsProcessed, setPickOrderItemsProcessed] = useState(false);
         distributer: "-",
         set: item.set || 0,
         originalData: {
-          ORDBKSTY_ID: item.originalData?.ORDBKSTY_ID || tempId,
-          FGITEM_KEY: item.barcode || "-",
+          ORDBKSTY_ID: tempId,
+          FGITEM_KEY: item.barcode || item.BarCode || "-",
           PRODUCT: item.product,
           STYLE: item.style,
           TYPE: item.type || "-",
@@ -123,54 +128,20 @@ const [pickOrderItemsProcessed, setPickOrderItemsProcessed] = useState(false);
       };
     });
     
-    // Add to existing table data
-    const newTableData = [...tableData, ...newItems];
-    setUpdatedTableData(newTableData);
     
-    // Update formData
-    const newOrdbkStyleItems = newItems.map(item => ({
-      ORDBKSTY_ID: item.id,
-      FGITEM_KEY: item.BarCode,
-      PRODUCT: item.product,
-      STYLE: item.style,
-      TYPE: item.type,
-      SHADE: item.shade,
-      PATTERN: item.lotNo,
-      ITMQTY: item.qty,
-      MRP: item.mrp,
-      ITMRATE: item.rate,
-      ITMAMT: item.amount,
-      DLV_VAR_PERC: 0,
-      DLV_VAR_QTY: 0,
-      DISC_AMT: item.discAmt,
-      NET_AMT: item.netAmt,
-      DISTBTR: "-",
-      SETQTY: item.set,
-      ORDBKSTYSZLIST: item.originalData?.ORDBKSTYSZLIST || [],
-      FGSTYLE_ID: item.FGSTYLE_ID,
-      FGPRD_KEY: item.FGPRD_KEY,
-      FGTYPE_KEY: "",
-      FGSHADE_KEY: item.FGSHADE_KEY,
-      FGPTN_KEY: "",
-      DBFLAG: 'I'
-    }));
+    setUpdatedTableData(prev => {
+      
+      const existingIds = new Set(prev.map(item => item.id));
+      const itemsToAdd = newItems.filter(item => !existingIds.has(item.id));
+      return [...prev, ...itemsToAdd];
+    });
     
-    setFormData(prev => ({
-      ...prev,
-      apiResponseData: {
-        ...prev.apiResponseData,
-        ORDBKSTYLIST: [...(prev.apiResponseData?.ORDBKSTYLIST || []), ...newOrdbkStyleItems]
-      }
-    }));
-    
-    showSnackbar(`${newItems.length} items added from Pick Order!`);
-    setPickOrderItemsProcessed(true);
+    showSnackbar(`${newItems.length} items added from Pick Order!`, 'success');
   }
-}, [pickOrderItems,pickOrderItemsProcessed]);
-
-useEffect(() => {
-  if (pickOrderItems && pickOrderItems.length === 0) {
-    setPickOrderItemsProcessed(false);
+  
+  // Reset the ref when pickOrderItems becomes empty
+  if (!pickOrderItems || pickOrderItems.length === 0) {
+    hasProcessedPickOrder.current = false;
   }
 }, [pickOrderItems]);
 
@@ -1703,6 +1674,48 @@ const fetchSizeDetails = async () => {
       }
     }
   };
+
+  // Add this useEffect in Stepper2.js to sync table data to formData
+useEffect(() => {
+  if (updatedTableData.length > 0 && !isAddingNew && !isEditingSize) {
+    // Sync updatedTableData to formData.apiResponseData.ORDBKSTYLIST
+    const syncedItems = updatedTableData.map(item => ({
+      ORDBKSTY_ID: item.id,
+      FGITEM_KEY: item.BarCode,
+      ALT_BARCODE: item.ALT_BARCODE || item.BarCode,
+      PRODUCT: item.product,
+      STYLE: item.style,
+      TYPE: item.type,
+      SHADE: item.shade,
+      PATTERN: item.lotNo,
+      ITMQTY: item.qty,
+      MRP: item.mrp,
+      ITMRATE: item.rate,
+      ITMAMT: item.amount,
+      DLV_VAR_PERC: item.varPer || 0,
+      DLV_VAR_QTY: item.varQty || 0,
+      DISC_AMT: item.discAmt || 0,
+      NET_AMT: item.netAmt || item.amount,
+      DISTBTR: item.distributer || "-",
+      SETQTY: item.set || 0,
+      ORDBKSTYSZLIST: item.originalData?.ORDBKSTYSZLIST || [],
+      FGSTYLE_ID: item.FGSTYLE_ID,
+      FGPRD_KEY: item.FGPRD_KEY,
+      FGTYPE_KEY: item.FGTYPE_KEY,
+      FGSHADE_KEY: item.FGSHADE_KEY,
+      FGPTN_KEY: item.FGPTN_KEY,
+      DBFLAG: item.originalData?.DBFLAG || (mode === 'add' ? 'I' : 'U')
+    }));
+    
+    setFormData(prev => ({
+      ...prev,
+      apiResponseData: {
+        ...prev.apiResponseData,
+        ORDBKSTYLIST: syncedItems
+      }
+    }));
+  }
+}, [updatedTableData, isAddingNew, isEditingSize, mode, setFormData]);
 
   // Handle Delete Item
   const handleDeleteItem = () => {
