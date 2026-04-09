@@ -1,9 +1,6 @@
 'use client';
 import React, { useState, useEffect, useCallback } from "react";
 import axiosInstance from "@/lib/axios";
-import {
-    Button, Stack, Box
-} from '@mui/material';
 import ReusableTable, { getCustomDateFilter } from '@/components/datatable/ReusableTable';
 import { useRouter } from 'next/navigation';
 
@@ -61,7 +58,6 @@ const columnDefs = [
 ];
 
 export default function StyleMstTable() {
-
     const [isLoading, setIsLoading] = useState(true);
     const [rows, setRows] = useState([]);
     const router = useRouter();
@@ -100,20 +96,18 @@ export default function StyleMstTable() {
             FGSTYLE_ID: row.FGSTYLE_ID,
             mode: "view"
         }).toString();
-        router.push(`/inverntory/style?${params}`);
+        router.push(`/masters/products/style?${params}`);
     };
 
     const handleSelectionChanged = useCallback((event) => {
         const selectedNodes = event.api.getSelectedNodes();
         const selectedData = selectedNodes.map(node => node.data);
         setSelectedRows(selectedData);
-        console.log('Selected rows:', selectedData);
     }, []);
 
     return (
         <div className="p-2 w-full">
             <div className="w-full mx-auto" style={{ maxWidth: '100%' }}>
-
                 <div style={{ height: 'calc(100vh - 80px)', width: '100%' }}>
                     {isLoading ? (
                         <div style={{
@@ -132,8 +126,8 @@ export default function StyleMstTable() {
                             theme="ag-theme-quartz"
                             isDarkMode={false}
                             pagination={true}
-                            paginationPageSize={25}
-                            paginationPageSizeSelector={[25, 50, 100, 250, 500, 1000]}
+                            paginationPageSize={100}
+                            paginationPageSizeSelector={[100, 250, 500, 1000]}
                             quickFilter={true}
                             onRowClick={(params) => {
                                 console.log('Row clicked:', params);

@@ -1825,17 +1825,17 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
             <div
               onClick={(e) => handleParentClick(item, e)}
               onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = isActive ? '#5ba8ffff' : '#f0f2ff';
+                e.currentTarget.style.backgroundColor = isActive ? '#635BFF' : '#f0f2ff';
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = isActive ? '#5ba8ffff' : 'transparent';
+                e.currentTarget.style.backgroundColor = isActive ? '#635BFF' : 'transparent';
               }}
               style={{
                 display: 'flex',
                 alignItems: 'center',
                 padding: '0.45rem 0.2rem',
                 cursor: 'pointer',
-                backgroundColor: isActive ? '#5ba8ffff' : 'transparent',
+                backgroundColor: isActive ? '#635bff' : 'transparent',
                 color: isActive ? 'white' : '#333',
                 transition: 'all 0.2s ease',
                 margin: '0.10rem 0.4rem',
@@ -2081,7 +2081,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
               fontWeight: '700',
               margin: 0,
               whiteSpace: 'nowrap',
-              color: '#1b69e7',
+              color: '#635bff',
               letterSpacing: '0.5px',
             }}>
               {companyName}
