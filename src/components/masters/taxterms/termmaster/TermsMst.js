@@ -20,9 +20,9 @@ import PrintTermsDt from './PrintTermsDt';
 
 const FORM_MODE = getFormMode();
 const TermsMst = () => {
-   const router = useRouter();
-        const searchParams = useSearchParams();
-        const TERM_KEY = searchParams.get('TERM_KEY');
+    const router = useRouter();
+    const searchParams = useSearchParams();
+    const TERM_KEY = searchParams.get('TERM_KEY');
     const [currentTERM_KEY, setCurrentTERM_KEY] = useState(null);
     const [form, setForm] = useState({
         SearchByCd: '',
@@ -66,10 +66,10 @@ const TermsMst = () => {
     const COBR_ID = localStorage.getItem('COBR_ID');
 
     useEffect(() => {
-  if (!form.GST_APP) {
-    setForm((prev) => ({ ...prev, GST_APP: 'N' ,TERM_OPR: '-'}));
-  }
-}, [form]);
+        if (!form.GST_APP) {
+            setForm((prev) => ({ ...prev, GST_APP: 'N', TERM_OPR: '-' }));
+        }
+    }, [form]);
 
     const resetForm = () => {
         setForm({
@@ -105,6 +105,7 @@ const TermsMst = () => {
             Status: updatedStatus
         }))
     };
+
     const handleFixAmountChange = (e) => {
         const isChecked = e.target.checked;
         setForm((prevForm) => ({
@@ -129,7 +130,7 @@ const TermsMst = () => {
         }));
     };
 
-    const fetchRetriveData =useCallback( async (currentTERM_KEY, flag = "R", isManualSearch = false) => {
+    const fetchRetriveData = useCallback(async (currentTERM_KEY, flag = "R", isManualSearch = false) => {
         try {
             const response = await axiosInstance.post('Terms/RetriveTerms', {
                 "FLAG": flag,
@@ -165,11 +166,6 @@ const TermsMst = () => {
                     TERMS_TYPE: categoryData.TERM_TYPE || '',
                     STATUS: categoryData.STATUS,
                 });
-                console.log("catedata", categoryData)
-                console.log("Form state after setForm:", {
-                    ROFF: categoryData.ROFF,
-                    formROFF: form.ROFF // Note: This will show the previous state due to setState being async
-                });
                 setStatus(DATA[0].STATUS);
                 setCurrentTERM_KEY(categoryData.TERM_KEY);
             } else {
@@ -202,19 +198,20 @@ const TermsMst = () => {
         } catch (err) {
             console.error(err);
         }
-    },[CO_ID,form.ROFF]);
-    
-     useEffect(() => {
-                if (TERM_KEY) {
-                    setCurrentTERM_KEY(TERM_KEY);
-                    fetchRetriveData(TERM_KEY);
-                    setMode(FORM_MODE.read);
-                } else {
-                    resetForm();
-                    setMode(FORM_MODE.read);
-                }
-                setMode(FORM_MODE.read);
-            }, [TERM_KEY, fetchRetriveData]);
+    }, [CO_ID, form.ROFF]);
+
+    useEffect(() => {
+        if (TERM_KEY) {
+            setCurrentTERM_KEY(TERM_KEY);
+            fetchRetriveData(TERM_KEY);
+            setMode(FORM_MODE.read);
+        } else {
+            resetForm();
+            setMode(FORM_MODE.read);
+        }
+        setMode(FORM_MODE.read);
+    }, [TERM_KEY, fetchRetriveData]);
+
     const handleSubmit = async () => {
         try {
             const UserName = userRole === 'user' ? username : PARTY_KEY;
@@ -295,6 +292,7 @@ const TermsMst = () => {
             console.error("Submit Error:", error);
         }
     };
+
     const handleCancel = async () => {
         if (mode === FORM_MODE.add) {
             await fetchRetriveData(1, "L");
@@ -307,6 +305,7 @@ const TermsMst = () => {
             SearchByCd: ''
         }));
     };
+
     const debouncedApiCall = debounce(async (newSeries) => {
         try {
             const response = await axiosInstance.post('GetSeriesSettings/GetSeriesLastNewKey', {
@@ -343,6 +342,7 @@ const TermsMst = () => {
             console.error("Error fetching series data:", error);
         }
     }, 300);
+
     const handleManualSeriesChange = (newSeries) => {
         setForm((prevForm) => ({
             ...prevForm,
@@ -357,7 +357,8 @@ const TermsMst = () => {
             return;
         };
         debouncedApiCall(newSeries);
-    }
+    };
+
     const handleAdd = async () => {
         setMode(FORM_MODE.add);
         setCurrentTERM_KEY(null);
@@ -441,14 +442,17 @@ const TermsMst = () => {
             console.error("Error fetching ID and LASTID:", error);
         }
     };
-    const handleFirst =()=>{}
-    const handleLast=async()=>{
-         await fetchRetriveData(1, "L");
+
+    const handleFirst = () => { }
+
+    const handleLast = async () => {
+        await fetchRetriveData(1, "L");
         setForm((prev) => ({
             ...prev,
             SearchByCd: ''
-        }));   
-    }
+        }));
+    };
+
     const handlePrevious = async () => {
         await fetchRetriveData(currentTERM_KEY, "P");
         setForm((prev) => ({
@@ -456,6 +460,7 @@ const TermsMst = () => {
             SearchByCd: ''
         }));
     };
+
     const handleNext = async () => {
         if (currentTERM_KEY) {
             await fetchRetriveData(currentTERM_KEY, "N");
@@ -465,12 +470,15 @@ const TermsMst = () => {
             SearchByCd: ''
         }));
     };
+
     const handleDelete = () => {
         setOpenConfirmDialog(true);
-    }
+    };
+
     const handleCloseConfirmDialog = () => {
         setOpenConfirmDialog(false);
     };
+
     const handleConfirmDelete = async () => {
         setOpenConfirmDialog(false);
         try {
@@ -489,10 +497,12 @@ const TermsMst = () => {
             console.error("Delete Error:", error);
         }
     };
+
     const handleEdit = () => {
         setMode(FORM_MODE.edit);
     };
-       const handlePrint = async () => {
+
+    const handlePrint = async () => {
         try {
             const response = await axiosInstance.post(`Terms/GetTermsDashBoard?currentPage=1&limit=5000`, {
                 "SearchText": ""
@@ -503,17 +513,17 @@ const TermsMst = () => {
                     ...row,
                     STATUS: row.STATUS === "1" ? "Active" : "Inactive"
                 }));
-    
+
                 // Generate the PDF blob
                 const asPdf = pdf(<PrintTermsDt rows={formattedData} />);
                 const blob = await asPdf.toBlob();
                 const url = URL.createObjectURL(blob);
-    
+
                 // Open the PDF in a new tab
                 const newTab = window.open(url, '_blank');
                 if (newTab) {
                     newTab.focus();
-                } 
+                }
                 setTimeout(() => {
                     URL.revokeObjectURL(url);
                 }, 100);
@@ -522,24 +532,29 @@ const TermsMst = () => {
             console.error("Print Error:", error);
         }
     };
+
     const handleExit = () => { router.push("/masters/taxterms/termmaster/termstable") };
- const Buttonsx = {
+    
+    const Buttonsx = {
         backgroundColor: '#39ace2',
         margin: { xs: '0 4px', sm: '0 6px' },
         minWidth: { xs: 40, sm: 46, md: 60 },
         height: { xs: 40, sm: 46, md: 27 },
     };
+
     return (
         <>
-            <Box sx={{ width: '100%', justifyContent: 'center', alignItems: 'flex-start', padding: '24px', boxSizing: 'border-box', marginTop: { xs: "30px", sm: "0px", md: "40px" } ,
-             overflowY: { xs: 'auto', sm: 'visible' }, // Enable scrolling on mobile
-                    maxHeight: { xs: '80vh', sm: 'none' },  }}
+            <Box sx={{
+                width: '100%', justifyContent: 'center', alignItems: 'flex-start', padding: '24px', boxSizing: 'border-box', marginTop: { xs: "30px", sm: "0px", md: "40px" },
+                overflowY: { xs: 'auto', sm: 'visible' }, // Enable scrolling on mobile
+                maxHeight: { xs: '80vh', sm: 'none' },
+            }}
                 className="form-container">
                 <ToastContainer />
                 <Box sx={{ maxWidth: '1000px', boxShadow: '0px 2px 6px rgba(0, 0, 0, 0.1)' }} className="form_grid" >
                     <Grid container alignItems="center"
-                sx={{ marginTop: { xs: '30px', sm: '10px', md: '10px' }, marginInline: '20px',  overflowY: { xs: 'auto', sm: 'visible' },  }}>
-                                           <Grid sx={{ flexGrow: 1 }}>
+                        sx={{ marginTop: { xs: '30px', sm: '10px', md: '10px' }, marginInline: '20px', overflowY: { xs: 'auto', sm: 'visible' }, }}>
+                        <Grid sx={{ flexGrow: 1 }}>
                             <Typography align="center" variant="h5">
                                 Terms Master
                             </Typography>
@@ -647,8 +662,8 @@ const TermsMst = () => {
                             <CustomAutocomplete
                                 label="Terms Group"
                                 // options={termsGroupOptions}
-                                 value={form.TERMS_GROUP}
-                                 onChange={(value) => setForm({ ...form, TERMS_GROUP: value })}
+                                value={form.TERMS_GROUP}
+                                onChange={(value) => setForm({ ...form, TERMS_GROUP: value })}
                                 disabled={true}
                                 sx={{ width: { xs: '100%', sm: '48%', md: '48%' } }}
                             />
@@ -671,8 +686,8 @@ const TermsMst = () => {
                                 label="Terms Type"
                                 // name="TERMS_TYPE_KEY"
                                 // options={termsTypeOptions}
-                                 value={form.TERMS_TYPE}
-                                 onChange={(value) => setForm({ ...form, TERMS_TYPE: value })}
+                                value={form.TERMS_TYPE}
+                                onChange={(value) => setForm({ ...form, TERMS_TYPE: value })}
                                 sx={{ width: { xs: '100%', sm: '48%', md: '50%' } }}
                             />
                             <Box
@@ -686,8 +701,8 @@ const TermsMst = () => {
                                 <CustomAutocomplete
                                     label="Gen. Ledger"
                                     // options={generalLedgerOptions}
-                                     value={form.GEN_LEDGER}
-                                     onChange={(value) => setForm({ ...form, GEN_LEDGER: value })}
+                                    value={form.GEN_LEDGER}
+                                    onChange={(value) => setForm({ ...form, GEN_LEDGER: value })}
                                     disabled={true}
                                     sx={{ width: { xs: '100%', sm: '100%', md: '30%' } }}
                                 />
@@ -727,7 +742,7 @@ const TermsMst = () => {
                                         size="small"
                                         sx={{
                                             '&.Mui-checked': {
-                                                color:mode === FORM_MODE.read ? 'rgba(0, 0, 0, 0.38)' : '#39ace2',
+                                                color: mode === FORM_MODE.read ? 'rgba(0, 0, 0, 0.38)' : '#39ace2',
                                             },
                                             p: '4px',
                                             '& .MuiSvgIcon-root': {
@@ -772,7 +787,7 @@ const TermsMst = () => {
                                             key={val}
                                             value={val}
                                             label={val === 'Y' ? 'Yes' : 'No'}
-                                               disabled={mode === FORM_MODE.read} 
+                                            disabled={mode === FORM_MODE.read}
                                             control={
                                                 <Radio
                                                     size="small"
@@ -846,7 +861,7 @@ const TermsMst = () => {
                                             size="small"
                                             sx={{
                                                 '&.Mui-checked': {
-                                                     color: mode === FORM_MODE.read ? 'rgba(0, 0, 0, 0.38)' :'#39ace2',
+                                                    color: mode === FORM_MODE.read ? 'rgba(0, 0, 0, 0.38)' : '#39ace2',
                                                 },
                                                 p: '4px',
                                                 '& .MuiSvgIcon-root': {
@@ -962,7 +977,7 @@ const TermsMst = () => {
                                             <FormControlLabel
                                                 key={value}
                                                 value={value}
-                                                   disabled={mode === FORM_MODE.read}
+                                                disabled={mode === FORM_MODE.read}
                                                 label={label}
                                                 control={
                                                     <Radio
@@ -1028,7 +1043,7 @@ const TermsMst = () => {
                                         size="small"
                                         sx={{
                                             '&.Mui-checked': {
-                                                color: mode === FORM_MODE.read ? 'rgba(0, 0, 0, 0.38)' :'#39ace2',
+                                                color: mode === FORM_MODE.read ? 'rgba(0, 0, 0, 0.38)' : '#39ace2',
                                             },
                                             p: '4px',
                                             '& .MuiSvgIcon-root': {
@@ -1060,7 +1075,7 @@ const TermsMst = () => {
                                         size="small"
                                         sx={{
                                             '&.Mui-checked': {
-                                                color: mode === FORM_MODE.read ? 'rgba(0, 0, 0, 0.38)' :'#39ace2',
+                                                color: mode === FORM_MODE.read ? 'rgba(0, 0, 0, 0.38)' : '#39ace2',
                                             },
                                             p: '4px',
                                             '& .MuiSvgIcon-root': {
@@ -1079,8 +1094,8 @@ const TermsMst = () => {
                             />
                         </Box>
                     </Box>
-                <Grid container alignItems="center"
-                        justifyContent="center" spacing={1} sx={{ marginTop: { xs: '40px', sm: '20px', md: '10px' }, marginInline: '20px',  overflowY: { xs: 'auto', sm: 'visible' },  }}>
+                    <Grid container alignItems="center"
+                        justifyContent="center" spacing={1} sx={{ marginTop: { xs: '40px', sm: '20px', md: '10px' }, marginInline: '20px', overflowY: { xs: 'auto', sm: 'visible' }, }}>
                         <Grid sx={{
                             display: 'flex', justifyContent: {
                                 xs: 'center',
@@ -1089,7 +1104,7 @@ const TermsMst = () => {
                             width: { xs: '100%', sm: 'auto' },
                         }}>
                             <Stack direction="row" spacing={1}>
-                                  <PaginationButtons
+                                <PaginationButtons
                                     mode={mode}
                                     FORM_MODE={FORM_MODE}
                                     currentKey={currentTERM_KEY}

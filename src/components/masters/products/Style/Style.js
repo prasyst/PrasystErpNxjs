@@ -18,6 +18,7 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import { TbListSearch } from "react-icons/tb";
 import { textInputSx } from '../../../../../public/styles/textInputSx';
 import { DropInputSx } from '../../../../../public/styles/dropInputSx';
+import { useUserPermissions } from '@/app/hooks/useUserPermissions';
 
 const columns = [
     { label: 'Style', field: '', type: 'text' },
@@ -71,19 +72,30 @@ const Style = () => {
         HSNCODE_KEY: ''
     });
     const [prodDrp, setProdDrp] = useState([]);
-    const [selectedProd, setSelectedProd] = useState(null);
     const [typeDrp, setTypeDrp] = useState([]);
-    const [selectedType, setSelectedType] = useState(null);
     const [brandDrp, setBrandDrp] = useState([]);
-    const [selectedBrand, setSelectedBrand] = useState(null);
     const [unitDrp, setUnitDrp] = useState([]);
-    const [selectedUnit, setSelectedUnit] = useState([]);
     const [qualityDrp, setQualityDrp] = useState([]);
-    const [selectedQuality, setSelectedQuality] = useState([]);
     const [prodSr, setProdSr] = useState([]);
-    const [selectedProSr, setSelectedProSr] = useState(null);
     const [seasonDrp, setSeasonDrp] = useState([]);
-    const [selectedSeason, setSelectedSeason] = useState(null);
+    const [selectedValues, setSelectedValues] = useState({
+        FGPRD_KEY: null,
+        FGTYPE_KEY: null,
+        BRAND_KEY: null,
+        UNIT_KEY: null,
+        QLTY_KEY: null,
+        PRODSRMST_ID: null,
+        SEASON_KEY: null,
+        // Add more dropdowns here as needed
+        FGCAT_KEY: null,
+        WEB_COLLECTION: null,
+        FAB_CATEGORY: null,
+        FABRIC: null,
+        PATTERN: null,
+    });
+
+    const { hasSpecificPermission, loading: isPermissionLoading } = useUserPermissions();
+    const moduleName = 'Style Master';
 
     const fetchStyleData = useCallback(async (currentStyleId, flag = "R") => {
         try {
@@ -160,7 +172,6 @@ const Style = () => {
         setMode('add');
         setIsFormDisabled(false);
         setFormData({
-
         });
         setCurrentStyleId(null);
     };
@@ -186,7 +197,7 @@ const Style = () => {
 
     const handleCancel = async () => {
         try {
-            await fetchStyleData(1, "R");
+            // await fetchStyleData(1, "R");
             setMode('view');
             setIsFormDisabled(true);
             setFormData((prev) => ({
@@ -230,6 +241,18 @@ const Style = () => {
         setSelectedRowIndex((prev) =>
             prev.includes(originalIndex) ? prev.filter((i) => i !== originalIndex) : [...prev, originalIndex]
         );
+    };
+
+    const handleDropdownChange = (field) => (event, newValue) => {
+        setSelectedValues(prev => ({
+            ...prev,
+            [field]: newValue
+        }));
+
+        setFormData(prev => ({
+            ...prev,
+            [field]: newValue ? (newValue.ID || newValue.KEY || newValue.FGSTYLE_ID || '') : ''
+        }));
     };
 
     useEffect(() => {
@@ -400,7 +423,7 @@ const Style = () => {
 
                     <Grid sx={{ display: "flex", justifyContent: "end", marginRight: '-6px' }}>
                         <CrudButton
-                            moduleName=""
+                            moduleName={moduleName}
                             mode={mode}
                             onAdd={handleAdd}
                             onEdit={handleEdit}
@@ -409,6 +432,10 @@ const Style = () => {
                             readOnlyMode={mode === "view"}
                             onPrevious={handlePrevious}
                             onNext={handleNext}
+                            canAdd={hasSpecificPermission(moduleName, 'ADD')}
+                            canEdit={hasSpecificPermission(moduleName, 'EDIT')}
+                            canDelete={hasSpecificPermission(moduleName, 'DELETE')}
+                            canView={hasSpecificPermission(moduleName, 'VIEW')}
                         />
                     </Grid>
                 </Grid>
@@ -421,8 +448,8 @@ const Style = () => {
                             options={prodDrp}
                             getOptionLabel={(option) => option.FGPRD_NAME || ''}
                             label="Product"
-                            value={selectedProd}
-                            onChange={(event, newValue) => setSelectedProd(newValue)}
+                            value={selectedValues.FGPRD_KEY}
+                            onChange={handleDropdownChange('FGPRD_KEY')}
                             sx={{
                                 ...DropInputSx,
                                 '& .MuiFilledInput-root': {
@@ -466,9 +493,9 @@ const Style = () => {
                             getOptionLabel={(option) => option.SERIES || ''}
                             options={prodSr}
                             label="Catalogue/Product SR"
-                            name=""
-                            value={selectedProSr}
-                            onChange={(event, newValue) => setSelectedProSr(newValue)}
+                            name="PRODSRMST_ID"
+                            value={selectedValues.PRODSRMST_ID}
+                            onChange={handleDropdownChange('PRODSRMST_ID')}
                             sx={{
                                 ...DropInputSx,
                                 '& .MuiFilledInput-root': {
@@ -528,9 +555,9 @@ const Style = () => {
                             options={typeDrp}
                             getOptionLabel={(option) => option.FGTYPE_NAME || ""}
                             label="Type"
-                            name="FGCAT_KEY"
-                            value={selectedType}
-                            onChange={(event, newValue) => setSelectedType(newValue)}
+                            name="FGTYPE_KEY"
+                            value={selectedValues.FGTYPE_KEY}
+                            onChange={handleDropdownChange('FGTYPE_KEY')}
                             sx={{
                                 ...DropInputSx,
                                 '& .MuiFilledInput-root': {
@@ -610,9 +637,9 @@ const Style = () => {
                             options={qualityDrp}
                             getOptionLabel={(option) => option.QLTY_NAME || ""}
                             label="Base/Quality"
-                            name=""
-                            value={selectedQuality}
-                            onChange={(event, newValue) => setSelectedQuality(newValue)}
+                            name="QLTY_KEY"
+                            value={selectedValues.QLTY_KEY}
+                            onChange={handleDropdownChange('QLTY_KEY')}
                             sx={{
                                 ...DropInputSx,
                                 '& .MuiFilledInput-root': {
@@ -635,8 +662,9 @@ const Style = () => {
                             options={brandDrp}
                             getOptionLabel={(option) => option.BRAND_NAME || ''}
                             label="Brand"
-                            value={selectedBrand}
-                            onChange={(event, newValue) => setSelectedBrand(newValue)}
+                            name='BRAND_KEY'
+                            value={selectedValues.BRAND_KEY}
+                            onChange={handleDropdownChange('BRAND_KEY')}
                             sx={{
                                 ...DropInputSx,
                                 '& .MuiFilledInput-root': {
@@ -659,8 +687,8 @@ const Style = () => {
                             options={unitDrp}
                             getOptionLabel={(option) => option.UNIT_NAME || ''}
                             label="Unit"
-                            value={selectedUnit}
-                            onChange={(event, newValue) => setSelectedUnit(newValue)}
+                            value={selectedValues.UNIT_KEY}
+                            onChange={handleDropdownChange('UNIT_KEY')}
                             sx={{
                                 ...DropInputSx,
                                 '& .MuiFilledInput-root': {
@@ -679,8 +707,8 @@ const Style = () => {
 
                     <Grid size={{ xs: 12, sm: 6, md: 2 }}>
                         <AutoVibe
-                            id="FGCAT_KEY"
-                            disabled={isFormDisabled}
+                            id="PRODUCT_TYPE"
+                            disabled={true}
                             options={''}
                             getOptionLabel={(option) => option || ""}
                             label="Product Type"
@@ -815,8 +843,8 @@ const Style = () => {
 
                     <Grid size={{ xs: 12, sm: 6, md: 2 }}>
                         <AutoVibe
-                            id="FGCAT_KEY"
-                            disabled={isFormDisabled}
+                            id="Coll_TYPE"
+                            disabled={true}
                             options={''}
                             getOptionLabel={(option) => option || ""}
                             label="Collection/Neck"
@@ -977,8 +1005,8 @@ const Style = () => {
 
                     <Grid size={{ xs: 12, sm: 6, md: 2 }}>
                         <AutoVibe
-                            id="FGCAT_KEY"
-                            disabled={isFormDisabled}
+                            id="FIT_KEY"
+                            disabled={true}
                             options={''}
                             getOptionLabel={(option) => option || ""}
                             label="Fit"
@@ -1101,9 +1129,9 @@ const Style = () => {
                             options={seasonDrp}
                             getOptionLabel={(option) => option.SEASON_NAME || ""}
                             label="Season"
-                            name=""
-                            value={selectedSeason}
-                            onChange={(e, newValue) => setSelectedSeason(newValue)}
+                            name="SEASON_KEY"
+                            value={selectedValues.SEASON_KEY}
+                            onChange={handleDropdownChange('SEASON_KEY')}
                             sx={{
                                 ...DropInputSx,
                                 '& .MuiFilledInput-root': {
@@ -1122,9 +1150,9 @@ const Style = () => {
 
                     <Grid size={{ xs: 12, sm: 6, md: 2 }}>
                         <AutoVibe
-                            id="FGCAT_KEY"
-                            disabled={isFormDisabled}
-                            options={''}
+                            id="FT_KEY"
+                            disabled={true}
+                            options={[]}
                             getOptionLabel={(option) => option || ""}
                             label="Division/Status/Trend"
                             name=""
@@ -1208,8 +1236,8 @@ const Style = () => {
                     <Grid size={{ xs: 12, sm: 6, md: 2 }}>
                         <AutoVibe
                             id="FGCAT_KEY"
-                            disabled={isFormDisabled}
-                            options={''}
+                            disabled={true}
+                            options={[]}
                             getOptionLabel={(option) => option || ""}
                             label="Pattern"
                             name=""
@@ -1261,8 +1289,8 @@ const Style = () => {
                         sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
                         <AutoVibe
                             id="FGCAT_KEY"
-                            disabled={isFormDisabled}
-                            options={''}
+                            disabled={true}
+                            options={[]}
                             getOptionLabel={(option) => option || ""}
                             label="Fab Category"
                             name=""
@@ -1277,9 +1305,9 @@ const Style = () => {
                             }}
                         />
                         <AutoVibe
-                            id="FGCAT_KEY"
-                            disabled={isFormDisabled}
-                            options={''}
+                            id="FAB_KEY"
+                            disabled={true}
+                            options={[]}
                             getOptionLabel={(option) => option || ""}
                             label="Fabric"
                             name=""
@@ -1391,9 +1419,9 @@ const Style = () => {
                         sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}
                     >
                         <AutoVibe
-                            id="FGCAT_KEY"
-                            disabled={isFormDisabled}
-                            options={''}
+                            id="F_KEY"
+                            disabled={true}
+                            options={[]}
                             getOptionLabel={(option) => option || ""}
                             label="Fab Design ID"
                             name=""
@@ -1408,9 +1436,9 @@ const Style = () => {
                             }}
                         />
                         <AutoVibe
-                            id="FGCAT_KEY"
-                            disabled={isFormDisabled}
-                            options={''}
+                            id="ATT_KEY"
+                            disabled={true}
+                            options={[]}
                             getOptionLabel={(option) => option || ""}
                             label="Attribute"
                             name=""

@@ -20,6 +20,43 @@ const columnDefs = [
         headerClass: 'checkbox-header'
     },
     {
+        field: "FGPRD_NAME",
+        headerName: "Product",
+        filter: 'agSetColumnFilter',
+        filterParams: {
+            defaultToNothingSelected: true,
+        },
+        sortable: true,
+        width: 100
+    },
+    {
+        field: "FGTYPE_NAME",
+        headerName: "Type",
+        filter: 'agSetColumnFilter',
+        filterParams: {
+            defaultToNothingSelected: true,
+        },
+        sortable: true
+    },
+    {
+        field: "FGSTYLE_CODE",
+        headerName: "Style",
+        filter: 'agSetColumnFilter',
+        filterParams: {
+            defaultToNothingSelected: true,
+        },
+        sortable: true
+    },
+    {
+        field: "HSN_CODE",
+        headerName: "HSN",
+        filter: 'agSetColumnFilter',
+        filterParams: {
+            defaultToNothingSelected: true,
+        },
+        sortable: true
+    },
+    {
         field: "MRP",
         headerName: "MRP",
         filter: 'agSetColumnFilter',

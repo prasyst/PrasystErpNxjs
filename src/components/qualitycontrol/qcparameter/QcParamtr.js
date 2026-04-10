@@ -466,15 +466,14 @@ const QcParamtr = () => {
     };
 
     return (
-        <Grid container sx={{ bgcolor: '#f5f5f5', py: 4 }}>
+        <Grid container sx={{ bgcolor: '#ffffff', py: 4 }}>
             <ToastContainer />
-            <Grid item xs={12} sx={{ mx: 'auto', px: { xs: 4, sm: 6, md: 8, lg: 12 }, width: '100%' }}>
+            <Grid size={{ xs: 12 }} sx={{ mx: 'auto', px: { xs: 4, sm: 6, md: 8, lg: 12 }, width: '100%' }}>
                 <Typography variant="h6" align="center">
                     QC Parameter
                 </Typography>
-                <Grid container justifyContent="space-between"
+                <Grid container spacing={2} justifyContent="space-between"
                     sx={{ marginInline: { xs: '5%', sm: '5%', md: '5%', lg: '0%', xl: '0%' } }}
-                    spacing={2}
                 >
                     <Grid>
                         <Button
@@ -539,7 +538,7 @@ const QcParamtr = () => {
                     </Grid>
                 </Grid>
                 <Grid container spacing={3} sx={{ mt: 2 }}>
-                    <Grid item xs={12} sm={6} md={6}>
+                    <Grid size={{ xs: 12, sm: 6, md: 6 }}>
                         <AutoVibeWithoutAR
                             id="QC_GROUP_KEY"
                             options={qcGroups}
@@ -549,10 +548,22 @@ const QcParamtr = () => {
                             onChange={handleQcGroupChange}
                             disabled={mode == FORM_MODE.read}
                             fullWidth
-                            sx={{ ...DropInputSx, minWidth: 350 }}
+                            sx={{
+                                ...DropInputSx,
+                                '& .MuiFilledInput-root': {
+                                    ...DropInputSx['& .MuiFilledInput-root'],
+                                    paddingTop: '16px !important',
+                                },
+                            }}
+                            inputProps={{
+                                style: {
+                                    padding: '6px 8px',
+                                    fontSize: '12px',
+                                },
+                            }}
                         />
                     </Grid>
-                    <Grid item xs={12} sm={6} md={6}>
+                    <Grid size={{ xs: 12, sm: 6, md: 6 }}>
                         <AutoVibeWithoutAR
                             id="QC_SUBGROUP_KEY"
                             options={qcSubGroups}
@@ -561,8 +572,20 @@ const QcParamtr = () => {
                             value={qcSubGroups.find((option) => option.QC_SUBGROUP_KEY === form.QC_SUBGROUP_KEY) || null}
                             onChange={handleQcSubGroupChange}
                             fullWidth
-                            sx={{ ...DropInputSx, minWidth: 350 }}
                             disabled={mode == FORM_MODE.read}
+                            sx={{
+                                ...DropInputSx,
+                                '& .MuiFilledInput-root': {
+                                    ...DropInputSx['& .MuiFilledInput-root'],
+                                    paddingTop: '16px !important',
+                                },
+                            }}
+                            inputProps={{
+                                style: {
+                                    padding: '6px 8px',
+                                    fontSize: '12px',
+                                },
+                            }}
                         />
                     </Grid>
                 </Grid>

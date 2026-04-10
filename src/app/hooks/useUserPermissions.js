@@ -19,7 +19,7 @@ export const useUserPermissions = () => {
       if (userIdFromStorage) {
         return userIdFromStorage;
       }
-      
+
       const userData = localStorage.getItem('user');
       if (userData) {
         try {
@@ -36,7 +36,6 @@ export const useUserPermissions = () => {
   // Fetch user permissions from API using userId - WITHOUT CACHE
   const fetchUserPermissions = useCallback(async (userId, forceRefresh = false) => {
     if (!userId) {
-      console.warn('No user ID provided for fetching permissions');
       setLoading(false);
       return;
     }
@@ -44,7 +43,7 @@ export const useUserPermissions = () => {
     try {
       setLoading(true);
       console.log('Fetching permissions for user ID:', userId);
-      
+
       const response = await axiosInstance.post('/MODULE/RetriveWebUserprivs', {
         "FLAG": "UR",
         "TBLNAME": "WebUserprivs",
@@ -55,7 +54,7 @@ export const useUserPermissions = () => {
         "CO_ID": ""
       });
 
-      console.log('Permissions API Response:', response.data);
+      // console.log('Permissions API Response:', response.data);
 
       if (response.data && response.data.DATA) {
         const permissionsMap = {};
@@ -74,18 +73,16 @@ export const useUserPermissions = () => {
             };
           }
         });
-        
+
         setPermissions(permissionsMap);
         const fetchTime = Date.now();
         setLastFetched(fetchTime);
-        
+
         // Still store in localStorage but don't rely on it for immediate updates
         localStorage.setItem('userPermissions', JSON.stringify(permissionsMap));
         localStorage.setItem('permissionsLastFetched', fetchTime.toString());
-        
-        console.log('Permissions loaded for user ID:', userId, permissionsMap);
-      } else {
-        console.warn('No permission data received from API');
+
+        // console.log('Permissions loaded for user ID:', userId, permissionsMap);
       }
     } catch (error) {
       console.error('Error fetching user permissions:', error);
@@ -94,32 +91,32 @@ export const useUserPermissions = () => {
     }
   }, []);
 
-    // Check if user has at least one permission for a module
+  // Check if user has at least one permission for a module
   const hasPermission = useCallback((modName) => {
     if (!modName) return true;
-    
+
     if (loading) return true;
-    
+
     if (Object.keys(permissions).length === 0) return true;
-    
+
     const modulePerms = permissions[modName];
-    
+
     if (!modulePerms) {
-      console.log(`Module ${modName} not found in permissions, defaulting to visible`);
+      // console.log(`Module ${modName} not found in permissions, defaulting to visible`);
       return true;
     }
-    
+
     const hasPerm = (
       modulePerms.ADD_PRIV ||
       modulePerms.EDIT_PRIV ||
       modulePerms.DELETE_PRIV ||
       modulePerms.SELECT_PRIV
     );
-    
+
     return hasPerm;
   }, [permissions, loading]);
 
-   const clearPermissions = useCallback(() => {
+  const clearPermissions = useCallback(() => {
     setPermissions({});
     setCurrentUser(null);
     setUserId(null);
@@ -133,10 +130,10 @@ export const useUserPermissions = () => {
   // Check specific permission - with debug logs
   const hasSpecificPermission = useCallback((modName, permissionType) => {
     if (!modName) return false;
-    
+
     // Try exact match first
     let modulePerms = permissions[modName];
-    
+
     // If not found, try case-insensitive match
     if (!modulePerms) {
       const foundKey = Object.keys(permissions).find(
@@ -146,43 +143,43 @@ export const useUserPermissions = () => {
         modulePerms = permissions[foundKey];
       }
     }
-    
+
     // If still not found, try partial match
     if (!modulePerms) {
       const foundKey = Object.keys(permissions).find(
-        key => key.toLowerCase().includes(modName.toLowerCase()) || 
-               modName.toLowerCase().includes(key.toLowerCase())
+        key => key.toLowerCase().includes(modName.toLowerCase()) ||
+          modName.toLowerCase().includes(key.toLowerCase())
       );
       if (foundKey) {
         modulePerms = permissions[foundKey];
-        console.log(`Found fuzzy match for ${modName}: ${foundKey}`);
+        // console.log(`Found fuzzy match for ${modName}: ${foundKey}`);
       }
     }
-    
+
     if (!modulePerms) {
-      console.log(`Module ${modName} not found in permissions`);
+      // console.log(`Module ${modName} not found in permissions`);
       return false;
     }
-    
+
     let result = false;
     switch (permissionType.toUpperCase()) {
-      case 'ADD': 
+      case 'ADD':
         result = modulePerms.ADD_PRIV === true;
         break;
-      case 'EDIT': 
+      case 'EDIT':
         result = modulePerms.EDIT_PRIV === true;
         break;
-      case 'DELETE': 
+      case 'DELETE':
         result = modulePerms.DELETE_PRIV === true;
         break;
-      case 'VIEW': 
+      case 'VIEW':
         result = modulePerms.SELECT_PRIV === true;
         break;
-      default: 
+      default:
         result = false;
     }
-    
-    console.log(`Permission check for ${modName} - ${permissionType}:`, result);
+
+    // console.log(`Permission check for ${modName} - ${permissionType}:`, result);
     return result;
   }, [permissions]);
 
@@ -190,7 +187,6 @@ export const useUserPermissions = () => {
   const refreshPermissions = useCallback(() => {
     const currentUserId = getCurrentUserId();
     if (currentUserId) {
-      console.log('Manually refreshing permissions for user:', currentUserId);
       return fetchUserPermissions(currentUserId, true);
     }
     return Promise.resolve();
@@ -202,7 +198,7 @@ export const useUserPermissions = () => {
     if (userId) {
       setUserId(userId);
       setCurrentUser(userId.toString());
-      
+
       // Always fetch fresh permissions when component mounts
       // This ensures latest data from server
       fetchUserPermissions(userId);

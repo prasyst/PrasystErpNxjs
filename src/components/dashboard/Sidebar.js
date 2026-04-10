@@ -1890,10 +1890,10 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
                         <div
                           onClick={(e) => handleChildClick(child, item.name, e)}
                           onMouseEnter={(e) => {
-                            e.currentTarget.style.backgroundColor = isChildActive ? '#5ba8ffff' : '#f0f2ff';
+                            e.currentTarget.style.backgroundColor = isChildActive ? '#635bff' : '#f0f2ff';
                           }}
                           onMouseLeave={(e) => {
-                            e.currentTarget.style.backgroundColor = isChildActive ? '#5ba8ffff' : 'transparent';
+                            e.currentTarget.style.backgroundColor = isChildActive ? '#635bff' : 'transparent';
                           }}
                           style={{
                             display: 'flex',
@@ -1902,7 +1902,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
                             cursor: 'pointer',
                             borderRadius: '6px',
                             margin: '2px 0',
-                            backgroundColor: isChildActive ? '#5ba8ffff' : 'transparent',
+                            backgroundColor: isChildActive ? '#635bff' : 'transparent',
                             color: isChildActive ? 'white' : '#444',
                             fontWeight: isChildActive ? 600 : 500,
                             transition: 'all 0.2s ease',
@@ -1952,7 +1952,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
                                         alignItems: 'center',
                                         padding: '0.35rem 0.1rem',
                                         cursor: 'pointer',
-                                        backgroundColor: isGrandchildActive ? '#5ba8ffff' : 'transparent',
+                                        backgroundColor: isGrandchildActive ? '#635bff' : 'transparent',
                                         color: isGrandchildActive ? 'white' : '#333',
                                         borderRadius: '6px',
                                         margin: '2px 0',
