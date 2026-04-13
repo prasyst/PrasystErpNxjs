@@ -5226,7 +5226,7 @@ const ScanBarcode = () => {
   const [activeTab, setActiveTab] = useState(0);
   const [scanMode, setScanMode] = useState('barcode'); // 'barcode', 'style', 'manual'
   const [viewMode, setViewMode] = useState('scan'); // 'scan', 'details', 'ratios', 'cart'
-
+const isAddingToCartRef = useRef(false);
   const [availableShades, setAvailableShades] = useState([]);
   const [selectedShades, setSelectedShades] = useState([]);
   const [shadeViewMode, setShadeViewMode] = useState('allocated');
@@ -5622,9 +5622,10 @@ const processFoundProduct = async (styleData, inputValue) => {
     await fetchShadesForStyle(styleData.FGSTYLE_ID, shadeViewMode);
   }
 
-  
+  // FIX: Auto-add to cart only when NOT in changeQtyMode
+  // Add a small delay to ensure sizeDetailsData is updated
   if (!scannerChangeQtyMode) {
-   
+    // Use setTimeout to ensure state updates are complete
     setTimeout(() => {
       const totalQty = calculateTotalQty();
       if (sizeDetailsData.length > 0 && totalQty > 0) {
@@ -5633,7 +5634,7 @@ const processFoundProduct = async (styleData, inputValue) => {
       } else if (sizeDetailsData.length > 0 && totalQty === 0) {
         showSnackbar('No quantities loaded. Please add quantities manually.', 'warning');
       }
-    }, 300);
+    }, 500); // Increased timeout to ensure state updates
   } else {
     showSnackbar('Change Qty mode: Please adjust quantities and click Add to Cart', 'info');
   }
@@ -5775,8 +5776,13 @@ const stopScanner = useCallback(() => {
   setIsStyleCodeMode(false); // Reset to barcode mode by default
 }, []);
 
-// Save size quantities by size name pattern (global across all products)
 const saveSizeQuantitiesForProduct = (sizeDetails) => {
+  // Don't save if we're in change qty mode
+  if (changeQtyMode) {
+    console.log('Change Qty Mode: Not saving quantities');
+    return;
+  }
+  
   if (!sizeDetails || sizeDetails.length === 0) return;
   
   const quantitiesMap = {};
@@ -5786,10 +5792,16 @@ const saveSizeQuantitiesForProduct = (sizeDetails) => {
     }
   });
   
-  // Save to localStorage with a global key (not product-specific)
+  // Only save if there are quantities
+  if (Object.keys(quantitiesMap).length === 0) {
+    return;
+  }
+  
+  // Save to localStorage with a global key
   const savedData = {
     quantities: quantitiesMap,
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
+    orderNo: formData.ORDER_NO // Track which order these quantities belong to
   };
   
   localStorage.setItem(`sizeQuantities_Global`, JSON.stringify(savedData));
@@ -5799,10 +5811,14 @@ const saveSizeQuantitiesForProduct = (sizeDetails) => {
   }));
 };
 
-// Load size quantities from global storage
 const loadSizeQuantitiesForProduct = () => {
+  // Check if we're in change qty mode - if yes, don't load saved quantities
+  if (changeQtyMode) {
+    return null;
+  }
+  
   // Check state first
-  if (savedSizeQuantities.global) {
+  if (savedSizeQuantities.global && Object.keys(savedSizeQuantities.global).length > 0) {
     return savedSizeQuantities.global;
   }
   
@@ -5811,11 +5827,14 @@ const loadSizeQuantitiesForProduct = () => {
     const stored = localStorage.getItem(`sizeQuantities_Global`);
     if (stored) {
       const parsed = JSON.parse(stored);
-      setSavedSizeQuantities(prev => ({
-        ...prev,
-        global: parsed.quantities
-      }));
-      return parsed.quantities;
+      // Only return if quantities exist and are not empty
+      if (parsed.quantities && Object.keys(parsed.quantities).length > 0) {
+        setSavedSizeQuantities(prev => ({
+          ...prev,
+          global: parsed.quantities
+        }));
+        return parsed.quantities;
+      }
     }
   } catch (error) {
     console.error('Error loading size quantities:', error);
@@ -6653,7 +6672,6 @@ const fetchPartyDetails = async (partyKey, isShippingParty = false, shouldAutoSe
 
       const savedQuantities = loadSizeQuantitiesForProduct();
       
-      // Apply saved quantities (unless changeQtyMode is enabled)
       if (!changeQtyMode && savedQuantities) {
         finalSizeDetails = transformedSizeDetails.map(size => {
           const savedQty = savedQuantities[size.STYSIZE_NAME];
@@ -6675,7 +6693,6 @@ const fetchPartyDetails = async (partyKey, isShippingParty = false, shouldAutoSe
       
       setSizeDetailsData(finalSizeDetails);
 
-      // Update total qty in newItemData
       const totalQty = finalSizeDetails.reduce((sum, size) => sum + (parseFloat(size.QTY) || 0), 0);
       setNewItemData(prev => ({ ...prev, qty: totalQty.toString() }));
       
@@ -6747,6 +6764,21 @@ const fetchPartyDetails = async (partyKey, isShippingParty = false, shouldAutoSe
     return defaultSizes;
   }
 };
+
+useEffect(() => {
+  // Auto-add to cart when size details load and not in changeQtyMode
+  if (!scannerChangeQtyMode && sizeDetailsData.length > 0 && currentStyleData) {
+    const totalQty = calculateTotalQty();
+    if (totalQty > 0 && !isAddingToCartRef.current) {
+      isAddingToCartRef.current = true;
+      const timer = setTimeout(() => {
+        handleConfirmItem();
+        isAddingToCartRef.current = false;
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }
+}, [sizeDetailsData, scannerChangeQtyMode, currentStyleData]);
 
   const handleRatioChange = (sizeName, value) => {
     const newRatioData = {
@@ -7388,97 +7420,190 @@ const handleFormChange = async (field, value) => {
   };
 
   const handleSubmitOrder = async () => {
-    if (tableData.length === 0) {
-      showSnackbar('Please add at least one item to the order', 'error');
-      return;
-    }
+  if (tableData.length === 0) {
+    showSnackbar('Please add at least one item to the order', 'error');
+    return;
+  }
 
-    if (!formData.Party || !formData.PARTY_KEY) {
-      showSnackbar('Please select a party first', 'error');
-      return;
-    }
+  if (!formData.Party || !formData.PARTY_KEY) {
+    showSnackbar('Please select a party first', 'error');
+    return;
+  }
 
-    try {
-      setIsLoadingData(true);
+  try {
+    setIsLoadingData(true);
 
-      const payload = prepareSubmitPayload();
-      const userName = localStorage.getItem('USER_NAME') || 'Admin';
-      const strCobrid = companyConfig.COBR_ID;
+    const payload = prepareSubmitPayload();
+    const userName = localStorage.getItem('USER_NAME') || 'Admin';
+    const strCobrid = companyConfig.COBR_ID;
 
-      const response = await axiosInstance.post(
-        `/ORDBK/ApiMangeOrdbk?UserName=${userName}&strCobrid=${strCobrid}`,
-        payload
-      );
+    const response = await axiosInstance.post(
+      `/ORDBK/ApiMangeOrdbk?UserName=${userName}&strCobrid=${strCobrid}`,
+      payload
+    );
 
-      if (response.data.RESPONSESTATUSCODE === 1) {
-        showSnackbar(`Order submitted successfully! Order No: ${formData.ORDER_NO}`, 'success');
+    if (response.data.RESPONSESTATUSCODE === 1) {
+      showSnackbar(`Order submitted successfully! Order No: ${formData.ORDER_NO}`, 'success');
 
-        if (isMobile) {
-          setActiveTab(0);
-          setViewMode('scan');
-        }
+      // CRITICAL: Clear saved quantities from localStorage after successful order
+      clearSavedQuantities();
+      
+      // Reset all states for new order
+      resetOrderStates();
 
-        setTableData([]);
-        setFormData(prev => ({
-          ...prev,
-          ORDER_NO: '',
-          ORDER_DATE: new Date().toLocaleDateString('en-GB'),
-          PARTY_ORD_NO: '',
-          SEASON: '',
-          ORD_REF_DT: '',
-          QUOTE_NO: '',
-          DLV_DT: '',
-          ORG_DLV_DT: '',
-          REMARK_STATUS: ''
-        }));
-
-        setNewItemData({
-          barcode: '',
-          product: '',
-          style: '',
-          type: '',
-          shade: '',
-          mrp: '',
-          rate: '',
-          qty: '',
-          discount: '0',
-          sets: '1',
-          convFact: '1',
-          remark: '',
-          varPer: '0',
-          stdQty: '',
-          setNo: '',
-          percent: '0',
-          rQty: '',
-          divDt: ''
-        });
-
-        setStyleCodeInput('');
-        setCurrentStyleData(null);
-        setSizeDetailsData([]);
-        setAvailableSizes([]);
-        setAvailableShades([]);
-        setSelectedShades([]);
-        setFillByRatioMode(false);
-        setFillByShadeMode(false);
-        setRatioData({
-          totalQty: '',
-          ratios: {}
-        });
-        setScannerError('');
-
-        await generateOrderNumber();
-
-      } else {
-        showSnackbar('Error submitting order: ' + (response.data.RESPONSEMESSAGE || 'Unknown error'), 'error');
+      if (isMobile) {
+        setActiveTab(0);
+        setViewMode('scan');
       }
-    } catch (error) {
-      showSnackbar('Error submitting order. Please try again.', 'error');
-    } finally {
-      setIsLoadingData(false);
-      setShowOrderModal(false);
+
+      setTableData([]);
+      
+      // Generate new order number for next order
+      await generateOrderNumber();
+
+      // Reset form data but keep order number
+      setFormData(prev => ({
+        ...prev,
+        PARTY_ORD_NO: '',
+        SEASON: '',
+        ORD_REF_DT: '',
+        QUOTE_NO: '',
+        DLV_DT: '',
+        ORG_DLV_DT: '',
+        REMARK_STATUS: ''
+      }));
+
+      setNewItemData({
+        barcode: '',
+        product: '',
+        style: '',
+        type: '',
+        shade: '',
+        mrp: '',
+        rate: '',
+        qty: '',
+        discount: '0',
+        sets: '1',
+        convFact: '1',
+        remark: '',
+        varPer: '0',
+        stdQty: '',
+        setNo: '',
+        percent: '0',
+        rQty: '',
+        divDt: ''
+      });
+
+      setStyleCodeInput('');
+      setCurrentStyleData(null);
+      setSizeDetailsData([]);
+      setAvailableSizes([]);
+      setAvailableShades([]);
+      setSelectedShades([]);
+      setFillByRatioMode(false);
+      setFillByShadeMode(false);
+      setRatioData({
+        totalQty: '',
+        ratios: {}
+      });
+      setScannerError('');
+      
+      // Reset change qty mode
+      setChangeQtyMode(false);
+      setScannerChangeQtyMode(false);
+      
+      // Reset equal qty mode
+      setFillEqualQtyMode(false);
+      setShowEqualQtyInput(false);
+      setEqualQtyValue('');
+      
+      // Show success message
+      showSnackbar('Order submitted! Starting fresh for new order...', 'success');
+      
+      // Auto start scanner for next order if autoScanMode is enabled
+      if (autoScanMode) {
+        setTimeout(() => {
+          startScanner();
+        }, 1000);
+      }
+
+    } else {
+      showSnackbar('Error submitting order: ' + (response.data.RESPONSEMESSAGE || 'Unknown error'), 'error');
     }
-  };
+  } catch (error) {
+    console.error('Order submission error:', error);
+    showSnackbar('Error submitting order. Please try again.', 'error');
+  } finally {
+    setIsLoadingData(false);
+    setShowOrderModal(false);
+  }
+};
+
+// Add this function to clear all saved quantities
+const clearSavedQuantities = () => {
+  try {
+    // Clear global saved quantities
+    localStorage.removeItem(`sizeQuantities_Global`);
+    
+    // Clear any product-specific saved quantities if they exist
+    const keys = Object.keys(localStorage);
+    keys.forEach(key => {
+      if (key.startsWith('sizeQuantities_') || key.startsWith('ratioData_')) {
+        localStorage.removeItem(key);
+      }
+    });
+    
+    // Reset saved quantities state
+    setSavedSizeQuantities({});
+    
+    // Reset initial quantities loaded flag
+    setInitialQuantitiesLoaded(false);
+    
+    console.log('All saved quantities cleared for new order');
+  } catch (error) {
+    console.error('Error clearing saved quantities:', error);
+  }
+};
+
+// Add this function to reset all order-related states
+const resetOrderStates = () => {
+  // Reset all form states for new order
+  setCurrentProductInfo({
+    barcode: '',
+    style: '',
+    product: '',
+    productKey: ''
+  });
+  
+  setCurrentStyleData(null);
+  setSizeDetailsData([]);
+  setAvailableSizes([]);
+  setAvailableShades([]);
+  setSelectedShades([]);
+  setSelectedShadeKey('');
+  
+  setFillByRatioMode(false);
+  setFillByShadeMode(false);
+  setRatioData({
+    totalQty: '',
+    ratios: {}
+  });
+  
+  setChangeQtyMode(false);
+  setScannerChangeQtyMode(false);
+  setFillEqualQtyMode(false);
+  setShowEqualQtyInput(false);
+  setEqualQtyValue('');
+  
+  setScannerError('');
+  setManualInputValue('');
+  setManualInputError('');
+  
+  // Clear any timeouts
+  if (window.saveTimeout) {
+    clearTimeout(window.saveTimeout);
+  }
+};
 
   // Cleanup effects
   useEffect(() => {
