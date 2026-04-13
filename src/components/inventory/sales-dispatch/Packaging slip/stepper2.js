@@ -16,11 +16,15 @@ import SearchIcon from "@mui/icons-material/Search";
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
+import useUserParams from '../../../../app/hooks/useUserParams';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchUserParams, selectUserParamByName, selectUserParamsLoading } from '../../../../app/redux/store/userParamsSlice';
 
 const FORM_MODE = getFormMode();
 
 const Stepper2 = ({ formData, pickOrderItems = [] , setFormData, isFormDisabled, mode, onSubmit, companyConfig, onCancel, onNext, onPrev, showSnackbar, showValidationErrors }) => {
   const [selectedProduct, setSelectedProduct] = useState(null); 
+  const dispatch = useDispatch();
   const [selectedStyle, setSelectedStyle] = useState(null);
   const [selectedRow, setSelectedRow] = useState(null);
   const [sizeDetailsData, setSizeDetailsData] = useState([]);
@@ -29,7 +33,7 @@ const Stepper2 = ({ formData, pickOrderItems = [] , setFormData, isFormDisabled,
   const [editingRowData, setEditingRowData] = useState(null);
   const [hasRecords, setHasRecords] = useState(false);
 const [pickOrderItemsProcessed, setPickOrderItemsProcessed] = useState(false);
-  // State for dropdown options
+    // const { fetchUserParams, isDuplicateStyleAllowed,isShadeAllocationEnabled} = useUserParams();
   const [productOptions, setProductOptions] = useState([]);
   const [styleOptions, setStyleOptions] = useState([]);
   const [typeOptions, setTypeOptions] = useState([]);
@@ -38,7 +42,7 @@ const [pickOrderItemsProcessed, setPickOrderItemsProcessed] = useState(false);
   const [availableShades, setAvailableShades] = useState([]);
   const [selectedShades, setSelectedShades] = useState([]);
   const [shadeViewMode, setShadeViewMode] = useState('allocated');
-
+const [showShadeAllocation, setShowShadeAllocation] = useState(true);
   // State for storing mappings
   const [productMapping, setProductMapping] = useState({});
   const [styleMapping, setStyleMapping] = useState({});
@@ -61,6 +65,19 @@ const [pickOrderItemsProcessed, setPickOrderItemsProcessed] = useState(false);
   const [isSizeDetailsLoaded, setIsSizeDetailsLoaded] = useState(false);
 
 const hasProcessedPickOrder = useRef(false);
+
+  const isDuplicateStyleAllowedParam = useSelector(state => selectUserParamByName(state, 'Allow Duplicate Style In Order'));
+  const isShadeAllocationEnabledParam = useSelector(state => selectUserParamByName(state, 'Shade Allocation'));
+  const paramsLoading = useSelector(selectUserParamsLoading);
+  
+  // Get values from Redux
+  const isDuplicateStyleAllowed = () => {
+    return isDuplicateStyleAllowedParam?.REMARK === '1';
+  };
+  
+  const isShadeAllocationEnabled = () => {
+    return isShadeAllocationEnabledParam?.REMARK === '1';
+  };
 
 useEffect(() => {
   
@@ -1231,72 +1248,115 @@ const fetchSizeDetails = async () => {
     return !!formData.Party && !!formData.PARTY_KEY;
   };
 
-  // Handle Add Item
-  const handleAddItem = async () => {
-    if (!isPartySelected()) {
-      showSnackbar("Please select a Party first before adding items", 'error');
-      return;
+// ADD THIS FUNCTION - Check if style already exists
+const isStyleAlreadyExists = (styleName, shadeName = null) => {
+  // If duplicate styles are allowed, return false (no restriction)
+  if (isDuplicateStyleAllowed()) {
+    return false;
+  }
+
+  // Check in existing table data
+  const existingItem = tableData.find(item => {
+    if (shadeName && shadeName !== '-') {
+      // Check both style and shade combination
+      return item.style === styleName && item.shade === shadeName;
     }
+    // Check only style
+    return item.style === styleName;
+  });
 
-    setIsAddingNew(true);
-    setSizeDetailsData([]);
-    setIsSizeDetailsLoaded(false);
-    setDataSource(null);
-    setAvailableShades([]);
-    setSelectedShades([]);
+  return !!existingItem;
+};
 
-    await fetchProductData();
 
-    setNewItemData({
-      product: '',
-      barcode: '',
-      style: '',
-      type: '',
-      shade: '',
-      qty: '',
-      mrp: '',
-      rate: '',
-      setNo: '',
-      varPer: '',
-      stdQty: '',
-      convFact: '',
-      lotNo: '',
-      discount: '',
-      percent: '',
-      remark: '',
-      divDt: '',
-      rQty: '',
-      sets: ''
-    });
-
-    setStyleCodeInput('');
-    setBarcodeInput('');
-    setStyleOptions([]);
-    setTypeOptions([]);
-    setLotNoOptions([]);
-  };
-
- const handleConfirmAdd = () => {
-  // Validation
-  if (!newItemData.product || !newItemData.style) {
-    showSnackbar("Please fill required fields: Product and Style", 'error');
+const handleAddItem = async () => {
+  if (!isPartySelected()) {
+    showSnackbar("Please select a Party first before adding items", 'error');
     return;
   }
 
+  try {
+      await dispatch(fetchUserParams());
+    } catch (error) {
+      console.error('Error fetching user params:', error);
+    }
+
+  setIsAddingNew(true);
+  setSizeDetailsData([]);
+  setIsSizeDetailsLoaded(false);
+  setDataSource(null);
+  setAvailableShades([]);
+  setSelectedShades([]);
+
+  await fetchProductData();
+
+  setNewItemData({
+    product: '',
+    barcode: '',
+    style: '',
+    type: '',
+    shade: '',
+    qty: '',
+    mrp: '',
+    rate: '',
+    setNo: '',
+    varPer: '',
+    stdQty: '',
+    convFact: '',
+    lotNo: '',
+    discount: '',
+    percent: '',
+    remark: '',
+    divDt: '',
+    rQty: '',
+    sets: ''
+  });
+
+  setStyleCodeInput('');
+  setBarcodeInput('');
+  setStyleOptions([]);
+  setTypeOptions([]);
+  setLotNoOptions([]);
+};
+
+
+const handleConfirmAdd = () => {
+    if (!newItemData.product || !newItemData.style) {
+      showSnackbar("Please fill required fields: Product and Style", 'error');
+      return;
+    }
+    
+    // 🔥 VALIDATION 2: Check for duplicate style using Redux value
+    if (!isDuplicateStyleAllowed()) {
+      if (selectedShades.length > 0) {
+        for (const shade of selectedShades) {
+          if (isStyleAlreadyExists(newItemData.style, shade)) {
+            showSnackbar(
+              `❌ Duplicate style "${newItemData.style}" with shade "${shade}" already exists! Duplicate styles are NOT allowed.`,
+              'error'
+            );
+            return;
+          }
+        }
+      } else {
+        const currentShade = newItemData.shade || '-';
+        if (isStyleAlreadyExists(newItemData.style, currentShade)) {
+          showSnackbar(
+            `❌ Duplicate style "${newItemData.style}" already exists in the order! Duplicate styles are NOT allowed.`,
+            'error'
+          );
+          return;
+        }
+      }
+    }
+
+  // Validation 3: Check size details
   if (sizeDetailsData.length === 0) {
     showSnackbar("Please load size details first", 'error');
     return;
   }
 
-  // Check for zero FG_QTY items
-  const zeroStockSizes = sizeDetailsData.filter(size => size.FG_QTY === 0);
-  // if (zeroStockSizes.length > 0) {
-  //   const sizeNames = zeroStockSizes.map(s => s.STYSIZE_NAME).join(', ');
-  //   showSnackbar(`Cannot order for sizes with no stock: ${sizeNames}`, 'error');
-  //   return;
-  // }
-
-  // Check if any size quantity exceeds FG_QTY
+  // Validation 4: Check stock availability
   const exceedingSizes = sizeDetailsData.filter(size => {
     const inputQty = parseFloat(size.QTY) || 0;
     const fgQty = size.FG_QTY || 0;
@@ -1311,7 +1371,7 @@ const fetchSizeDetails = async () => {
     return;
   }
 
-  // At least one size should have quantity > 0
+  // Validation 5: At least one size should have quantity
   const sizesWithQty = sizeDetailsData.filter(size => size.QTY && size.QTY > 0);
   if (sizesWithQty.length === 0) {
     showSnackbar("Please enter quantity for at least one size before confirming", 'error');
@@ -1339,16 +1399,12 @@ const fetchSizeDetails = async () => {
     ...size,
     QTY: parseFloat(size.QTY) || 0,
     ITM_AMT: (parseFloat(size.QTY) || 0) * rate,
-    FG_QTY: size.FG_QTY, // Preserve FG_QTY in the saved data
-    PORD_QTY: size.PORD_QTY // Preserve PORD_QTY in the saved data
+    FG_QTY: size.FG_QTY,
+    PORD_QTY: size.PORD_QTY
   }));
 
-  // Create items for EACH selected shade with FULL quantity
+  // Create items for each selected shade
   const newItems = selectedShades.map((shade, shadeIndex) => {
-    // Each shade gets full quantity (not divided)
-    const shadeAmount = totalAmount;
-    const shadeQty = totalQty;
-
     const fgshadeKey = shadeMapping[shade] || "";
     const fgtypeKey = typeMapping[newItemData.type] || "";
     const fgptnKey = lotNoMapping[newItemData.lotNo] || "";
@@ -1361,10 +1417,10 @@ const fetchSizeDetails = async () => {
       type: newItemData.type || "-",
       shade: shade || "-",
       lotNo: newItemData.lotNo || "-",
-      qty: shadeQty,
+      qty: totalQty,
       mrp: mrp,
       rate: rate,
-      amount: shadeAmount,
+      amount: totalAmount,
       varPer: parseFloat(newItemData.varPer) || 0,
       varQty: 0,
       varAmt: 0,
@@ -1380,10 +1436,10 @@ const fetchSizeDetails = async () => {
         TYPE: newItemData.type || "-",
         SHADE: shade || "-",
         PATTERN: newItemData.lotNo || "-",
-        ITMQTY: shadeQty,
+        ITMQTY: totalQty,
         MRP: mrp,
         ITMRATE: rate,
-        ITMAMT: shadeAmount,
+        ITMAMT: totalAmount,
         DLV_VAR_PERC: parseFloat(newItemData.varPer) || 0,
         DLV_VAR_QTY: 0,
         DISC_AMT: discount,
@@ -1411,142 +1467,142 @@ const fetchSizeDetails = async () => {
     };
   });
 
-    // If no shades selected, create single item with current shade
-    const finalNewItems = selectedShades.length > 0 ? newItems : [{
-      id: tempId,
-      BarCode: newItemData.barcode || "-",
-      product: newItemData.product,
-      style: newItemData.style || "-",
-      type: newItemData.type || "-",
-      shade: newItemData.shade || "-",
-      lotNo: newItemData.lotNo || "-",
-      qty: totalQty,
-      mrp: mrp,
-      rate: rate,
-      amount: totalAmount,
-      varPer: parseFloat(newItemData.varPer) || 0,
-      varQty: 0,
-      varAmt: 0,
-      discAmt: discount,
-      netAmt: netAmount,
-      distributer: "-",
-      set: parseFloat(newItemData.sets) || 0,
-      originalData: {
-        ORDBKSTY_ID: tempId,
-        FGITEM_KEY: newItemData.barcode || "-",
-        PRODUCT: newItemData.product,
-        STYLE: newItemData.style,
-        TYPE: newItemData.type || "-",
-        SHADE: newItemData.shade || "-",
-        PATTERN: newItemData.lotNo || "-",
-        ITMQTY: totalQty,
-        MRP: mrp,
-        ITMRATE: rate,
-        ITMAMT: totalAmount,
-        DLV_VAR_PERC: parseFloat(newItemData.varPer) || 0,
-        DLV_VAR_QTY: 0,
-        DISC_AMT: discount,
-        NET_AMT: netAmount,
-        DISTBTR: "-",
-        SETQTY: parseFloat(newItemData.sets) || 0,
-        ORDBKSTYSZLIST: updatedSizeDetails.map(size => ({
-          ...size,
-          ORDBKSTYSZ_ID: 0
-        })),
-        FGPRD_KEY: fgprdKey,
-        FGSTYLE_ID: fgstyleId,
-        FGTYPE_KEY: typeMapping[newItemData.type] || "",
-        FGSHADE_KEY: shadeMapping[newItemData.shade] || "",
-        FGPTN_KEY: lotNoMapping[newItemData.lotNo] || "",
-        STYCATRT_ID: stycatrtId, // Include STYCATRT_ID
-        DBFLAG: mode === 'add' ? 'I' : 'I'
-      },
-      FGSTYLE_ID: fgstyleId,
-      FGPRD_KEY: fgprdKey,
-      FGTYPE_KEY: typeMapping[newItemData.type] || "",
-      FGSHADE_KEY: shadeMapping[newItemData.shade] || "",
-      FGPTN_KEY: lotNoMapping[newItemData.lotNo] || "",
-      STYCATRT_ID: stycatrtId // Store STYCATRT_ID
-    }];
-
-    const newTableData = [...tableData, ...finalNewItems];
-    setUpdatedTableData(newTableData);
-
-    // Update formData with all items
-    const newOrdbkStyleItems = finalNewItems.map(item => ({
-      ORDBKSTY_ID: item.id,
-      FGITEM_KEY: item.BarCode,
-      PRODUCT: item.product,
-      STYLE: item.style,
-      TYPE: item.type,
-      SHADE: item.shade,
-      PATTERN: item.lotNo,
-      ITMQTY: item.qty,
-      MRP: item.mrp,
-      ITMRATE: item.rate,
-      ITMAMT: item.amount,
-      DLV_VAR_PERC: item.varPer,
-      DLV_VAR_QTY: item.varQty,
-      DISC_AMT: item.discAmt,
-      NET_AMT: item.netAmt,
-      DISTBTR: item.distributer,
-      SETQTY: item.set,
+  // If no shades selected, create single item
+  const finalNewItems = selectedShades.length > 0 ? newItems : [{
+    id: tempId,
+    BarCode: newItemData.barcode || "-",
+    product: newItemData.product,
+    style: newItemData.style || "-",
+    type: newItemData.type || "-",
+    shade: newItemData.shade || "-",
+    lotNo: newItemData.lotNo || "-",
+    qty: totalQty,
+    mrp: mrp,
+    rate: rate,
+    amount: totalAmount,
+    varPer: parseFloat(newItemData.varPer) || 0,
+    varQty: 0,
+    varAmt: 0,
+    discAmt: discount,
+    netAmt: netAmount,
+    distributer: "-",
+    set: parseFloat(newItemData.sets) || 0,
+    originalData: {
+      ORDBKSTY_ID: tempId,
+      FGITEM_KEY: newItemData.barcode || "-",
+      PRODUCT: newItemData.product,
+      STYLE: newItemData.style,
+      TYPE: newItemData.type || "-",
+      SHADE: newItemData.shade || "-",
+      PATTERN: newItemData.lotNo || "-",
+      ITMQTY: totalQty,
+      MRP: mrp,
+      ITMRATE: rate,
+      ITMAMT: totalAmount,
+      DLV_VAR_PERC: parseFloat(newItemData.varPer) || 0,
+      DLV_VAR_QTY: 0,
+      DISC_AMT: discount,
+      NET_AMT: netAmount,
+      DISTBTR: "-",
+      SETQTY: parseFloat(newItemData.sets) || 0,
       ORDBKSTYSZLIST: updatedSizeDetails.map(size => ({
         ...size,
         ORDBKSTYSZ_ID: 0
       })),
-      FGSTYLE_ID: item.FGSTYLE_ID,
-      FGPRD_KEY: item.FGPRD_KEY,
-      FGTYPE_KEY: item.FGTYPE_KEY,
-      FGSHADE_KEY: item.FGSHADE_KEY,
-      FGPTN_KEY: item.FGPTN_KEY,
-      STYCATRT_ID: item.STYCATRT_ID, // Include STYCATRT_ID
+      FGPRD_KEY: fgprdKey,
+      FGSTYLE_ID: fgstyleId,
+      FGTYPE_KEY: typeMapping[newItemData.type] || "",
+      FGSHADE_KEY: shadeMapping[newItemData.shade] || "",
+      FGPTN_KEY: lotNoMapping[newItemData.lotNo] || "",
+      STYCATRT_ID: stycatrtId,
       DBFLAG: mode === 'add' ? 'I' : 'I'
-    }));
+    },
+    FGSTYLE_ID: fgstyleId,
+    FGPRD_KEY: fgprdKey,
+    FGTYPE_KEY: typeMapping[newItemData.type] || "",
+    FGSHADE_KEY: shadeMapping[newItemData.shade] || "",
+    FGPTN_KEY: lotNoMapping[newItemData.lotNo] || "",
+    STYCATRT_ID: stycatrtId
+  }];
 
-    setFormData(prev => ({
-      ...prev,
-      apiResponseData: {
-        ...prev.apiResponseData,
-        ORDBKSTYLIST: [...(prev.apiResponseData?.ORDBKSTYLIST || []), ...newOrdbkStyleItems]
-      }
-    }));
+  const newTableData = [...tableData, ...finalNewItems];
+  setUpdatedTableData(newTableData);
 
-    setIsAddingNew(false);
-    setIsSizeDetailsLoaded(false);
-    setNewItemData({
-      product: '',
-      barcode: '',
-      style: '',
-      type: '',
-      shade: '',
-      qty: '',
-      mrp: '',
-      rate: '',
-      setNo: '',
-      varPer: '',
-      stdQty: '',
-      convFact: '',
-      lotNo: '',
-      discount: '',
-      percent: '',
-      remark: '',
-      divDt: '',
-      rQty: '',
-      sets: '',
-      stycatrtId: 0 // Reset STYCATRT_ID
-    });
-    setStyleCodeInput('');
-    setBarcodeInput('');
-    setSizeDetailsData([]);
-    setDataSource(null);
-    setSelectedShades([]);
-    setAvailableShades([]);
+  // Update formData
+  const newOrdbkStyleItems = finalNewItems.map(item => ({
+    ORDBKSTY_ID: item.id,
+    FGITEM_KEY: item.BarCode,
+    PRODUCT: item.product,
+    STYLE: item.style,
+    TYPE: item.type,
+    SHADE: item.shade,
+    PATTERN: item.lotNo,
+    ITMQTY: item.qty,
+    MRP: item.mrp,
+    ITMRATE: item.rate,
+    ITMAMT: item.amount,
+    DLV_VAR_PERC: item.varPer,
+    DLV_VAR_QTY: item.varQty,
+    DISC_AMT: item.discAmt,
+    NET_AMT: item.netAmt,
+    DISTBTR: item.distributer,
+    SETQTY: item.set,
+    ORDBKSTYSZLIST: updatedSizeDetails.map(size => ({
+      ...size,
+      ORDBKSTYSZ_ID: 0
+    })),
+    FGSTYLE_ID: item.FGSTYLE_ID,
+    FGPRD_KEY: item.FGPRD_KEY,
+    FGTYPE_KEY: item.FGTYPE_KEY,
+    FGSHADE_KEY: item.FGSHADE_KEY,
+    FGPTN_KEY: item.FGPTN_KEY,
+    STYCATRT_ID: item.STYCATRT_ID,
+    DBFLAG: mode === 'add' ? 'I' : 'I'
+  }));
 
-    showSnackbar(selectedShades.length > 1 ?
-      `${selectedShades.length} items added to order (${totalQty} each)!` :
-      "Item added successfully!");
-  };
+  setFormData(prev => ({
+    ...prev,
+    apiResponseData: {
+      ...prev.apiResponseData,
+      ORDBKSTYLIST: [...(prev.apiResponseData?.ORDBKSTYLIST || []), ...newOrdbkStyleItems]
+    }
+  }));
+
+  setIsAddingNew(false);
+  setIsSizeDetailsLoaded(false);
+  setNewItemData({
+    product: '',
+    barcode: '',
+    style: '',
+    type: '',
+    shade: '',
+    qty: '',
+    mrp: '',
+    rate: '',
+    setNo: '',
+    varPer: '',
+    stdQty: '',
+    convFact: '',
+    lotNo: '',
+    discount: '',
+    percent: '',
+    remark: '',
+    divDt: '',
+    rQty: '',
+    sets: '',
+    stycatrtId: 0
+  });
+  setStyleCodeInput('');
+  setBarcodeInput('');
+  setSizeDetailsData([]);
+  setDataSource(null);
+  setSelectedShades([]);
+  setAvailableShades([]);
+
+  showSnackbar(selectedShades.length > 1 ?
+    `${selectedShades.length} items added to order!` :
+    "Item added successfully!");
+};
 
   const handleEditItem = () => {
     if (!selectedRow) {
@@ -1887,6 +1943,7 @@ useEffect(() => {
 
   return (
     <Box>
+      
       <Box
         sx={{
           display: 'flex',
@@ -2324,32 +2381,34 @@ useEffect(() => {
                   </FormControl>
 
                   <Box sx={{ display: 'flex', flexDirection: 'row', gap: 0.5 }}>
-                    <Button
-                      variant={shadeViewMode === 'allocated' ? 'contained' : 'outlined'}
-                      onClick={handleAllocatedShadesClick}
-                      size="small"
-                      disabled={shouldDisableFields()}
-                      sx={{
-                        minWidth: '35px',
-                        height: '20px',
-                        textTransform: 'none',
-                        fontSize: '10px',
-                        padding: '0px 0px',
-                        backgroundColor: shadeViewMode === 'allocated' ? '#1976d2' : 'transparent',
-                        color: shadeViewMode === 'allocated' ? 'white' : '#1976d2',
-                        borderColor: '#1976d2',
-                        '&:hover': {
-                          backgroundColor: shadeViewMode === 'allocated' ? '#1565c0' : 'rgba(25, 118, 210, 0.04)'
-                        },
-                        '&.Mui-disabled': {
-                          borderColor: '#cccccc',
-                          color: '#666666',
-                          backgroundColor: 'transparent'
-                        }
-                      }}
-                    >
-                      Allc
-                    </Button>
+                  {isShadeAllocationEnabled() && (
+          <Button
+            variant={shadeViewMode === 'allocated' ? 'contained' : 'outlined'}
+            onClick={handleAllocatedShadesClick}
+            size="small"
+            disabled={shouldDisableFields()}
+            sx={{
+              minWidth: '35px',
+              height: '20px',
+              textTransform: 'none',
+              fontSize: '10px',
+              padding: '0px 0px',
+              backgroundColor: shadeViewMode === 'allocated' ? '#1976d2' : 'transparent',
+              color: shadeViewMode === 'allocated' ? 'white' : '#1976d2',
+              borderColor: '#1976d2',
+              '&:hover': {
+                backgroundColor: shadeViewMode === 'allocated' ? '#1565c0' : 'rgba(25, 118, 210, 0.04)'
+              },
+              '&.Mui-disabled': {
+                borderColor: '#cccccc',
+                color: '#666666',
+                backgroundColor: 'transparent'
+              }
+            }}
+          >
+            Allc
+          </Button>
+        )}
                     <Button
                       variant={shadeViewMode === 'allocated' ? 'contained' : 'outlined'}
                       onClick={handleAllocatedShadesClick}

@@ -77,6 +77,7 @@ const [isFetchingOrderNo, setIsFetchingOrderNo] = useState(false);
 const [typingTimeout, setTypingTimeout] = useState(null);
   // State to track loading for branch API
   const [loadingBranches, setLoadingBranches] = useState(false);
+  
 
   const [gstType, setGstType] = useState('state');
 
