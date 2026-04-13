@@ -2,16 +2,7 @@
 
 import React, { useRef, useState } from 'react';
 import {
-  Table,
-  TableHead,
-  TableBody,
-  TableRow,
-  TableCell,
-  TableContainer,
-  TextField,
-  Checkbox,
-  Paper,
-  Box
+  Table, TableHead, TableBody, TableRow, TableCell, TableContainer, TextField, Checkbox, Paper, Box
 } from '@mui/material';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 
@@ -51,7 +42,6 @@ const EditableTable = ({
       return;
     }
 
-    // Arrow keys se navigation
     let newRowIndex = rowIndex;
     let newFieldIndex = fieldIndex;
 
@@ -86,11 +76,10 @@ const EditableTable = ({
       <Table size="small" stickyHeader>
         <TableHead>
           <TableRow>
-            {/* Arrow ke liye ek extra blank header cell */}
             <TableCell sx={{ p: '6px 8px', width: 30 }} />
             {columns.map((col, index) => (
               <TableCell
-                key={col.field}
+                key={`header-${col.label || index}`}
                 sx={{
                   p: '4px 6px',
                   fontWeight: 600,
@@ -108,7 +97,7 @@ const EditableTable = ({
         <TableBody>
           {safeData.map((row, rowIndex) => (
             <TableRow
-              key={rowIndex}
+              key={`row-${row.originalIndex ?? rowIndex}`}
               onClick={() => handleRowClick(row.originalIndex)}
               selected={selectedRowIndex.includes(row.originalIndex)}
               sx={{
@@ -118,7 +107,6 @@ const EditableTable = ({
                 cursor: disabled ? 'default' : 'pointer',
               }}
             >
-              {/* Arrow ke liye cell */}
               <TableCell sx={{
                 p: '2px 4px', width: 15
               }}>
@@ -132,7 +120,7 @@ const EditableTable = ({
               {columns.map((col, fieldIndex) => {
                 const cellKey = `${rowIndex}-${col.field}`;
                 return (
-                  <TableCell key={col.field} sx={{ p: '4px 8px' }}>
+                  <TableCell key={`cell-${rowIndex}-${fieldIndex}`} sx={{ p: '4px 8px' }}>
                     {col.type === 'checkbox' ? (
                       <Checkbox
                         checked={true}
@@ -193,16 +181,3 @@ const EditableTable = ({
 };
 
 export default EditableTable;
-
-
-
-
-
-
-
-
-
-
-
-
-

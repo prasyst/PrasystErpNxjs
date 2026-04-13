@@ -592,8 +592,9 @@ const Stores = () => {
                             sx={textInputSx}
                             inputProps={{
                                 style: {
-                                    padding: '6px 8px',
-                                    fontSize: '12px',
+                                    padding: '6px 0px',
+                                    marginTop: '10px',
+                                    fontSize: '14px',
                                 },
                             }}
                         />
@@ -805,8 +806,9 @@ const Stores = () => {
                             sx={textInputSx}
                             inputProps={{
                                 style: {
-                                    padding: '6px 8px',
-                                    fontSize: '12px',
+                                    padding: '6px 0px',
+                                    marginTop: '10px',
+                                    fontSize: '14px',
                                 },
                             }}
                         />
@@ -823,8 +825,9 @@ const Stores = () => {
                             sx={textInputSx}
                             inputProps={{
                                 style: {
-                                    padding: '6px 8px',
-                                    fontSize: '12px',
+                                    padding: '6px 0px',
+                                    marginTop: '10px',
+                                    fontSize: '14px',
                                 },
                             }}
                         />
