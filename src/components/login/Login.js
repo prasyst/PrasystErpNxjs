@@ -20,11 +20,13 @@ import { useRouter } from "next/navigation";
 import { toast, ToastContainer } from 'react-toastify';
 import axiosInstance from '@/lib/axios';
 import CoBrModal from './CoBrModal';
+import { useDispatch } from 'react-redux';
 import Image from 'next/image';
 // import logo from '../../../public/images/logo.jpg'
 // import logo2 from '../../../public/images/download.png'
 import WhatsAppIcon from '@mui/icons-material/WhatsApp';
 import { buttonStyles } from '../../../public/styles/buttonStyles';
+import { fetchUserParams } from '../../app/redux/store/userParamsSlice';
 
 const roles = [
   { label: 'User', value: 'user', icon: <PersonIcon /> },
@@ -77,6 +79,7 @@ const Login = () => {
   const [showVerifiedIcon, setShowVerifiedIcon] = useState(false);
   const [otpErrorMsg, setOtpErrorMsg] = useState('');
   const [employeeEmailForOtp, setEmployeeEmailForOtp] = useState('');
+const dispatch = useDispatch();
 
   useEffect(() => {
     const checkMobile = async () => {
@@ -249,7 +252,8 @@ const Login = () => {
       localStorage.setItem('FCYR_KEY', lastTwoDigits);
       localStorage.setItem('authenticated', 'true');
       localStorage.setItem('userRole', role);
-      await fetchAndSaveUserParams();
+      // await fetchAndSaveUserParams();
+      await dispatch(fetchUserParams());
       setShowLogin(false);
       setModalOpen(true);
     } else {
@@ -530,7 +534,8 @@ const getAllUserParams = () => {
         localStorage.setItem('EMP_NAME', employeeData.EMP_NAME);
         if (employeeData.EMP_KEY) {
           localStorage.setItem('EMP_KEY', employeeData.EMP_KEY);
-          await fetchAndSaveUserParams();
+          // await fetchAndSaveUserParams();
+          await dispatch(fetchUserParams());
           router.push('/employeepage');
         }
         if (employeeData.EMP_NAME) {
@@ -582,7 +587,8 @@ const getAllUserParams = () => {
         localStorage.removeItem('EMP_KEY');
         localStorage.removeItem('EMP_NAME');
 
-         await fetchAndSaveUserParams();
+        //  await fetchAndSaveUserParams();
+           await dispatch(fetchUserParams());
         setShowLogin(false);
         setModalOpen(true);
       } else {
@@ -620,7 +626,7 @@ const getAllUserParams = () => {
     localStorage.removeItem('EMP_NAME');
       localStorage.removeItem('USER_PARAMS'); 
   localStorage.removeItem('USER_PARAMS_MAP');
-
+dispatch(clearUserParams());
     setShowLogin(true);
     setModalOpen(false);
     setForm({ username: '', password: '', mobile: '' });

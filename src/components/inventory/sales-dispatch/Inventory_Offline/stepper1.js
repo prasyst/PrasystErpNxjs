@@ -2148,7 +2148,7 @@ const Stepper1 = ({
   setMerchandiserMapping,
   showSnackbar,
   fetchPartyDetailsForAutoFill,
-  isDataLoading,
+  isDataLoading,companyConfig 
 }) => {
   const [selectedDate, setSelectedDate] = useState(null);
 
@@ -2167,7 +2167,8 @@ const Stepper1 = ({
   const [orderTypeOptions, setOrderTypeOptions] = useState([]);
   const [merchandiserOptions, setMerchandiserOptions] = useState([]);
   const [priceListOptions, setPriceListOptions] = useState([]);
-
+const [isFetchingOrderNo, setIsFetchingOrderNo] = useState(false);
+const [typingTimeout, setTypingTimeout] = useState(null);
   // State to track loading for branch API
   const [loadingBranches, setLoadingBranches] = useState(false);
 
@@ -2321,6 +2322,91 @@ const Stepper1 = ({
       backgroundColor: "#ffffff !important",
     },
   };
+
+const handleSeriesChange = async (e) => {
+  const { value } = e.target;
+  
+  // Update the series value immediately
+  setFormData(prev => ({
+    ...prev,
+    SERIES: value
+  }));
+
+  // Clear previous timeout
+  if (typingTimeout) {
+    clearTimeout(typingTimeout);
+  }
+
+  // Only fetch if value is not empty and not in disabled mode
+  if (value && value.trim() !== '' && !isFormDisabled) {
+    // Set a new timeout to fetch after user stops typing (500ms delay)
+    const timeout = setTimeout(async () => {
+      try {
+        setIsFetchingOrderNo(true);
+        
+        const payload = {
+          "MODULENAME": "PACK",
+          "TBLNAME": "PACK",
+          "FLDNAME": "PACK_No",
+          "NCOLLEN": 6,
+          "CPREFIX": value.trim(),
+          "COBR_ID": "02",
+          "FCYR_KEY": "25",
+          "TRNSTYPE": "T",
+          "SERIESID": 0,
+          "FLAG": ""
+        };
+
+        const response = await axiosInstance.post('/GetSeriesSettings/GetSeriesLastNewKey', payload);
+        
+        if (response.data?.DATA && response.data.DATA.length > 0) {
+          const orderData = response.data.DATA[0];
+          
+          // Generate ORDBK_KEY: FCYR_KEY + COBR_ID + orderNo
+          const correctOrdbkKey = `25${"02"}${orderData.ID}`;
+          
+          setFormData(prev => ({
+            ...prev,
+            ORDER_NO: orderData.ID || "",
+            LAST_ORD_NO: orderData.LASTID || "",
+            SERIES: value.trim(),
+            ORDBK_KEY: correctOrdbkKey
+          }));
+
+          // Show success message if needed
+          if (showSnackbar) {
+            showSnackbar(`Order number generated: ${orderData.ID}`, 'success');
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching order number:', error);
+        if (showSnackbar) {
+          showSnackbar('Error generating order number', 'error');
+        }
+      } finally {
+        setIsFetchingOrderNo(false);
+      }
+    }, 500);
+
+    setTypingTimeout(timeout);
+  } else if (!value || value.trim() === '') {
+    // If series is cleared, also clear order number and last order no
+    setFormData(prev => ({
+      ...prev,
+      ORDER_NO: "",
+      LAST_ORD_NO: "",
+      ORDBK_KEY: ""
+    }));
+  }
+};
+
+useEffect(() => {
+  return () => {
+    if (typingTimeout) {
+      clearTimeout(typingTimeout);
+    }
+  };
+}, [typingTimeout]);
 
   // Function to get today's date in DD/MM/YYYY format
   const getTodayDate = () => {
@@ -3246,7 +3332,7 @@ const handleInputChange = (e) => {
               label="Series"
               variant="filled"
               fullWidth
-              onChange={handleInputChange}
+              onChange={handleSeriesChange} 
               value={formData.SERIES || ""}
               name="SERIES"
               disabled={isFormDisabled}
@@ -3315,7 +3401,7 @@ const handleInputChange = (e) => {
               onChange={handleInputChange}
               value={formData.ORDER_NO || ""}
               name="ORDER_NO"
-              disabled={isFormDisabled}
+              disabled={isFormDisabled || isFetchingOrderNo} 
               sx={{
                 ...textInputSx,
                 '& .MuiFilledInput-root': {
