@@ -16,6 +16,8 @@ import SearchIcon from "@mui/icons-material/Search";
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchUserParams, selectUserParamByName, selectUserParamsLoading } from '../../../../app/redux/store/userParamsSlice';
 
 const FORM_MODE = getFormMode();
 
@@ -59,7 +61,45 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, compa
 
   // State for size details loading
   const [isSizeDetailsLoaded, setIsSizeDetailsLoaded] = useState(false);
+const dispatch = useDispatch();
 
+// Get user params from Redux
+const isDuplicateStyleAllowedParam = useSelector(state => selectUserParamByName(state, 'Allow Duplicate Style In Order'));
+const isShadeAllocationEnabledParam = useSelector(state => selectUserParamByName(state, 'Shade Allocation'));
+const paramsLoading = useSelector(selectUserParamsLoading);
+const isDuplicateStyleAllowed = () => {
+  return isDuplicateStyleAllowedParam?.REMARK === '1';
+};
+
+const isShadeAllocationEnabled = () => {
+  return isShadeAllocationEnabledParam?.REMARK === '1';
+};
+
+useEffect(() => {
+  // Fetch user params when component mounts
+  dispatch(fetchUserParams());
+}, [dispatch]);
+
+
+// Add this function before handleConfirmAdd
+const isStyleAlreadyExists = (styleName, shadeName = null) => {
+  // If duplicate styles are allowed, return false (no restriction)
+  if (isDuplicateStyleAllowed()) {
+    return false;
+  }
+
+  // Check in existing table data
+  const existingItem = tableData.find(item => {
+    if (shadeName && shadeName !== '-') {
+      // Check both style and shade combination
+      return item.style === styleName && item.shade === shadeName;
+    }
+    // Check only style
+    return item.style === styleName;
+  });
+
+  return !!existingItem;
+};
   // State for table filters
   const [tableFilters, setTableFilters] = useState({
     BarCode: '',
@@ -920,7 +960,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, compa
       setIsSizeDetailsLoaded(true);
 
       // Show success message with STYCATRT_ID
-      showSnackbar(`Size details loaded successfully. STYCATRT_ID: ${stycatrtId}`, 'success');
+      // showSnackbar(`Size details loaded successfully. STYCATRT_ID: ${stycatrtId}`, 'success');
     } else {
       showSnackbar("No size details found for the selected combination.", 'warning');
       setSizeDetailsData([]);
@@ -1139,6 +1179,11 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, compa
       showSnackbar("Please select a Party first before adding items", 'error');
       return;
     }
+     try {
+    await dispatch(fetchUserParams());
+  } catch (error) {
+    console.error('Error fetching user params:', error);
+  }
 
     setIsAddingNew(true);
     setSizeDetailsData([]);
@@ -1185,6 +1230,29 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, compa
       showSnackbar("Please fill required fields: Product and Style", 'error');
       return;
     }
+
+    if (!isDuplicateStyleAllowed()) {
+    if (selectedShades.length > 0) {
+      for (const shade of selectedShades) {
+        if (isStyleAlreadyExists(newItemData.style, shade)) {
+          showSnackbar(
+            `❌ Duplicate style "${newItemData.style}" with shade "${shade}" already exists! Duplicate styles are NOT allowed.`,
+            'error'
+          );
+          return;
+        }
+      }
+    } else {
+      const currentShade = newItemData.shade || '-';
+      if (isStyleAlreadyExists(newItemData.style, currentShade)) {
+        showSnackbar(
+          `❌ Duplicate style "${newItemData.style}" already exists in the order! Duplicate styles are NOT allowed.`,
+          'error'
+        );
+        return;
+      }
+    }
+  }
 
     if (sizeDetailsData.length === 0) {
       showSnackbar("Please load size details first", 'error');
@@ -2147,32 +2215,34 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, mode, onSubmit, compa
                   </FormControl>
 
                   <Box sx={{ display: 'flex', flexDirection: 'row', gap: 0.5 }}>
-                    <Button
-                      variant={shadeViewMode === 'allocated' ? 'contained' : 'outlined'}
-                      onClick={handleAllocatedShadesClick}
-                      size="small"
-                      disabled={shouldDisableFields()}
-                      sx={{
-                        minWidth: '35px',
-                        height: '20px',
-                        textTransform: 'none',
-                        fontSize: '10px',
-                        padding: '0px 0px',
-                        backgroundColor: shadeViewMode === 'allocated' ? '#1976d2' : 'transparent',
-                        color: shadeViewMode === 'allocated' ? 'white' : '#1976d2',
-                        borderColor: '#1976d2',
-                        '&:hover': {
-                          backgroundColor: shadeViewMode === 'allocated' ? '#1565c0' : 'rgba(25, 118, 210, 0.04)'
-                        },
-                        '&.Mui-disabled': {
-                          borderColor: '#cccccc',
-                          color: '#666666',
-                          backgroundColor: 'transparent'
-                        }
-                      }}
-                    >
-                      Allc
-                    </Button>
+                    {isShadeAllocationEnabled() && (
+  <Button
+    variant={shadeViewMode === 'allocated' ? 'contained' : 'outlined'}
+    onClick={handleAllocatedShadesClick}
+    size="small"
+    disabled={shouldDisableFields()}
+    sx={{
+      minWidth: '35px',
+      height: '20px',
+      textTransform: 'none',
+      fontSize: '10px',
+      padding: '0px 0px',
+      backgroundColor: shadeViewMode === 'allocated' ? '#1976d2' : 'transparent',
+      color: shadeViewMode === 'allocated' ? 'white' : '#1976d2',
+      borderColor: '#1976d2',
+      '&:hover': {
+        backgroundColor: shadeViewMode === 'allocated' ? '#1565c0' : 'rgba(25, 118, 210, 0.04)'
+      },
+      '&.Mui-disabled': {
+        borderColor: '#cccccc',
+        color: '#666666',
+        backgroundColor: 'transparent'
+      }
+    }}
+  >
+    Allc
+  </Button>
+)}
                     <Button
                       variant={shadeViewMode === 'allocated' ? 'contained' : 'outlined'}
                       onClick={handleAllocatedShadesClick}
