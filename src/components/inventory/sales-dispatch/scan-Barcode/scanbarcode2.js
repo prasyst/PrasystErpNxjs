@@ -8234,7 +8234,7 @@ const handleSizeQtyChange = (index, newQty) => {
     }
   };
 
-  const handleSubmitOrder = async () => {
+const handleSubmitOrder = async () => {
   if (tableData.length === 0) {
     showSnackbar('Please add at least one item to the order', 'error');
     return;
@@ -8260,23 +8260,19 @@ const handleSizeQtyChange = (index, newQty) => {
     if (response.data.RESPONSESTATUSCODE === 1) {
       showSnackbar(`Order submitted successfully! Order No: ${formData.ORDER_NO}`, 'success');
 
-      // CRITICAL: Clear saved quantities from localStorage after successful order
       clearSavedQuantities();
       
-      // Reset all states for new order
       resetOrderStates();
 
       if (isMobile) {
-        setActiveTab(0);
+        setActiveTab(0); 
         setViewMode('scan');
       }
 
       setTableData([]);
       
-      // Generate new order number for next order
       await generateOrderNumber();
 
-      // Reset form data but keep order number
       setFormData(prev => ({
         ...prev,
         PARTY_ORD_NO: '',
@@ -8322,26 +8318,19 @@ const handleSizeQtyChange = (index, newQty) => {
         ratios: {}
       });
       setScannerError('');
-      
-      // Reset change qty mode
+     
       setChangeQtyMode(false);
       setScannerChangeQtyMode(false);
-      
-      // Reset equal qty mode
+ 
       setFillEqualQtyMode(false);
       setShowEqualQtyInput(false);
       setEqualQtyValue('');
       
-      // Show success message
-      // showSnackbar('Order submitted! Starting fresh for new order...', 'success');
-      
-      // Auto start scanner for next order if autoScanMode is enabled
-      if (autoScanMode) {
-        setTimeout(() => {
-          startScanner();
-        }, 1000);
+     
+      if (showScanner) {
+        stopScanner();
       }
-
+    
     } else {
       showSnackbar('Error submitting order: ' + (response.data.RESPONSEMESSAGE || 'Unknown error'), 'error');
     }
@@ -8354,13 +8343,11 @@ const handleSizeQtyChange = (index, newQty) => {
   }
 };
 
-// Add this function to clear all saved quantities
 const clearSavedQuantities = () => {
   try {
-    // Clear global saved quantities
+    
     localStorage.removeItem(`sizeQuantities_Global`);
     
-    // Clear any product-specific saved quantities if they exist
     const keys = Object.keys(localStorage);
     keys.forEach(key => {
       if (key.startsWith('sizeQuantities_') || key.startsWith('ratioData_')) {
@@ -8368,10 +8355,8 @@ const clearSavedQuantities = () => {
       }
     });
     
-    // Reset saved quantities state
     setSavedSizeQuantities({});
-    
-    // Reset initial quantities loaded flag
+   
     setInitialQuantitiesLoaded(false);
     
     console.log('All saved quantities cleared for new order');
@@ -8381,7 +8366,7 @@ const clearSavedQuantities = () => {
 };
 
 const resetOrderStates = () => {
-  // Reset all form states for new order
+
   setCurrentProductInfo({
     barcode: '',
     style: '',
