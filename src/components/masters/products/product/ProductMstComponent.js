@@ -1740,10 +1740,3 @@ export default function Wrapper() {
     </Suspense>
   );
 }
-
-
-
-
-
-
-

@@ -21,8 +21,6 @@ import { toast, ToastContainer } from 'react-toastify';
 import axiosInstance from '@/lib/axios';
 import CoBrModal from './CoBrModal';
 import Image from 'next/image';
-// import logo from '../../../public/images/logo.jpg'
-// import logo2 from '../../../public/images/download.png'
 import WhatsAppIcon from '@mui/icons-material/WhatsApp';
 import { buttonStyles } from '../../../public/styles/buttonStyles';
 
@@ -50,8 +48,8 @@ const Login = () => {
   const [showLogin, setShowLogin] = useState(true);
   const currentYear = new Date().getFullYear();
   const fixedCurrentYear = currentYear - 1;
-  const nextYear = fixedCurrentYear + 1;
-  const defaultYearRange = `${fixedCurrentYear}-${nextYear}`;
+  const nextYear = currentYear + 1;
+  const defaultYearRange = `${currentYear}-${nextYear}`;
   const years = [defaultYearRange];
   const [selectedYear, setSelectedYear] = useState(defaultYearRange);
   const [otpRequests, setOtpRequests] = useState({});

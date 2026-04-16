@@ -1270,13 +1270,12 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClose }) => 
   useEffect(() => {
     const fetchCompanyName = async () => {
       try {
-        const response = await fetch('/api/company/name');
+        const response = await fetch('/');
         if (response.ok) {
           const data = await response.json();
           setCompanyName(data.companyName || 'Prasyst');
         }
       } catch (error) {
-        console.error('Failed to fetch company name:', error);
         const storedName = localStorage.getItem('companyName');
         if (storedName) {
           setCompanyName(storedName);
