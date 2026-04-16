@@ -78,6 +78,7 @@ const Style = () => {
     const [qualityDrp, setQualityDrp] = useState([]);
     const [prodSr, setProdSr] = useState([]);
     const [seasonDrp, setSeasonDrp] = useState([]);
+    const [webColl, setWebColl] = useState([]);
     const [selectedValues, setSelectedValues] = useState({
         FGPRD_KEY: null,
         FGTYPE_KEY: null,
@@ -87,7 +88,7 @@ const Style = () => {
         PRODSRMST_ID: null,
         SEASON_KEY: null,
         // Add more dropdowns here as needed
-        FGCAT_KEY: null,
+        WEBCOLLECTION_KEY: null,
         WEB_COLLECTION: null,
         FAB_CATEGORY: null,
         FABRIC: null,
@@ -263,6 +264,7 @@ const Style = () => {
         fetchQuality();
         fetchProductSr();
         fetchSeason();
+        fetchWebColl();
     }, [])
 
     const fetchProduct = async () => {
@@ -358,6 +360,19 @@ const Style = () => {
             }
         } catch (error) {
             toast.error('Error while fetching the product.');
+        }
+    };
+
+    const fetchWebColl = async () => {
+        try {
+            const response = await axiosInstance.post('WEBCOLLECTION/GetWEBCOLLECTIONDrp', {})
+            if (response.data.STATUS === 0) {
+                setWebColl(response.data.DATA);
+            } else {
+                setWebColl([]);
+            }
+        } catch (error) {
+            toast.error("Error while fetching the web collection.");
         }
     };
 
@@ -1092,18 +1107,24 @@ const Style = () => {
 
                     <Grid size={{ xs: 12, sm: 6, md: 2 }}>
                         <AutoVibe
-                            id=""
+                            id="WEBCOLLECTION_KEY"
                             disabled={isFormDisabled}
-                            options={''}
-                            getOptionLabel={(option) => option || ""}
+                            options={webColl}
+                            getOptionLabel={(option) => option.WEBCOLLECTION_NAME || ""}
                             label="Web Collection"
-                            name=""
-                            value={""}
-                            onChange={''}
-                            sx={DropInputSx}
+                            name="WEBCOLLECTION_KEY"
+                            value={selectedValues.WEBCOLLECTION_KEY}
+                            onChange={handleDropdownChange('WEBCOLLECTION_KEY')}
+                            sx={{
+                                ...DropInputSx,
+                                '& .MuiFilledInput-root': {
+                                    ...DropInputSx['& .MuiFilledInput-root'],
+                                    paddingTop: '16px !important',
+                                },
+                            }}
                             inputProps={{
                                 style: {
-                                    padding: '6px 8px',
+                                    padding: '6px 0px',
                                     fontSize: '12px',
                                 },
                             }}

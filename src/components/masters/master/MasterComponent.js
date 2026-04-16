@@ -769,6 +769,7 @@ export default function MasterPage() {
       'Raise Ticket': CreateIcon,
       'Ticket Escalation': ConfirmationNumberIcon,
       'Ticket Status': LocalActivityIcon,
+      'Location': LocalActivityIcon,
     };
     return iconMap[moduleName] || BusinessIcon;
   };

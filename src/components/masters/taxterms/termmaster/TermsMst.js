@@ -1,24 +1,42 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+'use client'
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import {
-    Box, Grid, TextField, Typography, Button, Stack, FormControlLabel, Checkbox, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions,
-    FormLabel,
-    RadioGroup,
-    Radio,
+    Box, Grid, TextField, Typography, Button, Stack, FormControlLabel, Checkbox, Dialog, DialogTitle, DialogContent,
+    DialogContentText, DialogActions, FormLabel, RadioGroup, Radio,
 } from '@mui/material';
-
-import { toast, ToastContainer } from 'react-toastify';
+import KeyboardArrowLeftIcon from "@mui/icons-material/KeyboardArrowLeft";
+import NavigateNextIcon from "@mui/icons-material/NavigateNext";
+import { toast, ToastContainer } from 'react-toastify'
+import z from 'zod';
 import { getFormMode } from '@/lib/helpers';
 import { useRouter } from 'next/navigation';
+import CrudButton from '@/GlobalFunction/CrudButton';
 import debounce from 'lodash.debounce';
 import axiosInstance from '@/lib/axios';
 import { useSearchParams } from 'next/navigation';
 import { pdf } from '@react-pdf/renderer';
-import PaginationButtons from '@/GlobalFunction/PaginationButtons';
-import CrudButtons from '@/GlobalFunction/CrudButtons';
+import { TbListSearch } from "react-icons/tb";
 import CustomAutocomplete from '@/GlobalFunction/CustomAutoComplete/CustomAutoComplete';
 import PrintTermsDt from './PrintTermsDt';
+import { useUserPermissions } from '@/app/hooks/useUserPermissions';
+import { textInputSx } from '../../../../../public/styles/textInputSx';
+import { DropInputSx } from '../../../../../public/styles/dropInputSx';
+import AutoVibe from '@/GlobalFunction/CustomAutoComplete/AutoVibe';
 
 const FORM_MODE = getFormMode();
+const categoryFormSchema = z.object({
+    FGCAT_NAME: z.string().min(1, "Category Name is required"),
+});
+
+const columns = [
+    { id: "ROWNUM", label: "SrNo.", minWidth: 40 },
+    { id: "FGCAT_KEY", label: "Code", minWidth: 40 },
+    { id: "FGCAT_CODE", label: "AltCode", minWidth: 40 },
+    { id: "FGCAT_NAME", label: "CatName", minWidth: 40 },
+    { id: "SEGMENT_KEY", label: "Segment", minWidth: 40 },
+    { id: "SR_CODE", label: "Cat_Series", minWidth: 40 },
+];
+
 const TermsMst = () => {
     const router = useRouter();
     const searchParams = useSearchParams();
@@ -52,7 +70,6 @@ const TermsMst = () => {
     const TERM_NAMERef = useRef(null);
     const TERM_ABRVRef = useRef(null);
     const TERM_ALT_CODERef = useRef(null);
-
     const SERIESRef = useRef(null);
     const [mode, setMode] = useState(() => {
         currentTERM_KEY ? FORM_MODE.read : FORM_MODE.add
@@ -64,6 +81,9 @@ const TermsMst = () => {
     const username = localStorage.getItem('USER_NAME');
     const PARTY_KEY = localStorage.getItem('PARTY_KEY');
     const COBR_ID = localStorage.getItem('COBR_ID');
+    const [termDrp, setTermDrp] = useState([]);
+    const { hasSpecificPermission, loading: isPermissionLoading } = useUserPermissions();
+    const moduleName = 'Terms Master';
 
     useEffect(() => {
         if (!form.GST_APP) {
@@ -82,20 +102,20 @@ const TermsMst = () => {
             TERM_LST_CODE: '',
             TERMGRP_KEY: '',
             TERM_VAL_YN: '1',
-            TERM_PERCENT: '' || 0.00,
-            TERM_VAL_FIX: '' || "N",
-            TERM_RATE: '' || 0.00,
-            TERM_PERQTY: '' || 0,
-            TERM_OPR: "",
+            TERM_PERCENT: 0,
+            TERM_VAL_FIX: '0',
+            TERM_RATE: 0,
+            TERM_PERQTY: 0,
+            TERM_OPR: "-",
             REMK: '',
             ACCLED_ID: '',
             CHG_TAXABLE: '',
-            ROFF: '',
-            GST_APP: '',
+            ROFF: '0',
+            GST_APP: 'N',
             TERMS_TYPE: '',
             Status: 1,
         });
-    }
+    };
 
     const handleChangeStatus = (event) => {
         const updatedStatus = event.target.checked ? "1" : "0";
@@ -104,6 +124,27 @@ const TermsMst = () => {
             ...prevData,
             Status: updatedStatus
         }))
+    };
+
+    const handleInputChange = () => { };
+
+    useEffect(() => {
+        fetchTermGroup();
+    }, [])
+
+    const fetchTermGroup = async () => {
+        try {
+            const response = await axiosInstance.post('TermGrp/GetTermGrpDrp', {
+                Flag: ""
+            });
+            if (response.data.STATUS === 0) {
+                setTermDrp(response.data.DATA);
+            } else {
+                setTermDrp([]);
+            }
+        } catch (error) {
+            toast.error('Error while fetching term group.');
+        }
     };
 
     const handleFixAmountChange = (e) => {
@@ -117,6 +158,7 @@ const TermsMst = () => {
             TERM_PERQTY: isChecked ? 0 : prevForm.TERM_PERQTY
         }));
     };
+
     const handleCalculationFlagChange = (e) => {
         const isChecked = e.target.checked;
         setForm(prevForm => ({
@@ -133,13 +175,13 @@ const TermsMst = () => {
     const fetchRetriveData = useCallback(async (currentTERM_KEY, flag = "R", isManualSearch = false) => {
         try {
             const response = await axiosInstance.post('Terms/RetriveTerms', {
-                "FLAG": flag,
-                "TBLNAME": "Terms",
-                "FLDNAME": "Term_KEY",
-                "ID": currentTERM_KEY,
-                "ORDERBYFLD": "",
-                "CWHAER": "",
-                "CO_ID": CO_ID
+                FLAG: flag,
+                TBLNAME: "Terms",
+                FLDNAME: "Term_KEY",
+                ID: currentTERM_KEY,
+                ORDERBYFLD: "",
+                CWHAER: "",
+                CO_ID: CO_ID
             });
             const { data: { STATUS, DATA, RESPONSESTATUSCODE, MESSAGE } } = response;
             if (STATUS === 0 && Array.isArray(DATA) && RESPONSESTATUSCODE == 1) {
@@ -222,24 +264,24 @@ const TermsMst = () => {
                 url = `Terms/InsertTerms?UserName=${(UserName)}&strCobrid=${COBR_ID}`;
             }
             const payload = {
-                "Term_KEY": form.TERM_KEY,
-                "Term_ALT_CODE": form.TERM_ALT_CODE,
-                "Term_NAME": form.TERM_NAME,
-                "Term_ABRV": form.TERM_ABRV,
-                "TermGrp_KEY": form.TERMGRP_KEY || '',  // Group  
-                "Term_Val_YN": form.TERM_VAL_YN,
-                "Term_Percent": form.TERM_PERCENT || 0.00,
-                "Term_Val_Fix": form.TERM_VAL_FIX || "0",
-                "Term_Rate": form.TERM_RATE || 0.00,
-                "Term_PerQty": form.TERM_PERQTY || 0,
-                "Term_Opr": form.TERM_OPR,
-                "REMK": form.REMK || "",
-                "ACCLED_ID": form.ACCLED_ID || 1,  //ledger
-                "CHG_TAXABLE": form.CHG_TAXABLE || "N",
-                "ROFF": form.ROFF,
-                "GST_APP": form.GST_APP || "N",
-                "TERMS_TYPE": form.TERMS_TYPE || 1,
-                "STATUS": form.Status ? "1" : "0",
+                Term_KEY: form.TERM_KEY,
+                Term_ALT_CODE: form.TERM_ALT_CODE,
+                Term_NAME: form.TERM_NAME,
+                Term_ABRV: form.TERM_ABRV,
+                TermGrp_KEY: form.TERMGRP_KEY || '',
+                Term_Val_YN: form.TERM_VAL_YN,
+                Term_Percent: form.TERM_PERCENT || 0.00,
+                Term_Val_Fix: form.TERM_VAL_FIX || "0",
+                Term_Rate: form.TERM_RATE || 0.00,
+                Term_PerQty: form.TERM_PERQTY || 0,
+                Term_Opr: form.TERM_OPR,
+                REMK: form.REMK || "",
+                ACCLED_ID: form.ACCLED_ID || 1,
+                CHG_TAXABLE: form.CHG_TAXABLE || "N",
+                ROFF: form.ROFF,
+                GST_APP: form.GST_APP || "N",
+                TERMS_TYPE: form.TERMS_TYPE || 1,
+                STATUS: form.Status ? "1" : "0",
             };
             let response;
             if (mode == FORM_MODE.edit && currentTERM_KEY) {
@@ -309,16 +351,16 @@ const TermsMst = () => {
     const debouncedApiCall = debounce(async (newSeries) => {
         try {
             const response = await axiosInstance.post('GetSeriesSettings/GetSeriesLastNewKey', {
-                "MODULENAME": "Terms",
-                "TBLNAME": "Terms",
-                "FLDNAME": "Term_KEY",
-                "NCOLLEN": 5,
-                "CPREFIX": newSeries,
-                "COBR_ID": COBR_ID,
-                "FCYR_KEY": FCYR_KEY,
-                "TRNSTYPE": "M",
-                "SERIESID": 0,
-                "FLAG": ""
+                MODULENAME: "Terms",
+                TBLNAME: "Terms",
+                FLDNAME: "Term_KEY",
+                NCOLLEN: 5,
+                CPREFIX: newSeries,
+                COBR_ID: COBR_ID,
+                FCYR_KEY: FCYR_KEY,
+                TRNSTYPE: "M",
+                SERIESID: 0,
+                FLAG: ""
             });
             const { STATUS, DATA, MESSAGE } = response.data;
             if (STATUS === 0 && DATA.length > 0) {
@@ -362,8 +404,7 @@ const TermsMst = () => {
     const handleAdd = async () => {
         setMode(FORM_MODE.add);
         setCurrentTERM_KEY(null);
-        setForm((prevForm) => ({
-            ...prevForm,
+        setForm({
             SearchByCd: '',
             TERM_KEY: '',
             TERM_NAME: '',
@@ -373,34 +414,34 @@ const TermsMst = () => {
             TERM_LST_CODE: '',
             TERMGRP_KEY: '',
             TERM_VAL_YN: '1',
-            TERM_PERCENT: '' || 0.00,
-            TERM_VAL_FIX: '' || "0",
-            TERM_RATE: '' || 0.00,
-            TERM_PERQTY: '' || 0,
-            TERM_OPR: "",
+            TERM_PERCENT: 0.00,
+            TERM_VAL_FIX: '0',
+            TERM_RATE: 0.00,
+            TERM_PERQTY: 0,
+            TERM_OPR: "-",
             REMK: '',
             ACCLED_ID: '',
             CHG_TAXABLE: '',
-            ROFF: '',
-            GST_APP: '',
+            ROFF: '0',
+            GST_APP: 'N',
             TERMS_TYPE: '',
             Status: 1,
-        }));
+        });
 
         // Step 1: Fetch CPREFIX value from the first API
         let cprefix = '';
         try {
             const response = await axiosInstance.post('GetSeriesSettings/GetSeriesLastNewKey', {
-                "MODULENAME": "Terms",
-                "TBLNAME": "Terms",
-                "FLDNAME": "Term_KEY",
-                "NCOLLEN": 0,
-                "CPREFIX": "",
-                "COBR_ID": COBR_ID,
-                "FCYR_KEY": FCYR_KEY,
-                "TRNSTYPE": "M",
-                "SERIESID": 16,
-                "FLAG": "Series"
+                MODULENAME: "Terms",
+                TBLNAME: "Terms",
+                FLDNAME: "Term_KEY",
+                NCOLLEN: 0,
+                CPREFIX: "",
+                COBR_ID: COBR_ID,
+                FCYR_KEY: FCYR_KEY,
+                TRNSTYPE: "M",
+                SERIESID: 16,
+                FLAG: "Series"
             });
 
             const { STATUS, DATA } = response.data;
@@ -505,7 +546,7 @@ const TermsMst = () => {
     const handlePrint = async () => {
         try {
             const response = await axiosInstance.post(`Terms/GetTermsDashBoard?currentPage=1&limit=5000`, {
-                "SearchText": ""
+                SearchText: ""
             });
             const { data: { STATUS, DATA } } = response; // Extract DATA
             if (STATUS === 0 && Array.isArray(DATA)) {
@@ -529,197 +570,335 @@ const TermsMst = () => {
                 }, 100);
             }
         } catch (error) {
-            console.error("Print Error:", error);
+            toast.error("Print Error:", error);
         }
     };
 
     const handleExit = () => { router.push("/masters/taxterms/termmaster/termstable") };
-    
-    const Buttonsx = {
-        backgroundColor: '#39ace2',
-        margin: { xs: '0 4px', sm: '0 6px' },
-        minWidth: { xs: 40, sm: 46, md: 60 },
-        height: { xs: 40, sm: 46, md: 27 },
+
+    const handleTable = () => {
+        router.push('/masters/taxterms/termmaster/termstable');
     };
 
     return (
-        <>
-            <Box sx={{
-                width: '100%', justifyContent: 'center', alignItems: 'flex-start', padding: '24px', boxSizing: 'border-box', marginTop: { xs: "30px", sm: "0px", md: "40px" },
-                overflowY: { xs: 'auto', sm: 'visible' }, // Enable scrolling on mobile
-                maxHeight: { xs: '80vh', sm: 'none' },
+        <Grid
+            sx={{
+                width: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'center',
+                alignItems: 'center',
+                boxSizing: 'border-box',
+                minHeight: '90vh',
+                overflowX: 'hidden',
+                overflowY: 'auto'
             }}
-                className="form-container">
-                <ToastContainer />
-                <Box sx={{ maxWidth: '1000px', boxShadow: '0px 2px 6px rgba(0, 0, 0, 0.1)' }} className="form_grid" >
-                    <Grid container alignItems="center"
-                        sx={{ marginTop: { xs: '30px', sm: '10px', md: '10px' }, marginInline: '20px', overflowY: { xs: 'auto', sm: 'visible' }, }}>
-                        <Grid sx={{ flexGrow: 1 }}>
-                            <Typography align="center" variant="h5">
-                                Terms Master
-                            </Typography>
-                        </Grid>
+        >
+            <ToastContainer />
+            <Grid container spacing={2}
+                sx={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    marginInline: { xs: '5%', sm: '5%', md: '5%', lg: '15%', xl: '5%' },
+                }}
+            >
+                <Grid>
+                    <Typography align="center" variant="h6">
+                        Terms Master
+                    </Typography>
+                </Grid>
+
+                <Grid container spacing={2} justifyContent="space-between"
+                    sx={{ marginInline: { xs: '5%', sm: '5%', md: '5%', lg: '0%', xl: '0%' } }}
+                >
+                    <Grid>
+                        <Button
+                            variant="contained"
+                            size="small"
+                            sx={{ background: 'linear-gradient(290deg, #d4d4d4, #d4d4d4) !important' }}
+                            disabled={mode !== 'view'}
+                            onClick={handlePrevious}
+                        >
+                            <KeyboardArrowLeftIcon />
+                        </Button>
+                        <Button
+                            variant="contained"
+                            size="small"
+                            sx={{ background: 'linear-gradient(290deg, #b9d0e9, #e9f2fa) !important', ml: 1 }}
+                            disabled={mode !== 'view'}
+                            onClick={handleNext}
+                        >
+                            <NavigateNextIcon />
+                        </Button>
                     </Grid>
-                    {/* Form Fields */}
-                    <Box
-                        sx={{
-                            display: 'flex',
-                            flexDirection: 'column',
-                            gap: { xs: 1.5, sm: 1.5, md: 1 },
-                            marginInline: { xs: '5%', sm: '5%', md: '15%' },
-                            marginTop: { xs: '15px', sm: '20px', md: '10px' },
-                        }}
-                    >
-                        <Box sx={{ display: 'flex', justifyContent: 'end' }}>
-                            <TextField
-                                placeholder="Search By Code"
-                                variant="filled"
-                                sx={{
-                                    width: { xs: '100%', sm: '50%', md: '30%' },
-                                    backgroundColor: '#e0f7fa',
-                                    '& .MuiInputBase-input': {
-                                        paddingBlock: { xs: '8px', md: '4px' },
-                                        paddingLeft: { xs: '10px', md: '8px' },
-                                    },
-                                    '& .MuiInputBase-root': {
-                                        paddingTop: '2px',
-                                    },
-                                    '& .MuiInputLabel-root': {
-                                        top: '-4px',
-                                    },
-                                }}
-                                value={form.SearchByCd}
-                                onChange={(e) => setForm({ ...form, SearchByCd: e.target.value })}
-                                onKeyPress={(e) => {
-                                    if (e.key === 'Enter') {
-                                        fetchRetriveData(e.target.value, 'R', true);
-                                    }
-                                }}
-                            />
-                        </Box>
-                        <Box
-                            sx={{
-                                display: 'flex',
-                                flexDirection: { xs: 'column', sm: 'row', md: 'row' },
-                                justifyContent: 'space-between',
-                                gap: { xs: 1, sm: 1, md: 1 },
-                            }}
-                        >
-                            <TextField
-                                label="Series"
-                                inputRef={SERIESRef}
-                                sx={{
-                                    width: { xs: '100%', sm: '48%', md: '32%' }
-                                }}
-                                disabled={mode === FORM_MODE.read}
-                                fullWidth
-                                className="custom-textfield"
-                                value={form.SERIES}
-                                onChange={(e) => handleManualSeriesChange(e.target.value)}
-                            />
-                            <TextField
-                                label="Last Cd"
-                                sx={{
-                                    width: { xs: '100%', sm: '48%', md: '32%' }
-                                }}
-                                disabled={true}
-                                fullWidth
-                                className="custom-textfield"
-                                value={form.TERM_LST_CODE}
-                                onChange={(e) => setForm({ ...form, TERM_LST_CODE: e.target.value })}
-                            />
-                            <TextField
-                                label="Code"
-                                inputRef={TERM_KEYRef}
-                                sx={{
-                                    width: { xs: '100%', sm: '48%', md: '32%' }
-                                }}
-                                disabled={mode === FORM_MODE.read}
-                                className="custom-textfield"
-                                value={form.TERM_KEY}
-                                onChange={(e) => setForm({ ...form, TERM_KEY: e.target.value })}
-                            />
-                        </Box>
-                        <Box
-                            sx={{
-                                display: 'flex',
-                                flexDirection: { xs: 'column', sm: 'row', md: 'row' },
-                                justifyContent: 'space-between',
-                                gap: { xs: 1, sm: 1, md: 2 },
-                            }}
-                        >
-                            <TextField
-                                inputRef={TERM_NAMERef}
-                                label="Name"
-                                sx={{
-                                    width: '100%'
-                                }}
-                                disabled={mode === FORM_MODE.read}
-                                className="custom-textfield"
-                                value={form.TERM_NAME}
-                                onChange={(e) => setForm({ ...form, TERM_NAME: e.target.value })}
-                            />
-                            <CustomAutocomplete
-                                label="Terms Group"
-                                // options={termsGroupOptions}
-                                value={form.TERMS_GROUP}
-                                onChange={(value) => setForm({ ...form, TERMS_GROUP: value })}
-                                disabled={true}
-                                sx={{ width: { xs: '100%', sm: '48%', md: '48%' } }}
-                            />
-                        </Box>
-                        {/* Terms Group and Terms Type in a single row */}
-                        <Box
-                            sx={{
-                                display: 'flex',
-                                flexDirection: { xs: 'column', sm: 'row', md: 'row' },
-                                justifyContent: 'space-between',
-                                gap: { xs: 1, sm: 1.5, md: 2 },
-                            }}
-                        >
 
+                    <Grid sx={{ display: 'flex' }}>
+                        <TextField
+                            placeholder="Search By Code"
+                            variant="outlined"
+                            sx={{
+                                backgroundColor: '#e0f7fa',
+                                '& .MuiInputBase-input': {
+                                    paddingBlock: { xs: '8px', md: '4px' },
+                                    paddingLeft: { xs: '8px', md: '8px' },
+                                },
+                            }}
+                            value={form.SearchByCd}
+                            onChange={(e) => setForm({ ...form, SearchByCd: e.target.value })}
+                            onKeyPress={(e) => {
+                                if (e.key === 'Enter') {
+                                    fetchRetriveData(e.target.value, 'R', true);
+                                }
+                            }}
+                        />
+                    </Grid>
 
-                            <CustomAutocomplete
-                                id="terms-key-autocomplete"
-                                // inputRef={SEGMENT_KEYRef}
-                                disabled={true}
-                                label="Terms Type"
-                                // name="TERMS_TYPE_KEY"
-                                // options={termsTypeOptions}
-                                value={form.TERMS_TYPE}
-                                onChange={(value) => setForm({ ...form, TERMS_TYPE: value })}
-                                sx={{ width: { xs: '100%', sm: '48%', md: '50%' } }}
-                            />
-                            <Box
-                                sx={{
-                                    display: 'flex',
-                                    flexDirection: { xs: 'column', sm: 'row' },
-                                    gap: 1,
-                                    width: { xs: '100%', sm: '48%', md: '100%' },
-                                }}
-                            >
-                                <CustomAutocomplete
-                                    label="Gen. Ledger"
-                                    // options={generalLedgerOptions}
-                                    value={form.GEN_LEDGER}
-                                    onChange={(value) => setForm({ ...form, GEN_LEDGER: value })}
-                                    disabled={true}
-                                    sx={{ width: { xs: '100%', sm: '100%', md: '30%' } }}
-                                />
-                                <TextField
-                                    label="Abbr"
-                                    inputRef={TERM_ABRVRef}
-                                    sx={{
-                                        width: { xs: '100%', sm: '40%', md: '30%' }
-                                    }}
+                    <Grid sx={{ display: 'flex' }}>
+                        <TbListSearch onClick={handleTable} style={{ color: 'rgb(99, 91, 255)', width: '40px', height: '32px' }} />
+                    </Grid>
+
+                    <Grid sx={{ display: "flex", justifyContent: "end", marginRight: '-6px' }}>
+                        <CrudButton
+                            moduleName={moduleName}
+                            mode={mode}
+                            onAdd={handleAdd}
+                            onEdit={handleEdit}
+                            onDelete={handleDelete}
+                            onView={handlePrint}
+                            onExit={handleExit}
+                            readOnlyMode={mode === FORM_MODE.read}
+                            onPrevious={handlePrevious}
+                            onNext={handleNext}
+                            canAdd={hasSpecificPermission(moduleName, 'ADD')}
+                            canEdit={hasSpecificPermission(moduleName, 'EDIT')}
+                            canDelete={hasSpecificPermission(moduleName, 'DELETE')}
+                            canView={hasSpecificPermission(moduleName, 'VIEW')}
+                        />
+                    </Grid>
+                </Grid>
+
+                <Grid container spacing={1}>
+                    <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                        <TextField
+                            label="Series"
+                            inputRef={SERIESRef}
+                            variant="filled"
+                            fullWidth
+                            onChange={(e) => handleManualSeriesChange(e.target.value)}
+                            value={form.SERIES}
+                            name="SERIES"
+                            disabled={mode === FORM_MODE.read}
+                            sx={textInputSx}
+                            inputProps={{
+                                style: {
+                                    padding: '6px 0px',
+                                    marginTop: '10px',
+                                    fontSize: '14px',
+                                },
+                            }}
+                        />
+                    </Grid>
+
+                    <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                        <TextField
+                            label="Last Cd"
+                            variant="filled"
+                            fullWidth
+                            onChange={(e) => setForm({ ...form, TERM_LST_CODE: e.target.value })}
+                            value={form.TERM_LST_CODE}
+                            name="TERM_LST_CODE"
+                            disabled={true}
+                            sx={textInputSx}
+                            inputProps={{
+                                style: {
+                                    padding: '6px 0px',
+                                    marginTop: '10px',
+                                    fontSize: '14px',
+                                },
+                            }}
+                        />
+                    </Grid>
+
+                    <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                        <TextField
+                            label="Code"
+                            inputRef={TERM_KEYRef}
+                            variant="filled"
+                            fullWidth
+                            onChange={(e) => setForm({ ...form, TERM_KEY: e.target.value })}
+                            value={form.TERM_KEY}
+                            name="TAX_KEY"
+                            disabled={mode === FORM_MODE.read}
+                            sx={textInputSx}
+                            inputProps={{
+                                style: {
+                                    padding: '6px 0px',
+                                    marginTop: '10px',
+                                    fontSize: '14px',
+                                },
+                            }}
+                        />
+                    </Grid>
+
+                    <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                        <TextField
+                            label="Alt Code"
+                            inputRef={TERM_KEYRef}
+                            variant="filled"
+                            fullWidth
+                            onChange={handleInputChange}
+                            value={form.TERM_KEY}
+                            name="TERM_KEY"
+                            disabled={mode === FORM_MODE.read}
+                            sx={textInputSx}
+                            inputProps={{
+                                style: {
+                                    padding: '6px 0px',
+                                    marginTop: '10px',
+                                    fontSize: '14px',
+                                },
+                            }}
+                        />
+                    </Grid>
+
+                    <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                        <TextField
+                            label={<span>Name<span style={{ color: "red" }}>*</span></span>}
+                            inputRef={TERM_NAMERef}
+                            variant="filled"
+                            fullWidth
+                            onChange={(e) => setForm({ ...form, TERM_NAME: e.target.value })}
+                            value={form.TERM_NAME}
+                            name="TAX_NAME"
+                            disabled={mode === FORM_MODE.read}
+                            sx={textInputSx}
+                            inputProps={{
+                                style: {
+                                    padding: '6px 0px',
+                                    marginTop: '10px',
+                                    fontSize: '14px',
+                                },
+                            }}
+                        />
+                    </Grid>
+
+                    <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                        <AutoVibe
+                            id="TERMGRP_KEY"
+                            disabled={mode === FORM_MODE.read}
+                            getOptionLabel={(option) => option.TERMGRP_NAME || ''}
+                            options={termDrp}
+                            label="Term Group"
+                            name="TERMGRP_KEY"
+                            value={termDrp.find(option => option.TERMGRP_KEY === form.TERMGRP_NAME) || null}
+                            onChange={(e, newValue) => {
+                                setForm((prevForm) => ({
+                                    ...prevForm,
+                                    TERMGRP_KEY: newValue ? newValue.TERMGRP_KEY : '',
+                                }));
+                            }}
+                            sx={{
+                                ...DropInputSx,
+                                '& .MuiFilledInput-root': {
+                                    ...DropInputSx['& .MuiFilledInput-root'],
+                                    paddingTop: '16px !important',
+                                },
+                            }}
+                            inputProps={{
+                                style: {
+                                    padding: '6px 0px',
+                                    fontSize: '12px',
+                                },
+                            }}
+                        />
+                    </Grid>
+
+                    <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                        <AutoVibe
+                            id="TAXGRP_KEY"
+                            disabled={mode === FORM_MODE.read}
+                            getOptionLabel={(option) => option.TAXGRP_NAME || ''}
+                            options={termDrp}
+                            label="Term Type"
+                            name="TAXGRP_KEY"
+                            value={termDrp.find(option => option.TAXGRP_KEY === form.TAXGRP_NAME) || null}
+                            onChange={(e, newValue) => {
+                                setForm((prevForm) => ({
+                                    ...prevForm,
+                                    TAXGRP_NAME: newValue ? newValue.TAXGRP_KEY : '',
+                                }));
+                            }}
+                            sx={{
+                                ...DropInputSx,
+                                '& .MuiFilledInput-root': {
+                                    ...DropInputSx['& .MuiFilledInput-root'],
+                                    paddingTop: '16px !important',
+                                },
+                            }}
+                            inputProps={{
+                                style: {
+                                    padding: '6px 0px',
+                                    fontSize: '12px',
+                                },
+                            }}
+                        />
+                    </Grid>
+
+                    <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                        <AutoVibe
+                            id="TAXGRP_KEY"
+                            disabled={true}
+                            getOptionLabel={(option) => option.TAXGRP_NAME || ''}
+                            options={termDrp}
+                            label="Ledger"
+                            name="TAXGRP_KEY"
+                            value={termDrp.find(option => option.TAXGRP_KEY === form.TAXGRP_NAME) || null}
+                            onChange={(e, newValue) => {
+                                setForm((prevForm) => ({
+                                    ...prevForm,
+                                    TAXGRP_NAME: newValue ? newValue.TAXGRP_KEY : '',
+                                }));
+                            }}
+                            sx={{
+                                ...DropInputSx,
+                                '& .MuiFilledInput-root': {
+                                    ...DropInputSx['& .MuiFilledInput-root'],
+                                    paddingTop: '16px !important',
+                                },
+                            }}
+                            inputProps={{
+                                style: {
+                                    padding: '6px 0px',
+                                    fontSize: '12px',
+                                },
+                            }}
+                        />
+                    </Grid>
+
+                    <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                        <FormControlLabel
+                            control={
+                                <Checkbox size='small'
                                     disabled={mode === FORM_MODE.read}
-                                    className="custom-textfield"
-                                    value={form.TERM_ABRV}
-                                    onChange={(e) => setForm({ ...form, TERM_ABRV: e.target.value })}
+                                    checked={form.ROFF === "1"}
+                                    onChange={(e) => {
+                                        setForm((prevForm) => ({
+                                            ...prevForm,
+                                            ROFF: e.target.checked ? "1" : "0",
+                                        }));
+                                    }}
+                                    sx={{
+                                        '&.Mui-checked': {
+                                            color: '#635bff',
+                                        }
+                                    }}
                                 />
-                            </Box>
-                        </Box>
+                            }
+                            label="Calculation Flag"
+                        />
+                    </Grid>
 
+                    <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                         <Box
                             sx={{
                                 display: 'flex',
@@ -732,34 +911,6 @@ const TermsMst = () => {
                                 },
                             }}
                         >
-
-                            <FormControlLabel
-                                control={
-                                    <Checkbox
-                                        disabled={mode === FORM_MODE.read}
-                                        checked={form.TERM_VAL_YN === "1"}
-                                        onChange={handleCalculationFlagChange}
-                                        size="small"
-                                        sx={{
-                                            '&.Mui-checked': {
-                                                color: mode === FORM_MODE.read ? 'rgba(0, 0, 0, 0.38)' : '#39ace2',
-                                            },
-                                            p: '4px',
-                                            '& .MuiSvgIcon-root': {
-                                                fontSize: '20px',
-                                            },
-                                        }}
-                                    />
-                                }
-                                label="Calculation Flag"
-                                sx={{
-                                    '& .MuiFormControlLabel-label': {
-                                        fontSize: '15px',
-                                    },
-                                    m: 0,
-                                }}
-                            />
-
                             <Box sx={{ display: 'flex', gap: { xs: 2, sm: 1, md: 1 } }}>
                                 <FormLabel sx={{ mt: '4px', fontSize: '15px' }} component="legend" disabled={mode === FORM_MODE.read}>
                                     GST Applicable
@@ -811,9 +962,30 @@ const TermsMst = () => {
                                 </RadioGroup>
                             </Box>
                         </Box>
+                    </Grid>
 
-                        {/* B;OCKS */}
+                    <Grid size={{ xs: 12, sm: 6, md: 5 }}>
+                        <TextField
+                            label="Abbreviation"
+                            inputRef={TERM_ABRVRef}
+                            variant="filled"
+                            fullWidth
+                            onChange={(e) => setForm({ ...form, TERM_ABRV: e.target.value })}
+                            value={form.TERM_ABRV || ''}
+                            name="TAX_ABRV"
+                            disabled={mode === FORM_MODE.read}
+                            sx={textInputSx}
+                            inputProps={{
+                                style: {
+                                    padding: '6px 0px',
+                                    marginTop: '10px',
+                                    fontSize: '14px',
+                                },
+                            }}
+                        />
+                    </Grid>
 
+                    <Grid size={{ xs: 12, sm: 12, md: 12 }}>
                         <Box
                             sx={{
                                 display: 'flex',
@@ -821,7 +993,6 @@ const TermsMst = () => {
                                 gap: 0,
                             }}
                         >
-                            {/* Block 1: Percentage or Fix Amount */}
                             <Box
                                 sx={{
                                     display: 'flex',
@@ -832,14 +1003,18 @@ const TermsMst = () => {
                             >
                                 <TextField
                                     label="Percentage"
-
-                                    sx={{
-                                        width: { xs: '32%', sm: '40%', md: '30%' }
-                                    }}
+                                    variant='filled'
                                     disabled={mode === FORM_MODE.read || form.TERM_VAL_FIX === "1"}
-                                    className="custom-textfield"
                                     value={form.TERM_PERCENT}
                                     onChange={(e) => setForm({ ...form, TERM_PERCENT: e.target.value })}
+                                    sx={textInputSx}
+                                    inputProps={{
+                                        style: {
+                                            padding: '6px 0px',
+                                            marginTop: '10px',
+                                            fontSize: '14px',
+                                        },
+                                    }}
                                 />
 
                                 <Box
@@ -909,25 +1084,34 @@ const TermsMst = () => {
                                 >
                                     <TextField
                                         label="Amount"
-
-                                        sx={{
-                                            width: { xs: '35%', sm: '40%', md: '55%' }
-                                        }}
+                                        variant='filled'
+                                        fullWidth
                                         disabled={mode === FORM_MODE.read || form.TERM_VAL_FIX === "1"}
-                                        className="custom-textfield"
                                         value={form.TERM_RATE}
                                         onChange={(e) => setForm({ ...form, TERM_RATE: e.target.value })}
+                                        sx={textInputSx}
+                                        inputProps={{
+                                            style: {
+                                                padding: '6px 0px',
+                                                marginTop: '10px',
+                                                fontSize: '14px',
+                                            },
+                                        }}
                                     />
                                     <TextField
                                         label="Per Qty"
-
-                                        sx={{
-                                            width: { xs: '50%', sm: '40%', md: '40%' }
-                                        }}
+                                        variant='filled'
                                         disabled={mode === FORM_MODE.read || form.TERM_VAL_FIX === "1"}
-                                        className="custom-textfield"
                                         value={form.TERM_PERQTY}
                                         onChange={(e) => setForm({ ...form, TERM_PERQTY: e.target.value })}
+                                        sx={textInputSx}
+                                        inputProps={{
+                                            style: {
+                                                padding: '6px 0px',
+                                                marginTop: '10px',
+                                                fontSize: '14px',
+                                            },
+                                        }}
                                     />
                                 </Box>
                                 <Box
@@ -941,9 +1125,9 @@ const TermsMst = () => {
                                 >
                                     <FormLabel
                                         sx={{
-                                            mt: '9px',
+                                            mt: '0px',
                                             whiteSpace: 'nowrap',
-                                            fontSize: '14px',
+                                            fontSize: '16px',
                                         }}
                                         component="legend"
                                     >
@@ -1004,165 +1188,151 @@ const TermsMst = () => {
 
                             </Box>
                         </Box>
-
-                        {/* BlOCKS */}
-                        <Box
-                            sx={{
-                                display: 'flex',
-                                flexDirection: { xs: 'column', sm: 'row', md: 'row' },
-                                justifyContent: 'space-between',
-                                gap: { xs: 1, sm: 1.5, md: 1 },
-                            }}
-                        >
-                            <TextField
-                                label="Remark"
-                                sx={{
-                                    width: { xs: '100%', sm: '40%', md: '90%' }
-
-                                }}
-                                disabled={mode === FORM_MODE.read}
-                                className="custom-textfield"
-                                value={form.REMK}
-                                onChange={(e) => setForm({ ...form, REMK: e.target.value })}
-                            />
-                        </Box>
-
-                        <Box
-                            sx={{
-                                display: 'flex',
-                                flexDirection: { xs: 'row', sm: 'row', md: 'row' },
-                                gap: { xs: 1, sm: 1.5, md: 1 },
-                            }}
-                        >
-                            <FormControlLabel
-                                control={
-                                    <Checkbox
-                                        disabled={mode === FORM_MODE.read}
-                                        checked={Status === '1'}
-                                        onChange={handleChangeStatus}
-                                        size="small"
-                                        sx={{
-                                            '&.Mui-checked': {
-                                                color: mode === FORM_MODE.read ? 'rgba(0, 0, 0, 0.38)' : '#39ace2',
-                                            },
-                                            p: '4px',
-                                            '& .MuiSvgIcon-root': {
-                                                fontSize: '20px',
-                                            },
-                                        }}
-                                    />
-                                }
-                                label="Active"
-                                sx={{
-                                    '& .MuiFormControlLabel-label': {
-                                        fontSize: '16px',
-                                    },
-                                    m: 0,
-                                }}
-                            />
-
-                            <FormControlLabel
-                                control={
-                                    <Checkbox
-                                        disabled={mode === FORM_MODE.read}
-                                        checked={form.ROFF === "1"}
-                                        onChange={(e) => {
-                                            setForm((prevForm) => ({
-                                                ...prevForm,
-                                                ROFF: e.target.checked ? "1" : "0",
-                                            }));
-                                        }}
-                                        size="small"
-                                        sx={{
-                                            '&.Mui-checked': {
-                                                color: mode === FORM_MODE.read ? 'rgba(0, 0, 0, 0.38)' : '#39ace2',
-                                            },
-                                            p: '4px',
-                                            '& .MuiSvgIcon-root': {
-                                                fontSize: '20px',
-                                            },
-                                        }}
-                                    />
-                                }
-                                label="Round Off"
-                                sx={{
-                                    '& .MuiFormControlLabel-label': {
-                                        fontSize: '16px',
-                                    },
-                                    m: 0,
-                                }}
-                            />
-                        </Box>
-                    </Box>
-                    <Grid container alignItems="center"
-                        justifyContent="center" spacing={1} sx={{ marginTop: { xs: '40px', sm: '20px', md: '10px' }, marginInline: '20px', overflowY: { xs: 'auto', sm: 'visible' }, }}>
-                        <Grid sx={{
-                            display: 'flex', justifyContent: {
-                                xs: 'center',
-                                sm: 'flex-start'
-                            },
-                            width: { xs: '100%', sm: 'auto' },
-                        }}>
-                            <Stack direction="row" spacing={1}>
-                                <PaginationButtons
-                                    mode={mode}
-                                    FORM_MODE={FORM_MODE}
-                                    currentKey={currentTERM_KEY}
-                                    onFirst={handleFirst}
-                                    onPrevious={handlePrevious}
-                                    onNext={handleNext}
-                                    onLast={handleLast}
-                                    sx={{ mt: 2 }}
-                                    buttonSx={Buttonsx}
-                                />
-                            </Stack>
-                        </Grid>
-                        <Grid>
-                            <Stack direction="row" spacing={{ xs: 0.5, sm: 1 }}  >
-                                <CrudButtons
-                                    mode={mode}
-                                    onAdd={mode === FORM_MODE.read ? handleAdd : handleSubmit}
-                                    onEdit={mode === FORM_MODE.read ? handleEdit : handleCancel}
-                                    onView={handlePrint}
-                                    onDelete={handleDelete}
-                                    onExit={handleExit}
-                                    readOnlyMode={mode === FORM_MODE.read}
-                                />
-                            </Stack>
-                        </Grid>
                     </Grid>
-                </Box>
-            </Box>
+
+                    <Grid size={{ xs: 12, sm: 6, md: 12 }}>
+                        <TextField
+                            label="Remark"
+                            inputRef={TERM_ABRVRef}
+                            variant="filled"
+                            fullWidth
+                            onChange={(e) => setForm({ ...form, REMK: e.target.value })}
+                            value={form.REMK}
+                            name="REMK"
+                            disabled={mode === FORM_MODE.read}
+                            sx={textInputSx}
+                            inputProps={{
+                                style: {
+                                    padding: '6px 0px',
+                                    marginTop: '10px',
+                                    fontSize: '14px',
+                                },
+                            }}
+                        />
+                    </Grid>
+
+                    <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+                        <FormControlLabel
+                            control={
+                                <Checkbox size='small'
+                                    disabled={mode === FORM_MODE.read}
+                                    checked={form.ROFF === "1"}
+                                    onChange={(e) => {
+                                        setForm((prevForm) => ({
+                                            ...prevForm,
+                                            ROFF: e.target.checked ? "1" : "0",
+                                        }));
+                                    }}
+                                    sx={{
+                                        '&.Mui-checked': {
+                                            color: '#635bff',
+                                        }
+                                    }}
+                                />
+                            }
+                            label="Round Off"
+                        />
+                    </Grid>
+
+                    <Grid size={{ xs: 12, sm: 6, md: 2 }} display="flex" justifyContent="end">
+                        <FormControlLabel
+                            control={
+                                <Checkbox
+                                    disabled={mode === FORM_MODE.read}
+                                    checked={Status == "1"}
+                                    onChange={handleChangeStatus}
+                                    sx={{
+                                        '&.Mui-checked': {
+                                            color: '#635bff',
+                                        }
+                                    }}
+                                />
+                            }
+                            label="Active "
+                        />
+                    </Grid>
+                </Grid>
+
+                <Grid sx={{
+                    display: "flex",
+                    justifyContent: "end",
+                    ml: '56.8%',
+                    position: 'relative',
+                    top: 10
+                }}>
+                    {mode === FORM_MODE.read && (
+                        <>
+                            <Button variant="contained"
+                                sx={{
+                                    background: 'linear-gradient(290deg, #d4d4d4, #ffffff)',
+                                    margin: { xs: '0 4px', sm: '0 6px' },
+                                    minWidth: { xs: 40, sm: 46, md: 60 },
+                                    height: { xs: 40, sm: 46, md: 30 },
+                                }}
+                                onClick={handleAdd} disabled>
+                                Submit
+                            </Button>
+                            <Button variant="contained"
+                                sx={{
+                                    background: 'linear-gradient(290deg, #a7c5e9, #ffffff)',
+                                    margin: { xs: '0 4px', sm: '0 6px' },
+                                    minWidth: { xs: 40, sm: 46, md: 60 },
+                                    height: { xs: 40, sm: 46, md: 30 },
+                                }}
+                                onClick={handleEdit}
+                                disabled
+                            >
+                                Cancel
+                            </Button>
+                        </>
+                    )}
+                    {(mode === FORM_MODE.edit || mode === FORM_MODE.add) && (
+                        <>
+                            <Button variant="contained"
+                                sx={{
+                                    backgroundColor: '#635bff',
+                                    color: '#fff',
+                                    margin: { xs: '0 4px', sm: '0 6px' },
+                                    minWidth: { xs: 40, sm: 46, md: 60 },
+                                    height: { xs: 40, sm: 46, md: 30 },
+                                }}
+                                onClick={handleSubmit}>
+                                Submit
+                            </Button>
+                            <Button variant="contained"
+                                sx={{
+                                    backgroundColor: '#635bff',
+                                    color: '#fff',
+                                    margin: { xs: '0 4px', sm: '0 6px' },
+                                    minWidth: { xs: 40, sm: 46, md: 60 },
+                                    height: { xs: 40, sm: 46, md: 30 },
+                                }}
+                                onClick={handleCancel}>
+                                Cancel
+                            </Button>
+                        </>
+                    )}
+                </Grid>
+            </Grid >
 
             <Dialog
                 open={openConfirmDialog}
                 onClose={handleCloseConfirmDialog}
-                maxWidth="xs"
                 aria-labelledby="alert-dialog-title"
                 aria-describedby="alert-dialog-description"
             >
-                <DialogTitle
-                    id="alert-dialog-title"
-                    sx={{ fontSize: { xs: '1rem', sm: '1.25rem' } }}
-                >
-                    Confirm Deletion
-                </DialogTitle>
+                <DialogTitle id="alert-dialog-title">{"Confirm Deletion"}</DialogTitle>
                 <DialogContent>
-                    <DialogContentText
-                        id="alert-dialog-description"
-                        sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}
-                    >
-                        Are you sure you want to delete this record?
+                    <DialogContentText id="alert-dialog-description">
+                        Are you sure you want to delete this category?
                     </DialogContentText>
                 </DialogContent>
-                <DialogActions sx={{ justifyContent: 'center', gap: { xs: 0.5, sm: 1 } }}>
+                <DialogActions>
                     <Button
                         sx={{
-                            backgroundColor: "#39ace2",
-                            color: "white",
-                            "&:hover": { backgroundColor: "#2199d6", color: "white" },
-                            minWidth: { xs: 80, sm: 100 },
-                            fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                            backgroundColor: '#635bff',
+                            color: 'white',
+                            '&:hover': { backgroundColor: '#1565c0', color: 'white' },
                         }}
                         onClick={handleConfirmDelete}
                     >
@@ -1170,11 +1340,9 @@ const TermsMst = () => {
                     </Button>
                     <Button
                         sx={{
-                            backgroundColor: "#39ace2",
-                            color: "white",
-                            "&:hover": { backgroundColor: "#2199d6", color: "white" },
-                            minWidth: { xs: 80, sm: 100 },
-                            fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                            backgroundColor: '#635bff',
+                            color: 'white',
+                            '&:hover': { backgroundColor: '#1565c0', color: 'white' },
                         }}
                         onClick={handleCloseConfirmDialog}
                     >
@@ -1182,7 +1350,8 @@ const TermsMst = () => {
                     </Button>
                 </DialogActions>
             </Dialog>
-        </>
+        </Grid >
     );
 };
+
 export default TermsMst;

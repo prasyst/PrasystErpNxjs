@@ -108,11 +108,11 @@ export default function StyleMstTable() {
         setIsLoading(true);
         try {
             const response = await axiosInstance.post(`FGSTYLE/GetFgstyleDashBoard?currentPage=1&limit=10`, {
-                "FLAG": "DASH",
-                "FGSTYLE_ID": 0,
-                "PageNumber": 1,
-                "PageSize": 10,
-                "SearchText": ""
+                FLAG: "DASH",
+                FGSTYLE_ID: 0,
+                PageNumber: 1,
+                PageSize: 1,
+                SearchText: ""
             });
             const { data: { STATUS, DATA } } = response;
             if (STATUS === 0 && Array.isArray(DATA)) {
@@ -120,7 +120,7 @@ export default function StyleMstTable() {
                     ...row,
                 }));
                 setRows(formattedData);
-            }
+            };
         } catch (error) {
             console.error("Error fetching style data:", error);
         } finally {
@@ -200,4 +200,4 @@ export default function StyleMstTable() {
             </div>
         </div>
     );
-}
+};

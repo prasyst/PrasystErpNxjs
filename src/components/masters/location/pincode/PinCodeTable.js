@@ -16,11 +16,12 @@ const columnDefs = [
         sortable: false,
         filter: false,
         resizable: false,
+
         headerClass: 'checkbox-header'
     },
     {
-        field: "TERM_KEY",
-        headerName: "Code",
+        field: "PARTY_KEY",
+        headerName: "CODE",
         width: 130,
         maxWidth: 140,
         filter: 'agSetColumnFilter',
@@ -30,9 +31,10 @@ const columnDefs = [
         sortable: true
     },
     {
-        field: "TERM_ALT_CODE",
-        headerName: "ALTCODE",
-        width: 160,
+        field: "PARTY_NAME",
+        headerName: "PARTYNAME",
+        width: 130,
+        maxWidth: 140,
         filter: 'agSetColumnFilter',
         filterParams: {
             defaultToNothingSelected: true,
@@ -40,9 +42,10 @@ const columnDefs = [
         sortable: true
     },
     {
-        field: "TERM_NAME",
-        headerName: "Name",
-        width: 230,
+        field: "ADDR",
+        headerName: "Address",
+        width: 190,
+        maxWidth: 200,
         filter: 'agSetColumnFilter',
         filterParams: {
             defaultToNothingSelected: true,
@@ -50,9 +53,10 @@ const columnDefs = [
         sortable: true
     },
     {
-        field: "TERM_ABRV",
-        headerName: "Abrv",
-        width: 140,
+        field: "PLACE",
+        headerName: "Place",
+        width: 130,
+        maxWidth: 140,
         filter: 'agSetColumnFilter',
         filterParams: {
             defaultToNothingSelected: true,
@@ -60,9 +64,54 @@ const columnDefs = [
         sortable: true
     },
     {
-        field: "STATUS",
-        headerName: "Status",
-        width: 140,
+        field: "E_MAIL",
+        headerName: "EMAIL",
+        width: 130,
+        maxWidth: 140,
+        filter: 'agSetColumnFilter',
+        filterParams: {
+            defaultToNothingSelected: true,
+        },
+        sortable: true
+    },
+    {
+        field: "CONTACT_PERSON",
+        headerName: "CONTACTPERSON",
+        width: 130,
+        maxWidth: 140,
+        filter: 'agSetColumnFilter',
+        filterParams: {
+            defaultToNothingSelected: true,
+        },
+        sortable: true
+    },
+    {
+        field: "MOBILE_NO",
+        headerName: "MOBILENO",
+        width: 130,
+        maxWidth: 140,
+        filter: 'agSetColumnFilter',
+        filterParams: {
+            defaultToNothingSelected: true,
+        },
+        sortable: true
+    },
+    {
+        field: "PAN_NO",
+        headerName: "PANNO",
+        width: 130,
+        maxWidth: 140,
+        filter: 'agSetColumnFilter',
+        filterParams: {
+            defaultToNothingSelected: true,
+        },
+        sortable: true
+    },
+    {
+        field: "GSTTIN_NO",
+        headerName: "GSTTINNO",
+        width: 130,
+        maxWidth: 140,
         filter: 'agSetColumnFilter',
         filterParams: {
             defaultToNothingSelected: true,
@@ -71,7 +120,8 @@ const columnDefs = [
     },
 ];
 
-export default function TermsTable() {
+export default function PinCodeTable() {
+
     const [isLoading, setIsLoading] = useState(true);
     const [rows, setRows] = useState([]);
     const router = useRouter();
@@ -84,31 +134,31 @@ export default function TermsTable() {
     const fetchTableData = async () => {
         setIsLoading(true);
         try {
-            const response = await axiosInstance.post(`Terms/GetTermsDashBoard?currentPage=1&limit=5000`, {
-                "SearchText": ''
+            const response = await axiosInstance.post(`Party/GetPartyDashBoard?currentPage=1&limit=25`, {
+                "SearchText": "",
+                "PARTY_CAT": "PC",
+                "FLAG": ""
             });
             const { data: { STATUS, DATA } } = response;
             if (STATUS === 0 && Array.isArray(DATA)) {
-                const formattedData = DATA.map((row, index) => ({
-                    id: index,
+                const formattedData = DATA.map((row) => ({
                     ...row,
-                    STATUS: row.STATUS === "1" ? "Active" : "Inactive"
                 }));
                 setRows(formattedData);
             }
         } catch (error) {
-            console.error("Error fetching term master data:", error);
+            console.error("Error fetching productgrp data:", error);
         } finally {
             setIsLoading(false);
         }
     };
 
-    const handleRowClick = (row) => {
+    const handleRowDoubleClick = (row) => {
         const params = new URLSearchParams({
-            TERM_KEY: row.TERM_KEY,
+            PARTY_KEY: row.PARTY_KEY,
             mode: "view"
         }).toString();
-        router.push(`/masters/taxterms/termmaster?${params}`);
+        router.push(`/masters/customers?${params}`);
     };
 
     const handleSelectionChanged = useCallback((event) => {
@@ -138,10 +188,10 @@ export default function TermsTable() {
                             theme="ag-theme-quartz"
                             isDarkMode={false}
                             pagination={true}
-                            paginationPageSize={1000}
-                            paginationPageSizeSelector={[500, 1000, 2000, 5000]}
+                            paginationPageSize={500}
+                            paginationPageSizeSelector={[500, 1000, 3000, 5000]}
                             quickFilter={true}
-                            onRowDoubleClick={handleRowClick}
+                            onRowDoubleClick={handleRowDoubleClick}
                             onSelectionChanged={handleSelectionChanged}
                             loading={isLoading}
                             enableExport={true}
@@ -172,4 +222,4 @@ export default function TermsTable() {
             </div>
         </div>
     );
-}
+};
