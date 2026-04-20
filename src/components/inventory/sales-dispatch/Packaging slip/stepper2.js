@@ -769,7 +769,7 @@ useEffect(() => {
     }
   };
 
- const fetchSizeDetailsForStyle = async (styleData) => {
+const fetchSizeDetailsForStyle = async (styleData) => {
   try {
     const fgprdKey = styleData.FGPRD_KEY;
     const fgstyleId = styleData.FGSTYLE_ID;
@@ -811,7 +811,7 @@ useEffect(() => {
       stycatrtId = stycatrtResponse.data.DATA[0].STYCATRT_ID || 0;
     }
 
-    // SECOND: Get size details with enhanced payload
+    // SECOND: Get size details with FLAG: "S" for Style mode
     const sizeDetailsPayload = {
       "FGSTYLE_ID": fgstyleId,
       "FGPRD_KEY": fgprdKey,
@@ -831,7 +831,7 @@ useEffect(() => {
       "ORDBKSTY_ID": 0,
       "CLIENT_ID": clientId,
       "CO_ID": coId,
-      "FLAG": ""
+      "FLAG": "S"  // ← CHANGE: Use "S" for Style mode
     };
 
     const response = await axiosInstance.post('/STYSIZE/AddSizeDetail', sizeDetailsPayload);
@@ -846,13 +846,14 @@ useEffect(() => {
         ORDER_QTY: 0,
         MRP: parseFloat(styleData.MRP) || 0,
         RATE: parseFloat(styleData.SSP) || 0,
-        FG_QTY: parseFloat(size.FG_QTY) || 0,  // Add FG_QTY
-        PORD_QTY: parseFloat(size.PORD_QTY) || 0 // Add PORD_QTY
+        FG_QTY: parseFloat(size.FG_QTY) || 0,
+        PORD_QTY: parseFloat(size.PORD_QTY) || 0,
+        BAL_QTY: parseFloat(size.BAL_QTY) || 0,
+        ISU_QTY: parseFloat(size.ISU_QTY) || 0
       }));
 
       setSizeDetailsData(transformedSizeDetails);
 
-      // Update newItemData with STYCATRT_ID for use in payload
       setNewItemData(prev => ({
         ...prev,
         stycatrtId: stycatrtId
@@ -2259,7 +2260,7 @@ useEffect(() => {
 
               <Grid size={{ xs: 12, sm: 6, md: 6 }}>
                 <TextField
-                  label="Syle Code"
+                  label="Style Code"
                   variant="filled"
                   disabled={shouldDisableFields()}
                   name="styleCode"

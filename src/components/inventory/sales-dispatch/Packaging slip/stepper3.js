@@ -704,7 +704,6 @@ const handleAllocatedShadesClick = async () => {
   await fetchShadesForStyle(currentStyleId, 'allocated');
 };
 
-// Fetch style data by barcode - IMPROVED
 const fetchStyleDataByBarcode = async (barcode) => {
   if (!barcode) return;
 
@@ -716,7 +715,7 @@ const fetchStyleDataByBarcode = async (barcode) => {
       "FGSTYLE_ID": "",
       "FGPRD_KEY": "",
       "FGSTYLE_CODE": "",
-      "ALT_BARCODE": barcode,
+      "ALT_BARCODE": barcode,  // Search by ALT_BARCODE
       "FLAG": ""
     };
 
@@ -724,12 +723,9 @@ const fetchStyleDataByBarcode = async (barcode) => {
 
     if (response.data.DATA && response.data.DATA.length > 0) {
       const styleData = response.data.DATA[0];
-      const barcodeValue = styleData.ALT_BARCODE || styleData.STYSTKDTL_KEY || barcode;
       
-      // Fetch shades for this style
-      if (styleData.FGSTYLE_ID) {
-        await fetchShadesForStyle(styleData.FGSTYLE_ID, shadeViewMode);
-      }
+      // IMPORTANT: Store the ORIGINAL barcode that user typed
+      const originalBarcode = barcode;  // This is "013457"
       
       if (isAddingNew || isEditingSize) {
         setNewItemData(prev => ({
@@ -739,12 +735,12 @@ const fetchStyleDataByBarcode = async (barcode) => {
           type: styleData.FGTYPE_NAME || '',
           mrp: styleData.MRP ? styleData.MRP.toString() : '',
           rate: styleData.SSP ? styleData.SSP.toString() : '',
-          barcode: barcodeValue,
+          barcode: originalBarcode,  // Store the actual barcode
           shade: selectedShades.length > 0 ? selectedShades[0] : ''
         }));
         
-        // Set style code input to show the style
-        setStyleCodeInput(styleData.FGSTYLE_CODE || styleData.FGSTYLE_NAME || '');
+        // Also set barcodeInput to show the actual barcode
+        setBarcodeInput(originalBarcode);
         
         if (styleData.FGPRD_NAME && styleData.FGPRD_KEY) {
           setProductMapping(prev => ({
@@ -765,8 +761,8 @@ const fetchStyleDataByBarcode = async (barcode) => {
           await fetchLotNoData(styleData.FGSTYLE_ID);
         }
         
-        // Auto-load size details for barcode
-        await fetchSizeDetailsForStyle(styleData);
+        // Fetch size details - pass the actual barcode and style data
+        await fetchSizeDetailsForStyle(styleData, originalBarcode);
       }
     } else {
       showSnackbar("No style found for this barcode", 'warning');
@@ -779,13 +775,17 @@ const fetchStyleDataByBarcode = async (barcode) => {
   }
 };
 
- const fetchSizeDetailsForStyle = async (styleData) => {
+const fetchSizeDetailsForStyle = async (styleData, barcodeValue = null) => {
   try {
     const fgprdKey = styleData.FGPRD_KEY;
     const fgstyleId = styleData.FGSTYLE_ID;
     const fgtypeKey = styleData.FGTYPE_KEY || "";
     const fgshadeKey = styleData.FGSHADE_KEY || "";
     const fgptnKey = styleData.FGPTN_KEY || "";
+    
+    // Use the barcodeValue passed from fetchStyleDataByBarcode
+    // If not provided, use from newItemData or empty string
+    const actualBarcode = barcodeValue || newItemData.barcode || barcodeInput || "";
 
     if (!fgprdKey || !fgstyleId) {
       return;
@@ -821,7 +821,7 @@ const fetchStyleDataByBarcode = async (barcode) => {
       stycatrtId = stycatrtResponse.data.DATA[0].STYCATRT_ID || 0;
     }
 
-    // SECOND: Get size details with enhanced payload
+    // SECOND: Get size details with FLAG: "B" for Barcode mode
     const sizeDetailsPayload = {
       "FGSTYLE_ID": fgstyleId,
       "FGPRD_KEY": fgprdKey,
@@ -835,14 +835,16 @@ const fetchStyleDataByBarcode = async (barcode) => {
       "COBR_ID": cobrId,
       "FCYR_KEY": fcyrKey,
       "STYSTKDTL_ID": 0,
-      "BARCODE": "",
+      "BARCODE": actualBarcode,  // ← Pass the ACTUAL barcode value (e.g., "013457")
       "FGITM_KEY": "",
       "STYSTK_KEY": "",
       "ORDBKSTY_ID": 0,
       "CLIENT_ID": clientId,
       "CO_ID": coId,
-      "FLAG": ""
+      "FLAG": "B"  // Barcode mode
     };
+
+    console.log('Barcode API Payload:', sizeDetailsPayload);
 
     const response = await axiosInstance.post('/STYSIZE/AddSizeDetail', sizeDetailsPayload);
 
@@ -856,26 +858,33 @@ const fetchStyleDataByBarcode = async (barcode) => {
         ORDER_QTY: 0,
         MRP: parseFloat(styleData.MRP) || 0,
         RATE: parseFloat(styleData.SSP) || 0,
-        FG_QTY: parseFloat(size.FG_QTY) || 0,  // Add FG_QTY
-        PORD_QTY: parseFloat(size.PORD_QTY) || 0 // Add PORD_QTY
+        FG_QTY: parseFloat(size.FG_QTY) || 0,
+        PORD_QTY: parseFloat(size.PORD_QTY) || 0,
+        BAL_QTY: parseFloat(size.BAL_QTY) || 0,
+        ISU_QTY: parseFloat(size.ISU_QTY) || 0,
+        STYSTKDTL_ID: size.STYSTKDTL_ID || 0,  // Store this for reference
+        BARCODE: actualBarcode  // Store the barcode
       }));
 
       setSizeDetailsData(transformedSizeDetails);
 
-      // Update newItemData with STYCATRT_ID for use in payload
       setNewItemData(prev => ({
         ...prev,
-        stycatrtId: stycatrtId
+        stycatrtId: stycatrtId,
+        barcode: actualBarcode  // Keep the actual barcode
       }));
 
       setIsSizeDetailsLoaded(true);
+      showSnackbar(`Size details loaded for barcode: ${actualBarcode}`, 'success');
     } else {
       setSizeDetailsData([]);
       setIsSizeDetailsLoaded(false);
+      showSnackbar("No size details found for this barcode", 'warning');
     }
   } catch (error) {
     console.error('Error auto-fetching size details:', error);
     setIsSizeDetailsLoaded(false);
+    showSnackbar('Error loading size details', 'error');
   }
 };
 
@@ -1135,21 +1144,28 @@ const fetchSizeDetails = async () => {
     }
   };
 
-  // Handle barcode text input change with debounce
-  const handleBarcodeInputChange = (e) => {
-    const value = e.target.value;
-    setBarcodeInput(value);
-    
-    if (barcodeTimeoutRef.current) {
-      clearTimeout(barcodeTimeoutRef.current);
-    }
-    
-    if (value && value.trim() !== '') {
-      barcodeTimeoutRef.current = setTimeout(() => {
-        fetchStyleDataByBarcode(value.trim());
-      }, 500);
-    }
-  };
+ const handleBarcodeInputChange = (e) => {
+  const value = e.target.value;
+  setBarcodeInput(value);  
+  
+  
+  if (isAddingNew || isEditingSize) {
+    setNewItemData(prev => ({
+      ...prev,
+      barcode: value
+    }));
+  }
+  
+  if (barcodeTimeoutRef.current) {
+    clearTimeout(barcodeTimeoutRef.current);
+  }
+  
+  if (value && value.trim() !== '') {
+    barcodeTimeoutRef.current = setTimeout(() => {
+      fetchStyleDataByBarcode(value.trim());
+    }, 500);
+  }
+};
 
   // Handle product selection change
   const handleProductChange = async (event, value) => {
