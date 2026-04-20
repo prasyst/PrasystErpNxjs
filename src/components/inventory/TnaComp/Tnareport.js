@@ -11,6 +11,8 @@ import {
   Typography,
   Grid,
   Chip,
+  Tooltip,
+  Paper,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import axiosInstance from '../../../lib/axios';
@@ -33,7 +35,6 @@ const calculateDelay = (estDate, actDate) => {
   return diffDays;
 };
 
-
 const formatDate = (dateValue) => {
   if (!dateValue || dateValue === '1900-01-01T00:00:00' || 
       dateValue === '1899-12-31T00:00:00' || dateValue === '1899-12-30T00:00:00') {
@@ -42,84 +43,206 @@ const formatDate = (dateValue) => {
   return new Date(dateValue).toLocaleDateString('en-GB');
 };
 
-const createOperationColumns = (operationName, estField, actField) => {
-  let displayName = operationName;
 
-  const nameMapping = {
-    'Cutting & Sewing': 'Cutting',
-    'Washing': 'Washing',
-    'Reversing': 'Reversing',
-    'Pressing': 'Pressing',
-    'Pairing': 'Pairing',
-    'Packing': 'Packing',
-    'Rosso': 'Rosso',
-    'Thumb Stitching': 'Thumb'
+const OperationColorCell = ({ estDate, actDate, operationName }) => {
+  const delay = calculateDelay(estDate, actDate);
+  
+
+  const getBackgroundColor = () => {
+    if (delay === null) return '#f5f5f5'; 
+    if (delay > 0) return '#ce2406'; 
+    if (delay <= 0) return '#03680b'; 
+    return '#f5f5f5';
   };
 
-  const shortName = nameMapping[operationName] || operationName;
-  
-  return [
-    {
-      field: estField,
-      headerName: `${shortName} (EST)`,
-      width: 150,
-      minWidth: 150,  
-      maxWidth: 300,  
-      flex: 0, 
-      filter: 'agDateColumnFilter',
-      filterParams: {
-        browserDatePicker: true,
-        filterOptions: ['equals', 'notEqual', 'lessThan', 'greaterThan', 'inRange', 'empty', 'notEmpty'],
-        customOptionLabel: 'Custom Dates',
-        customFilter: getCustomDateFilter()
-      },
-      sortable: true,
-      valueFormatter: (params) => formatDate(params.value)
-    },
-    {
-      field: actField,
-      headerName: `${shortName} (ACT)`,
-      width: 150,
-      minWidth: 150,  
-      maxWidth: 300, 
-      flex: 0, 
-      filter: 'agDateColumnFilter',
-      filterParams: {
-        browserDatePicker: true,
-        filterOptions: ['equals', 'notEqual', 'lessThan', 'greaterThan', 'inRange', 'empty', 'notEmpty'],
-        customOptionLabel: 'Custom Dates',
-        customFilter: getCustomDateFilter()
-      },
-      sortable: true,
-      valueFormatter: (params) => formatDate(params.value)
-    },
-    {
-      field: `${operationName}_DELAY`,
-      headerName: `${shortName} (Delay)`,
-      width: 140,
-      minWidth: 140,  
-      maxWidth: 200, 
-      flex: 0, 
-      filter: 'agNumberColumnFilter',
-      sortable: true,
-      cellStyle: (params) => {
-        if (params.value > 0) {
-          return { backgroundColor: '#ffebee', color: '#c62828', fontWeight: 'bold' };
-        } else if (params.value < 0) {
-          return { backgroundColor: '#e8f5e9', color: '#2e7d32', fontWeight: 'bold' };
-        } else if (params.value === 0) {
-          return { backgroundColor: '#fff3e0', color: '#ed6c02', fontWeight: 'bold' };
+  const getDelayText = () => {
+    if (delay === null) return 'Not Started';
+    if (delay > 0) return `Delayed by ${delay} days`;
+    if (delay < 0) return `Early by ${Math.abs(delay)} days`;
+    return 'On Time';
+  };
+
+  const getDelayColor = () => {
+    if (delay > 0) return '#c62828';
+    if (delay < 0) return '#056c0a';
+    if (delay === 0) return '#82400a';
+    return '#666';
+  };
+
+  const getStatusIcon = () => {
+    if (delay > 0) return '🔴';
+    if (delay < 0) return '🟢';
+    if (delay === 0) return '🟡';
+    return '⚪';
+  };
+
+
+  const hoverCard = (
+    <Paper
+      elevation={4}
+      sx={{
+        p: 1,
+        minWidth: 200,
+        maxWidth: 250,
+        backgroundColor: '#ffffff',
+        borderRadius: 2,
+        border: '1px solid #e0e0e0',
+        boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+      }}
+    >
+      {/* Header */}
+      <Box sx={{ 
+        display: 'flex', 
+        alignItems: 'center', 
+        gap: 1, 
+        mb: 1,
+        pb: 0.5,
+        borderBottom: '2px solid',
+        borderColor: getDelayColor(),
+      }}>
+        <Typography variant="h6" sx={{ 
+          fontSize: '1rem', 
+          fontWeight: 'bold',
+          color: getDelayColor(),
+          display: 'flex',
+          alignItems: 'center',
+          gap: 0.5
+        }}>
+          {getStatusIcon()} {operationName}
+        </Typography>
+      </Box>
+
+      <Box sx={{ mb: 0.5, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Typography variant="caption" sx={{ color: '#666', fontWeight: 500 }}>
+          📅 EST Date
+        </Typography>
+        <Typography variant="body2" sx={{ fontWeight: 'medium', color: '#333' }}>
+          {formatDate(estDate)}
+        </Typography>
+      </Box>
+
+      <Box sx={{ mb: 0.5, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Typography variant="caption" sx={{ color: '#666', fontWeight: 500 }}>
+          ✅ ACT Date
+        </Typography>
+        <Typography variant="body2" sx={{ fontWeight: 'medium', color: '#333' }}>
+          {formatDate(actDate)}
+        </Typography>
+      </Box>
+      <Box sx={{ my: 0.5, borderTop: '1px dashed #e0e0e0' }} />
+
+      {/* Status */}
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Typography variant="caption" sx={{ color: '#666', fontWeight: 500 }}>
+          📊 Status
+        </Typography>
+        <Chip
+          label={getDelayText()}
+          size="small"
+          sx={{
+            backgroundColor: getDelayColor() === '#c62828' ? '#ffebee' : 
+                            getDelayColor() === '#2e7d32' ? '#e8f5e9' :
+                            getDelayColor() === '#ed6c02' ? '#fff3e0' : '#f5f5f5',
+            color: getDelayColor(),
+            fontWeight: 'bold',
+            fontSize: '0.7rem',
+            height: 20,
+          }}
+        />
+      </Box>
+    </Paper>
+  );
+
+  return (
+    <Tooltip
+      title={hoverCard}
+      arrow
+      placement="top"
+      componentsProps={{
+        tooltip: {
+          sx: {
+            bgcolor: 'transparent',
+            p: 0,
+            maxWidth: 300,
+          }
         }
-        return {};
-      },
-      valueFormatter: (params) => {
-        if (params.value === null || params.value === undefined) return '-';
-        if (params.value > 0) return `+${params.value} days`;
-        if (params.value < 0) return `${params.value} days`;
-        return 'On Time';
-      }
-    }
+      }}
+    >
+      <Box
+        sx={{
+          width: '100%',
+          height: '100%',
+          backgroundColor: getBackgroundColor(),
+          transition: 'all 0.2s ease',
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          '&:hover': {
+            opacity: 0.9,
+            transform: 'scale(1.02)',
+            boxShadow: 'inset 0 0 0 2px rgba(25,118,210,0.2)',
+          }
+        }}
+      >
+ 
+        <Box sx={{ width: '100%', height: '100%', minHeight: '24px' }} />
+      </Box>
+    </Tooltip>
+  );
+};
+
+
+const createOperationColumns = () => {
+  const operations = [
+    { name: 'Cutting', estField: 'S-Cutting & Sewing_EST', actField: 'S-Cutting & Sewing_ACT', shortName: 'Cutting' },
+    { name: 'Washing', estField: 'S-Washing_EST', actField: 'S-Washing_ACT', shortName: 'Washing' },
+    { name: 'Reversing', estField: 'S-Reversing_EST', actField: 'S-Reversing_ACT', shortName: 'Reversing' },
+    { name: 'Pressing', estField: 'S-Pressing_EST', actField: 'S-Pressing_ACT', shortName: 'Pressing' },
+    { name: 'Pairing', estField: 'S-Pairing_EST', actField: 'S-Pairing_ACT', shortName: 'Pairing' },
+    { name: 'Packing', estField: 'S-Packing_EST', actField: 'S-Packing_ACT', shortName: 'Packing' },
+    { name: 'Rosso', estField: 'S-Rosso_EST', actField: 'S-Rosso_ACT', shortName: 'Rosso' },
+    { name: 'Thumb Stitching', estField: 'S-Thumb Stitching_EST', actField: 'S-Thumb Stitching_ACT', shortName: 'Thumb' }
   ];
+
+  return operations.map(op => ({
+    field: `${op.name}_OPERATION_COLOR`,
+    headerName: op.shortName,
+    width: 100,
+    minWidth: 100,
+    maxWidth: 100,
+    flex: 0,
+    sortable: true,
+    cellRenderer: (params) => {
+      if (!params.data) return null;
+      return React.createElement(OperationColorCell, {
+        estDate: params.data[op.estField],
+        actDate: params.data[op.actField],
+        operationName: op.shortName
+      });
+    },
+    comparator: (valueA, valueB, nodeA, nodeB, isDescending) => {
+
+      const getDelayForNode = (node) => {
+        if (!node || !node.data) return null;
+        const opData = operations.find(op => `${op.name}_OPERATION_COLOR` === node.colDef.field);
+        if (!opData) return null;
+        return calculateDelay(node.data[opData.estField], node.data[opData.actField]);
+      };
+      
+      const delayA = getDelayForNode(nodeA);
+      const delayB = getDelayForNode(nodeB);
+      
+      if (delayA === null && delayB === null) return 0;
+      if (delayA === null) return 1;
+      if (delayB === null) return -1;
+      return delayA - delayB;
+    },
+    cellStyle: {
+      padding: 0,
+      textAlign: 'center'
+    }
+  }));
 };
 
 const columnDefs = [
@@ -134,7 +257,6 @@ const columnDefs = [
     sortable: true,
     pinned: 'left',
     cellStyle: {
-      color: '#2e7d32',
       fontWeight: 'bold',
       backgroundColor: '#e8f5e9'
     }
@@ -150,11 +272,9 @@ const columnDefs = [
     sortable: true,
     pinned: 'left',
     cellStyle: {
-      color: '#ef8e3f',
       fontWeight: 'bold',
       backgroundColor: '#e8f5e9'
     }
-    
   },
   {
     field: "ORDBK_KEY",
@@ -167,8 +287,7 @@ const columnDefs = [
     sortable: true,
     pinned: 'left',
     cellStyle: {
-      color: '#b47913',
-      fontWeight: 'bold',
+      fontWeight: 'bold', 
       backgroundColor: '#e8f5e9'
     }
   },
@@ -183,10 +302,10 @@ const columnDefs = [
     sortable: true,
     pinned: 'left',
     cellStyle: {
-      color: '#d7683d',
       fontWeight: 'bold',
       backgroundColor: '#e8f5e9'
     }
+    
   },
   {
     field: "FGSHADE_NAME",
@@ -228,15 +347,7 @@ const columnDefs = [
     },
     sortable: true
   },
-
-  ...createOperationColumns('Cutting', 'S-Cutting & Sewing_EST', 'S-Cutting & Sewing_ACT'),
-  ...createOperationColumns('Washing', 'S-Washing_EST', 'S-Washing_ACT'),
-  ...createOperationColumns('Reversing', 'S-Reversing_EST', 'S-Reversing_ACT'),
-  ...createOperationColumns('Pressing', 'S-Pressing_EST', 'S-Pressing_ACT'),
-  ...createOperationColumns('Pairing', 'S-Pairing_EST', 'S-Pairing_ACT'),
-  ...createOperationColumns('Packing', 'S-Packing_EST', 'S-Packing_ACT'),
-  ...createOperationColumns('Rosso', 'S-Rosso_EST', 'S-Rosso_ACT'),
-  ...createOperationColumns('Thumb', 'S-Thumb Stitching_EST', 'S-Thumb Stitching_ACT')
+  ...createOperationColumns()
 ];
 
 export default function TNAReport() {
@@ -318,7 +429,6 @@ export default function TNAReport() {
   };
 
   const debouncedFetch = useCallback(debounce(fetchPartiesByName, 300), []);
-
 
   const processRowsWithDelays = useCallback((data) => {
     const operations = [
@@ -434,8 +544,6 @@ export default function TNAReport() {
     window.print();
   };
 
-  
-
   return (
     <Grid className="p-2 w-full">
       <Grid className="w-full mx-auto" style={{ maxWidth: '100%' }}>
@@ -472,24 +580,6 @@ export default function TNAReport() {
                 sx={{ ml: 1, backgroundColor: '#fff3e0', color: '#ed6c02' }}
               />
             </Typography>
-            
-            {/* <Box sx={{ display: 'flex', gap: 1 }}>
-              <Tooltip title="Refresh">
-                <IconButton onClick={handleRefresh} sx={{ color: '#39ace2' }}>
-                  <RefreshIcon />
-                </IconButton>
-              </Tooltip>
-              <Tooltip title="Export">
-                <IconButton onClick={handleExport} sx={{ color: '#39ace2' }}>
-                  <DownloadIcon />
-                </IconButton>
-              </Tooltip>
-              <Tooltip title="Print">
-                <IconButton onClick={handlePrint} sx={{ color: '#39ace2' }}>
-                  <PrintIcon />
-                </IconButton>
-              </Tooltip>
-            </Box> */}
           </Box>
         </Box>
 
@@ -523,8 +613,8 @@ export default function TNAReport() {
               selectedRows={selectedRows}
               enableCheckbox={true}
               compactMode={true}
-              rowHeight={24}
-               headerHeight={34}
+              rowHeight={28}
+              headerHeight={34}
               defaultColDef={{
                 resizable: true,
                 sortable: true,
