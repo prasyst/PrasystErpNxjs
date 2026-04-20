@@ -305,6 +305,7 @@ const columnDefs = [
       fontWeight: 'bold',
       backgroundColor: '#e8f5e9'
     }
+    
   },
   {
     field: "FGSHADE_NAME",
