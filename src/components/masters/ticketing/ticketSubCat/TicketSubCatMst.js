@@ -16,6 +16,8 @@ import KeyboardArrowLeftIcon from "@mui/icons-material/KeyboardArrowLeft";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import AutoVibe from '@/GlobalFunction/CustomAutoComplete/AutoVibe';
 import { useUserPermissions } from '@/app/hooks/useUserPermissions';
+import { textInputSx } from '../../../../../public/styles/textInputSx';
+import { DropInputSx } from '../../../../../public/styles/dropInputSx';
 
 const TicketSubCatMst = () => {
 
@@ -132,11 +134,8 @@ const TicketSubCatMst = () => {
                         "FLAG": "TN"
                     }
                 );
-                console.log("API response:", response.data.DATA);
                 if (
-                    response.data.STATUS === 0 &&
-                    response.data.RESPONSESTATUSCODE === 1
-                ) {
+                    response.data.STATUS === 0 && response.data.RESPONSESTATUSCODE === 1) {
                     setSCats(response.data.DATA);
                 } else {
                     toast.error("Failed to fetch Employee Name");
@@ -162,7 +161,6 @@ const TicketSubCatMst = () => {
             ...prev
         }));
     };
-
 
     const handleDelete = async () => {
         try {
@@ -201,7 +199,6 @@ const TicketSubCatMst = () => {
             REMARK: ''
         });
         setCurrentTicSCatId(null);
-
     };
 
     const handleEdit = () => {
@@ -268,78 +265,6 @@ const TicketSubCatMst = () => {
         }
     };
 
-    const textInputSx = {
-        '& .MuiInputBase-root': {
-            height: 36,
-            fontSize: '14px',
-        },
-        '& .MuiInputLabel-root': {
-            fontSize: '14px',
-            top: '-8px',
-        },
-        '& .MuiFilledInput-root': {
-            backgroundColor: '#fafafa',
-            border: '1px solid #e0e0e0',
-            borderRadius: '6px',
-            overflow: 'hidden',
-            height: 36,
-            fontSize: '14px',
-        },
-        '& .MuiFilledInput-root:before': {
-            display: 'none',
-        },
-        '& .MuiFilledInput-root:after': {
-            display: 'none',
-        },
-        '& .MuiInputBase-input': {
-            padding: '10px 12px !important',
-            fontSize: '14px !important',
-            lineHeight: '1.4',
-        },
-        '& .MuiFilledInput-root.Mui-disabled': {
-            backgroundColor: '#fff'
-        }
-    };
-
-    const DropInputSx = {
-        '& .MuiInputBase-root': {
-            height: 36,
-            fontSize: '14px',
-        },
-        '& .MuiInputLabel-root': {
-            fontSize: '14px',
-            top: '-4px',
-        },
-        '& .MuiFilledInput-root': {
-            backgroundColor: '#fafafa',
-            border: '1px solid #e0e0e0',
-            borderRadius: '6px',
-            overflow: 'hidden',
-            height: 36,
-            fontSize: '14px',
-            paddingRight: '36px',
-        },
-        '& .MuiFilledInput-root:before': {
-            display: 'none',
-        },
-        '& .MuiFilledInput-root:after': {
-            display: 'none',
-        },
-        '& .MuiInputBase-input': {
-            padding: '10px 12px',
-            fontSize: '14px',
-            lineHeight: '1.4',
-        },
-        '& .MuiAutocomplete-endAdornment': {
-            top: '50%',
-            transform: 'translateY(-50%)',
-            right: '10px',
-        },
-        '& .MuiFilledInput-root.Mui-disabled': {
-            backgroundColor: '#fff'
-        }
-    };
-
     return (
         <Grid
             sx={{
@@ -349,7 +274,7 @@ const TicketSubCatMst = () => {
                 justifyContent: 'center',
                 alignItems: 'center',
                 boxSizing: 'border-box',
-                minHeight: '91vh',
+                minHeight: '90vh',
                 overflowX: 'hidden',
                 overflowY: 'auto'
             }}
@@ -419,7 +344,7 @@ const TicketSubCatMst = () => {
                     </Grid>
                 </Grid>
 
-                <Grid container spacing={0.5}>
+                <Grid container spacing={1}>
                     <Grid size={{ xs: 12, sm: 6, md: 6 }}>
                         <AutoVibe
                             id="TKTCATID"
@@ -435,16 +360,21 @@ const TicketSubCatMst = () => {
                                     TKTCATID: newValue ? newValue.TKTCATID.toString() : '',
                                 }));
                             }}
-                            sx={DropInputSx}
+                            sx={{
+                                ...DropInputSx,
+                                '& .MuiFilledInput-root': {
+                                    ...DropInputSx['& .MuiFilledInput-root'],
+                                    paddingTop: '16px !important',
+                                },
+                            }}
                             inputProps={{
                                 style: {
-                                    padding: '6px 8px',
+                                    padding: '6px 0px',
                                     fontSize: '12px',
                                 },
                             }}
                         />
                     </Grid>
-                    {/* <Grid size={{ xs: 12, sm: 6, md: 4 }}></Grid> */}
 
                     <Grid size={{ xs: 12, sm: 6, md: 6 }}>
                         <AutoVibe
@@ -461,10 +391,16 @@ const TicketSubCatMst = () => {
                                     EMP_KEY: newValue ? newValue.EMP_KEY.toString() : '',
                                 }));
                             }}
-                            sx={DropInputSx}
+                            sx={{
+                                ...DropInputSx,
+                                '& .MuiFilledInput-root': {
+                                    ...DropInputSx['& .MuiFilledInput-root'],
+                                    paddingTop: '16px !important',
+                                },
+                            }}
                             inputProps={{
                                 style: {
-                                    padding: '6px 8px',
+                                    padding: '6px 0px',
                                     fontSize: '12px',
                                 },
                             }}
@@ -483,7 +419,8 @@ const TicketSubCatMst = () => {
                             sx={textInputSx}
                             inputProps={{
                                 style: {
-                                    padding: '6px 8px',
+                                    padding: '6px 0px',
+                                    marginTop: '10px',
                                     fontSize: '12px',
                                 },
                             }}
@@ -502,14 +439,15 @@ const TicketSubCatMst = () => {
                             sx={textInputSx}
                             inputProps={{
                                 style: {
-                                    padding: '6px 8px',
+                                    padding: '6px 0px',
+                                    marginTop: '10px',
                                     fontSize: '12px',
                                 },
                             }}
                         />
                     </Grid>
 
-                    <Grid size={{ xs: 12, sm: 6, md: 6 }}>
+                    <Grid size={{ xs: 12, sm: 12, md: 12 }}>
                         <TextField
                             label="Remark"
                             variant="filled"
@@ -521,7 +459,8 @@ const TicketSubCatMst = () => {
                             sx={textInputSx}
                             inputProps={{
                                 style: {
-                                    padding: '6px 8px',
+                                    padding: '6px 0px',
+                                    marginTop: '10px',
                                     fontSize: '12px',
                                 },
                             }}
@@ -565,7 +504,6 @@ const TicketSubCatMst = () => {
                     )}
                     {(mode === 'edit' || mode === 'add') && (
                         <>
-
                             <Button variant="contained"
                                 sx={{
                                     backgroundColor: '#635bff',
@@ -588,7 +526,6 @@ const TicketSubCatMst = () => {
                                 onClick={handleCancel}>
                                 Cancel
                             </Button>
-
                         </>
                     )}
                 </Grid>

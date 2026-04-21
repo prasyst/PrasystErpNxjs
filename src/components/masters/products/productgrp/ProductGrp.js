@@ -461,7 +461,7 @@ const ProductGrp = () => {
         }
     };
 
-    const handleExit = () => { router.push("/masterpage/?activeTab=13") };
+    const handleExit = () => { router.push("/masterpage/?activeTab=15") };
 
     return (
         <>

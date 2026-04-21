@@ -416,7 +416,7 @@ const PatternMst = () => {
     };
 
     const handleExit = () => {
-        router.push("/masterpage/?activeTab=13");
+        router.push("/masterpage/?activeTab=15");
     };
 
     const handleInputChange = (e) => {
