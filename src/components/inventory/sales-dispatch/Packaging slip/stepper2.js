@@ -831,7 +831,7 @@ const fetchSizeDetailsForStyle = async (styleData) => {
       "ORDBKSTY_ID": 0,
       "CLIENT_ID": clientId,
       "CO_ID": coId,
-      "FLAG": "S"  // ← CHANGE: Use "S" for Style mode
+      "FLAG": "GETPACKTY2"  
     };
 
     const response = await axiosInstance.post('/STYSIZE/AddSizeDetail', sizeDetailsPayload);

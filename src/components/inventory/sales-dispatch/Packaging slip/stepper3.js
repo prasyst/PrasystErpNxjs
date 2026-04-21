@@ -835,13 +835,13 @@ const fetchSizeDetailsForStyle = async (styleData, barcodeValue = null) => {
       "COBR_ID": cobrId,
       "FCYR_KEY": fcyrKey,
       "STYSTKDTL_ID": 0,
-      "BARCODE": actualBarcode,  // ← Pass the ACTUAL barcode value (e.g., "013457")
+      "BARCODE": actualBarcode,  
       "FGITM_KEY": "",
       "STYSTK_KEY": "",
       "ORDBKSTY_ID": 0,
       "CLIENT_ID": clientId,
       "CO_ID": coId,
-      "FLAG": "B"  // Barcode mode
+      "FLAG": "GETPACKbARC2"  
     };
 
     console.log('Barcode API Payload:', sizeDetailsPayload);

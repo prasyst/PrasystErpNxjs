@@ -485,7 +485,6 @@
 
 
 
-
 'use client';
 import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
@@ -522,8 +521,6 @@ import {
   Summarize as SummarizeIcon,
   AttachMoney as MoneyIcon,
 } from '@mui/icons-material';
-import { MdOutlineProductionQuantityLimits, MdInventory, MdShoppingCart, MdLocalShipping } from 'react-icons/md';
-import { FaBoxes, FaTruck, FaHandshake, FaClipboardList } from 'react-icons/fa';
 import { useRecentPaths } from '../../../app/context/RecentPathsContext';
 
 function TabPanel(props) {
@@ -555,7 +552,6 @@ export default function InventoryPage() {
   const router = useRouter();
   const { addRecentPath } = useRecentPaths();
 
-  
   useEffect(() => {
     setIsClient(true);
     const userIdFromStorage = localStorage.getItem('USER_ID');
@@ -565,7 +561,6 @@ export default function InventoryPage() {
     }
   }, []);
 
- 
   useEffect(() => {
     const fetchMenuItems = async () => {
       const effectiveUserId = userId || "1";
@@ -589,12 +584,13 @@ export default function InventoryPage() {
         if (response.data && response.data.DATA) {
           const allData = response.data.DATA;
           
-         
+          // DYNAMIC: Find Inventory module by name (similar to MasterPage)
           const inventoryModule = allData.find(item => 
-            (item.MOD_NAME === "Inventory" || item.MOD_DESC === "Inventory") &&
-            item.PARENT_ID === "0"
+            item.MOD_NAME === "Inventory" ||
+            item.MOD_DESC === "Inventory" ||
+            (item.PARENT_ID === "0" && (item.MOD_NAME?.toLowerCase().includes('inventory') || item.MOD_DESC?.toLowerCase().includes('inventory')))
           );
-          
+
           if (!inventoryModule) {
             console.warn('Inventory module not found in API response');
             setMenuData([]);
@@ -605,18 +601,30 @@ export default function InventoryPage() {
           const inventoryId = inventoryModule.MOD_ID.toString();
           console.log('Inventory Module ID (dynamically found):', inventoryId);
           
-          
-          const tabItems = allData.filter(item => 
-            item.PARENT_ID === inventoryId && 
-            (item.MOD_NAME || item.MOD_DESC) &&
-            item.MOD_NAME !== null &&
+          // Get all top-level tabs under Inventory (similar to MasterPage)
+          const topLevelTabs = allData.filter(item =>
+            item.PARENT_ID === inventoryId &&
+            item.MOD_NAME &&
             item.MOD_NAME.trim() !== ''
           );
           
-          console.log('Tab Items (direct children of Inventory):', tabItems);
+          console.log('Top level tabs under Inventory:', topLevelTabs);
           
+          const topLevelTabIds = new Set(topLevelTabs.map(tab => tab.MOD_ID.toString()));
           
-          const menuTree = buildInventoryMenu(allData, tabItems, inventoryId);
+          // Get all items under Inventory (including nested)
+          const inventoryItems = allData.filter(item => {
+            if (item.PARENT_ID === inventoryId) return true;
+            if (topLevelTabIds.has(item.PARENT_ID)) return true;
+            const parentItem = allData.find(p => p.MOD_ID.toString() === item.PARENT_ID);
+            if (parentItem && parentItem.PARENT_ID === inventoryId) return true;
+            return false;
+          });
+          
+          console.log('All inventory items:', inventoryItems);
+          
+          // Build menu tree
+          const menuTree = buildMenuTree(inventoryItems, allData, inventoryId);
           setMenuData(menuTree);
           console.log('Final Inventory Menu Tree:', menuTree);
         } else {
@@ -630,45 +638,48 @@ export default function InventoryPage() {
       }
     };
 
-    fetchMenuItems();
+    if (userId) {
+      fetchMenuItems();
+    } else {
+      // If userId is not available yet, try after a short delay
+      const timer = setTimeout(() => {
+        fetchMenuItems();
+      }, 500);
+      return () => clearTimeout(timer);
+    }
   }, [userId]);
 
- 
-  const buildInventoryMenu = (allData, tabItems, inventoryId) => {
+  const buildMenuTree = (data, allData, inventoryId) => {
     const itemMap = {};
-    const rootTabs = [];
+    const rootItems = [];
+    const parentChildMap = {};
 
-  
-    const parentIdsUnderInventory = new Set();
-    allData.forEach(item => {
-      if (item.PARENT_ID === inventoryId && item.MOD_ID) {
-        parentIdsUnderInventory.add(item.MOD_ID.toString());
-      }
-    });
+    // First pass: Create all items
+    data.forEach(item => {
+      if (!item.MOD_ID) return;
 
-   
-    allData.forEach(item => {
-      if (!item.MOD_ID || !(item.MOD_NAME || item.MOD_DESC)) return;
-
-      const hasPermission = 
-        item.ADD_PRIV === "1" || 
-        item.EDIT_PRIV === "1" || 
-        item.DELETE_PRIV === "1" || 
+      const hasPermission =
+        item.ADD_PRIV === "1" ||
+        item.EDIT_PRIV === "1" ||
+        item.DELETE_PRIV === "1" ||
         item.SELECT_PRIV === "1";
 
-     
-      const isParentOfPermittedItem = parentIdsUnderInventory.has(item.MOD_ID.toString()) && 
-        tabItems.some(tab => tab.MOD_ID.toString() === item.MOD_ID.toString());
+      const isTopLevelTab = item.PARENT_ID === inventoryId;
 
-      
-      if (hasPermission || isParentOfPermittedItem) {
+      if (hasPermission || isTopLevelTab) {
         const moduleName = item.MOD_DESC || item.MOD_NAME;
         const parentId = item.PARENT_ID === "0" || !item.PARENT_ID ? null : item.PARENT_ID;
-        
+
+        // Ensure path starts with a forward slash if it doesn't already
+        let path = item.MOD_ROUTIG || '#';
+        if (path !== '#' && !path.startsWith('/')) {
+          path = '/' + path;
+        }
+
         itemMap[item.MOD_ID] = {
           id: item.MOD_ID,
           name: moduleName,
-          path: item.MOD_ROUTIG || '#',
+          path: path,
           parentId: parentId,
           children: [],
           permissions: {
@@ -678,70 +689,96 @@ export default function InventoryPage() {
             view: item.SELECT_PRIV === "1"
           }
         };
-      }
-    });
 
-   
-    Object.values(itemMap).forEach(item => {
-      if (item.parentId && item.parentId !== inventoryId && itemMap[item.parentId]) {
-        
-        itemMap[item.parentId].children.push(item);
-      }
-    });
-
-  
-    tabItems.forEach(tabItem => {
-      const tabId = tabItem.MOD_ID.toString();
-      
-      if (itemMap[tabId]) {
-        
-        if (itemMap[tabId].children.length > 0) {
-          rootTabs.push(itemMap[tabId]);
+        if (parentId && parentId !== inventoryId) {
+          if (!parentChildMap[parentId]) {
+            parentChildMap[parentId] = [];
+          }
+          parentChildMap[parentId].push(item.MOD_ID);
         }
-      } else {
-       
-        const childrenWithPermissions = Object.values(itemMap).filter(
-          item => item.parentId === tabId
-        );
-        
-        if (childrenWithPermissions.length > 0) {
-        
-          rootTabs.push({
-            id: tabItem.MOD_ID,
-            name: tabItem.MOD_DESC || tabItem.MOD_NAME || `Module ${tabItem.MOD_ID}`,
-            path: tabItem.MOD_ROUTIG || '#',
-            parentId: tabItem.PARENT_ID,
-            children: childrenWithPermissions,
+      }
+    });
+
+    // Find top-level tab IDs that need to be created as parent items
+    const topLevelTabIds = new Set();
+
+    Object.values(itemMap).forEach(item => {
+      if (item.parentId && item.parentId !== inventoryId && !itemMap[item.parentId]) {
+        const parentItem = allData.find(d => d.MOD_ID.toString() === item.parentId);
+        if (parentItem && parentItem.PARENT_ID === inventoryId) {
+          topLevelTabIds.add(item.parentId);
+        }
+      }
+    });
+
+    // Create parent items for top-level tabs if they don't exist
+    topLevelTabIds.forEach(parentId => {
+      if (!itemMap[parentId]) {
+        const parentItem = allData.find(item => item.MOD_ID.toString() === parentId);
+        if (parentItem) {
+          // Ensure path starts with forward slash
+          let path = parentItem.MOD_ROUTIG || '#';
+          if (path !== '#' && !path.startsWith('/')) {
+            path = '/' + path;
+          }
+
+          itemMap[parentId] = {
+            id: parentItem.MOD_ID,
+            name: parentItem.MOD_DESC || parentItem.MOD_NAME,
+            path: path,
+            parentId: inventoryId,
+            children: [],
             permissions: {
               add: false,
               edit: false,
               delete: false,
               view: false
             }
-          });
+          };
         }
       }
     });
 
-   
-    rootTabs.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
-
-    
-    rootTabs.forEach(tab => {
-      tab.children.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+    // Build hierarchy
+    Object.values(itemMap).forEach(item => {
+      if (item.parentId && item.parentId !== inventoryId && itemMap[item.parentId]) {
+        itemMap[item.parentId].children.push(item);
+      } else if (item.parentId === inventoryId) {
+        rootItems.push(item);
+      }
     });
 
-    
-    const transformed = rootTabs.map(tab => ({
-      id: tab.id,
-      name: tab.name,
-      children: tab.children.map(child => ({
-        name: child.name,
-        path: child.path,
-        icon: getIconForModule(child.name),
-        permissions: child.permissions
-      }))
-    })).filter(tab => tab.children.length > 0); 
+    // Sort items by name
+    const sortItems = (items) => {
+      items.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+      items.forEach(item => {
+        if (item.children.length > 0) {
+          sortItems(item.children);
+        }
+      });
+    };
+    sortItems(rootItems);
+
+    // Transform for display (similar to MasterPage)
+    const transformed = rootItems.map(item => ({
+      id: item.id,
+      name: item.name,
+      children: item.children
+        .filter(child => {
+          const hasChildPermission =
+            child.permissions.add ||
+            child.permissions.edit ||
+            child.permissions.delete ||
+            child.permissions.view;
+          return hasChildPermission;
+        })
+        .map(child => ({
+          name: child.name,
+          path: child.path,
+          icon: getIconForModule(child.name),
+          permissions: child.permissions
+        }))
+    })).filter(tab => tab.children.length > 0);
 
     return transformed;
   };
@@ -760,7 +797,7 @@ export default function InventoryPage() {
     if (name.includes('stock enquiry')) return SearchIcon;
     if (name.includes('buyer enquiry')) return PeopleIcon;
     if (name.includes('enquiry')) return AssignmentIcon;
-    if (name.includes('artical/style')) return ArticleIcon;
+    if (name.includes('artical') || name.includes('style')) return ArticleIcon;
     if (name.includes('style/parts')) return StyleIcon;
     if (name.includes('barcode')) return QrCodeScannerIcon;
     if (name.includes('price list')) return LocalMallIcon;
@@ -769,8 +806,10 @@ export default function InventoryPage() {
     if (name.includes('pending')) return AssignmentIcon;
     if (name.includes('packing')) return ReceiptIcon;
     if (name.includes('quality')) return CheckCircleIcon;
+    if (name.includes('scan')) return QrCodeScannerIcon;
+    if (name.includes('paking') || name.includes('packing slip')) return ReceiptIcon;
     
-    return InventoryIcon; 
+    return InventoryIcon;
   };
 
   const handleTabChange = (event, newValue) => {
@@ -784,7 +823,7 @@ export default function InventoryPage() {
   const handleCardClick = (path, name) => {
     if (path && path !== '#') {
       addRecentPath(path, name);
-      window.location.href = path;
+      router.push(path);
     }
   };
 
@@ -792,10 +831,14 @@ export default function InventoryPage() {
     if (!isClient || loading) return;
 
     const tabParam = searchParams.get('activeTab') || '';
-    const index = menuData.findIndex(tab => tab.id.toString() === tabParam);
-    if (tabParam && index !== -1 && index !== activeTab) {
-      setActiveTab(index);
-    } else if (!tabParam && menuData.length > 0) {
+    if (tabParam && menuData.length > 0) {
+      const index = menuData.findIndex(tab => tab.id.toString() === tabParam);
+      if (index !== -1 && index !== activeTab) {
+        setActiveTab(index);
+      } else if (index === -1 && activeTab === -1 && menuData.length > 0) {
+        setActiveTab(0);
+      }
+    } else if (!tabParam && menuData.length > 0 && activeTab === -1) {
       setActiveTab(0);
     }
   }, [searchParams, isClient, loading, menuData, activeTab]);
@@ -856,59 +899,53 @@ export default function InventoryPage() {
 
               {menuData.map((tab, index) => (
                 <TabPanel key={tab.id} value={activeTab === -1 ? 0 : activeTab} index={index}>
-                  {tab.children && tab.children.length > 0 ? (
-                    <Grid container spacing={2}>
-                      {tab.children.map((item, itemIndex) => {
-                        const ItemIcon = item.icon;
-                        return (
-                          <Grid size={{ xs: 6, sm: 3, md: 3, lg: 1.5 }} key={itemIndex}>
-                            <Card
-                              sx={{
-                                cursor: item.path !== '#' ? 'pointer' : 'default',
-                                transition: 'all 0.3s ease',
-                                height: '100%',
-                                background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
-                                border: '1px solid #e0e0e0',
-                                borderRadius: '8px',
-                                '&:hover': item.path !== '#' ? {
-                                  transform: 'translateY(-2px)',
-                                  boxShadow: '0 4px 12px rgba(99, 91, 255, 0.2)',
-                                  background: 'linear-gradient(135deg, #5A6EFF 0%, #6A75FF 100%)',
+                  <Grid container spacing={2}>
+                    {tab.children?.map((item, itemIndex) => {
+                      const ItemIcon = item.icon;
+                      return (
+                        <Grid size={{ xs: 6, sm: 3, md: 3, lg: 1.5 }} key={itemIndex}>
+                          <Card
+                            sx={{
+                              cursor: item.path !== '#' ? 'pointer' : 'default',
+                              transition: 'all 0.3s ease',
+                              height: '100%',
+                              background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
+                              border: '1px solid #e0e0e0',
+                              borderRadius: '8px',
+                              '&:hover': item.path !== '#' ? {
+                                transform: 'translateY(-2px)',
+                                boxShadow: '0 4px 12px rgba(99, 91, 255, 0.2)',
+                                background: 'linear-gradient(135deg, #635bff 0%, #5A6EFF 100%)',
+                                '& .MuiTypography-root': {
                                   color: 'white',
-                                  '& svg': {
-                                    color: 'white !important',
-                                  }
-                                } : {},
-                              }}
-                              onClick={() => item.path !== '#' && handleCardClick(item.path, item.name)}
-                            >
-                              <CardContent sx={{
-                                textAlign: 'center',
-                                p: 2,
-                                '&:last-child': { pb: 2 }
-                              }}>
-                                <ItemIcon sx={{ 
-                                  fontSize: 25, 
-                                  mb: 1,
-                                  color: '#635bff',
-                                  transition: 'color 0.3s ease',
-                                }} />
-                                <Typography variant="body1" sx={{ fontWeight: '500', fontSize: '0.8rem' }}>
-                                  {item.name}
-                                </Typography>
-                              </CardContent>
-                            </Card>
-                          </Grid>
-                        );
-                      })}
-                    </Grid>
-                  ) : (
-                    <Box sx={{ textAlign: 'center', py: 4 }}>
-                      <Typography color="textSecondary">
-                        No items available in this section
-                      </Typography>
-                    </Box>
-                  )}
+                                },
+                                '& svg': {
+                                  color: 'white !important',
+                                }
+                              } : {},
+                            }}
+                            onClick={() => item.path !== '#' && handleCardClick(item.path, item.name)}
+                          >
+                            <CardContent sx={{
+                              textAlign: 'center',
+                              p: 2,
+                              '&:last-child': { pb: 2 }
+                            }}>
+                              <ItemIcon sx={{ 
+                                fontSize: 25, 
+                                mb: 1,
+                                color: '#635bff',
+                                transition: 'color 0.3s ease',
+                              }} />
+                              <Typography variant="body1" sx={{ fontWeight: '500', fontSize: '0.8rem' }}>
+                                {item.name}
+                              </Typography>
+                            </CardContent>
+                          </Card>
+                        </Grid>
+                      );
+                    })}
+                  </Grid>
                 </TabPanel>
               ))}
             </>
