@@ -13,11 +13,26 @@ import {
   Chip,
   Tooltip,
   Paper,
+  IconButton,
+  Stack,
+  Divider,
+  alpha,
+  useTheme,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
+import RefreshIcon from "@mui/icons-material/Refresh";
+import DownloadIcon from "@mui/icons-material/Download";
+import PrintIcon from "@mui/icons-material/Print";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import WarningAmberIcon from "@mui/icons-material/WarningAmber";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import TimelineIcon from "@mui/icons-material/Timeline";
 import axiosInstance from '../../../lib/axios';
 import { useRouter } from 'next/navigation';
 import ReusableTable, { getCustomDateFilter } from '../../datatable/ReusableTable';
+
+
+
 
 const calculateDelay = (estDate, actDate) => {
   if (!estDate || !actDate) return null;
@@ -81,13 +96,13 @@ const OperationColorCell = ({ estDate, actDate, operationName }) => {
     <Paper
       elevation={4}
       sx={{
-        p: 1,
-        minWidth: 200,
-        maxWidth: 250,
+        p: 1.5,
+        minWidth: 220,
+        maxWidth: 280,
         backgroundColor: '#ffffff',
         borderRadius: 2,
         border: '1px solid #e0e0e0',
-        boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+        boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
       }}
     >
       {/* Header */}
@@ -95,8 +110,8 @@ const OperationColorCell = ({ estDate, actDate, operationName }) => {
         display: 'flex', 
         alignItems: 'center', 
         gap: 1, 
-        mb: 1,
-        pb: 0.5,
+        mb: 1.5,
+        pb: 0.75,
         borderBottom: '2px solid',
         borderColor: getDelayColor(),
       }}>
@@ -112,7 +127,7 @@ const OperationColorCell = ({ estDate, actDate, operationName }) => {
         </Typography>
       </Box>
 
-      <Box sx={{ mb: 0.5, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <Box sx={{ mb: 0.75, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Typography variant="caption" sx={{ color: '#666', fontWeight: 500 }}>
           📅 EST Date
         </Typography>
@@ -121,7 +136,7 @@ const OperationColorCell = ({ estDate, actDate, operationName }) => {
         </Typography>
       </Box>
 
-      <Box sx={{ mb: 0.5, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <Box sx={{ mb: 0.75, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Typography variant="caption" sx={{ color: '#666', fontWeight: 500 }}>
           ✅ ACT Date
         </Typography>
@@ -129,7 +144,7 @@ const OperationColorCell = ({ estDate, actDate, operationName }) => {
           {formatDate(actDate)}
         </Typography>
       </Box>
-      <Box sx={{ my: 0.5, borderTop: '1px dashed #e0e0e0' }} />
+      <Box sx={{ my: 0.75, borderTop: '1px dashed #e0e0e0' }} />
 
       {/* Status */}
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -146,7 +161,7 @@ const OperationColorCell = ({ estDate, actDate, operationName }) => {
             color: getDelayColor(),
             fontWeight: 'bold',
             fontSize: '0.7rem',
-            height: 20,
+            height: 22,
           }}
         />
       </Box>
@@ -163,7 +178,7 @@ const OperationColorCell = ({ estDate, actDate, operationName }) => {
           sx: {
             bgcolor: 'transparent',
             p: 0,
-            maxWidth: 300,
+            maxWidth: 320,
           }
         }
       }}
@@ -178,15 +193,16 @@ const OperationColorCell = ({ estDate, actDate, operationName }) => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
+          borderRadius: 0.5,
           '&:hover': {
-            opacity: 0.9,
+            opacity: 0.85,
             transform: 'scale(1.02)',
-            boxShadow: 'inset 0 0 0 2px rgba(25,118,210,0.2)',
+            boxShadow: 'inset 0 0 0 2px rgba(25,118,210,0.3)',
           }
         }}
       >
  
-        <Box sx={{ width: '100%', height: '100%', minHeight: '24px' }} />
+        <Box sx={{ width: '100%', height: '100%', minHeight: '28px' }} />
       </Box>
     </Tooltip>
   );
@@ -246,61 +262,30 @@ const createOperationColumns = () => {
 };
 
 const columnDefs = [
-  {
-    field: "TNA_KEY",
-    headerName: "TNA KEY",
-    width: 120,
-    filter: 'agSetColumnFilter',
-    filterParams: {
-      defaultToNothingSelected: true,
-    },
-    sortable: true,
-    pinned: 'left',
-    cellStyle: {
-      fontWeight: 'bold',
-      backgroundColor: '#e8f5e9'
-    }
-  },
+ 
   {
     field: "TNA_NO",
     headerName: "TNA NO",
-    width: 100,
+    width: 110,
     filter: 'agSetColumnFilter',
     filterParams: {
       defaultToNothingSelected: true,
     },
     sortable: true,
-    pinned: 'left',
     cellStyle: {
       fontWeight: 'bold',
-      backgroundColor: '#e8f5e9'
-    }
-  },
-  {
-    field: "ORDBK_KEY",
-    headerName: "ORDER KEY",
-    width: 140,
-    filter: 'agSetColumnFilter',
-    filterParams: {
-      defaultToNothingSelected: true,
-    },
-    sortable: true,
-    pinned: 'left',
-    cellStyle: {
-      fontWeight: 'bold', 
       backgroundColor: '#e8f5e9'
     }
   },
   {
     field: "FGSTYLE_CODE",
     headerName: "STYLE CODE",
-    width: 120,
+    width: 130,
     filter: 'agSetColumnFilter',
     filterParams: {
       defaultToNothingSelected: true,
     },
     sortable: true,
-    pinned: 'left',
     cellStyle: {
       fontWeight: 'bold',
       backgroundColor: '#e8f5e9'
@@ -330,7 +315,7 @@ const columnDefs = [
   {
     field: "FGTYPE_NAME",
     headerName: "TYPE",
-    width: 120,
+    width: 130,
     filter: 'agSetColumnFilter',
     filterParams: {
       defaultToNothingSelected: true,
@@ -340,7 +325,7 @@ const columnDefs = [
   {
     field: "FGPTN_NAME",
     headerName: "PATTERN",
-    width: 120,
+    width: 130,
     filter: 'agSetColumnFilter',
     filterParams: {
       defaultToNothingSelected: true,
@@ -349,6 +334,55 @@ const columnDefs = [
   },
   ...createOperationColumns()
 ];
+
+const StatCard = ({ title, value, icon, color, subtitle }) => {
+  const theme = useTheme();
+  return (
+    <Card
+      elevation={0}
+      sx={{
+        borderRadius: 3,
+        background: `linear-gradient(135deg, ${alpha(color, 0.08)} 0%, ${alpha(color, 0.02)} 100%)`,
+        border: `1px solid ${alpha(color, 0.2)}`,
+        transition: 'transform 0.2s, box-shadow 0.2s',
+        '&:hover': {
+          transform: 'translateY(-2px)',
+          boxShadow: `0 8px 20px ${alpha(color, 0.15)}`,
+        },
+      }}
+    >
+      <CardContent sx={{ p: 1, '&:last-child': { pb: 1 } }}>
+        <Stack direction="row" alignItems="center" justifyContent="space-between">
+          <Stack spacing={0.5}>
+            <Typography variant="caption" sx={{ color: alpha('#000', 0.6), fontWeight: 500 }}>
+              {title}
+            </Typography>
+            <Typography variant="h5" sx={{ fontWeight: 'bold', color: color, lineHeight: 1 }}>
+              {value}
+            </Typography>
+            {subtitle && (
+              <Typography variant="caption" sx={{ color: alpha('#000', 0.5), mt: 0.5 }}>
+                {subtitle}
+              </Typography>
+            )}
+          </Stack>
+          <Box
+            sx={{
+              backgroundColor: alpha(color, 0.12),
+              borderRadius: '50%',
+              p: 1,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            {icon}
+          </Box>
+        </Stack>
+      </CardContent>
+    </Card>
+  );
+};
 
 export default function TNAReport() {
   const router = useRouter();
@@ -412,21 +446,7 @@ export default function TNAReport() {
     }
   };
 
-  const fetchPartyDetails = async (partyKey) => {
-    try {
-      const response = await axiosInstance.post("Party/GetPartyDtl_By_PartyKey", {
-        PARTY_KEY: partyKey
-      });
-      if (response.data.STATUS === 0 && Array.isArray(response.data.DATA)) {
-        setPartyDtls(response.data.DATA);
-      } else {
-        setPartyDtls([]);
-      }
-    } catch (error) {
-      console.error("Error fetching party details:", error);
-      setPartyDtls([]);
-    }
-  };
+  
 
   const debouncedFetch = useCallback(debounce(fetchPartiesByName, 300), []);
 
@@ -536,108 +556,153 @@ export default function TNAReport() {
     console.log('Selected rows:', selectedData);
   }, []);
 
-  const handleExport = () => {
-    console.log('Exporting data...');
-  };
-
-  const handlePrint = () => {
-    window.print();
-  };
+ 
 
   return (
-    <Grid className="p-2 w-full">
-      <Grid className="w-full mx-auto" style={{ maxWidth: '100%' }}>
-        <Box sx={{ width: "100%", px: 2, }}>
-          <Box sx={{
-            display: "flex",
-            flexDirection: { xs: "column", sm: "row" },
-            justifyContent: "space-between",
-            alignItems: "center",
-            gap: 2,
-          }}>
-            <Typography variant="h5" sx={{ 
-              fontWeight: 'bold', 
-              color: '#1976d2',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 1,
-              flexWrap: 'wrap'
-            }}>
-              📊 TNA Report
-              <Chip 
-                label={`${summaryStats.totalRecords} Records`} 
-                size="small" 
-                sx={{ ml: 1, backgroundColor: '#e3f2fd' }}
-              />
-              <Chip 
-                label={`${summaryStats.totalDelayedOperations} Delays`} 
-                size="small" 
-                sx={{ ml: 1, backgroundColor: '#ffebee', color: '#c62828' }}
-              />
-              <Chip 
-                label={`Avg Delay: ${summaryStats.avgDelayDays} days`} 
-                size="small" 
-                sx={{ ml: 1, backgroundColor: '#fff3e0', color: '#ed6c02' }}
-              />
-            </Typography>
-          </Box>
-        </Box>
+    <Box sx={{ p: 2, backgroundColor: '#f8fafc', minHeight: '100vh',fontFamily: `'Poppins', 'Roboto', sans-serif`  }}>
+      <Box sx={{ maxWidth: '100%', mx: 'auto' }}>
+        
+          <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" alignItems={{ xs: 'flex-start', sm: 'center' }} spacing={2}>
+            <Stack spacing={1}>
+              <Typography variant="h5" sx={{ fontWeight: 700, letterSpacing: '-0.5px' }}>
+                TNA Report
+              </Typography>
+             
+            </Stack>
+          </Stack>
+      
 
-        <Grid style={{ height: 'calc(100vh - 180px)', width: '100%' }}>
-          {isLoading ? (
-            <Grid style={{
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-              height: '100%'
-            }}>
-              <CircularProgress />
-            </Grid>
-          ) : (
-            <ReusableTable
-              columnDefs={columnDefs}
-              rowData={rows}
-              height="100%"
-              theme="ag-theme-quartz"
-              isDarkMode={false}
-              pagination={true}
-              paginationPageSize={25}
-              paginationPageSizeSelector={[25, 50, 100, 250, 500, 1000]}
-              quickFilter={true}
-              onRowClick={handleRowClick}
-              onRowDoubleClick={handleRowDoubleClick}
-              onSelectionChanged={handleSelectionChanged}
-              loading={isLoading}
-              enableExport={true}
-              exportSelectedOnly={true}
-              selectedRows={selectedRows}
-              enableCheckbox={true}
-              compactMode={true}
-              rowHeight={28}
-              headerHeight={34}
-              defaultColDef={{
-                resizable: true,
-                sortable: true,
-                filter: true,
-                flex: 1,
-                minWidth: 100
-              }}
-              customGridOptions={{
-                suppressRowClickSelection: true,
-                rowSelection: 'multiple',
-                animateRows: true,
-                enableCellTextSelection: true,
-                ensureDomOrder: true
-              }}
-              exportParams={{
-                suppressTextAsCDATA: true,
-                fileName: 'TNA_Report',
-                sheetName: 'TNA Report'
-              }}
+
+        <Grid container spacing={2.5} sx={{ mb: 2 }}>
+          <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
+            <StatCard
+              title="Total Records"
+              value={summaryStats.totalRecords.toLocaleString()}
+              icon={<VisibilityIcon sx={{ color: '#1976d2', fontSize: 28 }} />}
+              color="#1976d2"
+              subtitle="Production lines"
             />
-          )}
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
+            <StatCard
+              title="Unique Orders"
+              value={summaryStats.uniqueOrders.toLocaleString()}
+              icon={<TimelineIcon sx={{ color: '#0288d1', fontSize: 28 }} />}
+              color="#0288d1"
+              subtitle="Active orders"
+            />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
+            <StatCard
+              title="Unique Styles"
+              value={summaryStats.uniqueStyles.toLocaleString()}
+              icon={<CheckCircleIcon sx={{ color: '#388e3c', fontSize: 28 }} />}
+              color="#388e3c"
+              subtitle="Distinct styles"
+            />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
+            <StatCard
+              title="Delayed Ops"
+              value={summaryStats.totalDelayedOperations.toLocaleString()}
+              icon={<WarningAmberIcon sx={{ color: '#ed6c02', fontSize: 28 }} />}
+              color="#ed6c02"
+              subtitle="Operations delayed"
+            />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
+            <StatCard
+              title="Avg Delay"
+              value={`${summaryStats.avgDelayDays}d`}
+              icon={<TimelineIcon sx={{ color: '#d32f2f', fontSize: 28 }} />}
+              color="#d32f2f"
+              subtitle="Average delay period"
+            />
+          </Grid>
         </Grid>
-      </Grid>
-    </Grid>
+
+        <Paper
+          elevation={0}
+          sx={{
+            borderRadius: 3,
+            overflow: 'hidden',
+            border: '1px solid',
+            borderColor: 'divider',
+            backgroundColor: 'background.paper',
+          }}
+        >
+         
+          <Box sx={{ height: 'calc(100vh - 220px)', width: '100%' }}>
+            {isLoading ? (
+              <Box sx={{
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                height: '100%',
+                flexDirection: 'column',
+                gap: 2,
+              }}>
+                <CircularProgress size={48} thickness={4} />
+                <Typography variant="body2" color="text.secondary">
+                  Loading TNA Report Data...
+                </Typography>
+              </Box>
+            ) : (
+              <ReusableTable
+                columnDefs={columnDefs}
+                rowData={rows}
+                height="100%"
+                theme="ag-theme-quartz"
+                isDarkMode={false}
+                pagination={true}
+                paginationPageSize={25}
+                paginationPageSizeSelector={[25, 50, 100, 250, 500, 1000]}
+                quickFilter={true}
+                onRowClick={handleRowClick}
+                onRowDoubleClick={handleRowDoubleClick}
+                onSelectionChanged={handleSelectionChanged}
+                loading={isLoading}
+                enableExport={true}
+                exportSelectedOnly={true}
+                selectedRows={selectedRows}
+                enableCheckbox={true}
+                compactMode={true}
+                rowHeight={22}
+                headerHeight={35}
+                defaultColDef={{
+                  resizable: true,
+                  sortable: true,
+                  filter: true,
+                  flex: 1,
+                  minWidth: 100,
+                  cellStyle: {
+                    fontSize: '12px'
+                  }
+                }}
+                customGridOptions={{
+                  suppressRowClickSelection: true,
+                  rowSelection: 'multiple',
+                  animateRows: true,
+                  enableCellTextSelection: true,
+                  ensureDomOrder: true,
+                }}
+                exportParams={{
+                  suppressTextAsCDATA: true,
+                  fileName: 'TNA_Report',
+                  sheetName: 'TNA Report',
+                }}
+              />
+            )}
+          </Box>
+        </Paper>
+
+        {/* Footer */}
+        <Box sx={{ mt: 2, textAlign: 'center' }}>
+          <Typography variant="caption" color="text.secondary">
+            TNA Report | © {new Date().getFullYear()} All rights reserved
+          </Typography>
+        </Box>
+      </Box>
+    </Box>
   );
 }
