@@ -446,7 +446,7 @@ const BrandMst = () => {
     };
 
     const handleExit = () => {
-        router.push('/masterpage/?activeTab=13');
+        router.push('/masterpage/?activeTab=15');
     };
     const handleInputChange = (e) => {
         const { name, value } = e.target;

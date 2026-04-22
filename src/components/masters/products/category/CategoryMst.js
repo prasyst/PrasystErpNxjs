@@ -491,7 +491,7 @@ const CategoryMst = () => {
     };
 
     const handleExit = async () => {
-        router.push("/masterpage/?activeTab=13");
+        router.push("/masterpage/?activeTab=15");
     };
 
     const handleInputChange = (e) => {

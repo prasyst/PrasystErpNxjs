@@ -19,13 +19,16 @@ import { textInputSx } from '../../../../../public/styles/textInputSx';
 import ConfirmationDialog from '@/GlobalFunction/DeleteDialog/ConfirmationDialog';
 import PrintPrdPr from './printprdpr';
 import { inputStyle } from '../../../../../public/styles/inputStyleDrp';
+import AutoVibe from '@/GlobalFunction/CustomAutoComplete/AutoVibe';
 const FORM_MODE = getFormMode();
+
 const qcSubGrpFormSchema = z.object({
     QC_SUBGROUP_KEY: z.string().min(1, "QC Sub Group Name is required"),
     FGPRD_KEY: z.string().min(1, "QC Group is required"),
     PROSTG_KEY: z.string().min(1, "Process  is required"),
     QC_REQ: z.string().min(1, "Qc Req. is required"),
 });
+
 const QcPrdPro = () => {
     const router = useRouter();
     const searchParams = useSearchParams();
@@ -49,6 +52,7 @@ const QcPrdPro = () => {
     const [products, setProducts] = useState([]);
     const [process, setProcess] = useState([]);
     const [qcSubGroups, setQcSubGroups] = useState([]);
+
     useEffect(() => {
         const fetchProducts = async () => {
             try {
@@ -73,6 +77,7 @@ const QcPrdPro = () => {
         };
         fetchProducts();
     }, []);
+
     useEffect(() => {
         const fetchProcess = async () => {
             try {
@@ -99,6 +104,7 @@ const QcPrdPro = () => {
         };
         fetchProcess();
     }, []);
+
     useEffect(() => {
         const fetchQcSubGroups = async () => {
             try {
@@ -122,6 +128,7 @@ const QcPrdPro = () => {
         };
         fetchQcSubGroups();
     }, []);
+
     const updateQCIDInUrl = (qcId) => {
         const url = new URL(window.location.href);
         url.searchParams.set("QC_ID", qcId);
@@ -136,6 +143,7 @@ const QcPrdPro = () => {
             Status: updatedStatus
         }))
     };
+
     const fetchRetriveData = useCallback(async (currentQC_ID, flag = "R", isManualSearch = false) => {
         const CO_ID = localStorage.getItem('CO_ID');
         try {
@@ -184,6 +192,7 @@ const QcPrdPro = () => {
             console.error(err);
         }
     }, []);
+
     useEffect(() => {
         if (QC_ID) {
             setCurrentQC_ID(QC_ID);
@@ -204,6 +213,7 @@ const QcPrdPro = () => {
         }
         setMode(FORM_MODE.read);
     }, [QC_ID, fetchRetriveData]);
+
     const handleSubmit = async () => {
         const result = qcSubGrpFormSchema.safeParse(form);
         if (!result.success) {
@@ -269,6 +279,7 @@ const QcPrdPro = () => {
             console.error("Submit Error:", error);
         }
     };
+
     const handleCancel = async () => {
         if (mode === FORM_MODE.add) {
             await fetchRetriveData(1, "L");
@@ -281,6 +292,7 @@ const QcPrdPro = () => {
             SearchByCd: ''
         }));
     };
+
     const handleAdd = async () => {
         setMode(FORM_MODE.add);
         setCurrentQC_ID(null);
@@ -294,26 +306,30 @@ const QcPrdPro = () => {
             SearchByCd: '',
             Status: '1',
         }));
-
     };
+
     const handlePrevious = async () => {
         if (!currentQC_ID) return;
         const data = await fetchRetriveData(currentQC_ID, "P");
         setForm((prev) => ({ ...prev, SearchByCd: '' }));
         if (data?.QC_ID) updateQCIDInUrl(data.QC_ID);
     };
+
     const handleNext = async () => {
         if (!currentQC_ID) return;
         const data = await fetchRetriveData(currentQC_ID, "N");
         setForm((prev) => ({ ...prev, SearchByCd: '' }));
         if (data?.QC_ID) updateQCIDInUrl(data.QC_ID);
     };
+
     const handleDelete = () => {
         setOpenConfirmDialog(true);
-    }
+    };
+
     const handleCloseConfirmDialog = () => {
         setOpenConfirmDialog(false);
     };
+
     const handleConfirmDelete = async () => {
         setOpenConfirmDialog(false);
         const USER_NAME = localStorage.getItem('USER_NAME');
@@ -349,9 +365,11 @@ const QcPrdPro = () => {
             console.error("Delete Error:", error);
         }
     };
+
     const handleEdit = () => {
         setMode(FORM_MODE.edit);
     };
+
     const handlePrint = async () => {
         try {
             const response = await axiosInstance.post(`/QC_PRODUCT_PROCESS/GetQC_PRODUCT_PROCESSDashBoard?currentPage=1&limit=5000`, {
@@ -384,12 +402,15 @@ const QcPrdPro = () => {
             console.error("Print Error:", error);
         }
     };
+
     const handleTable = () => {
         router.push("/masters/qc/qcprdprocess/qcprdprtable/");
     };
+
     const handleExit = async () => {
         router.push("/masterpage/?activeTab=qc");
     };
+
     const handleInputChange = (e) => {
         const { name, value } = e.target;
         setForm(prev => ({
@@ -397,6 +418,7 @@ const QcPrdPro = () => {
             [name]: value
         }));
     };
+
     return (
         <>
             <Grid

@@ -574,7 +574,7 @@ const TermsMst = () => {
         }
     };
 
-    const handleExit = () => { router.push("/masters/taxterms/termmaster/termstable") };
+    const handleExit = () => { router.push("/masterpage/?activeTab=27") };
 
     const handleTable = () => {
         router.push('/masters/taxterms/termmaster/termstable');

@@ -16,6 +16,8 @@ import KeyboardArrowLeftIcon from "@mui/icons-material/KeyboardArrowLeft";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import AutoVibe from '@/GlobalFunction/CustomAutoComplete/AutoVibe';
 import { useUserPermissions } from '@/app/hooks/useUserPermissions';
+import { textInputSx } from '../../../../../public/styles/textInputSx';
+import { DropInputSx } from '../../../../../public/styles/dropInputSx';
 
 const TicketCatMst = () => {
 
@@ -203,7 +205,7 @@ const TicketCatMst = () => {
     };
 
     const handleTable = () => {
-        router.push('/masters/ticketing/ticketCategory/ticketCatTable');
+        router.push('/masters/ticketing/ticketCategory/ticketcattable');
     };
 
     const handleSubmit = async () => {
@@ -241,78 +243,6 @@ const TicketCatMst = () => {
         }
     };
 
-    const textInputSx = {
-        '& .MuiInputBase-root': {
-            height: 36,
-            fontSize: '14px',
-        },
-        '& .MuiInputLabel-root': {
-            fontSize: '14px',
-            top: '-8px',
-        },
-        '& .MuiFilledInput-root': {
-            backgroundColor: '#fafafa',
-            border: '1px solid #e0e0e0',
-            borderRadius: '6px',
-            overflow: 'hidden',
-            height: 36,
-            fontSize: '14px',
-        },
-        '& .MuiFilledInput-root:before': {
-            display: 'none',
-        },
-        '& .MuiFilledInput-root:after': {
-            display: 'none',
-        },
-        '& .MuiInputBase-input': {
-            padding: '10px 12px !important',
-            fontSize: '14px !important',
-            lineHeight: '1.4',
-        },
-        '& .MuiFilledInput-root.Mui-disabled': {
-            backgroundColor: '#fff'
-        }
-    };
-
-    const DropInputSx = {
-        '& .MuiInputBase-root': {
-            height: 36,
-            fontSize: '14px',
-        },
-        '& .MuiInputLabel-root': {
-            fontSize: '14px',
-            top: '-4px',
-        },
-        '& .MuiFilledInput-root': {
-            backgroundColor: '#fafafa',
-            border: '1px solid #e0e0e0',
-            borderRadius: '6px',
-            overflow: 'hidden',
-            height: 36,
-            fontSize: '14px',
-            paddingRight: '36px',
-        },
-        '& .MuiFilledInput-root:before': {
-            display: 'none',
-        },
-        '& .MuiFilledInput-root:after': {
-            display: 'none',
-        },
-        '& .MuiInputBase-input': {
-            padding: '10px 12px',
-            fontSize: '14px',
-            lineHeight: '1.4',
-        },
-        '& .MuiAutocomplete-endAdornment': {
-            top: '50%',
-            transform: 'translateY(-50%)',
-            right: '10px',
-        },
-        '& .MuiFilledInput-root.Mui-disabled': {
-            backgroundColor: '#fff'
-        }
-    };
-
     return (
         <Grid
             sx={{
@@ -322,25 +252,22 @@ const TicketCatMst = () => {
                 justifyContent: 'center',
                 alignItems: 'center',
                 boxSizing: 'border-box',
-                minHeight: '91vh',
+                minHeight: '90vh',
                 overflowX: 'hidden',
                 overflowY: 'auto'
             }}
         >
             <ToastContainer />
 
-            <Grid container
+            <Grid container spacing={2}
                 sx={{
                     display: 'flex',
                     flexDirection: 'column',
                     marginInline: { xs: '5%', sm: '5%', md: '5%', lg: '5%', xl: '5%' },
                 }}
-                spacing={2}
             >
-
-                <Grid container justifyContent="space-between"
+                <Grid container spacing={2} justifyContent="space-between"
                     sx={{ marginInline: { xs: '5%', sm: '5%', md: '5%', lg: '0%', xl: '0%' } }}
-                    spacing={2}
                 >
                     <Grid>
                         <Button
@@ -392,8 +319,7 @@ const TicketCatMst = () => {
                     </Grid>
                 </Grid>
 
-                <Grid container spacing={0.5}>
-
+                <Grid container spacing={1}>
                     <Grid size={{ xs: 12, sm: 6, md: 6 }}>
                         <TextField
                             label="Category Name"
@@ -406,8 +332,9 @@ const TicketCatMst = () => {
                             sx={textInputSx}
                             inputProps={{
                                 style: {
-                                    padding: '6px 8px',
-                                    fontSize: '12px',
+                                    padding: '6px 0px',
+                                    marginTop: '10px',
+                                    fontSize: '14px',
                                 },
                             }}
                         />
@@ -425,8 +352,9 @@ const TicketCatMst = () => {
                             sx={textInputSx}
                             inputProps={{
                                 style: {
-                                    padding: '6px 8px',
-                                    fontSize: '12px',
+                                    padding: '6px 0px',
+                                    marginTop: '10px',
+                                    fontSize: '14px',
                                 },
                             }}
                         />
@@ -444,8 +372,9 @@ const TicketCatMst = () => {
                             sx={textInputSx}
                             inputProps={{
                                 style: {
-                                    padding: '6px 8px',
-                                    fontSize: '12px',
+                                    padding: '6px 0px',
+                                    marginTop: '10px',
+                                    fontSize: '14px',
                                 },
                             }}
                         />
@@ -466,16 +395,21 @@ const TicketCatMst = () => {
                                     EMP_KEY: newValue ? newValue.EMP_KEY.toString() : '',
                                 }));
                             }}
-                            sx={DropInputSx}
+                            sx={{
+                                ...DropInputSx,
+                                '& .MuiFilledInput-root': {
+                                    ...DropInputSx['& .MuiFilledInput-root'],
+                                    paddingTop: '16px !important',
+                                },
+                            }}
                             inputProps={{
                                 style: {
-                                    padding: '6px 8px',
+                                    padding: '6px 0px',
                                     fontSize: '12px',
                                 },
                             }}
                         />
                     </Grid>
-
                 </Grid>
 
                 <Grid sx={{
@@ -513,7 +447,6 @@ const TicketCatMst = () => {
                     )}
                     {(mode === 'edit' || mode === 'add') && (
                         <>
-
                             <Button variant="contained"
                                 sx={{
                                     backgroundColor: '#635bff',
@@ -536,7 +469,6 @@ const TicketCatMst = () => {
                                 onClick={handleCancel}>
                                 Cancel
                             </Button>
-
                         </>
                     )}
                 </Grid>

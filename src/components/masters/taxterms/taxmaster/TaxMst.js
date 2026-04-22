@@ -487,7 +487,7 @@ const TaxMst = () => {
 
     const handleInputChange = () => { };
 
-    const handleExit = () => { router.push("/masters/taxterms/taxmaster/taxtable") };
+    const handleExit = () => { router.push("/masterpage/?activeTab=27") };
 
     const handleTable = () => {
         router.push('/masters/taxterms/taxmaster/taxtable');
