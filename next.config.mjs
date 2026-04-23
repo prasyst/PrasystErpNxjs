@@ -12,7 +12,6 @@
 // export default nextConfig;
 
 
-
 /** @type {import('next').NextConfig} */
 import withPWA from 'next-pwa';
 
@@ -24,6 +23,8 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
+  // Add turbopack config to fix the error
+  turbopack: {},
 };
 
 const pwaConfig = {
@@ -92,4 +93,5 @@ const pwaConfig = {
   ]
 };
 
+// Wrap withPWA properly
 export default withPWA(pwaConfig)(nextConfig);
