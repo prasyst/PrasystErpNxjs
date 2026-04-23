@@ -10,51 +10,15 @@
   "scope": "/",
   "icons": [
     {
-      "src": "/images/pratham.jpeg",
-      "sizes": "72x72",
-      "type": "image/jpeg",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "/images/pratham.jpeg",
-      "sizes": "96x96",
-      "type": "image/jpeg",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "/images/pratham.jpeg",
-      "sizes": "128x128",
-      "type": "image/jpeg",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "/images/pratham.jpeg",
-      "sizes": "144x144",
-      "type": "image/jpeg",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "/images/pratham.jpeg",
-      "sizes": "152x152",
-      "type": "image/jpeg",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "/images/pratham.jpeg",
+      "src": "/images/logo192.png",
       "sizes": "192x192",
-      "type": "image/jpeg",
+      "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/images/pratham.jpeg",
-      "sizes": "384x384",
-      "type": "image/jpeg",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "/images/pratham.jpeg",
+      "src": "/images/logo512.png",
       "sizes": "512x512",
-      "type": "image/jpeg",
+      "type": "image/png",
       "purpose": "any maskable"
     }
   ],
@@ -66,8 +30,8 @@
       "url": "/dashboard",
       "icons": [
         {
-          "src": "/images/pratham.jpeg",
-          "sizes": "96x96"
+          "src": "/images/logo192.png",
+          "sizes": "192x192"
         }
       ]
     },
@@ -78,8 +42,8 @@
       "url": "/login",
       "icons": [
         {
-          "src": "/images/pratham.jpeg",
-          "sizes": "96x96"
+          "src": "/images/logo192.png",
+          "sizes": "192x192"
         }
       ]
     }
