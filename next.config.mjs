@@ -23,16 +23,16 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
-  // Add turbopack config to fix the error
-  turbopack: {},
 };
 
 const pwaConfig = {
   dest: 'public',
-  register: true,
+  register: false, // Manual registration
   skipWaiting: true,
   disable: process.env.NODE_ENV === 'development',
-  buildExcludes: [/middleware-manifest\.json$/],
+  fallbacks: {
+    document: '/offline.html', // Optional: create offline page
+  },
   runtimeCaching: [
     {
       urlPattern: /^https:\/\/fonts\.(googleapis|gstatic)\.com\/.*/i,
@@ -68,18 +68,6 @@ const pwaConfig = {
       }
     },
     {
-      urlPattern: /\/api\/.*/i,
-      handler: 'NetworkFirst',
-      options: {
-        cacheName: 'api-cache',
-        networkTimeoutSeconds: 10,
-        expiration: {
-          maxEntries: 50,
-          maxAgeSeconds: 5 * 60
-        }
-      }
-    },
-    {
       urlPattern: /\/$/,
       handler: 'NetworkFirst',
       options: {
@@ -93,5 +81,4 @@ const pwaConfig = {
   ]
 };
 
-// Wrap withPWA properly
 export default withPWA(pwaConfig)(nextConfig);
