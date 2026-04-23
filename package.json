@@ -3,14 +3,12 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
- 
   "scripts": {
     "dev": "node server.js",
-    "clean": "if exist .next rmdir /s /q .next && if exist out rmdir /s /q out && if exist public\\sw.js del /q public\\sw.js && if exist public\\workbox-*.js del /q public\\workbox-*.js",
-    "build": "npm run clean && next build --webpack",
-    "start": "next start -p 4000 --webpack",
+    "build": "next build",
+    "start": "next start -p 4000",
     "lint": "next lint",
-    "export": "next build --webpack && next export"
+    "export": "next build && next export"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",
