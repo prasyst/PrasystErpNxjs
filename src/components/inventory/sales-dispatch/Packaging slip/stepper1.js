@@ -1,7 +1,7 @@
 'use client';
 import React, { useEffect, useState, useCallback, Suspense } from 'react';
 import {
-  Box, Grid, TextField, Typography, Button, Stack, FormControlLabel, FormLabel, Radio, RadioGroup, Checkbox,
+  Box, Grid, TextField, Typography, Button,Tooltip , Stack, FormControlLabel, FormLabel, Radio, RadioGroup, Checkbox,
 } from '@mui/material';
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
@@ -1215,16 +1215,29 @@ const handlePickOrderConfirm = (selectedItems) => {
               />
             </RadioGroup>
           </Box>
-          <Box sx={{ display: 'flex', alignItems: 'center', width: { xs: '100%', sm: '48%', md: '25%' } }}>
+
+<Box sx={{ display: 'flex', alignItems: 'center', width: { xs: '100%', sm: '48%', md: '25%' } }}>
   <FormLabel sx={{ margin: '7px 14px 0px 10px', fontSize: '12px', fontWeight: 'bold', color: 'black' }} component="legend">Select Details</FormLabel>
- <RadioGroup
-  row
-  name="detailMode"
-  onChange={(e) => setDetailMode(e.target.value)}
-  disabled={isFormDisabled}
-  value={detailMode}
-  sx={{ margin: '5px 0px 0px 0px' }}
->
+  <RadioGroup
+    row
+    name="detailMode"
+    onChange={(e) => {
+      const newMode = e.target.value;
+      setDetailMode(newMode);
+      // Also update parent formData
+      setFormData(prev => ({
+        ...prev,
+        BARCD_FLG: newMode === 'barcode' ? "1" : "0"
+      }));
+      // Show snackbar message
+      if (showSnackbar) {
+        showSnackbar(`${newMode === 'barcode' ? 'Barcode' : 'Style'} mode activated. ${newMode === 'barcode' ? 'Barcode Details' : 'Details'} tab is now active.`, 'info');
+      }
+    }}
+    disabled={isFormDisabled}
+    value={detailMode}
+    sx={{ margin: '5px 0px 0px 0px' }}
+  >
     <FormControlLabel
       disabled={isFormDisabled}
       value="style"
@@ -2369,28 +2382,46 @@ const handlePickOrderConfirm = (selectedItems) => {
                 />
               </RadioGroup>
 
-              <Button
-  variant="contained"
-  size="small"
-  onClick={() => setPickOrderModalOpen(true)}
-  disabled={isFormDisabled || !formData.Party || !formData.Branch}
-  sx={{
-    backgroundColor: '#4caf50',
-    color: 'white',
-    textTransform: 'none',
-    height: '36px',
-    marginLeft: '16px',
-    '&:hover': {
-      backgroundColor: '#45a049',
-    },
-    '&:disabled': {
-      backgroundColor: '#cccccc',
-      color: '#666666'
-    }
-  }}
+   
+
+
+
+<Tooltip 
+  title={
+    detailMode === 'barcode' 
+      ? "Pick from Order is only available in Style mode. Please switch to Style mode first." 
+      : (!formData.Party || !formData.Branch) 
+        ? "Please select Party and Branch first" 
+        : "Select items from existing orders"
+  }
+  placement="top"
+  arrow
 >
-  Pick from Order
-</Button>
+  <span>
+    <Button
+      variant="contained"
+      size="small"
+      onClick={() => setPickOrderModalOpen(true)}
+      disabled={isFormDisabled || !formData.Party || !formData.Branch || detailMode === 'barcode'}
+      sx={{
+        backgroundColor: '#4caf50',
+        color: 'white',
+        textTransform: 'none',
+        height: '36px',
+        marginLeft: '16px',
+        '&:hover': {
+          backgroundColor: '#45a049',
+        },
+        '&:disabled': {
+          backgroundColor: '#cccccc',
+          color: '#666666'
+        }
+      }}
+    >
+      Pick from Order
+    </Button>
+  </span>
+</Tooltip>
             </Box>
           </Grid>
 

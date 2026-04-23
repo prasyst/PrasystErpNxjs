@@ -2098,6 +2098,8 @@ const fetchAllDropdownData = async () => {
       <Grid size={{ xs: 12 }} sx={{ ml: '5%', mb: '0%', mt: '0%' }}>
         <Box sx={{ display: 'flex' }}>
 
+
+
 <Tabs
   value={tabIndex}
   onChange={handleTabChange}
@@ -2127,10 +2129,10 @@ const fetchAllDropdownData = async () => {
     }}
   />
   
-  {/* Details Tab - Always accessible but content will be disabled based on mode */}
+  {/* Details Tab - Disabled when Barcode mode is selected */}
   <Tab
     label="Details"
-    // Not disabled - user can click and view
+    disabled={detailMode === 'barcode'}
     sx={{
       minHeight: '36px',
       padding: '6px 16px',
@@ -2141,20 +2143,19 @@ const fetchAllDropdownData = async () => {
         color: '#000',
         fontWeight: 'bold',
       },
-      // Visual indication that it's view-only in barcode mode
       ...(detailMode === 'barcode' && {
-        opacity: 0.9,
-        '& .MuiTab-root': {
-          color: '#666',
+        opacity: 0.5,
+        '&.Mui-disabled': {
+          color: '#999',
         }
       })
     }}
   />
   
-  {/* BarCode Details Tab - Active when barcode mode is selected */}
+  {/* BarCode Details Tab - Disabled when Style mode is selected */}
   <Tab
     label="BarCode Details"
-    // Not disabled - active when detailMode is 'barcode'
+    disabled={detailMode === 'style'}
     sx={{
       minHeight: '36px',
       padding: '6px 16px',
@@ -2165,6 +2166,12 @@ const fetchAllDropdownData = async () => {
         color: '#000',
         fontWeight: 'bold',
       },
+      ...(detailMode === 'style' && {
+        opacity: 0.5,
+        '&.Mui-disabled': {
+          color: '#999',
+        }
+      })
     }}
   />
   
