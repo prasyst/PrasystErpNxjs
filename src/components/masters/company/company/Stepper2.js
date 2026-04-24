@@ -21,6 +21,8 @@ import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import SearchIcon from "@mui/icons-material/Search";
+import { textInputSx } from '../../../../../public/styles/textInputSx';
+import { DropInputSx } from '../../../../../public/styles/dropInputSx';
 
 const FORM_MODE = getFormMode();
 
@@ -58,111 +60,6 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, rows, setRows, curren
       setRows(formData?.PartyDtlEntities);
     }
   }, [formData]);
-
-  const textInputSx = {
-    '& .MuiInputBase-root': {
-      height: 36,
-      fontSize: '14px',
-    },
-    '& .MuiInputLabel-root': {
-      fontSize: '14px',
-      top: '-8px',
-    },
-    '& .MuiFilledInput-root': {
-      backgroundColor: '#fafafa',
-      border: '1px solid #e0e0e0',
-      borderRadius: '6px',
-      overflow: 'hidden',
-      height: 36,
-      fontSize: '14px',
-    },
-    '& .MuiFilledInput-root:before': {
-      display: 'none',
-    },
-    '& .MuiFilledInput-root:after': {
-      display: 'none',
-    },
-    '& .MuiInputBase-input': {
-      padding: '10px 12px !important',
-      fontSize: '14px !important',
-      lineHeight: '1.4',
-    },
-    '& .MuiFilledInput-root.Mui-disabled': {
-      backgroundColor: '#fff'
-    }
-  };
-
-  const doubleInputSx = {
-    '& .MuiInputBase-root': {
-      height: 76,
-      fontSize: '14px',
-    },
-    '& .MuiInputLabel-root': {
-      fontSize: '14px',
-      top: '-8px',
-    },
-    '& .MuiFilledInput-root': {
-      backgroundColor: '#fafafa',
-      border: '1px solid #e0e0e0',
-      borderRadius: '6px',
-      overflow: 'hidden',
-      height: 76,
-      fontSize: '14px',
-    },
-    '& .MuiFilledInput-root:before': {
-      display: 'none',
-    },
-    '& .MuiFilledInput-root:after': {
-      display: 'none',
-    },
-    '& .MuiInputBase-input': {
-      padding: '10px 12px !important',
-      fontSize: '14px !important',
-      lineHeight: '1.4',
-    },
-    '& .MuiFilledInput-root.Mui-disabled': {
-      backgroundColor: '#fff'
-    }
-  };
-
-  const DropInputSx = {
-    '& .MuiInputBase-root': {
-      height: 36,
-      fontSize: '14px',
-    },
-    '& .MuiInputLabel-root': {
-      fontSize: '14px',
-      top: '-4px',
-    },
-    '& .MuiFilledInput-root': {
-      backgroundColor: '#fafafa',
-      border: '1px solid #e0e0e0',
-      borderRadius: '6px',
-      overflow: 'hidden',
-      height: 36,
-      fontSize: '14px',
-      paddingRight: '36px',
-    },
-    '& .MuiFilledInput-root:before': {
-      display: 'none',
-    },
-    '& .MuiFilledInput-root:after': {
-      display: 'none',
-    },
-    '& .MuiInputBase-input': {
-      padding: '10px 12px',
-      fontSize: '14px',
-      lineHeight: '1.4',
-    },
-    '& .MuiAutocomplete-endAdornment': {
-      top: '50%',
-      transform: 'translateY(-50%)',
-      right: '10px',
-    },
-    '& .MuiFilledInput-root.Mui-disabled': {
-      backgroundColor: '#fff'
-    }
-  };
 
   // const handleInputChange = (e) => {
   //   const { name, value } = e.target;
@@ -508,47 +405,36 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, rows, setRows, curren
         </Grid>
 
         <Grid size={{ xs: 12, sm: 6, md: 12 }}>
-          <Stack direction="row" spacing={2}>
-            <Button
+          <Stack direction="row" spacing={1}>
+            <Button size='small'
               variant="contained"
               startIcon={<AddIcon />}
               onClick={handleAdd}
               disabled={isFormDisabled || isAddButtonDisabled}
-              sx={{
-                backgroundColor: '#007bff',
-                margin: { xs: '0 4px', sm: '0 6px' },
-                minWidth: { xs: 40, sm: 46, md: 60 },
-                height: { xs: 40, sm: 46, md: 30 },
-              }}
+              sx={{ bgcolor: '#635bff', }}
             >
               Add
             </Button>
 
-            <Button
+            <Button size='small'
               variant="contained"
               startIcon={<EditIcon />}
               onClick={handleEdit}
               disabled={isFormDisabled || isEditButtonDisabled}
               sx={{
-                backgroundColor: '#20c997',
-                margin: { xs: '0 4px', sm: '0 6px' },
-                minWidth: { xs: 40, sm: 46, md: 60 },
-                height: { xs: 40, sm: 46, md: 30 },
+                backgroundColor: '#635bff',
               }}
             >
               Edit
             </Button>
 
-            <Button
+            <Button size='small'
               variant="contained"
               startIcon={<DeleteIcon />}
               onClick={handleDelete}
               disabled={isFormDisabled || isDeleteButtonDisabled}
               sx={{
-                backgroundColor: '#dc3545',
-                margin: { xs: '0 4px', sm: '0 6px' },
-                minWidth: { xs: 40, sm: 46, md: 60 },
-                height: { xs: 40, sm: 46, md: 30 },
+                backgroundColor: '#635bff',
               }}
             >
               Delete
@@ -556,54 +442,50 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, rows, setRows, curren
           </Stack>
         </Grid>
 
-        <Grid size={{ xs: 12, sm: 6, md: 6 }}>
-          <TextField
-            label="Address"
-            variant="filled"
-            fullWidth
-            onChange={handleInputChange}
-            value={partyData?.ADDR}
-            disabled={!isEditButtonDisabled && !isAddButtonDisabled}
-            name="ADDR"
-            sx={doubleInputSx}
-            inputProps={{
-              style: {
-                padding: '6px 8px',
-                fontSize: '12px'
-              },
-            }}
-          />
-        </Grid>
+        <Grid container spacing={1}>
+          <Grid size={{ xs: 12, sm: 6, md: 6 }}>
+            <TextField
+              label="Address"
+              variant="filled"
+              fullWidth
+              name="ADDR"
+              value={partyData?.ADDR}
+              onChange={handleInputChange}
+              disabled={!isEditButtonDisabled && !isAddButtonDisabled}
+              sx={textInputSx}
+              inputProps={{
+                style: {
+                  padding: '6px 0px',
+                  marginTop: '10px',
+                  fontSize: '14px'
+                },
+              }}
+            />
+          </Grid>
 
-        <Grid size={{ xs: 12, sm: 6, md: 2 }} sx={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: '3px'
-        }}>
-          <AutoVibe
-            id="CONT_KEY"
-            disabled={!isEditButtonDisabled && !isAddButtonDisabled}
-            getOptionLabel={(option) => option || ''}
-            options={[]}
-            label="Country"
-            name="CONT_KEY"
-            value={partyData?.CONT_KEY || ""}
-            onChange={handleInputChange}
-            sx={DropInputSx}
-            inputProps={{
-              style: {
-                padding: '6px 8px',
-                fontSize: '12px',
-              },
-            }}
-          />
-          <Grid size={{ xs: 12, sm: 6, md: 12 }} sx={{
-            display: 'flex',
-            flexDirection: 'row',
-            alignItems: 'center',
-            gap: '3px'
-          }}>
+          <Grid size={{ xs: 12, sm: 6, md: 2 }} >
+            <AutoVibe
+              id="CONT_KEY"
+              disabled={!isEditButtonDisabled && !isAddButtonDisabled}
+              getOptionLabel={(option) => option || ''}
+              options={[]}
+              label="Country"
+              name="CONT_KEY"
+              value={partyData?.CONT_KEY || ""}
+              onChange={handleInputChange}
+              sx={{
+                ...DropInputSx,
+                '& .MuiFilledInput-root': {
+                  paddingTop: '16px !important',
+                },
+                '& input': {
+                  padding: '6px 8px',
+                  fontSize: '14px',
+                },
+              }}
+            />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6, md: 2 }} >
             <TextField
               label="Pincode"
               variant="filled"
@@ -615,592 +497,612 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, rows, setRows, curren
               sx={textInputSx}
               inputProps={{
                 style: {
-                  padding: '6px 8px',
-                  fontSize: '12px'
+                  padding: '6px 0px',
+                  marginTop: '10px',
+                  fontSize: '14px'
                 },
               }}
             />
+          </Grid>
+
+          <Grid size={{ xs: 12, sm: 6, md: 2 }} >
             <AutoVibe
               id=""
               disabled={!isEditButtonDisabled && !isAddButtonDisabled}
               getOptionLabel={(option) => option || ''}
               options={[]}
-              label="Pincode"
+              label="Area"
               name=""
               value={""}
               onChange={handleInputChange}
-              sx={DropInputSx}
-              inputProps={{
-                style: {
+              sx={{
+                ...DropInputSx,
+                '& .MuiFilledInput-root': {
+                  paddingTop: '16px !important',
+                },
+                '& input': {
                   padding: '6px 8px',
-                  fontSize: '12px',
+                  fontSize: '14px',
                 },
               }}
             />
           </Grid>
-        </Grid>
 
-        <Grid size={{ xs: 12, sm: 6, md: 2 }} sx={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: '3px'
-        }}>
-          <AutoVibe
-            id=""
-            disabled={!isEditButtonDisabled && !isAddButtonDisabled}
-            getOptionLabel={(option) => option || ''}
-            options={[]}
-            label="State"
-            name=""
-            value={""}
-            onChange={handleInputChange}
-            sx={DropInputSx}
-            inputProps={{
-              style: {
-                padding: '6px 8px',
+          <Grid size={{ xs: 12, sm: 6, md: 2 }} >
+            <AutoVibe
+              id=""
+              disabled={!isEditButtonDisabled && !isAddButtonDisabled}
+              getOptionLabel={(option) => option || ''}
+              options={[]}
+              label="State"
+              name=""
+              value={""}
+              onChange={handleInputChange}
+              sx={{
+                ...DropInputSx,
+                '& .MuiFilledInput-root': {
+                  paddingTop: '16px !important',
+                },
+                '& input': {
+                  padding: '6px 8px',
+                  fontSize: '14px',
+                },
+              }}
+            />
+          </Grid>
+
+          <Grid size={{ xs: 12, sm: 6, md: 2 }} >
+            <TextField
+              label="Tel"
+              variant="filled"
+              fullWidth
+              onChange={handleInputChange}
+              value={partyData?.TEL_NO || ""}
+              disabled={!isEditButtonDisabled && !isAddButtonDisabled}
+              name="TEL_NO"
+              sx={textInputSx}
+              inputProps={{
+                style: {
+                  padding: '6px 0px',
+                  marginTop: '10px',
+                  fontSize: '14px'
+                },
+              }}
+            />
+          </Grid>
+
+          <Grid size={{ xs: 12, sm: 6, md: 2 }} >
+            <AutoVibe
+              id="CITY_KEY"
+              disabled={!isEditButtonDisabled && !isAddButtonDisabled}
+              getOptionLabel={(option) => option || ''}
+              options={[]}
+              label="City/District"
+              name="CITY_KEY"
+              value={partyData?.CITY_KEY || ""}
+              onChange={handleInputChange}
+              sx={{
+                ...DropInputSx,
+                '& .MuiFilledInput-root': {
+                  paddingTop: '16px !important',
+                },
+                '& input': {
+                  padding: '6px 8px',
+                  fontSize: '14px',
+                },
+              }}
+            />
+          </Grid>
+
+          <Grid size={{ xs: 12, sm: 6, md: 2 }} >
+            <TextField
+              label="Email"
+              variant="filled"
+              fullWidth
+              onChange={handleInputChange}
+              value={partyData?.E_MAIL || ""}
+              disabled={!isEditButtonDisabled && !isAddButtonDisabled}
+              name="E_MAIL"
+              sx={textInputSx}
+              inputProps={{
+                style: {
+                  padding: '6px 0px',
+                  marginTop: '10px',
+                  fontSize: '14px'
+                },
+              }}
+            />
+          </Grid>
+
+          <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+            <TextField
+              label="Mobile"
+              variant="filled"
+              fullWidth
+              onChange={handleInputChange}
+              value={partyData?.MOBILE_NO || ""}
+              disabled={!isEditButtonDisabled && !isAddButtonDisabled}
+              name="MOBILE_NO"
+              sx={textInputSx}
+              inputProps={{
+                style: {
+                  padding: '6px 0px',
+                  marginTop: '10px',
+                  fontSize: '14px'
+                },
+              }}
+            />
+          </Grid>
+
+          <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+            <TextField
+              label="Cont Person"
+              variant="filled"
+              fullWidth
+              onChange={handleInputChange}
+              value={partyData?.CONTACT_PERSON || ""}
+              disabled={!isEditButtonDisabled && !isAddButtonDisabled}
+              name="CONTACT_PERSON"
+              sx={textInputSx}
+              inputProps={{
+                style: {
+                  padding: '6px 0px',
+                  marginTop: '10px',
+                  fontSize: '14px'
+                },
+              }}
+            />
+          </Grid>
+
+          <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+            <TextField
+              label="Website"
+              variant="filled"
+              fullWidth
+              onChange={handleInputChange}
+              value={partyData?.WEBSITE || ""}
+              disabled={!isEditButtonDisabled && !isAddButtonDisabled}
+              name="WEBSITE"
+              sx={textInputSx}
+              inputProps={{
+                style: {
+                  padding: '6px 0px',
+                  marginTop: '10px',
+                  fontSize: '14px'
+                },
+              }}
+            />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6, md: 1 }}>
+            <TextField
+              label="Alt Cd"
+              variant="filled"
+              fullWidth
+              onChange={handleInputChange}
+              name=""
+              value={""}
+              disabled={true}
+              sx={textInputSx}
+              inputProps={{
+                style: {
+                  padding: '6px 0px',
+                  marginTop: '10px',
+                  fontSize: '14px',
+                },
+              }}
+            />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6, md: 1 }}>
+            <TextField
+              label="LBT"
+              variant="filled"
+              fullWidth
+              onChange={handleInputChange}
+              name=""
+              value={""}
+              disabled={true}
+              sx={textInputSx}
+              inputProps={{
+                style: {
+                  padding: '6px 0px',
+                  marginTop: '10px',
+                  fontSize: '14px',
+                },
+              }}
+            />
+          </Grid>
+
+          <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+            <TextField
+              label="Fax"
+              variant="filled"
+              fullWidth
+              onChange={handleInputChange}
+              value={partyData?.FAX_NO || ""}
+              disabled={!isEditButtonDisabled && !isAddButtonDisabled}
+              name="FAX_NO"
+              sx={textInputSx}
+              inputProps={{
+                style: {
+                  padding: '6px 0px',
+                  marginTop: '10px',
+                  fontSize: '14px'
+                },
+              }}
+            />
+          </Grid>
+
+          <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+            <TextField
+              label="Spl Mark Down"
+              variant="filled"
+              fullWidth
+              onChange={handleInputChange}
+              value={""}
+              disabled={!isEditButtonDisabled && !isAddButtonDisabled}
+              name=""
+              sx={textInputSx}
+              inputProps={{
+                style: {
+                  padding: '6px 0px',
+                  marginTop: '10px',
+                  fontSize: '14px'
+                },
+              }}
+            />
+          </Grid>
+
+          <Grid size={{ xs: 12, sm: 6, md: 2 }} >
+            <TextField
+              label="Excise"
+              variant="filled"
+              fullWidth
+              onChange={handleInputChange}
+              value={partyData?.EXCISE_CODE || ""}
+              disabled={!isEditButtonDisabled && !isAddButtonDisabled}
+              name="EXCISE_CODE"
+              sx={textInputSx}
+              inputProps={{
+                style: {
+                  padding: '6px 0px',
+                  marginTop: '10px',
+                  fontSize: '14px'
+                },
+              }}
+            />
+          </Grid>
+
+          <Grid size={{ xs: 12, sm: 6, md: 2 }} >
+            <AutoVibe
+              id="TRADE_DISC"
+              disabled={!isEditButtonDisabled && !isAddButtonDisabled}
+              getOptionLabel={(option) => option || ''}
+              options={[]}
+              label="Trade Disc"
+              name="TRADE_DISC"
+              value={partyData?.TRADE_DISC || ""}
+              onChange={handleInputChange}
+              sx={{
+                ...DropInputSx,
+                '& .MuiFilledInput-root': {
+                  paddingTop: '16px !important',
+                },
+                '& input': {
+                  padding: '6px 8px',
+                  fontSize: '14px',
+                },
+              }}
+            />
+          </Grid>
+
+          <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+            <TextField
+              label="VAT"
+              variant="filled"
+              fullWidth
+              onChange={handleInputChange}
+              value={partyData?.VAT || ""}
+              disabled={!isEditButtonDisabled && !isAddButtonDisabled}
+              name="VAT"
+              sx={textInputSx}
+              inputProps={{
+                style: {
+                  padding: '6px 0px',
+                  marginTop: '10px',
+                  fontSize: '14px'
+                },
+              }}
+            />
+          </Grid>
+
+          <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+            <AutoVibe
+              id="TRSP_KEY"
+              disabled={!isEditButtonDisabled && !isAddButtonDisabled}
+              getOptionLabel={(option) => option || ''}
+              options={[]}
+              label="Transporter"
+              name="TRSP_KEY"
+              value={partyData?.TRSP_KEY || 0}
+              onChange={handleInputChange}
+              sx={{
+                ...DropInputSx,
+                '& .MuiFilledInput-root': {
+                  paddingTop: '16px !important',
+                },
+                '& input': {
+                  padding: '6px 8px',
+                  fontSize: '14px',
+                },
+              }}
+            />
+          </Grid>
+
+          <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+            <TextField
+              label="CST"
+              variant="filled"
+              fullWidth
+              onChange={handleInputChange}
+              value={partyData?.CST || ""}
+              disabled={!isEditButtonDisabled && !isAddButtonDisabled}
+              name="CST"
+              sx={textInputSx}
+              inputProps={{
+                style: {
+                  padding: '6px 0px',
+                  marginTop: '10px',
+                  fontSize: '12px'
+                },
+              }}
+            />
+          </Grid>
+
+          <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+            <AutoVibe
+              id="TAX_KEY"
+              disabled={!isEditButtonDisabled && !isAddButtonDisabled}
+              getOptionLabel={(option) => option || ''}
+              options={[]}
+              label="Tax Appl"
+              name="TAX_KEY"
+              value={partyData?.TAX_KEY || ""}
+              onChange={handleInputChange}
+              sx={{
+                ...DropInputSx,
+                '& .MuiFilledInput-root': {
+                  paddingTop: '16px !important',
+                },
+                '& input': {
+                  padding: '6px 8px',
+                  fontSize: '14px',
+                },
+              }}
+            />
+          </Grid>
+
+          <Grid size={{ xs: 12, sm: 6, md: 4 }} >
+            <AutoVibe
+              id="CFORM_FLG"
+              disabled={!isEditButtonDisabled && !isAddButtonDisabled}
+              getOptionLabel={(option) => option || ''}
+              options={[]}
+              label="Form Type"
+              name="CFORM_FLG"
+              value={partyData?.CFORM_FLG || 0}
+              onChange={handleInputChange}
+              sx={{
+                ...DropInputSx,
+                '& .MuiFilledInput-root': {
+                  paddingTop: '16px !important',
+                },
+                '& input': {
+                  padding: '6px 8px',
+                  fontSize: '14px',
+                },
+              }}
+            />
+          </Grid>
+
+          <Grid size={{ xs: 12, sm: 6, md: 4 }} >
+            <TextField
+              label="GSTIN No"
+              variant="filled"
+              fullWidth
+              onChange={handleInputChange}
+              value={partyData?.GSTTIN_NO || ""}
+              disabled={!isEditButtonDisabled && !isAddButtonDisabled}
+              name="GSTTIN_NO"
+              sx={textInputSx}
+              inputProps={{
+                style: {
+                  padding: '6px 0px',
+                  marginTop: '10px',
+                  fontSize: '14px'
+                },
+              }}
+            />
+          </Grid>
+
+          <Grid size={{ xs: 12, sm: 6, md: 8 }}>
+            <TextField
+              label="Remark"
+              variant="filled"
+              fullWidth
+              onChange={handleInputChange}
+              value={partyData?.REMK || ""}
+              disabled={!isEditButtonDisabled && !isAddButtonDisabled}
+              name="REMK"
+              sx={textInputSx}
+              inputProps={{
+                style: {
+                  padding: '6px 0px',
+                  marginTop: '10px',
+                  fontSize: '14px'
+                },
+              }}
+            />
+          </Grid>
+
+          <Grid size={{ xs: 12, sm: 6, md: 3 }} >
+            <RadioGroup
+              row
+              name="RDOFF"
+              onChange={handleInputChange}
+              disabled={!isEditButtonDisabled && !isAddButtonDisabled}
+              value={partyData?.RDOFF || ""}
+              sx={{
+                margin: 0, padding: 0,
+                display: 'flex',
+                alignItems: 'center',
+              }}
+            >
+              <FormControlLabel disabled={!isEditButtonDisabled && !isAddButtonDisabled}
+                value="N" control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
+                label={<Typography sx={{ fontSize: '12px' }}>None</Typography>} />
+              <FormControlLabel disabled={!isEditButtonDisabled && !isAddButtonDisabled}
+                value="NR" control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
+                label={<Typography sx={{ fontSize: '12px' }}>Nearest Re</Typography>} />
+              <FormControlLabel disabled={!isEditButtonDisabled && !isAddButtonDisabled}
+                value="R" control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
+                label={<Typography sx={{ fontSize: '12px' }}>Rs.5</Typography>} />
+            </RadioGroup>
+          </Grid>
+
+          <Grid size={{ xs: 12, sm: 6, md: 3 }} sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <FormLabel
+              sx={{
                 fontSize: '12px',
-              },
-            }}
-          />
-          <TextField
-            label="Tel"
-            variant="filled"
-            fullWidth
-            onChange={handleInputChange}
-            value={partyData?.TEL_NO || ""}
-            disabled={!isEditButtonDisabled && !isAddButtonDisabled}
-            name="TEL_NO"
-            sx={textInputSx}
-            inputProps={{
-              style: {
-                padding: '6px 8px',
-                fontSize: '12px'
-              },
-            }}
-          />
-        </Grid>
+                fontWeight: 'bold',
+                color: 'black',
+                whiteSpace: 'nowrap',
+                lineHeight: '1.5',
+                margin: 0,
+                padding: 0,
+              }}
+              component="legend"
+            >
+              Entity under SEZ
+            </FormLabel>
 
-        <Grid size={{ xs: 12, sm: 6, md: 2 }} sx={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: '3px'
-        }}>
-          <AutoVibe
-            id="CITY_KEY"
-            disabled={!isEditButtonDisabled && !isAddButtonDisabled}
-            getOptionLabel={(option) => option || ''}
-            options={[]}
-            label="City/District"
-            name="CITY_KEY"
-            value={partyData?.CITY_KEY || ""}
-            onChange={handleInputChange}
-            sx={DropInputSx}
-            inputProps={{
-              style: {
-                padding: '6px 8px',
-                fontSize: '12px',
-              },
-            }}
-          />
-          <TextField
-            label="Email"
-            variant="filled"
-            fullWidth
-            onChange={handleInputChange}
-            value={partyData?.E_MAIL || ""}
-            disabled={!isEditButtonDisabled && !isAddButtonDisabled}
-            name="E_MAIL"
-            sx={textInputSx}
-            inputProps={{
-              style: {
-                padding: '6px 8px',
-                fontSize: '12px'
-              },
-            }}
-          />
-        </Grid>
+            <RadioGroup
+              row
+              name="SEZ"
+              onChange={handleInputChange}
+              disabled={!isEditButtonDisabled && !isAddButtonDisabled}
+              value={partyData?.SEZ || ""}
+              sx={{ margin: 0, padding: 0, display: 'flex', alignItems: 'center', gap: 1 }}
+            >
+              <FormControlLabel
+                disabled={!isEditButtonDisabled && !isAddButtonDisabled}
+                value="Y"
+                control={<Radio sx={{ transform: 'scale(0.6)', padding: 0 }} />}
+                label={<Typography sx={{ fontSize: '12px' }}>Yes</Typography>}
+                sx={{ margin: 0 }}
+              />
+              <FormControlLabel
+                disabled={!isEditButtonDisabled && !isAddButtonDisabled}
+                value="N"
+                control={<Radio sx={{ transform: 'scale(0.6)', padding: 0 }} />}
+                label={<Typography sx={{ fontSize: '12px' }}>No</Typography>}
+                sx={{ margin: 0 }}
+              />
+            </RadioGroup>
 
-        <Grid size={{ xs: 12, sm: 6, md: 6 }}>
-          <TextField
-            label="Cont Person"
-            variant="filled"
-            fullWidth
-            onChange={handleInputChange}
-            value={partyData?.CONTACT_PERSON || ""}
-            disabled={!isEditButtonDisabled && !isAddButtonDisabled}
-            name="CONTACT_PERSON"
-            sx={textInputSx}
-            inputProps={{
-              style: {
-                padding: '6px 8px',
-                fontSize: '12px'
-              },
-            }}
-          />
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 2 }}>
-          <TextField
-            label="Mobile"
-            variant="filled"
-            fullWidth
-            onChange={handleInputChange}
-            value={partyData?.MOBILE_NO || ""}
-            disabled={!isEditButtonDisabled && !isAddButtonDisabled}
-            name="MOBILE_NO"
-            sx={textInputSx}
-            inputProps={{
-              style: {
-                padding: '6px 8px',
-                fontSize: '12px'
-              },
-            }}
-          />
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 2 }}>
-          <TextField
-            label="Website"
-            variant="filled"
-            fullWidth
-            onChange={handleInputChange}
-            value={partyData?.WEBSITE || ""}
-            disabled={!isEditButtonDisabled && !isAddButtonDisabled}
-            name="WEBSITE"
-            sx={textInputSx}
-            inputProps={{
-              style: {
-                padding: '6px 8px',
-                fontSize: '12px'
-              },
-            }}
-          />
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 1 }}>
-          <TextField
-            label="Alt Cd"
-            variant="filled"
-            fullWidth
-            onChange={handleInputChange}
-            name=""
-            value={""}
-            disabled={true}
-            sx={textInputSx}
-            inputProps={{
-              style: {
-                padding: '6px 8px',
-                fontSize: '12px',
-              },
-            }}
-          />
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 1 }}>
-          <TextField
-            label="LBT"
-            variant="filled"
-            fullWidth
-            onChange={handleInputChange}
-            name=""
-            value={""}
-            disabled={true}
-            sx={textInputSx}
-            inputProps={{
-              style: {
-                padding: '6px 8px',
-                fontSize: '12px',
-              },
-            }}
-          />
-        </Grid>
-
-        <Grid size={{ xs: 12, sm: 6, md: 2 }} sx={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: '3px'
-        }}>
-          <TextField
-            label="Fax"
-            variant="filled"
-            fullWidth
-            onChange={handleInputChange}
-            value={partyData?.FAX_NO || ""}
-            disabled={!isEditButtonDisabled && !isAddButtonDisabled}
-            name="FAX_NO"
-            sx={textInputSx}
-            inputProps={{
-              style: {
-                padding: '6px 8px',
-                fontSize: '12px'
-              },
-            }}
-          />
-          <TextField
-            label="Spl Mark Down"
-            variant="filled"
-            fullWidth
-            onChange={handleInputChange}
-            value={""}
-            disabled={!isEditButtonDisabled && !isAddButtonDisabled}
-            name=""
-            sx={textInputSx}
-            inputProps={{
-              style: {
-                padding: '6px 8px',
-                fontSize: '12px'
-              },
-            }}
-          />
-        </Grid>
-
-        <Grid size={{ xs: 12, sm: 6, md: 2 }} sx={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: '3px'
-        }}>
-          <TextField
-            label="Excise"
-            variant="filled"
-            fullWidth
-            onChange={handleInputChange}
-            value={partyData?.EXCISE_CODE || ""}
-            disabled={!isEditButtonDisabled && !isAddButtonDisabled}
-            name="EXCISE_CODE"
-            sx={textInputSx}
-            inputProps={{
-              style: {
-                padding: '6px 8px',
-                fontSize: '12px'
-              },
-            }}
-          />
-          <AutoVibe
-            id="TRADE_DISC"
-            disabled={!isEditButtonDisabled && !isAddButtonDisabled}
-            getOptionLabel={(option) => option || ''}
-            options={[]}
-            label="Trade Disc"
-            name="TRADE_DISC"
-            value={partyData?.TRADE_DISC || ""}
-            onChange={handleInputChange}
-            sx={DropInputSx}
-            inputProps={{
-              style: {
-                padding: '6px 8px',
-                fontSize: '12px',
-              },
-            }}
-          />
-        </Grid>
-
-        <Grid size={{ xs: 12, sm: 6, md: 2 }} sx={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: '3px'
-        }}>
-          <TextField
-            label="VAT"
-            variant="filled"
-            fullWidth
-            onChange={handleInputChange}
-            value={partyData?.VAT || ""}
-            disabled={!isEditButtonDisabled && !isAddButtonDisabled}
-            name="VAT"
-            sx={textInputSx}
-            inputProps={{
-              style: {
-                padding: '6px 8px',
-                fontSize: '12px'
-              },
-            }}
-          />
-          <AutoVibe
-            id="TRSP_KEY"
-            disabled={!isEditButtonDisabled && !isAddButtonDisabled}
-            getOptionLabel={(option) => option || ''}
-            options={[]}
-            label="Transporter"
-            name="TRSP_KEY"
-            value={partyData?.TRSP_KEY || 0}
-            onChange={handleInputChange}
-            sx={DropInputSx}
-            inputProps={{
-              style: {
-                padding: '6px 8px',
-                fontSize: '12px',
-              },
-            }}
-          />
-        </Grid>
-
-        <Grid size={{ xs: 12, sm: 6, md: 2 }} sx={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: '3px'
-        }}>
-          <TextField
-            label="CST"
-            variant="filled"
-            fullWidth
-            onChange={handleInputChange}
-            value={partyData?.CST || ""}
-            disabled={!isEditButtonDisabled && !isAddButtonDisabled}
-            name="CST"
-            sx={textInputSx}
-            inputProps={{
-              style: {
-                padding: '6px 8px',
-                fontSize: '12px'
-              },
-            }}
-          />
-          <AutoVibe
-            id="TAX_KEY"
-            disabled={!isEditButtonDisabled && !isAddButtonDisabled}
-            getOptionLabel={(option) => option || ''}
-            options={[]}
-            label="Tax Appl"
-            name="TAX_KEY"
-            value={partyData?.TAX_KEY || ""}
-            onChange={handleInputChange}
-            sx={DropInputSx}
-            inputProps={{
-              style: {
-                padding: '6px 8px',
-                fontSize: '12px',
-              },
-            }}
-          />
-        </Grid>
-
-        <Grid size={{ xs: 12, sm: 6, md: 4 }} sx={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: '3px'
-        }}>
-          <AutoVibe
-            id="CFORM_FLG"
-            disabled={!isEditButtonDisabled && !isAddButtonDisabled}
-            getOptionLabel={(option) => option || ''}
-            options={[]}
-            label="Form Type"
-            name="CFORM_FLG"
-            value={partyData?.CFORM_FLG || 0}
-            onChange={handleInputChange}
-            sx={DropInputSx}
-            inputProps={{
-              style: {
-                padding: '6px 8px',
-                fontSize: '12px',
-              },
-            }}
-          />
-          <TextField
-            label="GSTIN No"
-            variant="filled"
-            fullWidth
-            onChange={handleInputChange}
-            value={partyData?.GSTTIN_NO || ""}
-            disabled={!isEditButtonDisabled && !isAddButtonDisabled}
-            name="GSTTIN_NO"
-            sx={textInputSx}
-            inputProps={{
-              style: {
-                padding: '6px 8px',
-                fontSize: '12px'
-              },
-            }}
-          />
-        </Grid>
-
-        <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-          <TextField
-            label="Remark"
-            variant="filled"
-            fullWidth
-            onChange={handleInputChange}
-            value={partyData?.REMK || ""}
-            disabled={!isEditButtonDisabled && !isAddButtonDisabled}
-            name="REMK"
-            sx={textInputSx}
-            inputProps={{
-              style: {
-                padding: '6px 8px',
-                fontSize: '12px'
-              },
-            }}
-          />
-        </Grid>
-
-        <Grid size={{ xs: 12, sm: 6, md: 8 }} sx={{
-          display: 'flex',
-          alignItems: 'center',
-          position: 'relative',
-          left: 4
-        }}>
-          <RadioGroup
-            row
-            name="RDOFF"
-            onChange={handleInputChange}
-            disabled={!isEditButtonDisabled && !isAddButtonDisabled}
-            value={partyData?.RDOFF || ""}
-            sx={{
-              margin: 0, padding: 0,
-              display: 'flex',
-              alignItems: 'center',
-            }}
-          >
-            <FormControlLabel disabled={!isEditButtonDisabled && !isAddButtonDisabled}
-              value="N" control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
-              label={<Typography sx={{ fontSize: '12px' }}>None</Typography>} />
-            <FormControlLabel disabled={!isEditButtonDisabled && !isAddButtonDisabled}
-              value="NR" control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
-              label={<Typography sx={{ fontSize: '12px' }}>Nearest Re</Typography>} />
-            <FormControlLabel disabled={!isEditButtonDisabled && !isAddButtonDisabled}
-              value="R" control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
-              label={<Typography sx={{ fontSize: '12px' }}>Rs.5</Typography>} />
-          </RadioGroup>
-
-          <FormLabel
-            sx={{
-              fontSize: '12px',
-              fontWeight: 'bold',
-              color: 'black',
-              whiteSpace: 'nowrap',
-              lineHeight: '1.5',
-              position: 'relative',
-              left: -8,
-              display: 'flex',
-              alignItems: 'center',
-              padding: 0,
-              margin: 0,
-            }}
-            component="legend">Entity under SEZ</FormLabel>
-          <RadioGroup
-            row
-            name="SEZ"
-            onChange={handleInputChange}
-            disabled={!isEditButtonDisabled && !isAddButtonDisabled}
-            value={partyData?.SEZ || ""}
-            sx={{ margin: 0, padding: 0 }}
-          >
-            <FormControlLabel disabled={!isEditButtonDisabled && !isAddButtonDisabled}
-              value="Y" control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
-              label={<Typography sx={{ fontSize: '12px' }}>Yes</Typography>} />
-            <FormControlLabel disabled={!isEditButtonDisabled && !isAddButtonDisabled}
-              value="N" control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
-              label={<Typography sx={{ fontSize: '12px' }}>No</Typography>} />
-          </RadioGroup>
-
-          <Link sx={{ fontSize: '14px', textDecoration: 'none', cursor: 'pointer' }}>
             <Button
               component="span"
               variant="contained"
               sx={{
-                minHeight: '10px',
-                padding: '1px 4px',
+                bgcolor: '#635bff',
+                minHeight: '16px',
+                padding: '2px 6px',
                 fontSize: '0.675rem',
               }}
             >
               Verify GSTIN
             </Button>
-          </Link>
-        </Grid>
+          </Grid>
 
-        <Grid size={{ xs: 12, sm: 6, md: 4 }} sx={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '10px'
-        }}>
-          <FormLabel
-            sx={{
-              fontSize: '12px',
-              fontWeight: 'bold',
-              color: 'black',
-              whiteSpace: 'nowrap',
-              lineHeight: '1.5',
-              display: 'flex',
-              alignItems: 'center',
-              padding: 0,
-              margin: 0,
-            }}
-            component="legend">RD/URD</FormLabel>
-          <RadioGroup
-            row
-            name="RD_URD"
-            onChange={handleInputChange}
-            disabled={!isEditButtonDisabled && !isAddButtonDisabled}
-            value={partyData?.RD_URD || ""}
-            sx={{ margin: 0, padding: 0 }}
-          >
-            <FormControlLabel disabled={!isEditButtonDisabled && !isAddButtonDisabled}
-              value="R" control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
-              label={<Typography sx={{ fontSize: '12px' }}>RD</Typography>} />
-            <FormControlLabel disabled={!isEditButtonDisabled && !isAddButtonDisabled}
-              value="U" control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
-              label={<Typography sx={{ fontSize: '12px' }}>URD</Typography>} />
-            <FormControlLabel disabled={!isEditButtonDisabled && !isAddButtonDisabled}
-              value="C" control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
-              label={<Typography sx={{ fontSize: '12px' }}>Composition</Typography>} />
-          </RadioGroup>
-        </Grid>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }} sx={{ display: 'flex', alignItems: 'center', gap: 2 }} >
+            <FormLabel
+              sx={{
+                fontSize: '12px',
+                fontWeight: 'bold',
+                color: 'black',
+                whiteSpace: 'nowrap',
+                lineHeight: '1.5',
+                display: 'flex',
+                alignItems: 'center',
+                padding: 0,
+                margin: 0,
+              }}
+              component="legend">RD/URD</FormLabel>
+            <RadioGroup
+              row
+              name="RD_URD"
+              onChange={handleInputChange}
+              disabled={!isEditButtonDisabled && !isAddButtonDisabled}
+              value={partyData?.RD_URD || ""}
+              sx={{ margin: 0, padding: 0 }}
+            >
+              <FormControlLabel disabled={!isEditButtonDisabled && !isAddButtonDisabled}
+                value="R" control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
+                label={<Typography sx={{ fontSize: '12px' }}>RD</Typography>} />
+              <FormControlLabel disabled={!isEditButtonDisabled && !isAddButtonDisabled}
+                value="U" control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
+                label={<Typography sx={{ fontSize: '12px' }}>URD</Typography>} />
+              <FormControlLabel disabled={!isEditButtonDisabled && !isAddButtonDisabled}
+                value="C" control={<Radio sx={{ transform: 'scale(0.6)', padding: '2px' }} />}
+                label={<Typography sx={{ fontSize: '12px' }}>Composition</Typography>} />
+            </RadioGroup>
+          </Grid>
 
-        <Grid size={{ xs: 12, sm: 6, md: 1 }}>
-          <FormControlLabel
-            control={<Checkbox name="STATUS" size="small" checked={partyData?.STATUS === "1"}
-              onChange={handleChangeStatus} />}
-            disabled={!isEditButtonDisabled && !isAddButtonDisabled}
-            label="Active"
-            sx={{
-              '& .MuiFormControlLabel-label': { fontSize: '12px' }
-            }}
-          />
+          <Grid size={{ xs: 12, sm: 6, md: 1 }}>
+            <FormControlLabel
+              control={<Checkbox name="STATUS" size="small" checked={partyData?.STATUS === "1"}
+                onChange={handleChangeStatus} />}
+              disabled={!isEditButtonDisabled && !isAddButtonDisabled}
+              label="Active"
+              sx={{
+                '& .MuiFormControlLabel-label': { fontSize: '12px' }
+              }}
+            />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+            <FormControlLabel
+              control={<Checkbox name="DEFAULT_BRANCH" size="small" checked={partyData?.DEFAULT_BRANCH === "1"}
+                onChange={handleChangeStatus} />}
+              disabled={!isEditButtonDisabled && !isAddButtonDisabled}
+              label="Default Branch"
+              sx={{
+                '& .MuiFormControlLabel-label': { fontSize: '12px' }
+              }}
+            />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6, md: 12 }} sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 2 }}>
+            <Button size='small'
+              sx={{
+                backgroundColor: '#635bff',
+              }}
+              variant="contained"
+              onClick={handleConfirm}
+              disabled={mode === null}
+            >
+              Confirm
+            </Button>
+            <Button size='small'
+              sx={{
+                backgroundColor: '#635bff',
+              }}
+              onClick={handleCancel}
+              disabled={mode === null}
+              variant="contained"
+            >
+              Cancel
+            </Button>
+          </Grid>
         </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 2 }}>
-          <FormControlLabel
-            control={<Checkbox name="DEFAULT_BRANCH" size="small" checked={partyData?.DEFAULT_BRANCH === "1"}
-              onChange={handleChangeStatus} />}
-            disabled={!isEditButtonDisabled && !isAddButtonDisabled}
-            label="Default Branch"
-            sx={{
-              '& .MuiFormControlLabel-label': { fontSize: '12px' }
-            }}
-          />
-        </Grid>
-        <Stack direction="row" spacing={2} sx={{ position: 'relative', left: 198 }}>
-          <Button
-            sx={{
-              backgroundColor: '#28a745',
-              margin: { xs: '0 4px', sm: '0 6px' },
-              minWidth: { xs: 40, sm: 46, md: 60 },
-              height: { xs: 40, sm: 46, md: 30 },
-            }}
-            variant="contained"
-            onClick={handleConfirm}
-            disabled={mode === null}
-          >
-            Confirm
-          </Button>
-          <Button
-            sx={{
-              backgroundColor: '#6c757d',
-              margin: { xs: '0 4px', sm: '0 6px' },
-              minWidth: { xs: 40, sm: 46, md: 60 },
-              height: { xs: 40, sm: 46, md: 30 },
-            }}
-            onClick={handleCancel}
-            disabled={mode === null}
-            variant="contained"
-          >
-            Cancel
-          </Button>
-        </Stack>
-      </Grid>
-
+      </Grid >
     </>
   )
 }

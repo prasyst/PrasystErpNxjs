@@ -734,7 +734,7 @@ const CompanyMst = () => {
           CST: "",
           EXCISE_CODE: "",
           REMK: "",
-          STATUS: "",
+          STATUS: "1",
           PLACE: "",
           VAT: "",
           MAIN_BRANCH: "",
@@ -1563,7 +1563,7 @@ const CompanyMst = () => {
         </Grid>
       </Grid>
 
-      <Grid sx={{ marginInline: { xs: '5%', sm: '5%', md: '15%', lg: '15%', xl: '15%' } }}>
+      <Grid sx={{ marginInline: { xs: '5%', sm: '5%', md: '5%', lg: '5%', xl: '5%' } }}>
         <Box sx={{ display: 'flex', mb: 1 }}>
           <Tabs
             value={tabIndex}
@@ -1610,8 +1610,9 @@ const CompanyMst = () => {
           </Tabs>
         </Box>
       </Grid>
+
       <Grid sx={{
-        marginInline: { xs: '5%', sm: '5%', md: '15%', lg: '15%', xl: '15%' },
+        marginInline: { xs: '5%', sm: '5%', md: '5%', lg: '5%', xl: '5%' },
       }}>
         {tabIndex === 0 ? (
           <Stepper1

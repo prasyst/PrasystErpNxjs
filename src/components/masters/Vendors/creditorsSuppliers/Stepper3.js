@@ -1,144 +1,19 @@
 'use client';
-import React, { useEffect, useState, useCallback, Suspense } from 'react';
+import React from 'react';
 import {
-  Box,
-  Grid,
-  TextField,
-  Typography,
-  Button,
-  Stack,
-  FormControlLabel,
-  FormLabel,
-  Radio,
-  RadioGroup,
-  Checkbox,
-  Link
+  Grid, TextField, Typography, Button, Link
 } from '@mui/material';
-import { useSearchParams, useRouter } from 'next/navigation';
-import debounce from 'lodash.debounce';
-import { toast, ToastContainer } from 'react-toastify';
-import KeyboardArrowLeftIcon from "@mui/icons-material/KeyboardArrowLeft";
-import NavigateNextIcon from "@mui/icons-material/NavigateNext";
-import CrudButton from '../../../../GlobalFunction/CrudButton';
 import AutoVibe from '../../../../GlobalFunction/CustomAutoComplete/AutoVibe';
-import axiosInstance from '../../../../lib/axios';
 import { getFormMode } from '../../../../lib/helpers';
-import EditableTable from '@/atoms/EditTable';
-import CrudButtons from "@/GlobalFunction/CrudButtons";
-import PaginationButtons from '@/GlobalFunction/PaginationButtons';
-import z from 'zod';
+import { textInputSx } from '../../../../../public/styles/textInputSx';
+import { DropInputSx } from '../../../../../public/styles/dropInputSx';
+import { textInputDoubleSx } from '../../../../../public/styles/textInputSx';
 
 const FORM_MODE = getFormMode();
 
 const Stepper3 = ({ formData, setFormData, isFormDisabled }) => {
-  console.log("Stepper3 full formData:", formData?.PARTY_NAME || "");
 
   const clientData = formData?.CLIENTTERMSEntities?.[0];
-
-  const textInputSx = {
-    '& .MuiInputBase-root': {
-      height: 36,
-      fontSize: '14px',
-    },
-    '& .MuiInputLabel-root': {
-      fontSize: '14px',
-      top: '-8px',
-    },
-    '& .MuiFilledInput-root': {
-      backgroundColor: '#fafafa',
-      border: '1px solid #e0e0e0',
-      borderRadius: '6px',
-      overflow: 'hidden',
-      height: 36,
-      fontSize: '14px',
-    },
-    '& .MuiFilledInput-root:before': {
-      display: 'none',
-    },
-    '& .MuiFilledInput-root:after': {
-      display: 'none',
-    },
-    '& .MuiInputBase-input': {
-      padding: '10px 12px !important',
-      fontSize: '14px !important',
-      lineHeight: '1.4',
-    },
-    '& .MuiFilledInput-root.Mui-disabled': {
-      backgroundColor: '#fff'
-    }
-  };
-
-  const doubleInputSx = {
-    '& .MuiInputBase-root': {
-      height: 76,
-      fontSize: '14px',
-    },
-    '& .MuiInputLabel-root': {
-      fontSize: '14px',
-      top: '-8px',
-    },
-    '& .MuiFilledInput-root': {
-      backgroundColor: '#fafafa',
-      border: '1px solid #e0e0e0',
-      borderRadius: '6px',
-      overflow: 'hidden',
-      height: 76,
-      fontSize: '14px',
-    },
-    '& .MuiFilledInput-root:before': {
-      display: 'none',
-    },
-    '& .MuiFilledInput-root:after': {
-      display: 'none',
-    },
-    '& .MuiInputBase-input': {
-      padding: '10px 12px !important',
-      fontSize: '14px !important',
-      lineHeight: '1.4',
-    },
-    '& .MuiFilledInput-root.Mui-disabled': {
-      backgroundColor: '#fff'
-    }
-  };
-
-  const DropInputSx = {
-    '& .MuiInputBase-root': {
-      height: 36,
-      fontSize: '14px',
-    },
-    '& .MuiInputLabel-root': {
-      fontSize: '14px',
-      top: '-4px',
-    },
-    '& .MuiFilledInput-root': {
-      backgroundColor: '#fafafa',
-      border: '1px solid #e0e0e0',
-      borderRadius: '6px',
-      overflow: 'hidden',
-      height: 36,
-      fontSize: '14px',
-      paddingRight: '36px',
-    },
-    '& .MuiFilledInput-root:before': {
-      display: 'none',
-    },
-    '& .MuiFilledInput-root:after': {
-      display: 'none',
-    },
-    '& .MuiInputBase-input': {
-      padding: '10px 12px',
-      fontSize: '14px',
-      lineHeight: '1.4',
-    },
-    '& .MuiAutocomplete-endAdornment': {
-      top: '50%',
-      transform: 'translateY(-50%)',
-      right: '10px',
-    },
-    '& .MuiFilledInput-root.Mui-disabled': {
-      backgroundColor: '#fff'
-    }
-  };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -160,9 +35,7 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled }) => {
 
   return (
     <>
-
-      <Grid container spacing={0.5}>
-
+      <Grid container spacing={1}>
         <Grid size={{ xs: 12, sm: 6, md: 1 }}></Grid>
         <Grid size={{ xs: 12, sm: 6, md: 4 }}>
           <Typography variant="h6" component="h2">
@@ -180,11 +53,14 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled }) => {
             name="CLIENTGRP_KEY"
             value={clientData?.CLIENTGRP_KEY || 0}
             onChange={handleInputChange}
-            sx={DropInputSx}
-            inputProps={{
-              style: {
+            sx={{
+              ...DropInputSx,
+              '& .MuiFilledInput-root': {
+                paddingTop: '16px !important',
+              },
+              '& input': {
                 padding: '6px 8px',
-                fontSize: '12px',
+                fontSize: '14px',
               },
             }}
           />
@@ -200,11 +76,14 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled }) => {
             name="CLIENTGRP_KEY"
             value={clientData?.CLIENTGRP_KEY || 0}
             onChange={handleInputChange}
-            sx={DropInputSx}
-            inputProps={{
-              style: {
+            sx={{
+              ...DropInputSx,
+              '& .MuiFilledInput-root': {
+                paddingTop: '16px !important',
+              },
+              '& input': {
                 padding: '6px 8px',
-                fontSize: '12px',
+                fontSize: '14px',
               },
             }}
           />
@@ -220,17 +99,19 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled }) => {
             name="CLIENTGRP_KEY"
             value={clientData?.CLIENTGRP_KEY || 0}
             onChange={handleInputChange}
-            sx={DropInputSx}
-            inputProps={{
-              style: {
+            sx={{
+              ...DropInputSx,
+              '& .MuiFilledInput-root': {
+                paddingTop: '16px !important',
+              },
+              '& input': {
                 padding: '6px 8px',
-                fontSize: '12px',
+                fontSize: '14px',
               },
             }}
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 1 }}></Grid>
-
         <Grid size={{ xs: 12, sm: 6, md: 1 }}></Grid>
         <Grid size={{ xs: 12, sm: 6, md: 2 }}>
           <TextField
@@ -244,8 +125,9 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled }) => {
             sx={textInputSx}
             inputProps={{
               style: {
-                padding: '6px 8px',
-                fontSize: '12px'
+                padding: '6px 0px',
+                marginTop: '10px',
+                fontSize: '14px',
               },
             }}
           />
@@ -262,8 +144,9 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled }) => {
             sx={textInputSx}
             inputProps={{
               style: {
-                padding: '6px 8px',
-                fontSize: '12px'
+                padding: '6px 0px',
+                marginTop: '10px',
+                fontSize: '14px',
               },
             }}
           />
@@ -280,8 +163,9 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled }) => {
             sx={textInputSx}
             inputProps={{
               style: {
-                padding: '6px 8px',
-                fontSize: '12px'
+                padding: '6px 0px',
+                marginTop: '10px',
+                fontSize: '14px',
               },
             }}
           />
@@ -299,8 +183,9 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled }) => {
             sx={textInputSx}
             inputProps={{
               style: {
-                padding: '6px 8px',
-                fontSize: '12px'
+                padding: '6px 0px',
+                marginTop: '10px',
+                fontSize: '14px',
               },
             }}
           />
@@ -316,17 +201,19 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled }) => {
             name="TRSP_KEY"
             value={clientData?.TRSP_KEY || ""}
             onChange={handleInputChange}
-            sx={DropInputSx}
-            inputProps={{
-              style: {
+            sx={{
+              ...DropInputSx,
+              '& .MuiFilledInput-root': {
+                paddingTop: '16px !important',
+              },
+              '& input': {
                 padding: '6px 8px',
-                fontSize: '12px',
+                fontSize: '14px',
               },
             }}
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 1 }}></Grid>
-
         <Grid size={{ xs: 12, sm: 6, md: 1 }}></Grid>
         <Grid size={{ xs: 12, sm: 6, md: 2 }}>
           <AutoVibe
@@ -338,11 +225,14 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled }) => {
             name="TRADE_DISC"
             value={clientData?.TRADE_DISC || 0}
             onChange={handleInputChange}
-            sx={DropInputSx}
-            inputProps={{
-              style: {
+            sx={{
+              ...DropInputSx,
+              '& .MuiFilledInput-root': {
+                paddingTop: '16px !important',
+              },
+              '& input': {
                 padding: '6px 8px',
-                fontSize: '12px',
+                fontSize: '14px',
               },
             }}
           />
@@ -358,11 +248,14 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled }) => {
             name="TRADE_DISC"
             value={clientData?.TRADE_DISC || 0}
             onChange={handleInputChange}
-            sx={DropInputSx}
-            inputProps={{
-              style: {
+            sx={{
+              ...DropInputSx,
+              '& .MuiFilledInput-root': {
+                paddingTop: '16px !important',
+              },
+              '& input': {
                 padding: '6px 8px',
-                fontSize: '12px',
+                fontSize: '14px',
               },
             }}
           />
@@ -378,11 +271,14 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled }) => {
             name="TRADE_DISC"
             value={clientData?.TRADE_DISC || 0}
             onChange={handleInputChange}
-            sx={DropInputSx}
-            inputProps={{
-              style: {
+            sx={{
+              ...DropInputSx,
+              '& .MuiFilledInput-root': {
+                paddingTop: '16px !important',
+              },
+              '& input': {
                 padding: '6px 8px',
-                fontSize: '12px',
+                fontSize: '14px',
               },
             }}
           />
@@ -399,8 +295,9 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled }) => {
             sx={textInputSx}
             inputProps={{
               style: {
-                padding: '6px 8px',
-                fontSize: '12px'
+                padding: '6px 0px',
+                marginTop: '10px',
+                fontSize: '14px',
               },
             }}
           />
@@ -418,8 +315,9 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled }) => {
             sx={textInputSx}
             inputProps={{
               style: {
-                padding: '6px 8px',
-                fontSize: '12px'
+                padding: '6px 0px',
+                marginTop: '10px',
+                fontSize: '14px',
               },
             }}
           />
@@ -437,8 +335,9 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled }) => {
             sx={textInputSx}
             inputProps={{
               style: {
-                padding: '6px 8px',
-                fontSize: '12px'
+                padding: '6px 0px',
+                marginTop: '10px',
+                fontSize: '14px',
               },
             }}
           />
@@ -453,6 +352,8 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled }) => {
                 padding: '1px 4px',
                 marginTop: '7.5px',
                 fontSize: '0.675rem',
+                textTransform: 'none',
+                bgcolor: '#635bff'
               }}
             >
               Verify GSTIN
@@ -471,11 +372,14 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled }) => {
             name="DISC_KEY"
             value={clientData?.DISC_KEY || ""}
             onChange={handleInputChange}
-            sx={DropInputSx}
-            inputProps={{
-              style: {
+            sx={{
+              ...DropInputSx,
+              '& .MuiFilledInput-root': {
+                paddingTop: '16px !important',
+              },
+              '& input': {
                 padding: '6px 8px',
-                fontSize: '12px',
+                fontSize: '14px',
               },
             }}
           />
@@ -491,11 +395,14 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled }) => {
             name="DISC_KEY"
             value={clientData?.DISC_KEY || ""}
             onChange={handleInputChange}
-            sx={DropInputSx}
-            inputProps={{
-              style: {
+            sx={{
+              ...DropInputSx,
+              '& .MuiFilledInput-root': {
+                paddingTop: '16px !important',
+              },
+              '& input': {
                 padding: '6px 8px',
-                fontSize: '12px',
+                fontSize: '14px',
               },
             }}
           />
@@ -513,8 +420,9 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled }) => {
             sx={textInputSx}
             inputProps={{
               style: {
-                padding: '6px 8px',
-                fontSize: '12px'
+                padding: '6px 0px',
+                marginTop: '10px',
+                fontSize: '14px',
               },
             }}
           />
@@ -527,7 +435,6 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled }) => {
         </Grid>
 
         <Grid size={{ xs: 12, sm: 6, md: 1 }}></Grid>
-
         <Grid size={{ xs: 12, sm: 6, md: 1 }}></Grid>
         <Grid size={{ xs: 12, sm: 6, md: 4 }}>
           <TextField
@@ -541,8 +448,9 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled }) => {
             sx={textInputSx}
             inputProps={{
               style: {
-                padding: '6px 8px',
-                fontSize: '12px'
+                padding: '6px 0px',
+                marginTop: '10px',
+                fontSize: '14px',
               },
             }}
           />
@@ -560,8 +468,9 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled }) => {
             sx={textInputSx}
             inputProps={{
               style: {
-                padding: '6px 8px',
-                fontSize: '12px'
+                padding: '6px 0px',
+                marginTop: '10px',
+                fontSize: '14px',
               },
             }}
           />
@@ -578,8 +487,9 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled }) => {
             sx={textInputSx}
             inputProps={{
               style: {
-                padding: '6px 8px',
-                fontSize: '12px'
+                padding: '6px 0px',
+                marginTop: '10px',
+                fontSize: '14px',
               },
             }}
           />
@@ -597,15 +507,15 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled }) => {
             sx={textInputSx}
             inputProps={{
               style: {
-                padding: '6px 8px',
-                fontSize: '12px'
+                padding: '6px 0px',
+                marginTop: '10px',
+                fontSize: '14px',
               },
             }}
           />
         </Grid>
 
         <Grid size={{ xs: 12, sm: 6, md: 1 }}></Grid>
-
         <Grid size={{ xs: 12, sm: 6, md: 1 }}></Grid>
         <Grid size={{ xs: 12, sm: 6, md: 6 }}>
           <TextField
@@ -615,24 +525,15 @@ const Stepper3 = ({ formData, setFormData, isFormDisabled }) => {
             onChange={handleInputChange}
             value={clientData?.TARGET_PERC || ""}
             disabled={isFormDisabled}
+            multiline
+            rows={2}
             name="TARGET_PERC"
-            sx={doubleInputSx}
-            inputProps={{
-              style: {
-                padding: '6px 8px',
-                fontSize: '12px'
-              },
-            }}
+            sx={textInputDoubleSx}
           />
         </Grid>
-
-        <Grid size={{ xs: 12, sm: 6, md: 5 }}></Grid>
-
       </Grid >
-
     </>
   )
 }
 
 export default Stepper3;
-

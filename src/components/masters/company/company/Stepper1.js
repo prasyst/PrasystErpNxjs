@@ -1,62 +1,18 @@
 'use client';
-import React, { useEffect, useState, useCallback, Suspense } from 'react';
+import React from 'react';
 import {
-  Box, Grid, TextField, Typography, Button, Stack, FormControlLabel,
-  FormLabel, Radio, Link, RadioGroup, Checkbox,
+  Box, Grid, TextField, Typography, FormControlLabel, Checkbox,
 } from '@mui/material';
-import { useSearchParams, useRouter } from 'next/navigation';
-import debounce from 'lodash.debounce';
 import { toast, ToastContainer } from 'react-toastify';
-import KeyboardArrowLeftIcon from "@mui/icons-material/KeyboardArrowLeft";
-import NavigateNextIcon from "@mui/icons-material/NavigateNext";
-import CrudButton from '../../../../GlobalFunction/CrudButton';
 import AutoVibe from '../../../../GlobalFunction/CustomAutoComplete/AutoVibe';
-import axiosInstance from '../../../../lib/axios';
 import { getFormMode } from '../../../../lib/helpers';
-import EditableTable from '@/atoms/EditTable';
-import CrudButtons from "@/GlobalFunction/CrudButtons";
-import PaginationButtons from '@/GlobalFunction/PaginationButtons';
 import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
-import UploadIcon from '@mui/icons-material/Upload';
-import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
-import z from 'zod';
+import { textInputSx } from '../../../../../public/styles/textInputSx';
+import { DropInputSx } from '../../../../../public/styles/dropInputSx';
 
 const FORM_MODE = getFormMode();
 
 const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
-
-  const textInputSx = {
-    '& .MuiInputBase-root': {
-      height: 36,
-      fontSize: '14px',
-    },
-    '& .MuiInputLabel-root': {
-      fontSize: '14px',
-      top: '-8px',
-    },
-    '& .MuiFilledInput-root': {
-      backgroundColor: '#fafafa',
-      border: '1px solid #e0e0e0',
-      borderRadius: '6px',
-      overflow: 'hidden',
-      height: 36,
-      fontSize: '14px',
-    },
-    '& .MuiFilledInput-root:before': {
-      display: 'none',
-    },
-    '& .MuiFilledInput-root:after': {
-      display: 'none',
-    },
-    '& .MuiInputBase-input': {
-      padding: '10px 12px !important',
-      fontSize: '14px !important',
-      lineHeight: '1.4',
-    },
-    '& .MuiFilledInput-root.Mui-disabled': {
-      backgroundColor: '#fff'
-    }
-  };
 
   const doubleInputSx = {
     '& .MuiInputBase-root': {
@@ -85,45 +41,6 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
       padding: '10px 12px !important',
       fontSize: '14px !important',
       lineHeight: '1.4',
-    },
-    '& .MuiFilledInput-root.Mui-disabled': {
-      backgroundColor: '#fff'
-    }
-  };
-
-  const DropInputSx = {
-    '& .MuiInputBase-root': {
-      height: 36,
-      fontSize: '14px',
-    },
-    '& .MuiInputLabel-root': {
-      fontSize: '14px',
-      top: '-4px',
-    },
-    '& .MuiFilledInput-root': {
-      backgroundColor: '#fafafa',
-      border: '1px solid #e0e0e0',
-      borderRadius: '6px',
-      overflow: 'hidden',
-      height: 36,
-      fontSize: '14px',
-      paddingRight: '36px',
-    },
-    '& .MuiFilledInput-root:before': {
-      display: 'none',
-    },
-    '& .MuiFilledInput-root:after': {
-      display: 'none',
-    },
-    '& .MuiInputBase-input': {
-      padding: '10px 12px',
-      fontSize: '14px',
-      lineHeight: '1.4',
-    },
-    '& .MuiAutocomplete-endAdornment': {
-      top: '50%',
-      transform: 'translateY(-50%)',
-      right: '10px',
     },
     '& .MuiFilledInput-root.Mui-disabled': {
       backgroundColor: '#fff'
@@ -178,7 +95,7 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
 
   return (
     <>
-      <Grid container spacing={0.5}>
+      <Grid container spacing={1}>
         <Grid container size={{ xs: 12, sm: 6, md: 12 }} sx={{ display: 'flex' }}>
           <Grid container size={{ xs: 12, sm: 6, md: 10 }}>
             <Grid size={{ xs: 12, sm: 6, md: 1.5 }}>
@@ -193,8 +110,9 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
                 sx={textInputSx}
                 inputProps={{
                   style: {
-                    padding: '6px 8px',
-                    fontSize: '12px',
+                    padding: '6px 0px',
+                    marginTop: '10px',
+                    fontSize: '14px',
                   },
                 }}
               />
@@ -212,8 +130,9 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
                 sx={textInputSx}
                 inputProps={{
                   style: {
-                    padding: '6px 8px',
-                    fontSize: '12px',
+                    padding: '6px 0px',
+                    marginTop: '10px',
+                    fontSize: '14px',
                   },
                 }}
               />
@@ -231,8 +150,9 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
                 sx={textInputSx}
                 inputProps={{
                   style: {
-                    padding: '6px 8px',
-                    fontSize: '12px',
+                    padding: '6px 0px',
+                    marginTop: '10px',
+                    fontSize: '14px',
                   },
                 }}
               />
@@ -250,8 +170,9 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
                 sx={textInputSx}
                 inputProps={{
                   style: {
-                    padding: '6px 8px',
-                    fontSize: '12px',
+                    padding: '6px 0px',
+                    marginTop: '10px',
+                    fontSize: '14px',
                   },
                 }}
               />
@@ -269,8 +190,9 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
                 sx={textInputSx}
                 inputProps={{
                   style: {
-                    padding: '6px 8px',
-                    fontSize: '12px',
+                    padding: '6px 0px',
+                    marginTop: '10px',
+                    fontSize: '14px',
                   },
                 }}
               />
@@ -286,11 +208,14 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
                 name="TRSP_KEY"
                 value={formData?.TRSP_KEY || 0}
                 onChange={handleInputChange}
-                sx={textInputSx}
-                inputProps={{
-                  style: {
+                sx={{
+                  ...DropInputSx,
+                  '& .MuiFilledInput-root': {
+                    paddingTop: '16px !important',
+                  },
+                  '& input': {
                     padding: '6px 8px',
-                    fontSize: '12px',
+                    fontSize: '14px',
                   },
                 }}
               />
@@ -346,8 +271,9 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
             sx={doubleInputSx}
             inputProps={{
               style: {
-                padding: '6px 8px',
-                fontSize: '12px',
+                padding: '6px 0px',
+                marginTop: '10px',
+                fontSize: '14px',
               },
             }}
           />
@@ -365,8 +291,9 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
             sx={doubleInputSx}
             inputProps={{
               style: {
-                padding: '6px 8px',
-                fontSize: '12px',
+                padding: '6px 0px',
+                marginTop: '10px',
+                fontSize: '14px',
               },
             }}
           />
@@ -384,8 +311,9 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
             sx={doubleInputSx}
             inputProps={{
               style: {
-                padding: '6px 8px',
-                fontSize: '12px',
+                padding: '6px 0px',
+                marginTop: '10px',
+                fontSize: '14px',
               },
             }}
           />
@@ -403,8 +331,9 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
             sx={textInputSx}
             inputProps={{
               style: {
-                padding: '6px 8px',
-                fontSize: '12px',
+                padding: '6px 0px',
+                marginTop: '10px',
+                fontSize: '14px',
               },
             }}
           />
@@ -420,11 +349,14 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
             name="TRSP_KEY"
             value={formData?.TRSP_KEY || 0}
             onChange={handleInputChange}
-            sx={textInputSx}
-            inputProps={{
-              style: {
+            sx={{
+              ...DropInputSx,
+              '& .MuiFilledInput-root': {
+                paddingTop: '16px !important',
+              },
+              '& input': {
                 padding: '6px 8px',
-                fontSize: '12px',
+                fontSize: '14px',
               },
             }}
           />
@@ -448,8 +380,9 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
             sx={textInputSx}
             inputProps={{
               style: {
-                padding: '6px 8px',
-                fontSize: '12px',
+                padding: '6px 0px',
+                marginTop: '10px',
+                fontSize: '14px',
               },
             }}
           />
@@ -467,7 +400,8 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
             sx={textInputSx}
             inputProps={{
               style: {
-                padding: '6px 8px',
+                padding: '6px 0px',
+                marginTop: '10px',
                 fontSize: '12px',
               },
             }}
@@ -486,7 +420,8 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
             sx={textInputSx}
             inputProps={{
               style: {
-                padding: '6px 8px',
+                padding: '6px 0px',
+                marginTop: '10px',
                 fontSize: '12px',
               },
             }}
@@ -505,8 +440,9 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
             sx={textInputSx}
             inputProps={{
               style: {
-                padding: '6px 8px',
-                fontSize: '12px',
+                padding: '6px 0px',
+                marginTop: '10px',
+                fontSize: '14px',
               },
             }}
           />
@@ -524,8 +460,9 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
             sx={textInputSx}
             inputProps={{
               style: {
-                padding: '6px 8px',
-                fontSize: '12px',
+                padding: '6px 0px',
+                marginTop: '10px',
+                fontSize: '14px',
               },
             }}
           />
@@ -543,8 +480,9 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
             sx={textInputSx}
             inputProps={{
               style: {
-                padding: '6px 8px',
-                fontSize: '12px',
+                padding: '6px 0px',
+                marginTop: '10px',
+                fontSize: '14px',
               },
             }}
           />
@@ -562,8 +500,9 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
             sx={textInputSx}
             inputProps={{
               style: {
-                padding: '6px 8px',
-                fontSize: '12px',
+                padding: '6px 0px',
+                marginTop: '10px',
+                fontSize: '14px',
               },
             }}
           />
@@ -581,8 +520,9 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
             sx={textInputSx}
             inputProps={{
               style: {
-                padding: '6px 8px',
-                fontSize: '12px',
+                padding: '6px 0px',
+                marginTop: '10px',
+                fontSize: '14px',
               },
             }}
           />
@@ -600,8 +540,9 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
             sx={textInputSx}
             inputProps={{
               style: {
-                padding: '6px 8px',
-                fontSize: '12px',
+                padding: '6px 0px',
+                marginTop: '10px',
+                fontSize: '14px',
               },
             }}
           />
@@ -619,8 +560,9 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
             sx={textInputSx}
             inputProps={{
               style: {
-                padding: '6px 8px',
-                fontSize: '12px',
+                padding: '6px 0px',
+                marginTop: '10px',
+                fontSize: '14px',
               },
             }}
           />
@@ -638,8 +580,9 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
             sx={textInputSx}
             inputProps={{
               style: {
-                padding: '6px 8px',
-                fontSize: '12px',
+                padding: '6px 0px',
+                marginTop: '10px',
+                fontSize: '14px',
               },
             }}
           />
@@ -657,8 +600,9 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
             sx={textInputSx}
             inputProps={{
               style: {
-                padding: '6px 8px',
-                fontSize: '12px',
+                padding: '6px 0px',
+                marginTop: '10px',
+                fontSize: '14px',
               },
             }}
           />
@@ -676,8 +620,9 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
             sx={textInputSx}
             inputProps={{
               style: {
-                padding: '6px 8px',
-                fontSize: '12px',
+                padding: '6px 0px',
+                marginTop: '10px',
+                fontSize: '14px',
               },
             }}
           />
@@ -695,8 +640,9 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
             sx={textInputSx}
             inputProps={{
               style: {
-                padding: '6px 8px',
-                fontSize: '12px',
+                padding: '6px 0px',
+                marginTop: '10px',
+                fontSize: '14px',
               },
             }}
           />
@@ -714,8 +660,9 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
             sx={textInputSx}
             inputProps={{
               style: {
-                padding: '6px 8px',
-                fontSize: '12px',
+                padding: '6px 0px',
+                marginTop: '10px',
+                fontSize: '14px',
               },
             }}
           />
@@ -733,8 +680,9 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
             sx={textInputSx}
             inputProps={{
               style: {
-                padding: '6px 8px',
-                fontSize: '12px',
+                padding: '6px 0px',
+                marginTop: '10px',
+                fontSize: '14px',
               },
             }}
           />
@@ -752,8 +700,9 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
             sx={textInputSx}
             inputProps={{
               style: {
-                padding: '6px 8px',
-                fontSize: '12px',
+                padding: '6px 0px',
+                marginTop: '10px',
+                fontSize: '14px',
               },
             }}
           />
@@ -771,8 +720,9 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
             sx={textInputSx}
             inputProps={{
               style: {
-                padding: '6px 8px',
-                fontSize: '12px',
+                padding: '6px 0px',
+                marginTop: '10px',
+                fontSize: '14px',
               },
             }}
           />
@@ -788,11 +738,14 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
             name="TRSP_KEY"
             value={formData?.TRSP_KEY || 0}
             onChange={handleInputChange}
-            sx={textInputSx}
-            inputProps={{
-              style: {
+            sx={{
+              ...DropInputSx,
+              '& .MuiFilledInput-root': {
+                paddingTop: '16px !important',
+              },
+              '& input': {
                 padding: '6px 8px',
-                fontSize: '12px',
+                fontSize: '14px',
               },
             }}
           />
@@ -800,8 +753,7 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
 
         <Grid size={{ xs: 12, sm: 6, md: 2 }}>
           <FormControlLabel
-            control={<Checkbox name="DEFAULT_BRANCH" size="small" checked={formData?.DEFAULT_BRANCH === "1"}
-              onChange={handleChangeStatus} />}
+            control={<Checkbox name="DEFAULT_BRANCH" size="small" checked={formData?.DEFAULT_BRANCH === "1"} onChange={handleChangeStatus} />}
             disabled={isFormDisabled}
             label="Active"
             sx={{
@@ -810,9 +762,7 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
             }}
           />
         </Grid>
-
       </Grid >
-
     </>
   )
 }
