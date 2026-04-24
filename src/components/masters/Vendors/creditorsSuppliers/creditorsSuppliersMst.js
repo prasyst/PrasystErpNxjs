@@ -1,20 +1,7 @@
 'use client';
 import React, { useState, useEffect, useCallback, useRef } from "react";
-
 import {
-  Box,
-  Grid,
-  Button,
-  Typography,
-  Stepper,
-  Step,
-  StepLabel,
-  Tooltip,
-  StepConnector,
-  TextField,
-  Tabs,
-  Tab,
-  Stack,
+  Box, Grid, Button, Typography, TextField, Tabs, Tab,
 } from "@mui/material";
 import {
   KeyboardArrowLeft as KeyboardArrowLeftIcon,
@@ -25,35 +12,23 @@ import {
   CancelPresentation as CancelPresentationIcon,
 } from "@mui/icons-material";
 import { TbListSearch } from "react-icons/tb";
-
 import "react-toastify/dist/ReactToastify.css";
 import { toast, ToastContainer } from "react-toastify";
 import axiosInstance from '../../../../lib/axios';
-import Dialog from "@mui/material/Dialog";
-import DialogActions from "@mui/material/DialogActions";
-import DialogContent from "@mui/material/DialogContent";
-import DialogTitle from "@mui/material/DialogTitle";
-import DialogContentText from "@mui/material/DialogContentText";
-
 import { useSearchParams, useRouter } from 'next/navigation';
-import CrudButtons from "@/GlobalFunction/CrudButtons";
 import CrudButton from "@/GlobalFunction/CrudButton";
-import PaginationButtons from '@/GlobalFunction/PaginationButtons';
-
 import Stepper1 from "@/components/masters/Vendors/creditorsSuppliers/Stepper1";
 import Stepper2 from "@/components/masters/Vendors/creditorsSuppliers/Stepper2";
 import Stepper3 from "@/components/masters/Vendors/creditorsSuppliers/Stepper3";
 import { getFormMode } from "../../../../lib/helpers";
-
-const steps = ["Company Details", "Branch Details", "Terms Details"];
+import { textInputSx } from "../../../../../public/styles/textInputSx";
+import { useUserPermissions } from "@/app/hooks/useUserPermissions";
 
 const FORM_MODE = getFormMode();
 
 const CreditorsSuppliersMst = () => {
   const router = useRouter();
-
   const [tabIndex, setTabIndex] = useState(0);
-
   const [openDialog, setopenDialog] = useState(false);
   const [seriesData, setSeriesData] = useState([]);
   const [activeStep, setActiveStep] = useState(0);
@@ -67,6 +42,8 @@ const CreditorsSuppliersMst = () => {
   const [dataState, setDataState] = useState(null);
   const searchParams = useSearchParams();
   const FG = searchParams.get('PARTY_KEY');
+  const { hasSpecificPermission, loading: isPermissionLoading } = useUserPermissions();
+  const moduleName = 'Creditors/Suppliers';
 
   const [formData, setFormData] = useState({
     SearchByCd: "",
@@ -255,7 +232,7 @@ const CreditorsSuppliersMst = () => {
   const handlePrint = () => { };
 
   const handleExit = () => {
-    router.push('/dashboard');
+    router.push('/masterpage/?activeTab=11');
   };
 
   const fetchPartyData = useCallback(async (currentPARTY_KEY, flag = "R", isManualSearch = false) => {
@@ -436,8 +413,6 @@ const CreditorsSuppliersMst = () => {
         const newParams = new URLSearchParams();
         newParams.set("PARTY_KEY", partyData?.PARTY_KEY);
         router.replace(`/masters/vendors?${newParams.toString()}`);
-
-        console.log("fetch", partyData);
 
       } else if (response.data.STATUS === 1 && response.data.RESPONSESTATUSCODE === 2) {
         toast.info(response.data.MESSAGE);
@@ -632,7 +607,6 @@ const CreditorsSuppliersMst = () => {
         }
       }
     } catch (error) {
-      console.error('Error fetching party data:', error);
       toast.error('Error fetching party data. Please try again.');
     }
   }, [router]);
@@ -892,10 +866,8 @@ const CreditorsSuppliersMst = () => {
         toast.error("Failed to fetch Series");
       }
     } catch (error) {
-      console.error("Error fetching Series", error);
       toast.error("Error fetching Series. Please try again.");
     }
-
   };
 
   const handleFirst = () => { };
@@ -1302,26 +1274,18 @@ const CreditorsSuppliersMst = () => {
 
     let response;
     if (mode === 'edit') {
-
       response = await axiosInstance.patch(`Party/ManagePartyBranch?UserName=${(UserName)}&strCobrid=${COBR_ID}`, payloadUpdate);
-
-      console.log("payload", payloadUpdate);
     } else {
-
       response = await axiosInstance.post(`Party/ManagePartyBranch?UserName=${UserName}&strCobrid=${COBR_ID}`, payload);
-
-      console.log("payloadCreate", payload);
     }
 
     if (response.data.STATUS === 0 && response.data.RESPONSESTATUSCODE === 1) {
       toast.success(response.data.MESSAGE);
       setIsFormDisabled(true);
       setMode('view');
-
     } else {
       toast.error(response.data.MESSAGE || 'Operation failed');
     }
-
   };
 
   const handleCancel = async () => {
@@ -1370,49 +1334,11 @@ const CreditorsSuppliersMst = () => {
     setTabIndex(newValue);
   };
 
-  const Buttonsx = {
-    backgroundColor: '#39ace2',
-    margin: { xs: '0 4px', sm: '0 6px' },
-    minWidth: { xs: 40, sm: 46, md: 60 },
-    height: { xs: 40, sm: 46, md: 30 },
-  };
-
-  const textInputSx = {
-    '& .MuiInputBase-root': {
-      height: 36,
-      fontSize: '14px',
-    },
-    '& .MuiInputLabel-root': {
-      fontSize: '14px',
-      top: '-8px',
-    },
-    '& .MuiFilledInput-root': {
-      backgroundColor: '#e0f7fa',
-      border: '1px solid #e0e0e0',
-      borderRadius: '6px',
-      overflow: 'hidden',
-      height: 36,
-      fontSize: '14px',
-    },
-    '& .MuiFilledInput-root:before': {
-      display: 'none',
-    },
-    '& .MuiFilledInput-root:after': {
-      display: 'none',
-    },
-    '& .MuiInputBase-input': {
-      padding: '10px 12px !important',
-      fontSize: '14px !important',
-      lineHeight: '1.4',
-    },
-  };
-
   const handleTable = () => {
     router.push('/masters/vendors/creditorsSuppliersTable');
   };
 
   useEffect(() => {
-
     const defaultValues = {
       PARTYDTL_ID: 0,
       CFORM_FLG: 0,
@@ -1451,7 +1377,6 @@ const CreditorsSuppliersMst = () => {
           return item;
         });
 
-        console.log("Updated xyz array (setRows):", updatedParty);
         setRows(updatedParty);
 
         return {
@@ -1584,17 +1509,18 @@ const CreditorsSuppliersMst = () => {
             sx={textInputSx}
             inputProps={{
               style: {
-                padding: '4px 8px',
+                padding: '6px 0px',
+                marginTop: '10px',
                 fontSize: '12px',
               },
             }}
           />
-          <TbListSearch onClick={handleTable} style={{ color: 'rgb(99, 91, 255)', width: '40%', height: '62%' }} />
+          <TbListSearch onClick={handleTable} style={{ color: '#635bff', width: '40%', height: '62%' }} />
         </Grid>
 
         <Grid sx={{ display: "flex", justifyContent: "end" }}>
           <CrudButton
-            moduleName=""
+            moduleName={moduleName}
             mode={mode}
             onAdd={handleAdd}
             onEdit={handleEdit}
@@ -1603,12 +1529,15 @@ const CreditorsSuppliersMst = () => {
             readOnlyMode={mode === "view"}
             onPrevious={handlePrevClick}
             onNext={handleNextClick}
+            canAdd={hasSpecificPermission(moduleName, 'ADD')}
+            canEdit={hasSpecificPermission(moduleName, 'EDIT')}
+            canView={hasSpecificPermission(moduleName, 'VIEW')}
+            canDelete={hasSpecificPermission(moduleName, 'DELETE')}
           />
         </Grid>
       </Grid>
 
-
-      <Grid sx={{ marginInline: { xs: '5%', sm: '5%', md: '12.5%', lg: '12.5%', xl: '12.5%' } }}>
+      <Grid sx={{ marginInline: { xs: '5%', sm: '5%', md: '5%', lg: '5%', xl: '5%' } }}>
         <Box sx={{ display: 'flex', mb: 1 }}>
           <Tabs
             value={tabIndex}
@@ -1669,12 +1598,7 @@ const CreditorsSuppliersMst = () => {
           </Tabs>
         </Box>
       </Grid>
-      <Grid 
-      sx={{
-        marginInline: { xs: '5%', sm: '5%', md: '5%', lg: '5%', xl: '5%' },
-      }}
-      >
-
+      <Grid>
         {tabIndex === 0 ? (
           <Stepper1
             index={Index}
@@ -1727,7 +1651,6 @@ const CreditorsSuppliersMst = () => {
           )}
           {(mode === 'edit' || mode === 'add') && (
             <>
-
               <Button variant="contained"
                 sx={{
                   margin: { xs: '0 4px', sm: '0 6px' },
@@ -1748,7 +1671,6 @@ const CreditorsSuppliersMst = () => {
                 onClick={handleCancel}>
                 Cancel
               </Button>
-
             </>
           )}
         </Grid>

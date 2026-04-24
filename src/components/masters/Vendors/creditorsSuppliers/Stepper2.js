@@ -1,34 +1,17 @@
 'use client';
-import React, { useEffect, useState, useCallback, Suspense } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
-  Box,
-  Button,
-  Stack,
-  FormControlLabel,
-  FormLabel,
-  Radio,
-  RadioGroup,
-  Checkbox,
-  Link,
-  Grid, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, TextField, InputAdornment
+  Box, Button, Stack, FormControlLabel, FormLabel, Radio, RadioGroup, Checkbox, Link,
+  Grid, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, TextField
 } from '@mui/material';
-import { useSearchParams, useRouter } from 'next/navigation';
-import debounce from 'lodash.debounce';
-import { toast, ToastContainer } from 'react-toastify';
-import KeyboardArrowLeftIcon from "@mui/icons-material/KeyboardArrowLeft";
-import NavigateNextIcon from "@mui/icons-material/NavigateNext";
-import CrudButton from '../../../../GlobalFunction/CrudButton';
 import AutoVibe from '../../../../GlobalFunction/CustomAutoComplete/AutoVibe';
-import axiosInstance from '../../../../lib/axios';
 import { getFormMode } from '../../../../lib/helpers';
-import EditableTable from '@/atoms/EditTable';
-import CrudButtons from "@/GlobalFunction/CrudButtons";
-import PaginationButtons from '@/GlobalFunction/PaginationButtons';
-import z from 'zod';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
-import SearchIcon from "@mui/icons-material/Search";
+import { textInputSx } from '../../../../../public/styles/textInputSx';
+import { DropInputSx } from '../../../../../public/styles/dropInputSx';
+import { textInputDoubleSx } from '../../../../../public/styles/textInputSx';
 
 const FORM_MODE = getFormMode();
 
@@ -46,8 +29,6 @@ const columns = [
 ];
 
 const Stepper2 = ({ formData, setFormData, isFormDisabled, rows, setRows, currentPARTY_KEY }) => {
-  console.log("Stepper2 full formData:", formData.PartyDtlEntities?.[0]);
-
   const [selectedIndex, setSelectedIndex] = useState(null);
   const [isAddButtonDisabled, setIsAddButtonDisabled] = useState(false);
   const [isAddFormDisabled, setIsAddFormDisabled] = useState(false);
@@ -68,119 +49,6 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, rows, setRows, curren
       setRows(formData?.PartyDtlEntities);
     }
   }, [formData]);
-
-  const textInputSx = {
-    '& .MuiInputBase-root': {
-      height: 36,
-      fontSize: '14px',
-    },
-    '& .MuiInputLabel-root': {
-      fontSize: '14px',
-      top: '-8px',
-    },
-    '& .MuiFilledInput-root': {
-      backgroundColor: '#fafafa',
-      border: '1px solid #e0e0e0',
-      borderRadius: '6px',
-      overflow: 'hidden',
-      height: 36,
-      fontSize: '14px',
-    },
-    '& .MuiFilledInput-root:before': {
-      display: 'none',
-    },
-    '& .MuiFilledInput-root:after': {
-      display: 'none',
-    },
-    '& .MuiInputBase-input': {
-      padding: '10px 12px !important',
-      fontSize: '14px !important',
-      lineHeight: '1.4',
-    },
-    '& .MuiFilledInput-root.Mui-disabled': {
-      backgroundColor: '#fff'
-    }
-  };
-
-  const doubleInputSx = {
-    '& .MuiInputBase-root': {
-      height: 76,
-      fontSize: '14px',
-    },
-    '& .MuiInputLabel-root': {
-      fontSize: '14px',
-      top: '-8px',
-    },
-    '& .MuiFilledInput-root': {
-      backgroundColor: '#fafafa',
-      border: '1px solid #e0e0e0',
-      borderRadius: '6px',
-      overflow: 'hidden',
-      height: 76,
-      fontSize: '14px',
-    },
-    '& .MuiFilledInput-root:before': {
-      display: 'none',
-    },
-    '& .MuiFilledInput-root:after': {
-      display: 'none',
-    },
-    '& .MuiInputBase-input': {
-      padding: '10px 12px !important',
-      fontSize: '14px !important',
-      lineHeight: '1.4',
-    },
-    '& .MuiFilledInput-root.Mui-disabled': {
-      backgroundColor: '#fff'
-    }
-  };
-
-  const DropInputSx = {
-    '& .MuiInputBase-root': {
-      height: 36,
-      fontSize: '14px',
-    },
-    '& .MuiInputLabel-root': {
-      fontSize: '14px',
-      top: '-4px',
-    },
-    '& .MuiFilledInput-root': {
-      backgroundColor: '#fafafa',
-      border: '1px solid #e0e0e0',
-      borderRadius: '6px',
-      overflow: 'hidden',
-      height: 36,
-      fontSize: '14px',
-      paddingRight: '36px',
-    },
-    '& .MuiFilledInput-root:before': {
-      display: 'none',
-    },
-    '& .MuiFilledInput-root:after': {
-      display: 'none',
-    },
-    '& .MuiInputBase-input': {
-      padding: '10px 12px',
-      fontSize: '14px',
-      lineHeight: '1.4',
-    },
-    '& .MuiAutocomplete-endAdornment': {
-      top: '50%',
-      transform: 'translateY(-50%)',
-      right: '10px',
-    },
-    '& .MuiFilledInput-root.Mui-disabled': {
-      backgroundColor: '#fff'
-    }
-  };
-
-  // const handleInputChange = (e) => {
-  //   const { name, value } = e.target;
-  //   setFormData(prev => ({
-  //     ...prev,
-  //     PartyDtlEntities: [{ ...prev?.PartyDtlEntities?.[0], [name]: value }]
-  //   }));
-  // };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -306,7 +174,6 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, rows, setRows, curren
   };
 
   const handleConfirm = () => {
-
     const currentData = formData?.PartyDtlEntities?.[0];
     if (!currentData) return;
 
@@ -317,7 +184,6 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, rows, setRows, curren
       updated[selectedIndex] = currentData;
       setRows(updated);
     }
-
     setSelectedIndex(null);
     setMode(null);
   };
@@ -371,18 +237,10 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, rows, setRows, curren
   const handleChangeStatus = (event) => {
     const { name, checked } = event.target;
     const updatedStatus = checked ? "1" : "0";
-
     setFormData(prev => ({
       ...prev,
       PartyDtlEntities: [{ ...prev?.PartyDtlEntities?.[0], [name]: updatedStatus }]
     }));
-  };
-
-  const Buttonsx = {
-    backgroundColor: '#39ace2',
-    margin: { xs: '0 4px', sm: '0 6px' },
-    minWidth: { xs: 40, sm: 46, md: 60 },
-    height: { xs: 40, sm: 46, md: 30 },
   };
 
   const handleFilterChange = (columnId, value) => {
@@ -393,9 +251,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, rows, setRows, curren
   };
 
   const filteredRows = rows.filter((row, index) => {
-
     if (index === 0) return true;
-
     return columns.every((col) => {
       const filterValue = filters[col.id].toLowerCase();
       const cellValue = String(row[col.id] || "").toLowerCase();
@@ -405,8 +261,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, rows, setRows, curren
 
   return (
     <>
-
-      <Grid container spacing={0.5}>
+      <Grid container spacing={1}>
         <Grid size={{ xs: 12, sm: 6, md: 1 }}></Grid>
         <Grid size={{ xs: 12, sm: 6, md: 10 }}>
           <Paper
@@ -472,7 +327,6 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, rows, setRows, curren
                 </TableHead>
                 <TableBody>
                   {filteredRows.map((row, index) => (
-
                     <TableRow
                       key={index}
                       hover={index !== 0}
@@ -522,61 +376,51 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, rows, setRows, curren
           </Paper>
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 1 }}></Grid>
-
         <Grid size={{ xs: 12, sm: 6, md: 1 }}></Grid>
         <Grid size={{ xs: 12, sm: 6, md: 10 }}>
           <Stack direction="row" spacing={2}>
-            <Button
+            <Button size='small'
               variant="contained"
               startIcon={<AddIcon />}
               onClick={handleAdd}
               disabled={isFormDisabled || isAddButtonDisabled}
               sx={{
-                backgroundColor: '#007bff',
-                margin: { xs: '0 4px', sm: '0 6px' },
-                minWidth: { xs: 40, sm: 46, md: 60 },
-                height: { xs: 40, sm: 46, md: 30 },
+                backgroundColor: '#635BFF',
+                textTransform: 'none'
               }}
             >
               Add
             </Button>
 
-            <Button
+            <Button size='small'
               variant="contained"
               startIcon={<EditIcon />}
               onClick={handleEdit}
               disabled={isFormDisabled || isEditButtonDisabled}
               sx={{
-                backgroundColor: '#20c997',
-                margin: { xs: '0 4px', sm: '0 6px' },
-                minWidth: { xs: 40, sm: 46, md: 60 },
-                height: { xs: 40, sm: 46, md: 30 },
+                backgroundColor: '#635BFF',
+                textTransform: 'none'
               }}
             >
               Edit
             </Button>
 
-            <Button
+            <Button size='small'
               variant="contained"
               startIcon={<DeleteIcon />}
               onClick={handleDelete}
               disabled={isFormDisabled || isDeleteButtonDisabled}
               sx={{
-                backgroundColor: '#dc3545',
-                margin: { xs: '0 4px', sm: '0 6px' },
-                minWidth: { xs: 40, sm: 46, md: 60 },
-                height: { xs: 40, sm: 46, md: 30 },
+                backgroundColor: '#635BFF',
+                textTransform: 'none'
               }}
             >
-              Delete
+              Del
             </Button>
           </Stack>
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 1 }}></Grid>
-
         <Grid size={{ xs: 12, sm: 6, md: 1 }}></Grid>
-
-
         <Grid size={{ xs: 12, sm: 6, md: 4 }}>
           <TextField
             label="Address"
@@ -586,22 +430,13 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, rows, setRows, curren
             value={partyData?.ADDR}
             disabled={!isEditButtonDisabled && !isAddButtonDisabled}
             name="ADDR"
-            sx={doubleInputSx}
-            inputProps={{
-              style: {
-                padding: '6px 8px',
-                fontSize: '12px'
-              },
-            }}
+            multiline
+            rows={2}
+            sx={textInputDoubleSx}
           />
         </Grid>
 
-        <Grid size={{ xs: 12, sm: 6, md: 2 }} sx={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: '3px'
-        }}>
+        <Grid size={{ xs: 12, sm: 6, md: 2 }}>
           <AutoVibe
             id="CONT_KEY"
             disabled={!isEditButtonDisabled && !isAddButtonDisabled}
@@ -611,14 +446,18 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, rows, setRows, curren
             name="CONT_KEY"
             value={partyData?.CONT_KEY || ""}
             onChange={handleInputChange}
-            sx={DropInputSx}
-            inputProps={{
-              style: {
+            sx={{
+              ...DropInputSx,
+              '& .MuiFilledInput-root': {
+                paddingTop: '16px !important',
+              },
+              '& input': {
                 padding: '6px 8px',
-                fontSize: '12px',
+                fontSize: '14px',
               },
             }}
           />
+
           <Grid size={{ xs: 12, sm: 6, md: 12 }} sx={{
             display: 'flex',
             flexDirection: 'row',
@@ -636,8 +475,9 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, rows, setRows, curren
               sx={textInputSx}
               inputProps={{
                 style: {
-                  padding: '6px 8px',
-                  fontSize: '12px'
+                  padding: '6px 0px',
+                  marginTop: '10px',
+                  fontSize: '14px',
                 },
               }}
             />
@@ -650,23 +490,21 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, rows, setRows, curren
               name=""
               value={""}
               onChange={handleInputChange}
-              sx={DropInputSx}
-              inputProps={{
-                style: {
+              sx={{
+                ...DropInputSx,
+                '& .MuiFilledInput-root': {
+                  paddingTop: '16px !important',
+                },
+                '& input': {
                   padding: '6px 8px',
-                  fontSize: '12px',
+                  fontSize: '14px',
                 },
               }}
             />
           </Grid>
         </Grid>
 
-        <Grid size={{ xs: 12, sm: 6, md: 2 }} sx={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: '3px'
-        }}>
+        <Grid size={{ xs: 12, sm: 6, md: 2 }} >
           <AutoVibe
             id=""
             disabled={!isEditButtonDisabled && !isAddButtonDisabled}
@@ -676,11 +514,14 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, rows, setRows, curren
             name=""
             value={""}
             onChange={handleInputChange}
-            sx={DropInputSx}
-            inputProps={{
-              style: {
+            sx={{
+              ...DropInputSx,
+              '& .MuiFilledInput-root': {
+                paddingTop: '16px !important',
+              },
+              '& input': {
                 padding: '6px 8px',
-                fontSize: '12px',
+                fontSize: '14px',
               },
             }}
           />
@@ -695,19 +536,15 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, rows, setRows, curren
             sx={textInputSx}
             inputProps={{
               style: {
-                padding: '6px 8px',
-                fontSize: '12px'
+                padding: '6px 0px',
+                marginTop: '10px',
+                fontSize: '14px',
               },
             }}
           />
         </Grid>
 
-        <Grid size={{ xs: 12, sm: 6, md: 2 }} sx={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: '3px'
-        }}>
+        <Grid size={{ xs: 12, sm: 6, md: 2 }}>
           <AutoVibe
             id="CITY_KEY"
             disabled={!isEditButtonDisabled && !isAddButtonDisabled}
@@ -717,11 +554,14 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, rows, setRows, curren
             name="CITY_KEY"
             value={partyData?.CITY_KEY || ""}
             onChange={handleInputChange}
-            sx={DropInputSx}
-            inputProps={{
-              style: {
+            sx={{
+              ...DropInputSx,
+              '& .MuiFilledInput-root': {
+                paddingTop: '16px !important',
+              },
+              '& input': {
                 padding: '6px 8px',
-                fontSize: '12px',
+                fontSize: '14px',
               },
             }}
           />
@@ -736,14 +576,14 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, rows, setRows, curren
             sx={textInputSx}
             inputProps={{
               style: {
-                padding: '6px 8px',
-                fontSize: '12px'
+                padding: '6px 0px',
+                marginTop: '10px',
+                fontSize: '14px',
               },
             }}
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 1 }}></Grid>
-
         <Grid size={{ xs: 12, sm: 6, md: 1 }}></Grid>
         <Grid size={{ xs: 12, sm: 6, md: 4 }}>
           <TextField
@@ -757,8 +597,9 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, rows, setRows, curren
             sx={textInputSx}
             inputProps={{
               style: {
-                padding: '6px 8px',
-                fontSize: '12px'
+                padding: '6px 0px',
+                marginTop: '10px',
+                fontSize: '14px',
               },
             }}
           />
@@ -775,8 +616,9 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, rows, setRows, curren
             sx={textInputSx}
             inputProps={{
               style: {
-                padding: '6px 8px',
-                fontSize: '12px'
+                padding: '6px 0px',
+                marginTop: '10px',
+                fontSize: '14px',
               },
             }}
           />
@@ -793,8 +635,9 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, rows, setRows, curren
             sx={textInputSx}
             inputProps={{
               style: {
-                padding: '6px 8px',
-                fontSize: '12px'
+                padding: '6px 0px',
+                marginTop: '10px',
+                fontSize: '14px',
               },
             }}
           />
@@ -811,8 +654,9 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, rows, setRows, curren
             sx={textInputSx}
             inputProps={{
               style: {
-                padding: '6px 8px',
-                fontSize: '12px',
+                padding: '6px 0px',
+                marginTop: '10px',
+                fontSize: '14px',
               },
             }}
           />
@@ -829,14 +673,14 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, rows, setRows, curren
             sx={textInputSx}
             inputProps={{
               style: {
-                padding: '6px 8px',
-                fontSize: '12px',
+                padding: '6px 0px',
+                marginTop: '10px',
+                fontSize: '14px',
               },
             }}
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 1 }}></Grid>
-
         <Grid size={{ xs: 12, sm: 6, md: 1 }}></Grid>
         <Grid size={{ xs: 12, sm: 6, md: 2 }} sx={{
           display: 'flex',
@@ -855,8 +699,9 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, rows, setRows, curren
             sx={textInputSx}
             inputProps={{
               style: {
-                padding: '6px 8px',
-                fontSize: '12px'
+                padding: '6px 0px',
+                marginTop: '10px',
+                fontSize: '14px',
               },
             }}
           />
@@ -871,19 +716,15 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, rows, setRows, curren
             sx={textInputSx}
             inputProps={{
               style: {
-                padding: '6px 8px',
-                fontSize: '12px'
+                padding: '6px 0px',
+                marginTop: '10px',
+                fontSize: '14px',
               },
             }}
           />
         </Grid>
 
-        <Grid size={{ xs: 12, sm: 6, md: 2 }} sx={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: '3px'
-        }}>
+        <Grid size={{ xs: 12, sm: 6, md: 2 }} >
           <TextField
             label="Excise"
             variant="filled"
@@ -895,8 +736,9 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, rows, setRows, curren
             sx={textInputSx}
             inputProps={{
               style: {
-                padding: '6px 8px',
-                fontSize: '12px'
+                padding: '6px 0px',
+                marginTop: '10px',
+                fontSize: '14px',
               },
             }}
           />
@@ -909,22 +751,20 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, rows, setRows, curren
             name="TRADE_DISC"
             value={partyData?.TRADE_DISC || ""}
             onChange={handleInputChange}
-            sx={DropInputSx}
-            inputProps={{
-              style: {
+            sx={{
+              ...DropInputSx,
+              '& .MuiFilledInput-root': {
+                paddingTop: '16px !important',
+              },
+              '& input': {
                 padding: '6px 8px',
-                fontSize: '12px',
+                fontSize: '14px',
               },
             }}
           />
         </Grid>
 
-        <Grid size={{ xs: 12, sm: 6, md: 2 }} sx={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: '3px'
-        }}>
+        <Grid size={{ xs: 12, sm: 6, md: 2 }} >
           <TextField
             label="VAT"
             variant="filled"
@@ -936,8 +776,9 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, rows, setRows, curren
             sx={textInputSx}
             inputProps={{
               style: {
-                padding: '6px 8px',
-                fontSize: '12px'
+                padding: '6px 0px',
+                marginTop: '10px',
+                fontSize: '14px',
               },
             }}
           />
@@ -950,22 +791,20 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, rows, setRows, curren
             name="TRSP_KEY"
             value={partyData?.TRSP_KEY || 0}
             onChange={handleInputChange}
-            sx={DropInputSx}
-            inputProps={{
-              style: {
+            sx={{
+              ...DropInputSx,
+              '& .MuiFilledInput-root': {
+                paddingTop: '16px !important',
+              },
+              '& input': {
                 padding: '6px 8px',
-                fontSize: '12px',
+                fontSize: '14px',
               },
             }}
           />
         </Grid>
 
-        <Grid size={{ xs: 12, sm: 6, md: 2 }} sx={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: '3px'
-        }}>
+        <Grid size={{ xs: 12, sm: 6, md: 2 }}>
           <TextField
             label="CST"
             variant="filled"
@@ -977,8 +816,9 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, rows, setRows, curren
             sx={textInputSx}
             inputProps={{
               style: {
-                padding: '6px 8px',
-                fontSize: '12px'
+                padding: '6px 0px',
+                marginTop: '10px',
+                fontSize: '14px',
               },
             }}
           />
@@ -991,22 +831,20 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, rows, setRows, curren
             name="TAX_KEY"
             value={partyData?.TAX_KEY || ""}
             onChange={handleInputChange}
-            sx={DropInputSx}
-            inputProps={{
-              style: {
+            sx={{
+              ...DropInputSx,
+              '& .MuiFilledInput-root': {
+                paddingTop: '16px !important',
+              },
+              '& input': {
                 padding: '6px 8px',
-                fontSize: '12px',
+                fontSize: '14px',
               },
             }}
           />
         </Grid>
 
-        <Grid size={{ xs: 12, sm: 6, md: 2 }} sx={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: '3px'
-        }}>
+        <Grid size={{ xs: 12, sm: 6, md: 2 }}>
           <AutoVibe
             id="CFORM_FLG"
             disabled={!isEditButtonDisabled && !isAddButtonDisabled}
@@ -1016,11 +854,14 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, rows, setRows, curren
             name="CFORM_FLG"
             value={partyData?.CFORM_FLG || 0}
             onChange={handleInputChange}
-            sx={DropInputSx}
-            inputProps={{
-              style: {
+            sx={{
+              ...DropInputSx,
+              '& .MuiFilledInput-root': {
+                paddingTop: '16px !important',
+              },
+              '& input': {
                 padding: '6px 8px',
-                fontSize: '12px',
+                fontSize: '14px',
               },
             }}
           />
@@ -1035,14 +876,14 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, rows, setRows, curren
             sx={textInputSx}
             inputProps={{
               style: {
-                padding: '6px 8px',
-                fontSize: '12px'
+                padding: '6px 0px',
+                marginTop: '10px',
+                fontSize: '14px',
               },
             }}
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 1 }}></Grid>
-
         <Grid size={{ xs: 12, sm: 6, md: 1 }}></Grid>
         <Grid size={{ xs: 12, sm: 6, md: 4 }}>
           <TextField
@@ -1056,8 +897,9 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, rows, setRows, curren
             sx={textInputSx}
             inputProps={{
               style: {
-                padding: '6px 8px',
-                fontSize: '12px'
+                padding: '6px 0px',
+                marginTop: '10px',
+                fontSize: '14px',
               },
             }}
           />
@@ -1128,6 +970,8 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, rows, setRows, curren
               variant="contained"
               sx={{
                 minHeight: '10px',
+                textTransform: 'none',
+                bgcolor: '#635bff',
                 padding: '1px 4px',
                 fontSize: '0.675rem',
               }}
@@ -1138,7 +982,6 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, rows, setRows, curren
         </Grid>
 
         <Grid size={{ xs: 12, sm: 6, md: 1 }}></Grid>
-
         <Grid size={{ xs: 12, sm: 6, md: 1 }}></Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }} sx={{
           display: 'flex',
@@ -1201,12 +1044,9 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, rows, setRows, curren
           />
         </Grid>
         <Stack direction="row" spacing={2} sx={{ position: 'relative', left: 198 }}>
-          <Button
+          <Button size='small'
             sx={{
-              backgroundColor: '#28a745',
-              margin: { xs: '0 4px', sm: '0 6px' },
-              minWidth: { xs: 40, sm: 46, md: 60 },
-              height: { xs: 40, sm: 46, md: 30 },
+              backgroundColor: '#635bff',
             }}
             variant="contained"
             onClick={handleConfirm}
@@ -1214,12 +1054,9 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, rows, setRows, curren
           >
             Confirm
           </Button>
-          <Button
+          <Button size='small'
             sx={{
-              backgroundColor: '#6c757d',
-              margin: { xs: '0 4px', sm: '0 6px' },
-              minWidth: { xs: 40, sm: 46, md: 60 },
-              height: { xs: 40, sm: 46, md: 30 },
+              backgroundColor: '#635bff',
             }}
             onClick={handleCancel}
             disabled={mode === null}
@@ -1229,7 +1066,6 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, rows, setRows, curren
           </Button>
         </Stack>
       </Grid>
-
     </>
   )
 }

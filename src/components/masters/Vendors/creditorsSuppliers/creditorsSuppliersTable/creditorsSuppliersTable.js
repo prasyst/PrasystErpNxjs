@@ -169,13 +169,11 @@ export default function CreditorsSuppliersTable() {
     const selectedNodes = event.api.getSelectedNodes();
     const selectedData = selectedNodes.map(node => node.data);
     setSelectedRows(selectedData);
-    console.log('Selected rows:', selectedData);
   }, []);
 
   return (
     <div className="p-2 w-full">
       <div className="w-full mx-auto" style={{ maxWidth: '100%' }}>
-
         <div style={{ height: 'calc(100vh - 80px)', width: '100%' }}>
           {isLoading ? (
             <div style={{
@@ -194,8 +192,8 @@ export default function CreditorsSuppliersTable() {
               theme="ag-theme-quartz"
               isDarkMode={false}
               pagination={true}
-              paginationPageSize={25}
-              paginationPageSizeSelector={[25, 50, 100, 250, 500, 1000]}
+              paginationPageSize={500}
+              paginationPageSizeSelector={[500, 1000, 2000, 5000]}
               quickFilter={true}
               onRowClick={(params) => {
                 console.log('Row clicked:', params);

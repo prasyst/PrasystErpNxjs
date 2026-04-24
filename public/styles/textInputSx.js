@@ -85,3 +85,26 @@ export const textInputSx = {
         backgroundColor: '#fff'
     }
 };
+
+
+export const textInputDoubleSx = {
+    ...textInputSx,
+    '& .MuiInputBase-root': {
+        ...textInputSx['& .MuiInputBase-root'],
+        height: 'auto',
+        backgroundColor: '#fafafa',
+        minHeight: 'auto',
+    },
+    '& .MuiFilledInput-root': {
+        ...textInputSx['& .MuiFilledInput-root'],
+        height: 'auto',
+        minHeight: 'auto',
+        backgroundColor: '#fafafa',
+        padding: 0,
+    },
+    '& .MuiInputBase-input': {
+        ...textInputSx['& .MuiInputBase-input'],
+        padding: '10px 12px',
+        backgroundColor: '#fafafa',
+    },
+};
