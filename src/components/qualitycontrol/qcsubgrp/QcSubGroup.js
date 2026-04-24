@@ -56,7 +56,7 @@ const QcSubGroup = () => {
     const [Status, setStatus] = useState("1");
     const [qcGroups, setQcGroups] = useState([]);
     const { hasSpecificPermission, loading: isPermissionLoading } = useUserPermissions();
-    const moduleName = 'QC SubGrp';
+    const moduleName = 'QC SubGroup';
 
     useEffect(() => {
         const fetchQcGroups = async () => {
@@ -76,6 +76,7 @@ const QcSubGroup = () => {
         };
         fetchQcGroups();
     }, []);
+
     const handleChangeStatus = (event) => {
         const updatedStatus = event.target.checked ? "1" : "0";
         setStatus(updatedStatus);
@@ -84,17 +85,18 @@ const QcSubGroup = () => {
             Status: updatedStatus
         }))
     };
+
     const fetchRetriveData = useCallback(async (currentQC_SUBGROUP_KEY, flag = "R", isManualSearch = false) => {
         const CO_ID = localStorage.getItem('CO_ID');
         try {
             const response = await axiosInstance.post('QC_SUBGROUP/RetriveQC_SUBGROUP', {
-                "FLAG": flag,
-                "TBLNAME": "QC_SUBGROUP",
-                "FLDNAME": "QC_SUBGROUP_KEY",
-                "ID": currentQC_SUBGROUP_KEY,
-                "ORDERBYFLD": "",
-                "CWHAER": "",
-                "CO_ID": CO_ID
+                FLAG: flag,
+                TBLNAME: "QC_SUBGROUP",
+                FLDNAME: "QC_SUBGROUP_KEY",
+                ID: currentQC_SUBGROUP_KEY,
+                ORDERBYFLD: "",
+                CWHAER: "",
+                CO_ID: CO_ID
             });
             const { data: { STATUS, DATA, RESPONSESTATUSCODE, MESSAGE } } = response;
             if (STATUS === 0 && Array.isArray(DATA) && RESPONSESTATUSCODE == 1) {
@@ -132,6 +134,7 @@ const QcSubGroup = () => {
             console.error(err);
         }
     }, []);
+
     useEffect(() => {
         if (QC_SUBGROUP_KEY) {
             setCurrentQC_SUBGROUP_KEY(QC_SUBGROUP_KEY);
@@ -155,6 +158,7 @@ const QcSubGroup = () => {
         }
         setMode(FORM_MODE.read);
     }, [QC_SUBGROUP_KEY, fetchRetriveData]);
+
     const handleSubmit = async () => {
         const result = qcSubGrpFormSchema.safeParse(form);
         if (!result.success) {
@@ -192,7 +196,6 @@ const QcSubGroup = () => {
                 if (STATUS === 0) {
                     setMode(FORM_MODE.read);
                     toast.success(MESSAGE, { autoClose: 1000 });
-
                 } else {
                     toast.error(MESSAGE, { autoClose: 1000 });
                 }
@@ -218,6 +221,7 @@ const QcSubGroup = () => {
             console.error("Submit Error:", error);
         }
     };
+
     const handleCancel = async () => {
         if (mode === FORM_MODE.add) {
             await fetchRetriveData(1, "L");
@@ -230,21 +234,22 @@ const QcSubGroup = () => {
             SearchByCd: ''
         }));
     };
+
     const debouncedApiCall = debounce(async (newSeries) => {
         const FCYR_KEY = localStorage.getItem('FCYR_KEY');
         const COBR_ID = localStorage.getItem('COBR_ID');
         try {
             const response = await axiosInstance.post('GetSeriesSettings/GetSeriesLastNewKey', {
-                "MODULENAME": "QC_SUBGROUP",
-                "TBLNAME": "QC_SUBGROUP",
-                "FLDNAME": "QC_SUBGROUP_KEY",
-                "NCOLLEN": 5,
-                "CPREFIX": newSeries,
-                "COBR_ID": COBR_ID,
-                "FCYR_KEY": FCYR_KEY,
-                "TRNSTYPE": "M",
-                "SERIESID": 0,
-                "FLAG": ""
+                MODULENAME: "QC_SUBGROUP",
+                TBLNAME: "QC_SUBGROUP",
+                FLDNAME: "QC_SUBGROUP_KEY",
+                NCOLLEN: 5,
+                CPREFIX: newSeries,
+                COBR_ID: COBR_ID,
+                FCYR_KEY: FCYR_KEY,
+                TRNSTYPE: "M",
+                SERIESID: 0,
+                FLAG: ""
             });
             const { STATUS, DATA, MESSAGE } = response.data;
             if (STATUS === 0 && DATA.length > 0) {
@@ -256,8 +261,6 @@ const QcSubGroup = () => {
                     QC_SUBGROUP_LST_CODE: lastId
                 }));
             } else {
-                toast.error(`${MESSAGE} for ${newSeries}`);
-
                 setForm((prevForm) => ({
                     ...prevForm,
                     QC_SUBGROUP_KEY: '',
@@ -268,6 +271,7 @@ const QcSubGroup = () => {
             console.error("Error fetching series data:", error);
         }
     }, 300);
+
     const handleManualSeriesChange = (newSeries) => {
         setForm((prevForm) => ({
             ...prevForm,
@@ -282,7 +286,8 @@ const QcSubGroup = () => {
             return;
         };
         debouncedApiCall(newSeries);
-    }
+    };
+
     const handleAdd = async () => {
         setMode(FORM_MODE.add);
         setCurrentQC_SUBGROUP_KEY(null);
@@ -352,6 +357,7 @@ const QcSubGroup = () => {
             console.error("Error fetching ID and LASTID:", error);
         }
     };
+
     const handlePrevious = async () => {
         await fetchRetriveData(currentQC_SUBGROUP_KEY, "P");
         setForm((prev) => ({
@@ -359,6 +365,7 @@ const QcSubGroup = () => {
             SearchByCd: ''
         }));
     };
+
     const handleNext = async () => {
         if (currentQC_SUBGROUP_KEY) {
             await fetchRetriveData(currentQC_SUBGROUP_KEY, "N");
@@ -368,12 +375,15 @@ const QcSubGroup = () => {
             SearchByCd: ''
         }));
     };
+
     const handleDelete = () => {
         setOpenConfirmDialog(true);
-    }
+    };
+
     const handleCloseConfirmDialog = () => {
         setOpenConfirmDialog(false);
     };
+
     const handleConfirmDelete = async () => {
         setOpenConfirmDialog(false);
         const USER_NAME = localStorage.getItem('USER_NAME');
@@ -397,22 +407,21 @@ const QcSubGroup = () => {
                         return secondMsg;
                     }).join(" ,");
                     const finalMessage = `${firstMsg} ,${remainingMsgs}`;
-                    toast.error(finalMessage);
-                } else {
-                    toast.error(DATA?.[0]?.MSG || MESSAGE);
                 }
             }
         } catch (error) {
             console.error("Delete Error:", error);
         }
     };
+
     const handleEdit = () => {
         setMode(FORM_MODE.edit);
     };
+
     const handlePrint = async () => {
         try {
             const response = await axiosInstance.post(`/QC_SUBGROUP/GetQC_SUBGROUPDashBoard?currentPage=1&limit=5000`, {
-                "SearchText": ""
+                SearchText: ""
             });
             const { data: { STATUS, DATA } } = response;
             if (STATUS === 0 && Array.isArray(DATA)) {
@@ -468,22 +477,20 @@ const QcSubGroup = () => {
                 }}
             >
                 <ToastContainer />
-                <Grid container
+                <Grid container spacing={2}
                     sx={{
                         display: 'flex',
                         flexDirection: 'column',
                         marginInline: { xs: '5%', sm: '5%', md: '5%', lg: '15%', xl: '5%' },
                     }}
-                    spacing={2}
                 >
                     <Grid>
                         <Typography align="center" variant="h6">
                             QC Sub Group
                         </Typography>
                     </Grid>
-                    <Grid container justifyContent="space-between"
+                    <Grid container spacing={2} justifyContent="space-between"
                         sx={{ marginInline: { xs: '5%', sm: '5%', md: '5%', lg: '0%', xl: '0%' } }}
-                        spacing={2}
                     >
                         <Grid>
                             <Button
@@ -589,11 +596,7 @@ const QcSubGroup = () => {
                         </Grid>
                         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                             <TextField
-                                label={
-                                    <span>
-                                        Code <span style={{ color: 'red' }}>*</span>
-                                    </span>
-                                }
+                                label={<span>Code <span style={{ color: 'red' }}>*</span></span>}
                                 inputRef={QC_SUBGROUP_KEYRef}
                                 variant="filled"
                                 fullWidth
@@ -613,11 +616,7 @@ const QcSubGroup = () => {
                         </Grid>
                         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                             <TextField
-                                label={
-                                    <span>
-                                        QC SubGroup Name<span style={{ color: "red" }}>*</span>
-                                    </span>
-                                }
+                                label={<span>QC SubGroup Name<span style={{ color: "red" }}>*</span></span>}
                                 inputRef={QC_SUBGROUP_NAMERef}
                                 variant="filled"
                                 fullWidth
@@ -722,7 +721,7 @@ const QcSubGroup = () => {
                                         }}
                                     />
                                 }
-                                label="Active "
+                                label="Active"
                             />
                         </Grid>
                     </Grid>
@@ -798,4 +797,5 @@ const QcSubGroup = () => {
         </>
     );
 };
+
 export default QcSubGroup;

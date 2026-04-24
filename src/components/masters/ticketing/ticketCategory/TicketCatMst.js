@@ -22,7 +22,6 @@ import { DropInputSx } from '../../../../../public/styles/dropInputSx';
 const TicketCatMst = () => {
 
     const router = useRouter();
-
     const [formData, setFormData] = useState({
         TKTCATNAME: '',
         ABRV: '',
