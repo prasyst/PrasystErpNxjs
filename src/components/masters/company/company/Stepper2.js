@@ -1,15 +1,7 @@
 'use client';
 import React, { useEffect, useState, useCallback, Suspense } from 'react';
 import {
-  Box,
-  Button,
-  Stack,
-  FormControlLabel,
-  FormLabel,
-  Radio,
-  RadioGroup,
-  Checkbox,
-  Link,
+  Box, Button, Stack, FormControlLabel, FormLabel, Radio, RadioGroup, Checkbox, Link,
   Grid, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, TextField, InputAdornment
 } from '@mui/material';
 import { useSearchParams, useRouter } from 'next/navigation';
@@ -46,8 +38,6 @@ const columns = [
 ];
 
 const Stepper2 = ({ formData, setFormData, isFormDisabled, rows, setRows, currentPARTY_KEY }) => {
-  console.log("Stepper2 full formData:", formData.PartyDtlEntities?.[0]);
-
   const [selectedIndex, setSelectedIndex] = useState(null);
   const [isAddButtonDisabled, setIsAddButtonDisabled] = useState(false);
   const [isAddFormDisabled, setIsAddFormDisabled] = useState(false);
@@ -306,7 +296,6 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, rows, setRows, curren
   };
 
   const handleConfirm = () => {
-
     const currentData = formData?.PartyDtlEntities?.[0];
     if (!currentData) return;
 
@@ -317,7 +306,6 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, rows, setRows, curren
       updated[selectedIndex] = currentData;
       setRows(updated);
     }
-
     setSelectedIndex(null);
     setMode(null);
   };
@@ -405,9 +393,7 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, rows, setRows, curren
 
   return (
     <>
-
       <Grid container spacing={0.5}>
-        
         <Grid size={{ xs: 12, sm: 6, md: 12 }}>
           <Paper
             elevation={1}
@@ -472,7 +458,6 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, rows, setRows, curren
                 </TableHead>
                 <TableBody>
                   {filteredRows.map((row, index) => (
-
                     <TableRow
                       key={index}
                       hover={index !== 0}
@@ -522,7 +507,6 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, rows, setRows, curren
           </Paper>
         </Grid>
 
-        
         <Grid size={{ xs: 12, sm: 6, md: 12 }}>
           <Stack direction="row" spacing={2}>
             <Button
@@ -571,7 +555,6 @@ const Stepper2 = ({ formData, setFormData, isFormDisabled, rows, setRows, curren
             </Button>
           </Stack>
         </Grid>
-
 
         <Grid size={{ xs: 12, sm: 6, md: 6 }}>
           <TextField

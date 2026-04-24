@@ -1,18 +1,8 @@
 'use client';
 import React, { useEffect, useState, useCallback, Suspense } from 'react';
 import {
-  Box,
-  Grid,
-  TextField,
-  Typography,
-  Button,
-  Stack,
-  FormControlLabel,
-  FormLabel,
-  Radio,
-  Link,
-  RadioGroup,
-  Checkbox,
+  Box, Grid, TextField, Typography, Button, Stack, FormControlLabel,
+  FormLabel, Radio, Link, RadioGroup, Checkbox,
 } from '@mui/material';
 import { useSearchParams, useRouter } from 'next/navigation';
 import debounce from 'lodash.debounce';
@@ -34,7 +24,6 @@ import z from 'zod';
 const FORM_MODE = getFormMode();
 
 const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
-  console.log("Stepper1 full formData:", formData?.PrintName);
 
   const textInputSx = {
     '& .MuiInputBase-root': {
@@ -153,7 +142,6 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
   const handleChangeStatus = (event) => {
     const { name, checked } = event.target;
     const updatedStatus = checked ? "1" : "0";
-
     setFormData(prev => ({
       ...prev,
       [name]: updatedStatus
@@ -183,7 +171,6 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
           }));
         })
         .catch(err => {
-          console.error('Error reading file:', err);
           toast.error('Error reading file. Please try again.');
         });
     }
@@ -192,7 +179,6 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
   return (
     <>
       <Grid container spacing={0.5}>
-
         <Grid container size={{ xs: 12, sm: 6, md: 12 }} sx={{ display: 'flex' }}>
           <Grid container size={{ xs: 12, sm: 6, md: 10 }}>
             <Grid size={{ xs: 12, sm: 6, md: 1.5 }}>
@@ -309,7 +295,6 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
                 }}
               />
             </Grid>
-
           </Grid>
           <Grid container size={{ xs: 12, sm: 6, md: 2 }}>
             <Box
@@ -816,7 +801,7 @@ const Stepper1 = ({ formData, setFormData, isFormDisabled }) => {
         <Grid size={{ xs: 12, sm: 6, md: 2 }}>
           <FormControlLabel
             control={<Checkbox name="DEFAULT_BRANCH" size="small" checked={formData?.DEFAULT_BRANCH === "1"}
-            onChange={handleChangeStatus} />}
+              onChange={handleChangeStatus} />}
             disabled={isFormDisabled}
             label="Active"
             sx={{

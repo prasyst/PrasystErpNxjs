@@ -3,19 +3,8 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 
 import {
-  Box,
-  Grid,
-  Button,
-  Typography,
-  Stepper,
-  Step,
-  StepLabel,
-  Tooltip,
-  StepConnector,
-  TextField,
-  Tabs,
-  Tab,
-  Stack,
+  Box, Grid, Button, Typography, Stepper, Step, StepLabel, Tooltip,
+  StepConnector, TextField, Tabs, Tab, Stack,
 } from "@mui/material";
 import {
   KeyboardArrowLeft as KeyboardArrowLeftIcon,
@@ -35,12 +24,9 @@ import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
 import DialogTitle from "@mui/material/DialogTitle";
 import DialogContentText from "@mui/material/DialogContentText";
-
 import { useSearchParams, useRouter } from 'next/navigation';
-
 import CrudButton from "@/GlobalFunction/CrudButton";
 import PaginationButtons from '@/GlobalFunction/PaginationButtons';
-
 import Stepper1 from "@/components/masters/company/company/Stepper1";
 import Stepper2 from "@/components/masters/company/company/Stepper2";
 import { getFormMode } from "../../../../lib/helpers";
@@ -53,7 +39,7 @@ const CompanyMst = () => {
   const router = useRouter();
 
   const [tabIndex, setTabIndex] = useState(0);
-// const { hasSpecificPermission } = useUserPermissions();
+  // const { hasSpecificPermission } = useUserPermissions();
   const [openDialog, setopenDialog] = useState(false);
   const [seriesData, setSeriesData] = useState([]);
   const [activeStep, setActiveStep] = useState(0);
@@ -73,7 +59,7 @@ const CompanyMst = () => {
   const FG = searchParams.get('PARTY_KEY');
 
   const { hasSpecificPermission, loading: permissionsLoading } = useUserPermissions();
-const moduleName = "Company Master";
+  const moduleName = "Company Master";
 
   const [formData, setFormData] = useState({
     SearchByCd: "",
@@ -256,22 +242,12 @@ const moduleName = "Company Master";
       TCS_TERM_KEY: 0,
       BROKER1_KEY: 0
     }]
-
   });
-
-  useEffect(() => {
-  console.log('Company Master permissions:', {
-    add: hasSpecificPermission(moduleName, 'ADD'),
-    edit: hasSpecificPermission(moduleName, 'EDIT'),
-    delete: hasSpecificPermission(moduleName, 'DELETE'),
-    view: hasSpecificPermission(moduleName, 'VIEW')
-  });
-}, [hasSpecificPermission, moduleName]);
 
   const handlePrint = () => { };
 
   const handleExit = () => {
-    router.push('/dashboard');
+    router.push('/masterpage');
   };
 
   const fetchPartyData = useCallback(async (currentPARTY_KEY, flag = "R", isManualSearch = false) => {
@@ -280,14 +256,14 @@ const moduleName = "Company Master";
 
     try {
       const response = await axiosInstance.post(`Party/RetriveParty`, {
-        "FLAG": flag,
-        "TBLNAME": "PARTY",
-        "FLDNAME": "PARTY_KEY",
-        "ID": currentPARTY_KEY,
-        "ORDERBYFLD": "",
-        "CWHAER": "",
-        "CO_ID": CO_ID,
-        "PARTY_CAT": "PC"
+        FLAG: flag,
+        TBLNAME: "PARTY",
+        FLDNAME: "PARTY_KEY",
+        ID: currentPARTY_KEY,
+        ORDERBYFLD: "",
+        CWHAER: "",
+        CO_ID: CO_ID,
+        PARTY_CAT: "PC"
       });
 
       if (response.data.STATUS === 0 && response.data.RESPONSESTATUSCODE === 1) {
@@ -444,17 +420,13 @@ const moduleName = "Company Master";
             TCS_TERM_KEY: item.TCS_TERM_KEY || 0,
             BROKER1_KEY: item.BROKER1_KEY || 0
           }))
-
         });
 
         setIsFormDisabled(true);
         setCurrentPARTY_KEY(partyData?.PARTY_KEY);
         const newParams = new URLSearchParams();
         newParams.set("PARTY_KEY", partyData?.PARTY_KEY);
-        router.replace(`/masters/customers?${newParams.toString()}`);
-
-        console.log("fetch", partyData);
-
+        router.replace(`/masters/company?${newParams.toString()}`);
       } else if (response.data.STATUS === 1 && response.data.RESPONSESTATUSCODE === 2) {
         toast.info(response.data.MESSAGE);
       } else {
@@ -642,13 +614,11 @@ const moduleName = "Company Master";
                 TCS_TERM_KEY: 0,
                 BROKER1_KEY: 0
               }]
-
             }
           );
         }
       }
     } catch (error) {
-      console.error('Error fetching party data:', error);
       toast.error('Error fetching party data. Please try again.');
     }
   }, [router]);
@@ -681,10 +651,8 @@ const moduleName = "Company Master";
   }, [FG, fetchPartyData]);
 
   const handleAdd = async () => {
-
     const FCYR_KEY = localStorage.getItem('FCYR_KEY');
     const COBR_ID = localStorage.getItem('COBR_ID');
-
     setMode('add');
     setIsFormDisabled(false);
     setFormData(
@@ -869,7 +837,6 @@ const moduleName = "Company Master";
           TCS_TERM_KEY: 0,
           BROKER1_KEY: 0
         }]
-
       }
     );
     setRows([]);
@@ -895,10 +862,8 @@ const moduleName = "Company Master";
         responseSecond.data.RESPONSESTATUSCODE === 1
       ) {
         setSeries(responseSecond.data.DATA);
-
         const abcValue = responseSecond.data.DATA[0]?.ID || "";
         setAbcValue(abcValue);
-
         setFormData((prev) => ({
           ...prev,
           ID: abcValue
@@ -908,10 +873,8 @@ const moduleName = "Company Master";
         toast.error("Failed to fetch Series");
       }
     } catch (error) {
-      console.error("Error fetching Series", error);
       toast.error("Error fetching Series. Please try again.");
     }
-
   };
 
   const handleFirst = () => { };
@@ -922,7 +885,7 @@ const moduleName = "Company Master";
       ...prev,
       SearchByCd: ''
     }));
-  }
+  };
 
   const handlePrevClick = async () => {
     await fetchPartyData(currentPARTY_KEY, "P");
@@ -943,7 +906,6 @@ const moduleName = "Company Master";
   };
 
   const handleSubmit = async () => {
-
     const payload = [{
       DBFLAG: mode === 'add' ? 'I' : mode === 'edit' ? 'U' : '',
       PARTY_KEY: abcValue,
@@ -1124,7 +1086,6 @@ const moduleName = "Company Master";
         TCS_TERM_KEY: item.TCS_TERM_KEY || "",
         BROKER1_KEY: item.BROKER1_KEY || ""
       })) : []
-
     }];
 
     const payloadUpdate = [{
@@ -1313,31 +1274,22 @@ const moduleName = "Company Master";
     const username = localStorage.getItem('USER_NAME');
     const PARTY_KEY = localStorage.getItem('PARTY_KEY');
     const COBR_ID = localStorage.getItem('COBR_ID');
-
     const UserName = userRole === 'user' ? username : PARTY_KEY;
 
     let response;
     if (mode === 'edit') {
-
-      response = await axiosInstance.patch(`Party/ManagePartyBranch?UserName=${(UserName)}&strCobrid=${COBR_ID}`, payloadUpdate);
-
-      console.log("payload", payloadUpdate);
+      response = await axiosInstance.post(`Party/ManagePartyBranch?UserName=${(UserName)}&strCobrid=${COBR_ID}`, payloadUpdate);
     } else {
-
       response = await axiosInstance.post(`Party/ManagePartyBranch?UserName=${UserName}&strCobrid=${COBR_ID}`, payload);
-
-      console.log("payloadCreate", payload);
     }
 
     if (response.data.STATUS === 0 && response.data.RESPONSESTATUSCODE === 1) {
       toast.success(response.data.MESSAGE);
       setIsFormDisabled(true);
       setMode('view');
-
     } else {
       toast.error(response.data.MESSAGE || 'Operation failed');
     }
-
   };
 
   const handleCancel = async () => {
@@ -1359,13 +1311,8 @@ const moduleName = "Company Master";
     setIsFormDisabled(false);
   };
 
-  // const handleDelete = async () => {
-  //   setopenDialog(true);
-  // };
-
   const handleDelete = async () => {
     try {
-
       const response = await axiosInstance.post('Party/DeleteParty', {
         PARTY_KEY: currentPARTY_KEY
       });
@@ -1384,13 +1331,6 @@ const moduleName = "Company Master";
 
   const handleTabChange = (event, newValue) => {
     setTabIndex(newValue);
-  };
-
-  const Buttonsx = {
-    backgroundColor: '#39ace2',
-    margin: { xs: '0 4px', sm: '0 6px' },
-    minWidth: { xs: 40, sm: 46, md: 60 },
-    height: { xs: 40, sm: 46, md: 30 },
   };
 
   const textInputSx = {
@@ -1428,7 +1368,6 @@ const moduleName = "Company Master";
   };
 
   useEffect(() => {
-
     const defaultValues = {
       PARTYDTL_ID: 0,
       CFORM_FLG: 0,
@@ -1455,19 +1394,16 @@ const moduleName = "Company Master";
       }, {});
 
       setFormData((prev) => {
-
         const updatedParty = prev?.PartyDtlEntities?.map((item, index) => {
           if (index === 0) {
             return {
               ...item,
               ...updatedABC,
-
             };
           }
           return item;
         });
 
-        console.log("Updated xyz array (setRows):", updatedParty);
         setRows(updatedParty);
 
         return {
@@ -1552,11 +1488,10 @@ const moduleName = "Company Master";
     >
       <ToastContainer />
 
-      <Grid container justifyContent="space-between"
+      <Grid container spacing={2} justifyContent="space-between"
         sx={{
           marginInline: { xs: '5%', sm: '5%', md: '5%', lg: '5%', xl: '5%' },
         }}
-        spacing={2}
       >
         <Grid>
           <Button
@@ -1582,7 +1517,6 @@ const moduleName = "Company Master";
           <Typography align="center" variant="h6">
             {tabIndex === 0 ? "Company Master" : tabIndex === 1 ? "Branch" : null}
           </Typography>
-
         </Grid>
 
         <Grid sx={{ display: 'flex' }}>
@@ -1609,26 +1543,25 @@ const moduleName = "Company Master";
         </Grid>
 
         <Grid sx={{ display: "flex", justifyContent: "end" }}>
-  <CrudButton
-  moduleName={moduleName}
-  mode={mode}
-  onAdd={handleAdd}
-  onEdit={handleEdit}
-  onDelete={handleDelete}
-  onView={handlePrint}
-  onExit={handleExit}
-  readOnlyMode={mode === "view"}
-  onPrevious={handlePrevClick}
-  onNext={handleNextClick}
-  // Pass actual permission values from API
-  canAdd={hasSpecificPermission(moduleName, 'ADD')}
-  canEdit={hasSpecificPermission(moduleName, 'EDIT')}
-  canDelete={hasSpecificPermission(moduleName, 'DELETE')}
-  canView={hasSpecificPermission(moduleName, 'VIEW')}
-/>
+          <CrudButton
+            moduleName={moduleName}
+            mode={mode}
+            onAdd={handleAdd}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+            onView={handlePrint}
+            onExit={handleExit}
+            readOnlyMode={mode === "view"}
+            onPrevious={handlePrevClick}
+            onNext={handleNextClick}
+            // Pass actual permission values from API
+            canAdd={hasSpecificPermission(moduleName, 'ADD')}
+            canEdit={hasSpecificPermission(moduleName, 'EDIT')}
+            canDelete={hasSpecificPermission(moduleName, 'DELETE')}
+            canView={hasSpecificPermission(moduleName, 'VIEW')}
+          />
         </Grid>
       </Grid>
-
 
       <Grid sx={{ marginInline: { xs: '5%', sm: '5%', md: '15%', lg: '15%', xl: '15%' } }}>
         <Box sx={{ display: 'flex', mb: 1 }}>
@@ -1680,7 +1613,6 @@ const moduleName = "Company Master";
       <Grid sx={{
         marginInline: { xs: '5%', sm: '5%', md: '15%', lg: '15%', xl: '15%' },
       }}>
-
         {tabIndex === 0 ? (
           <Stepper1
             index={Index}
@@ -1728,7 +1660,6 @@ const moduleName = "Company Master";
           )}
           {(mode === 'edit' || mode === 'add') && (
             <>
-
               <Button variant="contained"
                 sx={{
                   margin: { xs: '0 4px', sm: '0 6px' },
@@ -1749,7 +1680,6 @@ const moduleName = "Company Master";
                 onClick={handleCancel}>
                 Cancel
               </Button>
-
             </>
           )}
         </Grid>
