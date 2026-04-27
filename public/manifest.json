@@ -30,8 +30,8 @@
       "url": "/dashboard",
       "icons": [
         {
-          "src": "/images/logo192.png",
-          "sizes": "192x192"
+          "src": "/images/logo512.png",
+          "sizes": "512x512"
         }
       ]
     },
@@ -42,8 +42,8 @@
       "url": "/login",
       "icons": [
         {
-          "src": "/images/logo192.png",
-          "sizes": "192x192"
+          "src": "/images/logo512.png",
+          "sizes": "512x512"
         }
       ]
     }
