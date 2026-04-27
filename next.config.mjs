@@ -16,7 +16,7 @@
 import withPWA from 'next-pwa';
 
 const nextConfig = {
-  // output: 'export',
+  output: 'export',
   reactStrictMode: true,
   assetPrefix: '/',
   trailingSlash: true,
