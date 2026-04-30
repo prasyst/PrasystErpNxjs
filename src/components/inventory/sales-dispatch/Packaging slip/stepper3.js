@@ -2952,7 +2952,8 @@ const Stepper3 = ({ formData,pickOrderItems , setFormData, isFormDisabled, mode,
   const [availableShades, setAvailableShades] = useState([]);
 const [selectedShades, setSelectedShades] = useState([]);
 const [shadeViewMode, setShadeViewMode] = useState('allocated');
-  
+  const [isContinuousAddMode, setIsContinuousAddMode] = useState(false);
+const [lastAddedBarcode, setLastAddedBarcode] = useState(null);
   // State for storing mappings
   const [productMapping, setProductMapping] = useState({});
   const [styleMapping, setStyleMapping] = useState({});
@@ -2969,10 +2970,10 @@ const [shadeViewMode, setShadeViewMode] = useState('allocated');
   const [isLoadingBarcode, setIsLoadingBarcode] = useState(false);
   const barcodeTimeoutRef = useRef(null);
 
-  // NEW: Track source of data loading
+
   const [dataSource, setDataSource] = useState(null);
   
-  // NEW: State for size details loading
+  
   const [isSizeDetailsLoaded, setIsSizeDetailsLoaded] = useState(false);
 const [checkboxes, setCheckboxes] = useState({
   changeQty: formData.CHANGE_QTY || false,
@@ -2980,7 +2981,7 @@ const [checkboxes, setCheckboxes] = useState({
   selectSet: formData.SELECT_SET || false
 });
 const [barcodeCache, setBarcodeCache] = useState(() => {
-  // Try to load from localStorage on component mount
+  
   if (typeof window !== 'undefined') {
     const saved = localStorage.getItem('barcodeQuantityCache');
     return saved ? JSON.parse(saved) : {};
@@ -2993,7 +2994,9 @@ const isProcessingBarcodeRef = useRef(false);
 const saveBarcodeQuantities = (barcode, sizeQuantities) => {
   if (!barcode) return;
   
-  // Extract only the quantity data for each size
+  // ✅ Get FGSTYLE_ID from current state
+  const fgstyleId = styleMapping[newItemData.style] || newItemData.fgstyleId;
+  
   const savedData = {
     barcode: barcode,
     product: newItemData.product,
@@ -3004,6 +3007,7 @@ const saveBarcodeQuantities = (barcode, sizeQuantities) => {
     mrp: newItemData.mrp,
     rate: newItemData.rate,
     discount: newItemData.discount,
+    fgstyleId: fgstyleId,
     sizes: sizeDetailsData.map(size => ({
       STYSIZE_NAME: size.STYSIZE_NAME,
       QTY: size.QTY || 0,
@@ -3016,15 +3020,14 @@ const saveBarcodeQuantities = (barcode, sizeQuantities) => {
     ...prev,
     [barcode]: savedData
   }));
-  
-  console.log('Saved barcode quantities:', barcode, savedData);
 };
+
 const hasCachedQuantities = (barcode) => {
   return barcodeCache[barcode] && barcodeCache[barcode].sizes && 
          barcodeCache[barcode].sizes.some(size => size.QTY > 0);
 };
 
-// Add this function to get cached quantities for a barcode
+
 const getCachedQuantities = (barcode) => {
   return barcodeCache[barcode];
 };
@@ -3662,7 +3665,7 @@ const fetchStyleDataByBarcode = async (barcode) => {
       "FGSTYLE_ID": "",
       "FGPRD_KEY": "",
       "FGSTYLE_CODE": "",
-      "ALT_BARCODE": barcode,  // Search by ALT_BARCODE
+      "ALT_BARCODE": barcode,
       "FLAG": ""
     };
 
@@ -3670,9 +3673,10 @@ const fetchStyleDataByBarcode = async (barcode) => {
 
     if (response.data.DATA && response.data.DATA.length > 0) {
       const styleData = response.data.DATA[0];
+      const originalBarcode = barcode;
       
-      // IMPORTANT: Store the ORIGINAL barcode that user typed
-      const originalBarcode = barcode;  // This is "013457"
+      // ✅ IMPORTANT: Store FGSTYLE_ID from API response
+      const fgstyleId = styleData.FGSTYLE_ID;
       
       if (isAddingNew || isEditingSize) {
         setNewItemData(prev => ({
@@ -3682,11 +3686,20 @@ const fetchStyleDataByBarcode = async (barcode) => {
           type: styleData.FGTYPE_NAME || '',
           mrp: styleData.MRP ? styleData.MRP.toString() : '',
           rate: styleData.SSP ? styleData.SSP.toString() : '',
-          barcode: originalBarcode,  // Store the actual barcode
-          shade: selectedShades.length > 0 ? selectedShades[0] : ''
+          barcode: originalBarcode,
+          shade: '',
+          
+          fgstyleId: fgstyleId
         }));
         
-        // Also set barcodeInput to show the actual barcode
+       
+        if ((styleData.FGSTYLE_CODE || styleData.FGSTYLE_NAME) && fgstyleId) {
+          setStyleMapping(prev => ({
+            ...prev,
+            [styleData.FGSTYLE_CODE || styleData.FGSTYLE_NAME]: fgstyleId
+          }));
+        }
+        
         setBarcodeInput(originalBarcode);
         
         if (styleData.FGPRD_NAME && styleData.FGPRD_KEY) {
@@ -3696,19 +3709,13 @@ const fetchStyleDataByBarcode = async (barcode) => {
           }));
         }
         
-        if ((styleData.FGSTYLE_CODE || styleData.FGSTYLE_NAME) && styleData.FGSTYLE_ID) {
-          setStyleMapping(prev => ({
-            ...prev,
-            [styleData.FGSTYLE_CODE || styleData.FGSTYLE_NAME]: styleData.FGSTYLE_ID
-          }));
+        if (fgstyleId) {
+          await fetchTypeData(fgstyleId);
+          await fetchLotNoData(fgstyleId);
+          await fetchShadesForStyle(fgstyleId, 'allocated');
         }
         
-        if (styleData.FGSTYLE_ID) {
-          await fetchTypeData(styleData.FGSTYLE_ID);
-          await fetchLotNoData(styleData.FGSTYLE_ID);
-        }
-        
-        // Fetch size details - pass the actual barcode and style data
+        // Fetch size details with FGSTYLE_ID
         await fetchSizeDetailsForStyle(styleData, originalBarcode);
       }
     } else {
@@ -3722,6 +3729,10 @@ const fetchStyleDataByBarcode = async (barcode) => {
   }
 };
 
+const isBarcodeAlreadyAdded = (barcode) => {
+  return tableData.some(item => item.BarCode === barcode);
+};
+
 const fetchSizeDetailsForStyle = async (styleData, barcodeValue = null) => {
   try {
     const fgprdKey = styleData.FGPRD_KEY;
@@ -3730,8 +3741,6 @@ const fetchSizeDetailsForStyle = async (styleData, barcodeValue = null) => {
     const fgshadeKey = styleData.FGSHADE_KEY || "";
     const fgptnKey = styleData.FGPTN_KEY || "";
     
-    // Use the barcodeValue passed from fetchStyleDataByBarcode
-    // If not provided, use from newItemData or empty string
     const actualBarcode = barcodeValue || newItemData.barcode || barcodeInput || "";
 
     if (!fgprdKey || !fgstyleId) {
@@ -3744,7 +3753,7 @@ const fetchSizeDetailsForStyle = async (styleData, barcodeValue = null) => {
     const coId = localStorage.getItem('CO_ID') || '02';
     const clientId = localStorage.getItem('CLIENT_ID') || '5102';
 
-    // FIRST: Get STYCATRT_ID from API with FLAG: "GETSTYCATRTID"
+    // Get STYCATRT_ID
     const stycatrtPayload = {
       "FGSTYLE_ID": fgstyleId,
       "FGPRD_KEY": fgprdKey,
@@ -3768,7 +3777,7 @@ const fetchSizeDetailsForStyle = async (styleData, barcodeValue = null) => {
       stycatrtId = stycatrtResponse.data.DATA[0].STYCATRT_ID || 0;
     }
 
-    // SECOND: Get size details with FLAG: "B" for Barcode mode
+    // Get size details with FLAG: "GETPACKbARC2"
     const sizeDetailsPayload = {
       "FGSTYLE_ID": fgstyleId,
       "FGPRD_KEY": fgprdKey,
@@ -3791,38 +3800,67 @@ const fetchSizeDetailsForStyle = async (styleData, barcodeValue = null) => {
       "FLAG": "GETPACKbARC2"  
     };
 
-    console.log('Barcode API Payload:', sizeDetailsPayload);
-
     const response = await axiosInstance.post('/STYSIZE/AddSizeDetail', sizeDetailsPayload);
 
     if (response.data.DATA && response.data.DATA.length > 0) {
-      const transformedSizeDetails = response.data.DATA.map((size, index) => ({
-        STYSIZE_ID: size.STYSIZE_ID || index + 1,
-        STYSIZE_NAME: size.STYSIZE_NAME || `Size ${index + 1}`,
-        FGSTYLE_ID: size.FGSTYLE_ID || fgstyleId,
-        QTY: 0,
-        ITM_AMT: 0,
-        ORDER_QTY: 0,
-        MRP: parseFloat(styleData.MRP) || 0,
-        RATE: parseFloat(styleData.SSP) || 0,
-        FG_QTY: parseFloat(size.FG_QTY) || 0,
-        PORD_QTY: parseFloat(size.PORD_QTY) || 0,
-        BAL_QTY: parseFloat(size.BAL_QTY) || 0,
-        ISU_QTY: parseFloat(size.ISU_QTY) || 0,
-        STYSTKDTL_ID: size.STYSTKDTL_ID || 0,  // Store this for reference
-        BARCODE: actualBarcode  // Store the barcode
-      }));
+      // 🔥 FIX: Auto-set QTY = 1 and validate against CL_QTY
+      const transformedSizeDetails = response.data.DATA.map((size, index) => {
+        const clQty = parseFloat(size.CL_QTY) || 0;
+        let autoQty = 0;
+        
+        // Only set auto QTY = 1 if there's available stock
+        if (clQty > 0) {
+          autoQty = 1;
+        }
+        
+        return {
+          STYSIZE_ID: size.STYSIZE_ID || index + 1,
+          STYSIZE_NAME: size.STYSIZE_NAME || `Size ${index + 1}`,
+          FGSTYLE_ID: size.FGSTYLE_ID || fgstyleId,
+          QTY: autoQty,  // Auto-set to 1 if stock available
+          ITM_AMT: autoQty * (parseFloat(styleData.SSP) || 0),
+          ORDER_QTY: autoQty,
+          MRP: parseFloat(styleData.MRP) || 0,
+          RATE: parseFloat(styleData.SSP) || 0,
+          CL_QTY: clQty,  // Available stock
+          PORD_QTY: parseFloat(size.PORD_QTY) || 0,
+          BAL_QTY: parseFloat(size.BAL_QTY) || 0,
+          ISU_QTY: parseFloat(size.ISU_QTY) || 0,
+          STYSTKDTL_ID: size.STYSTKDTL_ID || 0,
+          BARCODE: actualBarcode
+        };
+      });
 
       setSizeDetailsData(transformedSizeDetails);
 
       setNewItemData(prev => ({
         ...prev,
         stycatrtId: stycatrtId,
-        barcode: actualBarcode  // Keep the actual barcode
+        barcode: actualBarcode
       }));
 
       setIsSizeDetailsLoaded(true);
-      showSnackbar(`Size details loaded for barcode: ${actualBarcode}`, 'success');
+      
+      // Show warning for sizes with zero stock
+      const zeroStockSizes = transformedSizeDetails.filter(size => size.CL_QTY === 0);
+      if (zeroStockSizes.length > 0) {
+        showSnackbar(`⚠️ Warning: ${zeroStockSizes.length} size(s) have no stock!`, 'warning');
+      } else {
+        showSnackbar(`Size details loaded with default QTY=1 for each size!`, 'success');
+      }
+      
+      // ✅ Automatically confirm add after auto-setting quantities
+      // Small delay to ensure state is updated
+      setTimeout(() => {
+        // Check if any size has quantity > 0
+        const sizesWithQty = transformedSizeDetails.filter(size => size.QTY > 0);
+        if (sizesWithQty.length > 0) {
+          handleConfirmAdd();
+        } else {
+          showSnackbar("No sizes available with stock! Cannot add item.", 'error');
+        }
+      }, 100);
+      
     } else {
       setSizeDetailsData([]);
       setIsSizeDetailsLoaded(false);
@@ -3982,13 +4020,12 @@ const fetchSizeDetails = async () => {
       return;
     }
 
-    // Get values from localStorage
     const cobrId = companyConfig.COBR_ID || localStorage.getItem('COBR_ID') || '02';
     const fcyrKey = localStorage.getItem('FCYR_KEY') || '25';
     const coId = localStorage.getItem('CO_ID') || '02';
     const clientId = localStorage.getItem('CLIENT_ID') || '5102';
 
-    // FIRST: Get STYCATRT_ID from API with FLAG: "GETSTYCATRTID"
+    // Get STYCATRT_ID
     const stycatrtPayload = {
       "FGSTYLE_ID": fgstyleId,
       "FGPRD_KEY": fgprdKey,
@@ -4012,7 +4049,7 @@ const fetchSizeDetails = async () => {
       stycatrtId = stycatrtResponse.data.DATA[0].STYCATRT_ID || 0;
     }
 
-    // SECOND: Get size details with enhanced payload
+    // Get size details
     const sizeDetailsPayload = {
       "FGSTYLE_ID": fgstyleId,
       "FGPRD_KEY": fgprdKey,
@@ -4038,6 +4075,7 @@ const fetchSizeDetails = async () => {
     const sizeDetailsResponse = await axiosInstance.post('/STYSIZE/AddSizeDetail', sizeDetailsPayload);
 
     if (sizeDetailsResponse.data.DATA && sizeDetailsResponse.data.DATA.length > 0) {
+      // 🔥 FIX: Use CL_QTY from API response
       const transformedSizeDetails = sizeDetailsResponse.data.DATA.map((size, index) => ({
         STYSIZE_ID: size.STYSIZE_ID || index + 1,
         STYSIZE_NAME: size.STYSIZE_NAME || `Size ${index + 1}`,
@@ -4047,21 +4085,18 @@ const fetchSizeDetails = async () => {
         ORDER_QTY: 0,
         MRP: parseFloat(newItemData.mrp) || 0,
         RATE: parseFloat(newItemData.rate) || 0,
-        FG_QTY: parseFloat(size.FG_QTY) || 0,  // Add FG_QTY
-        PORD_QTY: parseFloat(size.PORD_QTY) || 0 // Add PORD_QTY
+        CL_QTY: parseFloat(size.CL_QTY) || 0,  // ✅ Use CL_QTY
+        PORD_QTY: parseFloat(size.PORD_QTY) || 0
       }));
 
       setSizeDetailsData(transformedSizeDetails);
 
-      // Update newItemData with STYCATRT_ID for use in payload
       setNewItemData(prev => ({
         ...prev,
         stycatrtId: stycatrtId
       }));
 
       setIsSizeDetailsLoaded(true);
-
-      // Show success message with STYCATRT_ID
       showSnackbar(`Size details loaded successfully. STYCATRT_ID: ${stycatrtId}`, 'success');
     } else {
       showSnackbar("No size details found for the selected combination.", 'warning');
@@ -4074,7 +4109,6 @@ const fetchSizeDetails = async () => {
     setIsSizeDetailsLoaded(false);
   }
 };
-
   // Handle style code text input change with debounce
   const handleStyleCodeInputChange = (e) => {
     const value = e.target.value;
@@ -4108,16 +4142,23 @@ const handleBarcodeInputChange = (e) => {
   
   if (value && value.trim() !== '') {
     barcodeTimeoutRef.current = setTimeout(() => {
+      // Check for duplicate (optional warning)
+      if (isBarcodeAlreadyAdded(value.trim()) && isContinuousAddMode) {
+        // showSnackbar(`Warning: Barcode ${value} already exists in order. Adding another entry.`, 'warning');
+      }
+      
       // Check if we're already processing this barcode
       if (lastProcessedBarcodeRef.current === value.trim() && isProcessingBarcodeRef.current) {
         console.log('Already processing this barcode:', value);
         return;
       }
       
-      // Check if this barcode has cached quantities
-      if (hasCachedQuantities(value.trim())) {
+      // Always try to auto-add if in continuous add mode
+      if (isContinuousAddMode && hasCachedQuantities(value.trim())) {
         console.log('Found cached quantities for barcode:', value);
-        // Load from cache and auto-add to table
+        loadFromCacheAndAddToTable(value.trim());
+      } else if (hasCachedQuantities(value.trim())) {
+        console.log('Found cached quantities for barcode:', value);
         loadFromCacheAndAddToTable(value.trim());
       } else {
         console.log('No cached quantities for barcode, fetching from API');
@@ -4137,187 +4178,329 @@ const loadFromCacheAndAddToTable = async (barcode) => {
     const cachedData = barcodeCache[barcode];
     if (!cachedData) {
       console.log('No cached data found');
+      isProcessingBarcodeRef.current = false;
       return;
     }
     
-    console.log('Loading from cache and auto-adding to table:', cachedData);
+    // ✅ Get FGSTYLE_ID from cached data or fetch from API
+    let fgstyleId = cachedData.fgstyleId || styleMapping[cachedData.style];
     
-    // First, populate the form fields with cached data
-    setNewItemData({
-      product: cachedData.product || '',
-      barcode: cachedData.barcode || barcode,
-      style: cachedData.style || '',
-      type: cachedData.type || '',
-      shade: cachedData.shade || '',
-      qty: '',
-      mrp: cachedData.mrp || '',
-      rate: cachedData.rate || '',
-      setNo: '',
-      varPer: '',
-      stdQty: '',
-      convFact: '',
-      lotNo: cachedData.lotNo || '',
-      discount: cachedData.discount || '',
-      percent: '',
-      remark: '',
-      divDt: '',
-      rQty: '',
-      sets: '',
-      stycatrtId: 0
-    });
+    // If still no ID, fetch from API
+    if (!fgstyleId && cachedData.style) {
+      try {
+        const payload = {
+          "FGSTYLE_ID": "",
+          "FGPRD_KEY": "",
+          "FGSTYLE_CODE": cachedData.style,
+          "FLAG": ""
+        };
+        const response = await axiosInstance.post('/FGSTYLE/GetFgstyleDrp', payload);
+        if (response.data.DATA && response.data.DATA.length > 0) {
+          fgstyleId = response.data.DATA[0].FGSTYLE_ID;
+        }
+      } catch (error) {
+        console.error('Error fetching FGSTYLE_ID:', error);
+      }
+    }
     
-    setBarcodeInput(barcode);
+    // ✅ Fetch fresh size details from API to get updated CL_QTY
+    let freshSizeDetails = null;
+    if (fgstyleId) {
+      freshSizeDetails = await fetchFreshSizeDetailsForBarcode(barcode, fgstyleId);
+    }
     
-    // Reconstruct size details with cached quantities
-    const reconstructedSizeDetails = cachedData.sizes.map(size => ({
-      STYSIZE_ID: size.STYSIZE_ID,
-      STYSIZE_NAME: size.STYSIZE_NAME,
-      QTY: size.QTY,
-      ITM_AMT: (size.QTY || 0) * (parseFloat(cachedData.rate) || 0),
-      ORDER_QTY: size.QTY,
-      MRP: parseFloat(cachedData.mrp) || 0,
-      RATE: parseFloat(cachedData.rate) || 0,
-      FG_QTY: 0,
-      PORD_QTY: 0,
-      BAL_QTY: 0,
-      ISU_QTY: 0
+    let finalSizeDetails = [];
+    let remainingStockMap = {};
+    
+    if (freshSizeDetails && freshSizeDetails.length > 0) {
+      // ✅ Calculate total previously ordered quantity for this barcode
+      const totalOrderedForBarcode = getTotalOrderedQuantityForBarcode(barcode);
+      
+      // ✅ Calculate remaining stock after previous orders
+      remainingStockMap = {};
+      freshSizeDetails.forEach(size => {
+        const originalClQty = size.CL_QTY || 0;
+        const remainingQty = Math.max(0, originalClQty - totalOrderedForBarcode);
+        remainingStockMap[size.STYSIZE_NAME] = remainingQty;
+      });
+      
+      // ✅ Prepare size details with auto QTY = 1 (if stock available)
+      finalSizeDetails = cachedData.sizes.map(size => {
+        const remainingQty = remainingStockMap[size.STYSIZE_NAME] || 0;
+        // Auto-set QTY = 1 if remaining stock >= 1, otherwise 0
+        const autoQty = remainingQty >= 1 ? 1 : 0;
+        
+        return {
+          STYSIZE_ID: size.STYSIZE_ID,
+          STYSIZE_NAME: size.STYSIZE_NAME,
+          QTY: autoQty,
+          ITM_AMT: autoQty * (parseFloat(cachedData.rate) || 0),
+          ORDER_QTY: autoQty,
+          MRP: parseFloat(cachedData.mrp) || 0,
+          RATE: parseFloat(cachedData.rate) || 0,
+          CL_QTY: remainingQty,
+          FG_QTY: remainingQty,
+          PORD_QTY: 0,
+          BAL_QTY: remainingQty,
+          ISU_QTY: 0,
+          BARCODE: barcode
+        };
+      });
+      
+      // Check if any size has auto quantity set
+      const sizesWithQty = finalSizeDetails.filter(size => size.QTY > 0);
+      if (sizesWithQty.length === 0) {
+        showSnackbar(`❌ No remaining stock available for barcode: ${barcode}. Cannot add item.`, 'error');
+        isProcessingBarcodeRef.current = false;
+        return;
+      }
+      
+      // Show warning if stock is low
+      const lowStockSizes = finalSizeDetails.filter(size => size.CL_QTY < 10 && size.CL_QTY > 0);
+      if (lowStockSizes.length > 0) {
+        showSnackbar(`⚠️ Low stock warning for ${lowStockSizes.length} size(s)`, 'warning');
+      }
+      
+    } else {
+      // Fallback: Use cached data with auto QTY=1
+      finalSizeDetails = cachedData.sizes.map(size => {
+        const clQty = size.CL_QTY || 0;
+        const autoQty = clQty >= 1 ? 1 : 0;
+        
+        return {
+          STYSIZE_ID: size.STYSIZE_ID,
+          STYSIZE_NAME: size.STYSIZE_NAME,
+          QTY: autoQty,
+          ITM_AMT: autoQty * (parseFloat(cachedData.rate) || 0),
+          ORDER_QTY: autoQty,
+          MRP: parseFloat(cachedData.mrp) || 0,
+          RATE: parseFloat(cachedData.rate) || 0,
+          CL_QTY: clQty,
+          FG_QTY: clQty,
+          PORD_QTY: 0,
+          BAL_QTY: clQty,
+          ISU_QTY: 0,
+          BARCODE: barcode
+        };
+      });
+    }
+    
+    // Calculate totals
+    const totalQty = finalSizeDetails.reduce((sum, size) => sum + (parseFloat(size.QTY) || 0), 0);
+    const rate = parseFloat(cachedData.rate) || 0;
+    const totalAmount = finalSizeDetails.reduce((sum, size) => {
+      const sizeQty = parseFloat(size.QTY) || 0;
+      return sum + (sizeQty * rate);
+    }, 0);
+    const discount = parseFloat(cachedData.discount) || 0;
+    const netAmount = totalAmount - discount;
+    
+    const tempId = Date.now();
+    const barcodeValue = barcode;
+    
+    // Get mapping keys
+    const fgprdKey = productMapping[cachedData.product] || "";
+    const fgtypeKey = typeMapping[cachedData.type] || "";
+    const fgshadeKey = shadeMapping[cachedData.shade] || "";
+    const fgptnKey = lotNoMapping[cachedData.lotNo] || "";
+    const stycatrtId = 0;
+    
+    // Create the item for the table
+    const newItem = {
+      id: tempId,
+      BarCode: barcodeValue,
+      orderNo: cachedData.orderNo || '',
+      balQty: cachedData.balQty || totalQty,
+      orderDate: cachedData.orderDate || '',
+      product: cachedData.product,
+      style: cachedData.style || "-",
+      type: cachedData.type || "-",
+      shade: cachedData.shade || "-",
+      lotNo: cachedData.lotNo || "-",
+      qty: totalQty,
+      mrp: parseFloat(cachedData.mrp) || 0,
+      rate: rate,
+      amount: totalAmount,
+      varPer: 0,
+      varQty: 0,
+      varAmt: 0,
+      discAmt: discount,
+      netAmt: netAmount,
+      distributer: "-",
+      set: 0,
+      originalData: {
+        ORDBKSTY_ID: tempId,
+        FGITEM_KEY: barcodeValue,
+        ALT_BARCODE: barcodeValue,
+        PRODUCT: cachedData.product,
+        STYLE: cachedData.style,
+        TYPE: cachedData.type || "-",
+        SHADE: cachedData.shade || "-",
+        PATTERN: cachedData.lotNo || "-",
+        ITMQTY: totalQty,
+        MRP: parseFloat(cachedData.mrp) || 0,
+        ITMRATE: rate,
+        ITMAMT: totalAmount,
+        DLV_VAR_PERC: 0,
+        DLV_VAR_QTY: 0,
+        DISC_AMT: discount,
+        NET_AMT: netAmount,
+        DISTBTR: "-",
+        SETQTY: 0,
+        ORDBKSTYSZLIST: finalSizeDetails.map(size => ({
+          STYSIZE_ID: size.STYSIZE_ID,
+          STYSIZE_NAME: size.STYSIZE_NAME,
+          QTY: size.QTY,
+          ITM_AMT: size.ITM_AMT,
+          ORDER_QTY: size.QTY,
+          MRP: size.MRP,
+          RATE: size.RATE,
+          CL_QTY: size.CL_QTY,
+          FG_QTY: size.FG_QTY,
+          PORD_QTY: size.PORD_QTY,
+          BAL_QTY: size.BAL_QTY,
+          ISU_QTY: size.ISU_QTY,
+          ORDBKSTYSZ_ID: 0,
+          DBFLAG: 'I'
+        })),
+        FGPRD_KEY: fgprdKey,
+        FGSTYLE_ID: fgstyleId,
+        FGTYPE_KEY: fgtypeKey,
+        FGSHADE_KEY: fgshadeKey,
+        FGPTN_KEY: fgptnKey,
+        STYCATRT_ID: stycatrtId,
+        DBFLAG: mode === 'add' ? 'I' : 'I'
+      },
+      FGSTYLE_ID: fgstyleId,
+      FGPRD_KEY: fgprdKey,
+      FGTYPE_KEY: fgtypeKey,
+      FGSHADE_KEY: fgshadeKey,
+      FGPTN_KEY: fgptnKey,
+      STYCATRT_ID: stycatrtId,
+      ALT_BARCODE: barcodeValue
+    };
+    
+    // Update table data
+    setUpdatedTableData(prev => [...prev, newItem]);
+    
+    // Update form data
+    setFormData(prev => ({
+      ...prev,
+      apiResponseData: {
+        ...prev.apiResponseData,
+        ORDBKSTYLIST: [...(prev.apiResponseData?.ORDBKSTYLIST || []), newItem.originalData]
+      }
     }));
     
-    setSizeDetailsData(reconstructedSizeDetails);
-    setIsSizeDetailsLoaded(true);
-    
-    // Auto-add to main table after a short delay
-    setTimeout(() => {
-      // Create and add the item to main table
-      const totalQty = reconstructedSizeDetails.reduce((sum, size) => sum + (parseFloat(size.QTY) || 0), 0);
-      const rate = parseFloat(cachedData.rate) || 0;
-      const totalAmount = reconstructedSizeDetails.reduce((sum, size) => {
-        const sizeQty = parseFloat(size.QTY) || 0;
-        return sum + (sizeQty * rate);
-      }, 0);
-      const discount = parseFloat(cachedData.discount) || 0;
-      const netAmount = totalAmount - discount;
-      
-      const tempId = Date.now();
-      const fgprdKey = productMapping[cachedData.product] || "";
-      const fgstyleId = styleMapping[cachedData.style] || "";
-      const stycatrtId = 0;
-      const barcodeValue = barcode;
-      
-      const newItem = {
-        id: tempId,
-        BarCode: barcodeValue,
-        product: cachedData.product,
-        style: cachedData.style || "-",
-        type: cachedData.type || "-",
-        shade: cachedData.shade || "-",
-        lotNo: cachedData.lotNo || "-",
-        qty: totalQty,
-        mrp: parseFloat(cachedData.mrp) || 0,
-        rate: rate,
-        amount: totalAmount,
-        varPer: 0,
-        varQty: 0,
-        varAmt: 0,
-        discAmt: discount,
-        netAmt: netAmount,
-        distributer: "-",
-        set: 0,
-        originalData: {
-          ORDBKSTY_ID: tempId,
-          FGITEM_KEY: barcodeValue,
-          ALT_BARCODE: barcodeValue,
-          PRODUCT: cachedData.product,
-          STYLE: cachedData.style,
-          TYPE: cachedData.type || "-",
-          SHADE: cachedData.shade || "-",
-          PATTERN: cachedData.lotNo || "-",
-          ITMQTY: totalQty,
-          MRP: parseFloat(cachedData.mrp) || 0,
-          ITMRATE: rate,
-          ITMAMT: totalAmount,
-          DLV_VAR_PERC: 0,
-          DLV_VAR_QTY: 0,
-          DISC_AMT: discount,
-          NET_AMT: netAmount,
-          DISTBTR: "-",
-          SETQTY: 0,
-          ORDBKSTYSZLIST: reconstructedSizeDetails.map(size => ({
-            ...size,
-            ORDBKSTYSZ_ID: 0
-          })),
-          FGPRD_KEY: fgprdKey,
-          FGSTYLE_ID: fgstyleId,
-          FGTYPE_KEY: typeMapping[cachedData.type] || "",
-          FGSHADE_KEY: shadeMapping[cachedData.shade] || "",
-          FGPTN_KEY: lotNoMapping[cachedData.lotNo] || "",
-          STYCATRT_ID: stycatrtId,
-          DBFLAG: mode === 'add' ? 'I' : 'I'
-        },
-        FGSTYLE_ID: fgstyleId,
-        FGPRD_KEY: fgprdKey,
-        FGTYPE_KEY: typeMapping[cachedData.type] || "",
-        FGSHADE_KEY: shadeMapping[cachedData.shade] || "",
-        FGPTN_KEY: lotNoMapping[cachedData.lotNo] || "",
-        STYCATRT_ID: stycatrtId,
-        ALT_BARCODE: barcodeValue
+    // Update cache with remaining stock for future scans
+    if (freshSizeDetails && freshSizeDetails.length > 0) {
+      const updatedCacheData = {
+        ...cachedData,
+        sizes: finalSizeDetails.map(size => ({
+          STYSIZE_ID: size.STYSIZE_ID,
+          STYSIZE_NAME: size.STYSIZE_NAME,
+          QTY: size.QTY,
+          CL_QTY: size.CL_QTY,
+          RATE: size.RATE,
+          MRP: size.MRP
+        })),
+        lastUsed: Date.now()
       };
       
-      // Add to table
-      setUpdatedTableData(prev => [...prev, newItem]);
-      
-      // Update formData
-      setFormData(prev => ({
+      setBarcodeCache(prev => ({
         ...prev,
-        apiResponseData: {
-          ...prev.apiResponseData,
-          ORDBKSTYLIST: [...(prev.apiResponseData?.ORDBKSTYLIST || []), newItem.originalData]
-        }
+        [barcode]: updatedCacheData
       }));
       
-      // Reset form for next entry
-      setIsAddingNew(false);
-      setIsSizeDetailsLoaded(false);
-      setNewItemData({
-        product: '',
-        barcode: '',
-        style: '',
-        type: '',
-        shade: '',
-        qty: '',
-        mrp: '',
-        rate: '',
-        setNo: '',
-        varPer: '',
-        stdQty: '',
-        convFact: '',
-        lotNo: '',
-        discount: '',
-        percent: '',
-        remark: '',
-        divDt: '',
-        rQty: '',
-        sets: '',
-        stycatrtId: 0
-      });
-      setBarcodeInput('');
-      setSizeDetailsData([]);
-      setSelectedShades([]);
-      setAvailableShades([]);
-      
-      showSnackbar(`Auto-added from cache! ${cachedData.product} - ${cachedData.style}`, 'success');
-      
-      // Clear processing flag
-      setTimeout(() => {
-        isProcessingBarcodeRef.current = false;
-      }, 500);
-    }, 100);
+      // Update localStorage
+      if (typeof window !== 'undefined') {
+        const updatedCache = {
+          ...barcodeCache,
+          [barcode]: updatedCacheData
+        };
+        localStorage.setItem('barcodeQuantityCache', JSON.stringify(updatedCache));
+      }
+    }
+    
+    setLastAddedBarcode(barcode);
+    setBarcodeInput('');
+    
+    // Focus back on barcode input for continuous scanning
+    setTimeout(() => {
+      const barcodeInputElement = document.querySelector('input[name="barcode"]');
+      if (barcodeInputElement) {
+        barcodeInputElement.value = '';
+        barcodeInputElement.focus();
+      }
+    }, 50);
+    
+    // showSnackbar(`Added ${cachedData.product} - ${cachedData.style} (Total Qty: ${totalQty})`, 'success');
+    
+    setTimeout(() => {
+      isProcessingBarcodeRef.current = false;
+    }, 500);
     
   } catch (error) {
     console.error('Error loading from cache:', error);
     showSnackbar('Error loading cached quantities', 'error');
     isProcessingBarcodeRef.current = false;
   }
+};
+
+const fetchFreshSizeDetailsForBarcode = async (barcode, fgstyleId) => {
+  try {
+    const payload = {
+      "FGSTYLE_ID": fgstyleId,
+      "FGPRD_KEY": "",
+      "FGTYPE_KEY": "",
+      "FGSHADE_KEY": "",
+      "FGPTN_KEY": "",
+      "MRP": 0,
+      "SSP": 0,
+      "PARTY_KEY": formData.PARTY_KEY || "",
+      "PARTYDTL_ID": formData.PARTYDTL_ID || 0,
+      "COBR_ID": companyConfig.COBR_ID || localStorage.getItem('COBR_ID') || '02',
+      "FCYR_KEY": localStorage.getItem('FCYR_KEY') || '25',
+      "STYSTKDTL_ID": 0,
+      "BARCODE": barcode,
+      "FGITM_KEY": "",
+      "STYSTK_KEY": "",
+      "ORDBKSTY_ID": 0,
+      "CLIENT_ID": localStorage.getItem('CLIENT_ID') || '5102',
+      "CO_ID": localStorage.getItem('CO_ID') || '02',
+      "FLAG": "GETPACKbARC2"
+    };
+
+    const response = await axiosInstance.post('/STYSIZE/AddSizeDetail', payload);
+    
+    if (response.data.DATA && response.data.DATA.length > 0) {
+      return response.data.DATA.map(size => ({
+        STYSIZE_ID: size.STYSIZE_ID,
+        STYSIZE_NAME: size.STYSIZE_NAME,
+        CL_QTY: parseFloat(size.CL_QTY) || 0,
+        PORD_QTY: parseFloat(size.PORD_QTY) || 0,
+        BAL_QTY: parseFloat(size.BAL_QTY) || 0,
+        FG_QTY: parseFloat(size.FG_QTY) || 0,
+        ISU_QTY: parseFloat(size.ISU_QTY) || 0,
+        QTY: 0
+      }));
+    }
+    return null;
+  } catch (error) {
+    console.error('Error fetching fresh size details:', error);
+    return null;
+  }
+};
+
+
+const getTotalOrderedQuantityForBarcode = (barcode) => {
+  const orders = tableData.filter(item => item.BarCode === barcode);
+  let totalQty = 0;
+  orders.forEach(order => {
+    const sizeDetails = order.originalData?.ORDBKSTYSZLIST || [];
+    totalQty += sizeDetails.reduce((sum, size) => sum + (parseFloat(size.QTY) || 0), 0);
+  });
+  return totalQty;
 };
 
   // Handle product selection change
@@ -4493,49 +4676,61 @@ const loadFromCacheAndAddToTable = async (barcode) => {
     return !!formData.Party && !!formData.PARTY_KEY;
   };
 
-  // Handle Add Item
   const handleAddItem = async () => {
-    if (!isPartySelected()) {
-      showSnackbar("Please select a Party first before adding items", 'error');
-      return;
-    }
+  if (!isPartySelected()) {
+    showSnackbar("Please select a Party first before adding items", 'error');
+    return;
+  }
 
-    setIsAddingNew(true);
-    setSizeDetailsData([]);
-    setIsSizeDetailsLoaded(false);
-    setDataSource(null);
-    
-    await fetchProductData();
-    
-    setNewItemData({
-      product: '',
-      barcode: '',
-      style: '',
-      type: '',
-      shade: '',
-      qty: '',
-      mrp: '',
-      rate: '',
-      setNo: '',
-      varPer: '',
-      stdQty: '',
-      convFact: '',
-      lotNo: '',
-      discount: '',
-      percent: '',
-      remark: '',
-      divDt: '',
-      rQty: '',
-      sets: ''
-    });
-    
-    setStyleCodeInput('');
-    setBarcodeInput('');
-    setStyleOptions([]);
-    setTypeOptions([]);
-    setShadeOptions([]);
-    setLotNoOptions([]);
-  };
+  // Enable continuous add mode
+  setIsContinuousAddMode(true);
+  setIsAddingNew(true);
+  setSizeDetailsData([]);
+  setIsSizeDetailsLoaded(false);
+  setDataSource(null);
+  
+  await fetchProductData();
+  
+  setNewItemData({
+    product: '',
+    barcode: '',
+    style: '',
+    type: '',
+    shade: '',
+    qty: '',
+    mrp: '',
+    rate: '',
+    setNo: '',
+    varPer: '',
+    stdQty: '',
+    convFact: '',
+    lotNo: '',
+    discount: '',
+    percent: '',
+    remark: '',
+    divDt: '',
+    rQty: '',
+    sets: ''
+  });
+  
+  setStyleCodeInput('');
+  setBarcodeInput('');
+  setStyleOptions([]);
+  setTypeOptions([]);
+  setShadeOptions([]);
+  setLotNoOptions([]);
+  
+  // Clear last added barcode
+  setLastAddedBarcode(null);
+  
+  // Focus on barcode input
+  setTimeout(() => {
+    const barcodeInput = document.querySelector('input[name="barcode"]');
+    if (barcodeInput) {
+      barcodeInput.focus();
+    }
+  }, 100);
+};
 
   // Add this useEffect in Stepper2.js to sync table data to formData
 useEffect(() => {
@@ -4767,8 +4962,8 @@ const handleConfirmAdd = () => {
     }
   }));
 
-  setIsAddingNew(false);
-  setIsSizeDetailsLoaded(false);
+  // ✅ DON'T close the add form - keep it open for continuous adding
+  // Just reset the fields for next item, but keep isAddingNew = true
   setNewItemData({
     product: '',
     barcode: '',
@@ -4791,16 +4986,39 @@ const handleConfirmAdd = () => {
     sets: '',
     stycatrtId: 0
   });
+  
+  // Clear barcode input
   setBarcodeInput('');
+  
+  // Clear size details
   setSizeDetailsData([]);
-  setDataSource(null);
+  setIsSizeDetailsLoaded(false);
+  
+  // Clear selected shades
   setSelectedShades([]);
-  setAvailableShades([]);
-  setItemsConfirmed(true);
-
+  
+  // Reset the data source
+  setDataSource(null);
+  
+  // ✅ Keep isAddingNew as true for continuous adding
+  // setIsAddingNew(false); // DON'T DO THIS - Remove this line
+  
+  // Reset items confirmed flag
+  setItemsConfirmed(false);
+  
+  // Show success message
   showSnackbar(selectedShades.length > 1 ? 
-    `${selectedShades.length} barcode items added to order (${totalQty} each)!` : 
-    "Barcode item added successfully!");
+    `${selectedShades.length} items added to order (${totalQty} each)! Ready for next scan` : 
+    "Item added successfully! Ready for next barcode");
+  
+  // ✅ Focus back on barcode input for next scan
+  setTimeout(() => {
+    const barcodeInputElement = document.querySelector('input[name="barcode"]');
+    if (barcodeInputElement) {
+      barcodeInputElement.value = '';
+      barcodeInputElement.focus();
+    }
+  }, 50);
 };
 
   const handleEditItem = () => {
@@ -4983,35 +5201,39 @@ const handleConfirmAdd = () => {
     showSnackbar("Item deleted successfully!");
   };
 
-  const handleCancelAdd = () => {
-    setIsAddingNew(false);
-    setIsSizeDetailsLoaded(false);
-    setNewItemData({
-      product: '',
-      barcode: '',
-      style: '',
-      type: '',
-      shade: '',
-      qty: '',
-      mrp: '',
-      rate: '',
-      setNo: '',
-      varPer: '',
-      stdQty: '',
-      convFact: '',
-      lotNo: '',
-      discount: '',
-      percent: '',
-      remark: '',
-      divDt: '',
-      rQty: '',
-      sets: ''
-    });
-    setStyleCodeInput('');
-    setBarcodeInput('');
-    setSizeDetailsData([]);
-    setDataSource(null);
-  };
+const handleCancelAdd = () => {
+  setIsContinuousAddMode(false);
+  setIsAddingNew(false);  // This will exit continuous add mode
+  setIsSizeDetailsLoaded(false);
+  setNewItemData({
+    product: '',
+    barcode: '',
+    style: '',
+    type: '',
+    shade: '',
+    qty: '',
+    mrp: '',
+    rate: '',
+    setNo: '',
+    varPer: '',
+    stdQty: '',
+    convFact: '',
+    lotNo: '',
+    discount: '',
+    percent: '',
+    remark: '',
+    divDt: '',
+    rQty: '',
+    sets: ''
+  });
+  setStyleCodeInput('');
+  setBarcodeInput('');
+  setSizeDetailsData([]);
+  setDataSource(null);
+  setSelectedShades([]);
+  setAvailableShades([]);
+  setLastAddedBarcode(null);
+};
 
   const handleEditCancel = () => {
     setShowValidationErrors(false);
@@ -5043,21 +5265,31 @@ const handleConfirmAdd = () => {
     setDataSource(null);
   };
 
-  const handleSizeQtyChange = (index, newQty) => {
-    const updatedSizeDetails = [...sizeDetailsData];
-    const qty = parseFloat(newQty) || 0;
-    const rate = parseFloat(newItemData.rate) || 0;
-    const amount = qty * rate;
-    
-    updatedSizeDetails[index] = {
-      ...updatedSizeDetails[index],
-      QTY: qty,
-      ITM_AMT: amount,
-      ORDER_QTY: qty
-    };
+ const handleSizeQtyChange = (index, newQty) => {
+  const size = sizeDetailsData[index];
+  const clQty = size.CL_QTY || 0;  
+  const inputQty = parseFloat(newQty) || 0;
+  
+  
+  if (inputQty > clQty) {
+    showSnackbar(`❌ Cannot order more than available stock! Maximum allowed: ${clQty} for size "${size.STYSIZE_NAME}"`, 'error');
+    return;
+  }
+  
+ 
+  const updatedSizeDetails = [...sizeDetailsData];
+  const rate = parseFloat(newItemData.rate) || 0;
+  const amount = inputQty * rate;
 
-    setSizeDetailsData(updatedSizeDetails);
+  updatedSizeDetails[index] = {
+    ...updatedSizeDetails[index],
+    QTY: inputQty,
+    ITM_AMT: amount,
+    ORDER_QTY: inputQty
   };
+
+  setSizeDetailsData(updatedSizeDetails);
+};
 
   const handleDateChange = (date, fieldName) => {
     if (date) {
@@ -5373,20 +5605,30 @@ const handleConfirmAdd = () => {
             <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 1 }}>
               
 
-               <TextField 
-                label="Type barcode Here" 
-                variant="filled" 
-                disabled={shouldDisableFields()}
-                name="barcode"
-                value={barcodeInput}
-                onChange={handleBarcodeInputChange}
-                placeholder="Type barcode"
-                sx={textInputSx} 
-                inputProps={{ 
-                  style: { padding: '6px 8px', fontSize: '12px' }
-                }}
-                // helperText={isLoadingBarcode ? "Loading..." : "Type barcode"}
-              />
+             <TextField 
+  label="Type barcode Here" 
+  variant="filled" 
+  disabled={shouldDisableFields()}
+  name="barcode"
+  value={barcodeInput}
+  onChange={handleBarcodeInputChange}
+  onKeyPress={(e) => {
+    if (e.key === 'Enter' && barcodeInput.trim()) {
+      e.preventDefault();
+      if (hasCachedQuantities(barcodeInput.trim())) {
+        loadFromCacheAndAddToTable(barcodeInput.trim());
+      } else if (barcodeInput.trim()) {
+        fetchStyleDataByBarcode(barcodeInput.trim());
+      }
+    }
+  }}
+  placeholder="Type or scan barcode"
+  sx={textInputSx} 
+  inputProps={{ 
+    style: { padding: '6px 8px', fontSize: '12px' },
+    autoFocus: true
+  }}
+/>
               
               
              
@@ -5743,48 +5985,32 @@ const handleConfirmAdd = () => {
         </Button>
       )}
       
-      <Button
-        variant="outlined"
-        color="secondary"
-        onClick={isAddingNew ? handleCancelAdd : () => {
-          setIsEditingSize(false);
-          setIsSizeDetailsLoaded(false);
-          setNewItemData({
-            product: '',
-            barcode: '',
-            style: '',
-            type: '',
-            shade: '',
-            qty: '',
-            mrp: '',
-            rate: '',
-            setNo: '',
-            varPer: '',
-            stdQty: '',
-            convFact: '',
-            lotNo: '',
-            discount: '',
-            percent: '',
-            remark: '',
-            divDt: '',
-            rQty: '',
-            sets: ''
-          });
-          setStyleCodeInput('');
-          setBarcodeInput('');
-          setDataSource(null);
-          
-          // Reset size details to original row's data
-          const selectedRowData = tableData.find(row => row.id === selectedRow);
-          if (selectedRowData) {
-            const sizeDetails = selectedRowData.originalData?.ORDBKSTYSZLIST || [];
-            setSizeDetailsData(sizeDetails);
-          }
-        }}
-        sx={{ minWidth: '60px', height: '36px' }}
-      >
-        Cancel
-      </Button>
+      <Button 
+  variant="outlined" 
+  color="secondary" 
+  onClick={() => {
+    if (isContinuousAddMode) {
+      handleCancelAdd();
+    } else if (isAddingNew) {
+      handleCancelAdd();
+    } else if (isEditingSize) {
+      handleEditCancel();
+    } else {
+      onCancel();
+    }
+  }}
+  // Remove disabled condition for cancel in continuous add mode
+  sx={{ 
+    minWidth: '60px', 
+    height: '36px',
+    '&:disabled': {
+      borderColor: '#cccccc',
+      color: '#666666'
+    }
+  }}
+>
+  Cancel
+</Button>
     </>
   )}
 </Box>
@@ -5826,20 +6052,18 @@ const handleConfirmAdd = () => {
   </TableRow>
 </TableHead>
                   
-                  <TableBody>
+
+<TableBody>
   {sizeDetailsData.length > 0 ? (
     sizeDetailsData.map((size, index) => {
-      // API response से values calculate करें
-      const readyQty = parseFloat(size.FG_QTY) || 0;
-      const orderQty = parseFloat(size.PORD_QTY) || 0;
-      const issueQty = parseFloat(size.ISU_QTY) || 0;
-      const processQty = orderQty + issueQty;
-      const balQty = parseFloat(size.BAL_QTY) || 0;
+      const clQty = size.CL_QTY || 0;
+      const isZeroStock = clQty === 0;
       
       return (
         <TableRow key={index} sx={{
           backgroundColor: index % 2 === 0 ? "#fafafa" : "#fff",
-          "&:hover": { backgroundColor: "#e3f2fd" }
+          "&:hover": { backgroundColor: "#e3f2fd" },
+          ...(isZeroStock && { backgroundColor: "#ffebee" })
         }}>
           <TableCell sx={{ fontSize: '0.75rem', padding: '6px 8px' }}>
             {size.STYSIZE_NAME}
@@ -5854,50 +6078,47 @@ const handleConfirmAdd = () => {
               sx={{ width: '80px' }}
               inputProps={{ 
                 style: { fontSize: '0.75rem', padding: '4px' },
-                min: 0 
+                min: 0,
+                max: clQty
               }}
-              disabled={!isAddingNew && !isEditingSize}
+              disabled={!isAddingNew && !isEditingSize || isZeroStock}
+              error={isZeroStock}
+              title={isZeroStock ? "No stock available for this size" : `Maximum available: ${clQty}`}
             />
           </TableCell>
           
-          {/* नए columns के data display करें */}
-          <TableCell sx={{ fontSize: '0.75rem', padding: '6px 8px' }}>
-            {readyQty.toFixed(3)}
+          <TableCell sx={{ 
+            fontSize: '0.75rem', 
+            padding: '6px 8px',
+            color: isZeroStock ? 'red' : clQty < 10 ? 'orange' : 'inherit',
+            fontWeight: isZeroStock ? 'bold' : 'normal'
+          }}>
+            {clQty.toFixed(3)}
+            {isZeroStock && <span style={{ marginLeft: '4px', fontSize: '0.7rem', color: 'red' }}>(Out of Stock)</span>}
+            {!isZeroStock && clQty < 10 && <span style={{ marginLeft: '4px', fontSize: '0.7rem', color: 'orange' }}>(Low Stock)</span>}
           </TableCell>
           
           <TableCell sx={{ fontSize: '0.75rem', padding: '6px 8px' }}>
-            {processQty.toFixed(3)}
+            {((size.PORD_QTY || 0) + (size.ISU_QTY || 0)).toFixed(3)}
           </TableCell>
           
           <TableCell sx={{ fontSize: '0.75rem', padding: '6px 8px' }}>
-            {orderQty.toFixed(3)}
+            {(size.PORD_QTY || 0).toFixed(3)}
           </TableCell>
           
           <TableCell sx={{ fontSize: '0.75rem', padding: '6px 8px' }}>
-            {balQty.toFixed(3)}
-          </TableCell>
-          
-          {/* <TableCell sx={{ fontSize: '0.75rem', padding: '6px 8px' }}>
-            {size.MRP || newItemData.mrp || 0}
+            {(size.BAL_QTY || 0).toFixed(3)}
           </TableCell>
           
           <TableCell sx={{ fontSize: '0.75rem', padding: '6px 8px' }}>
-            {size.RATE || newItemData.rate || 0}
-          </TableCell>
-          
-          <TableCell sx={{ fontSize: '0.75rem', padding: '6px 8px' }}>
-            {size.ITM_AMT || 0}
-          </TableCell> */}
-          
-          <TableCell sx={{ fontSize: '0.75rem', padding: '6px 8px' }}>
-            {size.FGSTYLE_ID || "-"}
+            {size.BARCODE || "-"}
           </TableCell>
         </TableRow>
       );
     })
   ) : (
     <TableRow>
-      <TableCell colSpan={11} align="center" sx={{ py: 1 }}> {/* colSpan को 11 करें क्योंकि अब 11 columns हैं */}
+      <TableCell colSpan={7} align="center" sx={{ py: 1 }}>
         <Typography variant="body2" color="textSecondary">
           {isAddingNew ? 
             (dataSource === 'barcode' ? 
@@ -5909,6 +6130,7 @@ const handleConfirmAdd = () => {
     </TableRow>
   )}
 </TableBody>
+
                 </Table>
               </TableContainer>
             </Box>
@@ -5917,39 +6139,7 @@ const handleConfirmAdd = () => {
 
         {/* Final Action Buttons */}
         <Stack direction="row" spacing={2} sx={{ m: 3, justifyContent: 'flex-end' }}>
-          {/* <Button 
-            variant="contained" 
-            color="primary" 
-            onClick={isAddingNew ? handleConfirmAdd : (isEditingSize ? handleEditItem : null)}
-            disabled={!(isAddingNew || isEditingSize)}
-            sx={{ 
-              minWidth: '60px', 
-              height: '36px',
-              backgroundColor: '#39ace2',
-              '&:disabled': {
-                backgroundColor: '#cccccc',
-                color: '#666666'
-              }
-            }}
-          >
-            {isAddingNew ? 'Confirm' : (isEditingSize ? 'Save' : 'Confirm')}
-          </Button>
-          <Button 
-            variant="outlined" 
-            color="secondary" 
-            onClick={isAddingNew ? handleCancelAdd : (isEditingSize ? handleEditCancel : onCancel)}
-            disabled={!(isAddingNew || isEditingSize)}
-            sx={{ 
-              minWidth: '60px', 
-              height: '36px',
-              '&:disabled': {
-                borderColor: '#cccccc',
-                color: '#666666'
-              }
-            }}
-          >
-            Cancel
-          </Button> */}
+         
           <Button 
             variant="outlined" 
             color="primary" 

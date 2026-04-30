@@ -600,64 +600,70 @@ useEffect(() => {
     }
   };
 
-  // Fetch shades for style - UPDATED FUNCTION
-  const fetchShadesForStyle = async (fgstyleId, mode = 'allocated') => {
-    try {
-      const payload = {
-        "FGSTYLE_ID": mode === 'allocated' ? fgstyleId.toString() : "",
-        "FLAG": ""
-      };
+const fetchShadesForStyle = async (fgstyleId, mode = 'allocated') => {
+  try {
+    const payload = {
+      "FGSTYLE_ID": mode === 'allocated' ? fgstyleId.toString() : "",
+      "FLAG": ""
+    };
 
-      const response = await axiosInstance.post('/Fgshade/GetFgshadedrp', payload);
- 
+    const response = await axiosInstance.post('/Fgshade/GetFgshadedrp', payload);
+    
+    if (response.data.DATA && Array.isArray(response.data.DATA)) {
+      const shades = response.data.DATA.map(item => ({
+        FGSHADE_NAME: item.FGSHADE_NAME || '',
+        FGSHADE_KEY: item.FGSHADE_KEY || '',
+        FGSTYLE_ID: item.FGSTYLE_ID || fgstyleId
+      }));
 
-      if (response.data.DATA && Array.isArray(response.data.DATA)) {
-        const shades = response.data.DATA.map(item => ({
-          FGSHADE_NAME: item.FGSHADE_NAME || '',
-          FGSHADE_KEY: item.FGSHADE_KEY || '',
-          FGSTYLE_ID: item.FGSTYLE_ID || fgstyleId
-        }));
-
-        // Build shade mapping
-        const shadeMap = {};
-        response.data.DATA.forEach(item => {
-          if (item.FGSHADE_NAME && item.FGSHADE_KEY) {
-            shadeMap[item.FGSHADE_NAME] = item.FGSHADE_KEY;
-          }
-        });
-        setShadeMapping(shadeMap);
-
-        setAvailableShades(shades);
-
-        // If in allocated mode, auto-select the first shade
-        if (mode === 'allocated' && shades.length > 0) {
-          const firstShade = shades[0].FGSHADE_NAME;
-          setSelectedShades([firstShade]);
-
-          // Also update the newItemData shade field
-          setNewItemData(prev => ({
-            ...prev,
-            shade: firstShade
-          }));
-        } else if (mode === 'all') {
-          // For all mode, don't auto-select any shade
-          setSelectedShades([]);
+      // Build shade mapping properly
+      const newShadeMapping = {};
+      response.data.DATA.forEach(item => {
+        if (item.FGSHADE_NAME && item.FGSHADE_KEY) {
+          newShadeMapping[item.FGSHADE_NAME] = item.FGSHADE_KEY;
         }
+      });
+      
+      // Update both state and local variable for immediate use
+      setShadeMapping(prev => ({
+        ...prev,
+        ...newShadeMapping
+      }));
 
-        return shades;
-      } else {
-        console.warn('No shades data received');
-        setAvailableShades([]);
-        setSelectedShades([]);
-        return [];
+      // 🔥 CRITICAL: Also update a ref or store in a variable that can be accessed immediately
+      // For now, we'll store in a temporary variable that can be used in subsequent calls
+      window._tempShadeMapping = { ...newShadeMapping };
+
+      setAvailableShades(shades);
+
+      if (mode === 'allocated' && shades.length > 0) {
+        const firstShade = shades[0].FGSHADE_NAME;
+        const firstShadeKey = shades[0].FGSHADE_KEY;
+        setSelectedShades([firstShade]);
+        
+        setNewItemData(prev => ({
+          ...prev,
+          shade: firstShade
+        }));
+        
+        // 🔥 Store the selected shade key for immediate use
+        window._tempSelectedShadeKey = firstShadeKey;
       }
-    } catch (error) {
-      showSnackbar('Error fetching shades', 'error');
+      
+      return shades;
+    } else {
+      console.warn('No shades data received');
       setAvailableShades([]);
       setSelectedShades([]);
       return [];
     }
-  };
+  } catch (error) {
+    showSnackbar('Error fetching shades', 'error');
+    setAvailableShades([]);
+    setSelectedShades([]);
+    return [];
+  }
+};
 
   // Handle shade selection change
   const handleShadeSelectionChange = (event) => {
@@ -774,7 +780,39 @@ const fetchSizeDetailsForStyle = async (styleData) => {
     const fgprdKey = styleData.FGPRD_KEY;
     const fgstyleId = styleData.FGSTYLE_ID;
     const fgtypeKey = styleData.FGTYPE_KEY || "";
-    const fgshadeKey = styleData.FGSHADE_KEY || "";
+    
+    // 🔥 FIX: Get shade key from selected shades with multiple fallback methods
+    let fgshadeKey = "";
+    
+    // Method 1: Check if we have selectedShades and shadeMapping
+    if (selectedShades.length > 0) {
+      const selectedShade = selectedShades[0];
+      fgshadeKey = shadeMapping[selectedShade] || "";
+      
+      // If still empty, try to find from availableShades
+      if (!fgshadeKey && availableShades.length > 0) {
+        const foundShade = availableShades.find(s => s.FGSHADE_NAME === selectedShade);
+        if (foundShade) {
+          fgshadeKey = foundShade.FGSHADE_KEY;
+        }
+      }
+    }
+    
+    // Method 2: If still empty, check from newItemData.shade
+    if (!fgshadeKey && newItemData.shade) {
+      fgshadeKey = shadeMapping[newItemData.shade] || "";
+    }
+    
+    // Method 3: If still empty, check from temporary storage
+    if (!fgshadeKey && window._tempSelectedShadeKey) {
+      fgshadeKey = window._tempSelectedShadeKey;
+    }
+    
+    // Method 4: If still empty, get from the first available shade
+    if (!fgshadeKey && availableShades.length > 0) {
+      fgshadeKey = availableShades[0].FGSHADE_KEY || "";
+    }
+    
     const fgptnKey = styleData.FGPTN_KEY || "";
 
     if (!fgprdKey || !fgstyleId) {
@@ -792,7 +830,7 @@ const fetchSizeDetailsForStyle = async (styleData) => {
       "FGSTYLE_ID": fgstyleId,
       "FGPRD_KEY": fgprdKey,
       "FGTYPE_KEY": fgtypeKey,
-      "FGSHADE_KEY": fgshadeKey,
+      "FGSHADE_KEY": fgshadeKey, // 🔥 Now this will have the correct shade key
       "FGPTN_KEY": fgptnKey,
       "FLAG": "GETSTYCATRTID",
       "MRP": parseFloat(styleData.MRP) || 0,
@@ -804,6 +842,8 @@ const fetchSizeDetailsForStyle = async (styleData) => {
       "CO_ID": coId
     };
 
+    console.log('STYCATRT Payload with shade key:', stycatrtPayload); // Debug log
+
     const stycatrtResponse = await axiosInstance.post('/STYSIZE/AddSizeDetail', stycatrtPayload);
 
     let stycatrtId = 0;
@@ -811,12 +851,12 @@ const fetchSizeDetailsForStyle = async (styleData) => {
       stycatrtId = stycatrtResponse.data.DATA[0].STYCATRT_ID || 0;
     }
 
-    // SECOND: Get size details with FLAG: "S" for Style mode
+    // SECOND: Get size details with FLAG: "GETPACKTY2"
     const sizeDetailsPayload = {
       "FGSTYLE_ID": fgstyleId,
       "FGPRD_KEY": fgprdKey,
       "FGTYPE_KEY": fgtypeKey,
-      "FGSHADE_KEY": fgshadeKey,
+      "FGSHADE_KEY": fgshadeKey, // 🔥 Also add here
       "FGPTN_KEY": fgptnKey,
       "MRP": parseFloat(styleData.MRP) || 0,
       "SSP": parseFloat(styleData.SSP) || 0,
@@ -834,6 +874,8 @@ const fetchSizeDetailsForStyle = async (styleData) => {
       "FLAG": "GETPACKTY2"  
     };
 
+    console.log('Size Details Payload with shade key:', sizeDetailsPayload); // Debug log
+
     const response = await axiosInstance.post('/STYSIZE/AddSizeDetail', sizeDetailsPayload);
 
     if (response.data.DATA && response.data.DATA.length > 0) {
@@ -846,7 +888,7 @@ const fetchSizeDetailsForStyle = async (styleData) => {
         ORDER_QTY: 0,
         MRP: parseFloat(styleData.MRP) || 0,
         RATE: parseFloat(styleData.SSP) || 0,
-        FG_QTY: parseFloat(size.FG_QTY) || 0,
+        CL_QTY: parseFloat(size.CL_QTY) || 0, 
         PORD_QTY: parseFloat(size.PORD_QTY) || 0,
         BAL_QTY: parseFloat(size.BAL_QTY) || 0,
         ISU_QTY: parseFloat(size.ISU_QTY) || 0
@@ -949,7 +991,39 @@ const fetchSizeDetails = async () => {
     const fgprdKey = productMapping[newItemData.product];
     const fgstyleId = styleMapping[newItemData.style];
     const fgtypeKey = typeMapping[newItemData.type] || "";
-    const fgshadeKey = shadeMapping[newItemData.shade] || "";
+    
+    // 🔥 FIX: Get shade key with multiple fallback methods
+    let fgshadeKey = "";
+    
+    // Method 1: Check if we have selectedShades and shadeMapping
+    if (selectedShades.length > 0) {
+      const selectedShade = selectedShades[0];
+      fgshadeKey = shadeMapping[selectedShade] || "";
+      
+      // If still empty, try to find from availableShades
+      if (!fgshadeKey && availableShades.length > 0) {
+        const foundShade = availableShades.find(s => s.FGSHADE_NAME === selectedShade);
+        if (foundShade) {
+          fgshadeKey = foundShade.FGSHADE_KEY;
+        }
+      }
+    }
+    
+    // Method 2: If still empty, check from newItemData.shade
+    if (!fgshadeKey && newItemData.shade) {
+      fgshadeKey = shadeMapping[newItemData.shade] || "";
+    }
+    
+    // Method 3: If still empty, check from temporary storage
+    if (!fgshadeKey && window._tempSelectedShadeKey) {
+      fgshadeKey = window._tempSelectedShadeKey;
+    }
+    
+    // Method 4: If still empty, get from the first available shade
+    if (!fgshadeKey && availableShades.length > 0) {
+      fgshadeKey = availableShades[0].FGSHADE_KEY || "";
+    }
+    
     const fgptnKey = lotNoMapping[newItemData.lotNo] || "";
 
     if (!fgprdKey || !fgstyleId) {
@@ -979,6 +1053,8 @@ const fetchSizeDetails = async () => {
       "CO_ID": coId
     };
 
+    console.log('fetchSizeDetails STYCATRT Payload:', stycatrtPayload); // Debug log
+
     const stycatrtResponse = await axiosInstance.post('/STYSIZE/AddSizeDetail', stycatrtPayload);
 
     let stycatrtId = 0;
@@ -986,7 +1062,7 @@ const fetchSizeDetails = async () => {
       stycatrtId = stycatrtResponse.data.DATA[0].STYCATRT_ID || 0;
     }
 
-    // SECOND: Get size details with enhanced payload
+    // SECOND: Get size details
     const sizeDetailsPayload = {
       "FGSTYLE_ID": fgstyleId,
       "FGPRD_KEY": fgprdKey,
@@ -1009,6 +1085,8 @@ const fetchSizeDetails = async () => {
       "FLAG": ""
     };
 
+    console.log('fetchSizeDetails Size Payload:', sizeDetailsPayload); // Debug log
+
     const sizeDetailsResponse = await axiosInstance.post('/STYSIZE/AddSizeDetail', sizeDetailsPayload);
 
     if (sizeDetailsResponse.data.DATA && sizeDetailsResponse.data.DATA.length > 0) {
@@ -1021,21 +1099,18 @@ const fetchSizeDetails = async () => {
         ORDER_QTY: 0,
         MRP: parseFloat(newItemData.mrp) || 0,
         RATE: parseFloat(newItemData.rate) || 0,
-        FG_QTY: parseFloat(size.FG_QTY) || 0,  // Add FG_QTY
-        PORD_QTY: parseFloat(size.PORD_QTY) || 0 // Add PORD_QTY
+        CL_QTY: parseFloat(size.CL_QTY) || 0,
+        PORD_QTY: parseFloat(size.PORD_QTY) || 0
       }));
 
       setSizeDetailsData(transformedSizeDetails);
 
-      // Update newItemData with STYCATRT_ID for use in payload
       setNewItemData(prev => ({
         ...prev,
         stycatrtId: stycatrtId
       }));
 
       setIsSizeDetailsLoaded(true);
-
-      // Show success message with STYCATRT_ID
       showSnackbar(`Size details loaded successfully. STYCATRT_ID: ${stycatrtId}`, 'success');
     } else {
       showSnackbar("No size details found for the selected combination.", 'warning');
@@ -1118,62 +1193,64 @@ const fetchSizeDetails = async () => {
     }
   };
 
-  // Handle style selection change
   const handleStyleChange = async (event, value) => {
-    setSelectedStyle(value);
-    setDataSource('dropdown');
+  setSelectedStyle(value);
+  setDataSource('dropdown');
 
-    if (isAddingNew || isEditingSize) {
-      setNewItemData(prev => ({ ...prev, style: value }));
+  if (isAddingNew || isEditingSize) {
+    setNewItemData(prev => ({ ...prev, style: value }));
 
-      setNewItemData(prev => ({
-        ...prev,
-        type: '',
-        shade: '',
-        lotNo: ''
-      }));
-      setTypeOptions([]);
-      setLotNoOptions([]);
-      setSizeDetailsData([]);
-      setIsSizeDetailsLoaded(false);
-      setAvailableShades([]);
-      setSelectedShades([]);
+    setNewItemData(prev => ({
+      ...prev,
+      type: '',
+      shade: '',
+      lotNo: ''
+    }));
+    setTypeOptions([]);
+    setLotNoOptions([]);
+    setSizeDetailsData([]);
+    setIsSizeDetailsLoaded(false);
+    setAvailableShades([]);
+    setSelectedShades([]);
 
-      if (value && styleMapping[value]) {
-        const fgstyleId = styleMapping[value];
+    if (value && styleMapping[value]) {
+      const fgstyleId = styleMapping[value];
 
-        // Fetch shades for the selected style
-        await fetchShadesForStyle(fgstyleId, shadeViewMode);
+      // 🔥 Fetch shades and wait for completion
+      await fetchShadesForStyle(fgstyleId, shadeViewMode);
 
-        const payload = {
-          "FGSTYLE_ID": fgstyleId,
-          "FGPRD_KEY": "",
-          "FGSTYLE_CODE": value,
-          "FLAG": ""
-        };
+      // Small delay to ensure shade mapping is set
+      await new Promise(resolve => setTimeout(resolve, 100));
 
-        try {
-          const response = await axiosInstance.post('/FGSTYLE/GetFgstyleDrp', payload);
+      const payload = {
+        "FGSTYLE_ID": fgstyleId,
+        "FGPRD_KEY": "",
+        "FGSTYLE_CODE": value,
+        "FLAG": ""
+      };
 
-          if (response.data.DATA && response.data.DATA.length > 0) {
-            const styleData = response.data.DATA[0];
+      try {
+        const response = await axiosInstance.post('/FGSTYLE/GetFgstyleDrp', payload);
 
-            setNewItemData(prev => ({
-              ...prev,
-              mrp: styleData.MRP ? styleData.MRP.toString() : '',
-              rate: styleData.SSP ? styleData.SSP.toString() : '',
-              type: styleData.FGTYPE_NAME || ''
-            }));
-          }
-        } catch (error) {
-          console.error('Error fetching style details:', error);
+        if (response.data.DATA && response.data.DATA.length > 0) {
+          const styleData = response.data.DATA[0];
+
+          setNewItemData(prev => ({
+            ...prev,
+            mrp: styleData.MRP ? styleData.MRP.toString() : '',
+            rate: styleData.SSP ? styleData.SSP.toString() : '',
+            type: styleData.FGTYPE_NAME || ''
+          }));
         }
-
-        await fetchTypeData(fgstyleId);
-        await fetchLotNoData(fgstyleId);
+      } catch (error) {
+        console.error('Error fetching style details:', error);
       }
+
+      await fetchTypeData(fgstyleId);
+      await fetchLotNoData(fgstyleId);
     }
-  };
+  }
+};
 
   // Handle type selection change
   const handleTypeChange = (event, value) => {
@@ -1358,11 +1435,20 @@ const handleConfirmAdd = () => {
   }
 
   // Validation 4: Check stock availability
-  const exceedingSizes = sizeDetailsData.filter(size => {
-    const inputQty = parseFloat(size.QTY) || 0;
-    const fgQty = size.FG_QTY || 0;
-    return inputQty > fgQty;
-  });
+  // In handleConfirmAdd function, update the stock validation:
+const exceedingSizes = sizeDetailsData.filter(size => {
+  const inputQty = parseFloat(size.QTY) || 0;
+  const clQty = size.CL_QTY || 0;  // 🔥 Changed from FG_QTY to CL_QTY
+  return inputQty > clQty;
+});
+
+if (exceedingSizes.length > 0) {
+  const sizeMessages = exceedingSizes.map(s => 
+    `${s.STYSIZE_NAME} (ordered: ${s.QTY}, available: ${s.CL_QTY})`  // 🔥 Updated to CL_QTY
+  ).join(', ');
+  showSnackbar(`Order quantity exceeds available stock for: ${sizeMessages}`, 'error');
+  return;
+}
 
   if (exceedingSizes.length > 0) {
     const sizeMessages = exceedingSizes.map(s => 
@@ -1890,20 +1976,20 @@ useEffect(() => {
     setAvailableShades([]);
   };
 
- const handleSizeQtyChange = (index, newQty) => {
+const handleSizeQtyChange = (index, newQty) => {
   const size = sizeDetailsData[index];
-  const fgQty = size.FG_QTY || 0;
+  const clQty = size.CL_QTY || 0;
   const inputQty = parseFloat(newQty) || 0;
   
-  // Validation 1: Check if FG_QTY is zero
-  if (fgQty === 0) {
-    showSnackbar(`Cannot order for size "${size.STYSIZE_NAME}" - FG_QTY is 0 (No stock available)`, 'error');
+  // Validation 1: Check if CL_QTY is zero
+  if (clQty === 0) {
+    showSnackbar(`Cannot order for size "${size.STYSIZE_NAME}" - CL QTY is 0 (No stock available)`, 'error');
     return;
   }
   
-  // Validation 2: Check if input quantity exceeds FG_QTY
-  if (inputQty > fgQty) {
-    showSnackbar(`Cannot order more than available stock (${fgQty}) for size "${size.STYSIZE_NAME}"`, 'error');
+  // Validation 2: Check if input quantity exceeds CL_QTY
+  if (inputQty > clQty) {
+    showSnackbar(`Cannot order more than available stock (${clQty}) for size "${size.STYSIZE_NAME}"`, 'error');
     return;
   }
   
@@ -2950,73 +3036,72 @@ useEffect(() => {
       </TableRow>
     </TableHead>
     <TableBody>
-      {sizeDetailsData.length > 0 ? (
-        sizeDetailsData.map((size, index) => {
-          const fgQty = size.FG_QTY || 0;
-          const isZeroStock = fgQty === 0;
-          
-          return (
-            <TableRow 
-              key={index} 
-              sx={{
-                backgroundColor: index % 2 === 0 ? "#fafafa" : "#fff",
-                "&:hover": { backgroundColor: "#e3f2fd" },
-                ...(isZeroStock && { backgroundColor: "#ffebee" }) // Highlight zero stock rows
+  {sizeDetailsData.length > 0 ? (
+    sizeDetailsData.map((size, index) => {
+      const clQty = size.CL_QTY || 0;
+      const isZeroStock = clQty === 0;
+      
+      return (
+        <TableRow 
+          key={index} 
+          sx={{
+            backgroundColor: index % 2 === 0 ? "#fafafa" : "#fff",
+            "&:hover": { backgroundColor: "#e3f2fd" },
+            ...(isZeroStock && { backgroundColor: "#ffebee" })
+          }}
+        >
+          <TableCell sx={{ fontSize: '0.75rem', padding: '6px 8px' }}>{size.STYSIZE_NAME}</TableCell>
+          <TableCell sx={{ fontSize: '0.75rem', padding: '6px 8px' }}>
+            <TextField
+              type="number"
+              value={size.QTY}
+              onChange={(e) => handleSizeQtyChange(index, e.target.value)}
+              size="small"
+              sx={{ width: '80px' }}
+              inputProps={{
+                style: { fontSize: '0.75rem', padding: '4px' },
+                min: 0,
+                max: clQty  // 🔥 Changed from fgQty to clQty
               }}
-            >
-              <TableCell sx={{ fontSize: '0.75rem', padding: '6px 8px' }}>{size.STYSIZE_NAME}</TableCell>
-              <TableCell sx={{ fontSize: '0.75rem', padding: '6px 8px' }}>
-                <TextField
-                  type="number"
-                  value={size.QTY}
-                  onChange={(e) => handleSizeQtyChange(index, e.target.value)}
-                  size="small"
-                  sx={{ width: '80px' }}
-                  inputProps={{
-                    style: { fontSize: '0.75rem', padding: '4px' },
-                    min: 0,
-                    max: fgQty 
-                  }}
-                  error={isZeroStock}
-                  // helperText={isZeroStock ? "No stock" : ""}
-                  disabled={!isAddingNew && !isEditingSize || isZeroStock}
-                  title={isZeroStock ? "This size has no stock available" : ""}
-                />
-              </TableCell>
-              <TableCell sx={{ 
-                fontSize: '0.75rem', 
-                padding: '6px 8px',
-                color: isZeroStock ? 'red' : 'inherit',
-                fontWeight: isZeroStock ? 'bold' : 'normal'
-              }}>
-                {fgQty}
-                {isZeroStock && <span style={{ marginLeft: '4px', fontSize: '0.7rem', color: 'red' }}>(No Stock)</span>}
-              </TableCell>
-              <TableCell sx={{ fontSize: '0.75rem', padding: '6px 8px' }}>{size.PORD_QTY || 0}</TableCell>
-              <TableCell sx={{ fontSize: '0.75rem', padding: '6px 8px' }}>
-                {size.MRP || newItemData.mrp || 0}
-              </TableCell>
-              <TableCell sx={{ fontSize: '0.75rem', padding: '6px 8px' }}>
-                {size.RATE || newItemData.rate || 0}
-              </TableCell>
-              <TableCell sx={{ fontSize: '0.75rem', padding: '6px 8px' }}>{size.ITM_AMT || 0}</TableCell>
-            </TableRow>
-          );
-        })
-      ) : (
-        <TableRow>
-          <TableCell colSpan={7} align="center" sx={{ py: 1 }}>
-            <Typography variant="body2" color="textSecondary">
-              {isAddingNew ?
-                (dataSource === 'barcode' ?
-                  "Size details auto-loaded! Enter quantities." :
-                  "Click 'Add Qty' to load size details")
-                : "No size details available"}
-            </Typography>
+              error={isZeroStock}
+              disabled={!isAddingNew && !isEditingSize || isZeroStock}
+              title={isZeroStock ? "This size has no stock available" : ""}
+            />
           </TableCell>
+          <TableCell sx={{ 
+            fontSize: '0.75rem', 
+            padding: '6px 8px',
+            color: isZeroStock ? 'red' : 'inherit',
+            fontWeight: isZeroStock ? 'bold' : 'normal'
+          }}>
+            {clQty}
+            {isZeroStock && <span style={{ marginLeft: '4px', fontSize: '0.7rem', color: 'red' }}>(No Stock)</span>}
+          </TableCell>
+          <TableCell sx={{ fontSize: '0.75rem', padding: '6px 8px' }}>{size.PORD_QTY || 0}</TableCell>
+          <TableCell sx={{ fontSize: '0.75rem', padding: '6px 8px' }}>
+            {size.MRP || newItemData.mrp || 0}
+          </TableCell>
+          <TableCell sx={{ fontSize: '0.75rem', padding: '6px 8px' }}>
+            {size.RATE || newItemData.rate || 0}
+          </TableCell>
+          <TableCell sx={{ fontSize: '0.75rem', padding: '6px 8px' }}>{size.ITM_AMT || 0}</TableCell>
         </TableRow>
-      )}
-    </TableBody>
+      );
+    })
+  ) : (
+    <TableRow>
+      <TableCell colSpan={7} align="center" sx={{ py: 1 }}>
+        <Typography variant="body2" color="textSecondary">
+          {isAddingNew ?
+            (dataSource === 'barcode' ?
+              "Size details auto-loaded! Enter quantities." :
+              "Click 'Add Qty' to load size details")
+            : "No size details available"}
+        </Typography>
+      </TableCell>
+    </TableRow>
+  )}
+</TableBody>
   </Table>
 </TableContainer>
             </Box>
