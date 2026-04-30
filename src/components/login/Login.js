@@ -374,11 +374,11 @@
 //       REMARK: "",
 //       FLAG: ""
 //     });
-    
+
 //     if (response.data.STATUS === 0 && response.data.DATA) {
 //       // Save the entire DATA array to localStorage
 //       localStorage.setItem('USER_PARAMS', JSON.stringify(response.data.DATA));
-      
+
 //       // Also save individual parameters for easy access
 //       const userParamsMap = {};
 //       response.data.DATA.forEach(param => {
@@ -392,7 +392,7 @@
 //         };
 //       });
 //       localStorage.setItem('USER_PARAMS_MAP', JSON.stringify(userParamsMap));
-      
+
 //       console.log('User parameters saved successfully:', response.data.DATA);
 //       return response.data.DATA;
 //     } else {
@@ -1913,16 +1913,11 @@
 // export default Login;
 
 
-
-
-
-
-
 'use client'
 import React, { useEffect, useState } from 'react';
 import {
   Box, Paper, Typography, TextField, Button, Avatar, useTheme, Card, MenuItem, Grow, Snackbar, InputAdornment, IconButton, useMediaQuery,
-  Modal, Fade, Divider, Radio,Checkbox , RadioGroup, FormControlLabel, FormControl, FormLabel, Grid, Dialog, DialogTitle, DialogContent, DialogActions,
+  Modal, Fade, Divider, Radio, Checkbox, RadioGroup, FormControlLabel, FormControl, FormLabel, Grid, Dialog, DialogTitle, DialogContent, DialogActions,
   CircularProgress,
 } from '@mui/material';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
@@ -1998,7 +1993,8 @@ const Login = () => {
   const [showVerifiedIcon, setShowVerifiedIcon] = useState(false);
   const [otpErrorMsg, setOtpErrorMsg] = useState('');
   const [employeeEmailForOtp, setEmployeeEmailForOtp] = useState('');
-const dispatch = useDispatch();
+  const dispatch = useDispatch();
+  const [empPswd, setEmpPswd] = useState(null);
 
   useEffect(() => {
     const checkMobile = async () => {
@@ -2016,12 +2012,14 @@ const dispatch = useDispatch();
           if (res.data.STATUS === 0) {
             setMobileValid('valid');
             setEmpKey(res.data.DATA[0].EMP_KEY || '');
+            setEmpPswd(Number(res.data.DATA[0].EMPPSWD) ?? null);
             setIsNewUser(res.data.FLAG === 'NewRe');
             setMobileMessage(res.data.FLAG === 'NewRe' ? 'New user detected' : '');
           } else {
             setMobileValid('invalid');
             setMobileMessage('Mobile not registered');
             setIsNewUser(false);
+            setEmpPswd(null);
           }
         } catch (err) {
           setMobileValid('invalid');
@@ -2034,6 +2032,7 @@ const dispatch = useDispatch();
         setMobileValid(null);
         setMobileMessage('');
         setShowCreatePwdLink(false);
+        setEmpPswd(null);
       }
     };
     const timer = setTimeout(checkMobile, 800);
@@ -2060,30 +2059,30 @@ const dispatch = useDispatch();
     return () => clearInterval(interval);
   }, []);
 
-useEffect(() => {
-  const expireTime = localStorage.getItem('authExpire');
-  const isAuthenticated = localStorage.getItem('authenticated') === 'true';
-  const hasCompanyAndBranch = localStorage.getItem('CO_ID') && localStorage.getItem('COBR_ID');
-  const stayLoggedIn = localStorage.getItem('stayLoggedIn') === 'true';
+  useEffect(() => {
+    const expireTime = localStorage.getItem('authExpire');
+    const isAuthenticated = localStorage.getItem('authenticated') === 'true';
+    const hasCompanyAndBranch = localStorage.getItem('CO_ID') && localStorage.getItem('COBR_ID');
+    const stayLoggedIn = localStorage.getItem('stayLoggedIn') === 'true';
 
-  // Check if session is expired
-  if (!expireTime || Date.now() > Number(expireTime) || !isAuthenticated) {
-    // Session expired, clear everything
-    localStorage.removeItem('authenticated');
-    localStorage.removeItem('authExpire');
-    localStorage.removeItem('stayLoggedIn');
-    localStorage.removeItem('userRole');
-    localStorage.removeItem('CO_ID');
-    localStorage.removeItem('COBR_ID');
-    localStorage.removeItem('USER_PARAMS');
-    localStorage.removeItem('USER_PARAMS_MAP');
-  } 
-  // If session is valid and user has company/branch, redirect to dashboard
-  else if (isAuthenticated && hasCompanyAndBranch) {
-    router.replace('/dashboard');
-  }
-  // If session is valid but no company/branch selected, stay on login to show modal
-}, [router]);
+    // Check if session is expired
+    if (!expireTime || Date.now() > Number(expireTime) || !isAuthenticated) {
+      // Session expired, clear everything
+      localStorage.removeItem('authenticated');
+      localStorage.removeItem('authExpire');
+      localStorage.removeItem('stayLoggedIn');
+      localStorage.removeItem('userRole');
+      localStorage.removeItem('CO_ID');
+      localStorage.removeItem('COBR_ID');
+      localStorage.removeItem('USER_PARAMS');
+      localStorage.removeItem('USER_PARAMS_MAP');
+    }
+    // If session is valid and user has company/branch, redirect to dashboard
+    else if (isAuthenticated && hasCompanyAndBranch) {
+      router.replace('/dashboard');
+    }
+    // If session is valid but no company/branch selected, stay on login to show modal
+  }, [router]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -2172,136 +2171,136 @@ useEffect(() => {
     }
   };
 
-// Helper function to set login expiry
-const setLoginExpiry = (stayLoggedIn) => {
-  if (stayLoggedIn) {
-    // 30 days for "Keep me logged in"
-    const expiryDate = Date.now() + 30 * 24 * 60 * 60 * 1000;
-    localStorage.setItem('authExpire', expiryDate.toString());
-    localStorage.setItem('stayLoggedIn', 'true');
-  } else {
-    // 24 hours for normal session
-    const expiryDate = Date.now() + 24 * 60 * 60 * 1000;
-    localStorage.setItem('authExpire', expiryDate.toString());
-    localStorage.setItem('stayLoggedIn', 'false');
-  }
-};
-
-// Modified handleLogin function
-const handleLogin = async () => {
-  if (role !== 'customer') {
-    if (!form.username.trim() || !form.password.trim()) {
-      toast.info("Username and password are required.");
-      return;
+  // Helper function to set login expiry
+  const setLoginExpiry = (stayLoggedIn) => {
+    if (stayLoggedIn) {
+      // 30 days for "Keep me logged in"
+      const expiryDate = Date.now() + 30 * 24 * 60 * 60 * 1000;
+      localStorage.setItem('authExpire', expiryDate.toString());
+      localStorage.setItem('stayLoggedIn', 'true');
+    } else {
+      // 24 hours for normal session
+      const expiryDate = Date.now() + 24 * 60 * 60 * 1000;
+      localStorage.setItem('authExpire', expiryDate.toString());
+      localStorage.setItem('stayLoggedIn', 'false');
     }
-  }
-  setLoading(true);
-  try {
-    const encryptionResponse = await axiosInstance.post('USERS/Getpwdencryption', {
-      USER_NAME: form.username,
-      USER_PWD: form.password,
-    });
-    const encryptedPassword = encryptionResponse.data.DATA;
-    const loginResponse = await axiosInstance.post('USERS/GetUserLogin', {
-      USER_NAME: form.username,
-      USER_PWD: encryptedPassword,
-    });
-    
-    if (loginResponse.data.STATUS === 0) {
-      const loginDetails = loginResponse.data.DATA[0];
-      const USER_NAME = loginDetails.USER_NAME;
-      const USER_ID = loginDetails.USER_ID;
+  };
+
+  // Modified handleLogin function
+  const handleLogin = async () => {
+    if (role !== 'customer') {
+      if (!form.username.trim() || !form.password.trim()) {
+        toast.info("Username and password are required.");
+        return;
+      }
+    }
+    setLoading(true);
+    try {
+      const encryptionResponse = await axiosInstance.post('USERS/Getpwdencryption', {
+        USER_NAME: form.username,
+        USER_PWD: form.password,
+      });
+      const encryptedPassword = encryptionResponse.data.DATA;
+      const loginResponse = await axiosInstance.post('USERS/GetUserLogin', {
+        USER_NAME: form.username,
+        USER_PWD: encryptedPassword,
+      });
+
+      if (loginResponse.data.STATUS === 0) {
+        const loginDetails = loginResponse.data.DATA[0];
+        const USER_NAME = loginDetails.USER_NAME;
+        const USER_ID = loginDetails.USER_ID;
+        const currentYear = new Date().getFullYear();
+        const fixCurrentYear = currentYear - 1;
+        const lastTwoDigits = fixCurrentYear.toString().slice(-2);
+
+        localStorage.setItem('USER_NAME', USER_NAME);
+        localStorage.setItem('USER_ID', USER_ID);
+        localStorage.setItem('FCYR_KEY', lastTwoDigits);
+        localStorage.setItem('authenticated', 'true');
+        localStorage.setItem('userRole', 'user');
+        localStorage.removeItem('EMP_KEY');
+        localStorage.removeItem('EMP_NAME');
+
+        // ✅ Set expiry based on "Stay Logged In"
+        setLoginExpiry(stayLoggedIn);
+
+        await dispatch(fetchUserParams());
+        setShowLogin(false);
+        setModalOpen(true);
+      } else {
+        toast.error('Invalid Credentials');
+      }
+    } catch (err) {
+      console.log("Error in Login Api ", err)
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Modified handleEmployeeLogin function
+  const handleEmployeeLogin = async () => {
+    if (!mobilePassword) return toast.error('Enter password');
+    try {
+      const encRes = await axiosInstance.post('USERS/Getpwdencryption', {
+        USER_NAME: form.mobile,
+        USER_PWD: mobilePassword
+      });
+      const encryptedPwd = encRes.data.DATA;
+      const loginRes = await axiosInstance.post('Employee/EmployeeLogin', {
+        MOBILE_NO: form.mobile,
+        EmpPswd: encryptedPwd,
+        FLAG: "Auth",
+        EMP_KEY: empKey
+      });
+
+      if (loginRes.data.STATUS === 0) {
+        const employeeData = loginRes.data.DATA[0];
+        localStorage.setItem('authenticated', 'true');
+        localStorage.setItem('userRole', 'employee');
+        localStorage.setItem('FCYR_KEY', fixedCurrentYear.toString().slice(-2));
+        localStorage.setItem('EMP_KEY', employeeData.EMP_KEY);
+        localStorage.setItem('EMP_NAME', employeeData.EMP_NAME);
+        localStorage.removeItem('USER_ID');
+
+        // ✅ Set expiry based on "Stay Logged In"
+        setLoginExpiry(stayLoggedIn);
+
+        await dispatch(fetchUserParams());
+        router.push('/employeepage');
+        setShowLogin(false);
+        setModalOpen(true);
+      } else {
+        setShowCreatePwdLink(true);
+        toast.error('Invalid Credentials');
+      }
+    } catch (err) {
+      toast.error('Login failed');
+    }
+  };
+
+  // Modified handleVerifyOtp function (for customer/salesman/broker)
+  const handleVerifyOtp = async () => {
+    if (!otp || otp.length !== 6) {
+      toast.info("Please enter a valid 6-digit otp.");
+    }
+    if (otp.trim() === generatedOtp) {
       const currentYear = new Date().getFullYear();
-      const fixCurrentYear = currentYear - 1;
-      const lastTwoDigits = fixCurrentYear.toString().slice(-2);
-      
-      localStorage.setItem('USER_NAME', USER_NAME);
-      localStorage.setItem('USER_ID', USER_ID);
+      const lastTwoDigits = currentYear.toString().slice(-2);
       localStorage.setItem('FCYR_KEY', lastTwoDigits);
       localStorage.setItem('authenticated', 'true');
-      localStorage.setItem('userRole', 'user');
-      localStorage.removeItem('EMP_KEY');
-      localStorage.removeItem('EMP_NAME');
-      
+      localStorage.setItem('userRole', role);
+
       // ✅ Set expiry based on "Stay Logged In"
       setLoginExpiry(stayLoggedIn);
-      
+
       await dispatch(fetchUserParams());
       setShowLogin(false);
       setModalOpen(true);
     } else {
-      toast.error('Invalid Credentials');
+      toast.error('Invalid OTP. Please try again.');
     }
-  } catch (err) {
-    console.log("Error in Login Api ", err)
-  } finally {
-    setLoading(false);
-  }
-};
-
-// Modified handleEmployeeLogin function
-const handleEmployeeLogin = async () => {
-  if (!mobilePassword) return toast.error('Enter password');
-  try {
-    const encRes = await axiosInstance.post('USERS/Getpwdencryption', {
-      USER_NAME: form.mobile,
-      USER_PWD: mobilePassword
-    });
-    const encryptedPwd = encRes.data.DATA;
-    const loginRes = await axiosInstance.post('Employee/EmployeeLogin', {
-      MOBILE_NO: form.mobile,
-      EmpPswd: encryptedPwd,
-      FLAG: "Auth",
-      EMP_KEY: empKey
-    });
-    
-    if (loginRes.data.STATUS === 0) {
-      const employeeData = loginRes.data.DATA[0];
-      localStorage.setItem('authenticated', 'true');
-      localStorage.setItem('userRole', 'employee');
-      localStorage.setItem('FCYR_KEY', fixedCurrentYear.toString().slice(-2));
-      localStorage.setItem('EMP_KEY', employeeData.EMP_KEY);
-      localStorage.setItem('EMP_NAME', employeeData.EMP_NAME);
-      localStorage.removeItem('USER_ID');
-      
-      // ✅ Set expiry based on "Stay Logged In"
-      setLoginExpiry(stayLoggedIn);
-      
-      await dispatch(fetchUserParams());
-      router.push('/employeepage');
-      setShowLogin(false);
-      setModalOpen(true);
-    } else {
-      setShowCreatePwdLink(true);
-      toast.error('Invalid Credentials');
-    }
-  } catch (err) {
-    toast.error('Login failed');
-  }
-};
-
-// Modified handleVerifyOtp function (for customer/salesman/broker)
-const handleVerifyOtp = async () => {
-  if (!otp || otp.length !== 6) {
-    toast.info("Please enter a valid 6-digit otp.");
-  }
-  if (otp.trim() === generatedOtp) {
-    const currentYear = new Date().getFullYear();
-    const lastTwoDigits = currentYear.toString().slice(-2);
-    localStorage.setItem('FCYR_KEY', lastTwoDigits);
-    localStorage.setItem('authenticated', 'true');
-    localStorage.setItem('userRole', role);
-    
-    // ✅ Set expiry based on "Stay Logged In"
-    setLoginExpiry(stayLoggedIn);
-    
-    await dispatch(fetchUserParams());
-    setShowLogin(false);
-    setModalOpen(true);
-  } else {
-    toast.error('Invalid OTP. Please try again.');
-  }
-};
+  };
 
   const openCreatePasswordModal = async () => {
     try {
@@ -2318,7 +2317,6 @@ const handleVerifyOtp = async () => {
       }
 
       const empData = res.data.DATA[0];
-
       const employeeName = empData.EMP_NAME?.trim() || 'Employee';
       const employeeEmail = empData.EMAIL?.trim() || '';
 
@@ -2410,76 +2408,76 @@ const handleVerifyOtp = async () => {
   };
 
   // Add this function to fetch and save User Parameters
-const fetchAndSaveUserParams = async () => {
-  try {
-    const response = await axiosInstance.post('USERPARAM/RetriveUserParam', {
-      USERPM_ID: 0,
-      USERPM_NAME: "",
-      REMARK: "",
-      FLAG: ""
-    });
-    
-    if (response.data.STATUS === 0 && response.data.DATA) {
-      // Save the entire DATA array to localStorage
-      localStorage.setItem('USER_PARAMS', JSON.stringify(response.data.DATA));
-      
-      // Also save individual parameters for easy access
-      const userParamsMap = {};
-      response.data.DATA.forEach(param => {
-        userParamsMap[param.USERPM_NAME] = {
-          USERPM_ID: param.USERPM_ID,
-          REMARK: param.REMARK,
-          SECPM_ID: param.SECPM_ID,
-          SECPM_NAME: param.SECPM_NAME,
-          COBR_ID: param.COBR_ID,
-          NAME: param.NAME
-        };
+  const fetchAndSaveUserParams = async () => {
+    try {
+      const response = await axiosInstance.post('USERPARAM/RetriveUserParam', {
+        USERPM_ID: 0,
+        USERPM_NAME: "",
+        REMARK: "",
+        FLAG: ""
       });
-      localStorage.setItem('USER_PARAMS_MAP', JSON.stringify(userParamsMap));
-      
-      console.log('User parameters saved successfully:', response.data.DATA);
-      return response.data.DATA;
-    } else {
-      console.error('Failed to fetch user parameters:', response.data.MESSAGE);
+
+      if (response.data.STATUS === 0 && response.data.DATA) {
+        // Save the entire DATA array to localStorage
+        localStorage.setItem('USER_PARAMS', JSON.stringify(response.data.DATA));
+
+        // Also save individual parameters for easy access
+        const userParamsMap = {};
+        response.data.DATA.forEach(param => {
+          userParamsMap[param.USERPM_NAME] = {
+            USERPM_ID: param.USERPM_ID,
+            REMARK: param.REMARK,
+            SECPM_ID: param.SECPM_ID,
+            SECPM_NAME: param.SECPM_NAME,
+            COBR_ID: param.COBR_ID,
+            NAME: param.NAME
+          };
+        });
+        localStorage.setItem('USER_PARAMS_MAP', JSON.stringify(userParamsMap));
+
+        console.log('User parameters saved successfully:', response.data.DATA);
+        return response.data.DATA;
+      } else {
+        console.error('Failed to fetch user parameters:', response.data.MESSAGE);
+        return [];
+      }
+    } catch (err) {
+      console.error('Error fetching user parameters:', err);
       return [];
     }
-  } catch (err) {
-    console.error('Error fetching user parameters:', err);
-    return [];
-  }
-};
+  };
 
-// Helper function to get user parameter by name
-const getUserParamByName = (paramName) => {
-  try {
-    const paramsMap = JSON.parse(localStorage.getItem('USER_PARAMS_MAP') || '{}');
-    return paramsMap[paramName] || null;
-  } catch (err) {
-    console.error('Error getting user param:', err);
-    return null;
-  }
-};
+  // Helper function to get user parameter by name
+  const getUserParamByName = (paramName) => {
+    try {
+      const paramsMap = JSON.parse(localStorage.getItem('USER_PARAMS_MAP') || '{}');
+      return paramsMap[paramName] || null;
+    } catch (err) {
+      console.error('Error getting user param:', err);
+      return null;
+    }
+  };
 
-// Helper function to get user parameter by ID
-const getUserParamById = (paramId) => {
-  try {
-    const params = JSON.parse(localStorage.getItem('USER_PARAMS') || '[]');
-    return params.find(param => param.USERPM_ID === paramId) || null;
-  } catch (err) {
-    console.error('Error getting user param by ID:', err);
-    return null;
-  }
-};
+  // Helper function to get user parameter by ID
+  const getUserParamById = (paramId) => {
+    try {
+      const params = JSON.parse(localStorage.getItem('USER_PARAMS') || '[]');
+      return params.find(param => param.USERPM_ID === paramId) || null;
+    } catch (err) {
+      console.error('Error getting user param by ID:', err);
+      return null;
+    }
+  };
 
-// Helper function to get all user parameters
-const getAllUserParams = () => {
-  try {
-    return JSON.parse(localStorage.getItem('USER_PARAMS') || '[]');
-  } catch (err) {
-    console.error('Error getting all user params:', err);
-    return [];
-  }
-};
+  // Helper function to get all user parameters
+  const getAllUserParams = () => {
+    try {
+      return JSON.parse(localStorage.getItem('USER_PARAMS') || '[]');
+    } catch (err) {
+      console.error('Error getting all user params:', err);
+      return [];
+    }
+  };
 
   const handleOtpKeyDown = (e, index) => {
     if (e.key === 'Backspace') {
@@ -2552,10 +2550,6 @@ const getAllUserParams = () => {
     }
   };
 
- 
-
-
-
   const handleCloseSnackbar = () => {
     setError(false);
   };
@@ -2578,11 +2572,11 @@ const getAllUserParams = () => {
     localStorage.removeItem('USER_ID');
     localStorage.removeItem('EMP_KEY');
     localStorage.removeItem('EMP_NAME');
-      localStorage.removeItem('USER_PARAMS'); 
-  localStorage.removeItem('USER_PARAMS_MAP');
-  localStorage.removeItem('authExpire');     
-  localStorage.removeItem('stayLoggedIn'); 
-dispatch(clearUserParams());
+    localStorage.removeItem('USER_PARAMS');
+    localStorage.removeItem('USER_PARAMS_MAP');
+    localStorage.removeItem('authExpire');
+    localStorage.removeItem('stayLoggedIn');
+    dispatch(clearUserParams());
     setShowLogin(true);
     setModalOpen(false);
     setForm({ username: '', password: '', mobile: '' });
@@ -2590,7 +2584,7 @@ dispatch(clearUserParams());
     setOtpSent(false);
     setGeneratedOtp('');
     setMobilePassword('');
-      setStayLoggedIn(false);  
+    setStayLoggedIn(false);
   };
 
   const sendMailOtp = async (email, otp) => {
@@ -2967,7 +2961,8 @@ dispatch(clearUserParams());
                           }}
                         />
                         {/* )} */}
-                        {showCreatePwdLink && (
+                        {/* Show Create Password if EMPPSWD=0, Forgot Password if EMPPSWD=1 */}
+                        {mobileValid === 'valid' && empPswd !== null && (
                           <Typography
                             variant="body2"
                             color="primary"
@@ -2979,7 +2974,7 @@ dispatch(clearUserParams());
                             }}
                             onClick={openCreatePasswordModal}
                           >
-                            Forgot Password?
+                            {Number(empPswd) === 0 ? 'Create Password' : 'Forgot Password?'}
                           </Typography>
                         )}
                       </>
@@ -3496,19 +3491,20 @@ dispatch(clearUserParams());
                             }}
                           />
                           {/* )} */}
-                          {showCreatePwdLink && (
+                          {/* Show Create Password if EMPPSWD=0, Forgot Password if EMPPSWD=1 */}
+                          {mobileValid === 'valid' && empPswd !== null && (
                             <Typography
                               variant="body2"
                               color="primary"
                               sx={{
                                 cursor: 'pointer',
                                 textDecoration: 'underline',
-                                mb: 1.5, ml: 1,
+                                mb: 2,
                                 fontWeight: 500,
                               }}
                               onClick={openCreatePasswordModal}
                             >
-                              Forgot Password?
+                              {Number(empPswd) === 0 ? 'Create Password' : 'Forgot Password?'}
                             </Typography>
                           )}
                         </>
@@ -3638,25 +3634,25 @@ dispatch(clearUserParams());
                   </TextField>
 
                   <FormControlLabel
-  control={
-    <Checkbox
-      checked={stayLoggedIn}
-      onChange={(e) => setStayLoggedIn(e.target.checked)}
-      sx={{
-        color: '#3A7BD5',
-        '&.Mui-checked': {
-          color: '#3A7BD5',
-        },
-      }}
-    />
-  }
-  label={
-    <Typography variant="body2" sx={{ fontWeight: 500 }}>
-      Keep me logged in
-    </Typography>
-  }
-  sx={{ mb: 2 }}
-/>
+                    control={
+                      <Checkbox size='small'
+                        checked={stayLoggedIn}
+                        onChange={(e) => setStayLoggedIn(e.target.checked)}
+                        sx={{
+                          color: '#3A7BD5',
+                          '&.Mui-checked': {
+                            color: '#3A7BD5',
+                          },
+                        }}
+                      />
+                    }
+                    label={
+                      <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                        Keep me logged in
+                      </Typography>
+                    }
+                    sx={{ mb: 0 }}
+                  />
 
                   <Box
                     sx={{

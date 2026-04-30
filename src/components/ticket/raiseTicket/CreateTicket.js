@@ -172,31 +172,35 @@ const CreateTicketPage = () => {
       if (response.data.STATUS === 0 && response.data.DATA) {
         const ticket = response.data.DATA.trnTktDtlList[0];
         const ticketImage = ticket.TktImage || '';
+
+        const formatImageSrc = (img) => {
+          if (!img) return '';
+          if (img.startsWith('data:')) return img;
+          // Fix malformed URLs with single slash
+          if (img.startsWith('http:/') && !img.startsWith('http://')) {
+            return img.replace('http:/', 'http://');
+          }
+          if (img.startsWith('http') || img.startsWith('/')) return img;
+          return `data:image/jpeg;base64,${img}`;
+        };
+
         setFormData(prevState => ({
           ...prevState,
           title: ticket.TktDesc,
           description: ticket.Remark,
-          category: {
-            TKTCATID: ticket.TktCatId,
-            TKTCATNAME: ticket.TktCatName
-          },
-          subCategory: {
-            TKTSUBCATID: ticket.TktSubCatId,
-            TKTSUBCATNAME: ticket.TktSubCatName
-          },
+          category: { TKTCATID: ticket.TktCatId, TKTCATNAME: ticket.TktCatName },
+          subCategory: { TKTSUBCATID: ticket.TktSubCatId, TKTSUBCATNAME: ticket.TktSubCatName },
           priority: ticket.TktSvrtyName,
           machGrp: ticket.MachineryGroup_Name || "",
           machineryKey: ticket.Machinery_Key || "",
           machine: ticket.Machinery_Name || "",
-          service: {
-            TKTSERVICEID: ticket.TktServiceId,
-            TKTSERVICENAME: ticket.TktServiceName
-          },
+          service: { TKTSERVICEID: ticket.TktServiceId, TKTSERVICENAME: ticket.TktServiceName },
           depGrp: ticket.CCGrp_Name || "",
           department: ticket.CCN_Key || "",
           dueDate: dayjs(ticket.TktDate).format("YYYY-MM-DD"),
           tags: [],
-          TktImage: ticketImage,
+          TktImage: formatImageSrc(ticketImage),
+          ImgName: ticket.ImgName || ticket.TktImage?.split('/').pop() || '',
           trnTktDtlEntities: ticket.trnTktDtlEntities || []
         }));
         // Set machine group key for dropdown
@@ -568,6 +572,7 @@ const CreateTicketPage = () => {
         ImgName: fileName,
       }));
       setselectedImage(base64String);
+      setAttachments([{ fileName, fileData: base64String }]);
     };
     reader.onerror = () => {
       toast.error("Failed to read file.");
