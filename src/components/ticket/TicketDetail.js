@@ -28,7 +28,7 @@ const TicketDetail = ({ ticket, onClose, onEdit }) => {
     try {
       await addComment(ticket.id, {
         text: newComment,
-        author: 'Current User', // In real app, get from auth context
+        author: 'Current User', 
         type: 'comment'
       });
       setNewComment('');

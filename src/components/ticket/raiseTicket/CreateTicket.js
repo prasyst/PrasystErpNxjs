@@ -5,7 +5,7 @@ import { useSearchParams } from "next/navigation";
 import {
   Box, Button, TextField, FormControl, Typography, Paper, Divider, Container,
   Grid, Stack, IconButton, Autocomplete, FormLabel, RadioGroup, FormControlLabel, Radio, Link,
-  Tooltip, Dialog, DialogTitle, DialogContent, DialogActions,
+  Tooltip, Dialog, DialogTitle, DialogContent, DialogActions,Chip,Select, MenuItem
 } from "@mui/material";
 import {
   ArrowBack as MdArrowBack,
@@ -114,9 +114,7 @@ const CreateTicketPage = () => {
     setOpenMail(false);
   };
 
-  const handleOpenService = () => {
-    setOpenService(true);
-  };
+  
 
   const handleCloseService = () => {
     setOpenService(false);
@@ -579,12 +577,10 @@ const CreateTicketPage = () => {
     };
     reader.readAsDataURL(file);
   };
-
-  useEffect(() => {
-    const fetchAllServices = async () => {
+   const fetchAllServices = async () => {
       try {
         const response = await axiosInstance.post('TktService/GetSubCatWiseTktServiceDrp', {
-          TktSubCatId: 1
+          TktSubCatId: 0
         })
         if (response.data.STATUS === 0) {
           setAllService(response.data.DATA)
@@ -597,8 +593,17 @@ const CreateTicketPage = () => {
       }
     };
 
+  useEffect(() => {
     fetchAllServices();
   }, [])
+  const handleOpenService =async () => {
+    setOpenService(true);
+    await fetchAllServices();
+  };
+
+  const handleFindServices = () => {
+    toast.info("info");
+  }
 
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: "#f9fafb" }}>
@@ -653,24 +658,21 @@ const CreateTicketPage = () => {
                 </FormLabel>
 
                 <FormControl>
-                  <RadioGroup
-                    row
-                    aria-labelledby="demo-row-radio-buttons-group-label"
-                    name="row-radio-buttons-group"
+                  <Select
                     value={ticketFor}
                     onChange={handleTicketChange}
+                    displayEmpty
+                    size="small" 
+                    sx={{
+                      '& .MuiSelect-select': {
+                        padding: '6px 14px',
+                        minHeight: 'auto'
+                      }
+                    }}
                   >
-                    <FormControlLabel
-                      value="M"
-                      control={<Radio size="small" />}
-                      label="Machine"
-                    />
-                    <FormControlLabel
-                      value="C"
-                      control={<Radio size="small" />}
-                      label="Cost Center/Department"
-                    />
-                  </RadioGroup>
+                    <MenuItem value="M">Machine</MenuItem>
+                    <MenuItem value="C">Cost Center/Department</MenuItem>
+                  </Select>
                 </FormControl>
 
                 <Box
@@ -1094,7 +1096,7 @@ const CreateTicketPage = () => {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button size="small" variant="contained" sx={{ bgcolor: '#635bff' }} onClick={() => toast.info("Working.")}>Find</Button>
+          <Button size="small" variant="contained" sx={{ bgcolor: '#635bff' }} onClick={handleFindServices}>Find</Button>
         </DialogActions>
       </Dialog>
     </Box>

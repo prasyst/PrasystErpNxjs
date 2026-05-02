@@ -49,6 +49,30 @@ const AllTicketsPage = () => {
   const [followupDialogOpen, setFollowupDialogOpen] = useState(false);
   const [selectedTicketForFollowup, setSelectedTicketForFollowup] = useState(null);
 
+
+  useEffect(() => {
+      if (ticketData?.status) {
+          let statusValue = "";
+          switch (ticketData.status.toLowerCase()) {
+              case "open":
+                  statusValue = "O";
+                  break;
+              case "resolved":
+                  statusValue = "R";
+                  break;
+              case "closed":
+                  statusValue = "C";
+                  break;
+              case "hold":
+                  statusValue = "H";
+                  break;
+              default:
+                  statusValue = "O";
+          }
+          // setTicketSt(statusValue);
+      }
+  }, [ticketData?.status]);
+
   useEffect(() => {
     fetchTicketDash();
   }, []);

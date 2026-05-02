@@ -9,11 +9,11 @@ import {
   Comment as CommentIcon
 } from '@mui/icons-material';
 import {
-  Add as AddIcon, Refresh as RefreshIcon,History as HistoryIcon
+  Add as AddIcon, Refresh as RefreshIcon, History as HistoryIcon, Email as EmailIcon, Close as CloseIcon
 } from '@mui/icons-material';
 import {
   Card, Typography, Button, TableContainer, Table, TableHead, TableBody, TableRow, TableCell, Chip, Grid, Box, CardContent, IconButton,
-  Stack, Paper, LinearProgress, Tooltip, useMediaQuery
+  Stack, Paper, LinearProgress, Tooltip, useMediaQuery, Dialog, DialogTitle, DialogContent, DialogActions
 } from '@mui/material';
 import axiosInstance from '@/lib/axios';
 import { FaExclamationTriangle, FaUsers, FaChartPie } from 'react-icons/fa';
@@ -27,6 +27,7 @@ import TicketReports from './TicketReports';
 import { useRouter } from 'next/navigation';
 import FollowupDialog from './FollowupDialog';
 import FollowupHistoryDialog from './FollowupHistoryDialog';
+import SendMail from './raiseTicket/SendMail';
 
 const TicketDashboard = () => {
   const router = useRouter();
@@ -51,7 +52,10 @@ const TicketDashboard = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [followupHistoryDialogOpen, setFollowupHistoryDialogOpen] = useState(false);
-    const [selectedTicketForHistory, setSelectedTicketForHistory] = useState(null);
+  const [selectedTicketForHistory, setSelectedTicketForHistory] = useState(null);
+  const [openMail, setOpenMail] = useState(false);
+  const [selectedTicketForMail, setSelectedTicketForMail] = useState(null);
+
 
   const fetchRecentTickets = async () => {
     setLoading(true);
@@ -189,10 +193,20 @@ const TicketDashboard = () => {
     return ((resolvedTickets / totalTickets) * 100).toFixed(2);
   };
 
-    const handleViewFollowupHistory = (ticket) => {
+  const handleViewFollowupHistory = (ticket) => {
     setSelectedTicketForHistory(ticket);
     setFollowupHistoryDialogOpen(true);
   }
+
+  const handleOpenEmail = (ticket) => {
+    setSelectedTicketForMail(ticket);
+    setOpenMail(true);
+  };
+  const handleCloseMail = () => {
+    setOpenMail(false);
+    setSelectedTicketForMail(null);
+  };
+
 
   const ticketModules = [
     {
@@ -720,22 +734,37 @@ const TicketDashboard = () => {
                               <CommentIcon />
                             </IconButton>
                           </Tooltip>
-                           <Tooltip title="View Followup History" arrow>
-                                                <IconButton
-                                                  size="small"
-                                                  color="info"
-                                                  onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    handleViewFollowupHistory(ticket);
-                                                  }}
-                                                  sx={{
-                                                    padding: '3px',
-                                                    '& .MuiSvgIcon-root': { fontSize: '1rem' }
-                                                  }}
-                                                >
-                                                  <HistoryIcon />
-                                                </IconButton>
-                                              </Tooltip>
+                          <Tooltip title="View Followup History" arrow>
+                            <IconButton
+                              size="small"
+                              color="info"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleViewFollowupHistory(ticket);
+                              }}
+                              sx={{
+                                padding: '3px',
+                                '& .MuiSvgIcon-root': { fontSize: '1rem' }
+                              }}
+                            >
+                              <HistoryIcon />
+                            </IconButton>
+                          </Tooltip>
+                          <Tooltip title="Send Mail" arrow>
+                            <IconButton size="small"
+                              color="info"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleOpenEmail(ticket);
+                              }}
+                              sx={{
+                                padding: '3px',
+                                '& .MuiSvgIcon-root': { fontSize: '1rem' }
+                              }}
+                            >
+                              <EmailIcon />
+                            </IconButton>
+                          </Tooltip>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -1155,6 +1184,26 @@ const TicketDashboard = () => {
         />
       )}
 
+      <Dialog open={openMail} onClose={handleCloseMail} maxWidth="xs" fullWidth>
+        <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', pr: 1, py: 1 }}>
+          <span>Send Mail</span>
+          <IconButton onClick={handleCloseMail} size="small">
+            <CloseIcon color="error" />
+          </IconButton>
+        </DialogTitle>
+
+        <DialogContent>
+          <SendMail
+            ticketTitle={selectedTicketForMail?.title || ""}
+            ticketNo={selectedTicketForMail?.id || ""}
+            ticketDescription={selectedTicketForMail?.description || ""}
+            ticketImage={selectedTicketForMail?.image || ""}
+            ticketImageName={selectedTicketForMail?.imageName || ""}
+            onClose={handleCloseMail}
+          />
+        </DialogContent>
+      </Dialog>
+
       {selectedTicket && (
         <TicketDetail
           ticket={selectedTicket}
@@ -1165,13 +1214,13 @@ const TicketDashboard = () => {
         />
       )}
 
-      {editingTicket && (
+      {/* {editingTicket && (
         <CreateTicket
           ticket={editingTicket}
           onClose={() => setEditingTicket(null)}
           onSuccess={(updatedTicket) => handleUpdateTicket(editingTicket.id, updatedTicket)}
         />
-      )}
+      )} */}
       <FollowupDialog
         open={followupDialogOpen}
         onClose={() => setFollowupDialogOpen(false)}
@@ -1179,10 +1228,10 @@ const TicketDashboard = () => {
         onSuccess={handleFollowupSuccess}
       />
       <FollowupHistoryDialog
-          open={followupHistoryDialogOpen}
-          onClose={() => setFollowupHistoryDialogOpen(false)}
-          ticket={selectedTicketForHistory}
-        />
+        open={followupHistoryDialogOpen}
+        onClose={() => setFollowupHistoryDialogOpen(false)}
+        ticket={selectedTicketForHistory}
+      />
 
     </div>
   );
