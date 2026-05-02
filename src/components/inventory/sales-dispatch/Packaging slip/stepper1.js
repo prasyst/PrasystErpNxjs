@@ -437,34 +437,57 @@ const handlePickOrderConfirm = (selectedItems) => {
     }
   };
 
-  // Fetch Party Data
-  const fetchPartiesByName = async (name = "") => {
-    try {
-      const response = await axiosInstance.post("Party/GetParty_By_Name", {
-        PARTY_NAME: name
+const fetchPartiesByName = async (name = "") => {
+  try {
+    const response = await axiosInstance.post("Party/GetParty_By_Name", {
+      PARTY_NAME: name
+    });
+    
+    console.log('Raw Party API Response:', response.data);
+    
+    if (response.data.STATUS === 0 && Array.isArray(response.data.DATA)) {
+      // Create options array and mapping that works for both data formats
+      const parties = [];
+      const mapping = {};
+      
+      response.data.DATA.forEach(item => {
+        // Determine the display name (what user sees)
+        let displayName = item.PARTY_NAME;
+        let partyKey = item.PARTY_KEY;
+        
+        // If PARTY_NAME is empty or null, try to use PARTY_ALT_CODE or PARTY_KEY as fallback
+        if (!displayName || displayName.trim() === '') {
+          displayName = item.PARTY_ALT_CODE || item.PARTY_KEY || '';
+        }
+        
+        // If PARTY_KEY is empty, try to use PARTY_ALT_CODE
+        if (!partyKey) {
+          partyKey = item.PARTY_ALT_CODE || displayName;
+        }
+        
+        if (displayName && partyKey) {
+          parties.push(displayName);
+          mapping[displayName] = partyKey;
+          console.log(`Added party - Display: ${displayName}, Key: ${partyKey}`);
+        }
       });
-      if (response.data.STATUS === 0 && Array.isArray(response.data.DATA)) {
-        const parties = response.data.DATA.map(item => item.PARTY_NAME || '');
-        setPartyOptions(parties);
-        setShippingPartyOptions(parties);
-
-        const mapping = {};
-        response.data.DATA.forEach(item => {
-          if (item.PARTY_NAME && item.PARTY_KEY) {
-            mapping[item.PARTY_NAME] = item.PARTY_KEY;
-          }
-        });
-        setPartyMapping(mapping);
-      } else {
-        setPartyOptions([]);
-        setShippingPartyOptions([]);
-      }
-    } catch (error) {
-      console.error("API error", error);
+      
+      setPartyOptions(parties);
+      setShippingPartyOptions(parties);
+      setPartyMapping(mapping);
+      
+      console.log('Party Options:', parties);
+      console.log('Party Mapping:', mapping);
+    } else {
       setPartyOptions([]);
       setShippingPartyOptions([]);
     }
-  };
+  } catch (error) {
+    console.error("API error", error);
+    setPartyOptions([]);
+    setShippingPartyOptions([]);
+  }
+};
 
   // Fetch Party Branches - FIXED: Proper branch selection based on API response
   const fetchPartyDetails = async (partyKey, forceBranchId = null) => {
