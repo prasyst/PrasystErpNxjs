@@ -1470,7 +1470,7 @@ const handleAdd = async () => {
       PKTS: "10"
     };
 
-    // ✅ CHANGE 1: Series prefix + dropdown data PARALLEL fetch करो
+    // Fetch series prefix and dropdown data in parallel
     const [prefix] = await Promise.all([
       getSeriesPrefix(),
       Object.keys(partyMapping).length === 0 ? fetchAllDropdownData() : Promise.resolve(true)
@@ -1496,28 +1496,76 @@ const handleAdd = async () => {
         setMode('add');
         setIsFormDisabled(false);
 
-        // ✅ CHANGE 2: await fetchAllDropdownData() हटाया - already loaded है mount पर
-        // अब सिर्फ party check करो
+        // Auto-select first party with proper mapping handling
         if (Object.keys(partyMapping).length > 0) {
-          const firstPartyKey = Object.keys(partyMapping)[0];
-          const firstPartyName = partyMapping[firstPartyKey];
-
-          console.log('Auto-selecting first party:', firstPartyName, 'Key:', firstPartyKey);
-
-          if (firstPartyName && firstPartyKey) {
+          console.log('Party Mapping Data:', partyMapping);
+          
+          let actualPartyKey = null;
+          let actualPartyName = null;
+          
+          // Try to find the correct party mapping (handles both local and live server data structures)
+          const partyEntries = Object.entries(partyMapping);
+          const firstEntry = partyEntries[0];
+          
+          if (firstEntry) {
+            const [firstKey, firstValue] = firstEntry;
+            
+            // Check if the key looks like a PARTY_KEY (starts with PC) and value looks like a name
+            if (firstKey && firstKey.startsWith && firstKey.startsWith('PC') && firstValue && !firstValue.startsWith('PC')) {
+              // Key is PARTY_KEY, value is PARTY_NAME (localhost format)
+              actualPartyKey = firstKey;
+              actualPartyName = firstValue;
+              console.log('Using localhost format - Key is PARTY_KEY:', actualPartyKey, 'Name:', actualPartyName);
+            }
+            // Check if value looks like a PARTY_KEY (starts with PC) and key looks like a name
+            else if (firstValue && firstValue.startsWith && firstValue.startsWith('PC') && firstKey && !firstKey.startsWith('PC')) {
+              // Key is PARTY_NAME, value is PARTY_KEY (live server format)
+              actualPartyKey = firstValue;
+              actualPartyName = firstKey;
+              console.log('Using live server format - Key is PARTY_KEY:', actualPartyKey, 'Name:', actualPartyName);
+            }
+            // If both look like keys or both look like names, try to find the correct one
+            else {
+              // Search through all entries to find a valid PARTY_KEY
+              for (const [key, value] of partyEntries) {
+                if (key && key.startsWith && key.startsWith('PC')) {
+                  actualPartyKey = key;
+                  actualPartyName = value;
+                  break;
+                } else if (value && value.startsWith && value.startsWith('PC')) {
+                  actualPartyKey = value;
+                  actualPartyName = key;
+                  break;
+                }
+              }
+              
+              // If still not found, use the first entry as is
+              if (!actualPartyKey) {
+                actualPartyKey = firstKey;
+                actualPartyName = firstValue;
+                console.log('Using fallback format - Key:', actualPartyKey, 'Value:', actualPartyName);
+              }
+            }
+          }
+          
+          console.log('Selected Party - Key:', actualPartyKey, 'Name:', actualPartyName);
+          
+          if (actualPartyName && actualPartyKey) {
             setFormData(prev => ({
               ...prev,
-              Party: firstPartyName,
-              PARTY_KEY: firstPartyKey,
-              SHIPPING_PARTY: firstPartyName,
-              SHP_PARTY_KEY: firstPartyKey
+              Party: actualPartyName,
+              PARTY_KEY: actualPartyKey,
+              SHIPPING_PARTY: actualPartyName,
+              SHP_PARTY_KEY: actualPartyKey
             }));
-
-            // ✅ CHANGE 3: Branch fetch और party auto-fill PARALLEL करो
-            await Promise.all([
-              fetchPartyDetails(firstPartyKey),
-              fetchPartyDetailsForAutoFill(firstPartyKey)
-            ]);
+            
+            // Fetch branch details for the selected party
+            await fetchPartyDetails(actualPartyKey);
+            
+            // Fetch additional party details for auto-fill
+            await fetchPartyDetailsForAutoFill(actualPartyKey);
+          } else {
+            console.warn('No valid party found in mapping:', partyMapping);
           }
         }
       }
@@ -1530,6 +1578,7 @@ const handleAdd = async () => {
     setShowValidationErrors(false);
   } catch (error) {
     console.error('Error in handleAdd:', error);
+    showSnackbar('Error initializing form: ' + (error.message || 'Unknown error'), 'error');
   } finally {
     setLoading(false);
   }
