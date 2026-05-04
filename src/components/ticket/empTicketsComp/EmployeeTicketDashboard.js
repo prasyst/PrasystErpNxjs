@@ -126,6 +126,7 @@ const EmployeeTicketDashboard = () => {
           priority: tkt.TKTSVRTYNAME || "Medium",
           status: tkt.TKTSTATUS === "O" ? "open" :
             tkt.TKTSTATUS === "P" ? "in-progress" :
+              tkt.TKTSTATUS === "H" ? "hold" :
               tkt.TKTSTATUS === "R" ? "resolved" : "closed",
           assignee: tkt.TECHEMP_NAME || "Unassigned",
           createdAt: tkt.TKTDATE,
@@ -595,7 +596,7 @@ const EmployeeTicketDashboard = () => {
           {quickStats.map((stat, index) => {
             const IconComponent = stat.icon;
             return (
-              <Grid item xs={6} sm={3} key={index}>
+              <Grid item xs={6} md={5} key={index}>
                 <Fade in={true} timeout={300} style={{ transitionDelay: `${index * 50}ms` }}>
                   <Card
                     elevation={0}

@@ -52,6 +52,7 @@ const TicketDetailsDialog = ({
     onClose,
     ticketId,
     onEdit,
+    setTicketDetailsOpen
 }) => {
     const [ticketDetails, setTicketDetails] = useState(null);
     const [loading, setLoading] = useState(false);
@@ -66,13 +67,6 @@ const TicketDetailsDialog = ({
     const fileInputRef = useRef(null);
 
 
-    const statusMapping = {
-        "O": "Open",
-        "P": "In Progress",
-        "R": "Resolved",
-        "H": "Hold",
-        "C": "Closed"
-    };
 
     useEffect(() => {
         if (ticketDetails?.status) {
@@ -226,6 +220,7 @@ const TicketDetailsDialog = ({
                 setAttachments([]);
                 setResolveRemark("");
                 fetchTicketDetails();
+                setTicketDetailsOpen(false);
             } else {
                 toast.error(response.data.MESSAGE || "Failed to update ticket");
             }
@@ -448,6 +443,21 @@ const TicketDetailsDialog = ({
                         </Box>
                     </Box>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                          <Button
+                        onClick={updateTicketStatus}
+                        variant="contained"
+                        // disabled={updating || !resolveRemark.trim()}
+                        sx={{
+                            backgroundColor: '#2563eb',
+                            textTransform: 'none',
+                            fontSize: '0.75rem',
+                            '&:hover': {
+                                backgroundColor: '#1d4ed8'
+                            }
+                        }}
+                    >
+                        {updating ? 'Updating...' : 'Update Status'}
+                    </Button>
                         <Button
                             onClick={handleEdit}
                             variant="outlined"
@@ -1004,7 +1014,7 @@ const TicketDetailsDialog = ({
                     )}
                 </Box>
 
-                <DialogActions sx={{
+                {/* <DialogActions sx={{
                     p: '1rem 1.5rem',
                     borderTop: '1px solid #e5e7eb',
                     gap: '0.75rem',
@@ -1054,7 +1064,7 @@ const TicketDetailsDialog = ({
                     >
                         Cancel
                     </Button>
-                </DialogActions>
+                </DialogActions> */}
             </Dialog>
         </>
     );
