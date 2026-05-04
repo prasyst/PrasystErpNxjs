@@ -2961,7 +2961,8 @@ const [lastAddedBarcode, setLastAddedBarcode] = useState(null);
   const [shadeMapping, setShadeMapping] = useState({});
   const [lotNoMapping, setLotNoMapping] = useState({});
   
-  // NEW: State for style code and barcode text input
+const [batchQuantity, setBatchQuantity] = useState(1);
+const [isBatchMode, setIsBatchMode] = useState(false);
   const [styleCodeInput, setStyleCodeInput] = useState('');
   const [isLoadingStyleCode, setIsLoadingStyleCode] = useState(false);
   const styleCodeTimeoutRef = useRef(null);
@@ -4142,31 +4143,715 @@ const handleBarcodeInputChange = (e) => {
   
   if (value && value.trim() !== '') {
     barcodeTimeoutRef.current = setTimeout(() => {
-      // Check for duplicate (optional warning)
-      if (isBarcodeAlreadyAdded(value.trim()) && isContinuousAddMode) {
-        // showSnackbar(`Warning: Barcode ${value} already exists in order. Adding another entry.`, 'warning');
-      }
-      
       // Check if we're already processing this barcode
       if (lastProcessedBarcodeRef.current === value.trim() && isProcessingBarcodeRef.current) {
         console.log('Already processing this barcode:', value);
         return;
       }
       
-      // Always try to auto-add if in continuous add mode
-      if (isContinuousAddMode && hasCachedQuantities(value.trim())) {
+      // Get batch quantity from the input field
+      const requestedQty = batchQuantity || 1;
+      
+      // Check cache first
+      if (hasCachedQuantities(value.trim())) {
         console.log('Found cached quantities for barcode:', value);
-        loadFromCacheAndAddToTable(value.trim());
-      } else if (hasCachedQuantities(value.trim())) {
-        console.log('Found cached quantities for barcode:', value);
-        loadFromCacheAndAddToTable(value.trim());
+        loadFromCacheAndAddToTableWithBatch(value.trim(), requestedQty);
       } else {
         console.log('No cached quantities for barcode, fetching from API');
-        fetchStyleDataByBarcode(value.trim());
+        fetchStyleDataByBarcodeWithBatch(value.trim(), requestedQty);
       }
     }, 500);
   }
 };
+
+// New function to fetch with batch quantity
+const fetchStyleDataByBarcodeWithBatch = async (barcode, requestedQty) => {
+  if (!barcode) return;
+
+  try {
+    setIsLoadingBarcode(true);
+    setDataSource('barcode');
+    
+    const payload = {
+      "FGSTYLE_ID": "",
+      "FGPRD_KEY": "",
+      "FGSTYLE_CODE": "",
+      "ALT_BARCODE": barcode,
+      "FLAG": ""
+    };
+
+    const response = await axiosInstance.post('/FGSTYLE/GetFgstyleDrp', payload);
+
+    if (response.data.DATA && response.data.DATA.length > 0) {
+      const styleData = response.data.DATA[0];
+      const originalBarcode = barcode;
+      const fgstyleId = styleData.FGSTYLE_ID;
+      
+      if (isAddingNew || isEditingSize) {
+        setNewItemData(prev => ({
+          ...prev,
+          product: styleData.FGPRD_NAME || '',
+          style: styleData.FGSTYLE_CODE || styleData.FGSTYLE_NAME || '',
+          type: styleData.FGTYPE_NAME || '',
+          mrp: styleData.MRP ? styleData.MRP.toString() : '',
+          rate: styleData.SSP ? styleData.SSP.toString() : '',
+          barcode: originalBarcode,
+          shade: '',
+          fgstyleId: fgstyleId
+        }));
+        
+        if ((styleData.FGSTYLE_CODE || styleData.FGSTYLE_NAME) && fgstyleId) {
+          setStyleMapping(prev => ({
+            ...prev,
+            [styleData.FGSTYLE_CODE || styleData.FGSTYLE_NAME]: fgstyleId
+          }));
+        }
+        
+        setBarcodeInput(originalBarcode);
+        
+        if (styleData.FGPRD_NAME && styleData.FGPRD_KEY) {
+          setProductMapping(prev => ({
+            ...prev,
+            [styleData.FGPRD_NAME]: styleData.FGPRD_KEY
+          }));
+        }
+        
+        if (fgstyleId) {
+          await fetchTypeData(fgstyleId);
+          await fetchLotNoData(fgstyleId);
+          await fetchShadesForStyle(fgstyleId, 'allocated');
+        }
+        
+        // Fetch size details with batch quantity
+        await fetchSizeDetailsForStyleWithBatch(styleData, originalBarcode, requestedQty);
+      }
+    } else {
+      showSnackbar("No style found for this barcode", 'warning');
+    }
+  } catch (error) {
+    console.error('Error fetching style data by barcode:', error);
+    showSnackbar('Error loading barcode data', 'error');
+  } finally {
+    setIsLoadingBarcode(false);
+  }
+};
+
+// New function to fetch size details with batch quantity
+const fetchSizeDetailsForStyleWithBatch = async (styleData, barcodeValue, requestedQty) => {
+  try {
+    const fgprdKey = styleData.FGPRD_KEY;
+    const fgstyleId = styleData.FGSTYLE_ID;
+    const fgtypeKey = styleData.FGTYPE_KEY || "";
+    const fgshadeKey = styleData.FGSHADE_KEY || "";
+    const fgptnKey = styleData.FGPTN_KEY || "";
+    
+    const actualBarcode = barcodeValue || newItemData.barcode || barcodeInput || "";
+
+    if (!fgprdKey || !fgstyleId) {
+      return;
+    }
+
+    // Get values from localStorage
+    const cobrId = companyConfig.COBR_ID || localStorage.getItem('COBR_ID') || '02';
+    const fcyrKey = localStorage.getItem('FCYR_KEY') || '25';
+    const coId = localStorage.getItem('CO_ID') || '02';
+    const clientId = localStorage.getItem('CLIENT_ID') || '5102';
+
+    // Get STYCATRT_ID
+    const stycatrtPayload = {
+      "FGSTYLE_ID": fgstyleId,
+      "FGPRD_KEY": fgprdKey,
+      "FGTYPE_KEY": fgtypeKey,
+      "FGSHADE_KEY": fgshadeKey,
+      "FGPTN_KEY": fgptnKey,
+      "FLAG": "GETSTYCATRTID",
+      "MRP": parseFloat(styleData.MRP) || 0,
+      "PARTY_KEY": formData.PARTY_KEY || "",
+      "PARTYDTL_ID": formData.PARTYDTL_ID || 0,
+      "COBR_ID": cobrId,
+      "FCYR_KEY": fcyrKey,
+      "CLIENT_ID": clientId,
+      "CO_ID": coId
+    };
+
+    const stycatrtResponse = await axiosInstance.post('/STYSIZE/AddSizeDetail', stycatrtPayload);
+
+    let stycatrtId = 0;
+    if (stycatrtResponse.data.DATA && stycatrtResponse.data.DATA.length > 0) {
+      stycatrtId = stycatrtResponse.data.DATA[0].STYCATRT_ID || 0;
+    }
+
+    // Get size details with FLAG: "GETPACKbARC2"
+    const sizeDetailsPayload = {
+      "FGSTYLE_ID": fgstyleId,
+      "FGPRD_KEY": fgprdKey,
+      "FGTYPE_KEY": fgtypeKey,
+      "FGSHADE_KEY": fgshadeKey,
+      "FGPTN_KEY": fgptnKey,
+      "MRP": parseFloat(styleData.MRP) || 0,
+      "SSP": parseFloat(styleData.SSP) || 0,
+      "PARTY_KEY": formData.PARTY_KEY || "",
+      "PARTYDTL_ID": formData.PARTYDTL_ID || 0,
+      "COBR_ID": cobrId,
+      "FCYR_KEY": fcyrKey,
+      "STYSTKDTL_ID": 0,
+      "BARCODE": actualBarcode,
+      "FGITM_KEY": "",
+      "STYSTK_KEY": "",
+      "ORDBKSTY_ID": 0,
+      "CLIENT_ID": clientId,
+      "CO_ID": coId,
+      "FLAG": "GETPACKbARC2"  
+    };
+
+    const response = await axiosInstance.post('/STYSIZE/AddSizeDetail', sizeDetailsPayload);
+
+    if (response.data.DATA && response.data.DATA.length > 0) {
+      // Calculate total ordered quantity for this barcode
+      const totalOrderedForBarcode = getTotalOrderedQuantityForBarcode(actualBarcode);
+      
+      const transformedSizeDetails = response.data.DATA.map((size, index) => {
+        const clQty = parseFloat(size.CL_QTY) || 0;
+        const remainingQty = Math.max(0, clQty - totalOrderedForBarcode);
+        
+        let autoQty = 0;
+        let requestStatus = '';
+        
+        // Check if requested quantity is valid
+        if (requestedQty > remainingQty) {
+          autoQty = remainingQty;
+          requestStatus = `⚠️ Requested ${requestedQty} but only ${remainingQty} available!`;
+        } else {
+          autoQty = requestedQty;
+          requestStatus = `✅ Added ${requestedQty} items (${remainingQty - requestedQty} remaining)`;
+        }
+        
+        // Distribute quantity across sizes using the first size that has stock
+        // For this logic, we'll put all quantity in the first size that has stock
+        // Alternative approach: distribute evenly - choose based on your business logic
+        
+        let finalQty = 0;
+        if (remainingQty > 0) {
+          finalQty = autoQty;
+        }
+        
+        return {
+          STYSIZE_ID: size.STYSIZE_ID || index + 1,
+          STYSIZE_NAME: size.STYSIZE_NAME || `Size ${index + 1}`,
+          FGSTYLE_ID: size.FGSTYLE_ID || fgstyleId,
+          QTY: finalQty,
+          ITM_AMT: finalQty * (parseFloat(styleData.SSP) || 0),
+          ORDER_QTY: finalQty,
+          MRP: parseFloat(styleData.MRP) || 0,
+          RATE: parseFloat(styleData.SSP) || 0,
+          CL_QTY: remainingQty,
+          PORD_QTY: parseFloat(size.PORD_QTY) || 0,
+          BAL_QTY: parseFloat(size.BAL_QTY) || 0,
+          ISU_QTY: parseFloat(size.ISU_QTY) || 0,
+          STYSTKDTL_ID: size.STYSTKDTL_ID || 0,
+          BARCODE: actualBarcode,
+          requestStatus: requestStatus
+        };
+      });
+
+      setSizeDetailsData(transformedSizeDetails);
+
+      setNewItemData(prev => ({
+        ...prev,
+        stycatrtId: stycatrtId,
+        barcode: actualBarcode
+      }));
+
+      setIsSizeDetailsLoaded(true);
+      
+      // Check if any size has auto quantity set
+      const sizesWithQty = transformedSizeDetails.filter(size => size.QTY > 0);
+      if (sizesWithQty.length === 0) {
+        showSnackbar(`❌ No stock available for barcode: ${actualBarcode}! Requested: ${requestedQty}`, 'error');
+      } else if (requestedQty > transformedSizeDetails[0]?.CL_QTY) {
+        showSnackbar(transformedSizeDetails[0]?.requestStatus || `⚠️ Only ${transformedSizeDetails[0]?.CL_QTY} available! Added ${transformedSizeDetails[0]?.QTY} items.`, 'warning');
+      } else {
+        showSnackbar(`${requestedQty} item(s) will be added for barcode: ${actualBarcode}!`, 'success');
+      }
+      
+      // Auto confirm add after setting quantities
+      setTimeout(() => {
+        const sizesWithQty = transformedSizeDetails.filter(size => size.QTY > 0);
+        if (sizesWithQty.length > 0) {
+          handleConfirmAddWithBatch(actualBarcode, requestedQty);
+        } else {
+          showSnackbar("No sizes available with stock! Cannot add item.", 'error');
+        }
+      }, 100);
+      
+    } else {
+      setSizeDetailsData([]);
+      setIsSizeDetailsLoaded(false);
+      showSnackbar("No size details found for this barcode", 'warning');
+    }
+  } catch (error) {
+    console.error('Error auto-fetching size details:', error);
+    setIsSizeDetailsLoaded(false);
+    showSnackbar('Error loading size details', 'error');
+  }
+};
+
+// New function to load from cache with batch quantity
+const loadFromCacheAndAddToTableWithBatch = async (barcode, requestedQty) => {
+  if (isProcessingBarcodeRef.current) return;
+  
+  isProcessingBarcodeRef.current = true;
+  lastProcessedBarcodeRef.current = barcode;
+  
+  try {
+    const cachedData = barcodeCache[barcode];
+    if (!cachedData) {
+      console.log('No cached data found');
+      isProcessingBarcodeRef.current = false;
+      return;
+    }
+    
+    let fgstyleId = cachedData.fgstyleId || styleMapping[cachedData.style];
+    
+    if (!fgstyleId && cachedData.style) {
+      try {
+        const payload = {
+          "FGSTYLE_ID": "",
+          "FGPRD_KEY": "",
+          "FGSTYLE_CODE": cachedData.style,
+          "FLAG": ""
+        };
+        const response = await axiosInstance.post('/FGSTYLE/GetFgstyleDrp', payload);
+        if (response.data.DATA && response.data.DATA.length > 0) {
+          fgstyleId = response.data.DATA[0].FGSTYLE_ID;
+        }
+      } catch (error) {
+        console.error('Error fetching FGSTYLE_ID:', error);
+      }
+    }
+    
+    let freshSizeDetails = null;
+    if (fgstyleId) {
+      freshSizeDetails = await fetchFreshSizeDetailsForBarcode(barcode, fgstyleId);
+    }
+    
+    let finalSizeDetails = [];
+    let remainingStockMap = {};
+    
+    if (freshSizeDetails && freshSizeDetails.length > 0) {
+      // Calculate total previously ordered quantity for this barcode
+      const totalOrderedForBarcode = getTotalOrderedQuantityForBarcode(barcode);
+      
+      // Calculate remaining stock after previous orders
+      remainingStockMap = {};
+      freshSizeDetails.forEach(size => {
+        const originalClQty = size.CL_QTY || 0;
+        const remainingQty = Math.max(0, originalClQty - totalOrderedForBarcode);
+        remainingStockMap[size.STYSIZE_NAME] = remainingQty;
+      });
+      
+      // Prepare size details with requested batch quantity
+      const firstSize = freshSizeDetails[0];
+      const remainingQty = remainingStockMap[firstSize?.STYSIZE_NAME] || 0;
+      
+      let autoQty = 0;
+      let requestStatus = '';
+      
+      if (requestedQty > remainingQty) {
+        autoQty = remainingQty;
+        requestStatus = `⚠️ Requested ${requestedQty} but only ${remainingQty} available!`;
+      } else {
+        autoQty = requestedQty;
+        requestStatus = `✅ Added ${requestedQty} items (${remainingQty - requestedQty} remaining)`;
+      }
+      
+      finalSizeDetails = [{
+        STYSIZE_ID: firstSize?.STYSIZE_ID || 1,
+        STYSIZE_NAME: firstSize?.STYSIZE_NAME || "Default",
+        QTY: autoQty,
+        ITM_AMT: autoQty * (parseFloat(cachedData.rate) || 0),
+        ORDER_QTY: autoQty,
+        MRP: parseFloat(cachedData.mrp) || 0,
+        RATE: parseFloat(cachedData.rate) || 0,
+        CL_QTY: remainingQty,
+        FG_QTY: remainingQty,
+        PORD_QTY: 0,
+        BAL_QTY: remainingQty,
+        ISU_QTY: 0,
+        BARCODE: barcode,
+        requestStatus: requestStatus
+      }];
+      
+      // Check if any size has auto quantity set
+      if (autoQty === 0) {
+        showSnackbar(`❌ No remaining stock available for barcode: ${barcode}. Requested: ${requestedQty}`, 'error');
+        isProcessingBarcodeRef.current = false;
+        return;
+      }
+      
+    } else {
+      // Fallback: Use cached data
+      const firstSize = cachedData.sizes[0];
+      const clQty = firstSize?.CL_QTY || 0;
+      let autoQty = requestedQty > clQty ? clQty : requestedQty;
+      
+      finalSizeDetails = [{
+        STYSIZE_ID: firstSize?.STYSIZE_ID || 1,
+        STYSIZE_NAME: firstSize?.STYSIZE_NAME || "Default",
+        QTY: autoQty,
+        ITM_AMT: autoQty * (parseFloat(cachedData.rate) || 0),
+        ORDER_QTY: autoQty,
+        MRP: parseFloat(cachedData.mrp) || 0,
+        RATE: parseFloat(cachedData.rate) || 0,
+        CL_QTY: clQty,
+        FG_QTY: clQty,
+        PORD_QTY: 0,
+        BAL_QTY: clQty,
+        ISU_QTY: 0,
+        BARCODE: barcode
+      }];
+    }
+    
+    const totalQty = finalSizeDetails.reduce((sum, size) => sum + (parseFloat(size.QTY) || 0), 0);
+    const rate = parseFloat(cachedData.rate) || 0;
+    const totalAmount = totalQty * rate;
+    const discount = parseFloat(cachedData.discount) || 0;
+    const netAmount = totalAmount - discount;
+    
+    const tempId = Date.now();
+    const barcodeValue = barcode;
+    
+    const fgprdKey = productMapping[cachedData.product] || "";
+    const fgtypeKey = typeMapping[cachedData.type] || "";
+    const fgshadeKey = shadeMapping[cachedData.shade] || "";
+    const fgptnKey = lotNoMapping[cachedData.lotNo] || "";
+    const stycatrtId = 0;
+    
+    const newItem = {
+      id: tempId,
+      BarCode: barcodeValue,
+      orderNo: cachedData.orderNo || '',
+      balQty: cachedData.balQty || totalQty,
+      orderDate: cachedData.orderDate || '',
+      product: cachedData.product,
+      style: cachedData.style || "-",
+      type: cachedData.type || "-",
+      shade: cachedData.shade || "-",
+      lotNo: cachedData.lotNo || "-",
+      qty: totalQty,
+      mrp: parseFloat(cachedData.mrp) || 0,
+      rate: rate,
+      amount: totalAmount,
+      varPer: 0,
+      varQty: 0,
+      varAmt: 0,
+      discAmt: discount,
+      netAmt: netAmount,
+      distributer: "-",
+      set: 0,
+      originalData: {
+        ORDBKSTY_ID: tempId,
+        FGITEM_KEY: barcodeValue,
+        ALT_BARCODE: barcodeValue,
+        PRODUCT: cachedData.product,
+        STYLE: cachedData.style,
+        TYPE: cachedData.type || "-",
+        SHADE: cachedData.shade || "-",
+        PATTERN: cachedData.lotNo || "-",
+        ITMQTY: totalQty,
+        MRP: parseFloat(cachedData.mrp) || 0,
+        ITMRATE: rate,
+        ITMAMT: totalAmount,
+        DLV_VAR_PERC: 0,
+        DLV_VAR_QTY: 0,
+        DISC_AMT: discount,
+        NET_AMT: netAmount,
+        DISTBTR: "-",
+        SETQTY: 0,
+        ORDBKSTYSZLIST: finalSizeDetails.map(size => ({
+          STYSIZE_ID: size.STYSIZE_ID,
+          STYSIZE_NAME: size.STYSIZE_NAME,
+          QTY: size.QTY,
+          ITM_AMT: size.ITM_AMT,
+          ORDER_QTY: size.QTY,
+          MRP: size.MRP,
+          RATE: size.RATE,
+          CL_QTY: size.CL_QTY,
+          FG_QTY: size.FG_QTY,
+          PORD_QTY: size.PORD_QTY,
+          BAL_QTY: size.BAL_QTY,
+          ISU_QTY: size.ISU_QTY,
+          ORDBKSTYSZ_ID: 0,
+          DBFLAG: 'I'
+        })),
+        FGPRD_KEY: fgprdKey,
+        FGSTYLE_ID: fgstyleId,
+        FGTYPE_KEY: fgtypeKey,
+        FGSHADE_KEY: fgshadeKey,
+        FGPTN_KEY: fgptnKey,
+        STYCATRT_ID: stycatrtId,
+        DBFLAG: mode === 'add' ? 'I' : 'I'
+      },
+      FGSTYLE_ID: fgstyleId,
+      FGPRD_KEY: fgprdKey,
+      FGTYPE_KEY: fgtypeKey,
+      FGSHADE_KEY: fgshadeKey,
+      FGPTN_KEY: fgptnKey,
+      STYCATRT_ID: stycatrtId,
+      ALT_BARCODE: barcodeValue
+    };
+    
+    setUpdatedTableData(prev => [...prev, newItem]);
+    
+    setFormData(prev => ({
+      ...prev,
+      apiResponseData: {
+        ...prev.apiResponseData,
+        ORDBKSTYLIST: [...(prev.apiResponseData?.ORDBKSTYLIST || []), newItem.originalData]
+      }
+    }));
+    
+    setLastAddedBarcode(barcode);
+    setBarcodeInput('');
+    
+    setTimeout(() => {
+      const barcodeInputElement = document.querySelector('input[name="barcode"]');
+      if (barcodeInputElement) {
+        barcodeInputElement.value = '';
+        barcodeInputElement.focus();
+      }
+    }, 50);
+    
+    setTimeout(() => {
+      isProcessingBarcodeRef.current = false;
+    }, 500);
+    
+  } catch (error) {
+    console.error('Error loading from cache:', error);
+    showSnackbar('Error loading cached quantities', 'error');
+    isProcessingBarcodeRef.current = false;
+  }
+};
+
+// New confirm add function for batch mode
+const handleConfirmAddWithBatch = (barcode, requestedQty) => {
+  // Validation
+  if (!newItemData.product || !newItemData.style) {
+    showSnackbar("Please fill required fields: Product and Style", 'error');
+    return;
+  }
+
+  if (sizeDetailsData.length === 0) {
+    showSnackbar("Please load size details first", 'error');
+    return;
+  }
+
+  const sizesWithQty = sizeDetailsData.filter(size => size.QTY && size.QTY > 0);
+  if (sizesWithQty.length === 0) {
+    showSnackbar("No stock available for this barcode!", 'error');
+    return;
+  }
+
+  // SAVE TO CACHE
+  if (barcode && barcode.trim() !== '') {
+    saveBarcodeQuantities(barcode.trim(), sizesWithQty);
+  }
+
+  const fgprdKey = productMapping[newItemData.product] || productMapping[newItemData.style] || "";
+  const fgstyleId = styleMapping[newItemData.style] || "";
+  const stycatrtId = newItemData.stycatrtId || 0;
+    
+  const totalQty = sizesWithQty.reduce((sum, size) => sum + (parseFloat(size.QTY) || 0), 0);
+  const mrp = parseFloat(newItemData.mrp) || 0;
+  const rate = parseFloat(newItemData.rate) || 0;
+  const totalAmount = totalQty * rate;
+  const discount = parseFloat(newItemData.discount) || 0;
+  const netAmount = totalAmount - discount;
+
+  const tempId = Date.now();
+  
+  const updatedSizeDetails = sizeDetailsData.map(size => ({
+    ...size,
+    QTY: parseFloat(size.QTY) || 0,
+    ITM_AMT: (parseFloat(size.QTY) || 0) * rate,
+    ALT_BARCODE: barcode
+  }));
+
+  const newItems = selectedShades.map((shade, shadeIndex) => {
+    const fgshadeKey = shadeMapping[shade] || "";
+    const fgtypeKey = typeMapping[newItemData.type] || "";
+    const fgptnKey = lotNoMapping[newItemData.lotNo] || "";
+
+    return {
+      id: tempId + shadeIndex,
+      BarCode: barcode || "-",
+      product: newItemData.product,
+      style: newItemData.style || "-",
+      type: newItemData.type || "-",
+      shade: shade || "-",
+      lotNo: newItemData.lotNo || "-",
+      qty: totalQty,
+      mrp: mrp,
+      rate: rate,
+      amount: totalAmount,
+      varPer: parseFloat(newItemData.varPer) || 0,
+      varQty: 0,
+      varAmt: 0,
+      discAmt: discount,
+      netAmt: netAmount,
+      distributer: "-",
+      set: parseFloat(newItemData.sets) || 0,
+      originalData: {
+        ORDBKSTY_ID: tempId + shadeIndex,
+        FGITEM_KEY: barcode || "-",
+        ALT_BARCODE: barcode || "-",
+        PRODUCT: newItemData.product,
+        STYLE: newItemData.style,
+        TYPE: newItemData.type || "-",
+        SHADE: shade || "-",
+        PATTERN: newItemData.lotNo || "-",
+        ITMQTY: totalQty,
+        MRP: mrp,
+        ITMRATE: rate,
+        ITMAMT: totalAmount,
+        DLV_VAR_PERC: parseFloat(newItemData.varPer) || 0,
+        DLV_VAR_QTY: 0,
+        DISC_AMT: discount,
+        NET_AMT: netAmount,
+        DISTBTR: "-",
+        SETQTY: parseFloat(newItemData.sets) || 0,
+        ORDBKSTYSZLIST: updatedSizeDetails.map(size => ({
+          ...size,
+          ORDBKSTYSZ_ID: 0
+        })),
+        FGPRD_KEY: fgprdKey,
+        FGSTYLE_ID: fgstyleId,
+        FGTYPE_KEY: fgtypeKey,
+        FGSHADE_KEY: fgshadeKey,
+        FGPTN_KEY: fgptnKey,
+        STYCATRT_ID: stycatrtId,
+        DBFLAG: mode === 'add' ? 'I' : 'I'
+      },
+      FGSTYLE_ID: fgstyleId,
+      FGPRD_KEY: fgprdKey,
+      FGTYPE_KEY: fgtypeKey,
+      FGSHADE_KEY: fgshadeKey,
+      FGPTN_KEY: fgptnKey,
+      STYCATRT_ID: stycatrtId,
+      ALT_BARCODE: barcode
+    };
+  });
+  
+  const finalNewItems = selectedShades.length > 0 ? newItems : [{
+    id: tempId,
+    BarCode: barcode || "-",
+    product: newItemData.product,
+    style: newItemData.style || "-",
+    type: newItemData.type || "-",
+    shade: newItemData.shade || "-",
+    lotNo: newItemData.lotNo || "-",
+    qty: totalQty,
+    mrp: mrp,
+    rate: rate,
+    amount: totalAmount,
+    varPer: parseFloat(newItemData.varPer) || 0,
+    varQty: 0,
+    varAmt: 0,
+    discAmt: discount,
+    netAmt: netAmount,
+    distributer: "-",
+    set: parseFloat(newItemData.sets) || 0,
+    originalData: {
+      ORDBKSTY_ID: tempId,
+      FGITEM_KEY: barcode || "-",
+      ALT_BARCODE: barcode || "-",
+      PRODUCT: newItemData.product,
+      STYLE: newItemData.style,
+      TYPE: newItemData.type || "-",
+      SHADE: newItemData.shade || "-",
+      PATTERN: newItemData.lotNo || "-",
+      ITMQTY: totalQty,
+      MRP: mrp,
+      ITMRATE: rate,
+      ITMAMT: totalAmount,
+      DLV_VAR_PERC: parseFloat(newItemData.varPer) || 0,
+      DLV_VAR_QTY: 0,
+      DISC_AMT: discount,
+      NET_AMT: netAmount,
+      DISTBTR: "-",
+      SETQTY: parseFloat(newItemData.sets) || 0,
+      ORDBKSTYSZLIST: updatedSizeDetails.map(size => ({
+        ...size,
+        ORDBKSTYSZ_ID: 0
+      })),
+      FGPRD_KEY: fgprdKey,
+      FGSTYLE_ID: fgstyleId,
+      FGTYPE_KEY: typeMapping[newItemData.type] || "",
+      FGSHADE_KEY: shadeMapping[newItemData.shade] || "",
+      FGPTN_KEY: lotNoMapping[newItemData.lotNo] || "",
+      STYCATRT_ID: stycatrtId,
+      DBFLAG: mode === 'add' ? 'I' : 'I'
+    },
+    FGSTYLE_ID: fgstyleId,
+    FGPRD_KEY: fgprdKey,
+    FGTYPE_KEY: typeMapping[newItemData.type] || "",
+    FGSHADE_KEY: shadeMapping[newItemData.shade] || "",
+    FGPTN_KEY: lotNoMapping[newItemData.lotNo] || "",
+    STYCATRT_ID: stycatrtId,
+    ALT_BARCODE: barcode
+  }];
+
+  const newTableData = [...tableData, ...finalNewItems];
+  setUpdatedTableData(newTableData);
+
+  setFormData(prev => ({
+    ...prev,
+    apiResponseData: {
+      ...prev.apiResponseData,
+      ORDBKSTYLIST: [...(prev.apiResponseData?.ORDBKSTYLIST || []), ...finalNewItems.map(item => item.originalData)]
+    }
+  }));
+
+  // Reset for next scan
+  setNewItemData({
+    product: '',
+    barcode: '',
+    style: '',
+    type: '',
+    shade: '',
+    qty: '',
+    mrp: '',
+    rate: '',
+    setNo: '',
+    varPer: '',
+    stdQty: '',
+    convFact: '',
+    lotNo: '',
+    discount: '',
+    percent: '',
+    remark: '',
+    divDt: '',
+    rQty: '',
+    sets: '',
+    stycatrtId: 0
+  });
+  
+  setBarcodeInput('');
+  setSizeDetailsData([]);
+  setIsSizeDetailsLoaded(false);
+  setSelectedShades([]);
+  setDataSource(null);
+  
+  showSnackbar(`${selectedShades.length > 1 ? selectedShades.length : 1} item(s) added! Qty: ${totalQty} each. Ready for next scan.`);
+  
+  setTimeout(() => {
+    const barcodeInputElement = document.querySelector('input[name="barcode"]');
+    if (barcodeInputElement) {
+      barcodeInputElement.value = '';
+      barcodeInputElement.focus();
+    }
+  }, 50);
+}
 
 const loadFromCacheAndAddToTable = async (barcode) => {
   if (isProcessingBarcodeRef.current) return;
@@ -5564,6 +6249,32 @@ const handleCancelAdd = () => {
           </Button>
 
           {/* Totals */}
+          <TextField 
+    label="Qty" 
+    variant="filled"
+    type="number"
+    value={batchQuantity}
+    onChange={(e) => {
+      const val = parseInt(e.target.value) || 1;
+      setBatchQuantity(Math.max(1, val));
+    }}
+    disabled={shouldDisableFields()}
+    sx={{ 
+      ...textInputSx, 
+      width: '100px',
+      '& .MuiInputBase-input': {
+        padding: '6px 8px',
+        fontSize: '12px',
+        textAlign: 'center'
+      }
+    }}
+    inputProps={{ 
+      style: { padding: '6px 8px', fontSize: '12px' },
+      min: 1,
+      step: 1
+    }}
+  />
+  
           <TextField 
             label="Tot Qty" 
             variant="filled" 
