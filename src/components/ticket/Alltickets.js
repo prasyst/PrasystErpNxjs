@@ -95,7 +95,7 @@ const AllTicketsPage = () => {
           category: tkt.TKTCATNAME || "General",
           priority: tkt.TKTSVRTYNAME || "Medium",
           status: tkt.TKTSTATUS === "O" ? "open" :
-            tkt.TKTSTATUS === "I" ? "in-progress" :
+            tkt.TKTSTATUS === "P" ? "in-progress" :
               tkt.TKTSTATUS === "H" ? "hold" :
                 tkt.TKTSTATUS === "R" ? "resolved" :
                   tkt.TKTSTATUS === "C" ? "closed" : 'Unknown',
@@ -1081,6 +1081,7 @@ const AllTicketsPage = () => {
           open={ticketDetailsOpen}
           onClose={handleCloseTicketDetails}
           ticketId={selectedTicketId}
+          setTicketDetailsOpen={setTicketDetailsOpen}
           onEdit={(ticket) => {
             handleCloseTicketDetails();
             handleEditTicket(ticket);

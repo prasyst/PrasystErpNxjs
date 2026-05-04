@@ -53,7 +53,6 @@ const AllTicketsPage = () => {
       if (response.data.STATUS === 0 && Array.isArray(response.data.DATA)) {
         const realTickets = response.data.DATA;
 
-        // Map API fields to UI-friendly names
         const mappedTickets = realTickets.map(tkt => ({
           TKTKEY: tkt.TKTKEY,
           id: tkt.TKTNO,
@@ -63,6 +62,7 @@ const AllTicketsPage = () => {
           priority: tkt.TKTSVRTYNAME || "Medium",
           status: tkt.TKTSTATUS === "O" ? "open" :
             tkt.TKTSTATUS === "P" ? "in-progress" :
+            tkt.TKTSTATUS === "H" ? "hold" :
               tkt.TKTSTATUS === "R" ? "resolved" : "closed",
           assignee: tkt.TECHEMP_NAME || "Unassigned",
           reporter: tkt.RAISEBYNM || "Unknown",
@@ -105,10 +105,11 @@ const AllTicketsPage = () => {
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'open': return 'error';
+      case 'open': return 'info';
       case 'in-progress': return 'warning';
       case 'resolved': return 'success';
       case 'closed': return 'default';
+      case 'hold': return 'secondary.main';
       default: return 'default';
     }
   };
@@ -500,6 +501,7 @@ const AllTicketsPage = () => {
                   label={
                     ticket.status === 'open' ? 'Open' :
                     ticket.status === 'in-progress' ? 'In Progress' :
+                    ticket.status === 'hold' ? 'Hold' :
                     ticket.status === 'resolved' ? 'Resolved' : 'Closed'
                   }
                   size="small"
@@ -576,7 +578,7 @@ const AllTicketsPage = () => {
                       <EditIcon />
                     </IconButton>
                   </Tooltip>
-                  <Tooltip title="Delete" arrow>
+                  {/* <Tooltip title="Delete" arrow>
                     <IconButton 
                       size="small" 
                       color="error" 
@@ -590,7 +592,7 @@ const AllTicketsPage = () => {
                     >
                       <DeleteIcon />
                     </IconButton>
-                  </Tooltip>
+                  </Tooltip> */}
                 </Box>
               </TableCell>
             </TableRow>
@@ -832,6 +834,7 @@ const AllTicketsPage = () => {
           open={ticketDetailsOpen}
           onClose={handleCloseTicketDetails}
           ticketId={selectedTicketId}
+          fetchTicketDash={fetchTicketDash}
           onEdit={(ticket) => {
             handleCloseTicketDetails();
             handleEditTicket(ticket);

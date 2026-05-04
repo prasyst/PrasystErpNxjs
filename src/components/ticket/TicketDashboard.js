@@ -78,7 +78,7 @@ const TicketDashboard = () => {
           category: tkt.TKTSERVICENAME || "General",
           priority: tkt.TKTSVRTYNAME || "Medium",
           status: tkt.TKTSTATUS === "O" ? "open" :
-            tkt.TKTSTATUS === "I" ? "in-progress" :
+            tkt.TKTSTATUS === "P" ? "in-progress" :
               tkt.TKTSTATUS === "H" ? "Hold" :
                 tkt.TKTSTATUS === "R" ? "resolved" : "closed",
           assignee: tkt.TECHEMP_NAME || "Unassigned",
@@ -975,8 +975,13 @@ const TicketDashboard = () => {
                 },
                 {
                   status: 'Closed',
-                  count: tickets.filter(ticket => ticket.status == "C").length,
+                  count: tickets.filter(ticket => ticket.status == "closed").length,
                   color: 'grey.500'
+                },
+                {
+                  status: 'Hold',
+                  count: tickets.filter(ticket => ticket.status == "Hold").length,
+                  color: 'warning.main'
                 }
               ].map((item, index) => (
                 <Stack

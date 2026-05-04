@@ -382,6 +382,7 @@ const TicketList = ({ onViewTicket, onEditTicket, onCreateTicket }) => {
                         ticket.TKTSTATUS === 'O' ? 'Open' :
                           ticket.TKTSTATUS === 'P' ? 'In Progress' :
                             ticket.TKTSTATUS === 'R' ? 'Resolved' :
+                            ticket.TKTSTATUS === 'H' ? 'Hold' :
                               ticket.TKTSTATUS === 'C' ? 'Closed' : 'Unknown'
                       }
                       size="small"

@@ -5,7 +5,7 @@ import { useSearchParams } from "next/navigation";
 import {
   Box, Button, TextField, FormControl, Typography, Paper, Divider, Container,
   Grid, Stack, IconButton, Autocomplete, FormLabel, RadioGroup, FormControlLabel, Radio, Link,
-  Tooltip,
+  Tooltip, Dialog, DialogTitle, DialogContent, DialogActions,Chip,Select, MenuItem
 } from "@mui/material";
 import {
   ArrowBack as MdArrowBack,
@@ -18,11 +18,14 @@ import {
 import dayjs from 'dayjs';
 import axiosInstance from "@/lib/axios";
 import { toast, ToastContainer } from "react-toastify";
+import ItemRequisitionDialog from "../raiseTicket/ItemRequisitiondlog";
 import { inputStyle } from "../../../../public/styles/inputStyles";
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import ZoomInIcon from '@mui/icons-material/ZoomIn';
 import ZoomDialog from "../raiseTicket/ZoomDialog";
-import ItemRequisitionDialog from "../raiseTicket/ItemRequisitiondlog";
+// import SendMail from "./SendMail";
+import CloseIcon from '@mui/icons-material/Close';
+import SearchIcon from '@mui/icons-material/Search';
 
 const CreateTicketPage = () => {
   const router = useRouter();
@@ -92,27 +95,36 @@ const CreateTicketPage = () => {
   const [rowsSecondTable, setRowsSecondTable] = useState([]);
   const fileInputRef = useRef(null);
   const [isItemRequisitionEnabled, setIsItemRequisitionEnabled] = useState(false);
-  const USER_NAME = 0;
+  const USER_NAME = localStorage.getItem("USER_NAME");
   const USER_ID = localStorage.getItem("USER_ID");
+  console.log("USER_ID:", USER_ID);
   const EMP_KEY = localStorage.getItem("EMP_KEY");
   const EMP_NAME = localStorage.getItem("EMP_NAME");
   const [selectedImage, setselectedImage] = useState("");
   const [zoomOpen, setZoomOpen] = useState(false);
   const [zoomSrc, setZoomSrc] = useState('');
-  const [userName,setUserName]=useState()
-   console.log('seriesKey',seriesKey)
-  useEffect(() => {
-      const storedName = localStorage.getItem('EMP_NAME') || localStorage.getItem('USER_NAME');
-      console.log('storedName',storedName)
-      const storedRole = localStorage.getItem('userRole');
-      if (storedName) {
-        const name=storedName.length>3 ? storedName.substring(0,11) + '..' :storedName
-        setUserName(name);
-      }
-    }, []);
+  const [openMail, setOpenMail] = useState(false);
+  const [openService, setOpenService] = useState(false);
+  const [allService, setAllService] = useState([]);
+
+  const handleOpen = () => {
+    setOpenMail(true);
+  };
+
+  const handleClose = () => {
+    setOpenMail(false);
+  };
+
+  
+
+  const handleCloseService = () => {
+    setOpenService(false);
+  };
+
   useEffect(() => {
     setIsItemRequisitionEnabled(validateForm());
   }, [formData, ticketFor]);
+
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const id = localStorage.getItem("COBR_ID") || "01";
@@ -121,6 +133,7 @@ const CreateTicketPage = () => {
       setFcyrKey(key);
     }
   }, []);
+
   useEffect(() => {
     fetchCategory();
     fetchMachineGroup();
@@ -130,14 +143,17 @@ const CreateTicketPage = () => {
     getSeriesKey();
     getSeriesData();
   }, [cobrId, fcyrKey])
+
   const handleSaveButton = () => {
     handleSubmit();
     setOpenConfirmDialog(false);
   };
+
   const handleItemsSave = (selectedItemsWithQty) => {
     setRowsSecondTable(selectedItemsWithQty);
     toast.success(`${selectedItemsWithQty.length} item(s) added to ticket.`);
   };
+
   const fetchRetriveData = async (ticketKey) => {
     try {
       const response = await axiosInstance.post(
@@ -155,34 +171,37 @@ const CreateTicketPage = () => {
       if (response.data.STATUS === 0 && response.data.DATA) {
         const ticket = response.data.DATA.trnTktDtlList[0];
         const ticketImage = ticket.TktImage || '';
+
+        const formatImageSrc = (img) => {
+          if (!img) return '';
+          if (img.startsWith('data:')) return img;
+          if (img.startsWith('http:/') && !img.startsWith('http://')) {
+            return img.replace('http:/', 'http://');
+          }
+          if (img.startsWith('http') || img.startsWith('/')) return img;
+          return `data:image/jpeg;base64,${img}`;
+        };
+
         setFormData(prevState => ({
           ...prevState,
           title: ticket.TktDesc,
           description: ticket.Remark,
-          category: {
-            TKTCATID: ticket.TktCatId,
-            TKTCATNAME: ticket.TktCatName
-          },
-          subCategory: {
-            TKTSUBCATID: ticket.TktSubCatId,
-            TKTSUBCATNAME: ticket.TktSubCatName
-          },
+          category: { TKTCATID: ticket.TktCatId, TKTCATNAME: ticket.TktCatName },
+          subCategory: { TKTSUBCATID: ticket.TktSubCatId, TKTSUBCATNAME: ticket.TktSubCatName },
           priority: ticket.TktSvrtyName,
           machGrp: ticket.MachineryGroup_Name || "",
           machineryKey: ticket.Machinery_Key || "",
           machine: ticket.Machinery_Name || "",
-          service: {
-            TKTSERVICEID: ticket.TktServiceId,
-            TKTSERVICENAME: ticket.TktServiceName
-          },
+          service: { TKTSERVICEID: ticket.TktServiceId, TKTSERVICENAME: ticket.TktServiceName },
           depGrp: ticket.CCGrp_Name || "",
           department: ticket.CCN_Key || "",
           dueDate: dayjs(ticket.TktDate).format("YYYY-MM-DD"),
           tags: [],
-          TktImage: ticketImage,
+          TktImage: formatImageSrc(ticketImage),
+          ImgName: ticket.ImgName || ticket.TktImage?.split('/').pop() || '',
           trnTktDtlEntities: ticket.trnTktDtlEntities || []
         }));
-        // Set machine group key for dropdown
+       
         if (ticket.TktFor === "M") {
           setSelectedMachGrpKey(ticket.MachineryGroup_Key || "");
         }
@@ -196,18 +215,18 @@ const CreateTicketPage = () => {
         setTktKey(ticket.TktKey);
         setTktNo(ticket.TktNo);
         setSelectedMachGrpKey(ticket.MachineryGroup_Key);
-      } else {
-        console.error('Failed to retrieve ticket data:', response.data.MESSAGE);
       }
     } catch (error) {
       console.error('Error fetching ticket data:', error);
     }
   };
+
   useEffect(() => {
     if (TKTKEY) {
       fetchRetriveData(TKTKEY);
     }
   }, [TKTKEY]);
+
   const getSeriesKey = async () => {
     try {
       const response = await axiosInstance.post("GetSeriesSettings/GetSeriesLastNewKey", {
@@ -233,6 +252,7 @@ const CreateTicketPage = () => {
       toast.error("Error while fetching.")
     }
   };
+
   const getSeriesData = async (prefix) => {
     try {
       const response = await axiosInstance.post('GetSeriesSettings/GetSeriesLastNewKey', {
@@ -249,11 +269,13 @@ const CreateTicketPage = () => {
       });
       if (response.data.STATUS === 0 && Array.isArray(response.data.DATA)) {
         setSeriesData(response.data.DATA);
+
       }
     } catch (error) {
       toast.error("Error while loading series.");
     }
   };
+
   const fetchCategory = async () => {
     try {
       const response = await axiosInstance.post('TktCat/GetTktCatDrp', {});
@@ -264,6 +286,7 @@ const CreateTicketPage = () => {
       toast.error("Error while fetching category.");
     }
   };
+
   useEffect(() => {
     if (formData.category?.TKTCATID) {
       const categoryId = formData.category.TKTCATID;
@@ -282,6 +305,7 @@ const CreateTicketPage = () => {
       fetchSubCategories();
     }
   }, [formData.category]);
+
   useEffect(() => {
     if (formData.subCategory?.TKTSUBCATID) {
       const subCategoryId = formData.subCategory.TKTSUBCATID;
@@ -305,6 +329,7 @@ const CreateTicketPage = () => {
       console.log("No subCategoryId found in formData.subCategory.");
     }
   }, [formData.subCategory]);
+
   const fetchMachineGroup = async () => {
     try {
       const response = await axiosInstance.post("Machinery/GetMachineryGrpDrp", {
@@ -317,6 +342,7 @@ const CreateTicketPage = () => {
       toast.error("Error while fetching machine group.");
     }
   };
+
   const fetchMachine = async (groupKey = "") => {
     if (!groupKey) {
       setMachineDrp([]);
@@ -335,10 +361,10 @@ const CreateTicketPage = () => {
         toast.info("No machines found in this group.");
       }
     } catch (error) {
-      console.error("Failed to load machines.");
       setMachineDrp([]);
     }
   };
+
   const fetchDeptGroup = async () => {
     try {
       const response = await axiosInstance.post("CCN/GetCCNGrpDrp", {
@@ -351,6 +377,7 @@ const CreateTicketPage = () => {
       toast.error("Error while fetching department Group.");
     }
   };
+
   const fetchDepart = async () => {
     try {
       const response = await axiosInstance.post("CCN/GetCCNDrp", {
@@ -368,6 +395,7 @@ const CreateTicketPage = () => {
   const handleTicketChange = (event) => {
     setTicketFor(event.target.value);
   };
+
   const validateForm = () => {
     const newErrors = {};
     if (!formData.category) newErrors.category = "Category is required";
@@ -385,145 +413,144 @@ const CreateTicketPage = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-const handleSubmit = async () => {
-  setLoading(true);
-  
-  if (!validateForm()) {
-    toast.error("Please fill in all required fields.");
-    setLoading(false);
-    return;
-  }
-  
-  try {
-    const isUpdate = !!TKTKEY;
-    let generatedTktKey = "";
-    let newTktNo = "";
+  const handleSubmit = async () => {
+    setLoading(true);
 
-    if (!isUpdate) {
-      try {
-        const seriesResponse = await axiosInstance.post('GetSeriesSettings/GetSeriesLastNewKey', {
-          MODULENAME: "TrnTkt",
-          TBLNAME: "TrnTkt",
-          FLDNAME: "TktNo",
-          NCOLLEN: 6,
-          CPREFIX: seriesKey?.CPREFIX || "TK",
-          COBR_ID: cobrId,
-          FCYR_KEY: fcyrKey,
-          TRNSTYPE: "M",
-          SERIESID: 0,
-          FLAG: ""
-        });
-        
-        if (seriesResponse.data.STATUS === 0 && Array.isArray(seriesResponse.data.DATA)) {
-          const seriesResult = seriesResponse.data.DATA[0];
-  
-          const prefix = (seriesKey?.CPREFIX || "TK").toUpperCase();
-          const numericPart = (seriesResult.ID || "001").replace(/\D/g, "");
-          const paddedNumber = String(numericPart).padStart(3, "0");
-          
-          generatedTktKey = fcyrKey + cobrId + prefix + paddedNumber;
-          newTktNo = prefix + paddedNumber;
-        
-          setSeriesData(seriesResponse.data.DATA);
-        } else {
+    if (!validateForm()) {
+      toast.error("Please fill in all required fields.");
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const isUpdate = !!TKTKEY;
+      let generatedTktKey = "";
+      let newTktNo = "";
+
+      if (!isUpdate) {
+        try {
+          const seriesResponse = await axiosInstance.post('GetSeriesSettings/GetSeriesLastNewKey', {
+            MODULENAME: "TrnTkt",
+            TBLNAME: "TrnTkt",
+            FLDNAME: "TktNo",
+            NCOLLEN: 6,
+            CPREFIX: seriesKey?.CPREFIX || "TK",
+            COBR_ID: cobrId,
+            FCYR_KEY: fcyrKey,
+            TRNSTYPE: "M",
+            SERIESID: 0,
+            FLAG: "",
+          });
+
+          if (seriesResponse.data.STATUS === 0 && Array.isArray(seriesResponse.data.DATA)) {
+            const seriesResult = seriesResponse.data.DATA[0];
+
+            const prefix = (seriesKey?.CPREFIX || "TK").toUpperCase();
+            const numericPart = (seriesResult.ID || "001").replace(/\D/g, "");
+            const paddedNumber = String(numericPart).padStart(3, "0");
+
+            generatedTktKey = fcyrKey + cobrId + prefix + paddedNumber;
+            newTktNo = prefix + paddedNumber;
+
+            setSeriesData(seriesResponse.data.DATA);
+          } else {
+            const prefix = "TK";
+            const fallbackNum = "001";
+            generatedTktKey = fcyrKey + cobrId + prefix + fallbackNum;
+            newTktNo = prefix + fallbackNum;
+            toast.warning("Using fallback ticket number.");
+          }
+        } catch (seriesError) {
+          // Fallback
           const prefix = "TK";
           const fallbackNum = "001";
           generatedTktKey = fcyrKey + cobrId + prefix + fallbackNum;
           newTktNo = prefix + fallbackNum;
-          toast.warning("Using fallback ticket number.");
+          toast.warning("Error fetching series. Using fallback ticket number.");
         }
-      } catch (seriesError) {
-        console.error("Error fetching series data:", seriesError);
-        // Fallback
-        const prefix = "TK";
-        const fallbackNum = "001";
-        generatedTktKey = fcyrKey + cobrId + prefix + fallbackNum;
-        newTktNo = prefix + fallbackNum;
-        toast.warning("Error fetching series. Using fallback ticket number.");
+      } else {
+        generatedTktKey = TktKey;
+        newTktNo = TktNo;
       }
-    } else {
-      generatedTktKey = TktKey;
-      newTktNo = TktNo;
-    }
-    
-    let attachmentData = { TktImage: "", ImgName: "" };
-    if (attachments.length > 0) {
-      const file = attachments[0];
-      const base64String = file.fileData.split(",")[1];
-      attachmentData = {
-        TktImage: base64String,
-        ImgName: file.fileName,
+
+      let attachmentData = { TktImage: "", ImgName: "" };
+      if (attachments.length > 0) {
+        const file = attachments[0];
+        const base64String = file.fileData.split(",")[1];
+        attachmentData = {
+          TktImage: base64String,
+          ImgName: file.fileName,
+        };
+      }
+
+      const ticketData = {
+        FCYR_KEY: fcyrKey,
+        COBR_ID: cobrId,
+        TktKey: generatedTktKey,
+        TktNo: newTktNo,
+        RaiseBy_ID: USER_ID || EMP_KEY,
+        MobileNo: "",
+        RaiseByNm: USER_NAME || EMP_NAME,
+        TktDate: dayjs().format("YYYY-MM-DDTHH:mm:ss"),
+        TktTime: dayjs().format("HH:mm:ss"),
+        TktFor: ticketFor,
+        Machinery_Key: ticketFor === "M" ? formData.machineryKey : "",
+        CCN_Key: ticketFor === "C" ? formData.department : "",
+        TktServiceId: formData.service?.TKTSERVICEID,
+        TktSvrtyId: 1,
+        TktTypeId: 1,
+        TktTagId: 1,
+        TechEmp_Key: "",
+        EsclEmp_Key: "",
+        FrwdEmp_Key: "",
+        TktStatus: "O",
+        ReqFlg: "R",
+        Reason: formData.description,
+        RejDate: dayjs().format("YYYY-MM-DD"),
+        AcceptFlg: "N",
+        AssignFlg: "N",
+        AssignDt: dayjs().format("YYYY-MM-DD"),
+        TktDesc: formData.description,
+        Status: "1",
+        RslvRmrk: "testing Rslv",
+        Remark: formData.title,
+        TktImage: formData.TktImage,
+        ImgName: formData.ImgName,
+        trnTktDtlEntities: rowsSecondTable
       };
+
+      if (isUpdate) {
+        ticketData.UpdatedBy = USER_ID || EMP_KEY;
+      } else {
+        ticketData.CreatedBy = 0;
+      }
+
+      const apiUrl = isUpdate
+        ? `TrnTkt/UpdateTrnTkt?UserName=${USER_NAME}&strCobrid=${cobrId}`
+        : `TrnTkt/InsertTrnTkt?UserName=${USER_NAME}&strCobrid=${cobrId}`;
+
+      const response = await axiosInstance.post(apiUrl, ticketData);
+
+      if (response.data.STATUS === 0) {
+        toast.success(
+          isUpdate
+            ? `Ticket ${newTktNo} updated successfully!`
+            : `Ticket ${newTktNo} created successfully!`
+        );
+        setTimeout(() => {
+          router.push("/tickets/all-tickets");
+        }, 1500);
+      } else {
+        toast.error(response.data.MESSAGE || "Failed to save ticket.");
+      }
+
+    } catch (error) {
+      toast.error("An error occurred while saving the ticket.");
+    } finally {
+      setLoading(false);
     }
-    
-    const ticketData = {
-      FCYR_KEY: fcyrKey,
-      COBR_ID: cobrId,
-      TktKey: generatedTktKey,
-      TktNo: newTktNo,
-      RaiseBy_ID: USER_ID || EMP_KEY,
-      MobileNo: "",
-      RaiseByNm: USER_NAME || EMP_NAME,
-      TktDate: dayjs().format("YYYY-MM-DDTHH:mm:ss"),
-      TktTime: dayjs().format("HH:mm:ss"),
-      TktFor: ticketFor,
-      Machinery_Key: ticketFor === "M" ? formData.machineryKey : "",
-      CCN_Key: ticketFor === "C" ? formData.department : "",
-      TktServiceId: formData.service?.TKTSERVICEID,
-      TktSvrtyId: 1,
-      TktTypeId: 1,
-      TktTagId: 1,
-      TechEmp_Key: "",
-      EsclEmp_Key: "",
-      FrwdEmp_Key: "",
-      TktStatus: "O",
-      ReqFlg: "R",
-      Reason: formData.description,
-      RejDate: dayjs().format("YYYY-MM-DD"),
-      AcceptFlg: "N",
-      AssignFlg: "N",
-      AssignDt: dayjs().format("YYYY-MM-DD"),
-      TktDesc: formData.description,
-      Status: "1",
-      RslvRmrk: "testing Rslv",
-      Remark: formData.title,
-      TktImage: formData.TktImage,
-      ImgName: formData.ImgName,
-      trnTktDtlEntities: rowsSecondTable
-    };
-    
-    if (isUpdate) {
-      ticketData.UpdatedBy = USER_ID || EMP_KEY;
-    } else {
-      ticketData.CreatedBy = 0;
-    }
-    
-    const apiUrl = isUpdate
-      ? `TrnTkt/UpdateTrnTkt?UserName=${USER_NAME}&strCobrid=${cobrId}`
-      : `TrnTkt/InsertTrnTkt?UserName=${USER_NAME}&strCobrid=${cobrId}`;
-    
-    const response = await axiosInstance.post(apiUrl, ticketData);
-    
-    if (response.data.STATUS === 0) {
-      toast.success(
-        isUpdate
-          ? `Ticket ${newTktNo} updated successfully!`
-          : `Ticket ${newTktNo} created successfully!`
-      );
-      // setTimeout(() => {
-      //   router.push("/tickets/all-tickets");
-      // }, 1500);
-    } else {
-      toast.error(response.data.MESSAGE || "Failed to save ticket.");
-    }
-    
-  } catch (error) {
-    console.error("Failed to create ticket. Check console.", error);
-    toast.error("An error occurred while saving the ticket.");
-  } finally {
-    setLoading(false);
-  }
-};
+  };
+
   const handleFileChange = (event) => {
     const file = event.target.files[0];
     if (!file) return;
@@ -543,12 +570,83 @@ const handleSubmit = async () => {
         ImgName: fileName,
       }));
       setselectedImage(base64String);
+      setAttachments([{ fileName, fileData: base64String }]);
     };
     reader.onerror = () => {
       toast.error("Failed to read file.");
     };
     reader.readAsDataURL(file);
   };
+   const fetchAllServices = async () => {
+      try {
+        const response = await axiosInstance.post('TktService/GetSubCatWiseTktServiceDrp', {
+          TktSubCatId: 0
+        })
+        if (response.data.STATUS === 0) {
+          setAllService(response.data.DATA)
+        } else {
+          setAllService([])
+        }
+      } catch (err) {
+        setAllService([]);
+        toast.error("Error while fetching all service.");
+      }
+    };
+
+  useEffect(() => {
+    fetchAllServices();
+  }, [])
+  const handleOpenService =async () => {
+    setOpenService(true);
+    await fetchAllServices();
+  };
+
+ const handleFindServices = () => {
+  const selectedService = allService.find(p => p.TKTSERVICEID === formData.service?.TKTSERVICEID);
+  
+  if (selectedService && selectedService.TKTSERVICEID !== 0) {
+    const categoryObj = {
+      TKTCATID: selectedService.TKTCATID,
+      TKTCATNAME: selectedService.TKTCATNAME
+    };
+
+    const subCategoryObj = {
+      TKTSUBCATID: selectedService.TKTSUBCATID,
+      TKTSUBCATNAME: selectedService.TKTSUBCATNAME
+    };
+
+    setFormData(prev => ({
+      ...prev,
+      category: categoryObj,
+      subCategory: subCategoryObj,
+      service: {
+        TKTSERVICEID: selectedService.TKTSERVICEID,
+        TKTSERVICENAME: selectedService.TKTSERVICENAME
+      }
+    }));
+
+    const fetchSubCategoriesForCategory = async () => {
+      try {
+        const response = await axiosInstance.post('TktsubCat/GetTktCatWiseSubCatDrp', {
+          "TktCatId": selectedService.TKTCATID,
+        });
+        if (response.data.STATUS === 0 && Array.isArray(response.data.DATA)) {
+          setSubCat(response.data.DATA);
+        }
+      } catch (error) {
+        console.error("Error fetching subcategories:", error);
+      }
+    };
+    
+    fetchSubCategoriesForCategory();
+  
+    setOpenService(false);
+  } else if (selectedService?.TKTSERVICEID === 0) {
+    toast.warning("Please select a valid service");
+  } else {
+    toast.warning("Please select a service first");
+  }
+};
 
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: "#f9fafb" }}>
@@ -586,51 +684,65 @@ const handleSubmit = async () => {
         <Paper elevation={2} sx={{ border: "1px solid #e5e7eb", borderRadius: 3 }}>
           <Box component="form">
             <Box p={{ xs: 2, md: 3 }}>
-              <Box display="flex" alignItems="center" sx={{
-                mb: 1,
-                flexDirection: { xs: 'column', md: 'row' },
-              }}>
-                <FormLabel id="demo-row-radio-buttons-group-label" sx={{ marginRight: 2, fontSize: '1rem', color: '#000' }}>
+              <Box
+                display="flex"
+                alignItems="center"
+                sx={{
+                  mb: 1,
+                  flexDirection: { xs: 'column', md: 'row' },
+                  gap: 1, // optional spacing between items in row
+                }}
+              >
+                <FormLabel
+                  id="demo-row-radio-buttons-group-label"
+                  sx={{ marginRight: 2, fontSize: '1rem', color: '#000' }}
+                >
                   Ticket For →
                 </FormLabel>
+
                 <FormControl>
-                  <RadioGroup
-                    row
-                    aria-labelledby="demo-row-radio-buttons-group-label"
-                    name="row-radio-buttons-group"
+                  <Select
                     value={ticketFor}
                     onChange={handleTicketChange}
+                    displayEmpty
+                    size="small" 
+                    sx={{
+                      '& .MuiSelect-select': {
+                        padding: '6px 14px',
+                        minHeight: 'auto'
+                      }
+                    }}
                   >
-                    <FormControlLabel
-                      value="M"
-                      control={<Radio size="small" />}
-                      label="Machine"
-                    />
-                    <FormControlLabel
-                      value="C"
-                      control={<Radio size="small" />}
-                      label="Cost Center/Department"
-                    />
-                  </RadioGroup>
+                    <MenuItem value="M">Machine</MenuItem>
+                    <MenuItem value="C">Cost Center/Department</MenuItem>
+                  </Select>
                 </FormControl>
-                <Button
-                  onClick={() => setOpenConfirmDialog(true)}
+
+                <Box
                   sx={{
-                    fontSize: '14px',
-                    textDecoration: 'none',
-                    cursor: 'pointer',
                     ml: 'auto',
-                    mr: 1,
-                    pointerEvents: isItemRequisitionEnabled ? "auto" : "none",
-                    color: isItemRequisitionEnabled ? "#fff" : "#aaa",
-                    bgcolor: isItemRequisitionEnabled ? "#635bff" : "#d1d5db",
-                    "&:hover": {
-                      bgcolor: isItemRequisitionEnabled ? "#1d4ed8" : "#d1d5db",
-                    },
-                    transition: "background-color 0.3s",
-                  }}>
-                  Item Requisition
-                </Button>
+                    display: 'flex',
+                    gap: 1,
+                    mt: { xs: 1, md: 0 },
+                  }}
+                >
+                 
+                  <Button size="small"
+                    onClick={() => setOpenConfirmDialog(true)}
+                    sx={{
+                      textTransform: 'none',
+                      pointerEvents: isItemRequisitionEnabled ? 'auto' : 'none',
+                      color: isItemRequisitionEnabled ? '#fff' : '#aaa',
+                      bgcolor: isItemRequisitionEnabled ? '#635bff' : '#d1d5db',
+                      '&:hover': {
+                        bgcolor: isItemRequisitionEnabled ? '#635bff' : '#d1d5db',
+                      },
+                      transition: 'background-color 0.3s',
+                    }}
+                  >
+                    Item Requisition
+                  </Button>
+                </Box>
               </Box>
               {ticketFor === "M" && (
                 <Grid container spacing={1} sx={{ mb: 2 }}>
@@ -751,7 +863,7 @@ const handleSubmit = async () => {
                 </Grid>
               </Grid>
               <Grid container spacing={1} sx={{ mb: 1 }}>
-                <Grid size={{ xs: 12, sm: 12 }}>
+                <Grid size={{ xs: 12, sm: 10 }}>
                   <Autocomplete
                     options={servDrp}
                     getOptionLabel={(option) => option.TKTSERVICENAME || ""}
@@ -761,6 +873,13 @@ const handleSubmit = async () => {
                       <TextField {...params} label={<><span>Service/Complaint</span><span style={{ color: 'red' }}>*</span></>} sx={inputStyle} />
                     )}
                   />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 2 }}>
+                  <Tooltip title='Check all services' arrow>
+                    <Button variant="contained" sx={{ textTransform: 'none', bgcolor: '#635BFF' }} startIcon={<SearchIcon />} onClick={handleOpenService}>
+                      Service
+                    </Button>
+                  </Tooltip>
                 </Grid>
               </Grid>
               <TextField
@@ -781,12 +900,11 @@ const handleSubmit = async () => {
                 placeholder="Describe the issue or request..."
                 sx={{ mb: 2 }}
               />
-              <Grid
-                container
-                spacing={1}
+              <Grid container spacing={1}
                 sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', flexDirection: { xs: 'column', md: 'row' } }}
               >
-                <Grid item xs={12} md={6} sx={{
+                {/* Image Box (6 out of 12 grid columns) */}
+                <Grid size={{ xs: 12, md: 6 }} sx={{
                   position: 'relative',
                   width: { xs: '100%', md: '50%' },
                   height: 130,
@@ -835,6 +953,7 @@ const handleSubmit = async () => {
                     }}
                   />
 
+                  {/* ----- DELETE ICON (only when image exists) ----- */}
                   {formData.TktImage && (
                     <Tooltip title="Remove Image" arrow>
                       <IconButton
@@ -862,6 +981,7 @@ const handleSubmit = async () => {
                     </Tooltip>
                   )}
 
+         
                   {formData.TktImage && (
                     <Tooltip title="Zoom Image" arrow>
                       <IconButton
@@ -886,8 +1006,8 @@ const handleSubmit = async () => {
                   )}
                 </Grid>
 
-
-                <Grid item xs={12} md={6} sx={{
+                {/* Image Path (6 out of 12 grid columns) */}
+                <Grid size={{ xs: 12, md: 6 }} sx={{
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'flex-start',
@@ -900,8 +1020,8 @@ const handleSubmit = async () => {
                       sx={{
                         wordBreak: 'break-word',
                         textAlign: 'left',
-                        margin: 0, 
-                        width: '100%', 
+                        margin: 0, // Remove any margin to avoid unwanted space
+                        width: '100%', // Make sure it takes full width
                       }}
                     >
                       {formData.ImgName || 'Image path not available'}
@@ -962,6 +1082,41 @@ const handleSubmit = async () => {
         setZoomOpen={setZoomOpen}
         zoomSrc={zoomSrc}
       />
+
+      <Dialog open={openMail} onClose={handleClose} maxWidth="xs" fullWidth>
+        <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', pr: 1, py: 1 }}>
+          <span>Send Mail</span>
+          <IconButton onClick={handleClose} size="small">
+            <CloseIcon color="error" />
+          </IconButton>
+        </DialogTitle>
+
+      </Dialog>
+
+      <Dialog open={openService} onClose={handleCloseService} maxWidth='sm' fullWidth>
+        <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', py: 1 }}>
+          <span>Select Service/Complaint</span>
+          <IconButton onClick={handleCloseService} size="small">
+            <CloseIcon color="error" />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent>
+          <Box sx={{ mt: 1 }}>
+            <Autocomplete
+              options={allService}
+              getOptionLabel={(option) => option.TKTSERVICENAME || ""}
+              value={allService.find(p => p.TKTSERVICEID === formData.service?.TKTSERVICEID) || null}
+              onChange={(_, value) => setFormData(prev => ({ ...prev, service: value || {} }))}
+              renderInput={(params) => (
+                <TextField {...params} label={<><span>Service/Complaint</span><span style={{ color: 'red' }}>*</span></>} sx={inputStyle} />
+              )}
+            />
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button size="small" variant="contained" sx={{ bgcolor: '#635bff' }} onClick={handleFindServices}>Find</Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

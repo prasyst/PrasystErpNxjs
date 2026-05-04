@@ -601,9 +601,52 @@ const CreateTicketPage = () => {
     await fetchAllServices();
   };
 
-  const handleFindServices = () => {
-    toast.info("info");
+ const handleFindServices = () => {
+  const selectedService = allService.find(p => p.TKTSERVICEID === formData.service?.TKTSERVICEID);
+  
+  if (selectedService && selectedService.TKTSERVICEID !== 0) {
+    const categoryObj = {
+      TKTCATID: selectedService.TKTCATID,
+      TKTCATNAME: selectedService.TKTCATNAME
+    };
+
+    const subCategoryObj = {
+      TKTSUBCATID: selectedService.TKTSUBCATID,
+      TKTSUBCATNAME: selectedService.TKTSUBCATNAME
+    };
+
+    setFormData(prev => ({
+      ...prev,
+      category: categoryObj,
+      subCategory: subCategoryObj,
+      service: {
+        TKTSERVICEID: selectedService.TKTSERVICEID,
+        TKTSERVICENAME: selectedService.TKTSERVICENAME
+      }
+    }));
+
+    const fetchSubCategoriesForCategory = async () => {
+      try {
+        const response = await axiosInstance.post('TktsubCat/GetTktCatWiseSubCatDrp', {
+          "TktCatId": selectedService.TKTCATID,
+        });
+        if (response.data.STATUS === 0 && Array.isArray(response.data.DATA)) {
+          setSubCat(response.data.DATA);
+        }
+      } catch (error) {
+        console.error("Error fetching subcategories:", error);
+      }
+    };
+    
+    fetchSubCategoriesForCategory();
+  
+    setOpenService(false);
+  } else if (selectedService?.TKTSERVICEID === 0) {
+    toast.warning("Please select a valid service");
+  } else {
+    toast.warning("Please select a service first");
   }
+};
 
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: "#f9fafb" }}>
