@@ -41,14 +41,23 @@ const TicketEscalation = () => {
     const [loadingEmployees, setLoadingEmployees] = useState(false);
     const [empKey, setEmpKey] = useState(null);
 
-    useEffect(() => {
-        const key = localStorage.getItem("EMP_KEY");
-        setEmpKey(key);
-    }, []);
-    
-    useEffect(() => {
-        fetchTickets();
-    }, []);
+  // Load empKey safely on client side only
+  useEffect(() => {
+    const key = localStorage.getItem("EMP_KEY");
+    if (key) {
+      setEmpKey(key);
+    } else {
+      // Optional: Redirect or show message if no EMP_KEY
+      console.warn("EMP_KEY not found in localStorage");
+    }
+  }, []);
+
+  // Only fetch tickets when empKey is available
+  useEffect(() => {
+    if (empKey) {
+      fetchTickets();
+    }
+  }, [empKey]);
 
     const fetchTickets = async () => {
         try {
