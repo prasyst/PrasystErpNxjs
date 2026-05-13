@@ -39,6 +39,7 @@ const TicketEscalation = () => {
     const [rowsPerPage, setRowsPerPage] = useState(100);
     const [employees, setEmployees] = useState([]);
     const [loadingEmployees, setLoadingEmployees] = useState(false);
+    const [empKey, setEmpKey] = useState(localStorage.getItem("EMP_KEY"));
 
     useEffect(() => {
         fetchTickets();
@@ -47,7 +48,9 @@ const TicketEscalation = () => {
     const fetchTickets = async () => {
         try {
             const response = await axiosInstance.post("TrnTkt/GetTrnTktDashBoard?currentPage=1&limit=50", {
-                SearchText: ""
+                SearchText: "",
+                Flag: "EMP",
+                EMP_KEY: empKey
             });
 
             if (response.data.STATUS === 0 && Array.isArray(response.data.DATA)) {
@@ -93,7 +96,7 @@ const TicketEscalation = () => {
             setSelectedTickets(prev => prev.filter(id => id !== ticketId));
         }
     };
-    
+
     const handleEscalationSubmit = async () => {
         if (!escalationDetails.level) {
             toast.error('Please select an employee to escalate to');

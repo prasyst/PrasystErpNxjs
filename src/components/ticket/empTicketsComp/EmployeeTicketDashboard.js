@@ -109,12 +109,15 @@ const EmployeeTicketDashboard = () => {
   const [loading, setLoading] = useState(false);
   const [chartView, setChartView] = useState('pie');
   const [timeRange, setTimeRange] = useState('week');
+  const [empKey, setEmpKey] = useState(localStorage.getItem("EMP_KEY"));
 
   const fetchMyTickets = async () => {
     setLoading(true);
     try {
       const response = await axiosInstance.post("TrnTkt/GetTrnTktDashBoard", {
-        SearchText: ""
+        SearchText: "",
+        Flag: "EMP",
+        EMP_KEY: empKey
       });
 
       if (response.data.STATUS === 0 && Array.isArray(response.data.DATA)) {
