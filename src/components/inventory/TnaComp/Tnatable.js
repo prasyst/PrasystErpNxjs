@@ -1,14 +1,7 @@
 'use client';
 import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import {
-  Box,
-  Button,
-  TextField,
-  CircularProgress,
-  Grid,
-  Paper,
-  Typography,
-  Alert,
+  Box, Button, TextField, CircularProgress, Grid, Paper, Typography, Alert,
 } from "@mui/material";
 import axiosInstance from '../../../lib/axios';
 import { useRouter } from 'next/navigation';
@@ -45,7 +38,7 @@ const getStatusChip = (status) => {
   const colors = statusColorMap[status] || { bg: '#757575', text: '#ffffff' };
 
   return (
-    <div style={{ display: 'flex', alignItems: 'center',justifyContent: 'center', height: '100%', }}>
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', }}>
       <span style={{
         backgroundColor: colors.bg,
         color: colors.text,
@@ -59,9 +52,9 @@ const getStatusChip = (status) => {
         letterSpacing: '0.3px',
         height: '22px',
         lineHeight: '20px',
-         width: '80px',
-         overflow: 'hidden',
-         textOverflow: 'ellipsis'
+        width: '80px',
+        overflow: 'hidden',
+        textOverflow: 'ellipsis'
       }}>
         {status}
       </span>
@@ -77,9 +70,9 @@ const setFilterParams = {
 };
 
 const columnDefs = [
-  {
+   {
     field: "PARTY_NAME",
-    headerName: "PARTY NAME",
+    headerName: "Party Name",
     width: 250,
     filter: 'agSetColumnFilter',
     filterParams: setFilterParams,
@@ -87,17 +80,8 @@ const columnDefs = [
     cellStyle: { fontWeight: 500 }
   },
   {
-    field: "ORDBK_KEY",
-    headerName: "ORDER KEY",
-    width: 130,
-    filter: 'agSetColumnFilter',
-    filterParams: setFilterParams,
-    sortable: true,
-    cellStyle: { fontWeight: 500, color: '#6949e9', cursor: 'pointer' }
-  },
-  {
     field: "ORDBK_NO",
-    headerName: "ORDER NO",
+    headerName: "Order No",
     width: 130,
     filter: 'agSetColumnFilter',
     filterParams: setFilterParams,
@@ -106,7 +90,7 @@ const columnDefs = [
   },
   {
     field: "ORDER_Date",
-    headerName: "ORDER DATE",
+    headerName: "Order Date",
     width: 130,
     cellRenderer: DateCellRenderer,
     filter: 'agDateColumnFilter',
@@ -127,8 +111,17 @@ const columnDefs = [
     sortable: true
   },
   {
+    field: "TNA_NO",
+    headerName: "TNA No",
+    width: 130,
+    filter: 'agSetColumnFilter',
+    filterParams: setFilterParams,
+    sortable: true,
+    cellStyle: { fontWeight: 500, color: '#6949e9', cursor: 'pointer' }
+  },
+  {
     field: "DLV_DT",
-    headerName: "DELIVERY DATE",
+    headerName: "Dlv Date",
     width: 140,
     cellRenderer: DateCellRenderer,
     filter: 'agDateColumnFilter',
@@ -150,7 +143,7 @@ const columnDefs = [
   },
   {
     field: "TotalCount",
-    headerName: "TOTAL ITEMS",
+    headerName: "Total Items",
     width: 100,
     filter: 'agSetColumnFilter',
     filterParams: setFilterParams,
@@ -160,29 +153,29 @@ const columnDefs = [
   },
   {
     field: "TNA_ST",
-    headerName: "TNA STATUS",
+    headerName: "TNA Status",
     width: 140,
     filter: 'agSetColumnFilter',
     filterParams: setFilterParams,
     sortable: true,
     cellRenderer: (params) => getStatusChip(params.value),
-       cellStyle: { display: 'flex', alignItems: 'center' }
+    cellStyle: { display: 'flex', alignItems: 'center' }
   },
   {
     field: "BOMSOCKS_ST",
-    headerName: "BOM STATUS",
+    headerName: "BOM Status",
     width: 140,
     filter: 'agSetColumnFilter',
     filterParams: setFilterParams,
     sortable: true,
     cellRenderer: (params) => getStatusChip(params.value),
-      cellStyle: { display: 'flex', alignItems: 'center' }
+    cellStyle: { display: 'flex', alignItems: 'center' }
   },
 ];
 
 const DateFilters = React.memo(({ dateRange, onDateChange, isLoading, onGetData, onNewOrder }) => {
   return (
-    <Paper elevation={0} sx={{ p: 1, borderRadius: 2 ,ml:2}}>
+    <Paper elevation={0} sx={{ p: 1, borderRadius: 2, ml: 2 }}>
       <Grid container spacing={2} alignItems="center">
         <Grid size={{ xs: 12, md: 2.5 }}>
           <TextField
@@ -341,11 +334,11 @@ const Tnatable = React.memo(function Tnatable() {
   }, []);
 
   const handleRowDoubleClick = useCallback((row) => {
-   const rowData = row;
-  console.log("ORDBK_KEY:", rowData?.ORDBK_KEY);
+    const rowData = row;
+    console.log("ORDBK_KEY:", rowData?.ORDBK_KEY);
     if (rowData?.ORDBK_KEY) {
-       router.push(`/tnapage/tnadetailestable?ordbk_key=${rowData.ORDBK_KEY}`);
-    } 
+      router.push(`/tnapage/tnadetailestable?ordbk_key=${rowData.ORDBK_KEY}`);
+    }
     // else {
     //   router.push(`/tnapage/tnadetailestable`);
     // }

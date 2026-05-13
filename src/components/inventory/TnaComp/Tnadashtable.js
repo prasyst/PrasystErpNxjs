@@ -2,20 +2,13 @@
 'use client';
 import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import {
-  Box,
-  Button,
-  TextField,
-  CircularProgress,
-  Autocomplete,
+  Box, Button, TextField, CircularProgress, Autocomplete,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import axiosInstance from '../../../lib/axios';
-import { useRouter,useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import RestoreIcon from '@mui/icons-material/Restore';
 import ReusableTable, { getCustomDateFilter } from '../../datatable/ReusableTable';
-
-
-
 
 const getStatusChip = (status) => {
   if (!status) return <span style={{ color: '#999' }}>-</span>;
@@ -31,7 +24,7 @@ const getStatusChip = (status) => {
   const colors = statusColorMap[status] || { bg: '#757575', text: '#ffffff' };
 
   return (
-    <div style={{ display: 'flex', alignItems: 'center',justifyContent: 'center', height: '100%', }}>
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', }}>
       <span style={{
         backgroundColor: colors.bg,
         color: colors.text,
@@ -45,9 +38,9 @@ const getStatusChip = (status) => {
         letterSpacing: '0.3px',
         height: '22px',
         lineHeight: '20px',
-         width: '80px',
-         overflow: 'hidden',
-         textOverflow: 'ellipsis'
+        width: '80px',
+        overflow: 'hidden',
+        textOverflow: 'ellipsis'
       }}>
         {status}
       </span>
@@ -78,11 +71,11 @@ const columnDefs = [
     maxWidth: 140,
     filter: 'agSetColumnFilter',
     filterParams: {
-      defaultToNothingSelected: true, 
+      defaultToNothingSelected: true,
     },
     sortable: true
   },
- 
+
   {
     field: "FGPRD_NAME",
     headerName: "PRODUCT NAME",
@@ -103,7 +96,7 @@ const columnDefs = [
     },
     sortable: true
   },
-   {
+  {
     field: "ORDER_Date",
     headerName: "ORDER DATE",
     width: 130,
@@ -155,7 +148,7 @@ const columnDefs = [
     },
     sortable: true
   },
-  
+
   {
     field: "DAYS_CAL",
     headerName: "DAYS_CAL",
@@ -173,13 +166,13 @@ const columnDefs = [
     field: "TNA_ST",
     headerName: "TNA STATUS",
     width: 130,
-     filter: 'agSetColumnFilter',
+    filter: 'agSetColumnFilter',
     filterParams: {
-      defaultToNothingSelected: true, 
+      defaultToNothingSelected: true,
     },
     cellRenderer: (params) => getStatusChip(params.value),
     sortable: true,
-     cellStyle: { display: 'flex', alignItems: 'center' }
+    cellStyle: { display: 'flex', alignItems: 'center' }
   },
   {
     field: "AMT",
@@ -209,10 +202,10 @@ export default function Tnadashtable() {
   const [isCustomer, setIsCustomer] = useState(false);
   const [partyName, setPartyName] = useState("");
   const [selectedRows, setSelectedRows] = useState([]);
-   const [cobrid, setCobrid] = useState('');
+  const [cobrid, setCobrid] = useState('');
   const [fcyr, setFcyr] = useState('');
   const [clientId, setClientId] = useState('')
-   const [isClient, setIsClient] = useState(false);
+  const [isClient, setIsClient] = useState(false);
   const [userId, setUserId] = useState()
   const [form, setForm] = useState({
     PARTY_KEY: "",
@@ -221,9 +214,9 @@ export default function Tnadashtable() {
   });
   const [rows, setRows] = useState([]);
   const searchParams = useSearchParams();
-const ordbkKey = searchParams.get('ordbk_key');
+  const ordbkKey = searchParams.get('ordbk_key');
 
-   useEffect(() => {
+  useEffect(() => {
     setIsClient(true);
     setCobrid(localStorage.getItem('COBR_ID') || '');
     setFcyr(localStorage.getItem('FCYR_KEY') || '');
@@ -305,18 +298,18 @@ const ordbkKey = searchParams.get('ordbk_key');
   const fetchTableData = useCallback(async () => {
     setIsLoading(true);
     try {
-        const response = await axiosInstance.post(`TNA/GetTNADashBoard?currentPage=1&limit=25`, {
-            "TNA_KEY": "",
-            "FLAG": "",
-            "FCYR_KEY": fcyr,
-            "COBR_ID": cobrid,
-            "PageNumber": 1,
-            "PageSize": 25,
-            "SearchText": "",
-            "PARTY_KEY": form.PARTY_KEY,
-            "PARTYDTL_ID": 0,
-            "ORDBK_KEY":ordbkKey
-        });
+      const response = await axiosInstance.post(`TNA/GetTNADashBoard?currentPage=1&limit=25`, {
+        "TNA_KEY": "",
+        "FLAG": "",
+        "FCYR_KEY": fcyr,
+        "COBR_ID": cobrid,
+        "PageNumber": 1,
+        "PageSize": 25,
+        "SearchText": "",
+        "PARTY_KEY": form.PARTY_KEY,
+        "PARTYDTL_ID": 0,
+        "ORDBK_KEY": ordbkKey
+      });
 
       const { data: { STATUS, DATA } } = response;
       if (STATUS === 0 && Array.isArray(DATA)) {
@@ -333,7 +326,7 @@ const ordbkKey = searchParams.get('ordbk_key');
     } finally {
       setIsLoading(false);
     }
-  }, [form.PARTY_KEY,ordbkKey]);
+  }, [form.PARTY_KEY, ordbkKey]);
 
   useEffect(() => {
     fetchTableData();
