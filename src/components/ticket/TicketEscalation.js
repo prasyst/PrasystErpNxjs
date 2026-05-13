@@ -39,8 +39,13 @@ const TicketEscalation = () => {
     const [rowsPerPage, setRowsPerPage] = useState(100);
     const [employees, setEmployees] = useState([]);
     const [loadingEmployees, setLoadingEmployees] = useState(false);
-    const [empKey, setEmpKey] = useState(localStorage.getItem("EMP_KEY"));
+    const [empKey, setEmpKey] = useState(null);
 
+    useEffect(() => {
+        const key = localStorage.getItem("EMP_KEY");
+        setEmpKey(key);
+    }, []);
+    
     useEffect(() => {
         fetchTickets();
     }, []);
