@@ -20,8 +20,6 @@ import {
 import axiosInstance from '@/lib/axios';
 import { toast } from 'react-toastify';
 
-
-
 const TicketEscalation = () => {
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('md'));
@@ -51,7 +49,9 @@ const TicketEscalation = () => {
         try {
             const response = await axiosInstance.post(
                 "TrnTkt/GetTrnTktDashBoard?currentPage=1&limit=50",
-                { SearchText: "" }
+                {
+                    SearchText: "",
+                }
             );
 
             if (response.data.STATUS === 0 && Array.isArray(response.data.DATA)) {
@@ -132,7 +132,6 @@ const TicketEscalation = () => {
                 // throw new Error(response.data.MESSAGE || 'Escalation failed');
             }
         } catch (error) {
-            console.error('Escalation failed:', error);
             toast.error(error.message || 'Failed to escalate tickets. Please try again.');
         } finally {
             setLoading(false);
@@ -237,7 +236,6 @@ const TicketEscalation = () => {
             }
             setLoadingEmployees(false);
         } catch (error) {
-            console.error("Failed to load employees:", error);
             setLoadingEmployees(false);
         }
     };
@@ -271,8 +269,8 @@ const TicketEscalation = () => {
                                     textTransform: 'none',
                                     borderRadius: '20px',
                                     minWidth: 'auto',
-                                    padding:'0px',
-                                    border:'0px'
+                                    padding: '0px',
+                                    border: '0px'
                                 }}
                                 variant="outlined"
                             >
