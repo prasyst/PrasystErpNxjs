@@ -12,37 +12,9 @@ import { TiTicket } from 'react-icons/ti';
 import axiosInstance from '@/lib/axios';
 
 import {
-  Box,
-  Typography,
-  Button,
-  Grid,
-  Card,
-  CardContent,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
-  Chip,
-  Stack,
-  Divider,
-  CircularProgress,
-  Container,
-  IconButton,
-  useTheme,
-  useMediaQuery,
-  Avatar,
-  Tooltip,
-  Fade,
-  LinearProgress,
-  alpha,
-  ToggleButton,
-  ToggleButtonGroup,
-  MenuItem,
-  Select,
-  FormControl
+  Box, Typography, Button, Grid, Card, CardContent, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Chip, Stack, Divider,
+  CircularProgress, Container, IconButton, useTheme, useMediaQuery, Avatar, Tooltip, Fade, LinearProgress, alpha, ToggleButton, ToggleButtonGroup,
+  MenuItem, Select, FormControl
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -60,7 +32,6 @@ import {
   TrendingUp as TrendingUpIcon
 } from '@mui/icons-material';
 
-
 import {
   Chart as ChartJS,
   ArcElement,
@@ -76,7 +47,6 @@ import {
   RadialLinearScale
 } from 'chart.js';
 import { Pie, Bar, Line, Doughnut } from 'react-chartjs-2';
-
 
 ChartJS.register(
   ArcElement,
@@ -97,7 +67,6 @@ const EmployeeTicketDashboard = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const isTablet = useMediaQuery(theme.breakpoints.down('md'));
-
   const [tickets, setTickets] = useState([]);
   const [stats, setStats] = useState({
     total: 0,
@@ -109,20 +78,15 @@ const EmployeeTicketDashboard = () => {
   const [loading, setLoading] = useState(false);
   const [chartView, setChartView] = useState('pie');
   const [timeRange, setTimeRange] = useState('week');
- const [empKey, setEmpKey] = useState(null);
+  const [empKey, setEmpKey] = useState(null);
 
-  // Load empKey safely on client side only
   useEffect(() => {
     const key = localStorage.getItem("EMP_KEY");
     if (key) {
       setEmpKey(key);
-    } else {
-      // Optional: Redirect or show message if no EMP_KEY
-      console.warn("EMP_KEY not found in localStorage");
     }
   }, []);
 
-  // Only fetch tickets when empKey is available
   useEffect(() => {
     if (empKey) {
       fetchMyTickets();

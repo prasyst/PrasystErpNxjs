@@ -4,23 +4,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { usePathname } from 'next/navigation';
 import {
-  Box,
-  Drawer,
-  List,
-  ListItem,
-  ListItemButton,
-  ListItemIcon,
-  ListItemText,
-  Typography,
-  IconButton,
-  TextField,
-  InputAdornment,
-  Divider,
-  Tooltip,
-  useMediaQuery,
-  useTheme,
-  Collapse,
-  Paper
+  Box, Drawer, List, ListItem, ListItemButton, ListItemIcon, ListItemText, Typography, IconButton,
+  TextField, InputAdornment, Divider, Tooltip, useMediaQuery, useTheme, Collapse, Paper
 } from '@mui/material';
 import {
   Dashboard as DashboardIcon,
@@ -35,6 +20,7 @@ import {
   ExpandLess as ExpandLessIcon,
   LocalOffer as TicketIcon
 } from '@mui/icons-material';
+import AssignmentIcon from '@mui/icons-material/Assignment';
 import EscalatorIcon from '@mui/icons-material/Escalator';
 import { useRecentPaths } from '../../app/context/RecentPathsContext';
 
@@ -69,25 +55,30 @@ const EmployeeSidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClos
       icon: TicketIcon,
       path: '/employeepage?activeTab=ticketing',
       children: [
-        { 
-          name: 'Dashboard', 
-          icon: ReceiptIcon, 
-          path: '/emp-tickets/ticket-dashboard' 
+        {
+          name: 'Dashboard',
+          icon: ReceiptIcon,
+          path: '/emp-tickets/ticket-dashboard'
         },
-        { 
-          name: 'My Tickets', 
-          icon: AssignmentTurnedInIcon, 
-          path: '/emp-tickets/all-tickets' 
+        {
+          name: 'Raise Ticket',
+          icon: AddTaskIcon,
+          path: '/emp-tickets/create-tickets/'
         },
-        { 
-          name: 'Escalate Tickets', 
-          icon: EscalatorIcon, 
-          path: '/emp-tickets/ticket-esclation/' 
+        {
+          name: 'My Tickets',
+          icon: AssignmentTurnedInIcon,
+          path: '/emp-tickets/all-tickets'
         },
-        { 
-          name: 'Raise Ticket', 
-          icon: AddTaskIcon, 
-          path: '/emp-tickets/create-tickets/' 
+        {
+          name: 'Assigned Tickets',
+          icon: AssignmentIcon,
+          path: '/emp-tickets/assigned-ticket/'
+        },
+        {
+          name: 'Escalate Tickets',
+          icon: EscalatorIcon,
+          path: '/emp-tickets/ticket-esclation/'
         },
       ],
     },
@@ -98,7 +89,7 @@ const EmployeeSidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClos
       if (isGrandchild) {
         addRecentPath(path, name);
       }
-      
+
       if (isMobile && onClose) {
         onClose();
       }
@@ -117,15 +108,15 @@ const EmployeeSidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClos
   const handleParentClick = (item, e) => {
     e.preventDefault();
     e.stopPropagation();
-    
+
     setActiveItem(item.name);
     setActiveChild(null);
     setActiveGrandchild(null);
-    
+
     if (item.children && item.children.length > 0) {
       toggleSection(item.name);
     }
-    
+
     if (item.path && item.path !== '#') {
       handleNavigationWithTracking(item.path, item.name, false);
     }
@@ -134,15 +125,15 @@ const EmployeeSidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClos
   const handleChildClick = (child, parentName, e) => {
     e.preventDefault();
     e.stopPropagation();
-    
+
     setActiveItem(parentName);
     setActiveChild(child.name);
     setActiveGrandchild(null);
-    
+
     if (child.children && child.children.length > 0) {
       toggleSection(child.name);
     }
-    
+
     let targetPath = child.path;
 
     if (!targetPath || targetPath === '#') {
@@ -156,11 +147,11 @@ const EmployeeSidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClos
         targetPath = `/employeepage?activeTab=${tab}`;
       }
     }
-    
+
     if (targetPath && targetPath !== '#') {
       handleNavigationWithTracking(targetPath, child.name, false);
     }
-    
+
     if (parentName === 'Ticketing') {
       setOpenSections(prev => ({ ...prev, [parentName]: true }));
     }
@@ -169,17 +160,17 @@ const EmployeeSidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClos
   const handleGrandchildClick = (grandchild, parentName, childName, e) => {
     e.preventDefault();
     e.stopPropagation();
-    
+
     setActiveItem(parentName);
     setActiveChild(childName);
     setActiveGrandchild(grandchild.name);
-    
+
     setOpenSections(prev => ({
       ...prev,
       [parentName]: true,
       [childName]: true
     }));
-    
+
     if (grandchild.path && grandchild.path !== '#') {
       handleNavigationWithTracking(grandchild.path, grandchild.name, true);
     }
@@ -210,17 +201,17 @@ const EmployeeSidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClos
       if (pathname.startsWith('/employeepage') || pathname.includes('ticket')) {
         const url = new URL(window.location.href);
         const activeTab = url.searchParams.get('activeTab');
-        
+
         if (activeTab) {
           setActiveItem('Ticketing');
           setOpenSections(prev => ({ ...prev, Ticketing: true }));
-          
+
           const tabToChildMap = {
             'dashboard': 'Dashboard',
             'raise-ticket': 'Raise Ticket',
             'my-tickets': 'My Tickets',
           };
-          
+
           setActiveChild(tabToChildMap[activeTab] || null);
           setActiveGrandchild(null);
           return true;
@@ -240,7 +231,7 @@ const EmployeeSidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClos
           setOpenSections(prev => ({ ...prev, Ticketing: true }));
         }
       }
-      
+
       return false;
     };
 
@@ -259,22 +250,22 @@ const EmployeeSidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClos
 
   const itemMatchesSearch = (item, query) => {
     if (!query.trim()) return true;
-    
+
     const searchLower = query.toLowerCase().trim();
     const itemNameLower = item.name.toLowerCase();
-    
+
     if (itemNameLower.includes(searchLower)) return true;
-    
+
     if (item.children) {
       return item.children.some(child => itemMatchesSearch(child, query));
     }
-    
+
     return false;
   };
 
   const filterMenuTree = (items, query) => {
     if (!query.trim()) return items.filter(item => item);
-    
+
     return items
       .filter(item => {
         if (!item) return false;
@@ -282,16 +273,16 @@ const EmployeeSidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClos
       })
       .map(item => {
         if (!item.children || item.children.length === 0) return item;
-        
+
         const filteredChildren = filterMenuTree(item.children, query);
-        
+
         if (filteredChildren.length > 0 || itemMatchesSearch(item, query)) {
           return {
             ...item,
             children: filteredChildren
           };
         }
-        
+
         return item;
       });
   };
@@ -304,25 +295,25 @@ const EmployeeSidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClos
   const handleSearchChange = (e) => {
     const value = e.target.value;
     setSearchQuery(value);
-    
+
     if (value.trim()) {
       const filteredItems = filterMenuTree(employeeMenuItems, value);
       const sectionsToOpen = {};
-      
+
       const collectParents = (items, parent = null) => {
         items.forEach(item => {
           if (!item) return;
-          
+
           if (parent && itemMatchesSearch(item, value)) {
             sectionsToOpen[parent.name] = true;
           }
-          
+
           if (item.children) {
             collectParents(item.children, item);
           }
         });
       };
-      
+
       collectParents(filteredItems);
       setOpenSections(prev => ({ ...prev, ...sectionsToOpen }));
     }
@@ -342,7 +333,10 @@ const EmployeeSidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClos
         const IconComponent = item.icon;
         const hasChildren = item.children && item.children.length > 0;
         const isOpen = openSections[item.name] || (searchQuery.trim() && hasChildren);
-        const isActive = activeItem === item.name;
+        const isActive =
+          (level === 0 && activeItem === item.name) ||       // parent
+          (level === 1 && activeChild === item.name) ||      // child
+          (level === 2 && activeGrandchild === item.name);   // grandchild
         const isHovered = hoveredItem === `${item.name}-${level}`;
 
         return (
@@ -362,31 +356,31 @@ const EmployeeSidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClos
                 onMouseLeave={() => setHoveredItem(null)}
                 sx={{
                   borderRadius: 1,
-                  backgroundColor: isActive 
-                    ? theme.palette.primary.main 
-                    : isHovered 
-                      ? theme.palette.action.hover 
+                  backgroundColor: isActive
+                    ? theme.palette.primary.main
+                    : isHovered
+                      ? theme.palette.action.hover
                       : 'transparent',
                   color: isActive ? theme.palette.primary.contrastText : theme.palette.text.primary,
-                  borderLeft: isActive 
+                  borderLeft: isActive
                     ? `4px solid ${theme.palette.primary.dark}`
                     : '4px solid transparent',
                   '&:hover': {
-                    backgroundColor: isActive 
-                      ? theme.palette.primary.main 
+                    backgroundColor: isActive
+                      ? theme.palette.primary.main
                       : theme.palette.action.hover,
                   },
                   height: level === 0 ? 35 : 35,
                 }}
               >
                 {IconComponent && (
-                  <ListItemIcon sx={{ 
+                  <ListItemIcon sx={{
                     color: isActive ? theme.palette.primary.contrastText : theme.palette.primary.main,
                   }}>
                     <IconComponent />
                   </ListItemIcon>
                 )}
-                
+
                 {!isCollapsed && (
                   <>
                     <ListItemText
@@ -400,13 +394,13 @@ const EmployeeSidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClos
                         mr: 1,
                       }}
                     />
-                    
+
                     {hasChildren && (
                       isOpen ? <ExpandLessIcon /> : <ChevronRightIcon />
                     )}
                   </>
                 )}
-                
+
                 {isCollapsed && level === 0 && (
                   <Tooltip title={item.name} placement="right">
                     <ListItemIcon sx={{ minWidth: 'auto' }}>
@@ -450,10 +444,10 @@ const EmployeeSidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClos
         }}
       >
         {/* Header */}
-        <Box sx={{ 
-          p: 2, 
-          display: 'flex', 
-          alignItems: 'center', 
+        <Box sx={{
+          p: 2,
+          display: 'flex',
+          alignItems: 'center',
           justifyContent: 'space-between',
           borderBottom: 1,
           borderColor: 'divider'
@@ -496,16 +490,16 @@ const EmployeeSidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClos
           />
         </Box>
 
-        <Box sx={{ 
-          flex: 1, 
-          overflowY: 'auto', 
+        <Box sx={{
+          flex: 1,
+          overflowY: 'auto',
           height: 'calc(100vh - 120px)',
-          p: 1 
+          p: 1
         }}>
           {searchQuery.trim() && menuItems.length === 0 ? (
-            <Box sx={{ 
-              textAlign: 'center', 
-              p: 4, 
+            <Box sx={{
+              textAlign: 'center',
+              p: 4,
               color: 'text.secondary',
               fontStyle: 'italic'
             }}>
@@ -545,10 +539,10 @@ const EmployeeSidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClos
       ref={sidebarRef}
     >
       {/* Header */}
-      <Box sx={{ 
-        p: 1, 
-        display: 'flex', 
-        alignItems: 'center', 
+      <Box sx={{
+        p: 1,
+        display: 'flex',
+        alignItems: 'center',
         justifyContent: isCollapsed ? 'center' : 'space-between',
         borderBottom: 1,
         borderColor: 'divider'
@@ -558,7 +552,7 @@ const EmployeeSidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClos
             {userName}
           </Typography>
         )}
-        <IconButton 
+        <IconButton
           onClick={() => setIsCollapsed(!isCollapsed)}
           size="small"
           sx={{ ml: isCollapsed ? 0 : 'auto' }}
@@ -599,10 +593,10 @@ const EmployeeSidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClos
       )}
 
       <Divider />
-  
-      <Box sx={{ 
-        flex: 1, 
-        overflowY: 'auto', 
+
+      <Box sx={{
+        flex: 1,
+        overflowY: 'auto',
         overflowX: 'hidden',
         height: 'calc(100vh - 120px)',
         '&::-webkit-scrollbar': {
@@ -617,9 +611,9 @@ const EmployeeSidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClos
         },
       }}>
         {searchQuery.trim() && menuItems.length === 0 ? (
-          <Box sx={{ 
-            textAlign: 'center', 
-            p: 4, 
+          <Box sx={{
+            textAlign: 'center',
+            p: 4,
             color: 'text.secondary',
             fontStyle: 'italic'
           }}>
