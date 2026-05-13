@@ -38,16 +38,25 @@ const AllTicketsPage = () => {
   const [selectedTicketId, setSelectedTicketId] = useState(null);
   const [ticketDetailsOpen, setTicketDetailsOpen] = useState(false);
   const [selectedRows, setSelectedRows] = useState([]);
-  const [empKey, setEmpKey] = useState(null);
+ const [empKey, setEmpKey] = useState(null);
 
+  // Load empKey safely on client side only
   useEffect(() => {
     const key = localStorage.getItem("EMP_KEY");
-    setEmpKey(key);
+    if (key) {
+      setEmpKey(key);
+    } else {
+      // Optional: Redirect or show message if no EMP_KEY
+      console.warn("EMP_KEY not found in localStorage");
+    }
   }, []);
 
+  // Only fetch tickets when empKey is available
   useEffect(() => {
-    fetchTicketDash();
-  }, []);
+    if (empKey) {
+      fetchTicketDash();
+    }
+  }, [empKey]);
 
   const fetchTicketDash = async () => {
     try {
@@ -142,7 +151,6 @@ const AllTicketsPage = () => {
     setTicketDetailsOpen(false);
     setSelectedTicketId(null);
   };
-
 
   const handleEditTicket = (ticket) => {
     router.push(`/emp-tickets/create-tickets/?TKTKEY=${ticket.TKTKEY}`);
