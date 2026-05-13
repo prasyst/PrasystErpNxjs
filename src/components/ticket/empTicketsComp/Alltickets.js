@@ -38,7 +38,12 @@ const AllTicketsPage = () => {
   const [selectedTicketId, setSelectedTicketId] = useState(null);
   const [ticketDetailsOpen, setTicketDetailsOpen] = useState(false);
   const [selectedRows, setSelectedRows] = useState([]);
-  const [empKey, setEmpKey] = useState(localStorage.getItem("EMP_KEY"));
+  const [empKey, setEmpKey] = useState(null);
+
+  useEffect(() => {
+    const key = localStorage.getItem("EMP_KEY");
+    setEmpKey(key);
+  }, []);
 
   useEffect(() => {
     fetchTicketDash();

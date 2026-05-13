@@ -109,7 +109,12 @@ const EmployeeTicketDashboard = () => {
   const [loading, setLoading] = useState(false);
   const [chartView, setChartView] = useState('pie');
   const [timeRange, setTimeRange] = useState('week');
-  const [empKey, setEmpKey] = useState(localStorage.getItem("EMP_KEY"));
+  const [empKey, setEmpKey] = useState(null);
+
+  useEffect(() => {
+    const key = localStorage.getItem("EMP_KEY");
+    setEmpKey(key);
+  }, []);
 
   const fetchMyTickets = async () => {
     setLoading(true);
