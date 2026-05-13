@@ -2,12 +2,7 @@
 import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import {
-  Box,
-  Typography,
-  Card,
-  CardContent,
-  Grid,
-  styled,
+  Box, Typography, Card, CardContent, Grid, styled,
 } from '@mui/material';
 import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
@@ -97,10 +92,7 @@ export default function MasterEmployeComp() {
     }
   }));
 
-
-
   const menuData = [
-
     {
       id: 'ticketing',
       name: 'Ticketing',
@@ -144,18 +136,17 @@ export default function MasterEmployeComp() {
             <TabPanel key={tab.id} value={activeTab} index={index}>
               <Grid container spacing={2}>
                 {tab.children?.map((item, itemIndex) => {
-                  // Special handling ONLY for QC Test header
                   if (item.isHeader) {
                     return (
-                      <Grid item xs={12} key={`header-${itemIndex}`} sx={{ mt: 1, mb: 2 }}>
+                      <Grid size={{ xs: 12 }} key={`header-${itemIndex}`} sx={{ mt: 1, mb: 2 }}>
                         <Typography
                           variant="h6"
                           sx={{
                             fontWeight: 700,
                             color: '#635bff',
                             fontSize: '1.1rem',
-                            display: 'block', 
-                            marginTop: '1px', 
+                            display: 'block',
+                            marginTop: '1px',
                             marginBottom: '10px',
                           }}
                         >
@@ -175,12 +166,12 @@ export default function MasterEmployeComp() {
                   }
                   const ItemIcon = item.icon;
                   return (
-                    <Grid item xs={6} sm={6} md={4} lg={3} key={itemIndex}>
+                    <Grid size={{ xs: 6, sm: 6, md: 4, lg: 2 }} key={itemIndex}>
                       <Card
                         sx={{
                           cursor: item.path !== '#' ? 'pointer' : 'default',
                           transition: 'all 0.3s ease',
-                          width: 150,
+                          // width: 150,
                           height: '100%',
                           background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
                           border: '1px solid #e0e0e0',

@@ -127,11 +127,11 @@ const EmployeeTicketDashboard = () => {
           status: tkt.TKTSTATUS === "O" ? "open" :
             tkt.TKTSTATUS === "P" ? "in-progress" :
               tkt.TKTSTATUS === "H" ? "hold" :
-              tkt.TKTSTATUS === "R" ? "resolved" : "closed",
+                tkt.TKTSTATUS === "R" ? "resolved" : "closed",
           assignee: tkt.TECHEMP_NAME || "Unassigned",
           createdAt: tkt.TKTDATE,
           dueDate: tkt.ASSIGNDT || tkt.TKTDATE,
-          responseTime: "2h", 
+          responseTime: "2h",
           lastUpdated: new Date().toISOString()
         }));
 
@@ -526,13 +526,13 @@ const EmployeeTicketDashboard = () => {
           alignItems: { xs: 'flex-start', sm: 'center' },
           gap: { xs: 1.5, sm: 2 }
         }}>
-         <Box sx={{ flex: 1 }}>
-            <Typography 
-              variant={isMobile ? "h6" : "h5"} 
-              fontWeight="bold" 
+          <Box sx={{ flex: 1 }}>
+            <Typography
+              variant={isMobile ? "h6" : "h5"}
+              fontWeight="bold"
               color="primary.main"
               gutterBottom={!isMobile}
-              sx={{ 
+              sx={{
                 fontSize: { xs: '1.1rem', sm: '1.5rem' },
                 display: 'flex',
                 alignItems: 'center',
@@ -542,10 +542,10 @@ const EmployeeTicketDashboard = () => {
               <TiTicket size={isMobile ? 20 : 24} />
               My Ticket Dashboard
             </Typography>
-            <Typography 
-              variant="caption" 
+            <Typography
+              variant="caption"
               color="text.secondary"
-              sx={{ 
+              sx={{
                 display: 'block',
                 fontSize: { xs: '0.75rem', sm: '0.8rem' }
               }}
@@ -596,7 +596,7 @@ const EmployeeTicketDashboard = () => {
           {quickStats.map((stat, index) => {
             const IconComponent = stat.icon;
             return (
-              <Grid item xs={6} md={5} key={index}>
+              <Grid size={{ xs: 12, md: 3 }} key={index}>
                 <Fade in={true} timeout={300} style={{ transitionDelay: `${index * 50}ms` }}>
                   <Card
                     elevation={0}
@@ -607,7 +607,7 @@ const EmployeeTicketDashboard = () => {
                       cursor: 'pointer',
                       transition: 'all 0.2s ease',
                       height: '100%',
-                      width:'140px',
+                      // width: '140px',
                       minHeight: { xs: 80, sm: 90 },
                       bgcolor: 'white',
                       '&:hover': {
@@ -700,7 +700,7 @@ const EmployeeTicketDashboard = () => {
             {userModules.map((module, index) => {
               const IconComponent = module.icon;
               return (
-                <Grid item xs={12} sm={4} key={index}>
+                <Grid size={{ xs: 12, sm: 4 }} key={index}>
                   <Fade in={true} timeout={300} style={{ transitionDelay: `${index * 100}ms` }}>
                     <Card
                       elevation={0}
@@ -1344,9 +1344,8 @@ const EmployeeTicketDashboard = () => {
             </TableContainer>
           )}
         </Card>
-         <Grid container spacing={1}>
-         
-          <Grid item xs={12} md={4}>
+        <Grid container spacing={1}>
+          <Grid size={{ xs: 12, md: 4 }}>
             <Card
               elevation={0}
               sx={{
@@ -1375,9 +1374,9 @@ const EmployeeTicketDashboard = () => {
                 <Typography variant="subtitle2" fontWeight="bold" gutterBottom color="primary.main">
                   Need Help?
                 </Typography>
-                <Typography 
-                  variant="caption" 
-                  color="text.secondary" 
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
                   paragraph
                   sx={{ fontSize: '0.75rem', mb: 1.5 }}
                 >
@@ -1402,7 +1401,7 @@ const EmployeeTicketDashboard = () => {
                   fullWidth
                   size="small"
                   onClick={() => router.push('/emp-tickets/create-tickets')}
-                  sx={{ 
+                  sx={{
                     bgcolor: 'primary.main',
                     '&:hover': { bgcolor: 'primary.dark' },
                     fontSize: '0.75rem',
