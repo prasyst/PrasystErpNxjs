@@ -5,7 +5,7 @@ import { useSearchParams } from "next/navigation";
 import {
   Box, Button, TextField, FormControl, Typography, Paper, Divider, Container,
   Grid, Stack, IconButton, Autocomplete, FormLabel, RadioGroup, FormControlLabel, Radio, Link,
-  Tooltip, Dialog, DialogTitle, DialogContent, DialogActions,Chip,Select, MenuItem
+  Tooltip, Dialog, DialogTitle, DialogContent, DialogActions, Chip, Select, MenuItem
 } from "@mui/material";
 import {
   ArrowBack as MdArrowBack,
@@ -105,6 +105,7 @@ const CreateTicketPage = () => {
   const [openMail, setOpenMail] = useState(false);
   const [openService, setOpenService] = useState(false);
   const [allService, setAllService] = useState([]);
+  const [raiseBy, setRaiseBy] = useState("");
 
   const handleOpen = () => {
     setOpenMail(true);
@@ -114,7 +115,7 @@ const CreateTicketPage = () => {
     setOpenMail(false);
   };
 
-  
+
 
   const handleCloseService = () => {
     setOpenService(false);
@@ -209,7 +210,7 @@ const CreateTicketPage = () => {
           setSelectedMachGrpKey("");
           setMachineDrp([]);
         }
-
+        setRaiseBy(ticket.RaiseByNm || "NA");
         setMode('retrieve');
         setTicketFor(ticket.TktFor);
         setTktKey(ticket.TktKey);
@@ -577,76 +578,76 @@ const CreateTicketPage = () => {
     };
     reader.readAsDataURL(file);
   };
-   const fetchAllServices = async () => {
-      try {
-        const response = await axiosInstance.post('TktService/GetSubCatWiseTktServiceDrp', {
-          TktSubCatId: 0
-        })
-        if (response.data.STATUS === 0) {
-          setAllService(response.data.DATA)
-        } else {
-          setAllService([])
-        }
-      } catch (err) {
-        setAllService([]);
-        toast.error("Error while fetching all service.");
+  const fetchAllServices = async () => {
+    try {
+      const response = await axiosInstance.post('TktService/GetSubCatWiseTktServiceDrp', {
+        TktSubCatId: 0
+      })
+      if (response.data.STATUS === 0) {
+        setAllService(response.data.DATA)
+      } else {
+        setAllService([])
       }
-    };
+    } catch (err) {
+      setAllService([]);
+      toast.error("Error while fetching all service.");
+    }
+  };
 
   useEffect(() => {
     fetchAllServices();
   }, [])
-  const handleOpenService =async () => {
+  const handleOpenService = async () => {
     setOpenService(true);
     await fetchAllServices();
   };
 
- const handleFindServices = () => {
-  const selectedService = allService.find(p => p.TKTSERVICEID === formData.service?.TKTSERVICEID);
-  
-  if (selectedService && selectedService.TKTSERVICEID !== 0) {
-    const categoryObj = {
-      TKTCATID: selectedService.TKTCATID,
-      TKTCATNAME: selectedService.TKTCATNAME
-    };
+  const handleFindServices = () => {
+    const selectedService = allService.find(p => p.TKTSERVICEID === formData.service?.TKTSERVICEID);
 
-    const subCategoryObj = {
-      TKTSUBCATID: selectedService.TKTSUBCATID,
-      TKTSUBCATNAME: selectedService.TKTSUBCATNAME
-    };
+    if (selectedService && selectedService.TKTSERVICEID !== 0) {
+      const categoryObj = {
+        TKTCATID: selectedService.TKTCATID,
+        TKTCATNAME: selectedService.TKTCATNAME
+      };
 
-    setFormData(prev => ({
-      ...prev,
-      category: categoryObj,
-      subCategory: subCategoryObj,
-      service: {
-        TKTSERVICEID: selectedService.TKTSERVICEID,
-        TKTSERVICENAME: selectedService.TKTSERVICENAME
-      }
-    }));
+      const subCategoryObj = {
+        TKTSUBCATID: selectedService.TKTSUBCATID,
+        TKTSUBCATNAME: selectedService.TKTSUBCATNAME
+      };
 
-    const fetchSubCategoriesForCategory = async () => {
-      try {
-        const response = await axiosInstance.post('TktsubCat/GetTktCatWiseSubCatDrp', {
-          "TktCatId": selectedService.TKTCATID,
-        });
-        if (response.data.STATUS === 0 && Array.isArray(response.data.DATA)) {
-          setSubCat(response.data.DATA);
+      setFormData(prev => ({
+        ...prev,
+        category: categoryObj,
+        subCategory: subCategoryObj,
+        service: {
+          TKTSERVICEID: selectedService.TKTSERVICEID,
+          TKTSERVICENAME: selectedService.TKTSERVICENAME
         }
-      } catch (error) {
-        console.error("Error fetching subcategories:", error);
-      }
-    };
-    
-    fetchSubCategoriesForCategory();
-  
-    setOpenService(false);
-  } else if (selectedService?.TKTSERVICEID === 0) {
-    toast.warning("Please select a valid service");
-  } else {
-    toast.warning("Please select a service first");
-  }
-};
+      }));
+
+      const fetchSubCategoriesForCategory = async () => {
+        try {
+          const response = await axiosInstance.post('TktsubCat/GetTktCatWiseSubCatDrp', {
+            "TktCatId": selectedService.TKTCATID,
+          });
+          if (response.data.STATUS === 0 && Array.isArray(response.data.DATA)) {
+            setSubCat(response.data.DATA);
+          }
+        } catch (error) {
+          console.error("Error fetching subcategories:", error);
+        }
+      };
+
+      fetchSubCategoriesForCategory();
+
+      setOpenService(false);
+    } else if (selectedService?.TKTSERVICEID === 0) {
+      toast.warning("Please select a valid service");
+    } else {
+      toast.warning("Please select a service first");
+    }
+  };
 
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: "#f9fafb" }}>
@@ -705,7 +706,7 @@ const CreateTicketPage = () => {
                     value={ticketFor}
                     onChange={handleTicketChange}
                     displayEmpty
-                    size="small" 
+                    size="small"
                     sx={{
                       '& .MuiSelect-select': {
                         padding: '6px 14px',
@@ -1113,6 +1114,12 @@ const CreateTicketPage = () => {
             ticketDescription={formData.description}
             ticketImage={formData.TktImage}
             ticketImageName={formData.ImgName}
+            ticketCat={formData.category?.TKTCATNAME || ""}
+            ticketSubCat={formData.subCategory?.TKTSUBCATNAME || ""}
+            ticketService={formData.service?.TKTSERVICENAME || ""}
+            raiseBy={raiseBy}
+            deptGrp={formData.depGrp}
+            dept={formData.department}
             onClose={handleClose}
           />
         </DialogContent>

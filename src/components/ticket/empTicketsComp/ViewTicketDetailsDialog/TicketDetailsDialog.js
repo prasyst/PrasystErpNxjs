@@ -281,7 +281,7 @@ const TicketDetailsDialog = ({
     const handleAddComment = (e) => {
         e.preventDefault();
         if (!newComment.trim()) return;
-        
+
         setIsSubmitting(true);
         setTimeout(() => {
             const newCommentObj = {
@@ -392,7 +392,6 @@ const TicketDetailsDialog = ({
                     }
                 }}
             >
-
                 <Box sx={{
                     display: 'flex',
                     alignItems: 'center',
@@ -420,7 +419,7 @@ const TicketDetailsDialog = ({
                             </Typography>
                             {!loading && ticketDetails && (
                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
-                                 
+
                                     <Chip
                                         label={ticketDetails.status?.replace('-', ' ')}
                                         size="medium"
@@ -444,21 +443,21 @@ const TicketDetailsDialog = ({
                         </Box>
                     </Box>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                          <Button
-                        onClick={updateTicketStatus}
-                        variant="contained"
-                        // disabled={updating || !resolveRemark.trim()}
-                        sx={{
-                            backgroundColor: '#2563eb',
-                            textTransform: 'none',
-                            fontSize: '0.75rem',
-                            '&:hover': {
-                                backgroundColor: '#1d4ed8'
-                            }
-                        }}
-                    >
-                        {updating ? 'Updating...' : 'Update Status'}
-                    </Button>
+                        <Button
+                            onClick={updateTicketStatus}
+                            variant="contained"
+                            // disabled={updating || !resolveRemark.trim()}
+                            sx={{
+                                backgroundColor: '#2563eb',
+                                textTransform: 'none',
+                                fontSize: '0.75rem',
+                                '&:hover': {
+                                    backgroundColor: '#1d4ed8'
+                                }
+                            }}
+                        >
+                            {updating ? 'Updating...' : 'Update Status'}
+                        </Button>
                         <Button
                             onClick={handleEdit}
                             variant="outlined"
@@ -473,16 +472,16 @@ const TicketDetailsDialog = ({
                         >
                             Edit
                         </Button>
-                        <IconButton onClick={onClose} sx={{ color: '#6b7280' }}>
-                            <CloseIcon />
+                        <IconButton onClick={onClose}>
+                            <CloseIcon color='error' />
                         </IconButton>
                     </Box>
                 </Box>
 
-                <Box sx={{ 
-                    flex: 1, 
-                    overflow: 'auto', 
-                    display: 'flex', 
+                <Box sx={{
+                    flex: 1,
+                    overflow: 'auto',
+                    display: 'flex',
                     flexDirection: { xs: 'column', md: 'row' },
                     m: 0,
                     p: 0
@@ -513,13 +512,13 @@ const TicketDetailsDialog = ({
 
                     {ticketDetails && !loading && (
                         <>
-                            <Box sx={{ 
-                                flex: 1, 
+                            <Box sx={{
+                                flex: 1,
                                 overflow: 'auto',
                                 m: 0,
                                 p: '1.5rem'
                             }}>
-                                
+
                                 <Box sx={{ mb: '1rem' }}>
                                     <Typography sx={{
                                         fontSize: '1rem',
@@ -567,8 +566,8 @@ const TicketDetailsDialog = ({
                                         }}
                                     >
                                         <Tab label="Details" />
-                        
-                                      
+
+
                                     </Tabs>
 
                                     {activeTab === 0 && (
@@ -721,7 +720,7 @@ const TicketDetailsDialog = ({
                                         </Box>
                                     )}
 
-                               
+
                                     {activeTab === 1 && (
                                         <Box>
                                             <Box sx={{ mb: '2rem' }}>
