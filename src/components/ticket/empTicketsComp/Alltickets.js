@@ -59,7 +59,7 @@ const AllTicketsPage = () => {
         "TrnTkt/GetTrnTktDashBoard?currentPage=1&limit=50",
         {
           SearchText: "",
-          Flag: "EMP",
+          Flag: "EMPSUBCAT",
           EMP_KEY: empKey
         }
       );
@@ -733,8 +733,6 @@ const AllTicketsPage = () => {
                   <MenuItem value="Low">Low</MenuItem>
                 </TextField>
               </Grid>
-
-
 
               <Grid item xs={12} md={2}>
                 <Typography variant="body2" color="text.secondary" align="center">
