@@ -126,7 +126,7 @@ const EmployeeHeader = ({ isSidebarCollapsed, onMenuToggle, isMobile }) => {
         position: 'fixed',
         top: 0,
         right: 0,
-        left: isMobile ? '0' : (isSidebarCollapsed ? '80px' : '250px'),
+        left: isMobile ? '0' : (isSidebarCollapsed ? '80px' : '242px'),
         zIndex: 50,
         borderBottom: '1px solid #e0e0e0',
         transition: 'left 0.3s ease, padding 0.3s ease',
@@ -136,7 +136,6 @@ const EmployeeHeader = ({ isSidebarCollapsed, onMenuToggle, isMobile }) => {
         boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
       }}
     >
-
       <div className="flex items-center gap-3 md:gap-4" style={{ flex: 1 }}>
         {isMobile && (
           <button

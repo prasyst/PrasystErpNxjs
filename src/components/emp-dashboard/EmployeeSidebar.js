@@ -44,7 +44,7 @@ const EmployeeSidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClos
   useEffect(() => {
     const storedName = localStorage.getItem('EMP_NAME') || localStorage.getItem('USER_NAME');
     if (storedName) {
-      const shortName = storedName.length > 3 ? storedName.substring(0, 11) + '..' : storedName;
+      const shortName = storedName.length > 3 ? storedName.substring(0, 20) + '..' : storedName;
       setUserName(shortName);
     }
   }, []);
@@ -68,7 +68,8 @@ const EmployeeSidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClos
         {
           name: 'My Tickets',
           icon: AssignmentTurnedInIcon,
-          path: '/emp-tickets/all-tickets'
+          // path: '/emp-tickets/all-tickets'
+          path: '/emp-tickets/my-tickets'
         },
         {
           name: 'Assigned Tickets',
@@ -375,7 +376,8 @@ const EmployeeSidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClos
               >
                 {IconComponent && (
                   <ListItemIcon sx={{
-                    color: isActive ? theme.palette.primary.contrastText : theme.palette.primary.main,
+                    // minWidth: 36,
+                    color: isActive ? 'theme.palette.primary.contrastText' : theme.palette.primary.main,
                   }}>
                     <IconComponent />
                   </ListItemIcon>
@@ -432,7 +434,7 @@ const EmployeeSidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClos
         variant="temporary"
         PaperProps={{
           sx: {
-            width: 280,
+            width: 240,
             bgcolor: 'background.paper',
             boxShadow: 3,
             overflowX: 'hidden',
@@ -507,7 +509,8 @@ const EmployeeSidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClos
             </Box>
           ) : (
             <List disablePadding>
-              {renderMenuItems(menuItems)}
+              {/* {renderMenuItems(menuItems)} */}
+              {renderMenuItems(menuItems[0]?.children || [], 0)}
             </List>
           )}
         </Box>
@@ -585,7 +588,7 @@ const EmployeeSidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClos
             }}
             sx={{
               '& .MuiOutlinedInput-root': {
-                borderRadius: 1,
+                borderRadius: 2,
               }
             }}
           />
@@ -620,8 +623,11 @@ const EmployeeSidebar = ({ isCollapsed, setIsCollapsed, isMobile, isOpen, onClos
             No results found
           </Box>
         ) : (
+          // <List disablePadding sx={{ p: 1 }}>
+          //   {renderMenuItems(menuItems)}
+          // </List>
           <List disablePadding sx={{ p: 1 }}>
-            {renderMenuItems(menuItems)}
+            {renderMenuItems(menuItems[0]?.children || [], 0)}
           </List>
         )}
       </Box>
