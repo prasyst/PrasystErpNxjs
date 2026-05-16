@@ -1,15 +1,19 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import {
-    Box, Container, Card, CardContent, Typography, Button, TextField, MenuItem, IconButton, Chip, Grid, Paper, Stack,
-    InputAdornment, Dialog, DialogTitle, DialogContent, DialogActions, useMediaQuery, useTheme, Checkbox, FormControlLabel,
-    Alert, Divider, Avatar, Tooltip, Badge, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
-    TablePagination, Tabs, Autocomplete
+    Box, Container, Card, CardContent, Typography, Button, TextField, MenuItem, IconButton, Chip,
+    InputAdornment, Dialog, DialogTitle, DialogContent, DialogActions, useMediaQuery, useTheme,
+    Grid, Tooltip, Fab, CircularProgress, Divider, Avatar, Alert, Stack, Autocomplete
 } from '@mui/material';
 import {
     ArrowBack as ArrowBackIcon,
+    Add as AddIcon,
     Search as SearchIcon,
+    Edit as EditIcon,
+    Delete as DeleteIcon,
+    Visibility as VisibilityIcon,
+    Close as CloseIcon,
     Escalator as EscalatorIcon,
     Warning as WarningIcon,
     ArrowUpward as ArrowUpwardIcon,
@@ -17,49 +21,40 @@ import {
     Send as SendIcon,
 } from '@mui/icons-material';
 import axiosInstance from '@/lib/axios';
+// import TicketDetailsDialog from '../empTicketsComp/ViewTicketDetailsDialog/TicketDetailsDialog';
+import ReusableTable, { getCustomDateFilter } from '@/components/datatable/ReusableTable';
 import { toast, ToastContainer } from 'react-toastify';
 
 const TicketEscalation = () => {
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-    const [selectedTickets, setSelectedTickets] = useState([]);
+    const isSmallMobile = useMediaQuery(theme.breakpoints.down('sm'));
+    
     const [tickets, setTickets] = useState([]);
+    const [filteredTickets, setFilteredTickets] = useState([]);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [statusFilter, setStatusFilter] = useState('all');
+    const [priorityFilter, setPriorityFilter] = useState('all');
+    const [selectedRows, setSelectedRows] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
     const [escalationDialogOpen, setEscalationDialogOpen] = useState(false);
     const [escalationDetails, setEscalationDetails] = useState({
         level: '',
         reason: '',
     });
-    const [loading, setLoading] = useState(false);
-    const [filter, setFilter] = useState({
-        search: '',
-        status: 'all',
-        priority: 'all',
-    });
-    const [page, setPage] = useState(0);
-    const [rowsPerPage, setRowsPerPage] = useState(100);
     const [employees, setEmployees] = useState([]);
     const [loadingEmployees, setLoadingEmployees] = useState(false);
-    const [empKey, setEmpKey] = useState(null);
+    const [loading, setLoading] = useState(false);
 
     useEffect(() => {
-        const key = localStorage.getItem("EMP_KEY");
-        if (key) {
-            setEmpKey(key);
-        }
+        fetchTickets();
     }, []);
 
-    useEffect(() => {
-        if (empKey) {
-            fetchTickets();
-        }
-    }, [empKey]);
-
     const fetchTickets = async () => {
+        setIsLoading(true);
         try {
             const response = await axiosInstance.post("TrnTkt/GetTrnTktDashBoard?currentPage=1&limit=50", {
-                SearchText: "",
-                Flag: "EMP",
-                EMP_KEY: empKey
+                SearchText: ""
             });
 
             if (response.data.STATUS === 0 && Array.isArray(response.data.DATA)) {
@@ -71,78 +66,61 @@ const TicketEscalation = () => {
                     category: tkt.TKTSERVICENAME || "General",
                     priority: tkt.TKTSVRTYNAME || "Medium",
                     status: tkt.TKTSTATUS === "O" ? "open" :
-                        tkt.TKTSTATUS === "I" ? "in-progress" :
-                            tkt.TKTSTATUS === "R" ? "resolved" : "closed",
+                        tkt.TKTSTATUS === "P" ? "in-progress" :
+                        tkt.TKTSTATUS === "H" ? "hold" :
+                        tkt.TKTSTATUS === "R" ? "resolved" : "closed",
                     assignee: tkt.TECHEMP_NAME || "Unassigned",
                     reporter: tkt.RAISEBYNM || "Unknown",
                     createdAt: tkt.TKTDATE,
                     dueDate: tkt.ASSIGNDT || tkt.TKTDATE,
                     mobileNo: tkt.MOBILENO || "N/A",
+                    tktFor: tkt.TKTFOR === "M" ? "Machine" : "Department",
+                    ccnName: tkt.CCN_NAME || "",
+                    machineryName: tkt.MACHINERY_NAME || "",
                     ageInHours: Math.floor(Math.random() * 72) + 1,
                     escalationLevel: Math.floor(Math.random() * 3) + 1,
                     lastEscalated: new Date(Date.now() - Math.random() * 86400000).toISOString(),
                 }));
                 setTickets(realTickets);
+                setFilteredTickets(realTickets);
             }
         } catch (error) {
-            toast.error("Failed to load tickets:", error);
-        }
-    };
-
-    const handleSelectAll = (event) => {
-        if (event.target.checked) {
-            const currentPageTickets = tickets.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
-            setSelectedTickets(currentPageTickets.map(t => t.TKTKEY));
-        } else {
-            setSelectedTickets([]);
-        }
-    };
-
-    const handleTicketSelect = (event, ticketId) => {
-        if (event.target.checked) {
-            setSelectedTickets(prev => [...prev, ticketId]);
-        } else {
-            setSelectedTickets(prev => prev.filter(id => id !== ticketId));
-        }
-    };
-
-    const handleEscalationSubmit = async () => {
-        if (!escalationDetails.level) {
-            toast.error('Please select an employee to escalate to');
-            return;
-        }
-
-        if (selectedTickets.length === 0) {
-            toast.error('Please select at least one ticket');
-            return;
-        }
-
-        setLoading(true);
-        try {
-            const payload = selectedTickets.map(ticketId => ({
-                TktKey: ticketId,
-                FrwdEmp_Key: escalationDetails.level,
-                FLAG: ""
-            }));
-
-            const response = await axiosInstance.post('/TrnTkt/MangeFrwdEmp', payload);
-
-            if (response.data.STATUS === 0 || response.data.success) {
-                toast.success(`Successfully escalated ${selectedTickets.length} ticket(s)!`);
-                setEscalationDialogOpen(false);
-                setSelectedTickets([]);
-                setEscalationDetails({
-                    level: '',
-                    reason: ''
-                });
-                fetchTickets();
-            } else {
-                throw new Error(response.data.MESSAGE || 'Escalation failed');
-            }
-        } catch (error) {
-            toast.error(error.message || 'Failed to escalate tickets. Please try again.');
+            toast.error("Failed to load tickets");
         } finally {
-            setLoading(false);
+            setIsLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        let filtered = tickets;
+
+        if (searchTerm) {
+            filtered = filtered.filter(t =>
+                t.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                t.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                t.description.toLowerCase().includes(searchTerm.toLowerCase())
+            );
+        }
+
+        if (statusFilter !== 'all') {
+            filtered = filtered.filter(t => t.status === statusFilter);
+        }
+
+        if (priorityFilter !== 'all') {
+            filtered = filtered.filter(t => t.priority === priorityFilter);
+        }
+
+        setFilteredTickets(filtered);
+    }, [searchTerm, statusFilter, priorityFilter, tickets]);
+
+    const getStatusColor = (status) => {
+        switch (status) {
+            case 'open': return 'error';
+            case 'in-progress': return 'warning';
+            case 'resolved': return 'success';
+            case 'closed': return 'default';
+            case 'hold': return 'secondary';
+            default: return 'default';
         }
     };
 
@@ -165,18 +143,8 @@ const TicketEscalation = () => {
         }
     };
 
-    const getStatusColor = (status) => {
-        switch (status) {
-            case 'open': return 'error';
-            case 'in-progress': return 'warning';
-            case 'resolved': return 'success';
-            case 'closed': return 'secondary';
-            default: return 'default';
-        }
-    };
-
     const formatDate = (dateString) => {
-        if (!dateString) return 'N/A';
+        if (!dateString) return '-';
         return new Date(dateString).toLocaleDateString('en-US', {
             day: 'numeric',
             month: 'short',
@@ -194,30 +162,6 @@ const TicketEscalation = () => {
         });
     };
 
-    const handleChangePage = (event, newPage) => {
-        setPage(newPage);
-    };
-
-    const handleChangeRowsPerPage = (event) => {
-        setRowsPerPage(parseInt(event.target.value, 10));
-        setPage(0);
-    };
-
-    const filteredTickets = tickets.filter(ticket => {
-        if (filter.search && !ticket.id.toLowerCase().includes(filter.search.toLowerCase()) &&
-            !ticket.title.toLowerCase().includes(filter.search.toLowerCase()) &&
-            !ticket.description.toLowerCase().includes(filter.search.toLowerCase())) {
-            return false;
-        }
-        if (filter.status !== 'all' && ticket.status !== filter.status) {
-            return false;
-        }
-        if (filter.priority !== 'all' && ticket.priority !== filter.priority) {
-            return false;
-        }
-        return true;
-    });
-
     const fetchEmployees = async () => {
         try {
             setLoadingEmployees(true);
@@ -230,9 +174,7 @@ const TicketEscalation = () => {
                     EMP_KEY: emp.EMP_KEY,
                     EMP_NAME: emp.EMP_NAME
                 }));
-
                 setEmployees(employeeList);
-
                 if (employeeList.length > 0) {
                     setEscalationDetails(prev => ({
                         ...prev,
@@ -240,535 +182,577 @@ const TicketEscalation = () => {
                     }));
                 }
             }
-            setLoadingEmployees(false);
         } catch (error) {
+            console.error("Error fetching employees:", error);
+        } finally {
             setLoadingEmployees(false);
         }
     };
 
     const handleEscalate = () => {
-        if (selectedTickets.length === 0) {
-            toast.warn('Please select at least one ticket to escalate');
+        if (selectedRows.length === 0) {
+            toast.warning('Please select at least one ticket to escalate');
             return;
         }
         setEscalationDialogOpen(true);
         fetchEmployees();
     };
 
-    const paginatedTickets = filteredTickets.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+    const handleEscalationSubmit = async () => {
+        if (!escalationDetails.level) {
+            toast.error('Please select an employee to escalate to');
+            return;
+        }
 
-    return (
-        <Box sx={{ backgroundColor: 'grey.50' }}>
-            <ToastContainer />
-            <Container maxWidth="xl" sx={{ px: { xs: 1, sm: 2 } }}>
-                <Box sx={{ mb: 1 }}>
-                    <Box display="flex" alignItems="center" justifyContent="space-between" gap={2}>
-                        <Box display="flex" alignItems="center" gap={2}>
-                            <Button
-                                startIcon={<ArrowBackIcon />}
-                                onClick={() => window.history.back()}
-                                sx={{
-                                    fontWeight: '600',
-                                    color: 'primary.main',
-                                    textTransform: 'none',
-                                    borderRadius: '20px',
-                                    minWidth: 'auto',
-                                    padding: '0px',
-                                    border: '0px'
-                                }}
-                                variant="outlined"
-                            >
-                                Back
-                            </Button>
+        if (selectedRows.length === 0) {
+            toast.error('Please select at least one ticket');
+            return;
+        }
 
-                            <Box display="flex" alignItems="center" gap={1}>
-                                <EscalatorIcon sx={{ color: 'primary.main', fontSize: '1.5rem' }} />
-                                <Typography
-                                    variant="h4"
-                                    fontWeight="bold"
-                                    sx={{
-                                        fontSize: { xs: '1rem', sm: '1.2rem', md: '1.5rem' }
-                                    }}
-                                >
-                                    Ticket Escalation
-                                </Typography>
-                            </Box>
-                        </Box>
+        setLoading(true);
+        try {
+            const payload = selectedRows.map(ticketId => ({
+                TktKey: ticketId,
+                FrwdEmp_Key: escalationDetails.level,
+                FLAG: ""
+            }));
 
-                        <Box display="flex" alignItems="center" gap={2}>
-                            <Typography
-                                variant="body2"
-                                color="text.secondary"
-                                sx={{
-                                    display: { xs: 'none', sm: 'block' },
-                                    fontWeight: 500
-                                }}
-                            >
-                                Selected: {selectedTickets.length} tickets
-                            </Typography>
-                            <Button
-                                variant="contained"
-                                startIcon={<ArrowUpwardIcon />}
-                                onClick={handleEscalate}
-                                disabled={selectedTickets.length === 0}
-                                sx={{
-                                    backgroundColor: '#dc2626',
-                                    '&:hover': { backgroundColor: '#b91c1c' },
-                                    textTransform: 'none',
-                                    borderRadius: '20px',
-                                    px: 3,
-                                    py: 0.5
-                                }}
-                            >
-                                Escalate Selected
-                            </Button>
-                        </Box>
-                    </Box>
-                    <Typography
-                        variant="body2"
-                        color="text.secondary"
-                        sx={{
-                            display: { xs: 'block', sm: 'none' },
-                            mt: 1,
-                            fontWeight: 500
-                        }}
-                    >
-                        Selected: {selectedTickets.length} tickets
+            const response = await axiosInstance.post('/TrnTkt/MangeFrwdEmp', payload);
+
+            if (response.data.STATUS === 0 || response.data.success) {
+                toast.success(`Successfully escalated ${selectedRows.length} ticket(s)!`);
+                setEscalationDialogOpen(false);
+                setSelectedRows([]);
+                setEscalationDetails({
+                    level: '',
+                    reason: ''
+                });
+                fetchTickets();
+            } else {
+                throw new Error(response.data.MESSAGE || 'Escalation failed');
+            }
+        } catch (error) {
+            toast.error(error.message || 'Failed to escalate tickets. Please try again.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // Column definitions for AG Grid
+    const columnDefs = useMemo(() => [
+        { 
+            headerName: '', 
+            width: 40, 
+            maxWidth: 40, 
+            checkboxSelection: true,
+            headerCheckboxSelection: true,
+            lockPosition: true,
+            suppressMenu: true,
+            sortable: false,
+            filter: false,
+            resizable: false,
+        },
+        { 
+            field: "id", 
+            headerName: "Ticket No", 
+            width: 110,
+            minWidth: 100,
+            filter: 'agSetColumnFilter',
+            filterParams: {
+                defaultToNothingSelected: true,
+            },
+            sortable: true,
+            cellRenderer: (params) => (
+                <Box display="flex" alignItems="center" gap={0.5}>
+                    <EscalatorIcon sx={{ fontSize: '0.875rem', color: '#dc2626' }} />
+                    <Typography variant="body2" fontWeight="600" color="primary" sx={{ fontSize: '0.75rem' }}>
+                        {params.value}
                     </Typography>
                 </Box>
+            )
+        },
+        { 
+            field: "title", 
+            headerName: "Title", 
+            width: 80,
+            minWidth: 80,
+            flex: 1,
+            filter: 'agSetColumnFilter',
+            filterParams: {
+                defaultToNothingSelected: true,
+            },
+            sortable: true,
+            cellRenderer: (params) => (
+                <Typography variant="subtitle2" fontWeight="600" sx={{ fontSize: '0.75rem', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {params.value}
+                </Typography>
+            )
+        },
+        { 
+            field: "escalationLevel", 
+            headerName: "Escalation", 
+            width: 120,
+            minWidth: 120,
+            filter: 'agSetColumnFilter',
+            filterParams: {
+                defaultToNothingSelected: true,
+            },
+            sortable: true,
+            cellRenderer: (params) => (
+                <Chip
+                    label={`L${params.value}`}
+                    size="small"
+                    color={getEscalationColor(params.value)}
+                    sx={{ fontSize: '0.7rem', height: '22px', minWidth: '50px' }}
+                />
+            )
+        },
+        { 
+            field: "priority", 
+            headerName: "Priority", 
+            width: 95,
+            minWidth: 90,
+            filter: 'agSetColumnFilter',
+            filterParams: {
+                defaultToNothingSelected: true,
+            },
+            sortable: true,
+            cellRenderer: (params) => (
+                <Chip 
+                    label={params.value} 
+                    size="small" 
+                    color={getPriorityColor(params.value)} 
+                    sx={{ fontSize: '0.7rem', height: '22px', minWidth: '60px' }} 
+                />
+            )
+        },
+        { 
+            field: "status", 
+            headerName: "Status", 
+            width: 110,
+            minWidth: 110,
+            filter: 'agSetColumnFilter',
+            filterParams: {
+                defaultToNothingSelected: true,
+            },
+            sortable: true,
+            cellRenderer: (params) => {
+                const statusMap = {
+                    'open': 'Open',
+                    'in-progress': 'In Progress',
+                    'hold': 'Hold',
+                    'resolved': 'Resolved',
+                    'closed': 'Closed'
+                };
+                return (
+                    <Chip
+                        label={statusMap[params.value] || params.value}
+                        size="small"
+                        color={getStatusColor(params.value)}
+                        variant="filled"
+                        sx={{ fontSize: '0.7rem', height: '22px', minWidth: '70px' }}
+                    />
+                );
+            }
+        },
+        { 
+            field: "assignee", 
+            headerName: "Assignee", 
+            width: 140,
+            minWidth: 140,
+            filter: 'agSetColumnFilter',
+            filterParams: {
+                defaultToNothingSelected: true,
+            },
+            sortable: true,
+            cellRenderer: (params) => (
+                <Box display="flex" alignItems="center" gap={0.5}>
+                    <Avatar sx={{ width: 20, height: 20, fontSize: '0.7rem', bgcolor: 'primary.main' }}>
+                        {params.value?.charAt(0).toUpperCase() || 'U'}
+                    </Avatar>
+                    <Typography variant="body2" sx={{ fontSize: '0.75rem' }}>
+                        {params.value?.split(' ')[0] || 'Unassigned'}
+                    </Typography>
+                </Box>
+            )
+        },
+        { 
+            field: "createdAt", 
+            headerName: "Created", 
+            width: 100,
+            minWidth: 90,
+            filter: 'agDateColumnFilter',
+            filterParams: {
+                browserDatePicker: true,
+                filterOptions: [
+                    'equals',
+                    'notEqual',
+                    'lessThan',
+                    'greaterThan',
+                    'inRange',
+                    'empty',
+                    'notEmpty'
+                ],
+                customOptionLabel: 'Custom Dates',
+                customFilter: getCustomDateFilter()
+            },
+            sortable: true,
+            valueFormatter: (params) => formatDate(params.value),
+            cellRenderer: (params) => (
+                <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.7rem' }}>
+                    {formatDate(params.value)}
+                </Typography>
+            )
+        },
+        { 
+            field: "lastEscalated", 
+            headerName: "Last Escalated", 
+            width: 130,
+            minWidth: 120,
+            filter: 'agDateColumnFilter',
+            filterParams: {
+                browserDatePicker: true,
+                filterOptions: [
+                    'equals',
+                    'notEqual',
+                    'lessThan',
+                    'greaterThan',
+                    'inRange',
+                    'empty',
+                    'notEmpty'
+                ],
+                customOptionLabel: 'Custom Dates',
+                customFilter: getCustomDateFilter()
+            },
+            sortable: true,
+            valueFormatter: (params) => formatDateTime(params.value),
+            cellRenderer: (params) => (
+                <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.7rem' }}>
+                    {formatDateTime(params.value)}
+                </Typography>
+            )
+        }
+    ], []);
 
-                <Grid container spacing={2}>
-                    <Grid size={{ xs: 12, md: 12 }}>
-                        <Card sx={{ boxShadow: 3, height: '100%', display: 'flex', flexDirection: 'column' }}>
-                            <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column', p: { xs: 1, sm: 2 }, '&:last-child': { pb: 0.5 } }}>
-                                <Box sx={{ mb: 1 }}>
-                                    <Grid container spacing={2} alignItems="center">
-                                        <Grid size={{ xs: 6, md: 3 }}>
-                                            <TextField
-                                                fullWidth
-                                                placeholder="Search tickets..."
-                                                value={filter.search}
-                                                onChange={(e) => setFilter({ ...filter, search: e.target.value })}
-                                                size="small"
-                                                InputProps={{
-                                                    startAdornment: (
-                                                        <InputAdornment position="start">
-                                                            <SearchIcon />
-                                                        </InputAdornment>
-                                                    ),
-                                                }}
-                                            />
-                                        </Grid>
+    const handleRowDoubleClick = useCallback((row) => {
+        // Handle double click if needed
+        console.log('Row double clicked:', row);
+    }, []);
 
-                                        <Grid size={{ xs: 6, md: 3 }}>
-                                            <TextField
-                                                fullWidth
-                                                select
-                                                label="Status"
-                                                value={filter.status}
-                                                onChange={(e) => setFilter({ ...filter, status: e.target.value })}
-                                                size="small"
-                                            >
-                                                <MenuItem value="all">All Status</MenuItem>
-                                                <MenuItem value="open">Open</MenuItem>
-                                                {/* <MenuItem value="in-progress">In Progress</MenuItem> */}
-                                                <MenuItem value="resolved">Resolved</MenuItem>
-                                                <MenuItem value="closed">Closed</MenuItem>
-                                            </TextField>
-                                        </Grid>
+    const handleSelectionChanged = useCallback((event) => {
+        const selectedNodes = event.api.getSelectedNodes();
+        const selectedData = selectedNodes.map(node => node.data);
+        setSelectedRows(selectedData.map(t => t.TKTKEY));
+    }, []);
 
-                                        <Grid size={{ xs: 6, md: 3 }}>
-                                            <TextField
-                                                fullWidth
-                                                select
-                                                label="Priority"
-                                                value={filter.priority}
-                                                onChange={(e) => setFilter({ ...filter, priority: e.target.value })}
-                                                size="small"
-                                            >
-                                                <MenuItem value="all">All Priority</MenuItem>
-                                                <MenuItem value="High">High</MenuItem>
-                                                <MenuItem value="Medium">Medium</MenuItem>
-                                                <MenuItem value="Low">Low</MenuItem>
-                                            </TextField>
-                                        </Grid>
-                                    </Grid>
-                                </Box>
+    const MobileTicketCard = ({ ticket }) => {
+        const isOverdue = ticket.ageInHours > 48;
+        
+        return (
+            <Card sx={{ mb: 1, cursor: 'pointer', borderLeft: isOverdue ? '3px solid #ef4444' : 'none' }}>
+                <CardContent sx={{ p: 1 }}>
+                    <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={1}>
+                        <Box display="flex" alignItems="center" gap={1}>
+                            <EscalatorIcon sx={{ color: '#dc2626', fontSize: '1rem' }} />
+                            <Typography variant="subtitle1" fontWeight="600" color="primary">
+                                {ticket.id}
+                            </Typography>
+                        </Box>
+                        <Chip
+                            label={`L${ticket.escalationLevel}`}
+                            size="small"
+                            color={getEscalationColor(ticket.escalationLevel)}
+                        />
+                    </Box>
 
-                                <Box sx={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'space-between',
-                                    mb: 1,
-                                    p: 0.5,
-                                    backgroundColor: 'grey.100',
-                                    borderRadius: 1,
-                                    flexWrap: 'wrap',
-                                    gap: 1
-                                }}>
+                    <Typography variant="h6" fontWeight="600" sx={{ mb: 1, fontSize: '1rem' }} noWrap>
+                        {ticket.title}
+                    </Typography>
 
-                                    <Typography variant="body2" color="text.secondary">
-                                        {selectedTickets.length} of {tickets.length} selected
-                                    </Typography>
-                                </Box>
-                                <Box sx={{
-                                    flex: 1,
-                                    overflow: 'hidden',
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                    maxHeight: 'calc(100vh - 500px)',
-                                    minHeight: '500px'
-                                }}>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2, lineHeight: 1.4 }}>
+                        {ticket.description.length > 80
+                            ? `${ticket.description.substring(0, 80)}...`
+                            : ticket.description
+                        }
+                    </Typography>
 
-                                    <Box sx={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-                                        <TableContainer
-                                            component={Paper}
+                    <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
+                        <Chip
+                            label={ticket.priority}
+                            size="small"
+                            color={getPriorityColor(ticket.priority)}
+                            variant="outlined"
+                        />
+                        <Chip
+                            label={ticket.status.replace('-', ' ')}
+                            size="small"
+                            color={getStatusColor(ticket.status)}
+                            variant="filled"
+                        />
+                    </Box>
+
+                    <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
+                        <Box display="flex" alignItems="center" gap={1}>
+                            <Avatar sx={{ width: 24, height: 24, fontSize: '0.75rem' }}>
+                                {ticket.assignee.charAt(0).toUpperCase()}
+                            </Avatar>
+                            <Typography variant="caption">
+                                {ticket.assignee.split(' ')[0]}
+                            </Typography>
+                        </Box>
+                        <Typography variant="caption" color="text.secondary">
+                            {formatDate(ticket.createdAt)}
+                        </Typography>
+                    </Box>
+
+                    <Divider sx={{ my: 1 }} />
+
+                    <Box display="flex" justifyContent="space-between" alignItems="center">
+                        <Typography variant="caption" color="text.secondary">
+                            Last Esc: {formatDateTime(ticket.lastEscalated)}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                            Age: {ticket.ageInHours}h
+                        </Typography>
+                    </Box>
+                </CardContent>
+            </Card>
+        );
+    };
+
+    return (
+        <Box sx={{
+            minHeight: '86vh',
+            backgroundColor: 'grey.50',
+            py: { xs: 1, md: 1 },
+            px: { xs: 1, sm: 1 }
+        }}>
+            <ToastContainer />
+            <Container maxWidth="xl" sx={{ px: { xs: 1, sm: 2 } }}>
+                {/* Main Card with all controls */}
+                <Card sx={{ mb: 0, boxShadow: 2 }}>
+                    <CardContent sx={{ p: { xs: 1, sm: 1 } }}>
+                        <Grid container spacing={2} alignItems="center">
+                            {/* Header Section with Title and Action Buttons */}
+                            <Grid item xs={12}>
+                                <Box display="flex" justifyContent="space-between" alignItems="center" flexDirection={{ xs: 'column', sm: 'row' }} gap={2}>
+                                    <Box display="flex" alignItems="center" gap={1}>
+                                        <EscalatorIcon sx={{ color: '#dc2626', fontSize: '1.8rem' }} />
+                                        <Typography
+                                            variant={isSmallMobile ? "h5" : "h5"}
+                                            component="h1"
+                                            fontWeight="bold"
                                             sx={{
-                                                flex: 1,
-                                                boxShadow: 'none',
-                                                border: '1px solid',
-                                                borderColor: 'divider',
-                                                borderRadius: 1,
-                                                '& .MuiTable-root': {
-                                                    tableLayout: 'fixed'
-                                                }
+                                                background: "linear-gradient(to right, #7e1f0aff, #054711ff)",
+                                                WebkitBackgroundClip: "text",
+                                                color: "transparent",
+                                                display: "inline-block",
                                             }}
                                         >
-                                            <Table
-                                                sx={{
-                                                    '& .MuiTableCell-root': {
-                                                        padding: '4px 8px',
-                                                        fontSize: '0.75rem',
-                                                        whiteSpace: 'nowrap',
-                                                        overflow: 'hidden',
-                                                        textOverflow: 'ellipsis',
-                                                    },
-                                                    '& .MuiTableCell-head': {
-                                                        backgroundColor: 'primary.main',
-                                                        color: 'white',
-                                                        fontWeight: 'bold',
-                                                        fontSize: '0.7rem',
-                                                        position: 'sticky',
-                                                        top: 0,
-                                                        zIndex: 1,
-                                                        padding: '6px 8px',
-                                                    },
-                                                    '& .MuiTableRow-root': {
-                                                        '&:hover': {
-                                                            backgroundColor: 'action.hover',
-                                                        },
-                                                    },
+                                            Ticket Escalation
+                                        </Typography>
+                                    </Box>
+                                    
+                                    <Box display="flex" gap={2} flexDirection={{ xs: 'column', sm: 'row' }} width={{ xs: '100%', sm: 'auto' }}>
+                                        <Button
+                                            startIcon={<ArrowBackIcon />}
+                                            onClick={() => window.history.back()}
+                                            sx={{
+                                                fontWeight: '600',
+                                                color: 'primary.main',
+                                                textTransform: 'none',
+                                                borderRadius: '20px',
+                                                width: { xs: '100%', sm: 'auto' }
+                                            }}
+                                            variant="outlined"
+                                            fullWidth={isSmallMobile}
+                                        >
+                                            
+                                        </Button>
+                                        
+                                        <Tooltip title='Escalate Selected Tickets' arrow>
+                                            <Button
+                                                variant="contained"
+                                                startIcon={<ArrowUpwardIcon />}
+                                                onClick={handleEscalate}
+                                                disabled={selectedRows.length === 0}
+                                                sx={{ 
+                                                    textTransform: 'none', 
+                                                    borderRadius: '20px', 
+                                                    backgroundColor: '#dc2626',
+                                                    '&:hover': { backgroundColor: '#b91c1c' },
+                                                    width: { xs: '100%', sm: 'auto' }
                                                 }}
-                                                stickyHeader
+                                                fullWidth={isSmallMobile}
                                             >
-                                                <TableHead>
-                                                    <TableRow>
-                                                        <TableCell
-                                                            padding="checkbox"
-                                                            sx={{
-                                                                backgroundColor: 'primary.main',
-                                                                width: '40px',
-                                                                minWidth: '40px',
-                                                                maxWidth: '40px',
-                                                                padding: '4px'
-                                                            }}
-                                                        >
-                                                            <Checkbox
-                                                                size="small"
-                                                                color="default"
-                                                                indeterminate={selectedTickets.length > 0 && selectedTickets.length < paginatedTickets.length}
-                                                                checked={paginatedTickets.length > 0 && selectedTickets.length === paginatedTickets.length}
-                                                                onChange={handleSelectAll}
-                                                                sx={{
-                                                                    color: 'white',
-                                                                    '&.Mui-checked': { color: 'white' },
-                                                                    padding: '2px'
-                                                                }}
-                                                            />
-                                                        </TableCell>
-
-                                                        <TableCell sx={{ width: '100px', minWidth: '100px', padding: '4px 8px', }}>Ticket No</TableCell>
-                                                        <TableCell sx={{ width: '180px', minWidth: '180px', padding: '4px 8px', }}>Title</TableCell>
-                                                        <TableCell sx={{ width: '100px', minWidth: '100px', padding: '4px 8px', }}>Escalation</TableCell>
-                                                        <TableCell sx={{ width: '80px', minWidth: '80px', padding: '4px 8px', }}>Priority</TableCell>
-                                                        <TableCell sx={{ width: '80px', minWidth: '80px', padding: '4px 8px', }}>Status</TableCell>
-                                                        <TableCell sx={{ width: '100px', minWidth: '100px', padding: '4px 8px', }}>Assignee</TableCell>
-                                                        <TableCell sx={{ width: '80px', minWidth: '80px', padding: '4px 8px', }}>Created</TableCell>
-                                                        <TableCell sx={{ width: '100px', minWidth: '100px', padding: '4px 8px', }}>Last Escalated</TableCell>
-                                                    </TableRow>
-                                                </TableHead>
-
-                                                <TableBody>
-                                                    {paginatedTickets.length > 0 ? (
-                                                        paginatedTickets.map((ticket) => {
-                                                            const isSelected = selectedTickets.includes(ticket.TKTKEY);
-                                                            const isOverdue = ticket.ageInHours > 48;
-
-                                                            return (
-                                                                <TableRow
-                                                                    key={ticket.TKTKEY}
-                                                                    hover
-                                                                    selected={isSelected}
-                                                                    sx={{
-                                                                        cursor: 'pointer',
-                                                                        backgroundColor: isSelected ? 'action.selected' : 'inherit',
-                                                                        ...(isOverdue && {
-                                                                            borderLeft: '3px solid #ef4444',
-                                                                        }),
-                                                                        '& .MuiTableCell-root': {
-                                                                            padding: '4px 8px',
-                                                                            borderBottom: '1px solid rgba(224, 224, 224, 0.5)'
-                                                                        }
-                                                                    }}
-                                                                    onClick={(e) => {
-                                                                        if (e.target.type !== 'checkbox') {
-                                                                            handleTicketSelect({ target: { checked: !isSelected } }, ticket.TKTKEY);
-                                                                        }
-                                                                    }}
-                                                                >
-                                                                    <TableCell
-                                                                        padding="checkbox"
-                                                                        sx={{
-                                                                            width: '40px',
-                                                                            minWidth: '40px',
-                                                                            maxWidth: '40px',
-                                                                            padding: '2px'
-                                                                        }}
-                                                                        onClick={(e) => e.stopPropagation()}
-                                                                    >
-                                                                        <Checkbox
-                                                                            size="small"
-                                                                            color="primary"
-                                                                            checked={isSelected}
-                                                                            onChange={(e) => handleTicketSelect(e, ticket.TKTKEY)}
-                                                                            sx={{ padding: '2px' }}
-                                                                        />
-                                                                    </TableCell>
-
-                                                                    <TableCell sx={{
-                                                                        width: '100px',
-                                                                        minWidth: '100px',
-                                                                        maxWidth: '100px',
-                                                                        padding: '4px 8px'
-                                                                    }}>
-                                                                        <Box display="flex" alignItems="center" gap={0.5}>
-                                                                            <EscalatorIcon fontSize="small" sx={{ fontSize: '0.875rem' }} />
-                                                                            <Typography
-                                                                                variant="body2"
-                                                                                fontWeight="600"
-                                                                                color="primary"
-                                                                                sx={{
-                                                                                    overflow: 'hidden',
-                                                                                    textOverflow: 'ellipsis',
-                                                                                    fontSize: '0.75rem'
-                                                                                }}
-                                                                            >
-                                                                                {ticket.id}
-                                                                            </Typography>
-                                                                        </Box>
-                                                                    </TableCell>
-
-                                                                    <TableCell sx={{
-                                                                        width: '180px',
-                                                                        minWidth: '180px',
-                                                                        maxWidth: '180px',
-                                                                        padding: '4px 8px'
-                                                                    }}>
-                                                                        <Box>
-                                                                            <Typography
-                                                                                variant="subtitle2"
-                                                                                fontWeight="600"
-                                                                                sx={{
-                                                                                    overflow: 'hidden',
-                                                                                    textOverflow: 'ellipsis',
-                                                                                    whiteSpace: 'nowrap',
-                                                                                    fontSize: '0.75rem',
-                                                                                    lineHeight: 1.2
-                                                                                }}
-                                                                            >
-                                                                                {ticket.title}
-                                                                            </Typography>
-                                                                        </Box>
-                                                                    </TableCell>
-
-                                                                    <TableCell sx={{
-                                                                        width: '100px',
-                                                                        minWidth: '100px',
-                                                                        maxWidth: '100px',
-                                                                        padding: '4px 8px'
-                                                                    }}>
-                                                                        <Chip
-                                                                            label={`L${ticket.escalationLevel}`}
-                                                                            size="small"
-                                                                            color={getEscalationColor(ticket.escalationLevel)}
-                                                                            sx={{
-                                                                                fontWeight: 'bold',
-                                                                                maxWidth: '100%',
-                                                                                height: '22px',
-                                                                                '& .MuiChip-label': {
-                                                                                    px: 0.5,
-                                                                                    fontSize: '0.7rem'
-                                                                                }
-                                                                            }}
-                                                                        />
-                                                                    </TableCell>
-
-                                                                    <TableCell sx={{
-                                                                        width: '80px',
-                                                                        minWidth: '80px',
-                                                                        maxWidth: '80px',
-                                                                        padding: '4px 8px'
-                                                                    }}>
-                                                                        <Chip
-                                                                            label={ticket.priority}
-                                                                            size="small"
-                                                                            color={getPriorityColor(ticket.priority)}
-                                                                            sx={{
-                                                                                maxWidth: '100%',
-                                                                                height: '22px',
-                                                                                '& .MuiChip-label': {
-                                                                                    px: 0.5,
-                                                                                    fontSize: '0.7rem'
-                                                                                }
-                                                                            }}
-                                                                        />
-                                                                    </TableCell>
-
-                                                                    <TableCell sx={{
-                                                                        width: '80px',
-                                                                        minWidth: '80px',
-                                                                        maxWidth: '80px',
-                                                                        padding: '4px 8px'
-                                                                    }}>
-                                                                        <Chip
-                                                                            label={ticket.status.replace('-', ' ')}
-                                                                            size="small"
-                                                                            color={getStatusColor(ticket.status)}
-                                                                            variant="filled"
-                                                                            sx={{
-                                                                                maxWidth: '100%',
-                                                                                height: '22px',
-                                                                                '& .MuiChip-label': {
-                                                                                    px: 0.5,
-                                                                                    fontSize: '0.7rem'
-                                                                                }
-                                                                            }}
-                                                                        />
-                                                                    </TableCell>
-
-                                                                    <TableCell sx={{
-                                                                        width: '100px',
-                                                                        minWidth: '100px',
-                                                                        maxWidth: '100px',
-                                                                        padding: '4px 8px'
-                                                                    }}>
-                                                                        <Box display="flex" alignItems="center" gap={0.5}>
-                                                                            <Avatar
-                                                                                sx={{
-                                                                                    width: 20,
-                                                                                    height: 20,
-                                                                                    fontSize: '0.7rem',
-                                                                                    bgcolor: 'primary.main'
-                                                                                }}
-                                                                            >
-                                                                                {ticket.assignee.charAt(0).toUpperCase()}
-                                                                            </Avatar>
-                                                                            <Typography
-                                                                                variant="body2"
-                                                                                sx={{
-                                                                                    overflow: 'hidden',
-                                                                                    textOverflow: 'ellipsis',
-                                                                                    whiteSpace: 'nowrap',
-                                                                                    fontSize: '0.75rem'
-                                                                                }}
-                                                                            >
-                                                                                {ticket.assignee.split(' ')[0]}
-                                                                            </Typography>
-                                                                        </Box>
-                                                                    </TableCell>
-
-                                                                    <TableCell sx={{
-                                                                        width: '80px',
-                                                                        minWidth: '80px',
-                                                                        maxWidth: '80px',
-                                                                        padding: '4px 8px'
-                                                                    }}>
-                                                                        <Typography
-                                                                            variant="body2"
-                                                                            sx={{
-                                                                                overflow: 'hidden',
-                                                                                textOverflow: 'ellipsis',
-                                                                                whiteSpace: 'nowrap',
-                                                                                fontSize: '0.75rem'
-                                                                            }}
-                                                                        >
-                                                                            {formatDate(ticket.createdAt)}
-                                                                        </Typography>
-                                                                    </TableCell>
-
-                                                                    <TableCell sx={{
-                                                                        width: '100px',
-                                                                        minWidth: '100px',
-                                                                        maxWidth: '100px',
-                                                                        padding: '4px 8px'
-                                                                    }}>
-                                                                        <Typography
-                                                                            variant="body2"
-                                                                            color="text.secondary"
-                                                                            sx={{
-                                                                                overflow: 'hidden',
-                                                                                textOverflow: 'ellipsis',
-                                                                                whiteSpace: 'nowrap',
-                                                                                fontSize: '0.75rem'
-                                                                            }}
-                                                                        >
-                                                                            {formatDateTime(ticket.lastEscalated)}
-                                                                        </Typography>
-                                                                    </TableCell>
-                                                                </TableRow>
-                                                            );
-                                                        })
-                                                    ) : (
-                                                        <TableRow>
-                                                            <TableCell colSpan={10} align="center" sx={{ py: 2 }}>
-                                                                <Typography variant="body1" color="text.secondary" sx={{ fontSize: '0.875rem' }}>
-                                                                    No tickets found. Try adjusting your filters.
-                                                                </Typography>
-                                                            </TableCell>
-                                                        </TableRow>
-                                                    )}
-                                                </TableBody>
-                                            </Table>
-                                        </TableContainer>
-
-                                        {filteredTickets.length > 0 && (
-                                            <TablePagination
-                                                rowsPerPageOptions={[50, 100, 300, 500]}
-                                                component="div"
-                                                count={filteredTickets.length}
-                                                rowsPerPage={rowsPerPage}
-                                                page={page}
-                                                onPageChange={handleChangePage}
-                                                onRowsPerPageChange={handleChangeRowsPerPage}
-                                                sx={{
-                                                    mt: 0.5,
-                                                    '& .MuiTablePagination-toolbar': {
-                                                        minHeight: '22px',
-                                                        padding: '0 8px'
-                                                    },
-                                                    '& .MuiTablePagination-selectLabel, & .MuiTablePagination-displayedRows': {
-                                                        margin: 0
-                                                    }
-                                                }}
-                                            />
-                                        )}
+                                                {isSmallMobile ? 'Escalate' : 'Escalate Selected'} ({selectedRows.length})
+                                            </Button>
+                                        </Tooltip>
                                     </Box>
                                 </Box>
-                            </CardContent>
-                        </Card>
-                    </Grid>
-                </Grid>
+                            </Grid>
 
+                            {/* Search and Filters Section */}
+                            <Grid item xs={12}>
+                                <Divider sx={{ my: 1 }} />
+                            </Grid>
+                            
+                            <Grid item xs={12} md={4}>
+                                <TextField
+                                    fullWidth
+                                    placeholder="Search tickets..."
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    size="small"
+                                    InputProps={{
+                                        startAdornment: (
+                                            <InputAdornment position="start">
+                                                <SearchIcon />
+                                            </InputAdornment>
+                                        ),
+                                    }}
+                                />
+                            </Grid>
+
+                            <Grid item xs={6} sm={4} md={2}>
+                                <TextField
+                                    fullWidth
+                                    select
+                                    label="Status"
+                                    value={statusFilter}
+                                    onChange={(e) => setStatusFilter(e.target.value)}
+                                    size="small"
+                                >
+                                    <MenuItem value="all">All Status</MenuItem>
+                                    <MenuItem value="open">Open</MenuItem>
+                                    <MenuItem value="in-progress">In Progress</MenuItem>
+                                    <MenuItem value="hold">Hold</MenuItem>
+                                    <MenuItem value="resolved">Resolved</MenuItem>
+                                    <MenuItem value="closed">Closed</MenuItem>
+                                </TextField>
+                            </Grid>
+
+                            <Grid item xs={6} sm={4} md={2}>
+                                <TextField
+                                    fullWidth
+                                    select
+                                    label="Priority"
+                                    value={priorityFilter}
+                                    onChange={(e) => setPriorityFilter(e.target.value)}
+                                    size="small"
+                                >
+                                    <MenuItem value="all">All Priority</MenuItem>
+                                    <MenuItem value="High">High</MenuItem>
+                                    <MenuItem value="Medium">Medium</MenuItem>
+                                    <MenuItem value="Low">Low</MenuItem>
+                                </TextField>
+                            </Grid>
+
+                            <Grid item xs={6} sm={4} md={2}>
+                                <Box textAlign="center">
+                                    
+                                    {selectedRows.length > 0 && (
+                                        <Typography variant="caption" color="error" fontWeight="500" display="block">
+                                            Selected: {selectedRows.length}
+                                        </Typography>
+                                    )}
+                                </Box>
+                            </Grid>
+                        </Grid>
+                    </CardContent>
+                </Card>
+
+                {/* AG Grid Table for Desktop */}
+                {!isMobile && (
+                    <div style={{ height: 'calc(93vh - 100px)', width: '100%', marginTop: '0px' }}>
+                        {isLoading ? (
+                            <div style={{ 
+                                display: 'flex', 
+                                justifyContent: 'center', 
+                                alignItems: 'center', 
+                                height: '100%' 
+                            }}>
+                                <CircularProgress />
+                            </div>
+                        ) : (
+                            <ReusableTable
+                                columnDefs={columnDefs}
+                                rowData={filteredTickets}
+                                height="100%"
+                                theme="ag-theme-quartz"
+                                isDarkMode={false}
+                                pagination={true}
+                                paginationPageSize={25}
+                                paginationPageSizeSelector={[25, 50, 100, 250, 500]}
+                                quickFilter={false}
+                                onRowDoubleClick={handleRowDoubleClick}
+                                onSelectionChanged={handleSelectionChanged}
+                                loading={isLoading}
+                                enableExport={false}
+                                exportSelectedOnly={true}
+                                selectedRows={selectedRows}
+                                enableCheckbox={true}
+                                compactMode={true}
+                                rowHeight={28}
+                                enableResetButton={false}
+                                enableExitBackButton={false}
+                                defaultColDef={{
+                                    resizable: true,
+                                    sortable: true,
+                                    filter: true,
+                                    flex: 0,
+                                    minWidth: 80
+                                }}
+                                customGridOptions={{
+                                    suppressRowClickSelection: true,
+                                    rowSelection: 'multiple',
+                                    animateRows: true,
+                                    enableCellTextSelection: true,
+                                    ensureDomOrder: true
+                                }}
+                                exportParams={{
+                                    suppressTextAsCDATA: true,
+                                    fileName: 'Ticket_Escalation',
+                                    sheetName: 'Tickets'
+                                }}
+                                enableLanguageSwitch={false}
+                            />
+                        )}
+                    </div>
+                )}
+
+                {/* Mobile View */}
+                {isMobile && (
+                    <Box sx={{ mt: 2 }}>
+                        {isLoading ? (
+                            <Box display="flex" justifyContent="center" alignItems="center" py={4}>
+                                <CircularProgress />
+                            </Box>
+                        ) : (
+                            filteredTickets.map((ticket, index) => (
+                                <MobileTicketCard key={ticket.TKTKEY || index} ticket={ticket} />
+                            ))
+                        )}
+                        {filteredTickets.length === 0 && !isLoading && (
+                            <Card sx={{ textAlign: 'center', py: 8, boxShadow: 3 }}>
+                                <CardContent>
+                                    <SearchIcon sx={{ fontSize: 64, color: 'grey.400', mb: 2 }} />
+                                    <Typography variant="h5" gutterBottom fontWeight="600">
+                                        No tickets found
+                                    </Typography>
+                                    <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
+                                        {searchTerm || statusFilter !== 'all' || priorityFilter !== 'all'
+                                            ? 'Try adjusting your search or filter criteria to find what you are looking for.'
+                                            : 'No tickets have been created yet.'
+                                        }
+                                    </Typography>
+                                </CardContent>
+                            </Card>
+                        )}
+                    </Box>
+                )}
+
+                {/* Escalation Dialog */}
                 <Dialog
                     open={escalationDialogOpen}
                     onClose={() => !loading && setEscalationDialogOpen(false)}
@@ -779,12 +763,19 @@ const TicketEscalation = () => {
                         <Box display="flex" alignItems="center" gap={1}>
                             <ArrowUpwardIcon color="error" />
                             <Typography variant="h6">Escalate Tickets</Typography>
+                            <IconButton
+                                onClick={() => setEscalationDialogOpen(false)}
+                                sx={{ position: 'absolute', right: 8, top: 8 }}
+                                disabled={loading}
+                            >
+                                <CloseIcon />
+                            </IconButton>
                         </Box>
                     </DialogTitle>
 
                     <DialogContent>
                         <Alert severity="warning" sx={{ mb: 2 }}>
-                            You are about to escalate {selectedTickets.length} ticket(s) to a higher level.
+                            You are about to escalate {selectedRows.length} ticket(s) to a higher level.
                         </Alert>
 
                         <Stack spacing={3}>
@@ -823,16 +814,10 @@ const TicketEscalation = () => {
                                 loadingText="Loading employees..."
                                 noOptionsText="No employees found"
                                 popupIcon={<ExpandMoreIcon />}
-                                sx={{
-                                    '& .MuiAutocomplete-inputRoot': {
-                                        pr: '8px !important',
-                                    }
-                                }}
                             />
                             <Alert severity="info">
                                 <Typography variant="body2">
-                                    <strong>Selected Tickets:</strong> {selectedTickets.length}
-                                    <br />
+                                    <strong>Selected Tickets:</strong> {selectedRows.length}
                                 </Typography>
                             </Alert>
                         </Stack>

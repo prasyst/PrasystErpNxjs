@@ -8,6 +8,7 @@ import {
 } from 'react-icons/md';
 import { FaExclamationTriangle } from 'react-icons/fa';
 import { TiTicket } from 'react-icons/ti';
+import ReusableTable, { getCustomDateFilter } from '@/components/datatable/ReusableTable';
 import axiosInstance from '@/lib/axios';
 import {
     Box, Typography, Button, Grid, Card, CardContent, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Chip, Stack,
@@ -1169,200 +1170,140 @@ const MyTickets = () => {
                     </Box>
 
                     {loading ? (
-                        <Box sx={{ textAlign: 'center', py: 3 }}>
-                            <CircularProgress size={24} sx={{ mb: 1 }} />
-                            <Typography variant="caption" color="text.secondary">
-                                Loading tickets...
-                            </Typography>
-                        </Box>
-                    ) : tickets.length === 0 ? (
-                        <Box sx={{ textAlign: 'center', py: 3, px: 2 }}>
-                            <ErrorOutlineIcon sx={{ fontSize: 32, color: 'grey.400', mb: 1 }} />
-                            <Typography variant="body2" color="text.secondary" gutterBottom>
-                                No tickets found
-                            </Typography>
-                            <Button
-                                size="small"
-                                variant="outlined"
-                                onClick={() => router.push('/emp-tickets/create-tickets')}
-                                sx={{ mt: 0.5, fontSize: '0.75rem' }}
+    <Box sx={{ textAlign: 'center', py: 3 }}>
+        <CircularProgress size={24} sx={{ mb: 1 }} />
+        <Typography variant="caption" color="text.secondary">
+            Loading tickets...
+        </Typography>
+    </Box>
+) : tickets.length === 0 ? (
+    <Box sx={{ textAlign: 'center', py: 3, px: 2 }}>
+        <ErrorOutlineIcon sx={{ fontSize: 32, color: 'grey.400', mb: 1 }} />
+        <Typography variant="body2" color="text.secondary" gutterBottom>
+            No tickets found
+        </Typography>
+        <Button
+            size="small"
+            variant="outlined"
+            onClick={() => router.push('/emp-tickets/create-tickets')}
+            sx={{ mt: 0.5, fontSize: '0.75rem' }}
+        >
+            Create First Ticket
+        </Button>
+    </Box>
+) : isMobile ? (
+    <Box>
+        {tickets.slice(0, 5).map((ticket, index) => (
+            <Box
+                key={index}
+                sx={{
+                    p: 1,
+                    borderBottom: '1px solid',
+                    borderColor: 'divider',
+                    cursor: 'pointer',
+                    transition: 'background-color 0.2s',
+                    '&:hover': { bgcolor: 'action.hover' },
+                    '&:last-child': { borderBottom: 0 }
+                }}
+                onClick={() => router.push(`/emp-tickets/ticket-detail/${ticket.id}`)}
+            >
+                <Stack direction="row" justifyContent="space-between" alignItems="flex-start" spacing={0.5}>
+                    <Box sx={{ flex: 1, minWidth: 0 }}>
+                        <Stack direction="row" spacing={0.5} alignItems="center" mb={0.5}>
+                            <Typography
+                                variant="caption"
+                                fontWeight="bold"
+                                color="primary.main"
+                                sx={{ fontSize: '0.7rem' }}
                             >
-                                Create First Ticket
-                            </Button>
-                        </Box>
-                    ) : isMobile ? (
-                        <Box>
-                            {tickets.slice(0, 5).map((ticket, index) => (
-                                <Box
-                                    key={index}
-                                    sx={{
-                                        p: 1,
-                                        borderBottom: '1px solid',
-                                        borderColor: 'divider',
-                                        cursor: 'pointer',
-                                        transition: 'background-color 0.2s',
-                                        '&:hover': { bgcolor: 'action.hover' },
-                                        '&:last-child': { borderBottom: 0 }
-                                    }}
-                                    onClick={() => router.push(`/emp-tickets/ticket-detail/${ticket.id}`)}
-                                >
-                                    <Stack direction="row" justifyContent="space-between" alignItems="flex-start" spacing={0.5}>
-                                        <Box sx={{ flex: 1, minWidth: 0 }}>
-                                            <Stack direction="row" spacing={0.5} alignItems="center" mb={0.5}>
-                                                <Typography
-                                                    variant="caption"
-                                                    fontWeight="bold"
-                                                    color="primary.main"
-                                                    sx={{ fontSize: '0.7rem' }}
-                                                >
-                                                    #{ticket.id}
-                                                </Typography>
-                                                <Box sx={{ flex: 1 }}>
-                                                    <PriorityBadge priority={ticket.priority} />
-                                                </Box>
-                                            </Stack>
+                                #{ticket.id}
+                            </Typography>
+                            <Box sx={{ flex: 1 }}>
+                                <PriorityBadge priority={ticket.priority} />
+                            </Box>
+                        </Stack>
 
-                                            <Typography
-                                                variant="body2"
-                                                fontWeight="medium"
-                                                sx={{
-                                                    fontSize: '0.8rem',
-                                                    overflow: 'hidden',
-                                                    textOverflow: 'ellipsis',
-                                                    whiteSpace: 'nowrap',
-                                                    mb: 0.5
-                                                }}
-                                            >
-                                                {ticket.title}
-                                            </Typography>
+                        <Typography
+                            variant="body2"
+                            fontWeight="medium"
+                            sx={{
+                                fontSize: '0.8rem',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap',
+                                mb: 0.5
+                            }}
+                        >
+                            {ticket.title}
+                        </Typography>
 
-                                            <Stack direction="row" justifyContent="space-between" alignItems="center">
-                                                <Stack direction="row" spacing={1} alignItems="center">
-                                                    <AccessTimeIcon sx={{ fontSize: 10, color: 'text.secondary' }} />
-                                                    <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.65rem' }}>
-                                                        {formatDate(ticket.createdAt)}
-                                                    </Typography>
-                                                </Stack>
-                                                <StatusBadge status={ticket.status} />
-                                            </Stack>
-                                        </Box>
-                                    </Stack>
-                                </Box>
-                            ))}
-                        </Box>
-                    ) : (
-                        <TableContainer>
-                            <Table size="small" sx={{ minWidth: 650 }}>
-                                <TableHead>
-                                    <TableRow sx={{ bgcolor: 'grey.50' }}>
-                                        <TableCell sx={{ fontWeight: 'bold', fontSize: '0.75rem', py: 0.45, width: '15%' }}>
-                                            TktNo
-                                        </TableCell>
-                                        <TableCell sx={{ fontWeight: 'bold', fontSize: '0.75rem', py: 0.45, width: '15%' }}>
-                                            TktDt
-                                        </TableCell>
-                                        <TableCell sx={{ fontWeight: 'bold', fontSize: '0.75rem', py: 0.45, width: '15%' }}>
-                                            Category
-                                        </TableCell>
-                                        <TableCell sx={{ fontWeight: 'bold', fontSize: '0.75rem', py: 0.45, width: '15%' }}>
-                                            SubCategory
-                                        </TableCell>
-                                        <TableCell sx={{ fontWeight: 'bold', fontSize: '0.75rem', py: 0.45, width: '15%' }}>
-                                            Service/Sub
-                                        </TableCell>
-                                        <TableCell sx={{ fontWeight: 'bold', fontSize: '0.75rem', py: 0.45, width: '15%' }}>
-                                            Tag
-                                        </TableCell>
-                                        <TableCell sx={{ fontWeight: 'bold', fontSize: '0.75rem', py: 0.45, width: '30%' }}>
-                                            Remark
-                                        </TableCell>
-                                        <TableCell sx={{ fontWeight: 'bold', fontSize: '0.75rem', py: 0.45, width: '30%' }}>
-                                            ResRemark
-                                        </TableCell>
-                                        <TableCell sx={{ fontWeight: 'bold', fontSize: '0.75rem', py: 0.45, width: '15%' }}>
-                                            Priority
-                                        </TableCell>
-                                        <TableCell sx={{ fontWeight: 'bold', fontSize: '0.75rem', py: 0.45, width: '15%' }}>
-                                            Status
-                                        </TableCell>
-                                        <TableCell sx={{ fontWeight: 'bold', fontSize: '0.75rem', py: 0.45, width: '10%' }}>
-                                            Action
-                                        </TableCell>
-                                    </TableRow>
-                                </TableHead>
-                                <TableBody>
-                                    {tickets.slice(0, 5).map((ticket, index) => (
-                                        <TableRow
-                                            key={index}
-                                            hover
-                                            sx={{
-                                                cursor: 'pointer',
-                                                '&:hover': { bgcolor: 'action.hover' },
-                                                height: 48
-                                            }}
-                                        >
-                                            <TableCell sx={{ py: 0.45 }}>
-                                                <Typography variant="caption" fontWeight="medium" color="primary.main">
-                                                    {ticket.id}
-                                                </Typography>
-                                            </TableCell>
-                                            <TableCell sx={{ py: 0.45 }}>
-                                                <Typography variant="caption" fontWeight="medium" color="primary.main">
-                                                    {formatDate(ticket.TktDt)}
-                                                </Typography>
-                                            </TableCell>
-                                            <TableCell sx={{ py: 0.45 }}>
-                                                <Typography variant="caption" fontWeight="medium" color="primary.main">
-                                                    {ticket.category}
-                                                </Typography>
-                                            </TableCell>
-                                            <TableCell sx={{ py: 0.45 }}>
-                                                <Typography variant="caption" fontWeight="medium" color="primary.main">
-                                                    {ticket.SubCat}
-                                                </Typography>
-                                            </TableCell>
-                                            <TableCell sx={{ py: 0.45 }}>
-                                                <Typography variant="caption" fontWeight="medium" color="primary.main">
-                                                    {ticket.Service}
-                                                </Typography>
-                                            </TableCell>
-                                            <TableCell sx={{ py: 0.45 }}>
-                                                <Typography variant="caption" fontWeight="medium" color="primary.main">
-                                                    {ticket.TicketTag}
-                                                </Typography>
-                                            </TableCell>
-                                            <TableCell sx={{ py: 0.45 }}>
-                                                <Typography variant="body2" fontWeight="medium" sx={{ fontSize: '0.8rem' }}>
-                                                    {ticket.title}
-                                                </Typography>
-                                            </TableCell>
-                                            <TableCell sx={{ py: 0.45 }}>
-                                                <Typography variant="body2" fontWeight="medium" sx={{ fontSize: '0.8rem' }}>
-                                                    {ticket.ResRemark}
-                                                </Typography>
-                                            </TableCell>
-                                            <TableCell sx={{ py: 0.45 }}>
-                                                <PriorityBadge priority={ticket.priority} />
-                                            </TableCell>
-                                            <TableCell sx={{ py: 0.45 }}>
-                                                <StatusBadge status={ticket.status} />
-                                            </TableCell>
-                                            <TableCell sx={{ py: 0.45 }}>
-                                                <Tooltip title="View" arrow>
-                                                    <IconButton
-                                                        size="small"
-                                                        sx={{ p: 0.5 }}
-                                                    >
-                                                        <VisibilityIcon fontSize="small" />
-                                                    </IconButton>
-                                                </Tooltip>
-                                            </TableCell>
-                                        </TableRow>
-                                    ))}
-                                </TableBody>
-                            </Table>
-                        </TableContainer>
-                    )}
+                        <Stack direction="row" justifyContent="space-between" alignItems="center">
+                            <Stack direction="row" spacing={1} alignItems="center">
+                                <AccessTimeIcon sx={{ fontSize: 10, color: 'text.secondary' }} />
+                                <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.65rem' }}>
+                                    {formatDate(ticket.createdAt)}
+                                </Typography>
+                            </Stack>
+                            <StatusBadge status={ticket.status} />
+                        </Stack>
+                    </Box>
+                </Stack>
+            </Box>
+        ))}
+    </Box>
+) : (
+    <div style={{ height: '500px', width: '100%' }}>
+        <ReusableTable
+            columnDefs={[
+                { field: "id", headerName: "TktNo", width: 120, filter: 'agSetColumnFilter', sortable: true, cellRenderer: (params) => (
+                    <Typography variant="caption" fontWeight="medium" color="primary.main">
+                        {params.value}
+                    </Typography>
+                )},
+                { field: "TktDt", headerName: "TktDt", width: 110, filter: 'agDateColumnFilter', filterParams: { browserDatePicker: true, customFilter: getCustomDateFilter() }, sortable: true, valueFormatter: (params) => formatDate(params.value) },
+                { field: "category", headerName: "Category", width: 130, filter: 'agSetColumnFilter', sortable: true },
+                { field: "SubCat", headerName: "SubCategory", width: 130, filter: 'agSetColumnFilter', sortable: true },
+                { field: "Service", headerName: "Service/Sub", width: 130, filter: 'agSetColumnFilter', sortable: true },
+                { field: "TicketTag", headerName: "Tag", width: 110, filter: 'agSetColumnFilter', sortable: true },
+                { field: "title", headerName: "Remark", width: 180, flex: 1, filter: 'agSetColumnFilter', sortable: true },
+                { field: "ResRemark", headerName: "ResRemark", width: 180, flex: 1, filter: 'agSetColumnFilter', sortable: true },
+                { field: "priority", headerName: "Priority", width: 110, filter: 'agSetColumnFilter', sortable: true, cellRenderer: (params) => <PriorityBadge priority={params.value} /> },
+                { field: "status", headerName: "Status", width: 120, filter: 'agSetColumnFilter', sortable: true, cellRenderer: (params) => <StatusBadge status={params.value} /> },
+                { 
+                    field: "action", 
+                    headerName: "Action", 
+                    width: 80,
+                    sortable: false,
+                    filter: false,
+                    cellRenderer: (params) => (
+                        <Tooltip title="View" arrow>
+                            <IconButton size="small" onClick={() => router.push(`/emp-tickets/ticket-detail/${params.data.id}`)}>
+                                <VisibilityIcon fontSize="small" />
+                            </IconButton>
+                        </Tooltip>
+                    )
+                }
+            ]}
+            rowData={tickets}
+            height="100%"
+            theme="ag-theme-quartz"
+            pagination={true}
+            paginationPageSize={25}
+            paginationPageSizeSelector={[25, 50, 100]}
+            loading={loading}
+            enableCheckbox={false}
+            compactMode={true}
+            rowHeight={25}
+            defaultColDef={{
+                resizable: true,
+                sortable: true,
+                filter: true,
+                minWidth: 80
+            }}
+            onRowDoubleClick={(params) => router.push(`/emp-tickets/ticket-detail/${params.data.id}`)}
+        />
+    </div>
+)}
                 </Card>
             </Container>
         </Box>

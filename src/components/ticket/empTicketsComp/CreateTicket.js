@@ -538,7 +538,7 @@ const CreateTicketPage = () => {
             : `Ticket ${newTktNo} created successfully!`
         );
         setTimeout(() => {
-          router.push("/tickets/all-tickets");
+          router.push("/emp-tickets/all-tickets");
         }, 1500);
       } else {
         toast.error(response.data.MESSAGE || "Failed to save ticket.");

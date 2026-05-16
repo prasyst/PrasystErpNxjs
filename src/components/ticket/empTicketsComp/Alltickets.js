@@ -1,28 +1,26 @@
 'use client';
-
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import {
-  Box, Container, Card, CardContent, Typography, Button, TextField, MenuItem, IconButton, Chip, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Stack,
-  InputAdornment, Dialog, DialogTitle, DialogContent, DialogActions, useMediaQuery, useTheme, Grid, Avatar, Divider, Tooltip, Fab, Checkbox,
+  Box, Container, Card, CardContent, Typography, Button, TextField, MenuItem, IconButton, Chip, 
+  InputAdornment, Dialog, DialogTitle, DialogContent, DialogActions, useMediaQuery, useTheme, 
+  Grid, Avatar, Divider, Tooltip, Fab, CircularProgress
 } from '@mui/material';
 import {
   ArrowBack as ArrowBackIcon,
   Add as AddIcon,
   Search as SearchIcon,
-  FilterList as FilterListIcon,
   Edit as EditIcon,
   Delete as DeleteIcon,
   Visibility as VisibilityIcon,
-  MoreVert as MoreVertIcon,
   Close as CloseIcon
 } from '@mui/icons-material';
 import axiosInstance from '@/lib/axios';
 import TicketDetailsDialog from '../empTicketsComp/ViewTicketDetailsDialog/TicketDetailsDialog';
+import ReusableTable, { getCustomDateFilter } from '@/components/datatable/ReusableTable';
 
 const AllTicketsPage = () => {
   const router = useRouter();
-  //   const searchParams = useSearchParams();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const isSmallMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -39,6 +37,7 @@ const AllTicketsPage = () => {
   const [ticketDetailsOpen, setTicketDetailsOpen] = useState(false);
   const [selectedRows, setSelectedRows] = useState([]);
   const [empKey, setEmpKey] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     const key = localStorage.getItem("EMP_KEY");
@@ -54,6 +53,7 @@ const AllTicketsPage = () => {
   }, [empKey]);
 
   const fetchTicketDash = async () => {
+    setIsLoading(true);
     try {
       const response = await axiosInstance.post(
         "TrnTkt/GetTrnTktDashBoard?currentPage=1&limit=50",
@@ -85,6 +85,7 @@ const AllTicketsPage = () => {
           tktFor: tkt.TKTFOR === "M" ? "Machine" : "Department",
           ccnName: tkt.CCN_NAME || "",
           machineryName: tkt.MACHINERY_NAME || "",
+          mobileNo: tkt.MOBILENO || "-",
         }));
 
         setTicketData(mappedTickets);
@@ -92,6 +93,8 @@ const AllTicketsPage = () => {
       }
     } catch (error) {
       toast.error("Failed to load tickets");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -115,6 +118,8 @@ const AllTicketsPage = () => {
     }
 
     setFilteredTickets(filtered);
+    // Clear selected rows when filters change
+    setSelectedRows([]);
   }, [searchTerm, statusFilter, priorityFilter, ticketData]);
 
   const getStatusColor = (status) => {
@@ -123,7 +128,7 @@ const AllTicketsPage = () => {
       case 'in-progress': return 'warning';
       case 'resolved': return 'success';
       case 'closed': return 'default';
-      case 'hold': return 'secondary.main';
+      case 'hold': return 'secondary';
       default: return 'default';
     }
   };
@@ -158,7 +163,7 @@ const AllTicketsPage = () => {
 
   const handleDeleteConfirm = () => {
     if (ticketToDelete) {
-      setTickets(prev => prev.filter(ticket => ticket.id !== ticketToDelete.id));
+      setTicketData(prev => prev.filter(ticket => ticket.TKTKEY !== ticketToDelete.TKTKEY));
       setDeleteDialogOpen(false);
       setTicketToDelete(null);
     }
@@ -176,21 +181,358 @@ const AllTicketsPage = () => {
     return name.split(' ').map(n => n[0]).join('').toUpperCase();
   };
 
-  const handleSelectAll = (event) => {
-    if (event.target.checked) {
-      setSelectedRows(filteredTickets.map(t => t.TKTKEY));
-    } else {
-      setSelectedRows([]);
-    }
+  const handleRowDoubleClick = (params) => {
+    handleViewTicket(params.data);
   };
 
-  const handleRowSelect = (event, id) => {
-    if (event.target.checked) {
-      setSelectedRows(prev => [...prev, id]);
-    } else {
-      setSelectedRows(prev => prev.filter(rowId => rowId !== id));
-    }
+  const handleSelectionChanged = (selectedNodes) => {
+    const selectedIds = selectedNodes.map(node => node.data.TKTKEY);
+    setSelectedRows(selectedIds);
   };
+
+  const columnDefs = useMemo(() => [
+  { 
+    headerName: '', 
+    width: 40, 
+    maxWidth: 40, 
+    checkboxSelection: true,
+    headerCheckboxSelection: true,
+    lockPosition: true,
+    suppressMenu: true,
+    sortable: false,
+    filter: false,
+    resizable: false,
+    cellClass: 'checkbox-cell',
+    headerClass: 'checkbox-header'
+  },
+  { 
+    field: "id", 
+    headerName: "Ticket No", 
+    width: 120,
+    minWidth: 110,
+    filter: 'agSetColumnFilter',
+    filterParams: {
+      defaultToNothingSelected: true,
+    },
+    sortable: true,
+    cellClass: 'ticket-number-cell',
+    headerClass: 'header-primary',
+    cellRenderer: (params) => (
+      <Box sx={{ display: 'flex', alignItems: 'center', height: '100%' }}>
+        <Typography 
+          variant="body2" 
+          fontWeight="700" 
+          sx={{ 
+            fontSize: '0.8rem',
+            color: '#1976d2',
+            letterSpacing: '0.3px',
+            fontFamily: 'monospace',
+            '&:hover': { textDecoration: 'underline', cursor: 'pointer' }
+          }}
+          onClick={() => handleViewTicket(params.data)}
+        >
+          {params.value}
+        </Typography>
+      </Box>
+    )
+  },
+  { 
+    field: "RAISEBYNM", 
+    headerName: "Raised By", 
+    width: 150,
+    minWidth: 140,
+    flex: 1,
+    filter: 'agSetColumnFilter',
+    sortable: true,
+    cellClass: 'user-cell',
+    headerClass: 'header-secondary',
+    cellRenderer: (params) => (
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+        
+        <Typography variant="body2" fontWeight="500" sx={{ fontSize: '0.8rem' }}>
+          {params.value}
+        </Typography>
+      </Box>
+    )
+  },
+  { 
+    field: "title", 
+    headerName: "Title", 
+    width: 200,
+    minWidth: 180,
+    flex: 1.5,
+    filter: 'agSetColumnFilter',
+    sortable: true,
+    cellClass: 'title-cell',
+    headerClass: 'header-secondary',
+    cellRenderer: (params) => (
+      <Tooltip title={params.value} arrow placement="top">
+        <Typography 
+          variant="body2" 
+          fontWeight="500" 
+          sx={{ 
+            fontSize: '0.8rem',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+            color: '#1a1a1a'
+          }}
+        >
+          {params.value}
+        </Typography>
+      </Tooltip>
+    )
+  },
+  { 
+    field: "TKTCATNAME", 
+    headerName: "Category", 
+    width: 140,
+    minWidth: 130,
+    flex: 1,
+    filter: 'agSetColumnFilter',
+    sortable: true,
+    cellClass: 'category-cell',
+    headerClass: 'header-secondary',
+    cellRenderer: (params) => (
+      <Chip 
+        label={params.value || 'N/A'} 
+        size="small" 
+        variant="outlined" 
+        sx={{ 
+          fontSize: '0.7rem', 
+          height: '24px',
+          borderRadius: '12px',
+          borderColor: '#90caf9',
+          color: '#1565c0',
+          fontWeight: 500,
+          '& .MuiChip-label': { px: 1 }
+        }} 
+      />
+    )
+  },
+  { 
+    field: "TKTSUBCATNAME", 
+    headerName: "Sub Category", 
+    width: 140,
+    minWidth: 130,
+    flex: 1,
+    filter: 'agSetColumnFilter',
+    sortable: true,
+    cellClass: 'subcategory-cell',
+    headerClass: 'header-secondary',
+    cellRenderer: (params) => (
+      <Chip 
+        label={params.value || 'N/A'} 
+        size="small" 
+        variant="filled" 
+        sx={{ 
+          fontSize: '0.7rem', 
+          height: '24px',
+          borderRadius: '12px',
+          bgcolor: '#f5f5f5',
+          color: '#616161',
+          fontWeight: 500
+        }} 
+      />
+    )
+  },
+  { 
+    field: "MOBILENO", 
+    headerName: "Mobile", 
+    width: 120,
+    minWidth: 110,
+    filter: 'agSetColumnFilter',
+    sortable: true,
+    cellClass: 'mobile-cell',
+    headerClass: 'header-secondary',
+    cellRenderer: (params) => (
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+        <Typography variant="body2" sx={{ fontSize: '0.75rem', color: '#666' }}>
+          {params.value || '-'}
+        </Typography>
+      </Box>
+    )
+  },
+  { 
+    field: "priority", 
+    headerName: "Priority", 
+    width: 110,
+    minWidth: 100,
+    filter: 'agSetColumnFilter',
+    sortable: true,
+    cellClass: 'priority-cell',
+    headerClass: 'header-secondary',
+    cellRenderer: (params) => {
+      const priorityConfig = {
+        'High': { color: '#d32f2f', bgcolor: '#ffebee', icon: '🔴' },
+        'Medium': { color: '#ed6c02', bgcolor: '#fff4e5', icon: '🟠' },
+        'Low': { color: '#2e7d32', bgcolor: '#e8f5e9', icon: '🟢' }
+      };
+      const config = priorityConfig[params.value] || priorityConfig['Medium'];
+      return (
+        <Chip 
+          label={params.value} 
+          size="small" 
+          sx={{ 
+            fontSize: '0.7rem', 
+            height: '26px',
+            fontWeight: 600,
+            backgroundColor: config.bgcolor,
+            color: config.color,
+            '& .MuiChip-label': { px: 1.5 }
+          }} 
+        />
+      );
+    }
+  },
+  { 
+    field: "status", 
+    headerName: "Status", 
+    width: 120,
+    minWidth: 110,
+    filter: 'agSetColumnFilter',
+    sortable: true,
+    cellClass: 'status-cell',
+    headerClass: 'header-secondary',
+    cellRenderer: (params) => {
+      const statusConfig = {
+        'open': { label: 'Open', color: '#1976d2', bgcolor: '#e3f2fd' },
+        'in-progress': { label: 'In Progress', color: '#ed6c02', bgcolor: '#fff3e0' },
+        'hold': { label: 'Hold', color: '#9c27b0', bgcolor: '#f3e5f5' },
+        'resolved': { label: 'Resolved', color: '#2e7d32', bgcolor: '#e8f5e9' },
+        'closed': { label: 'Closed', color: '#757575', bgcolor: '#f5f5f5' }
+      };
+      const config = statusConfig[params.value] || statusConfig['open'];
+      return (
+        <Chip
+          label={config.label}
+          size="small"
+          sx={{ 
+            fontSize: '0.7rem', 
+            height: '26px',
+            fontWeight: 600,
+            backgroundColor: config.bgcolor,
+            color: config.color,
+            '& .MuiChip-label': { px: 1.5 }
+          }}
+        />
+      );
+    }
+  },
+  { 
+    field: "tktFor", 
+    headerName: "Type", 
+    width: 115,
+    minWidth: 90,
+    filter: 'agSetColumnFilter',
+    sortable: true,
+    cellClass: 'type-cell',
+    headerClass: 'header-secondary',
+    cellRenderer: (params) => (
+      <Chip
+        label={params.value === 'Machine' ? '⚙️ Machine' : '🏢 Dept'}
+        size="small"
+        variant="outlined"
+        sx={{ 
+          fontSize: '0.7rem', 
+          height: '24px',
+          borderRadius: '12px',
+          fontWeight: 500
+        }}
+      />
+    )
+  },
+  { 
+    field: "createdAt", 
+    headerName: "Raised On", 
+    width: 130,
+    minWidth: 120,
+    filter: 'agDateColumnFilter',
+    filterParams: {
+      browserDatePicker: true,
+      filterOptions: ['equals', 'notEqual', 'lessThan', 'greaterThan', 'inRange'],
+      customOptionLabel: 'Custom Dates',
+      customFilter: getCustomDateFilter()
+    },
+    sortable: true,
+    cellClass: 'date-cell',
+    headerClass: 'header-secondary',
+    valueFormatter: (params) => formatDate(params.value),
+    cellRenderer: (params) => (
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+        <Typography variant="body2" sx={{ fontSize: '0.75rem', color: '#666' }}>
+          {formatDate(params.value)}
+        </Typography>
+      </Box>
+    )
+  },
+  { 
+    field: "REASON", 
+    headerName: "Reason", 
+    width: 150,
+    minWidth: 130,
+    flex: 1,
+    filter: 'agSetColumnFilter',
+    sortable: true,
+    cellClass: 'reason-cell',
+    headerClass: 'header-secondary',
+    cellRenderer: (params) => (
+      <Tooltip title={params.value || 'No reason provided'} arrow placement="top">
+        <Typography 
+          variant="body2" 
+          sx={{ 
+            fontSize: '0.75rem', 
+            color: '#555',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap'
+          }}
+        >
+          {params.value || '-'}
+        </Typography>
+      </Tooltip>
+    )
+  },
+  { 
+    headerName: "Actions", 
+    width: 100,
+    minWidth: 90,
+    sortable: false,
+    filter: false,
+    cellClass: 'action-cell',
+    headerClass: 'header-action',
+    cellRenderer: (params) => (
+      <Box display="flex" alignItems="center" gap={0.75}>
+        <Tooltip title="View Details" arrow>
+          <IconButton 
+            size="small" 
+            onClick={() => handleViewTicket(params.data)}
+            sx={{ 
+              padding: '4px',
+              bgcolor: '#e3f2fd',
+              '&:hover': { bgcolor: '#bbdefb' }
+            }}
+          >
+            <VisibilityIcon sx={{ fontSize: '1rem', color: '#1976d2' }} />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Edit Ticket" arrow>
+          <IconButton 
+            size="small" 
+            onClick={() => handleEditTicket(params.data)}
+            sx={{ 
+              padding: '4px',
+              bgcolor: '#fff3e0',
+              '&:hover': { bgcolor: '#ffe0b2' }
+            }}
+          >
+            <EditIcon sx={{ fontSize: '1rem', color: '#ed6c02' }} />
+          </IconButton>
+        </Tooltip>
+      </Box>
+    )
+  }
+], []);
 
   const MobileTicketCard = ({ ticket }) => (
     <Card sx={{ mb: 2, cursor: 'pointer' }} onClick={() => handleViewTicket(ticket)}>
@@ -283,349 +625,6 @@ const AllTicketsPage = () => {
     </Card>
   );
 
-  const DesktopTableView = () => (
-    <TableContainer
-      component={Paper}
-      sx={{
-        boxShadow: 2,
-        maxHeight: 500,
-        overflow: 'auto',
-        '&::-webkit-scrollbar': {
-          width: '6px',
-          height: '6px'
-        },
-        '&::-webkit-scrollbar-thumb': {
-          backgroundColor: '#c1c1c1',
-          borderRadius: '3px'
-        }
-      }}
-    >
-      <Table
-        sx={{
-          minWidth: 1000,
-          '& .MuiTableCell-root': {
-            padding: '4px 8px',
-            fontSize: '0.75rem',
-            lineHeight: 1.1,
-            whiteSpace: 'nowrap',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-          },
-          '& .MuiTableCell-head': {
-            padding: '6px 8px',
-            fontSize: '0.7rem',
-            textTransform: 'uppercase',
-            letterSpacing: '0.3px',
-            backgroundColor: 'primary.main',
-            color: 'white',
-            fontWeight: 600,
-            position: 'sticky',
-            top: 0,
-            zIndex: 10,
-            '&:first-of-type': {
-              borderTopLeftRadius: '4px',
-            },
-            '&:last-of-type': {
-              borderTopRightRadius: '4px',
-            }
-          },
-          '& .MuiTableRow-root': {
-            height: '42px',
-            '&:hover': {
-              backgroundColor: 'action.hover',
-            },
-            '&.Mui-selected': {
-              backgroundColor: 'primary.lighter',
-            },
-            '&.Mui-selected:hover': {
-              backgroundColor: 'primary.light',
-            }
-          },
-        }}
-        stickyHeader
-      >
-        <TableHead>
-          <TableRow>
-            <TableCell
-              padding="checkbox"
-              sx={{
-                backgroundColor: 'primary.main',
-                width: '40px',
-                minWidth: '40px',
-                maxWidth: '40px'
-              }}
-            >
-              <Checkbox
-                size="small"
-                color="default"
-                indeterminate={selectedRows.length > 0 && selectedRows.length < filteredTickets.length}
-                checked={filteredTickets.length > 0 && selectedRows.length === filteredTickets.length}
-                onChange={handleSelectAll}
-                sx={{
-                  color: 'white',
-                  padding: '2px',
-                  '&.Mui-checked': { color: 'white' },
-                  '&.MuiCheckbox-indeterminate': { color: 'white' },
-                }}
-              />
-            </TableCell>
-
-            <TableCell sx={{ width: '100px', minWidth: '100px' }}>Ticket No</TableCell>
-            <TableCell sx={{ width: '180px', minWidth: '180px' }}>Title</TableCell>
-            <TableCell sx={{ width: '120px', minWidth: '120px' }}>Category</TableCell>
-            <TableCell sx={{ width: '100px', minWidth: '100px' }}>Mobile No</TableCell>
-            <TableCell sx={{ width: '90px', minWidth: '90px' }}>Priority</TableCell>
-            <TableCell sx={{ width: '100px', minWidth: '100px' }}>Status</TableCell>
-            <TableCell sx={{ width: '80px', minWidth: '80px' }}>TKTFOR</TableCell>
-            <TableCell sx={{ width: '100px', minWidth: '100px' }}>Raised At</TableCell>
-            <TableCell sx={{ width: '90px', minWidth: '90px', textAlign: 'center' }}>Actions</TableCell>
-          </TableRow>
-        </TableHead>
-
-        <TableBody>
-          {filteredTickets.map((ticket) => {
-            const isSelected = selectedRows.includes(ticket.TKTKEY);
-            return (
-              <TableRow
-                key={ticket.TKTKEY}
-                hover
-                selected={isSelected}
-                sx={{
-                  cursor: 'pointer',
-                  backgroundColor: isSelected ? 'action.selected' : 'inherit',
-                  '&:last-child td': {
-                    borderBottom: 0
-                  }
-                }}
-                onClick={(e) => {
-                  if (e.target.type !== 'checkbox') {
-                    handleViewTicket(ticket);
-                  }
-                }}
-              >
-                {/* Row Checkbox */}
-                <TableCell
-                  padding="checkbox"
-                  sx={{
-                    width: '40px',
-                    minWidth: '40px',
-                    maxWidth: '40px'
-                  }}
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <Checkbox
-                    size="small"
-                    color="primary"
-                    checked={isSelected}
-                    onChange={(e) => handleRowSelect(e, ticket.TKTKEY)}
-                    sx={{
-                      padding: '2px',
-                      '& .MuiSvgIcon-root': {
-                        fontSize: '1rem'
-                      }
-                    }}
-                  />
-                </TableCell>
-
-                {/* Ticket No */}
-                <TableCell>
-                  <Typography
-                    variant="body2"
-                    fontWeight="600"
-                    color="primary"
-                    sx={{
-                      fontSize: '0.75rem',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis'
-                    }}
-                  >
-                    {ticket.id}
-                  </Typography>
-                </TableCell>
-
-                {/* Title */}
-                <TableCell sx={{ maxWidth: '180px' }}>
-                  <Typography
-                    variant="subtitle2"
-                    fontWeight="600"
-                    sx={{
-                      fontSize: '0.75rem',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap'
-                    }}
-                  >
-                    {ticket.title}
-                  </Typography>
-                </TableCell>
-
-                {/* Category */}
-                <TableCell>
-                  <Chip
-                    label={ticket.category}
-                    size="small"
-                    variant="outlined"
-                    color="primary"
-                    sx={{
-                      fontSize: '0.7rem',
-                      height: '22px',
-                      '& .MuiChip-label': {
-                        px: 1,
-                        py: 0.5
-                      }
-                    }}
-                  />
-                </TableCell>
-
-                {/* Mobile No */}
-                <TableCell>
-                  <Typography
-                    variant="body2"
-                    sx={{
-                      fontSize: '0.75rem',
-                      color: 'text.secondary'
-                    }}
-                  >
-                    {ticket.MOBILENO || '-'}
-                  </Typography>
-                </TableCell>
-
-                {/* Priority */}
-                <TableCell>
-                  <Chip
-                    label={ticket.priority}
-                    size="small"
-                    color={getPriorityColor(ticket.priority)}
-                    sx={{
-                      fontSize: '0.7rem',
-                      height: '22px',
-                      minWidth: '60px',
-                      '& .MuiChip-label': {
-                        px: 1,
-                        py: 0.5
-                      }
-                    }}
-                  />
-                </TableCell>
-
-                {/* Status */}
-                <TableCell>
-                  <Chip
-                    label={
-                      ticket.status === 'open' ? 'Open' :
-                        ticket.status === 'in-progress' ? 'In Progress' :
-                          ticket.status === 'hold' ? 'Hold' :
-                            ticket.status === 'resolved' ? 'Resolved' : 'Closed'
-                    }
-                    size="small"
-                    color={getStatusColor(ticket.status)}
-                    variant="filled"
-                    sx={{
-                      fontSize: '0.7rem',
-                      height: '22px',
-                      minWidth: '70px',
-                      '& .MuiChip-label': {
-                        px: 1,
-                        py: 0.5
-                      }
-                    }}
-                  />
-                </TableCell>
-
-                {/* TKTFOR */}
-                <TableCell>
-                  <Typography
-                    variant="body2"
-                    sx={{
-                      fontSize: '0.75rem',
-                      fontWeight: 500
-                    }}
-                  >
-                    {ticket.tktFor}
-                  </Typography>
-                </TableCell>
-
-                {/* Raised At */}
-                <TableCell>
-                  <Typography
-                    variant="body2"
-                    color="text.secondary"
-                    sx={{
-                      fontSize: '0.7rem'
-                    }}
-                  >
-                    {formatDate(ticket.createdAt)}
-                  </Typography>
-                </TableCell>
-
-                {/* Actions */}
-                <TableCell onClick={(e) => e.stopPropagation()}>
-                  <Box display="flex" justifyContent="center" gap={0.5}>
-                    <Tooltip title="View" arrow>
-                      <IconButton
-                        size="small"
-                        color="primary"
-                        onClick={() => handleViewTicket(ticket)}
-                        sx={{
-                          padding: '3px',
-                          '& .MuiSvgIcon-root': {
-                            fontSize: '1rem'
-                          }
-                        }}
-                      >
-                        <VisibilityIcon />
-                      </IconButton>
-                    </Tooltip>
-                    <Tooltip title="Edit" arrow>
-                      <IconButton
-                        size="small"
-                        color="secondary"
-                        onClick={() => handleEditTicket(ticket)}
-                        sx={{
-                          padding: '3px',
-                          '& .MuiSvgIcon-root': {
-                            fontSize: '1rem'
-                          }
-                        }}
-                      >
-                        <EditIcon />
-                      </IconButton>
-                    </Tooltip>
-                    {/* <Tooltip title="Delete" arrow>
-                    <IconButton 
-                      size="small" 
-                      color="error" 
-                      onClick={() => handleDeleteClick(ticket)}
-                      sx={{ 
-                        padding: '3px',
-                        '& .MuiSvgIcon-root': {
-                          fontSize: '1rem'
-                        }
-                      }}
-                    >
-                      <DeleteIcon />
-                    </IconButton>
-                  </Tooltip> */}
-                  </Box>
-                </TableCell>
-              </TableRow>
-            );
-          })}
-
-          {filteredTickets.length === 0 && (
-            <TableRow>
-              <TableCell colSpan={10} align="center" sx={{ py: 3 }}>
-                <Typography variant="body2" color="text.secondary">
-                  No tickets found
-                </Typography>
-              </TableCell>
-            </TableRow>
-          )}
-        </TableBody>
-      </Table>
-    </TableContainer>
-  );
-
   return (
     <Box sx={{
       minHeight: '100vh',
@@ -634,56 +633,35 @@ const AllTicketsPage = () => {
       px: { xs: 1, sm: 2 }
     }}>
       <Container maxWidth="xl" sx={{ px: { xs: 1, sm: 2 } }}>
-        <Box sx={{ mb: 2 }}>
-          <Box display="flex" justifyContent="space-between" alignItems={{ xs: 'flex-start', sm: 'center' }} flexDirection={{ xs: 'column', sm: 'row' }} gap={2}>
-            <Box>
-              <Tooltip title='Go to ticket dashboard' arrow>
-                <Button
-                  startIcon={<ArrowBackIcon />}
-                  onClick={() => router.push('/emp-tickets/ticket-dashboard')}
-                  sx={{
-                    fontWeight: '600',
-                    color: 'primary.main',
-                    textTransform: 'none',
-                    borderRadius: '20px'
-                  }}
-                  variant="outlined"
-                >
-                  Dashboard
-                </Button>
-              </Tooltip>
-            </Box>
-            <Tooltip title='Create New Ticket' arrow>
-              <Button
-                variant="contained"
-                startIcon={<AddIcon />}
-                onClick={() => router.push('/emp-tickets/create-tickets')}
-                size={isSmallMobile ? "small" : "medium"}
-                sx={{ textTransform: 'none', borderRadius: '20px', backgroundColor: '#615ec9ff' }}
-              >
-                {isSmallMobile ? 'New' : 'New Ticket'}
-              </Button>
-            </Tooltip>
-          </Box>
-        </Box>
+        <Card sx={{ mb: 0, boxShadow: 2 }}>
+          <CardContent sx={{ p: { xs: 1, sm: 1 } }}>
+            <Grid container spacing={2} alignItems="center">
+              {/* Header Section with Title and Action Buttons */}
+              <Grid item xs={12}>
+                <Box display="flex" justifyContent="space-between" alignItems="center" flexDirection={{ xs: 'column', sm: 'row' }} gap={2}>
+                  <Typography
+                    variant={isSmallMobile ? "h5" : "h4"}
+                    component="h1"
+                    fontWeight="bold"
+                    sx={{
+                      background: "linear-gradient(to right, #7e1f0aff, #054711ff)",
+                      WebkitBackgroundClip: "text",
+                      color: "transparent",
+                      display: "inline-block",
+                    }}
+                  >
+                    Tickets
+                  </Typography>
+                  
+                 
+                </Box>
+              </Grid>
 
-        {/* Filters */}
-        <Card sx={{ mb: 3, boxShadow: 2 }}>
-          <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
-            <Grid container spacing={2} alignItems="flex-end">
-              <Typography
-                variant={isSmallMobile ? "h5" : "h4"}
-                component="h1"
-                fontWeight="bold"
-                sx={{
-                  background: "linear-gradient(to right, #7e1f0aff, #054711ff)",
-                  WebkitBackgroundClip: "text",
-                  color: "transparent",
-                  display: "inline",
-                }}
-              >
-                Tickets
-              </Typography>
+              {/* Search and Filters Section */}
+              <Grid item xs={12}>
+                <Divider sx={{ my: 1 }} />
+              </Grid>
+              
               <Grid item xs={12} md={4}>
                 <TextField
                   fullWidth
@@ -713,6 +691,7 @@ const AllTicketsPage = () => {
                   <MenuItem value="all">All Status</MenuItem>
                   <MenuItem value="open">Open</MenuItem>
                   <MenuItem value="in-progress">In Progress</MenuItem>
+                  <MenuItem value="hold">Hold</MenuItem>
                   <MenuItem value="resolved">Resolved</MenuItem>
                   <MenuItem value="closed">Closed</MenuItem>
                 </TextField>
@@ -734,23 +713,69 @@ const AllTicketsPage = () => {
                 </TextField>
               </Grid>
 
-              <Grid item xs={12} md={2}>
-                <Typography variant="body2" color="text.secondary" align="center">
-                  {filteredTickets.length} tickets found
-                </Typography>
+              <Grid item xs={6} sm={4} md={2}>
+                <Box textAlign="center">
+                  
+                  {selectedRows.length > 0 && (
+                    <Typography variant="caption" color="primary" fontWeight="500" display="block">
+                      Selected: {selectedRows.length}
+                    </Typography>
+                  )}
+                </Box>
               </Grid>
 
-              <Typography>Selected Rows: {selectedRows.length}</Typography>
-
-              <Tooltip title='Update Bulk Record' arrow>
-                <Button
-                  variant="contained"
-                  size={isSmallMobile ? "small" : "medium"}
-                  sx={{ textTransform: 'none', borderRadius: '20px', backgroundColor: '#615ec9ff' }}
-                >
-                  {isSmallMobile ? 'Bulk' : 'Bulk Update'}
-                </Button>
-              </Tooltip>
+              <Grid item xs={6} sm={4} md={2}>
+                <Tooltip title='Update Bulk Record' arrow>
+                  <Button
+                    variant="contained"
+                    size={isSmallMobile ? "small" : "medium"}
+                    // onClick={handleBulkUpdate}
+                    sx={{ 
+                      textTransform: 'none', 
+                      borderRadius: '20px', 
+                      backgroundColor: '#615ec9ff',
+                      width: '100%'
+                    }}
+                  >
+                    {isSmallMobile ? 'Bulk' : 'Bulk Update'}
+                  </Button>
+                </Tooltip>
+                
+              </Grid>
+               <Box display="flex" gap={2} flexDirection={{ xs: 'column', sm: 'row' }} width={{ xs: '100%', sm: 'auto' }}>
+                    <Button
+                      startIcon={<ArrowBackIcon />}
+                      onClick={() => router.push('/emp-tickets/ticket-dashboard')}
+                      sx={{
+                        fontWeight: '600',
+                        color: 'primary.main',
+                        textTransform: 'none',
+                        borderRadius: '20px',
+                        width: { xs: '100%', sm: 'auto' }
+                      }}
+                      variant="outlined"
+                      fullWidth={isSmallMobile}
+                    >
+                    </Button>
+                    
+                    <Tooltip title='Create New Ticket' arrow>
+                      <Button
+                        variant="contained"
+                        startIcon={<AddIcon />}
+                        onClick={() => router.push('/emp-tickets/create-tickets')}
+                        size={isSmallMobile ? "small" : "medium"}
+                        sx={{ 
+                          textTransform: 'none', 
+                          borderRadius: '20px', 
+                          backgroundColor: '#615ec9ff',
+                          width: { xs: '100%', sm: 'auto' }
+                        }}
+                        fullWidth={isSmallMobile}
+                      >
+                        {isSmallMobile ? 'New' : 'New Ticket'}
+                      </Button>
+                    </Tooltip>
+                  </Box>
             </Grid>
           </CardContent>
         </Card>
@@ -758,41 +783,94 @@ const AllTicketsPage = () => {
         {isMobile ? (
           <Box>
             {filteredTickets.map((ticket, index) => (
-              <MobileTicketCard key={index} ticket={ticket} />
+              <MobileTicketCard key={ticket.TKTKEY || index} ticket={ticket} />
             ))}
+            {filteredTickets.length === 0 && (
+              <Card sx={{ textAlign: 'center', py: 8, boxShadow: 3 }}>
+                <CardContent>
+                  <SearchIcon sx={{ fontSize: 64, color: 'grey.400', mb: 2 }} />
+                  <Typography variant="h5" gutterBottom fontWeight="600">
+                    No tickets found
+                  </Typography>
+                  <Typography variant="body1" color="text.secondary" sx={{ mb: 3, maxWidth: 400, mx: 'auto' }}>
+                    {searchTerm || statusFilter !== 'all' || priorityFilter !== 'all'
+                      ? 'Try adjusting your search or filter criteria to find what you are looking for.'
+                      : 'No tickets have been created yet. Start by creating your first ticket!'
+                    }
+                  </Typography>
+                  {!searchTerm && statusFilter === 'all' && priorityFilter === 'all' && (
+                    <Button
+                      variant="contained"
+                      size="large"
+                      startIcon={<AddIcon />}
+                      onClick={() => router.push('/emp-tickets/create-tickets')}
+                    >
+                      Create Your First Ticket
+                    </Button>
+                  )}
+                </CardContent>
+              </Card>
+            )}
           </Box>
         ) : (
-          <DesktopTableView />
+          <div style={{ height: 'calc(92vh - 100px)', width: '100%' }}>
+            {isLoading ? (
+              <div style={{ 
+                display: 'flex', 
+                justifyContent: 'center', 
+                alignItems: 'center', 
+                height: '100%' 
+              }}>
+                <CircularProgress />
+              </div>
+            ) : (
+              <ReusableTable
+                columnDefs={columnDefs}
+                rowData={filteredTickets}
+                height="100%"
+                theme="ag-theme-quartz"
+                isDarkMode={false}
+                pagination={true}
+                paginationPageSize={25}
+                paginationPageSizeSelector={[25, 50, 100, 250, 500]}
+                quickFilter={false}
+                onRowDoubleClick={handleRowDoubleClick}
+                onSelectionChanged={handleSelectionChanged}
+                loading={isLoading}
+                enableExport={false}
+                exportSelectedOnly={true}
+                selectedRows={selectedRows}
+                enableCheckbox={true}
+                compactMode={true}
+                rowHeight={25}
+                enableResetButton={false}
+                enableExitBackButton={false}
+                defaultColDef={{
+                  resizable: true,
+                  sortable: true,
+                  filter: true,
+                  flex: 0,
+                  minWidth: 80
+                }}
+                customGridOptions={{
+                  suppressRowClickSelection: true,
+                  rowSelection: 'multiple',
+                  animateRows: true,
+                  enableCellTextSelection: true,
+                  ensureDomOrder: true
+                }}
+                exportParams={{
+                  suppressTextAsCDATA: true,
+                  fileName: 'Tickets_Details',
+                  sheetName: 'Tickets'
+                }}
+                enableLanguageSwitch={false}
+              />
+            )}
+          </div>
         )}
 
-        {filteredTickets.length === 0 && (
-          <Card sx={{ textAlign: 'center', py: 8, boxShadow: 3 }}>
-            <CardContent>
-              <SearchIcon sx={{ fontSize: 64, color: 'grey.400', mb: 2 }} />
-              <Typography variant="h5" gutterBottom fontWeight="600">
-                No tickets found
-              </Typography>
-              <Typography variant="body1" color="text.secondary" sx={{ mb: 3, maxWidth: 400, mx: 'auto' }}>
-                {searchTerm || statusFilter !== 'all' || priorityFilter !== 'all'
-                  ? 'Try adjusting your search or filter criteria to find what you are looking for.'
-                  : 'No tickets have been created yet. Start by creating your first ticket!'
-                }
-              </Typography>
-              {!searchTerm && statusFilter === 'all' && priorityFilter === 'all' && (
-                <Button
-                  variant="contained"
-                  size="large"
-                  startIcon={<AddIcon />}
-                  onClick={() => router.push('/emp-tickets/create-tickets')}
-                >
-                  Create Your First Ticket
-                </Button>
-              )}
-            </CardContent>
-          </Card>
-        )}
-
-        {isMobile && (
+        {isMobile && filteredTickets.length > 0 && (
           <Fab
             color="primary"
             aria-label="add ticket"
@@ -857,3 +935,13 @@ const AllTicketsPage = () => {
 };
 
 export default AllTicketsPage;
+
+
+
+
+
+
+
+
+
+
